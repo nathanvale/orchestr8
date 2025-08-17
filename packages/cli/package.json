@@ -1,0 +1,36 @@
+{
+  "name": "@orchestr8/cli",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "orchestr8": "./dist/index.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "vitest",
+    "test:ci": "vitest --run",
+    "lint": "eslint src --max-warnings 0",
+    "type-check": "tsc --noEmit",
+    "format:check": "prettier --check src",
+    "clean": "rimraf dist *.tsbuildinfo"
+  },
+  "dependencies": {
+    "@orchestr8/core": "workspace:*",
+    "@orchestr8/schema": "workspace:*",
+    "commander": "^14.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.8",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
+  }
+}

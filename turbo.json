@@ -1,0 +1,73 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "globalDependencies": ["**/.env.*local", "**/.env", "tsconfig*.json"],
+  "globalEnv": ["NODE_ENV", "CI", "VITEST", "LOG_LEVEL"],
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "inputs": ["src/**", "package.json", "tsconfig.json", "vitest.config.ts"],
+      "outputs": ["dist/**"]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true,
+      "inputs": ["src/**", "tsconfig.json", "package.json"]
+    },
+    "lint": {
+      "dependsOn": ["^lint"],
+      "inputs": [
+        "src/**",
+        "*.js",
+        "*.ts",
+        "*.tsx",
+        "*.mjs",
+        "eslint.config.*",
+        "package.json",
+        "tsconfig.json"
+      ],
+      "outputs": [],
+      "cache": true
+    },
+    "type-check": {
+      "dependsOn": ["^build"],
+      "inputs": ["src/**", "tsconfig.json", "tsconfig*.json", "package.json"],
+      "outputs": ["**/*.tsbuildinfo"]
+    },
+    "test": {
+      "dependsOn": ["^build"],
+      "inputs": ["src/**", "vitest.config.*", "package.json"],
+      "outputs": [],
+      "env": ["NODE_ENV"],
+      "passThroughEnv": ["CI", "VITEST_WORKER_ID", "VITEST_POOL_ID"]
+    },
+    "format": {
+      "inputs": [
+        "src/**",
+        "*.js",
+        "*.ts",
+        "*.tsx",
+        "*.json",
+        "*.md",
+        ".prettierrc*",
+        "prettier.config.*"
+      ],
+      "outputs": []
+    },
+    "format:check": {
+      "inputs": [
+        "src/**",
+        "*.js",
+        "*.ts",
+        "*.tsx",
+        "*.json",
+        "*.md",
+        ".prettierrc*",
+        "prettier.config.*"
+      ],
+      "outputs": []
+    },
+    "clean": {
+      "cache": false
+    }
+  }
+}

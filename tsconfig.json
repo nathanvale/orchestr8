@@ -1,0 +1,37 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "lib": ["ES2022"],
+    "moduleResolution": "bundler",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noEmit": true,
+    "resolveJsonModule": true,
+    "allowJs": false,
+    "composite": true,
+    "declaration": true,
+    "declarationMap": true,
+    "incremental": true,
+    "paths": {
+      "@orchestr8/core": ["./packages/core/src"],
+      "@orchestr8/resilience": ["./packages/resilience/src"],
+      "@orchestr8/agent-base": ["./packages/agent-base/src"],
+      "@orchestr8/testing": ["./packages/testing/src"],
+      "@orchestr8/schema": ["./packages/schema/src"],
+      "@orchestr8/cli": ["./packages/cli/src"]
+    }
+  },
+  "references": [
+    { "path": "./packages/schema" },
+    { "path": "./packages/resilience" },
+    { "path": "./packages/agent-base" },
+    { "path": "./packages/core" },
+    { "path": "./packages/testing" },
+    { "path": "./packages/cli" }
+  ],
+  "exclude": ["node_modules", "dist", "build", ".turbo"]
+}

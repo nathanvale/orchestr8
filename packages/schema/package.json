@@ -1,0 +1,31 @@
+{
+  "name": "@orchestr8/schema",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "vitest",
+    "test:ci": "vitest --run",
+    "lint": "eslint src --max-warnings 0",
+    "type-check": "tsc --noEmit",
+    "format:check": "prettier --check src",
+    "clean": "rimraf dist *.tsbuildinfo"
+  },
+  "dependencies": {
+    "zod": "^3.25.74"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.8",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
+  }
+}
