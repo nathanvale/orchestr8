@@ -8,13 +8,27 @@
 
 Implement the core orchestration engine that executes multi-step workflows with both sequential and parallel execution patterns. This engine will be the foundation of the @orchestr8 platform, enabling reliable coordination of agent tasks with proper dependency management and execution flow control.
 
-**CURRENT STATUS**: Phase 0 is **PARTIALLY COMPLETE** with critical contract misalignments identified:
-- ✅ Repository prerequisites met (Node >=20, jmespath, engines)
-- ✅ Error taxonomy aligned with ExecutionError structure
-- ❌ API contracts misaligned (Agent, AgentRegistry, ResilienceAdapter)
-- ❌ Expression evaluator has implementation bugs
-- ❌ Naming inconsistencies (dependsOn vs dependencies)
-- ❌ Status taxonomy mismatch (completed vs success)
+**CURRENT STATUS**: Based on implementation review, **CRITICAL GAPS IDENTIFIED**:
+
+**✅ Completed:**
+- Repository prerequisites met (Node >=20, jmespath, engines)
+- Error taxonomy aligned with ExecutionError structure  
+- Expression evaluator fixes implemented
+- API contract decisions finalized
+
+**❌ Critical Missing Implementation:**
+- **OrchestrationEngine class not implemented** - Core engine missing entirely
+- **Workflow execution logic missing** - Cannot execute workflows
+- **Dependency resolution missing** - No graph building or scheduling
+- **Parallel execution missing** - No concurrent step execution
+- **Memory management missing** - No bounded execution or truncation
+
+**⚠️ Implementation Issues Identified:**
+- Condition error handling inconsistent with spec requirements
+- ResilienceAdapter API needs final decision on composition order
+- Mapping expression parser is naive and incomplete
+- Max expansion size (64KB) not enforced
+- Schema validation errors not using ExecutionError taxonomy
 
 ## User Stories
 
@@ -38,21 +52,22 @@ The engine should analyze the workflow graph, identify optimal execution strateg
 
 ## Spec Scope
 
-### Phase 0.5: Contract Alignment & Bug Fixes (IMMEDIATE)
+### Phase 1: Core Engine Implementation (CRITICAL - BLOCKS MVP)
 
-1. **Fix Expression Evaluator Bugs** - Replace compile with search, fix depth tracking, add prototype guards, enforce 500ms timeout
-2. **Align API Contracts** - Standardize Agent.execute signature, choose sync/async for AgentRegistry, align ResilienceAdapter
-3. **Unify Naming Conventions** - Use `dependsOn` consistently, align status values to `completed/failed/skipped/cancelled`
-4. **Update Integration Mocks** - Ensure MockAgentRegistry and MockResilienceAdapter match chosen contracts
+1. **OrchestrationEngine Class** - Implement main engine with execute() method and workflow coordination
+2. **Execution Graph Building** - Parse workflow AST and build dependency graph with cycle detection  
+3. **Deterministic Scheduling** - Implement topological sorting and level-based execution planning
+4. **Parallel Execution Manager** - Implement concurrent step execution with Promise.all and fail-fast semantics
+5. **Memory Management** - Implement 512KB per-step limits with truncation metadata and JSON-safe serialization
+6. **AbortSignal Integration** - Implement cancellation propagation throughout execution chain
 
-### Phase 1: Core Implementation (After Contract Alignment)
+### Phase 2: Resilience & Error Handling Hardening
 
-1. **Workflow AST Execution** - Parse and execute workflow definitions with sequential and parallel node types
-2. **Dependency Resolution** - Analyze workflow graphs to determine execution order and parallelization opportunities
-3. **Execution Context Management** - Maintain execution state, correlation IDs, and data flow between workflow steps
-4. **Result Collection** - Collect results from parallel branches before proceeding to dependent steps
-5. **Error Handling** - Implement proper error propagation and workflow termination on failures
-6. **Memory Safety** - 512KB per-step output cap with JSON-safe serialization and truncation metadata
+1. **Condition Error Handling** - Implement strict mode for condition evaluation with ExecutionError consistency
+2. **ResilienceAdapter Integration** - Finalize composition order API and implement policy application
+3. **Expression Parser Improvements** - Implement robust default value parsing and enforce 64KB expansion limits
+4. **Schema Error Taxonomy** - Ensure all validation errors use ExecutionError with VALIDATION code
+5. **Fallback Result Aliasing** - Implement complete fallback execution and dependency resolution semantics
 
 ## Out of Scope
 

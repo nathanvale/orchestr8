@@ -3,20 +3,37 @@
 This is the technical specification for the spec detailed in @.agent-os/specs/2025-08-18-core-orchestration-engine/spec.md
 
 > Created: 2025-08-18
-> Version: 2.0.0
-> Updated: 2025-08-19
-> Status: **ALIGNMENT REQUIRED** - Critical implementation decisions needed
+> Version: 3.0.0
+> Updated: 2025-08-18
+> Status: **CRITICAL GAPS IDENTIFIED** - Core engine implementation missing
+
+## Critical Implementation Gaps Identified
+
+**❌ MISSING CORE IMPLEMENTATION:**
+- **OrchestrationEngine Class**: Main engine class not implemented - blocks all workflow execution
+- **Workflow Graph Building**: buildExecutionGraph() method missing - cannot parse or analyze workflows  
+- **Step Execution Logic**: executeStep() and executeLevel() methods missing - no step coordination
+- **Dependency Resolution**: scheduleSteps() deterministic scheduling missing - no execution order planning
+- **Parallel Execution**: Promise.all coordination and fail-fast semantics missing - no concurrent execution
+- **Memory Bounds**: Result truncation and size enforcement not implemented - no memory safety
+
+**⚠️ IMPLEMENTATION INCONSISTENCIES:**
+- **Condition Error Handling**: Code returns false on errors vs spec requirement for ExecutionError with VALIDATION code  
+- **Expression Mapping**: Naive parser splits on '??' without handling quoted defaults or nested expressions properly
+- **Security Limits**: 64KB expansion size limit defined but never enforced during mapping resolution
+- **Error Taxonomy**: Schema validation throws generic Error instead of ExecutionError with VALIDATION code
+- **ResilienceAdapter API**: Composition order approach needs final decision between Option A (apply/applyGlobalPolicies) vs Option B (applyPolicy only)
 
 ## Technical Requirements
 
-- **Workflow Parser**: Parse workflow AST nodes and build execution graph with dependency tracking
-- **Execution Scheduler**: Implement topological sorting to determine optimal execution order for sequential/parallel steps
-- **Parallel Execution Manager**: Manage concurrent agent execution with Promise.all and proper error handling
-- **Context Threading**: Maintain execution context and data flow between workflow steps with correlation IDs
-- **Result Collection**: Collect results from parallel branches before proceeding to dependent sequential steps
-- **Memory Management**: Implement bounded execution context (512KB per step, UTF-8 byte size) with truncation metadata
-- **Cancellation Support**: Integrate AbortSignal propagation through the entire execution chain
-- **Type Safety**: Full TypeScript support with strict mode and comprehensive type definitions
+- **OrchestrationEngine Class**: Implement main engine with execute() method coordinating complete workflow execution
+- **Execution Graph Builder**: Parse workflow AST and construct dependency graph with cycle detection and topological sorting
+- **Deterministic Scheduler**: Implement scheduleSteps() with dependency-count + index-based stable ordering for parallel readiness
+- **Parallel Execution Manager**: Implement executeLevel() with Promise.all, fail-fast semantics, and AbortSignal.any cancellation  
+- **Memory Management**: Enforce 512KB per-step limits with JSON-safe serialization, circular reference handling, and truncation metadata
+- **Context Threading**: Maintain ExecutionContext with correlation IDs, result collection, and data flow between workflow steps
+- **Cancellation Support**: Implement AbortSignal propagation with grace periods and deterministic cleanup throughout execution chain
+- **Error Classification**: Ensure all error paths use ExecutionError taxonomy with appropriate codes (VALIDATION, TIMEOUT, CANCELLED, etc.)
 
 ## Approach Options
 
@@ -145,32 +162,47 @@ interface WorkflowResult {
 
 ## Core Components
 
-### OrchestrationEngine Class
+### OrchestrationEngine Class (❌ NOT IMPLEMENTED)
 
-The main engine class that coordinates workflow execution:
+**Current Status**: Class does not exist in @orchestr8/core - this is a critical blocking issue for MVP delivery.
+
+**Required Implementation**: Main engine class that coordinates complete workflow execution:
 
 ```typescript
 class OrchestrationEngine {
+  // Main execution entry point - MISSING
   async execute(
     workflow: Workflow,
     context: ExecutionContext,
   ): Promise<WorkflowResult>
+  
+  // Graph construction and analysis - MISSING  
   private buildExecutionGraph(workflow: Workflow): ExecutionGraph
+  
+  // Parallel level execution with fail-fast - MISSING
   private executeLevel(
     steps: WorkflowStep[],
     context: ExecutionContext,
   ): Promise<StepResult[]>
+  
+  // Individual step execution with resilience - MISSING
   private executeStep(
     step: WorkflowStep,
     context: ExecutionContext,
   ): Promise<StepResult>
+  
+  // Deterministic scheduling algorithm - MISSING
   private scheduleSteps(
     steps: WorkflowStep[],
     completed: Set<string>,
   ): WorkflowStep[]
+  
+  // Execution tracking - MISSING
   getExecutionId(): string
 }
 ```
+
+**Impact**: Without this class, no workflows can be executed. This blocks the entire MVP Phase 1 deliverable.
 
 ## Execution Semantics
 
@@ -301,9 +333,10 @@ const wrappedOperation = withRetry(
 - **Security**: 500ms evaluation timeout enforced with proper error mapping
 - **Error handling**: Evaluation errors result in ExecutionError with code VALIDATION
 
-**CRITICAL BUG FIX REQUIRED:**
-- Current code incorrectly uses `jmespath.compile()` - must use `jmespath.search()`
-- Timeout is only warned, not enforced - must implement proper timeout with TIMEOUT error
+**IMPLEMENTATION STATUS:**
+- ✅ Fixed: jmespath.compile() replaced with jmespath.search()
+- ✅ Fixed: Proper timeout enforcement implemented with TIMEOUT error  
+- ⚠️ **Still Missing**: Condition evaluation error handling inconsistent with spec - returns false instead of throwing ExecutionError with VALIDATION code
 
 ### Mapping Expression Security - FIX REQUIRED
 
@@ -322,10 +355,11 @@ const wrappedOperation = withRetry(
 - **Prototype protection**: Prevent `__proto__`, `constructor`, `prototype` access
 - **Precedence order**: steps → variables → env (for conflict resolution)
 
-**CRITICAL BUGS TO FIX:**
-- Depth tracking uses `parts.indexOf(part)` which is wrong - must use iteration counter
-- No prototype key guards implemented - must block `__proto__`, `constructor`, `prototype`
-- Default value parsing is naive `split('??')` - must handle quoted defaults properly
+**IMPLEMENTATION STATUS:**
+- ✅ Fixed: Depth tracking now uses proper iteration counter instead of indexOf()
+- ✅ Fixed: Prototype key guards implemented to block `__proto__`, `constructor`, `prototype`
+- ⚠️ **Still Incomplete**: Default value parsing remains naive using split('??') - needs robust parser for quoted defaults
+- ⚠️ **Still Missing**: 64KB expansion size limit enforcement not implemented
 
 **Default Value Escaping Rules:**
 
