@@ -15,7 +15,13 @@
       "Bash(git add:*)",
       "Bash(pnpm format:check:*)",
       "Bash(pnpm format:*)",
-      "Bash(pnpm lint:*)"
+      "Bash(pnpm lint:*)",
+      "Bash(git commit:*)",
+      "Bash(pnpm type-check:*)",
+      "mcp__wallaby__wallaby_allTests",
+      "Bash(pnpm add:*)",
+      "Bash(pnpm validate:dual-consumption:*)",
+      "Bash(NODE_ENV=development node -e \"import(''@orchestr8/schema'').then(m => console.log(''✅ Dev import works for @orchestr8/schema''))\")"
     ],
     "deny": [],
     "ask": []

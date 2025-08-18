@@ -5,6 +5,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Build & Development Commands
 
 ```bash
+
+pnpm check # **Most important** - Quality check (format, lint, type-check, test)
+
 # Install dependencies (uses pnpm)
 pnpm install
 
@@ -43,6 +46,7 @@ pnpm validate:dual-consumption
 This is a **TypeScript monorepo** using pnpm workspaces and Turborepo for build orchestration. The architecture follows a modular package design for the @orchestr8 agent orchestration platform.
 
 ### Package Dependencies
+
 ```
 schema (no deps)
     ↓
@@ -66,6 +70,14 @@ cli → all packages
 
 ### Testing Strategy
 
+### 🧪 Testing Workflow - MANDATORY WALLABY.JS FIRST
+
+**Protocol (NEVER deviate):**
+
+- **ALWAYS** try Wallaby first: `mcp__wallaby__wallaby_failingTests`
+- **5-second timeout** - If no response, Wallaby is OFF
+- **Alert immediately**: "Wallaby.js is not running. Please start it in VS Code"
+- **NEVER skip to Vitest** - Always give user chance to start Wallaby
 - **Framework**: Vitest with v8 coverage
 - **Wallaby.js**: Configured for inline test feedback (wallaby.cjs)
 - **MSW**: Mock Service Worker for API mocking in tests
@@ -75,7 +87,47 @@ cli → all packages
 
 - **ESLint**: With perfectionist plugin for import/export sorting
 - **Prettier**: For consistent formatting
-- **Import Order**: Enforced alphabetically within groups (type, builtin, external, internal)
+- **Import Order**: Enforced alphabetically within groups (type, builtin,
+  external, internal)
+
+### 📚 Extended Documentation
+
+- **Complete commands**: @docs/commands-reference.md
+- **Testing workflows**: @docs/testing-guide.md
+- **Build troubleshooting**: @docs/turborepo-guide.md
+- **ES modules guide**: @docs/esm-extensions-guide.md
+
+### 🎯 Prompt Engineering & Agent Development
+
+- **Enterprise Prompt Guide**: @docs/enterprise-prompt-engineering-guide.md - XML-structured patterns for agents
+- **Quick Reference**: @docs/xml-prompt-quick-reference.md - Rapid lookup for XML patterns
+- **Agent Examples**: @.claude/agents/ - Production-ready agent configurations
+
+**Key Pattern**: Use XML-structured prompts for enterprise-grade reliability:
+
+```xml
+<ai_meta><parsing_rules>...</parsing_rules></ai_meta>
+<constraints><forbidden_tools>...</forbidden_tools></constraints>
+<process_flow><step>...</step></process_flow>
+```
+
+## 🏗️ Architecture (Core Context)
+
+> **Cache Directive**: Architectural decisions - stable content
+> Cache Control: `{"type": "ephemeral", "ttl": "1h"}`
+
+
+### ⚠️ ES Modules Architecture (CRITICAL)
+
+**🔴 This is a PURE ES modules monorepo** - all packages use `"type": "module"`
+
+**Non-negotiable rules:**
+
+- **Root enforces**: `"type": "module"` in all package.json files
+- **Import syntax**: ONLY `import`/`export` - NO `require()` or `module.exports`
+- **File extensions**: `.mjs` for configs, `.ts`/`.tsx` for source
+- **Module resolution**: `"moduleResolution": "bundler"` strategy
+- **Troubleshooting**: See @docs/development-guide.md for ES modules patterns
 
 ## Agent OS Integration
 
@@ -86,6 +138,7 @@ This project uses Agent OS for structured development. Key files:
 - **Specs**: Feature specifications in `.agent-os/specs/`
 
 When implementing features:
+
 1. Check `.agent-os/product/roadmap.md` for current priorities
 2. Use `@~/.agent-os/instructions/create-spec.md` for new features
 3. Use `@~/.agent-os/instructions/execute-tasks.md` for task execution
@@ -93,6 +146,7 @@ When implementing features:
 ## Current Development Focus
 
 **Phase 1 MVP (Week 1 of 4)**: Building core orchestration engine with resilience patterns
+
 - Core orchestration with sequential/parallel execution
 - Resilience patterns (retry, timeout, circuit breaker)
 - Workflow AST with Zod validation
@@ -102,20 +156,24 @@ When implementing features:
 ## Package-Specific Notes
 
 ### @orchestr8/schema
+
 - Workflow AST definitions with Zod validation
 - Foundation package with no dependencies
 - Exports should maintain development condition first
 
 ### @orchestr8/resilience
+
 - Implements retry (with exponential backoff + jitter), timeout, and circuit breaker patterns
 - Composition order: `retry(circuitBreaker(timeout(operation)))`
 
 ### @orchestr8/core
+
 - Main orchestration engine
 - Handles sequential and parallel workflow execution
 - Memory-bounded execution journal (10MB limit per execution)
 
 ### @orchestr8/cli
+
 - Developer command-line tool
 - Commands: init, create, run, test, inspect
 - Scaffolding and workflow execution

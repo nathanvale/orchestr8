@@ -49,3 +49,8 @@ lerna-debug.log*
 *.log
 tmp
 temp
+
+# Obsidian
+.agent-os/.obsidian/**
+.obsidian/workspace.json
+**/.obsidian/workspace.json
