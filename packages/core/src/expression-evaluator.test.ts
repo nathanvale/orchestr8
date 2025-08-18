@@ -492,6 +492,182 @@ describe('Expression Evaluator', () => {
         // Result can be undefined, but shouldn't crash
       })
     })
+  })
+
+  describe('Robust Mapping Parser', () => {
+    it('should handle single-quoted default values', () => {
+      expect(
+        resolveMapping(
+          "${steps.nonexistent.output ?? 'single-quoted'}",
+          context,
+        ),
+      ).toBe('single-quoted')
+      expect(
+        resolveMapping("${variables.missing ?? 'fallback'}", context),
+      ).toBe('fallback')
+      expect(
+        resolveMapping("${env.MISSING_VAR ?? 'env-default'}", context),
+      ).toBe('env-default')
+    })
+
+    it('should handle single quotes with apostrophes in default values', () => {
+      expect(
+        resolveMapping("${variables.missing ?? 'it\\'s working'}", context),
+      ).toBe("it's working")
+      expect(
+        resolveMapping("${variables.missing ?? 'can\\'t fail'}", context),
+      ).toBe("can't fail")
+    })
+
+    it('should handle escaped quotes in double-quoted default values', () => {
+      expect(
+        resolveMapping(
+          '${variables.missing ?? "He said \\"Hello\\""}',
+          context,
+        ),
+      ).toBe('He said "Hello"')
+      expect(
+        resolveMapping(
+          '${variables.missing ?? "Path: \\"C:\\\\Users\\""}',
+          context,
+        ),
+      ).toBe('Path: "C:\\Users"')
+    })
+
+    it('should handle escaped quotes in single-quoted default values', () => {
+      expect(
+        resolveMapping("${variables.missing ?? 'She said \\'Hi\\''}", context),
+      ).toBe("She said 'Hi'")
+      expect(
+        resolveMapping(
+          "${variables.missing ?? 'It\\'s a \\'test\\''}",
+          context,
+        ),
+      ).toBe("It's a 'test'")
+    })
+
+    it('should handle mixed quote escaping scenarios', () => {
+      expect(
+        resolveMapping(
+          '${variables.missing ?? "Mix \\"quotes\\" and \'apostrophes\'"}',
+          context,
+        ),
+      ).toBe('Mix "quotes" and \'apostrophes\'')
+      expect(
+        resolveMapping(
+          "${variables.missing ?? 'Mix \"quotes\" and \\'apostrophes\\''}",
+          context,
+        ),
+      ).toBe('Mix "quotes" and \'apostrophes\'')
+    })
+
+    it('should handle nested ?? operators within quoted strings', () => {
+      expect(
+        resolveMapping(
+          '${variables.missing ?? "This ?? is literal in quotes"}',
+          context,
+        ),
+      ).toBe('This ?? is literal in quotes')
+      expect(
+        resolveMapping(
+          "${variables.missing ?? 'Contains ?? operator in string'}",
+          context,
+        ),
+      ).toBe('Contains ?? operator in string')
+    })
+
+    it('should handle complex nested ?? patterns', () => {
+      expect(
+        resolveMapping(
+          '${variables.missing ?? "Format: ${var} ?? default"}',
+          context,
+        ),
+      ).toBe('Format: ${var} ?? default')
+      expect(
+        resolveMapping(
+          "${variables.missing ?? 'If x ?? y then z ?? w'}",
+          context,
+        ),
+      ).toBe('If x ?? y then z ?? w')
+    })
+
+    it('should distinguish between operator ?? and literal ?? in quotes', () => {
+      // This should use the ?? operator to provide the default, but the default contains ?? as literal text
+      expect(
+        resolveMapping(
+          '${variables.nonexistent ?? "SQL: SELECT * FROM table WHERE id ?? NULL"}',
+          context,
+        ),
+      ).toBe('SQL: SELECT * FROM table WHERE id ?? NULL')
+
+      // Multiple ?? operators - only the first should be treated as the operator
+      expect(
+        resolveMapping(
+          '${variables.missing ?? "First default with ?? inside"}',
+          context,
+        ),
+      ).toBe('First default with ?? inside')
+    })
+
+    it('should handle edge cases in expression resolution', () => {
+      // Empty expression parts
+      expect(resolveMapping('${variables.empty ?? ""}', context)).toBe('')
+
+      // Whitespace handling
+      expect(
+        resolveMapping('${  variables.missing   ??   "spaced"  }', context),
+      ).toBe('spaced')
+
+      // Nested ${} expressions in default values
+      expect(
+        resolveMapping('${variables.missing ?? "Value: ${ignored}"}', context),
+      ).toBe('Value: ${ignored}')
+    })
+
+    it('should handle malformed expressions gracefully', () => {
+      // Unmatched quotes in defaults
+      expect(() =>
+        resolveMapping('${variables.missing ?? "unclosed quote}', context),
+      ).not.toThrow()
+
+      // Mixed quote types
+      expect(
+        resolveMapping('${variables.missing ?? "double\' quote"}', context),
+      ).toBe("double' quote")
+
+      // Empty default after ??
+      expect(resolveMapping('${variables.missing ?? }', context)).toBe(
+        undefined,
+      )
+    })
+
+    it('should handle complex nested expression patterns', () => {
+      // Multiple levels of ${} nesting in string context
+      const complexInput =
+        'Prefix ${steps.step1.output.result} and ${variables.testVar ?? "backup"} suffix'
+      expect(resolveMapping(complexInput, context)).toBe(
+        'Prefix success and test value suffix',
+      )
+
+      // Expression with no default should work
+      expect(resolveMapping('${variables.testVar}', context)).toBe('test value')
+
+      // Non-string expression resolution
+      const objectInput = {
+        key1: '${steps.step1.output.data.id}',
+        key2: '${variables.missing ?? "default"}',
+        nested: {
+          value: '${variables.nested.value ?? 0}',
+        },
+      }
+      expect(resolveMapping(objectInput, context)).toEqual({
+        key1: 123,
+        key2: 'default',
+        nested: {
+          value: 42,
+        },
+      })
+    })
 
     it('should prevent environment variable enumeration', () => {
       // Try to access non-whitelisted env vars

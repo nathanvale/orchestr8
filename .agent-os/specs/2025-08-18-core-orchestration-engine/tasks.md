@@ -29,7 +29,7 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
 **Completed Critical Gaps:**
 
 - [x] ✅ Cancellation propagation with AbortSignal.any
-- [x] ✅ True timeout enforcement for expression evaluation  
+- [x] ✅ True timeout enforcement for expression evaluation
 - [x] ✅ Expression expansion 64KB limit enforcement
 - [x] ✅ Dependency failure skip semantics
 - [x] ✅ Structured logging implementation
@@ -112,13 +112,13 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
   - [x] 7.5 Test interaction between retry attempts and timeouts
   - [x] 7.6 Document composition semantics clearly
 
-- [ ] 8. **MEDIUM: Mapping Parser Improvements** (Robustness)
-  - [ ] 8.1 Write tests for single-quoted default values
-  - [ ] 8.2 Write tests for escaped quotes in defaults
-  - [ ] 8.3 Write tests for nested ?? in quoted strings
-  - [ ] 8.4 Implement proper tokenizer for default value parsing
-  - [ ] 8.5 Handle edge cases in expression resolution
-  - [ ] 8.6 Verify robust parsing for all expression patterns
+- [x] 8. **MEDIUM: Mapping Parser Improvements** (Robustness) ✅ COMPLETED
+  - [x] 8.1 Write tests for single-quoted default values
+  - [x] 8.2 Write tests for escaped quotes in defaults
+  - [x] 8.3 Write tests for nested ?? in quoted strings
+  - [x] 8.4 Implement proper tokenizer for default value parsing
+  - [x] 8.5 Handle edge cases in expression resolution
+  - [x] 8.6 Verify robust parsing for all expression patterns
 
 - [ ] 9. **HIGH DECISION: Nested Step Types Semantics** (Architecture Decision)
   - [ ] 9.1 Analyze current schema SequentialStep/ParallelStep definitions
@@ -130,7 +130,7 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
 
 - [ ] 10. **MEDIUM: Configuration Parity** (Technical Consistency)
   - [ ] 10.1 Thread OrchestrationOptions.maxExpansionDepth to evaluator
-  - [ ] 10.2 Thread OrchestrationOptions.maxExpansionSize to evaluator  
+  - [ ] 10.2 Thread OrchestrationOptions.maxExpansionSize to evaluator
   - [ ] 10.3 Add tests for non-default limits
   - [ ] 10.4 Remove hard-coded SECURITY_LIMITS usage
   - [ ] 10.5 Verify configurable limits work end-to-end
@@ -142,7 +142,7 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
   - [ ] 11.4 Document single source of truth for env access
 
 - [ ] 12. **LOW: Code Cleanup** (Technical Debt)
-  - [ ] 12.1 Clean dist before build in schema package 
+  - [ ] 12.1 Clean dist before build in schema package
   - [ ] 12.2 Evaluate expression cache usage beyond deduplication
   - [ ] 12.3 Document Map insertion order invariants
   - [ ] 12.4 Clean up TODO comments in code

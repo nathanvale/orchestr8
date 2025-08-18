@@ -121,16 +121,250 @@ function resolveStringExpression(
   context: ExecutionContext,
 ): unknown {
   // Check if entire string is a single expression
-  const singleExprMatch = input.match(/^\$\{([^}]+)\}$/)
-  if (singleExprMatch) {
-    return resolvePlaceholder(singleExprMatch[1]!, context)
+  const singleExpr = extractSingleExpression(input)
+  if (singleExpr !== null) {
+    return resolvePlaceholder(singleExpr, context)
   }
 
   // Replace multiple expressions in string
-  return input.replace(/\$\{([^}]+)\}/g, (match, expr) => {
-    const value = resolvePlaceholder(expr, context)
-    return value === undefined ? match : String(value)
-  })
+  return replaceExpressions(input, context)
+}
+
+/**
+ * Extract expression from ${...} if the entire string is a single expression
+ */
+function extractSingleExpression(input: string): string | null {
+  if (!input.startsWith('${') || !input.endsWith('}')) {
+    return null
+  }
+
+  const content = input.slice(2, -1)
+
+  // Verify this is actually a complete single expression by checking for balanced braces
+  let braceCount = 0
+  let inQuotes = false
+  let quoteChar = ''
+  let escaped = false
+
+  for (let i = 0; i < content.length; i++) {
+    const char = content[i]
+
+    if (escaped) {
+      escaped = false
+      continue
+    }
+
+    if (char === '\\') {
+      escaped = true
+      continue
+    }
+
+    if (!inQuotes && (char === '"' || char === "'")) {
+      inQuotes = true
+      quoteChar = char
+      continue
+    }
+
+    if (inQuotes && char === quoteChar) {
+      inQuotes = false
+      quoteChar = ''
+      continue
+    }
+
+    if (!inQuotes) {
+      if (char === '{') {
+        braceCount++
+      } else if (char === '}') {
+        braceCount--
+      }
+    }
+  }
+
+  // If balanced and not in quotes, this is a single expression
+  if (braceCount === 0 && !inQuotes) {
+    return content
+  }
+
+  return null
+}
+
+/**
+ * Replace all ${...} expressions in a string with their resolved values
+ */
+function replaceExpressions(input: string, context: ExecutionContext): string {
+  let result = ''
+  let i = 0
+
+  while (i < input.length) {
+    if (i < input.length - 1 && input[i] === '$' && input[i + 1] === '{') {
+      // Found start of expression, find the matching closing brace
+      const expressionStart = i + 2
+      let braceCount = 1
+      let j = expressionStart
+      let inQuotes = false
+      let quoteChar = ''
+      let escaped = false
+
+      while (j < input.length && braceCount > 0) {
+        const char = input[j]
+
+        if (escaped) {
+          escaped = false
+          j++
+          continue
+        }
+
+        if (char === '\\') {
+          escaped = true
+          j++
+          continue
+        }
+
+        if (!inQuotes && (char === '"' || char === "'")) {
+          inQuotes = true
+          quoteChar = char
+          j++
+          continue
+        }
+
+        if (inQuotes && char === quoteChar) {
+          inQuotes = false
+          quoteChar = ''
+          j++
+          continue
+        }
+
+        if (!inQuotes) {
+          if (char === '{') {
+            braceCount++
+          } else if (char === '}') {
+            braceCount--
+          }
+        }
+
+        j++
+      }
+
+      if (braceCount === 0) {
+        // Found complete expression
+        const expression = input.slice(expressionStart, j - 1)
+        const value = resolvePlaceholder(expression, context)
+        result += value === undefined ? input.slice(i, j) : String(value)
+        i = j
+      } else {
+        // Unmatched braces, treat as literal
+        result += input[i]
+        i++
+      }
+    } else {
+      result += input[i]
+      i++
+    }
+  }
+
+  return result
+}
+
+/**
+ * Parse expression with default value, handling quote escaping and nested ?? operators
+ */
+function parseExpressionWithDefault(expression: string): {
+  expression: string
+  defaultValue?: string
+} {
+  let i = 0
+  let inQuotes = false
+  let quoteChar = ''
+  let escaped = false
+
+  // Find the first ?? operator that's not inside quotes
+  while (i < expression.length - 1) {
+    const char = expression[i]
+    const nextChar = expression[i + 1]
+
+    if (escaped) {
+      escaped = false
+      i++
+      continue
+    }
+
+    if (char === '\\') {
+      escaped = true
+      i++
+      continue
+    }
+
+    if (!inQuotes && (char === '"' || char === "'")) {
+      inQuotes = true
+      quoteChar = char
+      i++
+      continue
+    }
+
+    if (inQuotes && char === quoteChar) {
+      inQuotes = false
+      quoteChar = ''
+      i++
+      continue
+    }
+
+    // Look for ?? operator when not in quotes
+    if (!inQuotes && char === '?' && nextChar === '?') {
+      // Found the operator - split here
+      const expr = expression.substring(0, i).trim()
+      const defaultRaw = expression.substring(i + 2).trim()
+
+      // Parse the default value to remove quotes and handle escaping
+      const defaultValue = parseQuotedString(defaultRaw)
+
+      return {
+        expression: expr,
+        defaultValue: defaultValue,
+      }
+    }
+
+    i++
+  }
+
+  // No ?? operator found
+  return {
+    expression: expression.trim(),
+    defaultValue: undefined,
+  }
+}
+
+/**
+ * Parse a quoted string, handling escape sequences
+ */
+function parseQuotedString(input: string): string | undefined {
+  if (input === undefined || input === null) return undefined
+
+  const trimmed = input.trim()
+  if (trimmed === '') return undefined
+
+  // Check for double quotes
+  if (trimmed.startsWith('"') && trimmed.endsWith('"')) {
+    const content = trimmed.slice(1, -1)
+    return unescapeString(content, '"')
+  }
+
+  // Check for single quotes
+  if (trimmed.startsWith("'") && trimmed.endsWith("'")) {
+    const content = trimmed.slice(1, -1)
+    return unescapeString(content, "'")
+  }
+
+  // Return as-is if not quoted
+  return trimmed
+}
+
+/**
+ * Unescape a string based on the quote type
+ */
+function unescapeString(str: string, quoteType: string): string {
+  return str
+    .replace(new RegExp(`\\\\${quoteType}`, 'g'), quoteType) // Unescape quotes
+    .replace(/\\\\/g, '\\') // Unescape backslashes
 }
 
 /**
@@ -141,20 +375,12 @@ function resolvePlaceholder(
   context: ExecutionContext,
 ): unknown {
   // Handle default value syntax: expression ?? defaultValue
-  const [expr, defaultValueRaw] = expression.split('??').map((s) => s.trim())
-
-  // Parse default value - remove surrounding quotes if present
-  let defaultValue = defaultValueRaw
-  if (
-    defaultValue &&
-    defaultValue.startsWith('"') &&
-    defaultValue.endsWith('"')
-  ) {
-    defaultValue = defaultValue.slice(1, -1)
-  }
+  const parsedExpression = parseExpressionWithDefault(expression)
+  const expr = parsedExpression.expression
+  const defaultValue = parsedExpression.defaultValue
 
   // Parse the expression path
-  const parts = expr!.split('.')
+  const parts = expr.split('.')
   const source = parts[0]
 
   let value: unknown
@@ -195,7 +421,7 @@ function resolvePlaceholder(
   }
 
   // Get final resolved value or default
-  const resolvedValue = value !== undefined ? value : defaultValue || undefined
+  const resolvedValue = value !== undefined ? value : defaultValue
 
   // Check expansion size limit
   if (resolvedValue !== undefined) {
