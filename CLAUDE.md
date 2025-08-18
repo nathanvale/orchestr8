@@ -68,6 +68,34 @@ cli → all packages
 3. **TypeScript Project References**: Using composite projects for fast incremental builds
 4. **Strict TypeScript**: All packages use strict mode with `noUncheckedIndexedAccess`
 
+### 🚫 TypeScript `any` Type - ABSOLUTELY FORBIDDEN
+
+**CRITICAL: The use of `any` type is STRICTLY PROHIBITED under ALL circumstances**
+
+This codebase maintains a **ZERO TOLERANCE** policy for TypeScript `any` types:
+
+- **NO EXCEPTIONS**: Never use `any`, not even temporarily
+- **NO WORKAROUNDS**: Don't use `as any`, `<any>`, or `unknown` as a bypass
+- **NO JUSTIFICATIONS**: There is always a better type-safe solution
+- **ENFORCED BY**: ESLint rule `@typescript-eslint/no-explicit-any: 'error'`
+- **ALTERNATIVES REQUIRED**: Use proper types, generics, or `unknown` with type guards
+
+**Why this matters:**
+- Type safety is non-negotiable for enterprise-grade reliability
+- `any` defeats the entire purpose of using TypeScript
+- Runtime errors from `any` usage are unacceptable in production
+
+**If you encounter a scenario where `any` seems necessary:**
+1. STOP - There's always a type-safe alternative
+2. Use proper generic types or interfaces
+3. Use `unknown` with proper type guards if type is truly unknown
+4. Define specific types for third-party libraries if needed
+
+**Enforcement:**
+- ESLint will error on any `any` usage
+- CI/CD pipeline will fail on `any` detection
+- Code reviews will reject PRs containing `any`
+
 ### Testing Strategy
 
 ### 🧪 Testing Workflow - MANDATORY WALLABY.JS FIRST
@@ -85,6 +113,7 @@ cli → all packages
 
 ### Code Style
 
+- **TypeScript `any` FORBIDDEN**: Zero tolerance - no `any` types ever
 - **ESLint**: With perfectionist plugin for import/export sorting
 - **Prettier**: For consistent formatting
 - **Import Order**: Enforced alphabetically within groups (type, builtin,
@@ -115,7 +144,6 @@ cli → all packages
 
 > **Cache Directive**: Architectural decisions - stable content
 > Cache Control: `{"type": "ephemeral", "ttl": "1h"}`
-
 
 ### ⚠️ ES Modules Architecture (CRITICAL)
 
@@ -180,7 +208,11 @@ When implementing features:
 
 ## Important Constraints
 
+- **NO `any` TYPES**: Absolute prohibition - TypeScript `any` is never acceptable
 - **Memory Safety**: 10MB journal limit, 1000 event queue limit, auto-truncation
 - **Local Only**: Binds to 127.0.0.1:8088 (no external access in MVP)
 - **Test Coverage Target**: >80% for core packages
 - **Performance**: <100ms orchestration overhead (p95)
+
+- ALWAYS follow best practive of using .js extensions for all TypeScript imports
+- /clear
