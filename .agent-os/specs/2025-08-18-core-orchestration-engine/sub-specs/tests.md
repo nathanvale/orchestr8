@@ -20,6 +20,7 @@ This is the tests coverage details for the spec detailed in @.agent-os/specs/202
 ### Expression Evaluator Bugs
 
 **Test: JMESPath compile vs search**
+
 ```typescript
 describe('Expression Evaluator - JMESPath', () => {
   test('should use jmespath.search() not compile()', () => {
@@ -32,6 +33,7 @@ describe('Expression Evaluator - JMESPath', () => {
 ```
 
 **Test: Depth tracking bug**
+
 ```typescript
 describe('Expression Evaluator - Depth Tracking', () => {
   test('should correctly track depth with iteration counter', () => {
@@ -44,26 +46,31 @@ describe('Expression Evaluator - Depth Tracking', () => {
 ```
 
 **Test: Prototype pollution protection**
+
 ```typescript
 describe('Expression Evaluator - Security', () => {
   test('should block prototype pollution keys', () => {
     // Current BUG: No prototype key guards
     // FIX: Block __proto__, constructor, prototype
     const maliciousPath = 'obj.__proto__.polluted'
-    expect(() => resolvePlaceholder(maliciousPath, context)).toThrow(/VALIDATION/)
+    expect(() => resolvePlaceholder(maliciousPath, context)).toThrow(
+      /VALIDATION/,
+    )
   })
 })
 ```
 
 **Test: Timeout enforcement**
+
 ```typescript
 describe('Expression Evaluator - Timeout', () => {
   test('should enforce 500ms timeout with TIMEOUT error', () => {
     // Current BUG: Only warns, doesn't enforce
     // FIX: Use Promise.race or AbortController to enforce
     const slowExpression = 'complexJMESPath'
-    await expect(evaluateCondition(slowExpression, context))
-      .rejects.toMatchObject({ code: 'TIMEOUT' })
+    await expect(
+      evaluateCondition(slowExpression, context),
+    ).rejects.toMatchObject({ code: 'TIMEOUT' })
   })
 })
 ```
@@ -275,19 +282,21 @@ test('scheduler produces deterministic ordering', () => {
 ### Mocking Requirements - ALIGNMENT CRITICAL
 
 **Wallaby.js Compatibility:**
+
 ```typescript
 // CORRECT - Wallaby compatible
 vi.mock('fs', () => ({
-  readFileSync: vi.fn().mockImplementation(() => 'content')
+  readFileSync: vi.fn().mockImplementation(() => 'content'),
 }))
 
 // INCORRECT - Breaks Wallaby
 vi.mock('fs', () => ({
-  readFileSync: vi.fn().mockReturnValue('content')
+  readFileSync: vi.fn().mockReturnValue('content'),
 }))
 ```
 
 **Mock Interface Alignment Required:**
+
 - **MockAgentRegistry**: Must match chosen sync/async decision
 - **MockResilienceAdapter**: Must match apply vs applyPolicy decision
 - **Agent.execute**: Must match context parameter decision

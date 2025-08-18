@@ -37,12 +37,17 @@
       "Bash(pnpm -F @orchestr8/cli build)",
       "mcp__wallaby__wallaby_failingTests",
       "Bash(pnpm exec prettier:*)",
-      "mcp__wallaby__wallaby_runtimeValuesByTest"
+      "mcp__wallaby__wallaby_runtimeValuesByTest",
+      "Bash(pnpm -F @orchestr8/core lint --fix)",
+      "Bash(pnpm -F @orchestr8/core lint)",
+      "Bash(pnpm -F @orchestr8/core test:ci)",
+      "Bash(sed:*)",
+      "Bash(perl:*)",
+      "Bash(pnpm -F @orchestr8/core format)",
+      "Bash(pnpm -F @orchestr8/core prettier:*)"
     ],
     "deny": [],
     "ask": [],
-    "additionalDirectories": [
-      "/Users/nathanvale"
-    ]
+    "additionalDirectories": ["/Users/nathanvale"]
   }
 }

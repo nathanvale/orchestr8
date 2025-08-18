@@ -22,12 +22,14 @@ The engine needs a way to resolve and invoke agents by their identifier.
 ### AgentRegistry Contract - DECISION REQUIRED
 
 **Current Misalignment:**
+
 - **Spec**: Synchronous API with `lookup(): Agent | undefined`
 - **Code**: Async API with `getAgent(): Promise<Agent>` (throws on not found)
 
 **Decision Options:**
 
 #### Option A: Sync API (Spec Version)
+
 ```typescript
 interface AgentRegistry {
   lookup(agentId: string): Agent | undefined
@@ -36,10 +38,12 @@ interface AgentRegistry {
   list(): string[]
 }
 ```
+
 **Pros:** Simple, no async overhead for in-memory registry
 **Cons:** Cannot support remote registries
 
 #### Option B: Async API (Code Version)
+
 ```typescript
 interface AgentRegistry {
   getAgent(agentId: string): Promise<Agent>
@@ -47,40 +51,51 @@ interface AgentRegistry {
   registerAgent?(agent: Agent): Promise<void>
 }
 ```
+
 **Pros:** Supports remote registries, future-proof
 **Cons:** Async overhead for simple cases
 
 ### Agent Interface - DECISION REQUIRED
 
 **Current Misalignment:**
+
 - **Spec**: `execute(input: unknown, signal: AbortSignal): Promise<unknown>`
 - **Code**: `execute(input: unknown, context: ExecutionContext, signal?: AbortSignal): Promise<unknown>`
 
 **Decision Options:**
 
 #### Option A: Simple Signature (Spec Version)
+
 ```typescript
 interface Agent {
   readonly id: string
   execute(input: unknown, signal: AbortSignal): Promise<unknown>
 }
 ```
+
 **Pros:** Simple, context can be part of input
 **Cons:** Less explicit about context dependency
 
 #### Option B: Context Parameter (Code Version)
+
 ```typescript
 interface Agent {
   readonly id: string
   readonly name: string
-  execute(input: unknown, context: ExecutionContext, signal?: AbortSignal): Promise<unknown>
+  execute(
+    input: unknown,
+    context: ExecutionContext,
+    signal?: AbortSignal,
+  ): Promise<unknown>
 }
 ```
+
 **Pros:** Explicit context, more flexible
 **Cons:** More complex signature
 
 **RECOMMENDATION**: Use Option B (Code Version) for both - aligns with existing code and provides more flexibility
-```
+
+````
 
 ### Integration Points
 
@@ -138,11 +153,13 @@ interface ResiliencePolicies {
   timeout?: number
   compositionOrder?: 'retry-cb-timeout' | 'timeout-cb-retry'
 }
-```
+````
+
 **Pros:** Clear composition order, separate global/step policies
 **Cons:** More complex API
 
 #### Option B: Code Version (Current)
+
 ```typescript
 interface ResilienceAdapter {
   applyPolicy<T>(
@@ -152,11 +169,13 @@ interface ResilienceAdapter {
   ): Promise<T>
 }
 ```
+
 **Pros:** Simple API
 **Cons:** No composition order control, unclear policy precedence
 
 **RECOMMENDATION**: Adopt Option A (Spec Version) for explicit composition control
-```
+
+````
 
 ### Policy Application Strategy
 
@@ -192,7 +211,7 @@ steps:
     fallbackStepId: backup
   - id: backup
     dependencies: [stepA, stepB] # Additional dependency
-```
+````
 
 In this case, `backup` executes only if:
 
@@ -246,6 +265,7 @@ const context: ExecutionContext = {
 ### StepResult - ALIGNMENT NEEDED
 
 **Current Misalignment:**
+
 - **Spec**: Uses `'success'` status
 - **Code**: Uses `'completed'` status
 
@@ -254,11 +274,11 @@ const context: ExecutionContext = {
 ```typescript
 interface StepResult {
   stepId: string
-  status: 'completed' | 'failed' | 'skipped' | 'cancelled'  // Use 'completed' not 'success'
+  status: 'completed' | 'failed' | 'skipped' | 'cancelled' // Use 'completed' not 'success'
   output?: unknown
   error?: ExecutionError
-  startTime: string  // ISO string format
-  endTime: string    // ISO string format
+  startTime: string // ISO string format
+  endTime: string // ISO string format
   attempts?: number
 
   // Memory truncation metadata
@@ -278,12 +298,12 @@ The error taxonomy is properly aligned with the schema definition:
 ```typescript
 interface ExecutionError {
   code:
-    | 'TIMEOUT'      // Operation exceeded time limit
+    | 'TIMEOUT' // Operation exceeded time limit
     | 'CIRCUIT_OPEN' // Circuit breaker prevented execution
-    | 'CANCELLED'    // Operation cancelled via AbortSignal
-    | 'VALIDATION'   // Schema violations, missing deps, agent not found
-    | 'RETRYABLE'    // Transient failures eligible for retry
-    | 'UNKNOWN'      // Unclassified errors (minimize usage)
+    | 'CANCELLED' // Operation cancelled via AbortSignal
+    | 'VALIDATION' // Schema violations, missing deps, agent not found
+    | 'RETRYABLE' // Transient failures eligible for retry
+    | 'UNKNOWN' // Unclassified errors (minimize usage)
   message: string
   stepId?: string
   attempt?: number
@@ -369,7 +389,6 @@ interface FallbackExecution {
   - Support agent lookup failures → VALIDATION error
   - Configurable agent versions and metadata
   - Deterministic agent resolution for testing
-  
 - `MockResilienceAdapter`: Must implement chosen interface
   - Pass-through mode for testing without resilience
   - Configurable failure injection
@@ -377,15 +396,16 @@ interface FallbackExecution {
   - Policy composition order testing
 
 **Wallaby.js Compatibility:**
+
 ```typescript
 // CORRECT - Wallaby compatible
 vi.mock('fs', () => ({
-  readFileSync: vi.fn().mockImplementation(() => 'content')
+  readFileSync: vi.fn().mockImplementation(() => 'content'),
 }))
 
 // INCORRECT - Wallaby incompatible
 vi.mock('fs', () => ({
-  readFileSync: vi.fn().mockReturnValue('content')
+  readFileSync: vi.fn().mockReturnValue('content'),
 }))
 ```
 

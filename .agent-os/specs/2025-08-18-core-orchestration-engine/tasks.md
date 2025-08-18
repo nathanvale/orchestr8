@@ -8,6 +8,7 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
 ## Implementation Status
 
 **✅ COMPLETED (Prerequisites & Fixes):**
+
 - [x] Repository prerequisites (Node >=20, jmespath, engines fields)
 - [x] Error taxonomy aligned with ExecutionError structure
 - [x] API contract decisions finalized (Agent.execute, AgentRegistry.getAgent)
@@ -15,13 +16,15 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
 - [x] Naming conventions aligned (dependsOn, completed status)
 
 **❌ CRITICAL MISSING IMPLEMENTATION:**
+
 - [ ] **OrchestrationEngine class** - Core engine not implemented (BLOCKS MVP)
 - [ ] **Workflow execution logic** - Cannot execute any workflows
 - [ ] **Dependency resolution** - No graph building or scheduling
-- [ ] **Parallel execution** - No concurrent step coordination  
+- [ ] **Parallel execution** - No concurrent step coordination
 - [ ] **Memory management** - No bounded execution or truncation
 
 **⚠️ MEDIUM PRIORITY FIXES:**
+
 - [ ] Condition error handling consistency (throw vs return false)
 - [ ] Expression parser improvements (quoted defaults, 64KB limit)
 - [ ] ResilienceAdapter composition order finalization
@@ -55,7 +58,7 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
   - [ ] 2.7 Verify parallel execution and memory management tests pass
 
 - [ ] 3. **MEDIUM: Error Handling & Resilience Integration** (Post-MVP Critical Features)
-  - [ ] 3.1 Write tests for condition evaluation error handling (throw ExecutionError vs return false) 
+  - [ ] 3.1 Write tests for condition evaluation error handling (throw ExecutionError vs return false)
   - [ ] 3.2 Implement strict mode for condition evaluation with VALIDATION error consistency
   - [ ] 3.3 Write tests for ResilienceAdapter composition order and policy application
   - [ ] 3.4 Finalize ResilienceAdapter API and implement policy composition
@@ -74,7 +77,7 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
 
 - [ ] 5. **LOW: Integration Testing & Performance Validation** (Quality Gates)
   - [ ] 5.1 Write tests for hybrid sequential-parallel workflow patterns with complex dependencies
-  - [ ] 5.2 Add tests for partial parallel failures with ExecutionError aggregation and fail-fast behavior  
+  - [ ] 5.2 Add tests for partial parallel failures with ExecutionError aggregation and fail-fast behavior
   - [ ] 5.3 Test performance benchmarks: <100ms orchestration overhead (p95) and deterministic scheduling
   - [ ] 5.4 Add tests for cancellation scenarios: graceful cleanup, timeout enforcement, AbortSignal propagation
   - [ ] 5.5 Comprehensive edge case testing and >80% coverage validation

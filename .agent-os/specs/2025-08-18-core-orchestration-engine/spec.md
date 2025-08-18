@@ -11,12 +11,14 @@ Implement the core orchestration engine that executes multi-step workflows with 
 **CURRENT STATUS**: Based on implementation review, **CRITICAL GAPS IDENTIFIED**:
 
 **✅ Completed:**
+
 - Repository prerequisites met (Node >=20, jmespath, engines)
-- Error taxonomy aligned with ExecutionError structure  
+- Error taxonomy aligned with ExecutionError structure
 - Expression evaluator fixes implemented
 - API contract decisions finalized
 
 **❌ Critical Missing Implementation:**
+
 - **OrchestrationEngine class not implemented** - Core engine missing entirely
 - **Workflow execution logic missing** - Cannot execute workflows
 - **Dependency resolution missing** - No graph building or scheduling
@@ -24,6 +26,7 @@ Implement the core orchestration engine that executes multi-step workflows with 
 - **Memory management missing** - No bounded execution or truncation
 
 **⚠️ Implementation Issues Identified:**
+
 - Condition error handling inconsistent with spec requirements
 - ResilienceAdapter API needs final decision on composition order
 - Mapping expression parser is naive and incomplete
@@ -55,7 +58,7 @@ The engine should analyze the workflow graph, identify optimal execution strateg
 ### Phase 1: Core Engine Implementation (CRITICAL - BLOCKS MVP)
 
 1. **OrchestrationEngine Class** - Implement main engine with execute() method and workflow coordination
-2. **Execution Graph Building** - Parse workflow AST and build dependency graph with cycle detection  
+2. **Execution Graph Building** - Parse workflow AST and build dependency graph with cycle detection
 3. **Deterministic Scheduling** - Implement topological sorting and level-based execution planning
 4. **Parallel Execution Manager** - Implement concurrent step execution with Promise.all and fail-fast semantics
 5. **Memory Management** - Implement 512KB per-step limits with truncation metadata and JSON-safe serialization

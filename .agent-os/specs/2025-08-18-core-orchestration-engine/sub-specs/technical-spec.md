@@ -10,15 +10,17 @@ This is the technical specification for the spec detailed in @.agent-os/specs/20
 ## Critical Implementation Gaps Identified
 
 **❌ MISSING CORE IMPLEMENTATION:**
+
 - **OrchestrationEngine Class**: Main engine class not implemented - blocks all workflow execution
-- **Workflow Graph Building**: buildExecutionGraph() method missing - cannot parse or analyze workflows  
+- **Workflow Graph Building**: buildExecutionGraph() method missing - cannot parse or analyze workflows
 - **Step Execution Logic**: executeStep() and executeLevel() methods missing - no step coordination
 - **Dependency Resolution**: scheduleSteps() deterministic scheduling missing - no execution order planning
 - **Parallel Execution**: Promise.all coordination and fail-fast semantics missing - no concurrent execution
 - **Memory Bounds**: Result truncation and size enforcement not implemented - no memory safety
 
 **⚠️ IMPLEMENTATION INCONSISTENCIES:**
-- **Condition Error Handling**: Code returns false on errors vs spec requirement for ExecutionError with VALIDATION code  
+
+- **Condition Error Handling**: Code returns false on errors vs spec requirement for ExecutionError with VALIDATION code
 - **Expression Mapping**: Naive parser splits on '??' without handling quoted defaults or nested expressions properly
 - **Security Limits**: 64KB expansion size limit defined but never enforced during mapping resolution
 - **Error Taxonomy**: Schema validation throws generic Error instead of ExecutionError with VALIDATION code
@@ -29,7 +31,7 @@ This is the technical specification for the spec detailed in @.agent-os/specs/20
 - **OrchestrationEngine Class**: Implement main engine with execute() method coordinating complete workflow execution
 - **Execution Graph Builder**: Parse workflow AST and construct dependency graph with cycle detection and topological sorting
 - **Deterministic Scheduler**: Implement scheduleSteps() with dependency-count + index-based stable ordering for parallel readiness
-- **Parallel Execution Manager**: Implement executeLevel() with Promise.all, fail-fast semantics, and AbortSignal.any cancellation  
+- **Parallel Execution Manager**: Implement executeLevel() with Promise.all, fail-fast semantics, and AbortSignal.any cancellation
 - **Memory Management**: Enforce 512KB per-step limits with JSON-safe serialization, circular reference handling, and truncation metadata
 - **Context Threading**: Maintain ExecutionContext with correlation IDs, result collection, and data flow between workflow steps
 - **Cancellation Support**: Implement AbortSignal propagation with grace periods and deterministic cleanup throughout execution chain
@@ -62,14 +64,14 @@ Result container for individual step execution with status tracking:
 
 ```typescript
 interface StepResult {
-  stepId: string  // Use 'stepId' not 'id'
-  status: 'completed' | 'failed' | 'skipped' | 'cancelled'  // Use 'completed' not 'success'
+  stepId: string // Use 'stepId' not 'id'
+  status: 'completed' | 'failed' | 'skipped' | 'cancelled' // Use 'completed' not 'success'
   output?: unknown
   error?: ExecutionError
-  startTime: string  // ISO string format
-  endTime: string    // ISO string format
+  startTime: string // ISO string format
+  endTime: string // ISO string format
   attempts?: number
-  
+
   // Memory truncation metadata
   truncated?: boolean
   originalSize?: number
@@ -150,13 +152,13 @@ Complete workflow execution result:
 ```typescript
 interface WorkflowResult {
   executionId: string
-  status: 'completed' | 'failed' | 'cancelled'  // Use 'completed' not 'success'
-  steps: Record<string, StepResult>  // Use Record not Array
+  status: 'completed' | 'failed' | 'cancelled' // Use 'completed' not 'success'
+  steps: Record<string, StepResult> // Use Record not Array
   variables: Record<string, unknown>
   errors?: ExecutionError[]
-  startTime: string  // ISO string format
-  endTime: string    // ISO string format
-  duration: number  // milliseconds
+  startTime: string // ISO string format
+  endTime: string // ISO string format
+  duration: number // milliseconds
 }
 ```
 
@@ -175,28 +177,28 @@ class OrchestrationEngine {
     workflow: Workflow,
     context: ExecutionContext,
   ): Promise<WorkflowResult>
-  
-  // Graph construction and analysis - MISSING  
+
+  // Graph construction and analysis - MISSING
   private buildExecutionGraph(workflow: Workflow): ExecutionGraph
-  
+
   // Parallel level execution with fail-fast - MISSING
   private executeLevel(
     steps: WorkflowStep[],
     context: ExecutionContext,
   ): Promise<StepResult[]>
-  
+
   // Individual step execution with resilience - MISSING
   private executeStep(
     step: WorkflowStep,
     context: ExecutionContext,
   ): Promise<StepResult>
-  
+
   // Deterministic scheduling algorithm - MISSING
   private scheduleSteps(
     steps: WorkflowStep[],
     completed: Set<string>,
   ): WorkflowStep[]
-  
+
   // Execution tracking - MISSING
   getExecutionId(): string
 }
@@ -334,8 +336,9 @@ const wrappedOperation = withRetry(
 - **Error handling**: Evaluation errors result in ExecutionError with code VALIDATION
 
 **IMPLEMENTATION STATUS:**
+
 - ✅ Fixed: jmespath.compile() replaced with jmespath.search()
-- ✅ Fixed: Proper timeout enforcement implemented with TIMEOUT error  
+- ✅ Fixed: Proper timeout enforcement implemented with TIMEOUT error
 - ⚠️ **Still Missing**: Condition evaluation error handling inconsistent with spec - returns false instead of throwing ExecutionError with VALIDATION code
 
 ### Mapping Expression Security - FIX REQUIRED
@@ -356,6 +359,7 @@ const wrappedOperation = withRetry(
 - **Precedence order**: steps → variables → env (for conflict resolution)
 
 **IMPLEMENTATION STATUS:**
+
 - ✅ Fixed: Depth tracking now uses proper iteration counter instead of indexOf()
 - ✅ Fixed: Prototype key guards implemented to block `__proto__`, `constructor`, `prototype`
 - ⚠️ **Still Incomplete**: Default value parsing remains naive using split('??') - needs robust parser for quoted defaults

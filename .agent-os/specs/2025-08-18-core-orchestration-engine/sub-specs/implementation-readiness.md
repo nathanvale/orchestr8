@@ -394,11 +394,13 @@ vi.mock('fs', () => ({
 Current assessment shows significant progress with some critical blockers remaining:
 
 **✅ Complete:**
+
 - Repository prerequisites (Node >=20, jmespath, engines)
 - Error taxonomy alignment
 - Basic documentation structure
 
 **🔴 Blocking Issues:**
+
 1. **Expression evaluator bugs** (compile vs search, depth tracking, prototype guards, timeout)
 2. **API contract decisions** (Agent, AgentRegistry, ResilienceAdapter interfaces)
 3. **Naming inconsistencies** (dependsOn vs dependencies, completed vs success)

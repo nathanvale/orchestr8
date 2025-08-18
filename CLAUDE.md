@@ -219,3 +219,5 @@ When implementing features:
 
 - ALWAYS follow best practive of using .js extensions for all TypeScript imports
 - /clear
+
+- Always use pnpm format from the root to format any file it is fast enough
