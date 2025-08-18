@@ -18,66 +18,59 @@ This is the technical specification for the spec detailed in @.agent-os/specs/20
 - **Parallel Execution**: Promise.all with fail-fast semantics and level-based cancellation
 - **Memory Bounds**: 512KB truncation with byte-accurate binary search implementation
 
-**🔧 PHASE 2 GAPS (Hardening Required):**
+**✅ PHASE 2 COMPLETED (Hardening):**
 
-**Critical:**
+**Previously Critical (Now Resolved):**
 
-- **Cancellation Propagation**: Parent AbortSignal not merged with level controller - use AbortSignal.any
+- **Cancellation Propagation**: Parent AbortSignal merged with level controller using AbortSignal.any ✅
+- **Timeout Enforcement**: Preemptive cancellation implemented for expression evaluation ✅
+- **Expression Expansion**: 64KB limit enforcement added during mapping resolution ✅
+- **Dependency Semantics**: Skip behavior for failed/cancelled dependencies implemented ✅
+- **Structured Logging**: Logger interface wired into engine with lifecycle events ✅
 
-**High Priority:**
+**🔧 REMAINING GAPS (Medium Priority):**
 
-- **Timeout Enforcement**: Post-execution timeout check insufficient - need preemptive cancellation
-- **Expression Expansion**: 64KB limit not enforced during mapping resolution
-- **Dependency Semantics**: Unclear skip behavior for failed/cancelled dependencies
-
-**Medium Priority:**
-
-- **Structured Logging**: Logger interface defined but not wired into engine
 - **Resilience Composition**: Order between retry/timeout/circuit breaker needs finalization
 - **Default Parsing**: Naive split on '??' breaks with quoted/nested expressions
+- **Nested Step Types**: Schema defines SequentialStep/ParallelStep but engine uses flat dependency graph  
+- **Configuration Parity**: OrchestrationOptions limits not threaded through to evaluator
+- **Environment Whitelist**: Inconsistent usage between workflow.allowedEnvVars and engine envWhitelist
 
 ## Phase 2 Gap Analysis
 
-### Critical Gaps
+### ✅ Resolved Critical Gaps (Previously Blocking)
 
-**1. Cancellation Propagation (CRITICAL)**
+**1. Cancellation Propagation (RESOLVED ✅)**
 
-- **Issue**: Parent AbortSignal not combined with level AbortController
-- **Impact**: Parent cancellation may not propagate to all executing steps
-- **Solution**: Use `AbortSignal.any([parentSignal, levelController.signal])`
+- **Previous Issue**: Parent AbortSignal not combined with level AbortController
+- **Solution Applied**: AbortSignal.any([parentSignal, levelController.signal]) implemented
 - **Location**: orchestration-engine.ts executeLevel() method
 
-### High Priority Gaps
+**2. True Timeout Enforcement (RESOLVED ✅)**
 
-**2. True Timeout Enforcement**
-
-- **Issue**: Timeout checked after JMESPath execution completes
-- **Impact**: Long-running expressions can block event loop beyond 500ms limit
-- **Solution**: Implement preemptive cancellation (worker threads or cancellable evaluator)
+- **Previous Issue**: Timeout checked after JMESPath execution completes
+- **Solution Applied**: Preemptive cancellation implemented for expression evaluation
 - **Location**: expression-evaluator.ts evaluateCondition() method
 
-**3. Expression Expansion Limits**
+**3. Expression Expansion Limits (RESOLVED ✅)**
 
-- **Issue**: 64KB max expansion size not enforced during mapping resolution
-- **Impact**: Large expansions could cause memory issues
-- **Solution**: Add byte counter during resolution, throw VALIDATION error at limit
+- **Previous Issue**: 64KB max expansion size not enforced
+- **Solution Applied**: Byte counter added during resolution with VALIDATION error
 - **Location**: expression-evaluator.ts resolveMapping() method
 
-**4. Dependency Failure Semantics**
+**4. Dependency Failure Semantics (RESOLVED ✅)**
 
-- **Issue**: Steps skip only when dependency is "skipped", not "failed" or "cancelled"
-- **Impact**: Unclear behavior in failure scenarios
-- **Solution**: Implement Option A from dependency-semantics.md (skip on any non-completed)
+- **Previous Issue**: Unclear skip behavior for failed/cancelled dependencies
+- **Solution Applied**: Skip behavior implemented for "failed" and "cancelled" statuses
 - **Location**: orchestration-engine.ts executeStep() method
 
-### Medium Priority Gaps
+**5. Structured Logging (RESOLVED ✅)**
 
-**5. Structured Logging**
-
-- **Issue**: Logger interface defined but not wired into engine
-- **Impact**: No observability for debugging production issues
-- **Solution**: Accept logger option and emit lifecycle events per structured-logging.md
+- **Previous Issue**: Logger interface not wired into engine
+- **Solution Applied**: Logger option accepted with lifecycle events implementation
 - **Location**: Throughout orchestration-engine.ts
+
+### 🔧 Remaining Medium Priority Gaps
 
 **6. Resilience Composition Order**
 
@@ -93,13 +86,41 @@ This is the technical specification for the spec detailed in @.agent-os/specs/20
 - **Solution**: Implement proper tokenizer for default value parsing
 - **Location**: expression-evaluator.ts parseExpression() method
 
-### Low Priority Gaps
+### 🆕 New Technical Gaps Identified
 
-**8. Code Cleanup**
+**8. Nested Step Types vs Flat Execution**
 
-- Unused InternalExecutionContext.envWhitelist
+- **Issue**: Schema defines SequentialStep/ParallelStep but engine uses flat dependency graph
+- **Impact**: Nested groups not traversed; maxConcurrency not honored at group level
+- **Decision Needed**: Implement group expansion or explicitly de-scope for MVP
+- **Location**: Engine architecture decision
+
+**9. Configuration Parity**  
+
+- **Issue**: OrchestrationOptions exposes limits but evaluator uses hard-coded SECURITY_LIMITS
+- **Impact**: Engine configuration not threaded through to expression evaluation
+- **Solution**: Thread engine limits to evaluator; add tests for non-default limits
+- **Location**: expression-evaluator.ts SECURITY_LIMITS usage
+
+**10. Environment Whitelist Source Mismatch**
+
+- **Issue**: Evaluator uses workflow.allowedEnvVars; engine's envWhitelist unused
+- **Impact**: Inconsistent environment variable access patterns
+- **Solution**: Settle on single approach (workflow.allowedEnvVars recommended)
+- **Location**: InternalExecutionContext.envWhitelist vs workflow usage
+
+### Low Priority Items (Technical Debt)
+
+**11. Code Cleanup**
+
+- Unused InternalExecutionContext.envWhitelist (related to gap #10)
 - Expression cache only used for deduplication
 - Map insertion order invariants undocumented
+
+**12. Build Artifact Cleanup**
+
+- Dist artifacts drift in schema package (dist contains stale zod-based artifacts)
+- Solution: Clean dist on build to avoid stale files
 
 ## Technical Requirements
 
@@ -369,19 +390,44 @@ private scheduleSteps(steps: WorkflowStep[], completed: Set<string>): WorkflowSt
 
 ### Resilience Composition Order
 
-**Composition Order Mapping:**
+**Default Composition: retry-cb-timeout** 
 
-- `'retry-cb-timeout'` (default): `retry(circuitBreaker(timeout(operation)))`
-  - Retry wraps circuit breaker, which wraps timeout, which wraps the operation
-  - Retries occur at the outermost level, circuit breaker tracks all attempts
-- `'timeout-cb-retry'`: `timeout(circuitBreaker(retry(operation)))`
-  - Timeout wraps circuit breaker, which wraps retry, which wraps the operation
-  - Overall timeout encompasses all retry attempts
+The @orchestr8 platform uses `retry(circuitBreaker(timeout(operation)))` as the default composition order, selected for optimal fault isolation and compatibility with industry standards.
 
-**Implementation:**
+**Composition Order Mappings:**
+
+1. **`'retry-cb-timeout'` (Default):** `retry(circuitBreaker(timeout(operation)))`
+   - **Execution Flow:** Retry wrapper → Circuit Breaker wrapper → Timeout wrapper → Operation
+   - **Timeout Scope:** Each retry attempt gets its own independent timeout window
+   - **Circuit Breaker Tracking:** Monitors individual attempt outcomes separately
+   - **Total Execution Time:** Can exceed single timeout value (retry count × timeout)
+
+2. **`'timeout-cb-retry'` (Alternative):** `timeout(circuitBreaker(retry(operation)))`
+   - **Execution Flow:** Timeout wrapper → Circuit Breaker wrapper → Retry wrapper → Operation
+   - **Timeout Scope:** Overall timeout encompasses all retry attempts combined
+   - **Circuit Breaker Tracking:** Sees retry attempts within single timeout window
+   - **Total Execution Time:** Hard-bounded by timeout value regardless of retry count
+
+**Decision Rationale:**
+
+The default `retry-cb-timeout` composition was chosen for:
+
+1. **Better Fault Isolation:** Individual timeouts prevent one slow attempt from affecting subsequent retry attempts
+2. **Industry Compatibility:** Aligns with Polly (.NET), resilience4j (Java), and other major resilience libraries
+3. **Predictable Behavior:** Each attempt gets equal opportunity under timeout constraints
+4. **Circuit Breaker Accuracy:** Separate tracking of individual attempt outcomes provides better failure rate calculation
+
+**When to Use Alternative:**
+
+Use `timeout-cb-retry` when:
+- Hard SLA requirements must be enforced (total execution time cannot exceed timeout)
+- Overall system latency budgets are critical
+- Circuit breaker should consider retry persistence as part of failure pattern
+
+**Implementation Contract:**
 
 ```typescript
-// Example for 'retry-cb-timeout' (default)
+// Default implementation in ResilienceAdapter
 const wrappedOperation = withRetry(
   withCircuitBreaker(
     withTimeout(operation, timeoutPolicy),
@@ -389,7 +435,35 @@ const wrappedOperation = withRetry(
   ),
   retryPolicy,
 )
+
+// Alternative implementation  
+const wrappedOperation = withTimeout(
+  withCircuitBreaker(
+    withRetry(operation, retryPolicy),
+    circuitBreakerPolicy,
+  ),
+  timeoutPolicy,
+)
 ```
+
+**Policy Normalization:**
+
+All resilience policies are normalized with consistent defaults:
+
+- **Retry Policy:**
+  - `maxAttempts`: 3
+  - `backoffStrategy`: 'exponential'  
+  - `jitterStrategy`: 'full-jitter'
+  - `initialDelay`: 1000ms
+  - `maxDelay`: 10000ms
+
+- **Circuit Breaker Policy:**
+  - `failureThreshold`: 5
+  - `recoveryTime`: 30000ms (30s)
+  - `sampleSize`: 10
+  - `halfOpenPolicy`: 'single-probe'
+
+- **Timeout Policy:** No defaults - must be explicitly specified
 
 ### Condition Evaluation - FIX REQUIRED
 

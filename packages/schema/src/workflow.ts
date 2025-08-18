@@ -57,6 +57,26 @@ export interface BaseStep {
   timeout?: number
 
   /**
+   * Step-level resilience policies
+   */
+  resilience?: {
+    retry?: {
+      maxAttempts?: number
+      backoffStrategy?: 'fixed' | 'exponential'
+      jitterStrategy?: 'none' | 'full-jitter'
+      initialDelay?: number
+      maxDelay?: number
+    }
+    circuitBreaker?: {
+      failureThreshold?: number
+      recoveryTime?: number
+      sampleSize?: number
+      halfOpenPolicy?: 'single-probe' | 'gradual'
+    }
+    timeout?: number
+  }
+
+  /**
    * Dependencies - step IDs that must complete before this step
    */
   dependsOn?: string[]

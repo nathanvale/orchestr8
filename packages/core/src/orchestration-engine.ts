@@ -203,9 +203,11 @@ export class OrchestrationEngine implements IOrchestrationEngine {
         dependsOn: step.dependsOn ?? [],
         config: agentStep?.config,
         input: agentStep?.input,
-        resilience: workflow.resilience
-          ? this.normalizeResiliencePolicy(workflow.resilience)
-          : undefined,
+        resilience: step.resilience 
+          ? this.normalizeResiliencePolicy(step.resilience)
+          : workflow.resilience
+            ? this.normalizeResiliencePolicy(workflow.resilience)
+            : undefined,
         onError: step.onError ?? 'fail',
         fallbackStepId: step.fallbackStepId,
         conditions:
@@ -1144,8 +1146,14 @@ export class OrchestrationEngine implements IOrchestrationEngine {
       policyObj.circuitBreaker &&
       typeof policyObj.circuitBreaker === 'object'
     ) {
-      normalized.circuitBreaker =
-        policyObj.circuitBreaker as ResiliencePolicy['circuitBreaker']
+      const cb = policyObj.circuitBreaker as Record<string, unknown>
+      normalized.circuitBreaker = {
+        failureThreshold: (cb.failureThreshold as number) ?? 5,
+        recoveryTime: (cb.recoveryTime as number) ?? 30000,
+        sampleSize: (cb.sampleSize as number) ?? 10,
+        halfOpenPolicy:
+          (cb.halfOpenPolicy as 'single-probe' | 'gradual') ?? 'single-probe',
+      }
     }
 
     return normalized

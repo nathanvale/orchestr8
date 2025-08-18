@@ -24,23 +24,26 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
 - [x] **Parallel execution** - Concurrent step coordination with Semaphore pattern
 - [x] **Memory management** - 512KB bounded execution with truncation metadata
 
-**🔧 PHASE 2 HARDENING (In Progress):**
+**✅ PHASE 2 HARDENING (MOSTLY COMPLETED):**
 
-**Critical Gaps:**
+**Completed Critical Gaps:**
 
-- [x] ✅ Cancellation propagation with AbortSignal.any (COMPLETED)
+- [x] ✅ Cancellation propagation with AbortSignal.any
+- [x] ✅ True timeout enforcement for expression evaluation  
+- [x] ✅ Expression expansion 64KB limit enforcement
+- [x] ✅ Dependency failure skip semantics
+- [x] ✅ Structured logging implementation
 
-**High Priority Gaps:**
+**🔧 REMAINING MEDIUM PRIORITY GAPS:**
 
-- [x] ✅ True timeout enforcement for expression evaluation (COMPLETED)
-- [x] ✅ Expression expansion 64KB limit enforcement (COMPLETED)
-- [x] ✅ Dependency failure skip semantics (COMPLETED)
-
-**Medium Priority Gaps:**
-
-- [x] ✅ Structured logging implementation (COMPLETED)
 - [ ] Resilience composition order finalization
 - [ ] Mapping parser robustness improvements
+
+**🆕 NEW TECHNICAL GAPS IDENTIFIED:**
+
+- [ ] Nested step types vs flat execution decision (implement or de-scope)
+- [ ] Configuration parity - thread OrchestrationOptions limits to evaluator
+- [ ] Environment whitelist source consistency (workflow vs engine)
 
 ## Tasks
 
@@ -101,13 +104,13 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
   - [x] 6.7 Write tests with memory logger to verify log fields
   - [x] 6.8 Document Pino adapter pattern for consumers
 
-- [ ] 7. **MEDIUM: Resilience Composition Order** (Reliability)
-  - [ ] 7.1 Write tests for retry-cb-timeout composition order
-  - [ ] 7.2 Write tests for timeout-cb-retry alternative order
-  - [ ] 7.3 Finalize default composition order decision
-  - [ ] 7.4 Implement consistent policy normalization
-  - [ ] 7.5 Test interaction between retry attempts and timeouts
-  - [ ] 7.6 Document composition semantics clearly
+- [x] 7. **MEDIUM: Resilience Composition Order** (Reliability ✅ COMPLETED)
+  - [x] 7.1 Write tests for retry-cb-timeout composition order
+  - [x] 7.2 Write tests for timeout-cb-retry alternative order
+  - [x] 7.3 Finalize default composition order decision
+  - [x] 7.4 Implement consistent policy normalization
+  - [x] 7.5 Test interaction between retry attempts and timeouts
+  - [x] 7.6 Document composition semantics clearly
 
 - [ ] 8. **MEDIUM: Mapping Parser Improvements** (Robustness)
   - [ ] 8.1 Write tests for single-quoted default values
@@ -117,16 +120,37 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
   - [ ] 8.5 Handle edge cases in expression resolution
   - [ ] 8.6 Verify robust parsing for all expression patterns
 
-- [ ] 9. **LOW: Code Cleanup** (Technical Debt)
-  - [ ] 9.1 Remove or wire InternalExecutionContext.envWhitelist
-  - [ ] 9.2 Evaluate expression cache usage beyond deduplication
-  - [ ] 9.3 Document Map insertion order invariants
-  - [ ] 9.4 Clean up TODO comments in code
-  - [ ] 9.5 Improve type definitions where needed
+- [ ] 9. **HIGH DECISION: Nested Step Types Semantics** (Architecture Decision)
+  - [ ] 9.1 Analyze current schema SequentialStep/ParallelStep definitions
+  - [ ] 9.2 Evaluate impact of flat dependency graph vs nested group execution
+  - [ ] 9.3 Decision: Implement group expansion layer OR explicitly de-scope nested groups
+  - [ ] 9.4 If de-scope: Update schema/examples to use dependsOn only
+  - [ ] 9.5 If implement: Design group expansion with maxConcurrency support
+  - [ ] 9.6 Document decision rationale
 
-- [ ] 10. **FUTURE: Integration Testing & Performance** (Phase 3)
-  - [ ] 10.1 Comprehensive integration test suite
-  - [ ] 10.2 Performance benchmarks (<100ms p95 overhead)
-  - [ ] 10.3 Memory profiling and optimization
-  - [ ] 10.4 Load testing with large workflows
-  - [ ] 10.5 Edge case coverage >90%
+- [ ] 10. **MEDIUM: Configuration Parity** (Technical Consistency)
+  - [ ] 10.1 Thread OrchestrationOptions.maxExpansionDepth to evaluator
+  - [ ] 10.2 Thread OrchestrationOptions.maxExpansionSize to evaluator  
+  - [ ] 10.3 Add tests for non-default limits
+  - [ ] 10.4 Remove hard-coded SECURITY_LIMITS usage
+  - [ ] 10.5 Verify configurable limits work end-to-end
+
+- [ ] 11. **MEDIUM: Environment Whitelist Consistency** (API Cleanup)
+  - [ ] 11.1 Remove unused InternalExecutionContext.envWhitelist
+  - [ ] 11.2 Ensure evaluator consistently uses workflow.allowedEnvVars
+  - [ ] 11.3 Add tests for environment variable access patterns
+  - [ ] 11.4 Document single source of truth for env access
+
+- [ ] 12. **LOW: Code Cleanup** (Technical Debt)
+  - [ ] 12.1 Clean dist before build in schema package 
+  - [ ] 12.2 Evaluate expression cache usage beyond deduplication
+  - [ ] 12.3 Document Map insertion order invariants
+  - [ ] 12.4 Clean up TODO comments in code
+  - [ ] 12.5 Improve type definitions where needed
+
+- [ ] 13. **FUTURE: Integration Testing & Performance** (Phase 3)
+  - [ ] 13.1 Comprehensive integration test suite
+  - [ ] 13.2 Performance benchmarks (<100ms p95 overhead)
+  - [ ] 13.3 Memory profiling and optimization
+  - [ ] 13.4 Load testing with large workflows
+  - [ ] 13.5 Edge case coverage >90%
