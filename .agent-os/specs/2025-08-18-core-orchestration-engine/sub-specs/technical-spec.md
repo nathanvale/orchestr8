@@ -38,7 +38,7 @@ This is the technical specification for the spec detailed in @.agent-os/specs/20
 **MEDIUM PRIORITY (Technical Consistency):**
 
 - **Resilience Adapter Contract**: Composition order relies on adapter implementation, not enforced by interface contract
-- **Configuration Parity**: Engine maxExpansionDepth/Size options not threaded to evaluator (uses hard-coded SECURITY_LIMITS)  
+- **Configuration Parity**: Engine maxExpansionDepth/Size options not threaded to evaluator (uses hard-coded SECURITY_LIMITS)
 - **Environment Whitelist Duplication**: Two sources of truth (workflow.allowedEnvVars vs engine envWhitelist)
 - **Condition Error Handling**: Returns false on invalid expressions instead of throwing VALIDATION error in non-strict mode
 
@@ -94,7 +94,7 @@ This is the technical specification for the spec detailed in @.agent-os/specs/20
 **HIGH PRIORITY: Schema Group Semantics vs Flat Graph Divergence**
 
 - **Issue**: Execution uses a flat dependency graph; ExecutionNode.type allows sequential|parallel and children, but the engine ignores nested groups and group-level maxConcurrency
-- **Impact**: Workflows authored with nested sequential/parallel will not behave as authored  
+- **Impact**: Workflows authored with nested sequential/parallel will not behave as authored
 - **Decision Required**: For MVP, de-scope nested groups explicitly and instruct using dependsOn. If keeping groups, implement expansion to a flat DAG respecting group-level properties
 - **Location**: Core engine architecture
 

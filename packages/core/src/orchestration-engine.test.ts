@@ -1804,4 +1804,217 @@ describe('OrchestrationEngine', () => {
       })
     })
   })
+
+  describe('fallback input override behavior', () => {
+    it('should use fallback step explicit input over original step input', async () => {
+      // Arrange
+      const workflow: Workflow = {
+        id: 'fallback-input-test',
+        name: 'Fallback Input Test',
+        version: '1.0.0',
+        steps: [
+          {
+            id: 'primary',
+            type: 'agent',
+            agentId: 'failing-agent',
+            onError: 'fallback',
+            fallbackStepId: 'fallback',
+            input: { source: 'original-input', data: 'original-data' },
+          },
+          {
+            id: 'fallback',
+            type: 'agent',
+            agentId: 'fallback-agent',
+            input: { source: 'fallback-input', data: 'fallback-data' },
+          },
+        ],
+      }
+
+      const failingAgent: Agent = {
+        id: 'failing-agent',
+        name: 'Failing Agent',
+        execute: vi.fn().mockRejectedValue(new Error('Primary failed')),
+      }
+
+      const fallbackAgent: Agent = {
+        id: 'fallback-agent',
+        name: 'Fallback Agent',
+        execute: vi.fn().mockResolvedValue({ success: true }),
+      }
+
+      const mockRegistry: AgentRegistry = {
+        getAgent: vi.fn().mockImplementation((id: string) => {
+          if (id === 'failing-agent') return failingAgent
+          if (id === 'fallback-agent') return fallbackAgent
+          throw new Error(`Agent not found: ${id}`)
+        }),
+      }
+
+      const engine = new OrchestrationEngine({
+        agentRegistry: mockRegistry,
+      })
+
+      // Act
+      const result = await engine.execute(workflow)
+
+      // Assert
+      expect(result.status).toBe('completed')
+
+      // Verify that fallback agent received its own input, not original input
+      expect(fallbackAgent.execute).toHaveBeenCalledWith(
+        { source: 'fallback-input', data: 'fallback-data' }, // Should be fallback input
+        expect.any(Object), // execution context
+        expect.any(AbortSignal), // abort signal
+      )
+
+      // Verify the failing agent received original input
+      expect(failingAgent.execute).toHaveBeenCalledWith(
+        { source: 'original-input', data: 'original-data' },
+        expect.any(Object), // execution context
+        expect.any(AbortSignal), // abort signal
+      )
+    })
+
+    it('should use original step input when fallback has no explicit input', async () => {
+      // Arrange
+      const workflow: Workflow = {
+        id: 'fallback-no-input-test',
+        name: 'Fallback No Input Test',
+        version: '1.0.0',
+        steps: [
+          {
+            id: 'primary',
+            type: 'agent',
+            agentId: 'failing-agent',
+            onError: 'fallback',
+            fallbackStepId: 'fallback',
+            input: { source: 'original-input', data: 'original-data' },
+          },
+          {
+            id: 'fallback',
+            type: 'agent',
+            agentId: 'fallback-agent',
+            // No dependencies and no explicit input - should inherit from original
+          },
+        ],
+      }
+
+      const failingAgent: Agent = {
+        id: 'failing-agent',
+        name: 'Failing Agent',
+        execute: vi.fn().mockRejectedValue(new Error('Primary failed')),
+      }
+
+      const fallbackAgent: Agent = {
+        id: 'fallback-agent',
+        name: 'Fallback Agent',
+        execute: vi.fn().mockResolvedValue({ success: true }),
+      }
+
+      const mockRegistry: AgentRegistry = {
+        getAgent: vi.fn().mockImplementation((id: string) => {
+          if (id === 'failing-agent') return failingAgent
+          if (id === 'fallback-agent') return fallbackAgent
+          throw new Error(`Agent not found: ${id}`)
+        }),
+      }
+
+      const engine = new OrchestrationEngine({
+        agentRegistry: mockRegistry,
+      })
+
+      // Act
+      const result = await engine.execute(workflow)
+
+      // Assert
+      expect(result.status).toBe('completed')
+
+      // Verify that fallback agent received original input (since it has no explicit input)
+      expect(fallbackAgent.execute).toHaveBeenCalledWith(
+        { source: 'original-input', data: 'original-data' }, // Should inherit original input
+        expect.any(Object), // execution context
+        expect.any(AbortSignal), // abort signal
+      )
+    })
+
+    it('should handle fallback-as-alias scenarios with proper input precedence', async () => {
+      // Arrange - Test when a fallback step is also used as a regular step
+      const workflow: Workflow = {
+        id: 'fallback-alias-test',
+        name: 'Fallback Alias Test',
+        version: '1.0.0',
+        steps: [
+          {
+            id: 'step1',
+            type: 'agent',
+            agentId: 'success-agent',
+            input: { step: 'step1' },
+          },
+          {
+            id: 'primary',
+            type: 'agent',
+            agentId: 'failing-agent',
+            dependsOn: ['step1'],
+            onError: 'fallback',
+            fallbackStepId: 'shared-fallback',
+            input: { source: 'primary-input' },
+          },
+          {
+            id: 'shared-fallback',
+            type: 'agent',
+            agentId: 'fallback-agent',
+            dependsOn: ['step1'],
+            input: { source: 'shared-fallback-input' },
+          },
+        ],
+      }
+
+      const successAgent: Agent = {
+        id: 'success-agent',
+        name: 'Success Agent',
+        execute: vi.fn().mockResolvedValue({ success: true }),
+      }
+
+      const failingAgent: Agent = {
+        id: 'failing-agent',
+        name: 'Failing Agent',
+        execute: vi.fn().mockRejectedValue(new Error('Primary failed')),
+      }
+
+      const fallbackAgent: Agent = {
+        id: 'fallback-agent',
+        name: 'Fallback Agent',
+        execute: vi.fn().mockResolvedValue({ fallback: true }),
+      }
+
+      const mockRegistry: AgentRegistry = {
+        getAgent: vi.fn().mockImplementation((id: string) => {
+          if (id === 'success-agent') return successAgent
+          if (id === 'failing-agent') return failingAgent
+          if (id === 'fallback-agent') return fallbackAgent
+          throw new Error(`Agent not found: ${id}`)
+        }),
+      }
+
+      const engine = new OrchestrationEngine({
+        agentRegistry: mockRegistry,
+      })
+
+      // Act
+      const result = await engine.execute(workflow)
+
+      // Assert
+      expect(result.status).toBe('completed')
+
+      // Verify that shared-fallback agent received its own input when used as fallback
+      expect(fallbackAgent.execute).toHaveBeenCalledWith(
+        { source: 'shared-fallback-input' }, // Should use its own input
+        expect.any(Object), // execution context
+        expect.any(AbortSignal), // abort signal
+      )
+
+      // Verify it was only called once (as a fallback, not as regular step)
+      expect(fallbackAgent.execute).toHaveBeenCalledTimes(1)
+    })
+  })
 })

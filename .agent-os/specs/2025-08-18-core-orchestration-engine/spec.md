@@ -37,18 +37,21 @@ Implement the core orchestration engine that executes multi-step workflows with 
 **🔧 Remaining Quality Issues (by Severity):**
 
 **High Priority (Implementation Gaps):**
+
 1. Fallback input override not honored - fallback step's own input ignored
 2. Nested step schema vs flat execution divergence - groups not traversed
 
 **Medium Priority (Technical Consistency):**
+
 1. Resilience composition not enforced at adapter contract level
 2. Configuration parity - engine limits not threaded through evaluator
 3. Environment whitelist duplication/inconsistency
 4. Condition error handling defaults to "silent false"
 
 **Low Priority (Technical Debt):**
+
 1. "True" preemptive timeout misleading documentation
-2. Unused type fields and implementation drift  
+2. Unused type fields and implementation drift
 3. Memory truncation UX - no partial output preview
 
 ## User Stories
@@ -201,19 +204,15 @@ The engine should analyze the workflow graph, identify optimal execution strateg
 ### Next Actions Required (Priority Order):
 
 **High Priority (Implementation Gaps):**
+
 1. Fix fallback input precedence (fallback step input > original input); add tests
 2. Decide nested groups architecture: implement group expansion OR explicitly de-scope and document dependsOn-only approach
 
 **Medium Priority (Technical Consistency):**  
-3. Update ResilienceAdapter contract to accept policies and compositionOrder; add reference adapter
-4. Thread engine security limits to evaluator; remove hard-coded constants
-5. Unify env var whitelist (choose schema field) and remove duplicate engine field  
+3. Update ResilienceAdapter contract to accept policies and compositionOrder; add reference adapter 4. Thread engine security limits to evaluator; remove hard-coded constants 5. Unify env var whitelist (choose schema field) and remove duplicate engine field  
 6. Consider default strictConditions: true (or expose workflow-level flag) and test invalid expressions → VALIDATION
 
-**Low Priority (Polish):**
-7. Clarify docs on condition "timeout" behavior; optionally explore Worker-based preemption
-8. Clean up unused types/fields (children, maxMetadataBytes) or wire them and add tests
-9. Consider retaining safe preview for truncated results
+**Low Priority (Polish):** 7. Clarify docs on condition "timeout" behavior; optionally explore Worker-based preemption 8. Clean up unused types/fields (children, maxMetadataBytes) or wire them and add tests 9. Consider retaining safe preview for truncated results
 
 ### Phase 3 (Future):
 

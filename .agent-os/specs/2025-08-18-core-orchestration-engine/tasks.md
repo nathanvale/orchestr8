@@ -42,16 +42,19 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
 **🆕 UPDATED TECHNICAL GAPS (from Code Review):**
 
 **High Priority:**
-- [ ] Fallback input override not honored (fallback step input ignored) 
+
+- [x] ✅ Fallback input override not honored (fallback step input ignored)
 - [ ] Nested step schema vs flat execution divergence (groups not traversed)
 
 **Medium Priority:**
+
 - [ ] Resilience composition control not enforced at adapter contract level
-- [ ] Configuration parity - engine limits not threaded through evaluator  
+- [ ] Configuration parity - engine limits not threaded through evaluator
 - [ ] Environment whitelist duplication/inconsistency (two sources of truth)
 - [ ] Condition error handling defaults to "silent false" (non-strict mode)
 
 **Low Priority:**
+
 - [ ] Preemptive timeout documentation overpromises (post-check only)
 - [ ] Unused type fields and implementation drift
 - [ ] Memory truncation UX - no partial output preview
@@ -131,13 +134,13 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
   - [x] 8.5 Handle edge cases in expression resolution
   - [x] 8.6 Verify robust parsing for all expression patterns
 
-- [ ] 9. **HIGH: Fix Fallback Input Override** (Implementation Bug)
-  - [ ] 9.1 Write tests for fallback step with explicit input mapping
-  - [ ] 9.2 Write tests for fallback step without input (uses original step input)
-  - [ ] 9.3 Update executeFallback to check fallback.input before using originalNode.input
-  - [ ] 9.4 Verify fallback input precedence: fallback.input > originalNode.input
-  - [ ] 9.5 Test both explicit fallback input and fallback-as-alias scenarios
-  - [ ] 9.6 Ensure backwards compatibility with existing fallback patterns
+- [x] 9. **HIGH: Fix Fallback Input Override** (Implementation Bug) ✅ COMPLETED
+  - [x] 9.1 Write tests for fallback step with explicit input mapping
+  - [x] 9.2 Write tests for fallback step without input (uses original step input)
+  - [x] 9.3 Update executeFallback to check fallback.input before using originalNode.input
+  - [x] 9.4 Verify fallback input precedence: fallback.input > originalNode.input
+  - [x] 9.5 Test both explicit fallback input and fallback-as-alias scenarios
+  - [x] 9.6 Ensure backwards compatibility with existing fallback patterns
 
 - [ ] 10. **HIGH DECISION: Nested Step Types Semantics** (Architecture Decision)
   - [ ] 10.1 Analyze current schema SequentialStep/ParallelStep definitions
@@ -180,7 +183,7 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
 - [ ] 15. **LOW: Documentation and Polish** (Technical Debt)
   - [ ] 15.1 Update timeout documentation from "preemptive" to "post-check"
   - [ ] 15.2 Clean up unused ExecutionNode.children and maxMetadataBytes
-  - [ ] 15.3 Consider safe preview for truncated memory results  
+  - [ ] 15.3 Consider safe preview for truncated memory results
   - [ ] 15.4 Clean dist before build in schema package
   - [ ] 15.5 Document Map insertion order invariants
   - [ ] 15.6 Clean up TODO comments in code

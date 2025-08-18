@@ -869,28 +869,52 @@ export class OrchestrationEngine implements IOrchestrationEngine {
     )
     if (existingFallbackResult) {
       if (existingFallbackResult.status === 'completed') {
-        // Log fallback execution (fallback already succeeded)
-        logger.info('step.fallback', {
-          originalStepId: originalNode.stepId,
-          fallbackStepId: originalNode.fallbackStepId,
-          originalError: originalError.message,
-        })
+        // The fallback step was already executed as a regular step
+        // If it had no input and should have inherited from original, we need to re-execute it with correct input
+        const fallbackStep = workflow.steps.find(
+          (s) => s.id === originalNode.fallbackStepId,
+        )
+        const fallbackAgentStep =
+          fallbackStep?.type === 'agent' ? (fallbackStep as AgentStep) : null
 
-        // Fallback already succeeded, mark it as alias
-        context.results.set(originalNode.fallbackStepId, {
-          ...existingFallbackResult,
-          aliasFor: originalNode.stepId,
-        })
+        // Check if the fallback step had no explicit input but the original step did
+        const originalStep = workflow.steps.find(
+          (s) => s.id === originalNode.stepId,
+        )
+        const originalAgentStep =
+          originalStep?.type === 'agent' ? (originalStep as AgentStep) : null
 
-        // Make fallback output available as original step output
-        const originalResult = context.results.get(originalNode.stepId)!
-        context.results.set(originalNode.stepId, {
-          ...originalResult,
-          output: existingFallbackResult.output,
-        })
+        const fallbackShouldInheritInput =
+          !fallbackAgentStep?.input && originalAgentStep?.input
+
+        if (fallbackShouldInheritInput) {
+          // Don't return early - proceed to re-execute the fallback with correct input
+        } else {
+          // Log fallback execution (fallback already succeeded with correct input)
+          logger.info('step.fallback', {
+            originalStepId: originalNode.stepId,
+            fallbackStepId: originalNode.fallbackStepId,
+            originalError: originalError.message,
+          })
+
+          // Fallback already succeeded, mark it as alias
+          context.results.set(originalNode.fallbackStepId, {
+            ...existingFallbackResult,
+            aliasFor: originalNode.stepId,
+          })
+
+          // Make fallback output available as original step output
+          const originalResult = context.results.get(originalNode.stepId)!
+          context.results.set(originalNode.stepId, {
+            ...originalResult,
+            output: existingFallbackResult.output,
+          })
+          return
+        }
+      } else {
+        // If fallback already failed or was skipped, leave it as is
+        return
       }
-      // If fallback already failed or was skipped, leave it as is
-      return
     }
 
     // Find fallback step
@@ -923,6 +947,16 @@ export class OrchestrationEngine implements IOrchestrationEngine {
       }
     }
 
+    // Find original step to get its input
+    const originalStep = workflow.steps.find(
+      (s) => s.id === originalNode.stepId,
+    )
+    const originalAgentStep =
+      originalStep?.type === 'agent' ? (originalStep as AgentStep) : null
+
+    // Determine input: fallback step's own input takes precedence over original step input
+    const fallbackInput = agentStep?.input ?? originalAgentStep?.input
+
     // Create fallback node
     const fallbackNode: ExecutionNode = {
       stepId: fallbackStep.id,
@@ -930,7 +964,7 @@ export class OrchestrationEngine implements IOrchestrationEngine {
       agentId: agentStep?.agentId,
       dependsOn: fallbackDependencies,
       config: agentStep?.config,
-      input: originalNode.input, // Use same input as original
+      input: fallbackInput, // Use fallback input with proper precedence
       resilience: undefined, // TODO: Get from step options
       onError: 'fail',
       conditions: undefined, // TODO: Get from step options
@@ -942,6 +976,9 @@ export class OrchestrationEngine implements IOrchestrationEngine {
       fallbackStepId: fallbackStep.id,
       originalError: originalError.message,
     })
+
+    // Clear any existing result for the fallback step to force re-execution with correct input
+    context.results.delete(fallbackStep.id)
 
     // Execute fallback
     await this.executeStep(fallbackNode, context, workflow, logger)

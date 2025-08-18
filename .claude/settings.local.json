@@ -50,7 +50,8 @@
       "Bash(rg:*)",
       "mcp__wallaby__wallaby_allTestsForFile",
       "mcp__wallaby__wallaby_failingTestsForFile",
-      "mcp__wallaby__wallaby_runtimeValues"
+      "mcp__wallaby__wallaby_runtimeValues",
+      "mcp__wallaby__wallaby_testById"
     ],
     "deny": [],
     "ask": [],

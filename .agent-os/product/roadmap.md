@@ -1,8 +1,8 @@
 # Product Roadmap
 
-> Last Updated: 2025-08-17
-> Version: 1.0.0
-> Status: Week 1 of 4-Week MVP Sprint
+> Last Updated: 2025-08-18
+> Version: 1.0.1
+> Status: Week 1 of 4-Week MVP Sprint (Core engine mostly complete)
 
 ## Phase 0: Already Completed
 
@@ -19,21 +19,22 @@ The following foundational work has been implemented:
 **Goal:** Deliver working orchestration engine with basic resilience
 **Success Criteria:** Can execute multi-step workflows with retry/timeout/circuit breaker
 
-### Must-Have Features
+### Must-Have Features (Phase 1)
 
-- [ ] Core orchestration engine implementation - Sequential and parallel execution `L`
-- [ ] Complete resilience patterns - Retry with jitter, circuit breaker, timeout composition `M`
-- [ ] Workflow AST with Zod validation - JSON schema for workflows `M`
+- [x] Core orchestration engine implementation - Sequential and parallel execution `L`
+- [ ] Complete resilience patterns - Retry with jitter, circuit breaker, timeout composition (adapter implementation pending) `M`
+- [ ] Workflow schema validation (TypeScript AST in place; Zod validation planned) `M`
 - [ ] In-process event bus - Bounded queue with overflow policy `M`
-- [ ] Basic execution context - Correlation ID, cancellation support `S`
+- [x] Basic execution context - Correlation ID, cancellation support `S`
 
-### Should-Have Features
+### Should-Have Features (Phase 1)
 
-- [ ] AbortSignal propagation through execution chain `M`
+- [x] AbortSignal propagation through execution chain `M`
 - [ ] Memory-safe execution journal `M`
-- [ ] Structured error taxonomy `S`
+- [x] Structured error taxonomy `S`
+- [x] Structured logging (opt-in, no-op by default) `S`
 
-### Dependencies
+### Dependencies (Phase 1)
 
 - TypeScript strict mode configuration
 - Vitest test setup
@@ -43,7 +44,7 @@ The following foundational work has been implemented:
 **Goal:** Provide developer tools and agent framework
 **Success Criteria:** Developers can create, test, and run agents via CLI
 
-### Must-Have Features
+### Must-Have Features (Phase 2)
 
 - [ ] BaseAgent abstract class with validation hooks `M`
 - [ ] Agent test harness with MSW integration `M`
@@ -51,13 +52,13 @@ The following foundational work has been implemented:
 - [ ] Workflow execution via CLI `M`
 - [ ] Journal inspection capability `S`
 
-### Should-Have Features
+### Should-Have Features (Phase 2)
 
 - [ ] Agent scaffolding templates `S`
 - [ ] Test coverage reporting `S`
 - [ ] Chain of Thought support in BaseAgent `M`
 
-### Dependencies
+### Dependencies (Phase 2)
 
 - Core orchestration engine completed
 - Resilience patterns working
@@ -67,7 +68,7 @@ The following foundational work has been implemented:
 **Goal:** Enable monitoring and REST API access
 **Success Criteria:** Can monitor executions via API and dashboard
 
-### Must-Have Features
+### Must-Have Features (Phase 3)
 
 - [ ] REST API with 4 core endpoints (execute, status, journal, cancel) `M`
 - [ ] WebSocket server for real-time updates `M`
@@ -75,13 +76,13 @@ The following foundational work has been implemented:
 - [ ] OpenTelemetry integration (minimal mode) `M`
 - [ ] Idempotency support with TTL `S`
 
-### Should-Have Features
+### Should-Have Features (Phase 3)
 
 - [ ] ETag support for caching `S`
 - [ ] Dashboard metrics visualization `M`
 - [ ] Performance monitoring `S`
 
-### Dependencies
+### Dependencies (Phase 3)
 
 - CLI and agent framework functional
 - Execution journal implemented
@@ -105,7 +106,7 @@ The following foundational work has been implemented:
 - [ ] Troubleshooting guide `S`
 - [ ] API documentation `M`
 
-### Dependencies
+### Dependencies (Phase 4)
 
 - All core functionality complete
 - Dashboard operational
