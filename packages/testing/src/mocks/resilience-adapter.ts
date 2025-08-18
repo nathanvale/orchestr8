@@ -3,7 +3,7 @@
  * Wallaby.js compatible with mockImplementation pattern
  */
 
-import type { ResilienceAdapter, ResiliencePolicy } from '@orchestr8/core'
+import type { CompositionOrder, ResilienceAdapter, ResiliencePolicy } from '@orchestr8/core'
 
 import { createExecutionError, ExecutionErrorCode } from '@orchestr8/schema'
 import { vi } from 'vitest'
@@ -12,14 +12,18 @@ import { vi } from 'vitest'
  * Mock ResilienceAdapter for testing
  */
 export class MockResilienceAdapter implements ResilienceAdapter {
-  // Spy function for testing
+  // Spy function for testing (legacy interface)
   applyPolicy = vi.fn()
+
+  // Spy function for new interface
+  applyNormalizedPolicy = vi.fn()
 
   // Track applied policies for assertions
   appliedPolicies: Array<{
     policy: ResiliencePolicy
     signal?: AbortSignal
     timestamp: string
+    compositionOrder?: CompositionOrder
   }> = []
 
   // Configuration for simulating behaviors
@@ -30,102 +34,124 @@ export class MockResilienceAdapter implements ResilienceAdapter {
   private currentAttempt = 0
 
   constructor() {
-    // Default implementation that passes through the operation
+    // Default implementation that passes through the operation (legacy interface)
     this.applyPolicy.mockImplementation(
       async (
         operation: () => Promise<unknown>,
         policy: ResiliencePolicy,
         signal?: AbortSignal,
       ) => {
-        // Track the applied policy
-        this.appliedPolicies.push({
-          policy,
-          signal,
-          timestamp: new Date().toISOString(),
-        })
-
-        // Check for abort signal
-        if (signal?.aborted) {
-          throw createExecutionError(
-            ExecutionErrorCode.CANCELLED,
-            'Operation cancelled',
-            { context: { reason: signal.reason } },
-          )
-        }
-
-        // Simulate timeout if configured
-        if (this.simulateTimeout && policy.timeout) {
-          throw createExecutionError(
-            ExecutionErrorCode.TIMEOUT,
-            `Operation timed out after ${policy.timeout}ms`,
-            { context: { timeout: policy.timeout } },
-          )
-        }
-
-        // Simulate circuit breaker open if configured
-        if (this.simulateCircuitOpen && policy.circuitBreaker) {
-          throw createExecutionError(
-            ExecutionErrorCode.CIRCUIT_OPEN,
-            'Circuit breaker is open',
-            { context: { policy: policy.circuitBreaker } },
-          )
-        }
-
-        // Simulate cancellation if configured
-        if (this.simulateCancellation) {
-          throw createExecutionError(
-            ExecutionErrorCode.CANCELLED,
-            'Operation was cancelled',
-            { context: { simulatedCancellation: true } },
-          )
-        }
-
-        // Simulate retries if configured
-        if (this.simulateRetryCount > 0 && policy.retry) {
-          this.currentAttempt++
-          if (this.currentAttempt <= this.simulateRetryCount) {
-            throw createExecutionError(
-              ExecutionErrorCode.RETRYABLE,
-              `Simulated retry attempt ${this.currentAttempt}`,
-              { attempt: this.currentAttempt },
-            )
-          }
-          // Reset for next operation
-          this.currentAttempt = 0
-        }
-
-        // Listen for abort signal during operation
-        if (signal) {
-          return new Promise((resolve, reject) => {
-            const abortHandler = () => {
-              reject(
-                createExecutionError(
-                  ExecutionErrorCode.CANCELLED,
-                  'Operation cancelled during execution',
-                  { context: { reason: signal.reason } },
-                ),
-              )
-            }
-
-            signal.addEventListener('abort', abortHandler, { once: true })
-
-            operation()
-              .then((result) => {
-                resolve(result)
-              })
-              .catch((error) => {
-                reject(error)
-              })
-              .finally(() => {
-                signal.removeEventListener('abort', abortHandler)
-              })
-          })
-        }
-
-        // Default: execute the operation
-        return operation()
+        return this.executeWithPolicy(operation, policy, signal)
       },
     )
+
+    // New interface implementation
+    this.applyNormalizedPolicy.mockImplementation(
+      async (
+        operation: () => Promise<unknown>,
+        normalizedPolicy: ResiliencePolicy,
+        compositionOrder: CompositionOrder,
+        signal?: AbortSignal,
+      ) => {
+        return this.executeWithPolicy(operation, normalizedPolicy, signal, compositionOrder)
+      },
+    )
+  }
+
+  private async executeWithPolicy(
+    operation: () => Promise<unknown>,
+    policy: ResiliencePolicy,
+    signal?: AbortSignal,
+    compositionOrder?: CompositionOrder,
+  ): Promise<unknown> {
+    // Track the applied policy
+    this.appliedPolicies.push({
+      policy,
+      signal,
+      timestamp: new Date().toISOString(),
+      compositionOrder,
+    })
+
+    // Check for abort signal
+    if (signal?.aborted) {
+      throw createExecutionError(
+        ExecutionErrorCode.CANCELLED,
+        'Operation cancelled',
+        { context: { reason: signal.reason } },
+      )
+    }
+
+    // Simulate timeout if configured
+    if (this.simulateTimeout && policy.timeout) {
+      throw createExecutionError(
+        ExecutionErrorCode.TIMEOUT,
+        `Operation timed out after ${policy.timeout}ms`,
+        { context: { timeout: policy.timeout } },
+      )
+    }
+
+    // Simulate circuit breaker open if configured
+    if (this.simulateCircuitOpen && policy.circuitBreaker) {
+      throw createExecutionError(
+        ExecutionErrorCode.CIRCUIT_OPEN,
+        'Circuit breaker is open',
+        { context: { policy: policy.circuitBreaker } },
+      )
+    }
+
+    // Simulate cancellation if configured
+    if (this.simulateCancellation) {
+      throw createExecutionError(
+        ExecutionErrorCode.CANCELLED,
+        'Operation was cancelled',
+        { context: { simulatedCancellation: true } },
+      )
+    }
+
+    // Simulate retries if configured
+    if (this.simulateRetryCount > 0 && policy.retry) {
+      this.currentAttempt++
+      if (this.currentAttempt <= this.simulateRetryCount) {
+        throw createExecutionError(
+          ExecutionErrorCode.RETRYABLE,
+          `Simulated retry attempt ${this.currentAttempt}`,
+          { attempt: this.currentAttempt },
+        )
+      }
+      // Reset for next operation
+      this.currentAttempt = 0
+    }
+
+    // Listen for abort signal during operation
+    if (signal) {
+      return new Promise((resolve, reject) => {
+        const abortHandler = () => {
+          reject(
+            createExecutionError(
+              ExecutionErrorCode.CANCELLED,
+              'Operation cancelled during execution',
+              { context: { reason: signal.reason } },
+            ),
+          )
+        }
+
+        signal.addEventListener('abort', abortHandler, { once: true })
+
+        operation()
+          .then((result) => {
+            resolve(result)
+          })
+          .catch((error) => {
+            reject(error)
+          })
+          .finally(() => {
+            signal.removeEventListener('abort', abortHandler)
+          })
+      })
+    }
+
+    // Default: execute the operation
+    return operation()
   }
 
   /**
@@ -226,29 +252,27 @@ export class MockResilienceAdapter implements ResilienceAdapter {
     this.currentAttempt = 0
     this.appliedPolicies = []
     this.applyPolicy.mockReset()
+    this.applyNormalizedPolicy.mockReset()
 
-    // Restore default implementation
+    // Restore default implementations
     this.applyPolicy.mockImplementation(
       async (
         operation: () => Promise<unknown>,
         policy: ResiliencePolicy,
         signal?: AbortSignal,
       ) => {
-        this.appliedPolicies.push({
-          policy,
-          signal,
-          timestamp: new Date().toISOString(),
-        })
+        return this.executeWithPolicy(operation, policy, signal)
+      },
+    )
 
-        if (signal?.aborted) {
-          throw createExecutionError(
-            ExecutionErrorCode.CANCELLED,
-            'Operation cancelled',
-            { context: { reason: signal.reason } },
-          )
-        }
-
-        return operation()
+    this.applyNormalizedPolicy.mockImplementation(
+      async (
+        operation: () => Promise<unknown>,
+        normalizedPolicy: ResiliencePolicy,
+        compositionOrder: CompositionOrder,
+        signal?: AbortSignal,
+      ) => {
+        return this.executeWithPolicy(operation, normalizedPolicy, signal, compositionOrder)
       },
     )
   }

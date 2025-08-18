@@ -105,32 +105,38 @@ export interface AgentStep extends BaseStep {
 }
 
 /**
- * Sequential execution group
+ * Sequential execution group (MVP: Use dependsOn for sequencing)
+ *
+ * @deprecated For MVP, nested groups are not supported. Use AgentStep with dependsOn relationships
+ * to achieve sequential execution. This type is reserved for post-MVP nested group implementation.
  */
 export interface SequentialStep extends BaseStep {
   type: 'sequential'
 
   /**
-   * Steps to execute in order
+   * @deprecated Nested steps not supported in MVP. Use root-level steps with dependsOn instead.
    */
-  steps: WorkflowStep[]
+  steps?: never
 }
 
 /**
- * Parallel execution group
+ * Parallel execution group (MVP: Use dependsOn for parallelism)
+ *
+ * @deprecated For MVP, nested groups are not supported. Use AgentStep without dependencies
+ * to achieve parallel execution. This type is reserved for post-MVP nested group implementation.
  */
 export interface ParallelStep extends BaseStep {
   type: 'parallel'
 
   /**
-   * Steps to execute concurrently
+   * @deprecated Nested steps not supported in MVP. Use root-level steps with dependsOn instead.
    */
-  steps: WorkflowStep[]
+  steps?: never
 
   /**
-   * Maximum concurrent executions (default: unlimited)
+   * @deprecated Group-level concurrency not supported in MVP. Use workflow.maxConcurrency instead.
    */
-  maxConcurrency?: number
+  maxConcurrency?: never
 }
 
 /**

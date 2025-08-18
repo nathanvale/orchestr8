@@ -103,14 +103,15 @@ function validateSteps(steps: WorkflowStep[], stepIds: Set<string>): void {
       }
     }
 
-    // Validate nested steps
+    // MVP: Nested groups are deprecated - validate that steps property is not used
     if (step.type === 'sequential' || step.type === 'parallel') {
-      if (!Array.isArray(step.steps) || step.steps.length === 0) {
+      // TypeScript should prevent this, but add runtime check for safety
+      if ('steps' in step && step.steps !== undefined) {
         throw new Error(
-          `${step.type} step ${step.id} must have at least one nested step`,
+          `${step.type} step ${step.id}: Nested groups are not supported in MVP. ` +
+            `Use root-level steps with dependsOn relationships instead.`,
         )
       }
-      validateSteps(step.steps, stepIds)
     }
 
     // Validate error handling
@@ -183,11 +184,10 @@ function buildDependencyGraph(steps: WorkflowStep[]): Map<string, string[]> {
       graph.set(step.id, [])
     }
 
-    if (step.type === 'sequential' || step.type === 'parallel') {
-      for (const nestedStep of step.steps) {
-        addStep(nestedStep)
-      }
-    }
+    // MVP: Skip nested step processing for sequential/parallel - they use dependsOn instead
+    // if (step.type === 'sequential' || step.type === 'parallel') {
+    //   // Nested steps not supported in MVP
+    // }
   }
 
   for (const step of steps) {

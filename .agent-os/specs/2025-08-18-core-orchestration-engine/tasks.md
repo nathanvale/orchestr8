@@ -142,21 +142,21 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
   - [x] 9.5 Test both explicit fallback input and fallback-as-alias scenarios
   - [x] 9.6 Ensure backwards compatibility with existing fallback patterns
 
-- [ ] 10. **HIGH DECISION: Nested Step Types Semantics** (Architecture Decision)
-  - [ ] 10.1 Analyze current schema SequentialStep/ParallelStep definitions
-  - [ ] 10.2 Evaluate impact of flat dependency graph vs nested group execution
-  - [ ] 10.3 Decision: Implement group expansion layer OR explicitly de-scope nested groups
-  - [ ] 10.4 If de-scope: Update schema/examples to use dependsOn only
-  - [ ] 10.5 If implement: Design group expansion with maxConcurrency support
-  - [ ] 10.6 Document decision rationale and update architecture docs
+- [x] 10. **HIGH DECISION: Nested Step Types Semantics** (Architecture Decision) ✅ COMPLETED
+  - [x] 10.1 Analyze current schema SequentialStep/ParallelStep definitions
+  - [x] 10.2 Evaluate impact of flat dependency graph vs nested group execution
+  - [x] 10.3 Decision: Implement group expansion layer OR explicitly de-scope nested groups
+  - [x] 10.4 If de-scope: Update schema/examples to use dependsOn only
+  - [x] 10.5 If implement: Design group expansion with maxConcurrency support
+  - [x] 10.6 Document decision rationale and update architecture docs
 
-- [ ] 11. **MEDIUM: Update ResilienceAdapter Contract** (Interface Consistency)
-  - [ ] 11.1 Update ResilienceAdapter interface to accept normalized policies
-  - [ ] 11.2 Add explicit compositionOrder parameter (e.g., 'retry-cb-timeout')
-  - [ ] 11.3 Provide reference adapter implementation in @orchestr8/resilience
-  - [ ] 11.4 Keep current wrapper for compatibility but add deprecation notice
-  - [ ] 11.5 Test consistent composition order across different adapters
-  - [ ] 11.6 Update documentation on resilience composition semantics
+- [x] 11. **MEDIUM: Update ResilienceAdapter Contract** (Interface Consistency) ✅ COMPLETED
+  - [x] 11.1 Update ResilienceAdapter interface to accept normalized policies
+  - [x] 11.2 Add explicit compositionOrder parameter (e.g., 'retry-cb-timeout')
+  - [x] 11.3 Provide reference adapter implementation in @orchestr8/resilience
+  - [x] 11.4 Keep current wrapper for compatibility but add deprecation notice
+  - [x] 11.5 Test consistent composition order across different adapters
+  - [x] 11.6 Update documentation on resilience composition semantics
 
 - [ ] 12. **MEDIUM: Configuration Parity** (Technical Consistency)
   - [ ] 12.1 Thread OrchestrationOptions.maxExpansionDepth to evaluator

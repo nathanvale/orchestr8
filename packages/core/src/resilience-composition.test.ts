@@ -2,7 +2,7 @@ import type { Workflow } from '@orchestr8/schema'
 
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 
-import type { Agent, AgentRegistry, ResilienceAdapter } from './types.js'
+import type { Agent, AgentRegistry, ResilienceAdapter, ResiliencePolicy } from './types.js'
 
 import { OrchestrationEngine } from './orchestration-engine.js'
 
@@ -661,6 +661,182 @@ describe('Resilience Composition Order', () => {
             halfOpenPolicy: 'single-probe',
           }),
         }),
+        expect.any(AbortSignal),
+      )
+    })
+  })
+
+  describe('ResilienceAdapter with explicit composition order', () => {
+    let newInterfaceAdapter: ResilienceAdapter
+    let compositionCallTracker: Array<{ normalizedPolicy: ResiliencePolicy; compositionOrder: string }>
+
+    beforeEach(() => {
+      compositionCallTracker = []
+      
+      // Mock adapter implementing the new interface with explicit compositionOrder
+      newInterfaceAdapter = {
+        applyPolicy: vi.fn().mockImplementation(async (operation, policy, signal) => {
+          // For backward compatibility test - old interface
+          operationCallOrder.push('old-interface-call')
+          return operation()
+        }),
+        applyNormalizedPolicy: vi.fn().mockImplementation(async (operation, normalizedPolicy, compositionOrder, signal) => {
+          // Track calls to new interface
+          compositionCallTracker.push({ normalizedPolicy, compositionOrder })
+          operationCallOrder.push(`new-interface-${compositionOrder}`)
+          return operation()
+        })
+      }
+
+      engine = new OrchestrationEngine({
+        agentRegistry: mockAgentRegistry,
+        resilienceAdapter: newInterfaceAdapter,
+      })
+    })
+
+    it('should call applyNormalizedPolicy with default retry-cb-timeout composition order', async () => {
+      const workflow: Workflow = {
+        steps: [
+          {
+            id: 'step1',
+            type: 'agent',
+            agentId: 'test-agent',
+            resilience: {
+              retry: { maxAttempts: 3, backoffStrategy: 'exponential', jitterStrategy: 'full-jitter', initialDelay: 1000, maxDelay: 10000 },
+              circuitBreaker: { failureThreshold: 5, recoveryTime: 30000, sampleSize: 10, halfOpenPolicy: 'single-probe' },
+              timeout: 5000,
+            },
+          },
+        ],
+      }
+
+      await engine.execute(workflow)
+
+      expect(newInterfaceAdapter.applyNormalizedPolicy).toHaveBeenCalledWith(
+        expect.any(Function),
+        expect.objectContaining({
+          retry: expect.objectContaining({
+            maxAttempts: 3,
+            backoffStrategy: 'exponential',
+            jitterStrategy: 'full-jitter',
+            initialDelay: 1000,
+            maxDelay: 10000,
+          }),
+          circuitBreaker: expect.objectContaining({
+            failureThreshold: 5,
+            recoveryTime: 30000,
+            sampleSize: 10,
+            halfOpenPolicy: 'single-probe',
+          }),
+          timeout: 5000,
+        }),
+        'retry-cb-timeout', // Default composition order
+        expect.any(AbortSignal),
+      )
+
+      expect(compositionCallTracker).toHaveLength(1)
+      expect(compositionCallTracker[0].compositionOrder).toBe('retry-cb-timeout')
+      expect(operationCallOrder).toContain('new-interface-retry-cb-timeout')
+    })
+
+    it('should use configurable composition order when specified', async () => {
+      // Create engine with custom composition order
+      const customEngine = new OrchestrationEngine({
+        agentRegistry: mockAgentRegistry,
+        resilienceAdapter: newInterfaceAdapter,
+        defaultCompositionOrder: 'timeout-cb-retry',
+      })
+
+      const workflow: Workflow = {
+        steps: [
+          {
+            id: 'step1',
+            type: 'agent',
+            agentId: 'test-agent',
+            resilience: {
+              retry: { maxAttempts: 2, backoffStrategy: 'fixed', jitterStrategy: 'none', initialDelay: 500, maxDelay: 500 },
+              timeout: 3000,
+            },
+          },
+        ],
+      }
+
+      await customEngine.execute(workflow)
+
+      expect(newInterfaceAdapter.applyNormalizedPolicy).toHaveBeenCalledWith(
+        expect.any(Function),
+        expect.objectContaining({
+          retry: expect.objectContaining({
+            maxAttempts: 2,
+          }),
+          timeout: 3000,
+        }),
+        'timeout-cb-retry',
+        expect.any(AbortSignal),
+      )
+
+      expect(operationCallOrder).toContain('new-interface-timeout-cb-retry')
+    })
+
+    it('should fall back to old interface when applyNormalizedPolicy is not available', async () => {
+      // Create adapter with only old interface
+      const legacyAdapter: ResilienceAdapter = {
+        applyPolicy: vi.fn().mockImplementation(async (operation) => {
+          operationCallOrder.push('legacy-adapter-call')
+          return operation()
+        }),
+      }
+
+      const legacyEngine = new OrchestrationEngine({
+        agentRegistry: mockAgentRegistry,
+        resilienceAdapter: legacyAdapter,
+      })
+
+      const workflow: Workflow = {
+        steps: [
+          {
+            id: 'step1',
+            type: 'agent',
+            agentId: 'test-agent',
+            resilience: {
+              timeout: 2000,
+            },
+          },
+        ],
+      }
+
+      await legacyEngine.execute(workflow)
+
+      expect(legacyAdapter.applyPolicy).toHaveBeenCalledWith(
+        expect.any(Function),
+        expect.objectContaining({ timeout: 2000 }),
+        expect.any(AbortSignal),
+      )
+      expect(operationCallOrder).toContain('legacy-adapter-call')
+    })
+
+    it('should handle normalized policy with only one resilience pattern', async () => {
+      const workflow: Workflow = {
+        steps: [
+          {
+            id: 'step1',
+            type: 'agent',
+            agentId: 'test-agent',
+            resilience: {
+              retry: { maxAttempts: 2, backoffStrategy: 'fixed', jitterStrategy: 'none', initialDelay: 100, maxDelay: 100 },
+            },
+          },
+        ],
+      }
+
+      await engine.execute(workflow)
+
+      expect(newInterfaceAdapter.applyNormalizedPolicy).toHaveBeenCalledWith(
+        expect.any(Function),
+        expect.objectContaining({
+          retry: expect.objectContaining({ maxAttempts: 2 }),
+        }),
+        'retry-cb-timeout',
         expect.any(AbortSignal),
       )
     })

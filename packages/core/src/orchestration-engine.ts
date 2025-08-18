@@ -17,6 +17,7 @@ import {
 
 import type {
   AgentRegistry,
+  CompositionOrder,
   ExecutionGraph,
   ExecutionNode,
   Logger,
@@ -50,6 +51,7 @@ export class OrchestrationEngine implements IOrchestrationEngine {
   private readonly agentRegistry: AgentRegistry
   private readonly resilienceAdapter: ResilienceAdapter
   private readonly logger: Logger
+  private readonly defaultCompositionOrder: CompositionOrder
   private readonly maxConcurrency: number
   private readonly maxResultBytesPerStep: number
   private readonly maxMetadataBytes: number
@@ -61,6 +63,7 @@ export class OrchestrationEngine implements IOrchestrationEngine {
     this.agentRegistry = options.agentRegistry
     this.resilienceAdapter = options.resilienceAdapter
     this.logger = options.logger ?? new NoOpLogger()
+    this.defaultCompositionOrder = options.defaultCompositionOrder ?? 'retry-cb-timeout'
     this.maxConcurrency = options.maxConcurrency ?? 10
     this.maxResultBytesPerStep = options.maxResultBytesPerStep ?? 512 * 1024
     this.maxMetadataBytes = options.maxMetadataBytes ?? 128 * 1024
@@ -758,11 +761,29 @@ export class OrchestrationEngine implements IOrchestrationEngine {
             : undefined)
 
         if (policy) {
-          output = await this.resilienceAdapter.applyPolicy(
-            executeAgent,
-            policy,
-            context.abortSignal,
-          )
+          // Check if adapter supports new interface with composition order
+          if ('applyNormalizedPolicy' in this.resilienceAdapter && 
+              typeof this.resilienceAdapter.applyNormalizedPolicy === 'function') {
+            // Use new interface with normalized policy and explicit composition order
+            const normalizedPolicy = this.normalizeResiliencePolicy(policy)
+            if (normalizedPolicy) {
+              output = await this.resilienceAdapter.applyNormalizedPolicy(
+                executeAgent,
+                normalizedPolicy,
+                this.defaultCompositionOrder,
+                context.abortSignal,
+              )
+            } else {
+              output = await executeAgent()
+            }
+          } else {
+            // Fall back to legacy interface
+            output = await this.resilienceAdapter.applyPolicy(
+              executeAgent,
+              policy,
+              context.abortSignal,
+            )
+          }
         } else {
           output = await executeAgent()
         }

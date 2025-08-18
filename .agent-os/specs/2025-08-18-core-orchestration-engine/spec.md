@@ -117,12 +117,14 @@ The engine should analyze the workflow graph, identify optimal execution strateg
    - **Impact**: Workflows authored with nested sequential/parallel will not behave as authored
    - **Action**: Decide and document. For MVP, de-scope nested groups explicitly and instruct using dependsOn. If keeping groups, implement expansion to a flat DAG respecting group-level properties
 
-**MEDIUM PRIORITY:**
+**✅ COMPLETED MEDIUM PRIORITY:**
 
-10. **Resilience Composition Control Not Enforced at Adapter Level**
+10. **Resilience Composition Control Not Enforced at Adapter Level** ✅ COMPLETED
     - **Evidence**: Commit 4d629ff finalizes default order; engine normalizes policy, but the adapter interface is still applyPolicy(operation, policy, signal?). Composition order relies on the adapter implementation, which isn't codified in the contract
     - **Impact**: Inconsistent behavior across adapters; ambiguity for consumers
-    - **Action**: Update ResilienceAdapter contract to accept normalized policies and an explicit compositionOrder (e.g., 'retry-cb-timeout' default). Provide a reference adapter in @orchestr8/resilience
+    - **Action**: ✅ Updated ResilienceAdapter contract to accept normalized policies and an explicit compositionOrder (e.g., 'retry-cb-timeout' default). Provided reference adapter in @orchestr8/resilience with both legacy and new interfaces. Added comprehensive tests for adapter consistency.
+
+**REMAINING MEDIUM PRIORITY:**
 
 11. **Config Parity: Engine Limits Not Threaded Through Evaluator**
     - **Evidence**: Engine has maxExpansionDepth, maxExpansionSize options; expression-evaluator.ts uses local SECURITY_LIMITS

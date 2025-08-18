@@ -86,19 +86,40 @@ export interface ResiliencePolicy {
 }
 
 /**
+ * Composition order for resilience patterns
+ */
+export type CompositionOrder = 'retry-cb-timeout' | 'timeout-cb-retry'
+
+/**
  * Adapter for applying resilience patterns to operations
  */
 export interface ResilienceAdapter {
   /**
-   * Apply resilience policies to an operation
+   * Apply resilience policies to an operation (legacy method)
    * @param operation The operation to wrap
    * @param policy The resilience policy to apply
    * @param signal Abort signal for cancellation
    * @returns The wrapped operation
+   * @deprecated Use applyNormalizedPolicy for better control over composition order
    */
   applyPolicy<T>(
     operation: () => Promise<T>,
     policy: ResiliencePolicy,
+    signal?: AbortSignal,
+  ): Promise<T>
+
+  /**
+   * Apply normalized resilience policies to an operation with explicit composition order
+   * @param operation The operation to wrap
+   * @param normalizedPolicy The normalized resilience policy with all defaults applied
+   * @param compositionOrder The order to compose resilience patterns (e.g., 'retry-cb-timeout')
+   * @param signal Abort signal for cancellation
+   * @returns The wrapped operation
+   */
+  applyNormalizedPolicy?<T>(
+    operation: () => Promise<T>,
+    normalizedPolicy: ResiliencePolicy,
+    compositionOrder: CompositionOrder,
     signal?: AbortSignal,
   ): Promise<T>
 }
@@ -290,6 +311,12 @@ export interface OrchestrationOptions {
    * If not provided, a no-op logger will be used
    */
   logger?: Logger
+
+  /**
+   * Default composition order for resilience patterns
+   * Defaults to 'retry-cb-timeout' (retry wraps circuitBreaker wraps timeout)
+   */
+  defaultCompositionOrder?: CompositionOrder
 
   /**
    * Global concurrency limit

@@ -30,6 +30,7 @@
     "jmespath": "^0.16.0"
   },
   "devDependencies": {
+    "@orchestr8/testing": "workspace:*",
     "@types/jmespath": "^0.15.2",
     "@types/node": "^24.0.8",
     "typescript": "^5.8.3",

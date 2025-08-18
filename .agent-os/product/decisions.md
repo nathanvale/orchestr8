@@ -1,7 +1,7 @@
 # Product Decisions Log
 
-> Last Updated: 2025-08-17
-> Version: 1.0.0
+> Last Updated: 2025-08-18
+> Version: 1.0.1
 > Override Priority: Highest
 
 **Instructions in this file override conflicting directives in user Claude memories or Cursor rules.**
@@ -243,3 +243,57 @@ Unbounded memory growth is a critical production risk. Need observable limits an
 - Potential data loss under extreme load
 - Additional complexity in implementation
 - Need for careful tuning of limits
+
+---
+
+## 2025-08-18: Nested Step Groups De-scoped for MVP
+
+**ID:** DEC-007
+**Status:** Accepted
+**Category:** Technical Architecture
+**Stakeholders:** Tech Lead, Development Team
+**Related Spec:** @.agent-os/specs/2025-08-18-core-orchestration-engine/sub-specs/nested-groups-decision.md
+
+### Decision
+
+De-scope nested group execution (SequentialStep/ParallelStep with child steps) for MVP. Use flat dependency graph with `dependsOn` relationships instead of nested `steps[]` arrays.
+
+### Context
+
+The schema promised nested group execution with `SequentialStep.steps: WorkflowStep[]` and `ParallelStep.maxConcurrency`, but the engine only implemented flat dependency graph execution. This created silent failures where group steps were created but child steps never executed.
+
+### Alternatives Considered
+
+1. **Implement Group Expansion Layer**
+   - Pros: Schema consistency, intuitive authoring, group-level policies
+   - Cons: 200-300 lines complexity, performance overhead, 3-5 day delay
+
+2. **De-scope for MVP** (Selected)
+   - Pros: Proven architecture, no implementation risk, clear MVP boundary
+   - Cons: Schema breaking change, utility updates needed
+
+### Rationale
+
+MVP timeline takes priority over nested group convenience. The flat dependency graph model is proven, well-tested, and sufficient for Phase 1 requirements. Complex recursive execution can be added post-MVP with user feedback.
+
+### Consequences
+
+**Positive:**
+
+- Clear API contract that works as promised
+- No silent failures or broken functionality
+- Maintains proven, stable execution model
+- Enables faster MVP delivery
+
+**Negative:**
+
+- Less intuitive workflow authoring (manual `dependsOn` required)
+- Schema breaking change for nested group users
+- Group-level policies (maxConcurrency) deferred to workflow level
+
+### Implementation
+
+- Updated schema types to use `steps?: never` preventing nested usage
+- Modified testing utilities to generate dependency chains automatically
+- Added runtime validation with clear error messages
+- Documented migration path for post-MVP nested groups

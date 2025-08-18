@@ -96,38 +96,65 @@ export class WorkflowBuilder {
   }
 
   /**
-   * Add a sequential group
+   * Add steps with sequential dependencies (MVP approach)
+   * Creates a chain where each step depends on the previous one
    */
   addSequentialGroup(
     id: string,
     steps: WorkflowStep[],
-    options?: Partial<SequentialStep>,
+    options?: Partial<Omit<SequentialStep, 'steps'>>,
   ): this {
-    const step: SequentialStep = {
-      id,
-      type: 'sequential',
-      steps,
-      ...options,
+    if (steps.length === 0) {
+      throw new Error('Sequential group must have at least one step')
     }
-    this.workflow.steps!.push(step)
+
+    // Chain dependencies: each step depends on the previous one
+    const chainedSteps = steps.map((step, index) => {
+      if (index === 0) {
+        // First step inherits any dependencies from options
+        return {
+          ...step,
+          dependsOn: [...(step.dependsOn ?? []), ...(options?.dependsOn ?? [])],
+        }
+      } else {
+        // Subsequent steps depend on the previous step
+        const previousStep = steps[index - 1]
+        if (!previousStep) {
+          throw new Error('Invalid step index in sequential chain')
+        }
+        return {
+          ...step,
+          dependsOn: [...(step.dependsOn ?? []), previousStep.id],
+        }
+      }
+    })
+
+    // Add all steps to the workflow
+    this.workflow.steps!.push(...chainedSteps)
     return this
   }
 
   /**
-   * Add a parallel group
+   * Add steps with parallel execution (MVP approach)
+   * All steps run in parallel with the same dependencies
    */
   addParallelGroup(
     id: string,
     steps: WorkflowStep[],
-    options?: Partial<ParallelStep>,
+    options?: Partial<Omit<ParallelStep, 'steps' | 'maxConcurrency'>>,
   ): this {
-    const step: ParallelStep = {
-      id,
-      type: 'parallel',
-      steps,
-      ...options,
+    if (steps.length === 0) {
+      throw new Error('Parallel group must have at least one step')
     }
-    this.workflow.steps!.push(step)
+
+    // All parallel steps inherit the same dependencies
+    const parallelSteps = steps.map((step) => ({
+      ...step,
+      dependsOn: [...(step.dependsOn ?? []), ...(options?.dependsOn ?? [])],
+    }))
+
+    // Add all steps to the workflow
+    this.workflow.steps!.push(...parallelSteps)
     return this
   }
 
@@ -203,6 +230,7 @@ export function createWorkflowWithDependencies(): Workflow {
 
 /**
  * Create a complex hybrid workflow
+ * MVP approach: Uses dependsOn to create hybrid sequential/parallel patterns
  */
 export function createHybridWorkflow(): Workflow {
   const parallelSteps = [
@@ -223,10 +251,12 @@ export function createHybridWorkflow(): Workflow {
       dependsOn: ['start'],
     })
     .addSequentialGroup('sequential-group', sequentialSteps, {
-      dependsOn: ['parallel-group'],
+      // Depend on all parallel steps completing
+      dependsOn: ['parallel-1', 'parallel-2'],
     })
     .addAgentStep('end', 'agent-end', {
-      dependsOn: ['sequential-group'],
+      // Depend on the last sequential step
+      dependsOn: ['seq-2'],
     })
     .build()
 }
