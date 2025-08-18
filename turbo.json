@@ -38,7 +38,16 @@
       "inputs": ["src/**", "vitest.config.*", "package.json"],
       "outputs": [],
       "env": ["NODE_ENV"],
-      "passThroughEnv": ["CI", "VITEST_WORKER_ID", "VITEST_POOL_ID"]
+      "passThroughEnv": [
+        "CI",
+        "WALLABY_WORKER",
+        "WALLABY_WORKER_ID",
+        "VITEST_WORKER_ID",
+        "VITEST_POOL_ID",
+        "JEST_WORKER_ID",
+        "WALLABY_QUIET",
+        "WALLABY_SCHEMA_VERSION"
+      ]
     },
     "format": {
       "inputs": [

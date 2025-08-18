@@ -1,2 +1,2 @@
-export * from './test-harness.js'
-export * from './mock-handlers.js'
+// Dummy index file for @orchestr8/testing
+export {}

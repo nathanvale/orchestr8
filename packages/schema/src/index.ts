@@ -1,2 +1,2 @@
-export * from './workflow-ast.js'
-export * from './types.js'
+// Dummy index file for @orchestr8/schema
+export {}

@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir:*)",
+      "Bash(rm:*)",
+      "Bash(touch:*)",
+      "Bash(for pkg in schema resilience core agent-base testing cli)",
+      "Bash(do echo \"=== $pkg ===\")",
+      "Bash(ls:*)",
+      "Bash(done)",
+      "Bash(pnpm install:*)",
+      "Bash(pnpm build:*)",
+      "Bash(pnpm test:ci:*)",
+      "Bash(pnpm test:*)",
+      "Bash(git add:*)",
+      "Bash(pnpm format:check:*)",
+      "Bash(pnpm format:*)",
+      "Bash(pnpm lint:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
