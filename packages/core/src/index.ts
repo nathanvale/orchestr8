@@ -9,6 +9,9 @@ export {
   clearExpressionCache,
 } from './expression-evaluator.js'
 
+// Export implementation
+export { OrchestrationEngine } from './orchestration-engine.js'
+
 // Export core types and interfaces
 export type {
   Agent,
@@ -18,7 +21,7 @@ export type {
   ExecutionNode,
   ExecutionGraph,
   OrchestrationOptions,
-  OrchestrationEngine,
+  OrchestrationEngine as IOrchestrationEngine,
 } from './types.js'
 
 // Re-export commonly used schema types

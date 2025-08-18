@@ -275,6 +275,11 @@ export interface StepResult {
    * Retained bytes after truncation
    */
   retainedBytes?: number
+
+  /**
+   * If this result is a fallback for another failed step
+   */
+  aliasFor?: string
 }
 
 /**
