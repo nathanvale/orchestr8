@@ -104,6 +104,91 @@ export interface ResilienceAdapter {
 }
 
 /**
+ * Log level enumeration
+ */
+export type LogLevel = 'trace' | 'debug' | 'info' | 'warn' | 'error'
+
+/**
+ * Log entry structure for structured logging
+ */
+export interface LogEntry {
+  /**
+   * Log level
+   */
+  level: LogLevel
+
+  /**
+   * Log message
+   */
+  message: string
+
+  /**
+   * Timestamp in ISO format
+   */
+  timestamp: string
+
+  /**
+   * Additional structured data
+   */
+  [key: string]: unknown
+}
+
+/**
+ * Logger interface for structured logging throughout the orchestration engine
+ */
+export interface Logger {
+  /**
+   * Log an entry with the specified level
+   * @param level The log level
+   * @param message The log message
+   * @param data Additional structured data
+   */
+  log(level: LogLevel, message: string, data?: Record<string, unknown>): void
+
+  /**
+   * Log a trace entry
+   * @param message The log message
+   * @param data Additional structured data
+   */
+  trace(message: string, data?: Record<string, unknown>): void
+
+  /**
+   * Log a debug entry
+   * @param message The log message
+   * @param data Additional structured data
+   */
+  debug(message: string, data?: Record<string, unknown>): void
+
+  /**
+   * Log an info entry
+   * @param message The log message
+   * @param data Additional structured data
+   */
+  info(message: string, data?: Record<string, unknown>): void
+
+  /**
+   * Log a warning entry
+   * @param message The log message
+   * @param data Additional structured data
+   */
+  warn(message: string, data?: Record<string, unknown>): void
+
+  /**
+   * Log an error entry
+   * @param message The log message
+   * @param data Additional structured data
+   */
+  error(message: string, data?: Record<string, unknown>): void
+
+  /**
+   * Create a child logger with additional context
+   * @param context Additional context to include in all logs
+   * @returns A new logger with the added context
+   */
+  child(context: Record<string, unknown>): Logger
+}
+
+/**
  * Execution graph node representing a step ready for execution
  */
 export interface ExecutionNode {
@@ -199,6 +284,12 @@ export interface OrchestrationOptions {
    * Resilience adapter for applying policies
    */
   resilienceAdapter: ResilienceAdapter
+
+  /**
+   * Optional logger for structured logging
+   * If not provided, a no-op logger will be used
+   */
+  logger?: Logger
 
   /**
    * Global concurrency limit

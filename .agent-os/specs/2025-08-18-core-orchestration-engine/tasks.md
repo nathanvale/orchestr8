@@ -32,13 +32,13 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
 
 **High Priority Gaps:**
 
-- [ ] True timeout enforcement for expression evaluation
-- [ ] Expression expansion 64KB limit enforcement
-- [ ] Dependency failure skip semantics
+- [x] ✅ True timeout enforcement for expression evaluation (COMPLETED)
+- [x] ✅ Expression expansion 64KB limit enforcement (COMPLETED)
+- [x] ✅ Dependency failure skip semantics (COMPLETED)
 
 **Medium Priority Gaps:**
 
-- [ ] Structured logging implementation
+- [x] ✅ Structured logging implementation (COMPLETED)
 - [ ] Resilience composition order finalization
 - [ ] Mapping parser robustness improvements
 
@@ -83,23 +83,23 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
   - [x] 4.5 Test pathological expressions and memory bombs
   - [x] 4.6 Verify all security limits are enforced
 
-- [ ] 5. **HIGH: Dependency Failure Semantics** (Behavioral Clarity)
-  - [ ] 5.1 Write tests for skip behavior when dependencies fail
-  - [ ] 5.2 Write tests for skip behavior when dependencies are cancelled
-  - [ ] 5.3 Define clear contract: skip on "failed" and "cancelled" or only "skipped"
-  - [ ] 5.4 Implement chosen semantics consistently
-  - [ ] 5.5 Document decision in dependency-semantics.md sub-spec
-  - [ ] 5.6 Verify all dependency scenarios handle correctly
+- [x] 5. **HIGH: Dependency Failure Semantics** (Behavioral Clarity ✅ COMPLETED)
+  - [x] 5.1 Write tests for skip behavior when dependencies fail
+  - [x] 5.2 Write tests for skip behavior when dependencies are cancelled
+  - [x] 5.3 Define clear contract: skip on "failed" and "cancelled" or only "skipped"
+  - [x] 5.4 Implement chosen semantics consistently
+  - [x] 5.5 Document decision in dependency-semantics.md sub-spec
+  - [x] 5.6 Verify all dependency scenarios handle correctly
 
-- [ ] 6. **MEDIUM: Structured Logging Implementation** (Observability)
-  - [ ] 6.1 Define Logger interface in core with child() and log methods
-  - [ ] 6.2 Accept logger?: Logger in OrchestrationOptions
-  - [ ] 6.3 Implement no-op default logger
-  - [ ] 6.4 Add workflow.start/end logs with executionId correlation
-  - [ ] 6.5 Add step.start/success/error logs with stepId and timing
-  - [ ] 6.6 Add level.start and level.fail-fast logs
-  - [ ] 6.7 Write tests with memory logger to verify log fields
-  - [ ] 6.8 Document Pino adapter pattern for consumers
+- [x] 6. **MEDIUM: Structured Logging Implementation** (Observability ✅ COMPLETED)
+  - [x] 6.1 Define Logger interface in core with child() and log methods
+  - [x] 6.2 Accept logger?: Logger in OrchestrationOptions
+  - [x] 6.3 Implement no-op default logger
+  - [x] 6.4 Add workflow.start/end logs with executionId correlation
+  - [x] 6.5 Add step.start/success/error logs with stepId and timing
+  - [x] 6.6 Add level.start and level.fail-fast logs
+  - [x] 6.7 Write tests with memory logger to verify log fields
+  - [x] 6.8 Document Pino adapter pattern for consumers
 
 - [ ] 7. **MEDIUM: Resilience Composition Order** (Reliability)
   - [ ] 7.1 Write tests for retry-cb-timeout composition order

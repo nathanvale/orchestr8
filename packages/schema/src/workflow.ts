@@ -280,6 +280,11 @@ export interface StepResult {
    * If this result is a fallback for another failed step
    */
   aliasFor?: string
+
+  /**
+   * Reason why step was skipped (for debugging)
+   */
+  skipReason?: string
 }
 
 /**

@@ -1,22 +1,39 @@
 # Dependency Failure Semantics
 
 > Created: 2025-08-18
-> Status: Specification Required
+> Status: ✅ IMPLEMENTED
 > Scope: @orchestr8/core step dependency resolution
+> Implementation Date: 2025-08-18
 
 ## Purpose
 
-Define clear semantics for step execution when dependencies are in various failure states. Current implementation only skips steps when dependencies are "skipped", but behavior for "failed" and "cancelled" dependencies needs clarification.
+Define clear semantics for step execution when dependencies are in various failure states. ✅ **COMPLETED**: Implemented Option A (skip on any non-completed dependency) with comprehensive test coverage.
 
-## Current Behavior
+## ✅ Implemented Behavior
 
-Steps are skipped only when a dependency has status "skipped":
+Steps are skipped when ANY dependency is not in "completed" status, with fallback aliasing support:
 
 ```typescript
-// Current implementation
-if (step.dependsOn?.some(dep => results.get(dep)?.status === 'skipped')) {
-  // Skip this step
-  return { status: 'skipped', ... }
+// ✅ IMPLEMENTED - Current behavior
+for (const dep of node.dependsOn) {
+  const depResult = context.results.get(dep)
+  if (!depResult || depResult.status !== 'completed') {
+    // Check if there's a successful fallback that aliases for this dependency
+    const hasSuccessfulFallback = Array.from(context.results.values()).some(
+      (r) => r.aliasFor === dep && r.status === 'completed',
+    )
+
+    if (!hasSuccessfulFallback) {
+      // Skip this step if dependency not completed and no successful fallback
+      return {
+        stepId: node.stepId,
+        status: 'skipped',
+        skipReason: 'dependency-not-completed',
+        startTime,
+        endTime: new Date().toISOString(),
+      }
+    }
+  }
 }
 ```
 
@@ -143,10 +160,43 @@ Required test coverage:
 5. Step with all completed dependencies → executes normally
 6. Multi-level dependency chains with various failure modes
 
-## Acceptance Criteria
+## ✅ Acceptance Criteria
 
-- [ ] Clear decision documented and approved
-- [ ] Implementation matches chosen semantics
-- [ ] All test scenarios pass
-- [ ] Documentation updated
-- [ ] No regression in existing tests
+- [x] **Clear decision documented and approved** - Option A implemented
+- [x] **Implementation matches chosen semantics** - Skip on any non-completed dependency
+- [x] **All test scenarios pass** - 7 comprehensive test cases added
+- [x] **Documentation updated** - This document and technical spec updated
+- [x] **No regression in existing tests** - All 71 tests passing
+- [x] **Fallback compatibility** - Works correctly with fallback aliasing mechanism
+- [x] **skipReason field added** - Enhanced debugging with specific skip reasons
+- [x] **onError: continue support** - Workflow failure logic respects continue directive
+
+## ✅ Implementation Summary
+
+**Key Features Implemented:**
+
+1. **Dependency Check Logic**: Steps skip when `status !== 'completed'`
+2. **Fallback Support**: Successful fallbacks satisfy dependency requirements
+3. **Enhanced Debugging**: `skipReason` field with specific reasons:
+   - `'dependency-not-completed'` - Normal dependency failure
+   - `'condition-not-met'` - Conditional execution skipped
+   - `'level-failure'` - Skip due to level failure (fail-fast)
+   - `'workflow-cancelled'` - Skip due to workflow cancellation
+4. **onError Integration**: `onError: 'continue'` prevents workflow failure
+5. **Comprehensive Testing**: All dependency failure scenarios covered
+
+**Test Coverage:**
+
+- ✅ Step with failed dependency → skipped
+- ✅ Step with cancelled dependency → skipped
+- ✅ Step with skipped dependency → skipped
+- ✅ Step with mixed statuses → skipped
+- ✅ Step with all completed dependencies → executes normally
+- ✅ Multi-level dependency chains with failures
+- ✅ Special case: onError: continue prevents level failure
+
+**Files Modified:**
+
+- `packages/schema/src/workflow.ts` - Added `skipReason?: string` to StepResult
+- `packages/core/src/orchestration-engine.ts` - Updated dependency logic and failure detection
+- `packages/core/src/orchestration-engine.test.ts` - Added 7 comprehensive test cases

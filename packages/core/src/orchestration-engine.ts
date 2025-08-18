@@ -19,6 +19,7 @@ import type {
   AgentRegistry,
   ExecutionGraph,
   ExecutionNode,
+  Logger,
   OrchestrationEngine as IOrchestrationEngine,
   OrchestrationOptions,
   ResilienceAdapter,
@@ -26,6 +27,7 @@ import type {
 } from './types.js'
 
 import { evaluateCondition, resolveMapping } from './expression-evaluator.js'
+import { NoOpLogger } from './logger.js'
 
 /**
  * Internal execution context for the engine
@@ -47,6 +49,7 @@ interface InternalExecutionContext {
 export class OrchestrationEngine implements IOrchestrationEngine {
   private readonly agentRegistry: AgentRegistry
   private readonly resilienceAdapter: ResilienceAdapter
+  private readonly logger: Logger
   private readonly maxConcurrency: number
   private readonly maxResultBytesPerStep: number
   private readonly maxMetadataBytes: number
@@ -57,6 +60,7 @@ export class OrchestrationEngine implements IOrchestrationEngine {
   constructor(options: OrchestrationOptions) {
     this.agentRegistry = options.agentRegistry
     this.resilienceAdapter = options.resilienceAdapter
+    this.logger = options.logger ?? new NoOpLogger()
     this.maxConcurrency = options.maxConcurrency ?? 10
     this.maxResultBytesPerStep = options.maxResultBytesPerStep ?? 512 * 1024
     this.maxMetadataBytes = options.maxMetadataBytes ?? 128 * 1024
@@ -76,6 +80,20 @@ export class OrchestrationEngine implements IOrchestrationEngine {
     const executionId = randomUUID()
     const startTime = new Date().toISOString()
     const startTimestamp = Date.now()
+
+    // Create workflow logger with execution context
+    const workflowLogger = this.logger.child({
+      executionId,
+      workflowId: workflow.id,
+      workflowVersion: workflow.version,
+    })
+
+    workflowLogger.info('workflow.start', {
+      workflowName: workflow.name,
+      stepCount: workflow.steps.length,
+      variables: variables ?? {},
+      startTime,
+    })
 
     // Create internal execution context
     const context: InternalExecutionContext = {
@@ -105,7 +123,7 @@ export class OrchestrationEngine implements IOrchestrationEngine {
       const graph = this.buildExecutionGraph(workflow)
 
       // Execute workflow levels
-      await this.executeGraph(graph, context, workflow)
+      await this.executeGraph(graph, context, workflow, workflowLogger)
 
       // Collect results
       for (const [stepId, stepResult] of context.results) {
@@ -117,14 +135,21 @@ export class OrchestrationEngine implements IOrchestrationEngine {
         (r) => r.status === 'failed',
       )
 
-      // Check if failed steps have successful fallbacks
+      // Check if failed steps have successful fallbacks or onError: continue
       const unrecoverableFailures = failedSteps.filter((failedStep) => {
         // Check if any other step is an alias for this failed step
         const hasSuccessfulFallback = Array.from(context.results.values()).some(
           (r) => r.aliasFor === failedStep.stepId && r.status === 'completed',
         )
-        // Only count as failure if no successful fallback
-        return !hasSuccessfulFallback
+
+        // Check if the failed step has onError: continue
+        const workflowStep = workflow.steps.find(
+          (s) => s.id === failedStep.stepId,
+        )
+        const hasContinueError = workflowStep?.onError === 'continue'
+
+        // Only count as failure if no successful fallback and not configured to continue
+        return !hasSuccessfulFallback && !hasContinueError
       })
 
       if (unrecoverableFailures.length > 0) {
@@ -146,6 +171,15 @@ export class OrchestrationEngine implements IOrchestrationEngine {
     // Set final timing
     result.endTime = new Date().toISOString()
     result.duration = Date.now() - startTimestamp
+
+    // Log workflow completion
+    workflowLogger.info('workflow.end', {
+      status: result.status,
+      stepCount: Object.keys(result.steps).length,
+      duration: result.duration,
+      endTime: result.endTime,
+      errorCount: result.errors?.length ?? 0,
+    })
 
     return result
   }
@@ -331,12 +365,19 @@ export class OrchestrationEngine implements IOrchestrationEngine {
     graph: ExecutionGraph,
     context: InternalExecutionContext,
     workflow: Workflow,
+    logger: Logger,
   ): Promise<void> {
     if (!graph.levels) return
 
     for (let levelIndex = 0; levelIndex < graph.levels.length; levelIndex++) {
       const level = graph.levels[levelIndex]
       if (!level) continue // TypeScript guard for noUncheckedIndexedAccess
+
+      logger.debug('level.start', {
+        levelIndex,
+        stepCount: level.length,
+        stepIds: level.map((node) => node.stepId),
+      })
 
       // Check if workflow is cancelled
       if (context.abortSignal.aborted) {
@@ -380,7 +421,7 @@ export class OrchestrationEngine implements IOrchestrationEngine {
       }
 
       // Execute level
-      await this.executeLevel(level, context, workflow)
+      await this.executeLevel(level, context, workflow, logger)
 
       // Check if workflow was cancelled during level execution
       if (context.abortSignal.aborted) {
@@ -399,6 +440,7 @@ export class OrchestrationEngine implements IOrchestrationEngine {
                 status: 'skipped',
                 startTime: new Date().toISOString(),
                 endTime: new Date().toISOString(),
+                skipReason: 'workflow-cancelled',
               })
             }
           }
@@ -409,7 +451,9 @@ export class OrchestrationEngine implements IOrchestrationEngine {
       // Check for failures with fail-fast semantics
       const levelFailures = level
         .map((node) => context.results.get(node.stepId))
-        .filter((r) => r && r.status === 'failed')
+        .filter(
+          (r): r is StepResult => r !== undefined && r.status === 'failed',
+        )
 
       if (levelFailures.length > 0) {
         // Check if any failed step has onError: 'fail' (default)
@@ -419,6 +463,14 @@ export class OrchestrationEngine implements IOrchestrationEngine {
         })
 
         if (shouldFailFast) {
+          logger.warn('level.fail-fast', {
+            levelIndex,
+            failedSteps: levelFailures.map((f) => ({
+              stepId: f.stepId,
+              error: f.error?.message ?? 'Unknown error',
+            })),
+          })
+
           // Cancel remaining steps in this level
           for (const node of level) {
             const result = context.results.get(node.stepId)
@@ -450,6 +502,7 @@ export class OrchestrationEngine implements IOrchestrationEngine {
                   status: 'skipped',
                   startTime: new Date().toISOString(),
                   endTime: new Date().toISOString(),
+                  skipReason: 'level-failure',
                 })
               }
             }
@@ -467,6 +520,7 @@ export class OrchestrationEngine implements IOrchestrationEngine {
     steps: ExecutionNode[],
     context: InternalExecutionContext,
     workflow: Workflow,
+    logger: Logger,
   ): Promise<void> {
     // Create an abort controller for this level
     const levelAbortController = new AbortController()
@@ -491,7 +545,7 @@ export class OrchestrationEngine implements IOrchestrationEngine {
             abortSignal: combinedSignal,
           }
 
-          await this.executeStep(node, stepContext, workflow)
+          await this.executeStep(node, stepContext, workflow, logger)
 
           // Check if this step failed with onError: 'fail'
           const result = context.results.get(node.stepId)
@@ -543,7 +597,13 @@ export class OrchestrationEngine implements IOrchestrationEngine {
       ) {
         // Try to execute fallback now that level is complete
         try {
-          await this.executeFallback(node, context, workflow, result.error!)
+          await this.executeFallback(
+            node,
+            context,
+            workflow,
+            result.error!,
+            logger,
+          )
         } catch {
           // Fallback failed, keep original failure
         }
@@ -558,29 +618,59 @@ export class OrchestrationEngine implements IOrchestrationEngine {
     node: ExecutionNode,
     context: InternalExecutionContext,
     workflow: Workflow,
+    logger: Logger,
   ): Promise<void> {
     const startTime = new Date().toISOString()
+
+    // Create step logger with context
+    const stepLogger = logger.child({
+      stepId: node.stepId,
+      agentId: node.agentId,
+    })
+
+    stepLogger.debug('step.start', {
+      startTime,
+      dependencies: node.dependsOn,
+      onError: node.onError,
+    })
 
     // Check if this step has already been executed (e.g., as a fallback)
     const existingResult = context.results.get(node.stepId)
     if (existingResult && existingResult.status === 'completed') {
       // Step already executed successfully, skip
+      stepLogger.debug('step.skip', {
+        reason: 'already-executed',
+      })
       return
     }
 
     try {
-      // Check if dependencies were completed (not skipped)
+      // Check if dependencies were completed (not skipped, failed, or cancelled)
       for (const dep of node.dependsOn) {
         const depResult = context.results.get(dep)
-        if (!depResult || depResult.status === 'skipped') {
-          // Skip this step if any dependency was skipped
-          context.results.set(node.stepId, {
-            stepId: node.stepId,
-            status: 'skipped',
-            startTime,
-            endTime: new Date().toISOString(),
-          })
-          return
+        if (!depResult || depResult.status !== 'completed') {
+          // Check if there's a successful fallback that aliases for this dependency
+          const hasSuccessfulFallback = Array.from(
+            context.results.values(),
+          ).some((r) => r.aliasFor === dep && r.status === 'completed')
+
+          if (!hasSuccessfulFallback) {
+            // Skip this step if dependency not completed and no successful fallback
+            stepLogger.debug('step.skip', {
+              reason: 'dependency-not-completed',
+              dependency: dep,
+              dependencyStatus: depResult?.status,
+            })
+
+            context.results.set(node.stepId, {
+              stepId: node.stepId,
+              status: 'skipped',
+              startTime,
+              endTime: new Date().toISOString(),
+              skipReason: 'dependency-not-completed',
+            })
+            return
+          }
         }
       }
 
@@ -592,11 +682,17 @@ export class OrchestrationEngine implements IOrchestrationEngine {
           workflow,
         )
         if (!shouldExecute) {
+          stepLogger.debug('step.skip', {
+            reason: 'condition-not-met',
+            conditions: node.conditions,
+          })
+
           context.results.set(node.stepId, {
             stepId: node.stepId,
             status: 'skipped',
             startTime,
             endTime: new Date().toISOString(),
+            skipReason: 'condition-not-met',
           })
           return
         }
@@ -675,20 +771,42 @@ export class OrchestrationEngine implements IOrchestrationEngine {
       // Truncate output if needed
       const result = this.truncateResult(output)
 
+      const endTime = new Date().toISOString()
+      const duration = Date.now() - new Date(startTime).getTime()
+
       // Store result
       context.results.set(node.stepId, {
         stepId: node.stepId,
         status: 'completed',
         output: result.truncated ? undefined : output,
         startTime,
-        endTime: new Date().toISOString(),
+        endTime,
         ...result,
+      })
+
+      // Log successful completion
+      stepLogger.info('step.success', {
+        duration,
+        endTime,
+        truncated: result.truncated,
+        outputSize: result.originalSize,
       })
     } catch (error) {
       const executionError = this.normalizeError(error, node.stepId)
+      const endTime = new Date().toISOString()
+      const duration = Date.now() - new Date(startTime).getTime()
 
       // Check if this is a cancellation error
       const isCancelled = executionError.code === ExecutionErrorCode.CANCELLED
+
+      // Log step error
+      stepLogger.error('step.error', {
+        error: executionError.message,
+        errorCode: executionError.code,
+        duration,
+        endTime,
+        cancelled: isCancelled,
+      })
 
       // Handle error based on policy
       if (node.onError === 'fallback' && node.fallbackStepId && !isCancelled) {
@@ -730,6 +848,7 @@ export class OrchestrationEngine implements IOrchestrationEngine {
     context: InternalExecutionContext,
     workflow: Workflow,
     originalError: ExecutionError,
+    logger: Logger,
   ): Promise<void> {
     if (!originalNode.fallbackStepId) return
 
@@ -748,6 +867,13 @@ export class OrchestrationEngine implements IOrchestrationEngine {
     )
     if (existingFallbackResult) {
       if (existingFallbackResult.status === 'completed') {
+        // Log fallback execution (fallback already succeeded)
+        logger.info('step.fallback', {
+          originalStepId: originalNode.stepId,
+          fallbackStepId: originalNode.fallbackStepId,
+          originalError: originalError.message,
+        })
+
         // Fallback already succeeded, mark it as alias
         context.results.set(originalNode.fallbackStepId, {
           ...existingFallbackResult,
@@ -808,8 +934,15 @@ export class OrchestrationEngine implements IOrchestrationEngine {
       conditions: undefined, // TODO: Get from step options
     }
 
+    // Log fallback execution
+    logger.info('step.fallback', {
+      originalStepId: originalNode.stepId,
+      fallbackStepId: fallbackStep.id,
+      originalError: originalError.message,
+    })
+
     // Execute fallback
-    await this.executeStep(fallbackNode, context, workflow)
+    await this.executeStep(fallbackNode, context, workflow, logger)
 
     // If fallback succeeded, alias its output for the original step
     const fallbackResult = context.results.get(fallbackStep.id)

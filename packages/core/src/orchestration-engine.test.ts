@@ -1338,4 +1338,470 @@ describe('OrchestrationEngine', () => {
       expect(mockAgent2.execute).toHaveBeenCalled()
     })
   })
+
+  describe('dependency failure semantics', () => {
+    describe('skip behavior for failed dependencies', () => {
+      it('should skip step when dependency fails', async () => {
+        // Arrange
+        const workflow: Workflow = {
+          id: 'dep-fail-test',
+          name: 'Dependency Failure Test',
+          version: '1.0.0',
+          steps: [
+            {
+              id: 'failing-step',
+              type: 'agent',
+              agentId: 'failing-agent',
+            },
+            {
+              id: 'dependent-step',
+              type: 'agent',
+              agentId: 'dependent-agent',
+              dependsOn: ['failing-step'],
+            },
+          ],
+        }
+
+        const failingAgent: Agent = {
+          id: 'failing-agent',
+          name: 'Failing Agent',
+          execute: vi.fn().mockImplementation(async () => {
+            throw createExecutionError(
+              ExecutionErrorCode.RETRYABLE,
+              'Step failed',
+            )
+          }),
+        }
+
+        const dependentAgent: Agent = {
+          id: 'dependent-agent',
+          name: 'Dependent Agent',
+          execute: vi
+            .fn()
+            .mockImplementation(async () => ({ result: 'should not execute' })),
+        }
+
+        vi.mocked(mockAgentRegistry.getAgent).mockImplementation(async (id) => {
+          if (id === 'failing-agent') return failingAgent
+          if (id === 'dependent-agent') return dependentAgent
+          throw new Error(`Agent not found: ${id}`)
+        })
+
+        // Act
+        const result = await engine.execute(workflow)
+
+        // Assert
+        expect(result.status).toBe('failed')
+        expect(result.steps['failing-step'].status).toBe('failed')
+        expect(result.steps['dependent-step'].status).toBe('skipped')
+        expect(result.steps['dependent-step'].skipReason).toBe('level-failure')
+        expect(dependentAgent.execute).not.toHaveBeenCalled()
+      })
+
+      it('should skip step when dependency is cancelled', async () => {
+        // Arrange - Using onError: continue to avoid level failure
+        const workflow: Workflow = {
+          id: 'dep-cancel-test',
+          name: 'Dependency Cancellation Test',
+          version: '1.0.0',
+          steps: [
+            {
+              id: 'cancelled-step',
+              type: 'agent',
+              agentId: 'cancelled-agent',
+              onError: 'continue', // Prevent level failure
+            },
+            {
+              id: 'dependent-step',
+              type: 'agent',
+              agentId: 'dependent-agent',
+              dependsOn: ['cancelled-step'],
+            },
+          ],
+        }
+
+        const cancelledAgent: Agent = {
+          id: 'cancelled-agent',
+          name: 'Cancelled Agent',
+          execute: vi.fn().mockImplementation(async () => {
+            throw createExecutionError(
+              ExecutionErrorCode.CANCELLED,
+              'Step cancelled',
+            )
+          }),
+        }
+
+        const dependentAgent: Agent = {
+          id: 'dependent-agent',
+          name: 'Dependent Agent',
+          execute: vi
+            .fn()
+            .mockImplementation(async () => ({ result: 'should not execute' })),
+        }
+
+        vi.mocked(mockAgentRegistry.getAgent).mockImplementation(async (id) => {
+          if (id === 'cancelled-agent') return cancelledAgent
+          if (id === 'dependent-agent') return dependentAgent
+          throw new Error(`Agent not found: ${id}`)
+        })
+
+        // Act
+        const result = await engine.execute(workflow)
+
+        // Assert - Cancelled steps don't cause workflow failure if no other failures
+        expect(result.status).toBe('completed') // Workflow completes (cancelled steps don't count as failures)
+        expect(result.steps['cancelled-step'].status).toBe('cancelled') // CANCELLED errors remain cancelled
+        expect(result.steps['dependent-step'].status).toBe('skipped')
+        expect(result.steps['dependent-step'].skipReason).toBe(
+          'dependency-not-completed',
+        ) // Dependency logic applies
+        expect(dependentAgent.execute).not.toHaveBeenCalled()
+      })
+
+      it('should skip step when dependency is skipped', async () => {
+        // Arrange
+        const workflow: Workflow = {
+          id: 'dep-skip-test',
+          name: 'Dependency Skip Test',
+          version: '1.0.0',
+          steps: [
+            {
+              id: 'conditional-step',
+              type: 'agent',
+              agentId: 'conditional-agent',
+              if: 'variables.shouldExecute',
+            },
+            {
+              id: 'dependent-step',
+              type: 'agent',
+              agentId: 'dependent-agent',
+              dependsOn: ['conditional-step'],
+            },
+          ],
+        }
+
+        const conditionalAgent: Agent = {
+          id: 'conditional-agent',
+          name: 'Conditional Agent',
+          execute: vi
+            .fn()
+            .mockImplementation(async () => ({ result: 'conditional result' })),
+        }
+
+        const dependentAgent: Agent = {
+          id: 'dependent-agent',
+          name: 'Dependent Agent',
+          execute: vi
+            .fn()
+            .mockImplementation(async () => ({ result: 'should not execute' })),
+        }
+
+        vi.mocked(mockAgentRegistry.getAgent).mockImplementation(async (id) => {
+          if (id === 'conditional-agent') return conditionalAgent
+          if (id === 'dependent-agent') return dependentAgent
+          throw new Error(`Agent not found: ${id}`)
+        })
+
+        // Act - shouldExecute is false, so conditional-step gets skipped
+        const result = await engine.execute(workflow, { shouldExecute: false })
+
+        // Assert
+        expect(result.status).toBe('completed')
+        expect(result.steps['conditional-step'].status).toBe('skipped')
+        expect(result.steps['conditional-step'].skipReason).toBe(
+          'condition-not-met',
+        )
+        expect(result.steps['dependent-step'].status).toBe('skipped')
+        expect(result.steps['dependent-step'].skipReason).toBe(
+          'dependency-not-completed',
+        )
+        expect(conditionalAgent.execute).not.toHaveBeenCalled()
+        expect(dependentAgent.execute).not.toHaveBeenCalled()
+      })
+
+      it('should skip step when any dependency is not completed (mixed statuses)', async () => {
+        // Arrange
+        const workflow: Workflow = {
+          id: 'mixed-deps-test',
+          name: 'Mixed Dependencies Test',
+          version: '1.0.0',
+          steps: [
+            {
+              id: 'successful-step',
+              type: 'agent',
+              agentId: 'success-agent',
+            },
+            {
+              id: 'failing-step',
+              type: 'agent',
+              agentId: 'failing-agent',
+              onError: 'continue', // Prevent level failure
+            },
+            {
+              id: 'dependent-step',
+              type: 'agent',
+              agentId: 'dependent-agent',
+              dependsOn: ['successful-step', 'failing-step'],
+            },
+          ],
+        }
+
+        const successAgent: Agent = {
+          id: 'success-agent',
+          name: 'Success Agent',
+          execute: vi
+            .fn()
+            .mockImplementation(async () => ({ result: 'success' })),
+        }
+
+        const failingAgent: Agent = {
+          id: 'failing-agent',
+          name: 'Failing Agent',
+          execute: vi.fn().mockImplementation(async () => {
+            throw createExecutionError(
+              ExecutionErrorCode.RETRYABLE,
+              'Step failed',
+            )
+          }),
+        }
+
+        const dependentAgent: Agent = {
+          id: 'dependent-agent',
+          name: 'Dependent Agent',
+          execute: vi
+            .fn()
+            .mockImplementation(async () => ({ result: 'should not execute' })),
+        }
+
+        vi.mocked(mockAgentRegistry.getAgent).mockImplementation(async (id) => {
+          if (id === 'success-agent') return successAgent
+          if (id === 'failing-agent') return failingAgent
+          if (id === 'dependent-agent') return dependentAgent
+          throw new Error(`Agent not found: ${id}`)
+        })
+
+        // Act
+        const result = await engine.execute(workflow)
+
+        // Assert
+        expect(result.status).toBe('completed') // Workflow continues due to onError: continue
+        expect(result.steps['successful-step'].status).toBe('completed')
+        expect(result.steps['failing-step'].status).toBe('failed')
+        expect(result.steps['dependent-step'].status).toBe('skipped')
+        expect(result.steps['dependent-step'].skipReason).toBe(
+          'dependency-not-completed',
+        )
+        expect(successAgent.execute).toHaveBeenCalled()
+        expect(failingAgent.execute).toHaveBeenCalled()
+        expect(dependentAgent.execute).not.toHaveBeenCalled()
+      })
+
+      it('should execute step when all dependencies are completed', async () => {
+        // Arrange
+        const workflow: Workflow = {
+          id: 'all-deps-success-test',
+          name: 'All Dependencies Success Test',
+          version: '1.0.0',
+          steps: [
+            {
+              id: 'dep1',
+              type: 'agent',
+              agentId: 'agent1',
+            },
+            {
+              id: 'dep2',
+              type: 'agent',
+              agentId: 'agent2',
+            },
+            {
+              id: 'dependent-step',
+              type: 'agent',
+              agentId: 'dependent-agent',
+              dependsOn: ['dep1', 'dep2'],
+            },
+          ],
+        }
+
+        const agent1: Agent = {
+          id: 'agent1',
+          name: 'Agent 1',
+          execute: vi
+            .fn()
+            .mockImplementation(async () => ({ result: 'dep1-result' })),
+        }
+
+        const agent2: Agent = {
+          id: 'agent2',
+          name: 'Agent 2',
+          execute: vi
+            .fn()
+            .mockImplementation(async () => ({ result: 'dep2-result' })),
+        }
+
+        const dependentAgent: Agent = {
+          id: 'dependent-agent',
+          name: 'Dependent Agent',
+          execute: vi
+            .fn()
+            .mockImplementation(async () => ({ result: 'dependent-result' })),
+        }
+
+        vi.mocked(mockAgentRegistry.getAgent).mockImplementation(async (id) => {
+          if (id === 'agent1') return agent1
+          if (id === 'agent2') return agent2
+          if (id === 'dependent-agent') return dependentAgent
+          throw new Error(`Agent not found: ${id}`)
+        })
+
+        // Act
+        const result = await engine.execute(workflow)
+
+        // Assert
+        expect(result.status).toBe('completed')
+        expect(result.steps.dep1.status).toBe('completed')
+        expect(result.steps.dep2.status).toBe('completed')
+        expect(result.steps['dependent-step'].status).toBe('completed')
+        expect(agent1.execute).toHaveBeenCalled()
+        expect(agent2.execute).toHaveBeenCalled()
+        expect(dependentAgent.execute).toHaveBeenCalled()
+      })
+
+      it('should handle multi-level dependency chains with failures', async () => {
+        // Arrange
+        const workflow: Workflow = {
+          id: 'multi-level-deps-test',
+          name: 'Multi-Level Dependencies Test',
+          version: '1.0.0',
+          steps: [
+            {
+              id: 'level1',
+              type: 'agent',
+              agentId: 'agent1',
+            },
+            {
+              id: 'level2',
+              type: 'agent',
+              agentId: 'agent2',
+              dependsOn: ['level1'],
+            },
+            {
+              id: 'level3',
+              type: 'agent',
+              agentId: 'agent3',
+              dependsOn: ['level2'],
+            },
+          ],
+        }
+
+        const agent1: Agent = {
+          id: 'agent1',
+          name: 'Agent 1',
+          execute: vi.fn().mockImplementation(async () => {
+            throw createExecutionError(
+              ExecutionErrorCode.RETRYABLE,
+              'Level 1 failed',
+            )
+          }),
+        }
+
+        const agent2: Agent = {
+          id: 'agent2',
+          name: 'Agent 2',
+          execute: vi
+            .fn()
+            .mockImplementation(async () => ({ result: 'should not execute' })),
+        }
+
+        const agent3: Agent = {
+          id: 'agent3',
+          name: 'Agent 3',
+          execute: vi
+            .fn()
+            .mockImplementation(async () => ({ result: 'should not execute' })),
+        }
+
+        vi.mocked(mockAgentRegistry.getAgent).mockImplementation(async (id) => {
+          if (id === 'agent1') return agent1
+          if (id === 'agent2') return agent2
+          if (id === 'agent3') return agent3
+          throw new Error(`Agent not found: ${id}`)
+        })
+
+        // Act
+        const result = await engine.execute(workflow)
+
+        // Assert
+        expect(result.status).toBe('failed')
+        expect(result.steps.level1.status).toBe('failed')
+        expect(result.steps.level2.status).toBe('skipped')
+        expect(result.steps.level2.skipReason).toBe('level-failure')
+        expect(result.steps.level3.status).toBe('skipped')
+        expect(result.steps.level3.skipReason).toBe('level-failure')
+        expect(agent1.execute).toHaveBeenCalled()
+        expect(agent2.execute).not.toHaveBeenCalled()
+        expect(agent3.execute).not.toHaveBeenCalled()
+      })
+
+      it('should use dependency-not-completed skipReason when onError: continue prevents level failure', async () => {
+        // Arrange - This test specifically verifies dependency-not-completed logic
+        const workflow: Workflow = {
+          id: 'dep-not-completed-test',
+          name: 'Dependency Not Completed Test',
+          version: '1.0.0',
+          steps: [
+            {
+              id: 'failing-dep',
+              type: 'agent',
+              agentId: 'failing-agent',
+              onError: 'continue', // This prevents level failure and allows dependency check
+            },
+            {
+              id: 'dependent-step',
+              type: 'agent',
+              agentId: 'dependent-agent',
+              dependsOn: ['failing-dep'],
+            },
+          ],
+        }
+
+        const failingAgent: Agent = {
+          id: 'failing-agent',
+          name: 'Failing Agent',
+          execute: vi.fn().mockImplementation(async () => {
+            throw createExecutionError(
+              ExecutionErrorCode.RETRYABLE,
+              'Dependency failed',
+            )
+          }),
+        }
+
+        const dependentAgent: Agent = {
+          id: 'dependent-agent',
+          name: 'Dependent Agent',
+          execute: vi
+            .fn()
+            .mockImplementation(async () => ({ result: 'should not execute' })),
+        }
+
+        vi.mocked(mockAgentRegistry.getAgent).mockImplementation(async (id) => {
+          if (id === 'failing-agent') return failingAgent
+          if (id === 'dependent-agent') return dependentAgent
+          throw new Error(`Agent not found: ${id}`)
+        })
+
+        // Act
+        const result = await engine.execute(workflow)
+
+        // Assert - This is where we expect dependency-not-completed
+        expect(result.status).toBe('completed') // Workflow continues due to onError: continue
+        expect(result.steps['failing-dep'].status).toBe('failed')
+        expect(result.steps['dependent-step'].status).toBe('skipped')
+        expect(result.steps['dependent-step'].skipReason).toBe(
+          'dependency-not-completed',
+        )
+        expect(failingAgent.execute).toHaveBeenCalled()
+        expect(dependentAgent.execute).not.toHaveBeenCalled()
+      })
+    })
+  })
 })
