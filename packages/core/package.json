@@ -23,8 +23,7 @@
   },
   "dependencies": {
     "@orchestr8/schema": "workspace:*",
-    "@orchestr8/resilience": "workspace:*",
-    "@orchestr8/agent-base": "workspace:*"
+    "@orchestr8/resilience": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^24.0.8",

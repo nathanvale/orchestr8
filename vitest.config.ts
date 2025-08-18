@@ -29,6 +29,7 @@ export default defineConfig({
     exclude: ['node_modules', 'dist', 'build', '.turbo'],
   },
   resolve: {
+    conditions: ['development', 'default'],
     alias: {
       '@orchestr8/core': path.resolve(dirname, 'packages/core/src'),
       '@orchestr8/resilience': path.resolve(dirname, 'packages/resilience/src'),

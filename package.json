@@ -20,11 +20,8 @@
     "clean": "turbo clean && rm -rf node_modules/.cache",
     "clean:all": "pnpm clean && rm -rf node_modules",
     "fresh": "pnpm clean:all && pnpm install",
-    "check": "turbo format:check lint type-check && turbo test -- --run"
-  },
-  "dependencies": {
-    "commander": "^14.0.0",
-    "zod": "^3.25.74"
+    "check": "turbo format:check lint type-check && turbo test -- --run",
+    "validate:dual-consumption": "node scripts/validate-dual-consumption.js"
   },
   "devDependencies": {
     "@eslint/js": "^9.30.0",
@@ -37,6 +34,7 @@
     "eslint": "^9.30.0",
     "eslint-config-prettier": "^10.1.5",
     "eslint-plugin-perfectionist": "^4.15.0",
+    "glob": "^11.0.3",
     "msw": "^2.10.2",
     "prettier": "3.6.2",
     "rimraf": "^6.0.1",
