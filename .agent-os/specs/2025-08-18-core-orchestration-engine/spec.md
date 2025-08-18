@@ -12,6 +12,7 @@ Implement the core orchestration engine that executes multi-step workflows with 
 **CURRENT STATUS**: Phase 1 core implementation COMPLETE. Phase 2 hardening in progress.
 
 **✅ Phase 1 Complete (Core Engine):**
+
 - OrchestrationEngine class fully implemented (859 lines)
 - Workflow execution with sequential/parallel patterns
 - Dependency resolution with topological sorting
@@ -21,6 +22,7 @@ Implement the core orchestration engine that executes multi-step workflows with 
 - Retry default policies
 
 **🔧 Phase 2 In Progress (Hardening):**
+
 - Cancellation propagation improvements needed
 - Expression expansion limits enforcement
 - Dependency failure semantics clarification
@@ -61,17 +63,12 @@ The engine should analyze the workflow graph, identify optimal execution strateg
 ### Phase 2: Hardening & Reliability (🔧 IN PROGRESS)
 
 **Critical (Blocking Issues):**
+
 1. **Cancellation Propagation** - Merge parent AbortSignal with level controller using AbortSignal.any
 
-**High Priority:**
-2. **True Timeout Enforcement** - Implement preemptive cancellation for expression evaluation (500ms limit)
-3. **Expression Expansion Limits** - Enforce 64KB max size during mapping resolution with byte counting
-4. **Dependency Failure Semantics** - Define and implement skip behavior for failed/cancelled dependencies
+**High Priority:** 2. **True Timeout Enforcement** - Implement preemptive cancellation for expression evaluation (500ms limit) 3. **Expression Expansion Limits** - Enforce 64KB max size during mapping resolution with byte counting 4. **Dependency Failure Semantics** - Define and implement skip behavior for failed/cancelled dependencies
 
-**Medium Priority:**
-5. **Structured Logging** - Wire Logger interface and emit lifecycle events (see sub-spec: `sub-specs/structured-logging.md`)
-6. **Resilience Composition** - Finalize order between retry/timeout/circuit breaker with consistent defaults
-7. **Mapping Parser Robustness** - Support quoted defaults and handle nested ?? expressions
+**Medium Priority:** 5. **Structured Logging** - Wire Logger interface and emit lifecycle events (see sub-spec: `sub-specs/structured-logging.md`) 6. **Resilience Composition** - Finalize order between retry/timeout/circuit breaker with consistent defaults 7. **Mapping Parser Robustness** - Support quoted defaults and handle nested ?? expressions
 
 ### Phase 3: Polish & Optimization (FUTURE)
 
@@ -91,17 +88,20 @@ The engine should analyze the workflow graph, identify optimal execution strateg
 ## Expected Deliverable
 
 ### Phase 1 (✅ Delivered):
+
 1. Working orchestration engine executing sequential and parallel workflows
 2. Integration with @orchestr8/schema workflow definitions
 3. Test coverage for core execution patterns
 
 ### Phase 2 (In Progress):
+
 1. Hardened cancellation and timeout enforcement
 2. Complete expression security with size limits
 3. Structured logging implementation with correlation
 4. Comprehensive test coverage >80% with edge cases
 
 ### Phase 3 (Future):
+
 1. Performance optimizations (<100ms p95 overhead)
 2. Complete documentation and invariants
 

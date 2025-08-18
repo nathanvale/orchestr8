@@ -26,12 +26,12 @@ Interface shape:
 
 Injection:
 
-- `options.logger?: Logger`  
+- `options.logger?: Logger`
 - `this.logger = options.logger ?? noopLogger`
 
 Correlations:
 
-- Use `executionId` as correlation id across all log lines.  
+- Use `executionId` as correlation id across all log lines.
 - Create child loggers for workflow (`{ executionId, workflow: { id, version, name } }`) and for steps (`{ stepId, agentId, type }`).
 
 ### Pino integration (consumer-owned)
@@ -40,8 +40,8 @@ Core avoids a hard dependency on Pino. Applications pass a Pino instance adapted
 
 Recommended Pino config (consumer side):
 
-- JSON logs by default; pretty-print in dev.  
-- Redact: `authorization`, `apiKey`, `token`, `password`, `secret`, `headers.authorization`.  
+- JSON logs by default; pretty-print in dev.
+- Redact: `authorization`, `apiKey`, `token`, `password`, `secret`, `headers.authorization`.
 - Level from env: `LOG_LEVEL` (default `info`).
 
 ## Event taxonomy
@@ -85,43 +85,43 @@ Resilience:
 
 Required fields on every log line:
 
-- timestamp (logger-provided)  
-- level  
-- msg  
-- executionId  
+- timestamp (logger-provided)
+- level
+- msg
+- executionId
 - where applicable: workflow.id/version/name, stepId, agentId, durationMs, code
 
 Redaction policy:
 
-- Never log full outputs when truncated; only emit metadata (truncated, originalSize, retainedBytes).  
-- Default redacted keys: `authorization`, `apiKey`, `token`, `password`, `secret`, `headers.authorization`.  
+- Never log full outputs when truncated; only emit metadata (truncated, originalSize, retainedBytes).
+- Default redacted keys: `authorization`, `apiKey`, `token`, `password`, `secret`, `headers.authorization`.
 - Allow consumer to extend via configuration.
 
 ## Configuration
 
-- LOG_LEVEL: `trace|debug|info|warn|error` (default `info`)  
-- LOG_PRETTY: `true|false` (default `false`)  
+- LOG_LEVEL: `trace|debug|info|warn|error` (default `info`)
+- LOG_PRETTY: `true|false` (default `false`)
 - LOG_REDACT: comma-separated extra keys to redact
 
 These envs are consumed by the application logger (Pino). Core only uses the injected `Logger`.
 
 ## Performance
 
-- Keep logs sparse at `info`. Use `debug` for verbose internals.  
-- Format-free structured fields; avoid expensive stringification of large payloads.  
+- Keep logs sparse at `info`. Use `debug` for verbose internals.
+- Format-free structured fields; avoid expensive stringification of large payloads.
 - No blocking I/O in core; rely on logger implementation for performance.
 
 ## Testing
 
-- Provide a memory logger in tests to capture entries.  
-- Validate presence of correlation fields (executionId, workflow.id, stepId).  
-- Ensure no sensitive fields leak in log lines.  
+- Provide a memory logger in tests to capture entries.
+- Validate presence of correlation fields (executionId, workflow.id, stepId).
+- Ensure no sensitive fields leak in log lines.
 - Verify expected events for success, failure, cancellation, and fallback aliasing.
 
 ## Acceptance criteria
 
-- Core accepts `logger?: Logger` and defaults to no-op.  
-- Engine emits workflow.start/end and step.start/success/error logs with required fields.  
-- Redaction policy documented; consumers can enable Pino redaction.  
-- Unit tests cover typical paths and assert required fields present.  
+- Core accepts `logger?: Logger` and defaults to no-op.
+- Engine emits workflow.start/end and step.start/success/error logs with required fields.
+- Redaction policy documented; consumers can enable Pino redaction.
+- Unit tests cover typical paths and assert required fields present.
 - No hard dependency on Pino in `@orchestr8/core`.
