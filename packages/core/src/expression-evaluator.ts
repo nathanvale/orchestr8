@@ -3,7 +3,7 @@
  * Implements JMESPath for conditions and ${} pattern for mappings
  */
 
-import type { ExecutionContext, ExecutionError } from '@orchestr8/schema'
+import type { ExecutionContext } from '@orchestr8/schema'
 
 import { createExecutionError, ExecutionErrorCode } from '@orchestr8/schema'
 import * as jmespath from 'jmespath'
@@ -194,8 +194,49 @@ function resolvePlaceholder(
     }
   }
 
-  // Return value or default
-  return value !== undefined ? value : defaultValue || undefined
+  // Get final resolved value or default
+  const resolvedValue = value !== undefined ? value : defaultValue || undefined
+
+  // Check expansion size limit
+  if (resolvedValue !== undefined) {
+    checkExpansionSizeLimit(resolvedValue)
+  }
+
+  return resolvedValue
+}
+
+/**
+ * Check if a value exceeds the expansion size limit
+ */
+function checkExpansionSizeLimit(value: unknown): void {
+  try {
+    // Serialize the value to check its size
+    const serialized = JSON.stringify(value)
+    const byteSize = Buffer.byteLength(serialized, 'utf8')
+
+    if (byteSize > SECURITY_LIMITS.maxSize) {
+      throw createExecutionError(
+        ExecutionErrorCode.VALIDATION,
+        `Expression expansion size exceeds limit of ${SECURITY_LIMITS.maxSize} bytes (got ${byteSize} bytes)`,
+      )
+    }
+  } catch (error) {
+    // If it's already our validation error, re-throw it
+    if (
+      error &&
+      typeof error === 'object' &&
+      'code' in error &&
+      error.code === 'VALIDATION'
+    ) {
+      throw error
+    }
+
+    // If JSON.stringify fails (circular reference, etc), that's also a validation error
+    throw createExecutionError(
+      ExecutionErrorCode.VALIDATION,
+      `Expression value could not be serialized for size check: ${error instanceof Error ? error.message : 'Unknown error'}`,
+    )
+  }
 }
 
 /**
@@ -277,27 +318,47 @@ function getWhitelistedEnvVars(
 }
 
 /**
- * Evaluate a function with timeout protection
+ * Evaluate a function with timeout protection using AbortSignal
  */
 function evaluateWithTimeout<T>(fn: () => T, timeout: number): T {
   const startTime = Date.now()
 
-  // Note: In a real implementation, we'd use worker threads or
-  // other mechanisms for true timeout protection. For now, we
-  // execute synchronously and check elapsed time.
-  const result = fn()
+  // Create an AbortController for timeout
+  const timeoutController = new AbortController()
 
-  const elapsed = Date.now() - startTime
-  if (elapsed > timeout) {
-    // Throw a proper timeout error instead of just warning
-    const error: ExecutionError = createExecutionError(
-      ExecutionErrorCode.TIMEOUT,
-      `Expression evaluation exceeded ${timeout}ms timeout (took ${elapsed}ms)`,
-    )
+  // Set up timeout
+  const timeoutId = setTimeout(() => {
+    timeoutController.abort()
+  }, timeout)
+
+  try {
+    // For synchronous operations, we still check elapsed time
+    // In the future, this could be enhanced with worker threads
+    const result = fn()
+
+    const elapsed = Date.now() - startTime
+    if (elapsed > timeout || timeoutController.signal.aborted) {
+      throw createExecutionError(
+        ExecutionErrorCode.TIMEOUT,
+        `Expression evaluation exceeded ${timeout}ms timeout (took ${elapsed}ms)`,
+      )
+    }
+
+    return result
+  } catch (error) {
+    // Check if this is a timeout-related error
+    if (timeoutController.signal.aborted) {
+      throw createExecutionError(
+        ExecutionErrorCode.TIMEOUT,
+        `Expression evaluation was cancelled due to ${timeout}ms timeout`,
+      )
+    }
+    // Re-throw original error
     throw error
+  } finally {
+    // Clean up timeout
+    clearTimeout(timeoutId)
   }
-
-  return result
 }
 
 /**

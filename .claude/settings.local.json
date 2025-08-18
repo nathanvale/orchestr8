@@ -45,10 +45,13 @@
       "Bash(perl:*)",
       "Bash(pnpm -F @orchestr8/core format)",
       "Bash(pnpm -F @orchestr8/core prettier:*)",
-      "mcp__wallaby__wallaby_coveredLinesForTest"
+      "mcp__wallaby__wallaby_coveredLinesForTest",
+      "Bash(afplay:*)"
     ],
     "deny": [],
     "ask": [],
-    "additionalDirectories": ["/Users/nathanvale"]
+    "additionalDirectories": [
+      "/Users/nathanvale"
+    ]
   }
 }

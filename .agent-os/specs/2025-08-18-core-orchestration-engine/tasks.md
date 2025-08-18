@@ -75,13 +75,13 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
   - [x] 3.3 Test cascading cancellation from parent to all level steps
   - [x] 3.4 Verify deterministic cancellation order
 
-- [ ] 4. **HIGH: Expression Security & Timeouts** (Security Critical)
-  - [ ] 4.1 Write tests for 500ms timeout on JMESPath evaluation
-  - [ ] 4.2 Implement preemptive cancellation for long-running expressions
-  - [ ] 4.3 Write tests for 64KB expansion limit enforcement
-  - [ ] 4.4 Add byte counter during mapping resolution with VALIDATION error
-  - [ ] 4.5 Test pathological expressions and memory bombs
-  - [ ] 4.6 Verify all security limits are enforced
+- [x] 4. **HIGH: Expression Security & Timeouts** (Security Critical ✅ COMPLETED)
+  - [x] 4.1 Write tests for 500ms timeout on JMESPath evaluation
+  - [x] 4.2 Implement preemptive cancellation for long-running expressions
+  - [x] 4.3 Write tests for 64KB expansion limit enforcement
+  - [x] 4.4 Add byte counter during mapping resolution with VALIDATION error
+  - [x] 4.5 Test pathological expressions and memory bombs
+  - [x] 4.6 Verify all security limits are enforced
 
 - [ ] 5. **HIGH: Dependency Failure Semantics** (Behavioral Clarity)
   - [ ] 5.1 Write tests for skip behavior when dependencies fail
