@@ -538,6 +538,293 @@ describe('OrchestrationEngine', () => {
       }
     })
 
+    it('should propagate parent signal cancellation to all level steps', async () => {
+      // Arrange
+      const workflow: Workflow = {
+        id: 'parent-cancel-workflow',
+        name: 'Parent Cancel Workflow',
+        version: '1.0.0',
+        steps: [
+          {
+            id: 'step1',
+            type: 'agent',
+            agentId: 'agent1',
+          },
+          {
+            id: 'step2',
+            type: 'agent',
+            agentId: 'agent2',
+          },
+          {
+            id: 'step3',
+            type: 'agent',
+            agentId: 'agent3',
+          },
+        ],
+      }
+
+      const abortController = new AbortController()
+      const executionPromises: Array<Promise<unknown>> = []
+
+      const createMockAgent = (id: string): Agent => ({
+        id,
+        name: `Agent ${id}`,
+        execute: vi.fn().mockImplementation(async (_, __, signal) => {
+          const promise = new Promise((resolve, reject) => {
+            // Simulate long-running work
+            const timeout = setTimeout(() => {
+              resolve({ result: `${id}-result` })
+            }, 200)
+
+            // Listen for cancellation
+            signal?.addEventListener('abort', () => {
+              clearTimeout(timeout)
+              reject(
+                createExecutionError(
+                  ExecutionErrorCode.CANCELLED,
+                  `${id} cancelled by signal`,
+                ),
+              )
+            })
+          })
+          executionPromises.push(promise)
+          return promise
+        }),
+      })
+
+      const mockAgent1 = createMockAgent('agent1')
+      const mockAgent2 = createMockAgent('agent2')
+      const mockAgent3 = createMockAgent('agent3')
+
+      vi.mocked(mockAgentRegistry.getAgent).mockImplementation(async (id) => {
+        if (id === 'agent1') return mockAgent1
+        if (id === 'agent2') return mockAgent2
+        if (id === 'agent3') return mockAgent3
+        throw createExecutionError(
+          ExecutionErrorCode.VALIDATION,
+          `Agent not found: ${id}`,
+        )
+      })
+
+      // Act
+      const promise = engine.execute(workflow, {}, abortController.signal)
+
+      // Cancel after all steps have started but before they complete
+      await new Promise((resolve) => setTimeout(resolve, 50))
+      abortController.abort()
+
+      const result = await promise
+
+      // Assert
+      expect(result.status).toBe('cancelled')
+
+      // All parallel steps should be cancelled
+      expect(result.steps.step1.status).toBe('cancelled')
+      expect(result.steps.step2.status).toBe('cancelled')
+      expect(result.steps.step3.status).toBe('cancelled')
+
+      // All agents should have been called (they started execution)
+      expect(mockAgent1.execute).toHaveBeenCalled()
+      expect(mockAgent2.execute).toHaveBeenCalled()
+      expect(mockAgent3.execute).toHaveBeenCalled()
+    })
+
+    it('should combine parent and level abort signals properly', async () => {
+      // Arrange
+      const workflow: Workflow = {
+        id: 'combined-signal-workflow',
+        name: 'Combined Signal Workflow',
+        version: '1.0.0',
+        steps: [
+          {
+            id: 'fail-fast',
+            type: 'agent',
+            agentId: 'failAgent',
+            onError: 'fail', // This will trigger level abort
+          },
+          {
+            id: 'parallel-step',
+            type: 'agent',
+            agentId: 'parallelAgent',
+          },
+        ],
+      }
+
+      const parentAbortController = new AbortController()
+      let parallelStepSignal: AbortSignal | undefined
+
+      const failAgent: Agent = {
+        id: 'failAgent',
+        name: 'Fail Agent',
+        execute: vi.fn().mockImplementation(async () => {
+          // Fail immediately to trigger level abort
+          throw createExecutionError(
+            ExecutionErrorCode.EXECUTION,
+            'Intentional failure',
+          )
+        }),
+      }
+
+      const parallelAgent: Agent = {
+        id: 'parallelAgent',
+        name: 'Parallel Agent',
+        execute: vi.fn().mockImplementation(async (_, __, signal) => {
+          parallelStepSignal = signal
+
+          return new Promise((resolve, reject) => {
+            // Wait for abort signal
+            const timeout = setTimeout(() => {
+              resolve({ result: 'should-not-complete' })
+            }, 500)
+
+            signal?.addEventListener('abort', () => {
+              clearTimeout(timeout)
+              reject(
+                createExecutionError(
+                  ExecutionErrorCode.CANCELLED,
+                  'Cancelled by combined signal',
+                ),
+              )
+            })
+          })
+        }),
+      }
+
+      vi.mocked(mockAgentRegistry.getAgent).mockImplementation(async (id) => {
+        if (id === 'failAgent') return failAgent
+        if (id === 'parallelAgent') return parallelAgent
+        throw createExecutionError(
+          ExecutionErrorCode.VALIDATION,
+          `Agent not found: ${id}`,
+        )
+      })
+
+      // Act
+      const result = await engine.execute(
+        workflow,
+        {},
+        parentAbortController.signal,
+      )
+
+      // Assert
+      expect(result.status).toBe('failed')
+      expect(result.steps['fail-fast'].status).toBe('failed')
+      expect(result.steps['parallel-step'].status).toBe('cancelled')
+
+      // The parallel step should have received an abort signal from level controller
+      expect(parallelStepSignal?.aborted).toBe(true)
+      expect(parallelAgent.execute).toHaveBeenCalled()
+    })
+
+    it('should handle cascading cancellation from parent to all active levels', async () => {
+      // Arrange
+      const workflow: Workflow = {
+        id: 'cascading-cancel-workflow',
+        name: 'Cascading Cancel Workflow',
+        version: '1.0.0',
+        steps: [
+          {
+            id: 'level1-step1',
+            type: 'agent',
+            agentId: 'agent1',
+          },
+          {
+            id: 'level1-step2',
+            type: 'agent',
+            agentId: 'agent2',
+          },
+          {
+            id: 'level2-step1',
+            type: 'agent',
+            agentId: 'agent3',
+            dependsOn: ['level1-step1'],
+          },
+          {
+            id: 'level2-step2',
+            type: 'agent',
+            agentId: 'agent4',
+            dependsOn: ['level1-step2'],
+          },
+        ],
+      }
+
+      const abortController = new AbortController()
+      let level1Step1Completed = false
+      let level1Step2Completed = false
+
+      const createDelayedAgent = (id: string, delay: number): Agent => ({
+        id,
+        name: `Agent ${id}`,
+        execute: vi.fn().mockImplementation(async (_, __, signal) => {
+          return new Promise((resolve, reject) => {
+            const timeout = setTimeout(() => {
+              if (id === 'agent1') level1Step1Completed = true
+              if (id === 'agent2') level1Step2Completed = true
+              resolve({ result: `${id}-result` })
+            }, delay)
+
+            signal?.addEventListener('abort', () => {
+              clearTimeout(timeout)
+              reject(
+                createExecutionError(
+                  ExecutionErrorCode.CANCELLED,
+                  `${id} cancelled`,
+                ),
+              )
+            })
+          })
+        }),
+      })
+
+      // Level 1 steps complete quickly
+      const mockAgent1 = createDelayedAgent('agent1', 10)
+      const mockAgent2 = createDelayedAgent('agent2', 10)
+      // Level 2 steps take longer
+      const mockAgent3 = createDelayedAgent('agent3', 200)
+      const mockAgent4 = createDelayedAgent('agent4', 200)
+
+      vi.mocked(mockAgentRegistry.getAgent).mockImplementation(async (id) => {
+        if (id === 'agent1') return mockAgent1
+        if (id === 'agent2') return mockAgent2
+        if (id === 'agent3') return mockAgent3
+        if (id === 'agent4') return mockAgent4
+        throw createExecutionError(
+          ExecutionErrorCode.VALIDATION,
+          `Agent not found: ${id}`,
+        )
+      })
+
+      // Act
+      const promise = engine.execute(workflow, {}, abortController.signal)
+
+      // Wait for level 1 to complete and level 2 to start
+      await new Promise((resolve) => setTimeout(resolve, 50))
+
+      // Cancel while level 2 is executing
+      abortController.abort()
+
+      const result = await promise
+
+      // Assert
+      expect(result.status).toBe('cancelled')
+
+      // Level 1 should have completed
+      expect(level1Step1Completed).toBe(true)
+      expect(level1Step2Completed).toBe(true)
+      expect(result.steps['level1-step1'].status).toBe('completed')
+      expect(result.steps['level1-step2'].status).toBe('completed')
+
+      // Level 2 should be cancelled
+      expect(result.steps['level2-step1'].status).toBe('cancelled')
+      expect(result.steps['level2-step2'].status).toBe('cancelled')
+
+      // All agents should have been called
+      expect(mockAgent1.execute).toHaveBeenCalled()
+      expect(mockAgent2.execute).toHaveBeenCalled()
+      expect(mockAgent3.execute).toHaveBeenCalled()
+      expect(mockAgent4.execute).toHaveBeenCalled()
+    })
+
     it('should enforce memory limits on step results', async () => {
       // Arrange
       const largeData = 'x'.repeat(600 * 1024) // 600KB string

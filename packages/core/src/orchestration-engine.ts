@@ -334,10 +334,12 @@ export class OrchestrationEngine implements IOrchestrationEngine {
   ): Promise<void> {
     if (!graph.levels) return
 
-    for (const level of graph.levels) {
+    for (let levelIndex = 0; levelIndex < graph.levels.length; levelIndex++) {
+      const level = graph.levels[levelIndex]
+
       // Check if workflow is cancelled
       if (context.abortSignal.aborted) {
-        // Mark remaining steps as cancelled
+        // For the current level, mark unfinished steps as cancelled
         for (const node of level) {
           if (!context.results.has(node.stepId)) {
             context.results.set(node.stepId, {
@@ -353,11 +355,53 @@ export class OrchestrationEngine implements IOrchestrationEngine {
             })
           }
         }
+
+        // For future levels, mark steps as skipped (they never started)
+        for (
+          let futureIndex = levelIndex + 1;
+          futureIndex < graph.levels.length;
+          futureIndex++
+        ) {
+          const futureLevel = graph.levels[futureIndex]
+          for (const node of futureLevel) {
+            if (!context.results.has(node.stepId)) {
+              context.results.set(node.stepId, {
+                stepId: node.stepId,
+                status: 'skipped',
+                startTime: new Date().toISOString(),
+                endTime: new Date().toISOString(),
+              })
+            }
+          }
+        }
         break
       }
 
       // Execute level
       await this.executeLevel(level, context, workflow)
+
+      // Check if workflow was cancelled during level execution
+      if (context.abortSignal.aborted) {
+        // Skip remaining levels (they never started)
+        for (
+          let futureIndex = levelIndex + 1;
+          futureIndex < graph.levels.length;
+          futureIndex++
+        ) {
+          const futureLevel = graph.levels[futureIndex]
+          for (const node of futureLevel) {
+            if (!context.results.has(node.stepId)) {
+              context.results.set(node.stepId, {
+                stepId: node.stepId,
+                status: 'skipped',
+                startTime: new Date().toISOString(),
+                endTime: new Date().toISOString(),
+              })
+            }
+          }
+        }
+        break
+      }
 
       // Check for failures with fail-fast semantics
       const levelFailures = level
@@ -421,10 +465,12 @@ export class OrchestrationEngine implements IOrchestrationEngine {
     // Create an abort controller for this level
     const levelAbortController = new AbortController()
 
-    // Combine with parent abort signal
-    const combinedSignal = context.abortSignal.aborted
-      ? context.abortSignal
-      : levelAbortController.signal
+    // Combine parent and level abort signals using AbortSignal.any
+    // This ensures both parent cancellation and level fail-fast work properly
+    const combinedSignal = AbortSignal.any([
+      context.abortSignal,
+      levelAbortController.signal,
+    ])
 
     // Execute steps in parallel with concurrency limit
     const promises: Promise<void>[] = []

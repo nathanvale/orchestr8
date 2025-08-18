@@ -32,7 +32,7 @@ if (step.dependsOn?.some(dep => {
   return status !== 'completed'
 })) {
   // Skip this step with appropriate reason
-  return { 
+  return {
     status: 'skipped',
     skipReason: 'dependency-not-completed',
     ...
@@ -41,6 +41,7 @@ if (step.dependsOn?.some(dep => {
 ```
 
 **Rationale:**
+
 - Simple mental model: steps only run when ALL dependencies succeeded
 - Prevents cascade of failures from propagating
 - Aligns with fail-fast philosophy
@@ -51,25 +52,25 @@ if (step.dependsOn?.some(dep => {
 Different behavior based on dependency status:
 
 ```typescript
-const failedDeps = step.dependsOn?.filter(dep => 
+const failedDeps = step.dependsOn?.filter(dep =>
   results.get(dep)?.status === 'failed'
 )
-const cancelledDeps = step.dependsOn?.filter(dep => 
+const cancelledDeps = step.dependsOn?.filter(dep =>
   results.get(dep)?.status === 'cancelled'
 )
-const skippedDeps = step.dependsOn?.filter(dep => 
+const skippedDeps = step.dependsOn?.filter(dep =>
   results.get(dep)?.status === 'skipped'
 )
 
 if (failedDeps.length > 0) {
   // Fail this step due to dependency failure
-  return { 
+  return {
     status: 'failed',
     error: { code: 'DEPENDENCY_FAILED', ... }
   }
 } else if (cancelledDeps.length > 0) {
   // Cancel this step due to dependency cancellation
-  return { 
+  return {
     status: 'cancelled',
     error: { code: 'DEPENDENCY_CANCELLED', ... }
   }
@@ -80,6 +81,7 @@ if (failedDeps.length > 0) {
 ```
 
 **Rationale:**
+
 - Preserves failure context through the graph
 - Allows different handling strategies per status
 - More complex but more flexible
@@ -87,7 +89,8 @@ if (failedDeps.length > 0) {
 ## Impact Analysis
 
 ### Option A Impact:
-- **Pros:** 
+
+- **Pros:**
   - Simpler implementation and testing
   - Easier to reason about workflow behavior
   - Natural circuit breaking on failures
@@ -96,6 +99,7 @@ if (failedDeps.length > 0) {
   - May hide root cause of failures
 
 ### Option B Impact:
+
 - **Pros:**
   - Rich error propagation
   - Can implement different recovery strategies

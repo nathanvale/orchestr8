@@ -27,14 +27,17 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
 **🔧 PHASE 2 HARDENING (In Progress):**
 
 **Critical Gaps:**
-- [ ] Cancellation propagation with AbortSignal.any
+
+- [x] ✅ Cancellation propagation with AbortSignal.any (COMPLETED)
 
 **High Priority Gaps:**
+
 - [ ] True timeout enforcement for expression evaluation
 - [ ] Expression expansion 64KB limit enforcement
 - [ ] Dependency failure skip semantics
 
 **Medium Priority Gaps:**
+
 - [ ] Structured logging implementation
 - [ ] Resilience composition order finalization
 - [ ] Mapping parser robustness improvements
@@ -66,11 +69,11 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
   - [x] 2.6 Implement memory bounds enforcement with truncation metadata
   - [x] 2.7 Verify parallel execution and memory management tests pass
 
-- [ ] 3. **CRITICAL: Cancellation Propagation Fix** (Blocking)
-  - [ ] 3.1 Write tests for parent signal propagation with AbortSignal.any
-  - [ ] 3.2 Combine parent AbortSignal with level AbortController
-  - [ ] 3.3 Test cascading cancellation from parent to all level steps
-  - [ ] 3.4 Verify deterministic cancellation order
+- [x] 3. **CRITICAL: Cancellation Propagation Fix** (✅ COMPLETED)
+  - [x] 3.1 Write tests for parent signal propagation with AbortSignal.any
+  - [x] 3.2 Combine parent AbortSignal with level AbortController
+  - [x] 3.3 Test cascading cancellation from parent to all level steps
+  - [x] 3.4 Verify deterministic cancellation order
 
 - [ ] 4. **HIGH: Expression Security & Timeouts** (Security Critical)
   - [ ] 4.1 Write tests for 500ms timeout on JMESPath evaluation

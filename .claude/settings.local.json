@@ -49,8 +49,6 @@
     ],
     "deny": [],
     "ask": [],
-    "additionalDirectories": [
-      "/Users/nathanvale"
-    ]
+    "additionalDirectories": ["/Users/nathanvale"]
   }
 }

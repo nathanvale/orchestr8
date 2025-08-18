@@ -21,14 +21,17 @@ This is the technical specification for the spec detailed in @.agent-os/specs/20
 **🔧 PHASE 2 GAPS (Hardening Required):**
 
 **Critical:**
+
 - **Cancellation Propagation**: Parent AbortSignal not merged with level controller - use AbortSignal.any
 
 **High Priority:**
+
 - **Timeout Enforcement**: Post-execution timeout check insufficient - need preemptive cancellation
 - **Expression Expansion**: 64KB limit not enforced during mapping resolution
 - **Dependency Semantics**: Unclear skip behavior for failed/cancelled dependencies
 
 **Medium Priority:**
+
 - **Structured Logging**: Logger interface defined but not wired into engine
 - **Resilience Composition**: Order between retry/timeout/circuit breaker needs finalization
 - **Default Parsing**: Naive split on '??' breaks with quoted/nested expressions
@@ -38,6 +41,7 @@ This is the technical specification for the spec detailed in @.agent-os/specs/20
 ### Critical Gaps
 
 **1. Cancellation Propagation (CRITICAL)**
+
 - **Issue**: Parent AbortSignal not combined with level AbortController
 - **Impact**: Parent cancellation may not propagate to all executing steps
 - **Solution**: Use `AbortSignal.any([parentSignal, levelController.signal])`
@@ -46,18 +50,21 @@ This is the technical specification for the spec detailed in @.agent-os/specs/20
 ### High Priority Gaps
 
 **2. True Timeout Enforcement**
+
 - **Issue**: Timeout checked after JMESPath execution completes
 - **Impact**: Long-running expressions can block event loop beyond 500ms limit
 - **Solution**: Implement preemptive cancellation (worker threads or cancellable evaluator)
 - **Location**: expression-evaluator.ts evaluateCondition() method
 
 **3. Expression Expansion Limits**
+
 - **Issue**: 64KB max expansion size not enforced during mapping resolution
 - **Impact**: Large expansions could cause memory issues
 - **Solution**: Add byte counter during resolution, throw VALIDATION error at limit
 - **Location**: expression-evaluator.ts resolveMapping() method
 
 **4. Dependency Failure Semantics**
+
 - **Issue**: Steps skip only when dependency is "skipped", not "failed" or "cancelled"
 - **Impact**: Unclear behavior in failure scenarios
 - **Solution**: Implement Option A from dependency-semantics.md (skip on any non-completed)
@@ -66,18 +73,21 @@ This is the technical specification for the spec detailed in @.agent-os/specs/20
 ### Medium Priority Gaps
 
 **5. Structured Logging**
+
 - **Issue**: Logger interface defined but not wired into engine
 - **Impact**: No observability for debugging production issues
 - **Solution**: Accept logger option and emit lifecycle events per structured-logging.md
 - **Location**: Throughout orchestration-engine.ts
 
 **6. Resilience Composition Order**
+
 - **Issue**: Composition order between retry/timeout/circuit breaker unclear
 - **Impact**: Inconsistent behavior across different policy combinations
 - **Solution**: Finalize order and document clearly
 - **Location**: ResilienceAdapter integration points
 
 **7. Mapping Parser Robustness**
+
 - **Issue**: Naive split on '??' breaks with quoted or nested expressions
 - **Impact**: Cannot use '??' in default values
 - **Solution**: Implement proper tokenizer for default value parsing
@@ -86,6 +96,7 @@ This is the technical specification for the spec detailed in @.agent-os/specs/20
 ### Low Priority Gaps
 
 **8. Code Cleanup**
+
 - Unused InternalExecutionContext.envWhitelist
 - Expression cache only used for deduplication
 - Map insertion order invariants undocumented
@@ -269,6 +280,7 @@ class OrchestrationEngine {
 ```
 
 **Known Issues to Address**:
+
 - executeLevel() should use AbortSignal.any to merge parent and level signals
 - Dependency skip logic needs clarification for failed/cancelled dependencies
 
