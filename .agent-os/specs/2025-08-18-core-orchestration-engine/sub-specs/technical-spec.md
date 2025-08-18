@@ -3,28 +3,92 @@
 This is the technical specification for the spec detailed in @.agent-os/specs/2025-08-18-core-orchestration-engine/spec.md
 
 > Created: 2025-08-18
-> Version: 3.0.0
+> Version: 4.0.0
 > Updated: 2025-08-18
-> Status: **CRITICAL GAPS IDENTIFIED** - Core engine implementation missing
+> Status: **Phase 1 Complete - Phase 2 Hardening In Progress**
 
-## Critical Implementation Gaps Identified
+## Implementation Status Summary
 
-**❌ MISSING CORE IMPLEMENTATION:**
+**✅ PHASE 1 COMPLETE (Core Engine):**
 
-- **OrchestrationEngine Class**: Main engine class not implemented - blocks all workflow execution
-- **Workflow Graph Building**: buildExecutionGraph() method missing - cannot parse or analyze workflows
-- **Step Execution Logic**: executeStep() and executeLevel() methods missing - no step coordination
-- **Dependency Resolution**: scheduleSteps() deterministic scheduling missing - no execution order planning
-- **Parallel Execution**: Promise.all coordination and fail-fast semantics missing - no concurrent execution
-- **Memory Bounds**: Result truncation and size enforcement not implemented - no memory safety
+- **OrchestrationEngine Class**: Fully implemented with 859 lines of production code
+- **Workflow Graph Building**: buildExecutionGraph() with topological sorting and cycle detection
+- **Step Execution Logic**: executeStep() and executeLevel() with parallel coordination
+- **Dependency Resolution**: scheduleSteps() with deterministic dependency-count + index ordering
+- **Parallel Execution**: Promise.all with fail-fast semantics and level-based cancellation
+- **Memory Bounds**: 512KB truncation with byte-accurate binary search implementation
 
-**⚠️ IMPLEMENTATION INCONSISTENCIES:**
+**🔧 PHASE 2 GAPS (Hardening Required):**
 
-- **Condition Error Handling**: Code returns false on errors vs spec requirement for ExecutionError with VALIDATION code
-- **Expression Mapping**: Naive parser splits on '??' without handling quoted defaults or nested expressions properly
-- **Security Limits**: 64KB expansion size limit defined but never enforced during mapping resolution
-- **Error Taxonomy**: Schema validation throws generic Error instead of ExecutionError with VALIDATION code
-- **ResilienceAdapter API**: Composition order approach needs final decision between Option A (apply/applyGlobalPolicies) vs Option B (applyPolicy only)
+**Critical:**
+- **Cancellation Propagation**: Parent AbortSignal not merged with level controller - use AbortSignal.any
+
+**High Priority:**
+- **Timeout Enforcement**: Post-execution timeout check insufficient - need preemptive cancellation
+- **Expression Expansion**: 64KB limit not enforced during mapping resolution
+- **Dependency Semantics**: Unclear skip behavior for failed/cancelled dependencies
+
+**Medium Priority:**
+- **Structured Logging**: Logger interface defined but not wired into engine
+- **Resilience Composition**: Order between retry/timeout/circuit breaker needs finalization
+- **Default Parsing**: Naive split on '??' breaks with quoted/nested expressions
+
+## Phase 2 Gap Analysis
+
+### Critical Gaps
+
+**1. Cancellation Propagation (CRITICAL)**
+- **Issue**: Parent AbortSignal not combined with level AbortController
+- **Impact**: Parent cancellation may not propagate to all executing steps
+- **Solution**: Use `AbortSignal.any([parentSignal, levelController.signal])`
+- **Location**: orchestration-engine.ts executeLevel() method
+
+### High Priority Gaps
+
+**2. True Timeout Enforcement**
+- **Issue**: Timeout checked after JMESPath execution completes
+- **Impact**: Long-running expressions can block event loop beyond 500ms limit
+- **Solution**: Implement preemptive cancellation (worker threads or cancellable evaluator)
+- **Location**: expression-evaluator.ts evaluateCondition() method
+
+**3. Expression Expansion Limits**
+- **Issue**: 64KB max expansion size not enforced during mapping resolution
+- **Impact**: Large expansions could cause memory issues
+- **Solution**: Add byte counter during resolution, throw VALIDATION error at limit
+- **Location**: expression-evaluator.ts resolveMapping() method
+
+**4. Dependency Failure Semantics**
+- **Issue**: Steps skip only when dependency is "skipped", not "failed" or "cancelled"
+- **Impact**: Unclear behavior in failure scenarios
+- **Solution**: Implement Option A from dependency-semantics.md (skip on any non-completed)
+- **Location**: orchestration-engine.ts executeStep() method
+
+### Medium Priority Gaps
+
+**5. Structured Logging**
+- **Issue**: Logger interface defined but not wired into engine
+- **Impact**: No observability for debugging production issues
+- **Solution**: Accept logger option and emit lifecycle events per structured-logging.md
+- **Location**: Throughout orchestration-engine.ts
+
+**6. Resilience Composition Order**
+- **Issue**: Composition order between retry/timeout/circuit breaker unclear
+- **Impact**: Inconsistent behavior across different policy combinations
+- **Solution**: Finalize order and document clearly
+- **Location**: ResilienceAdapter integration points
+
+**7. Mapping Parser Robustness**
+- **Issue**: Naive split on '??' breaks with quoted or nested expressions
+- **Impact**: Cannot use '??' in default values
+- **Solution**: Implement proper tokenizer for default value parsing
+- **Location**: expression-evaluator.ts parseExpression() method
+
+### Low Priority Gaps
+
+**8. Code Cleanup**
+- Unused InternalExecutionContext.envWhitelist
+- Expression cache only used for deduplication
+- Map insertion order invariants undocumented
 
 ## Technical Requirements
 
@@ -164,47 +228,49 @@ interface WorkflowResult {
 
 ## Core Components
 
-### OrchestrationEngine Class (❌ NOT IMPLEMENTED)
+### OrchestrationEngine Class (✅ IMPLEMENTED)
 
-**Current Status**: Class does not exist in @orchestr8/core - this is a critical blocking issue for MVP delivery.
+**Current Status**: Fully implemented in @orchestr8/core with complete workflow execution capabilities.
 
-**Required Implementation**: Main engine class that coordinates complete workflow execution:
+**Implemented Methods**:
 
 ```typescript
 class OrchestrationEngine {
-  // Main execution entry point - MISSING
+  // Main execution entry point - ✅ COMPLETE
   async execute(
     workflow: Workflow,
     context: ExecutionContext,
   ): Promise<WorkflowResult>
 
-  // Graph construction and analysis - MISSING
+  // Graph construction and analysis - ✅ COMPLETE
   private buildExecutionGraph(workflow: Workflow): ExecutionGraph
 
-  // Parallel level execution with fail-fast - MISSING
+  // Parallel level execution with fail-fast - ✅ COMPLETE (needs AbortSignal.any fix)
   private executeLevel(
     steps: WorkflowStep[],
     context: ExecutionContext,
   ): Promise<StepResult[]>
 
-  // Individual step execution with resilience - MISSING
+  // Individual step execution with resilience - ✅ COMPLETE
   private executeStep(
     step: WorkflowStep,
     context: ExecutionContext,
   ): Promise<StepResult>
 
-  // Deterministic scheduling algorithm - MISSING
+  // Deterministic scheduling algorithm - ✅ COMPLETE
   private scheduleSteps(
     steps: WorkflowStep[],
     completed: Set<string>,
   ): WorkflowStep[]
 
-  // Execution tracking - MISSING
+  // Execution tracking - ✅ COMPLETE
   getExecutionId(): string
 }
 ```
 
-**Impact**: Without this class, no workflows can be executed. This blocks the entire MVP Phase 1 deliverable.
+**Known Issues to Address**:
+- executeLevel() should use AbortSignal.any to merge parent and level signals
+- Dependency skip logic needs clarification for failed/cancelled dependencies
 
 ## Execution Semantics
 

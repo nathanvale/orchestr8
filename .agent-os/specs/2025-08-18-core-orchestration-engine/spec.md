@@ -2,36 +2,30 @@
 
 > Spec: Core Orchestration Engine - Sequential and Parallel Execution
 > Created: 2025-08-18
-> Status: Planning
+> Status: In Progress - Phase 2 Hardening
+> Last Updated: 2025-08-18
 
 ## Overview
 
-Implement the core orchestration engine that executes multi-step workflows with both sequential and parallel execution patterns. This engine will be the foundation of the @orchestr8 platform, enabling reliable coordination of agent tasks with proper dependency management and execution flow control.
+Implement the core orchestration engine that executes multi-step workflows with both sequential and parallel execution patterns. This engine is the foundation of the @orchestr8 platform, enabling reliable coordination of agent tasks with proper dependency management and execution flow control.
 
-**CURRENT STATUS**: Based on implementation review, **CRITICAL GAPS IDENTIFIED**:
+**CURRENT STATUS**: Phase 1 core implementation COMPLETE. Phase 2 hardening in progress.
 
-**✅ Completed:**
+**✅ Phase 1 Complete (Core Engine):**
+- OrchestrationEngine class fully implemented (859 lines)
+- Workflow execution with sequential/parallel patterns
+- Dependency resolution with topological sorting
+- Memory-bounded execution (512KB limits)
+- Strict condition mode support
+- Fallback aliasing semantics
+- Retry default policies
 
-- Repository prerequisites met (Node >=20, jmespath, engines)
-- Error taxonomy aligned with ExecutionError structure
-- Expression evaluator fixes implemented
-- API contract decisions finalized
-
-**❌ Critical Missing Implementation:**
-
-- **OrchestrationEngine class not implemented** - Core engine missing entirely
-- **Workflow execution logic missing** - Cannot execute workflows
-- **Dependency resolution missing** - No graph building or scheduling
-- **Parallel execution missing** - No concurrent step execution
-- **Memory management missing** - No bounded execution or truncation
-
-**⚠️ Implementation Issues Identified:**
-
-- Condition error handling inconsistent with spec requirements
-- ResilienceAdapter API needs final decision on composition order
-- Mapping expression parser is naive and incomplete
-- Max expansion size (64KB) not enforced
-- Schema validation errors not using ExecutionError taxonomy
+**🔧 Phase 2 In Progress (Hardening):**
+- Cancellation propagation improvements needed
+- Expression expansion limits enforcement
+- Dependency failure semantics clarification
+- Resilience composition order finalization
+- Structured logging implementation
 
 ## User Stories
 
@@ -55,22 +49,35 @@ The engine should analyze the workflow graph, identify optimal execution strateg
 
 ## Spec Scope
 
-### Phase 1: Core Engine Implementation (CRITICAL - BLOCKS MVP)
+### Phase 1: Core Engine Implementation (✅ COMPLETED)
 
-1. **OrchestrationEngine Class** - Implement main engine with execute() method and workflow coordination
-2. **Execution Graph Building** - Parse workflow AST and build dependency graph with cycle detection
-3. **Deterministic Scheduling** - Implement topological sorting and level-based execution planning
-4. **Parallel Execution Manager** - Implement concurrent step execution with Promise.all and fail-fast semantics
-5. **Memory Management** - Implement 512KB per-step limits with truncation metadata and JSON-safe serialization
-6. **AbortSignal Integration** - Implement cancellation propagation throughout execution chain
+1. **OrchestrationEngine Class** - Main engine with execute() method and workflow coordination
+2. **Execution Graph Building** - Workflow AST parsing and dependency graph with cycle detection
+3. **Deterministic Scheduling** - Topological sorting and level-based execution planning
+4. **Parallel Execution Manager** - Concurrent step execution with Promise.all and fail-fast semantics
+5. **Memory Management** - 512KB per-step limits with truncation metadata and JSON-safe serialization
+6. **AbortSignal Integration** - Cancellation propagation throughout execution chain
 
-### Phase 2: Resilience & Error Handling Hardening
+### Phase 2: Hardening & Reliability (🔧 IN PROGRESS)
 
-1. **Condition Error Handling** - Implement strict mode for condition evaluation with ExecutionError consistency
-2. **ResilienceAdapter Integration** - Finalize composition order API and implement policy application
-3. **Expression Parser Improvements** - Implement robust default value parsing and enforce 64KB expansion limits
-4. **Schema Error Taxonomy** - Ensure all validation errors use ExecutionError with VALIDATION code
-5. **Fallback Result Aliasing** - Implement complete fallback execution and dependency resolution semantics
+**Critical (Blocking Issues):**
+1. **Cancellation Propagation** - Merge parent AbortSignal with level controller using AbortSignal.any
+
+**High Priority:**
+2. **True Timeout Enforcement** - Implement preemptive cancellation for expression evaluation (500ms limit)
+3. **Expression Expansion Limits** - Enforce 64KB max size during mapping resolution with byte counting
+4. **Dependency Failure Semantics** - Define and implement skip behavior for failed/cancelled dependencies
+
+**Medium Priority:**
+5. **Structured Logging** - Wire Logger interface and emit lifecycle events (see sub-spec: `sub-specs/structured-logging.md`)
+6. **Resilience Composition** - Finalize order between retry/timeout/circuit breaker with consistent defaults
+7. **Mapping Parser Robustness** - Support quoted defaults and handle nested ?? expressions
+
+### Phase 3: Polish & Optimization (FUTURE)
+
+1. **Expression Cache Optimization** - Pre-parse and validate expression caching
+2. **Environment Whitelist Cleanup** - Wire or remove unused envWhitelist in InternalExecutionContext
+3. **Documentation** - Document Map insertion order invariants for deterministic scheduling
 
 ## Out of Scope
 
@@ -79,12 +86,24 @@ The engine should analyze the workflow graph, identify optimal execution strateg
 - Workflow validation - handled by @orchestr8/schema package
 - Execution journaling - will be added in a separate spec
 - REST API endpoints - planned for Phase 3
+- Observability beyond logs (metrics/traces) - tracked separately
 
 ## Expected Deliverable
 
-1. A working orchestration engine that can execute both sequential and parallel workflows defined in the workflow AST format
-2. Comprehensive test coverage demonstrating execution of complex workflow patterns with proper result handling
-3. Integration with existing @orchestr8/schema workflow definitions and validation
+### Phase 1 (✅ Delivered):
+1. Working orchestration engine executing sequential and parallel workflows
+2. Integration with @orchestr8/schema workflow definitions
+3. Test coverage for core execution patterns
+
+### Phase 2 (In Progress):
+1. Hardened cancellation and timeout enforcement
+2. Complete expression security with size limits
+3. Structured logging implementation with correlation
+4. Comprehensive test coverage >80% with edge cases
+
+### Phase 3 (Future):
+1. Performance optimizations (<100ms p95 overhead)
+2. Complete documentation and invariants
 
 ## Spec Documentation
 
@@ -95,9 +114,11 @@ The engine should analyze the workflow graph, identify optimal execution strateg
 - **Implementation Readiness Checklist**: @.agent-os/specs/2025-08-18-core-orchestration-engine/sub-specs/implementation-readiness.md
 - **Schema Semantics Alignment**: @.agent-os/specs/2025-08-18-core-orchestration-engine/sub-specs/schema-semantics-alignment.md
 
-### Implementation Documentation (Phase 1)
+### Implementation Documentation
 
 - **Tasks**: @.agent-os/specs/2025-08-18-core-orchestration-engine/tasks.md
 - **Technical Specification**: @.agent-os/specs/2025-08-18-core-orchestration-engine/sub-specs/technical-spec.md
 - **Engine Contracts**: @.agent-os/specs/2025-08-18-core-orchestration-engine/sub-specs/engine-contracts.md
 - **Tests Specification**: @.agent-os/specs/2025-08-18-core-orchestration-engine/sub-specs/tests.md
+- **Structured Logging**: @.agent-os/specs/2025-08-18-core-orchestration-engine/sub-specs/structured-logging.md
+- **Dependency Semantics**: @.agent-os/specs/2025-08-18-core-orchestration-engine/sub-specs/dependency-semantics.md

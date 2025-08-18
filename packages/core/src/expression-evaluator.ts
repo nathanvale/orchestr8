@@ -5,7 +5,7 @@
 
 import type { ExecutionContext, ExecutionError } from '@orchestr8/schema'
 
-import { createExecutionError } from '@orchestr8/schema'
+import { createExecutionError, ExecutionErrorCode } from '@orchestr8/schema'
 import * as jmespath from 'jmespath'
 
 /**
@@ -31,11 +31,13 @@ const PROTOTYPE_POLLUTION_KEYS = ['__proto__', 'constructor', 'prototype']
  * Evaluate a JMESPath condition expression
  * @param expression The JMESPath expression
  * @param context The execution context
+ * @param strictMode If true, throw validation errors for invalid expressions
  * @returns The evaluation result
  */
 export function evaluateCondition(
   expression: string,
   context: ExecutionContext,
+  strictMode = false,
 ): boolean {
   if (!expression) {
     return true // No condition means always true
@@ -67,8 +69,17 @@ export function evaluateCondition(
     if (error instanceof Error && error.message.includes('TIMEOUT')) {
       throw error
     }
-    // Log error and return false for invalid expressions
-    console.error(`Failed to evaluate condition: ${expression}`, error)
+
+    // In strict mode, throw validation error for invalid expressions
+    if (strictMode) {
+      throw createExecutionError(
+        ExecutionErrorCode.VALIDATION,
+        `Invalid condition expression: ${expression}`,
+        { cause: error as Error },
+      )
+    }
+
+    // Return false for invalid expressions (silent fail in non-strict mode)
     return false
   }
 }
@@ -280,7 +291,7 @@ function evaluateWithTimeout<T>(fn: () => T, timeout: number): T {
   if (elapsed > timeout) {
     // Throw a proper timeout error instead of just warning
     const error: ExecutionError = createExecutionError(
-      'TIMEOUT',
+      ExecutionErrorCode.TIMEOUT,
       `Expression evaluation exceeded ${timeout}ms timeout (took ${elapsed}ms)`,
     )
     throw error

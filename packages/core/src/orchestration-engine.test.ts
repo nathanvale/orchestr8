@@ -11,6 +11,7 @@ describe('OrchestrationEngine', () => {
   let mockAgentRegistry: AgentRegistry
   let mockResilienceAdapter: ResilienceAdapter
   let engine: OrchestrationEngine
+  let strictEngine: OrchestrationEngine
 
   beforeEach(() => {
     // Create mock agent registry
@@ -29,6 +30,13 @@ describe('OrchestrationEngine', () => {
     engine = new OrchestrationEngine({
       agentRegistry: mockAgentRegistry,
       resilienceAdapter: mockResilienceAdapter,
+    })
+
+    // Create strict mode engine instance
+    strictEngine = new OrchestrationEngine({
+      agentRegistry: mockAgentRegistry,
+      resilienceAdapter: mockResilienceAdapter,
+      strictConditions: true,
     })
   })
 
@@ -654,6 +662,393 @@ describe('OrchestrationEngine', () => {
         expect.any(Object),
         expect.any(AbortSignal),
       )
+    })
+  })
+
+  describe('fallback with dependencies', () => {
+    it('should check fallback dependencies before execution', async () => {
+      // Arrange
+      const workflow: Workflow = {
+        id: 'test-workflow',
+        name: 'Test Workflow',
+        version: '1.0.0',
+        steps: [
+          {
+            id: 'primary',
+            type: 'agent',
+            agentId: 'agent1',
+            onError: 'fallback',
+            fallbackStepId: 'backup',
+            input: { test: true },
+          },
+          {
+            id: 'dependency',
+            type: 'agent',
+            agentId: 'agent2',
+            input: { data: 'test' },
+          },
+          {
+            id: 'backup',
+            type: 'agent',
+            agentId: 'agent3',
+            dependsOn: ['dependency'], // Fallback depends on another step
+            input: { fallback: true },
+          },
+        ],
+      }
+
+      const mockAgent1: Agent = {
+        id: 'agent1',
+        name: 'Agent 1',
+        execute: vi.fn().mockRejectedValue(new Error('Primary failed')),
+      }
+
+      const mockAgent2: Agent = {
+        id: 'agent2',
+        name: 'Agent 2',
+        execute: vi.fn().mockImplementation(async () => ({ result: 'dep-ok' })),
+      }
+
+      const mockAgent3: Agent = {
+        id: 'agent3',
+        name: 'Agent 3',
+        execute: vi
+          .fn()
+          .mockImplementation(async () => ({ result: 'backup-ok' })),
+      }
+
+      vi.mocked(mockAgentRegistry.getAgent).mockImplementation(async (id) => {
+        if (id === 'agent1') return mockAgent1
+        if (id === 'agent2') return mockAgent2
+        if (id === 'agent3') return mockAgent3
+        throw new Error(`Agent not found: ${id}`)
+      })
+
+      // Act
+      const result = await engine.execute(workflow)
+
+      // Assert
+      expect(result.status).toBe('completed')
+      expect(result.steps.primary.status).toBe('failed')
+      expect(result.steps.dependency.status).toBe('completed')
+      expect(result.steps.backup.status).toBe('completed')
+      expect(result.steps.backup.aliasFor).toBe('primary')
+    })
+
+    it('should fail if fallback dependencies are not met', async () => {
+      // Arrange
+      const workflow: Workflow = {
+        id: 'test-workflow',
+        name: 'Test Workflow',
+        version: '1.0.0',
+        steps: [
+          {
+            id: 'primary',
+            type: 'agent',
+            agentId: 'agent1',
+            onError: 'fallback',
+            fallbackStepId: 'backup',
+            input: { test: true },
+          },
+          {
+            id: 'missing-dep',
+            type: 'agent',
+            agentId: 'agent2',
+            if: 'variables.shouldExecute', // Will be skipped
+            input: { data: 'test' },
+          },
+          {
+            id: 'backup',
+            type: 'agent',
+            agentId: 'agent3',
+            dependsOn: ['missing-dep'], // Depends on skipped step
+            input: { fallback: true },
+          },
+        ],
+      }
+
+      const mockAgent1: Agent = {
+        id: 'agent1',
+        name: 'Agent 1',
+        execute: vi.fn().mockRejectedValue(new Error('Primary failed')),
+      }
+
+      const mockAgent2: Agent = {
+        id: 'agent2',
+        name: 'Agent 2',
+        execute: vi.fn().mockImplementation(async () => ({ result: 'dep-ok' })),
+      }
+
+      const mockAgent3: Agent = {
+        id: 'agent3',
+        name: 'Agent 3',
+        execute: vi
+          .fn()
+          .mockImplementation(async () => ({ result: 'backup-ok' })),
+      }
+
+      vi.mocked(mockAgentRegistry.getAgent).mockImplementation(async (id) => {
+        if (id === 'agent1') return mockAgent1
+        if (id === 'agent2') return mockAgent2
+        if (id === 'agent3') return mockAgent3
+        throw new Error(`Agent not found: ${id}`)
+      })
+
+      // Act
+      const result = await engine.execute(workflow, { shouldExecute: false })
+
+      // Assert
+      expect(result.status).toBe('failed')
+      expect(result.steps.primary.status).toBe('failed')
+      expect(result.steps['missing-dep'].status).toBe('skipped')
+      // Backup should be skipped due to unmet dependencies
+      expect(result.steps.backup?.status).toBe('skipped')
+      expect(result.errors).toBeDefined()
+      expect(result.errors?.[0]?.message).toContain('Primary failed')
+    })
+  })
+
+  describe('retry mechanism', () => {
+    it('should retry failed steps with onError: retry', async () => {
+      // Arrange
+      let attemptCount = 0
+      const workflow: Workflow = {
+        id: 'test-workflow',
+        name: 'Test Workflow',
+        version: '1.0.0',
+        steps: [
+          {
+            id: 'flaky-step',
+            type: 'agent',
+            agentId: 'flaky-agent',
+            onError: 'retry',
+            input: { test: true },
+          },
+        ],
+      }
+
+      const mockAgent: Agent = {
+        id: 'flaky-agent',
+        name: 'Flaky Agent',
+        execute: vi.fn().mockImplementation(async () => {
+          attemptCount++
+          if (attemptCount < 2) {
+            throw new Error('Temporary failure')
+          }
+          return { result: 'success' }
+        }),
+      }
+
+      vi.mocked(mockAgentRegistry.getAgent).mockResolvedValue(mockAgent)
+
+      // Mock resilience adapter to actually retry
+      vi.mocked(mockResilienceAdapter.applyPolicy).mockImplementation(
+        async (operation, policy) => {
+          let lastError
+          const retryConfig = policy?.retry || { maxAttempts: 3 }
+          for (let i = 0; i < retryConfig.maxAttempts; i++) {
+            try {
+              return await operation()
+            } catch (error) {
+              lastError = error
+              if (i < retryConfig.maxAttempts - 1) {
+                // Wait before retry (simplified, no exponential backoff)
+                await new Promise((resolve) => setTimeout(resolve, 10))
+              }
+            }
+          }
+          throw lastError
+        },
+      )
+
+      // Act
+      const result = await engine.execute(workflow)
+
+      // Assert
+      expect(result.status).toBe('completed')
+      expect(result.steps['flaky-step'].status).toBe('completed')
+      expect(result.steps['flaky-step'].output).toEqual({ result: 'success' })
+      expect(mockAgent.execute).toHaveBeenCalledTimes(2)
+    })
+
+    it('should fail after retry attempts are exhausted', async () => {
+      // Arrange
+      const workflow: Workflow = {
+        id: 'test-workflow',
+        name: 'Test Workflow',
+        version: '1.0.0',
+        steps: [
+          {
+            id: 'always-fails',
+            type: 'agent',
+            agentId: 'failing-agent',
+            onError: 'retry',
+            input: { test: true },
+          },
+        ],
+      }
+
+      const mockAgent: Agent = {
+        id: 'failing-agent',
+        name: 'Failing Agent',
+        execute: vi.fn().mockRejectedValue(new Error('Permanent failure')),
+      }
+
+      vi.mocked(mockAgentRegistry.getAgent).mockResolvedValue(mockAgent)
+
+      // Mock resilience adapter to actually retry
+      vi.mocked(mockResilienceAdapter.applyPolicy).mockImplementation(
+        async (operation, policy) => {
+          let lastError
+          const retryConfig = policy?.retry || { maxAttempts: 3 }
+          for (let i = 0; i < retryConfig.maxAttempts; i++) {
+            try {
+              return await operation()
+            } catch (error) {
+              lastError = error
+            }
+          }
+          throw lastError
+        },
+      )
+
+      // Act
+      const result = await engine.execute(workflow)
+
+      // Assert
+      expect(result.status).toBe('failed')
+      expect(result.steps['always-fails'].status).toBe('failed')
+      expect(result.steps['always-fails'].error?.message).toContain(
+        'Permanent failure',
+      )
+      expect(mockAgent.execute).toHaveBeenCalledTimes(3) // Initial + retries
+    })
+  })
+
+  describe('strict mode conditions', () => {
+    it('should silently skip invalid conditions in non-strict mode', async () => {
+      // Arrange
+      const workflow: Workflow = {
+        id: 'test-workflow',
+        name: 'Test Workflow',
+        version: '1.0.0',
+        steps: [
+          {
+            id: 'step1',
+            type: 'agent',
+            agentId: 'agent1',
+            if: 'invalid.syntax[', // Invalid JMESPath
+            input: { test: true },
+          },
+        ],
+      }
+
+      const mockAgent: Agent = {
+        id: 'agent1',
+        name: 'Agent 1',
+        execute: vi.fn().mockImplementation(async () => ({ result: 'ok' })),
+      }
+
+      vi.mocked(mockAgentRegistry.getAgent).mockResolvedValue(mockAgent)
+
+      // Act
+      const result = await engine.execute(workflow)
+
+      // Assert
+      expect(result.status).toBe('completed')
+      expect(result.steps.step1.status).toBe('skipped')
+      expect(mockAgent.execute).not.toHaveBeenCalled()
+    })
+
+    it('should throw validation error for invalid conditions in strict mode', async () => {
+      // Arrange
+      const workflow: Workflow = {
+        id: 'test-workflow',
+        name: 'Test Workflow',
+        version: '1.0.0',
+        steps: [
+          {
+            id: 'step1',
+            type: 'agent',
+            agentId: 'agent1',
+            if: 'invalid.syntax[', // Invalid JMESPath
+            input: { test: true },
+          },
+        ],
+      }
+
+      const mockAgent: Agent = {
+        id: 'agent1',
+        name: 'Agent 1',
+        execute: vi.fn().mockImplementation(async () => ({ result: 'ok' })),
+      }
+
+      vi.mocked(mockAgentRegistry.getAgent).mockResolvedValue(mockAgent)
+
+      // Act
+      const result = await strictEngine.execute(workflow)
+
+      // Assert
+      expect(result.status).toBe('failed')
+      expect(result.steps.step1.status).toBe('failed')
+      expect(result.steps.step1.error?.code).toBe('VALIDATION')
+      expect(result.steps.step1.error?.message).toContain(
+        'Condition evaluation failed',
+      )
+      expect(mockAgent.execute).not.toHaveBeenCalled()
+    })
+
+    it('should handle valid conditions in strict mode', async () => {
+      // Arrange
+      const workflow: Workflow = {
+        id: 'test-workflow',
+        name: 'Test Workflow',
+        version: '1.0.0',
+        steps: [
+          {
+            id: 'step1',
+            type: 'agent',
+            agentId: 'agent1',
+            input: { value: 'test' },
+          },
+          {
+            id: 'step2',
+            type: 'agent',
+            agentId: 'agent2',
+            if: 'steps.step1.output.result', // Valid condition
+            dependsOn: ['step1'],
+            input: { data: 'test' },
+          },
+        ],
+      }
+
+      const mockAgent1: Agent = {
+        id: 'agent1',
+        name: 'Agent 1',
+        execute: vi.fn().mockImplementation(async () => ({ result: true })),
+      }
+
+      const mockAgent2: Agent = {
+        id: 'agent2',
+        name: 'Agent 2',
+        execute: vi.fn().mockImplementation(async () => ({ result: 'ok' })),
+      }
+
+      vi.mocked(mockAgentRegistry.getAgent).mockImplementation(async (id) => {
+        if (id === 'agent1') return mockAgent1
+        if (id === 'agent2') return mockAgent2
+        throw new Error(`Agent not found: ${id}`)
+      })
+
+      // Act
+      const result = await strictEngine.execute(workflow)
+
+      // Assert
+      expect(result.status).toBe('completed')
+      expect(result.steps.step1.status).toBe('completed')
+      expect(result.steps.step2.status).toBe('completed')
+      expect(mockAgent1.execute).toHaveBeenCalled()
+      expect(mockAgent2.execute).toHaveBeenCalled()
     })
   })
 })

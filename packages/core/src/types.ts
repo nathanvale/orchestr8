@@ -224,6 +224,12 @@ export interface OrchestrationOptions {
    * Maximum expression expansion size in bytes
    */
   maxExpansionSize?: number
+
+  /**
+   * Strict mode for condition evaluation
+   * When true, invalid conditions throw validation errors instead of silently returning false
+   */
+  strictConditions?: boolean
 }
 
 /**

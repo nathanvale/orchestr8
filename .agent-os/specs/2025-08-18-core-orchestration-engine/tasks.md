@@ -3,7 +3,8 @@
 These are the tasks to be completed for the spec detailed in @.agent-os/specs/2025-08-18-core-orchestration-engine/spec.md
 
 > Created: 2025-08-18
-> Status: CRITICAL IMPLEMENTATION REQUIRED - Core Engine Missing
+> Status: Phase 1 Complete - Phase 2 Hardening In Progress
+> Last Updated: 2025-08-18
 
 ## Implementation Status
 
@@ -23,12 +24,20 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
 - [x] **Parallel execution** - Concurrent step coordination with Semaphore pattern
 - [x] **Memory management** - 512KB bounded execution with truncation metadata
 
-**⚠️ MEDIUM PRIORITY FIXES:**
+**🔧 PHASE 2 HARDENING (In Progress):**
 
-- [ ] Condition error handling consistency (throw vs return false)
-- [ ] Expression parser improvements (quoted defaults, 64KB limit)
-- [ ] ResilienceAdapter composition order finalization
-- [ ] Schema validation error taxonomy alignment
+**Critical Gaps:**
+- [ ] Cancellation propagation with AbortSignal.any
+
+**High Priority Gaps:**
+- [ ] True timeout enforcement for expression evaluation
+- [ ] Expression expansion 64KB limit enforcement
+- [ ] Dependency failure skip semantics
+
+**Medium Priority Gaps:**
+- [ ] Structured logging implementation
+- [ ] Resilience composition order finalization
+- [ ] Mapping parser robustness improvements
 
 ## Tasks
 
@@ -57,28 +66,64 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
   - [x] 2.6 Implement memory bounds enforcement with truncation metadata
   - [x] 2.7 Verify parallel execution and memory management tests pass
 
-- [ ] 3. **MEDIUM: Error Handling & Resilience Integration** (Post-MVP Critical Features)
-  - [ ] 3.1 Write tests for condition evaluation error handling (throw ExecutionError vs return false)
-  - [ ] 3.2 Implement strict mode for condition evaluation with VALIDATION error consistency
-  - [ ] 3.3 Write tests for ResilienceAdapter composition order and policy application
-  - [ ] 3.4 Finalize ResilienceAdapter API and implement policy composition
-  - [ ] 3.5 Write tests for fallbackStepId execution path and result aliasing semantics
-  - [ ] 3.6 Implement complete fallback execution and dependency resolution
-  - [ ] 3.7 Verify error handling and resilience tests pass
+- [ ] 3. **CRITICAL: Cancellation Propagation Fix** (Blocking)
+  - [ ] 3.1 Write tests for parent signal propagation with AbortSignal.any
+  - [ ] 3.2 Combine parent AbortSignal with level AbortController
+  - [ ] 3.3 Test cascading cancellation from parent to all level steps
+  - [ ] 3.4 Verify deterministic cancellation order
 
-- [ ] 4. **MEDIUM: Expression & Validation Improvements** (Post-MVP Polish)
-  - [ ] 4.1 Write tests for robust default value parsing with quoted literals
-  - [ ] 4.2 Implement improved expression parser handling quoted defaults and nested expressions
-  - [ ] 4.3 Write tests for 64KB expansion size enforcement during mapping resolution
-  - [ ] 4.4 Implement expansion size limits with VALIDATION error classification
-  - [ ] 4.5 Write tests for schema validation using ExecutionError taxonomy
-  - [ ] 4.6 Update schema validation to use ExecutionError with VALIDATION code
-  - [ ] 4.7 Verify expression and validation improvement tests pass
+- [ ] 4. **HIGH: Expression Security & Timeouts** (Security Critical)
+  - [ ] 4.1 Write tests for 500ms timeout on JMESPath evaluation
+  - [ ] 4.2 Implement preemptive cancellation for long-running expressions
+  - [ ] 4.3 Write tests for 64KB expansion limit enforcement
+  - [ ] 4.4 Add byte counter during mapping resolution with VALIDATION error
+  - [ ] 4.5 Test pathological expressions and memory bombs
+  - [ ] 4.6 Verify all security limits are enforced
 
-- [ ] 5. **LOW: Integration Testing & Performance Validation** (Quality Gates)
-  - [ ] 5.1 Write tests for hybrid sequential-parallel workflow patterns with complex dependencies
-  - [ ] 5.2 Add tests for partial parallel failures with ExecutionError aggregation and fail-fast behavior
-  - [ ] 5.3 Test performance benchmarks: <100ms orchestration overhead (p95) and deterministic scheduling
-  - [ ] 5.4 Add tests for cancellation scenarios: graceful cleanup, timeout enforcement, AbortSignal propagation
-  - [ ] 5.5 Comprehensive edge case testing and >80% coverage validation
-  - [ ] 5.6 Verify all integration tests pass with performance requirements met
+- [ ] 5. **HIGH: Dependency Failure Semantics** (Behavioral Clarity)
+  - [ ] 5.1 Write tests for skip behavior when dependencies fail
+  - [ ] 5.2 Write tests for skip behavior when dependencies are cancelled
+  - [ ] 5.3 Define clear contract: skip on "failed" and "cancelled" or only "skipped"
+  - [ ] 5.4 Implement chosen semantics consistently
+  - [ ] 5.5 Document decision in dependency-semantics.md sub-spec
+  - [ ] 5.6 Verify all dependency scenarios handle correctly
+
+- [ ] 6. **MEDIUM: Structured Logging Implementation** (Observability)
+  - [ ] 6.1 Define Logger interface in core with child() and log methods
+  - [ ] 6.2 Accept logger?: Logger in OrchestrationOptions
+  - [ ] 6.3 Implement no-op default logger
+  - [ ] 6.4 Add workflow.start/end logs with executionId correlation
+  - [ ] 6.5 Add step.start/success/error logs with stepId and timing
+  - [ ] 6.6 Add level.start and level.fail-fast logs
+  - [ ] 6.7 Write tests with memory logger to verify log fields
+  - [ ] 6.8 Document Pino adapter pattern for consumers
+
+- [ ] 7. **MEDIUM: Resilience Composition Order** (Reliability)
+  - [ ] 7.1 Write tests for retry-cb-timeout composition order
+  - [ ] 7.2 Write tests for timeout-cb-retry alternative order
+  - [ ] 7.3 Finalize default composition order decision
+  - [ ] 7.4 Implement consistent policy normalization
+  - [ ] 7.5 Test interaction between retry attempts and timeouts
+  - [ ] 7.6 Document composition semantics clearly
+
+- [ ] 8. **MEDIUM: Mapping Parser Improvements** (Robustness)
+  - [ ] 8.1 Write tests for single-quoted default values
+  - [ ] 8.2 Write tests for escaped quotes in defaults
+  - [ ] 8.3 Write tests for nested ?? in quoted strings
+  - [ ] 8.4 Implement proper tokenizer for default value parsing
+  - [ ] 8.5 Handle edge cases in expression resolution
+  - [ ] 8.6 Verify robust parsing for all expression patterns
+
+- [ ] 9. **LOW: Code Cleanup** (Technical Debt)
+  - [ ] 9.1 Remove or wire InternalExecutionContext.envWhitelist
+  - [ ] 9.2 Evaluate expression cache usage beyond deduplication
+  - [ ] 9.3 Document Map insertion order invariants
+  - [ ] 9.4 Clean up TODO comments in code
+  - [ ] 9.5 Improve type definitions where needed
+
+- [ ] 10. **FUTURE: Integration Testing & Performance** (Phase 3)
+  - [ ] 10.1 Comprehensive integration test suite
+  - [ ] 10.2 Performance benchmarks (<100ms p95 overhead)
+  - [ ] 10.3 Memory profiling and optimization
+  - [ ] 10.4 Load testing with large workflows
+  - [ ] 10.5 Edge case coverage >90%

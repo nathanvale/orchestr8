@@ -22,6 +22,7 @@ import type {
   OrchestrationEngine as IOrchestrationEngine,
   OrchestrationOptions,
   ResilienceAdapter,
+  ResiliencePolicy,
 } from './types.js'
 
 import { evaluateCondition, resolveMapping } from './expression-evaluator.js'
@@ -51,6 +52,7 @@ export class OrchestrationEngine implements IOrchestrationEngine {
   private readonly maxMetadataBytes: number
   private readonly maxExpansionDepth: number
   private readonly maxExpansionSize: number
+  private readonly strictConditions: boolean
 
   constructor(options: OrchestrationOptions) {
     this.agentRegistry = options.agentRegistry
@@ -60,6 +62,7 @@ export class OrchestrationEngine implements IOrchestrationEngine {
     this.maxMetadataBytes = options.maxMetadataBytes ?? 128 * 1024
     this.maxExpansionDepth = options.maxExpansionDepth ?? 10
     this.maxExpansionSize = options.maxExpansionSize ?? 64 * 1024
+    this.strictConditions = options.strictConditions ?? false
   }
 
   /**
@@ -166,7 +169,9 @@ export class OrchestrationEngine implements IOrchestrationEngine {
         dependsOn: step.dependsOn ?? [],
         config: agentStep?.config,
         input: agentStep?.input,
-        resilience: undefined, // TODO: Get from workflow or step options
+        resilience: workflow.resilience
+          ? this.normalizeResiliencePolicy(workflow.resilience)
+          : undefined,
         onError: step.onError ?? 'fail',
         fallbackStepId: step.fallbackStepId,
         conditions:
@@ -475,6 +480,23 @@ export class OrchestrationEngine implements IOrchestrationEngine {
         }
       }
     }
+
+    // After level completes, handle any fallbacks
+    for (const node of steps) {
+      const result = context.results.get(node.stepId)
+      if (
+        result?.status === 'failed' &&
+        node.onError === 'fallback' &&
+        node.fallbackStepId
+      ) {
+        // Try to execute fallback now that level is complete
+        try {
+          await this.executeFallback(node, context, workflow, result.error!)
+        } catch {
+          // Fallback failed, keep original failure
+        }
+      }
+    }
   }
 
   /**
@@ -487,7 +509,29 @@ export class OrchestrationEngine implements IOrchestrationEngine {
   ): Promise<void> {
     const startTime = new Date().toISOString()
 
+    // Check if this step has already been executed (e.g., as a fallback)
+    const existingResult = context.results.get(node.stepId)
+    if (existingResult && existingResult.status === 'completed') {
+      // Step already executed successfully, skip
+      return
+    }
+
     try {
+      // Check if dependencies were completed (not skipped)
+      for (const dep of node.dependsOn) {
+        const depResult = context.results.get(dep)
+        if (!depResult || depResult.status === 'skipped') {
+          // Skip this step if any dependency was skipped
+          context.results.set(node.stepId, {
+            stepId: node.stepId,
+            status: 'skipped',
+            startTime,
+            endTime: new Date().toISOString(),
+          })
+          return
+        }
+      }
+
       // Check conditions
       if (node.conditions) {
         const shouldExecute = await this.evaluateConditions(
@@ -547,12 +591,31 @@ export class OrchestrationEngine implements IOrchestrationEngine {
 
       // Apply resilience policies
       let output: unknown
-      if (node.resilience) {
-        output = await this.resilienceAdapter.applyPolicy(
-          executeAgent,
-          node.resilience,
-          context.abortSignal,
-        )
+      if (node.resilience || node.onError === 'retry') {
+        // If retry is requested but no policy defined, create a default one
+        const policy =
+          node.resilience ||
+          (node.onError === 'retry'
+            ? {
+                retry: {
+                  maxAttempts: 3,
+                  backoffStrategy: 'exponential' as const,
+                  jitterStrategy: 'full-jitter' as const,
+                  initialDelay: 1000,
+                  maxDelay: 10000,
+                },
+              }
+            : undefined)
+
+        if (policy) {
+          output = await this.resilienceAdapter.applyPolicy(
+            executeAgent,
+            policy,
+            context.abortSignal,
+          )
+        } else {
+          output = await executeAgent()
+        }
       } else {
         output = await executeAgent()
       }
@@ -577,8 +640,14 @@ export class OrchestrationEngine implements IOrchestrationEngine {
 
       // Handle error based on policy
       if (node.onError === 'fallback' && node.fallbackStepId && !isCancelled) {
-        // Execute fallback step (but not for cancellations)
-        await this.executeFallback(node, context, workflow, executionError)
+        // Store the failure, fallback will be handled after level completes
+        context.results.set(node.stepId, {
+          stepId: node.stepId,
+          status: 'failed',
+          error: executionError,
+          startTime,
+          endTime: new Date().toISOString(),
+        })
       } else if (node.onError === 'continue' && !isCancelled) {
         // Mark as failed but continue (but not for cancellations)
         context.results.set(node.stepId, {
@@ -621,6 +690,29 @@ export class OrchestrationEngine implements IOrchestrationEngine {
       endTime: new Date().toISOString(),
     })
 
+    // Check if fallback has already been executed
+    const existingFallbackResult = context.results.get(
+      originalNode.fallbackStepId,
+    )
+    if (existingFallbackResult) {
+      if (existingFallbackResult.status === 'completed') {
+        // Fallback already succeeded, mark it as alias
+        context.results.set(originalNode.fallbackStepId, {
+          ...existingFallbackResult,
+          aliasFor: originalNode.stepId,
+        })
+
+        // Make fallback output available as original step output
+        const originalResult = context.results.get(originalNode.stepId)!
+        context.results.set(originalNode.stepId, {
+          ...originalResult,
+          output: existingFallbackResult.output,
+        })
+      }
+      // If fallback already failed or was skipped, leave it as is
+      return
+    }
+
     // Find fallback step
     const fallbackStep = workflow.steps.find(
       (s) => s.id === originalNode.fallbackStepId,
@@ -637,12 +729,26 @@ export class OrchestrationEngine implements IOrchestrationEngine {
     const agentStep =
       fallbackStep.type === 'agent' ? (fallbackStep as AgentStep) : null
 
+    // Check if fallback dependencies are satisfied
+    const fallbackDependencies = fallbackStep.dependsOn ?? []
+    for (const dep of fallbackDependencies) {
+      const depResult = context.results.get(dep)
+      if (!depResult || depResult.status !== 'completed') {
+        // Fallback dependencies not met - throw validation error
+        throw createExecutionError(
+          ExecutionErrorCode.VALIDATION,
+          `Fallback step '${fallbackStep.id}' has unmet dependency: '${dep}'`,
+          { stepId: originalNode.stepId },
+        )
+      }
+    }
+
     // Create fallback node
     const fallbackNode: ExecutionNode = {
       stepId: fallbackStep.id,
       type: fallbackStep.type,
       agentId: agentStep?.agentId,
-      dependsOn: fallbackStep.dependsOn ?? [],
+      dependsOn: fallbackDependencies,
       config: agentStep?.config,
       input: originalNode.input, // Use same input as original
       resilience: undefined, // TODO: Get from step options
@@ -696,13 +802,21 @@ export class OrchestrationEngine implements IOrchestrationEngine {
 
       // Evaluate 'if' condition
       if (conditions.if) {
-        const result = evaluateCondition(conditions.if, evalContext)
+        const result = evaluateCondition(
+          conditions.if,
+          evalContext,
+          this.strictConditions,
+        )
         if (!result) return false
       }
 
       // Evaluate 'unless' condition
       if (conditions.unless) {
-        const result = evaluateCondition(conditions.unless, evalContext)
+        const result = evaluateCondition(
+          conditions.unless,
+          evalContext,
+          this.strictConditions,
+        )
         if (result) return false
       }
 
@@ -775,11 +889,28 @@ export class OrchestrationEngine implements IOrchestrationEngine {
         return { truncated: false }
       }
 
-      // Truncate the result
-      const truncatedStr = serialized.substring(
-        0,
-        Math.floor((this.maxResultBytesPerStep * 0.9) / 2),
-      )
+      // Truncate to ~90% of the limit to leave room for metadata
+      const targetBytes = Math.floor(this.maxResultBytesPerStep * 0.9)
+
+      // Use binary search to find the right character count that fits within byte limit
+      let low = 0
+      let high = serialized.length
+      let bestFit = 0
+
+      while (low <= high) {
+        const mid = Math.floor((low + high) / 2)
+        const testStr = serialized.substring(0, mid)
+        const testBytes = Buffer.byteLength(testStr, 'utf8')
+
+        if (testBytes <= targetBytes) {
+          bestFit = mid
+          low = mid + 1
+        } else {
+          high = mid - 1
+        }
+      }
+
+      const truncatedStr = serialized.substring(0, bestFit)
 
       return {
         truncated: true,
@@ -794,6 +925,45 @@ export class OrchestrationEngine implements IOrchestrationEngine {
         retainedBytes: 0,
       }
     }
+  }
+
+  /**
+   * Normalize resilience policy to ensure all required fields are present
+   */
+  private normalizeResiliencePolicy(
+    policy: unknown,
+  ): ResiliencePolicy | undefined {
+    if (!policy || typeof policy !== 'object') return undefined
+
+    const policyObj = policy as Record<string, unknown>
+    const normalized: ResiliencePolicy = {}
+
+    if (policyObj.retry && typeof policyObj.retry === 'object') {
+      const retry = policyObj.retry as Record<string, unknown>
+      normalized.retry = {
+        maxAttempts: (retry.maxAttempts as number) ?? 3,
+        backoffStrategy:
+          (retry.backoffStrategy as 'fixed' | 'exponential') ?? 'exponential',
+        jitterStrategy:
+          (retry.jitterStrategy as 'none' | 'full-jitter') ?? 'full-jitter',
+        initialDelay: (retry.initialDelay as number) ?? 1000,
+        maxDelay: (retry.maxDelay as number) ?? 10000,
+      }
+    }
+
+    if (policyObj.timeout && typeof policyObj.timeout === 'number') {
+      normalized.timeout = policyObj.timeout
+    }
+
+    if (
+      policyObj.circuitBreaker &&
+      typeof policyObj.circuitBreaker === 'object'
+    ) {
+      normalized.circuitBreaker =
+        policyObj.circuitBreaker as ResiliencePolicy['circuitBreaker']
+    }
+
+    return normalized
   }
 
   /**
