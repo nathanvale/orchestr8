@@ -39,11 +39,22 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
 - [ ] Resilience composition order finalization
 - [ ] Mapping parser robustness improvements
 
-**🆕 NEW TECHNICAL GAPS IDENTIFIED:**
+**🆕 UPDATED TECHNICAL GAPS (from Code Review):**
 
-- [ ] Nested step types vs flat execution decision (implement or de-scope)
-- [ ] Configuration parity - thread OrchestrationOptions limits to evaluator
-- [ ] Environment whitelist source consistency (workflow vs engine)
+**High Priority:**
+- [ ] Fallback input override not honored (fallback step input ignored) 
+- [ ] Nested step schema vs flat execution divergence (groups not traversed)
+
+**Medium Priority:**
+- [ ] Resilience composition control not enforced at adapter contract level
+- [ ] Configuration parity - engine limits not threaded through evaluator  
+- [ ] Environment whitelist duplication/inconsistency (two sources of truth)
+- [ ] Condition error handling defaults to "silent false" (non-strict mode)
+
+**Low Priority:**
+- [ ] Preemptive timeout documentation overpromises (post-check only)
+- [ ] Unused type fields and implementation drift
+- [ ] Memory truncation UX - no partial output preview
 
 ## Tasks
 
@@ -120,37 +131,63 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
   - [x] 8.5 Handle edge cases in expression resolution
   - [x] 8.6 Verify robust parsing for all expression patterns
 
-- [ ] 9. **HIGH DECISION: Nested Step Types Semantics** (Architecture Decision)
-  - [ ] 9.1 Analyze current schema SequentialStep/ParallelStep definitions
-  - [ ] 9.2 Evaluate impact of flat dependency graph vs nested group execution
-  - [ ] 9.3 Decision: Implement group expansion layer OR explicitly de-scope nested groups
-  - [ ] 9.4 If de-scope: Update schema/examples to use dependsOn only
-  - [ ] 9.5 If implement: Design group expansion with maxConcurrency support
-  - [ ] 9.6 Document decision rationale
+- [ ] 9. **HIGH: Fix Fallback Input Override** (Implementation Bug)
+  - [ ] 9.1 Write tests for fallback step with explicit input mapping
+  - [ ] 9.2 Write tests for fallback step without input (uses original step input)
+  - [ ] 9.3 Update executeFallback to check fallback.input before using originalNode.input
+  - [ ] 9.4 Verify fallback input precedence: fallback.input > originalNode.input
+  - [ ] 9.5 Test both explicit fallback input and fallback-as-alias scenarios
+  - [ ] 9.6 Ensure backwards compatibility with existing fallback patterns
 
-- [ ] 10. **MEDIUM: Configuration Parity** (Technical Consistency)
-  - [ ] 10.1 Thread OrchestrationOptions.maxExpansionDepth to evaluator
-  - [ ] 10.2 Thread OrchestrationOptions.maxExpansionSize to evaluator
-  - [ ] 10.3 Add tests for non-default limits
-  - [ ] 10.4 Remove hard-coded SECURITY_LIMITS usage
-  - [ ] 10.5 Verify configurable limits work end-to-end
+- [ ] 10. **HIGH DECISION: Nested Step Types Semantics** (Architecture Decision)
+  - [ ] 10.1 Analyze current schema SequentialStep/ParallelStep definitions
+  - [ ] 10.2 Evaluate impact of flat dependency graph vs nested group execution
+  - [ ] 10.3 Decision: Implement group expansion layer OR explicitly de-scope nested groups
+  - [ ] 10.4 If de-scope: Update schema/examples to use dependsOn only
+  - [ ] 10.5 If implement: Design group expansion with maxConcurrency support
+  - [ ] 10.6 Document decision rationale and update architecture docs
 
-- [ ] 11. **MEDIUM: Environment Whitelist Consistency** (API Cleanup)
-  - [ ] 11.1 Remove unused InternalExecutionContext.envWhitelist
-  - [ ] 11.2 Ensure evaluator consistently uses workflow.allowedEnvVars
-  - [ ] 11.3 Add tests for environment variable access patterns
-  - [ ] 11.4 Document single source of truth for env access
+- [ ] 11. **MEDIUM: Update ResilienceAdapter Contract** (Interface Consistency)
+  - [ ] 11.1 Update ResilienceAdapter interface to accept normalized policies
+  - [ ] 11.2 Add explicit compositionOrder parameter (e.g., 'retry-cb-timeout')
+  - [ ] 11.3 Provide reference adapter implementation in @orchestr8/resilience
+  - [ ] 11.4 Keep current wrapper for compatibility but add deprecation notice
+  - [ ] 11.5 Test consistent composition order across different adapters
+  - [ ] 11.6 Update documentation on resilience composition semantics
 
-- [ ] 12. **LOW: Code Cleanup** (Technical Debt)
-  - [ ] 12.1 Clean dist before build in schema package
-  - [ ] 12.2 Evaluate expression cache usage beyond deduplication
-  - [ ] 12.3 Document Map insertion order invariants
-  - [ ] 12.4 Clean up TODO comments in code
-  - [ ] 12.5 Improve type definitions where needed
+- [ ] 12. **MEDIUM: Configuration Parity** (Technical Consistency)
+  - [ ] 12.1 Thread OrchestrationOptions.maxExpansionDepth to evaluator
+  - [ ] 12.2 Thread OrchestrationOptions.maxExpansionSize to evaluator
+  - [ ] 12.3 Add tests for non-default limits
+  - [ ] 12.4 Remove hard-coded SECURITY_LIMITS usage in expression-evaluator
+  - [ ] 12.5 Verify configurable limits work end-to-end
 
-- [ ] 13. **FUTURE: Integration Testing & Performance** (Phase 3)
-  - [ ] 13.1 Comprehensive integration test suite
-  - [ ] 13.2 Performance benchmarks (<100ms p95 overhead)
-  - [ ] 13.3 Memory profiling and optimization
-  - [ ] 13.4 Load testing with large workflows
-  - [ ] 13.5 Edge case coverage >90%
+- [ ] 13. **MEDIUM: Environment Whitelist Consistency** (API Cleanup)
+  - [ ] 13.1 Remove unused InternalExecutionContext.envWhitelist field
+  - [ ] 13.2 Ensure evaluator consistently uses workflow.allowedEnvVars
+  - [ ] 13.3 Add tests for environment variable access patterns
+  - [ ] 13.4 Document single source of truth for env access (workflow schema)
+  - [ ] 13.5 Update any references to the removed envWhitelist field
+
+- [ ] 14. **MEDIUM: Strict Condition Defaults** (Runtime Safety)
+  - [ ] 14.1 Analyze current strictConditions=false default behavior
+  - [ ] 14.2 Consider changing default to strictConditions=true
+  - [ ] 14.3 Add tests for invalid conditions raising VALIDATION errors when strict
+  - [ ] 14.4 Test backward compatibility with existing workflows
+  - [ ] 14.5 Document condition error handling behavior changes
+  - [ ] 14.6 Consider workflow-level strictConditions override
+
+- [ ] 15. **LOW: Documentation and Polish** (Technical Debt)
+  - [ ] 15.1 Update timeout documentation from "preemptive" to "post-check"
+  - [ ] 15.2 Clean up unused ExecutionNode.children and maxMetadataBytes
+  - [ ] 15.3 Consider safe preview for truncated memory results  
+  - [ ] 15.4 Clean dist before build in schema package
+  - [ ] 15.5 Document Map insertion order invariants
+  - [ ] 15.6 Clean up TODO comments in code
+
+- [ ] 16. **FUTURE: Integration Testing & Performance** (Phase 3)
+  - [ ] 16.1 Comprehensive integration test suite
+  - [ ] 16.2 Performance benchmarks (<100ms p95 overhead)
+  - [ ] 16.3 Memory profiling and optimization
+  - [ ] 16.4 Load testing with large workflows
+  - [ ] 16.5 Edge case coverage >90%

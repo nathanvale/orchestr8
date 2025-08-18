@@ -28,13 +28,25 @@ This is the technical specification for the spec detailed in @.agent-os/specs/20
 - **Dependency Semantics**: Skip behavior for failed/cancelled dependencies implemented ✅
 - **Structured Logging**: Logger interface wired into engine with lifecycle events ✅
 
-**🔧 REMAINING GAPS (Medium Priority):**
+**🔧 REMAINING QUALITY GAPS (Updated from Code Review):**
 
-- **Resilience Composition**: Order between retry/timeout/circuit breaker needs finalization
-- **Default Parsing**: Naive split on '??' breaks with quoted/nested expressions
-- **Nested Step Types**: Schema defines SequentialStep/ParallelStep but engine uses flat dependency graph  
-- **Configuration Parity**: OrchestrationOptions limits not threaded through to evaluator
-- **Environment Whitelist**: Inconsistent usage between workflow.allowedEnvVars and engine envWhitelist
+**HIGH PRIORITY (Implementation Gaps):**
+
+- **Fallback Input Override**: executeFallback ignores fallback step's own input mapping; uses original step input instead
+- **Nested Group Semantics**: Schema defines SequentialStep/ParallelStep with children and maxConcurrency, but engine uses flat dependency graph only
+
+**MEDIUM PRIORITY (Technical Consistency):**
+
+- **Resilience Adapter Contract**: Composition order relies on adapter implementation, not enforced by interface contract
+- **Configuration Parity**: Engine maxExpansionDepth/Size options not threaded to evaluator (uses hard-coded SECURITY_LIMITS)  
+- **Environment Whitelist Duplication**: Two sources of truth (workflow.allowedEnvVars vs engine envWhitelist)
+- **Condition Error Handling**: Returns false on invalid expressions instead of throwing VALIDATION error in non-strict mode
+
+**LOW PRIORITY (Polish & Documentation):**
+
+- **Timeout Documentation**: "Preemptive" timeout is actually post-check timeout (JMESPath is synchronous)
+- **Unused Type Fields**: ExecutionNode.children, maxMetadataBytes not implemented/enforced
+- **Memory Truncation UX**: No partial output preview; consumers only get size metadata
 
 ## Phase 2 Gap Analysis
 
@@ -70,44 +82,70 @@ This is the technical specification for the spec detailed in @.agent-os/specs/20
 - **Solution Applied**: Logger option accepted with lifecycle events implementation
 - **Location**: Throughout orchestration-engine.ts
 
-### 🔧 Remaining Medium Priority Gaps
+### 🔧 Current Quality Issues (Priority Order)
 
-**6. Resilience Composition Order**
+**HIGH PRIORITY: Fallback Input Override**
 
-- **Issue**: Composition order between retry/timeout/circuit breaker unclear
-- **Impact**: Inconsistent behavior across different policy combinations
-- **Solution**: Finalize order and document clearly
-- **Location**: ResilienceAdapter integration points
+- **Issue**: orchestration-engine.ts executeFallback builds fallback node with input: originalNode.input, ignoring any input mapping defined on the fallback step itself
+- **Impact**: Users defining explicit input for the fallback step will be surprised; results may be wrong
+- **Solution**: Use fallback step's own input if present; otherwise fall back to the original step's input. Add tests for both cases
+- **Location**: executeFallback method in OrchestrationEngine
 
-**7. Mapping Parser Robustness**
+**HIGH PRIORITY: Schema Group Semantics vs Flat Graph Divergence**
 
-- **Issue**: Naive split on '??' breaks with quoted or nested expressions
-- **Impact**: Cannot use '??' in default values
-- **Solution**: Implement proper tokenizer for default value parsing
-- **Location**: expression-evaluator.ts parseExpression() method
+- **Issue**: Execution uses a flat dependency graph; ExecutionNode.type allows sequential|parallel and children, but the engine ignores nested groups and group-level maxConcurrency
+- **Impact**: Workflows authored with nested sequential/parallel will not behave as authored  
+- **Decision Required**: For MVP, de-scope nested groups explicitly and instruct using dependsOn. If keeping groups, implement expansion to a flat DAG respecting group-level properties
+- **Location**: Core engine architecture
 
-### 🆕 New Technical Gaps Identified
+**MEDIUM PRIORITY: Resilience Composition Control**
 
-**8. Nested Step Types vs Flat Execution**
+- **Issue**: Commit 4d629ff finalizes default order; engine normalizes policy, but the adapter interface is still applyPolicy(operation, policy, signal?). Composition order relies on the adapter implementation, which isn't codified in the contract
+- **Impact**: Inconsistent behavior across adapters; ambiguity for consumers
+- **Solution**: Update ResilienceAdapter contract to accept normalized policies and an explicit compositionOrder (e.g., 'retry-cb-timeout' default). Provide a reference adapter in @orchestr8/resilience
+- **Location**: ResilienceAdapter interface contract
 
-- **Issue**: Schema defines SequentialStep/ParallelStep but engine uses flat dependency graph
-- **Impact**: Nested groups not traversed; maxConcurrency not honored at group level
-- **Decision Needed**: Implement group expansion or explicitly de-scope for MVP
-- **Location**: Engine architecture decision
+**MEDIUM PRIORITY: Config Parity - Engine Limits Not Threaded Through Evaluator**
 
-**9. Configuration Parity**  
-
-- **Issue**: OrchestrationOptions exposes limits but evaluator uses hard-coded SECURITY_LIMITS
-- **Impact**: Engine configuration not threaded through to expression evaluation
-- **Solution**: Thread engine limits to evaluator; add tests for non-default limits
+- **Issue**: Engine has maxExpansionDepth, maxExpansionSize options; expression-evaluator.ts uses local SECURITY_LIMITS
+- **Impact**: Tuning engine options won't affect expression evaluation; limits drift
+- **Solution**: Thread engine limits to evaluator (function params or context) and remove hard-coded constants. Add tests for non-defaults
 - **Location**: expression-evaluator.ts SECURITY_LIMITS usage
 
-**10. Environment Whitelist Source Mismatch**
+**MEDIUM PRIORITY: Environment Whitelist Duplication/Inconsistency**
 
-- **Issue**: Evaluator uses workflow.allowedEnvVars; engine's envWhitelist unused
-- **Impact**: Inconsistent environment variable access patterns
-- **Solution**: Settle on single approach (workflow.allowedEnvVars recommended)
+- **Issue**: Evaluator uses workflow.allowedEnvVars; engine carries an unused envWhitelist?: string[] with TODO
+- **Impact**: Two sources of truth; potential security confusion
+- **Solution**: Choose one (recommend schema-driven workflow.allowedEnvVars) and remove/bridge the other. Document precedence
 - **Location**: InternalExecutionContext.envWhitelist vs workflow usage
+
+**MEDIUM PRIORITY: Condition Error Handling Defaults to "Silent False"**
+
+- **Issue**: evaluateCondition() returns false on invalid expressions in non-strict mode; engine's default strictConditions is false
+- **Impact**: Typos in conditions silently skip steps; harder to debug
+- **Solution**: Consider defaulting strictConditions to true for runtime safety, or expose a workflow-level toggle. Add tests for invalid conditions raising VALIDATION errors when strict
+- **Location**: evaluateCondition method behavior
+
+**LOW PRIORITY: Preemptive Timeout Documentation**
+
+- **Issue**: JMESPath search is synchronous; evaluateWithTimeout checks elapsed time after evaluation. It can't interrupt a long evaluation mid-flight
+- **Impact**: Small with JMESPath (fast), but spec text overpromises
+- **Solution**: Update docs to "post-check timeout" or explore Worker-based evaluation for real preemption if needed
+- **Location**: Documentation and timeout implementation
+
+**LOW PRIORITY: Unused Type Fields and Implementation Drift**
+
+- **Issue**: ExecutionNode.children, types for group nodes are unused; maxMetadataBytes isn't enforced anywhere
+- **Impact**: Minor maintenance cost and confusion
+- **Solution**: Remove or wire these, and add tests or docs
+- **Location**: Type definitions and enforcement points
+
+**LOW PRIORITY: Memory Truncation UX**
+
+- **Issue**: truncateResult marks truncated: true and omits output; only size metadata is kept
+- **Impact**: Consumers can't inspect partial output
+- **Solution**: Consider retaining a safe preview (e.g., JSON string prefix) under a documented policy. Keep current default for safety
+- **Location**: Memory management truncation logic
 
 ### Low Priority Items (Technical Debt)
 
@@ -390,7 +428,7 @@ private scheduleSteps(steps: WorkflowStep[], completed: Set<string>): WorkflowSt
 
 ### Resilience Composition Order
 
-**Default Composition: retry-cb-timeout** 
+**Default Composition: retry-cb-timeout**
 
 The @orchestr8 platform uses `retry(circuitBreaker(timeout(operation)))` as the default composition order, selected for optimal fault isolation and compatibility with industry standards.
 
@@ -420,6 +458,7 @@ The default `retry-cb-timeout` composition was chosen for:
 **When to Use Alternative:**
 
 Use `timeout-cb-retry` when:
+
 - Hard SLA requirements must be enforced (total execution time cannot exceed timeout)
 - Overall system latency budgets are critical
 - Circuit breaker should consider retry persistence as part of failure pattern
@@ -436,12 +475,9 @@ const wrappedOperation = withRetry(
   retryPolicy,
 )
 
-// Alternative implementation  
+// Alternative implementation
 const wrappedOperation = withTimeout(
-  withCircuitBreaker(
-    withRetry(operation, retryPolicy),
-    circuitBreakerPolicy,
-  ),
+  withCircuitBreaker(withRetry(operation, retryPolicy), circuitBreakerPolicy),
   timeoutPolicy,
 )
 ```
@@ -452,7 +488,7 @@ All resilience policies are normalized with consistent defaults:
 
 - **Retry Policy:**
   - `maxAttempts`: 3
-  - `backoffStrategy`: 'exponential'  
+  - `backoffStrategy`: 'exponential'
   - `jitterStrategy`: 'full-jitter'
   - `initialDelay`: 1000ms
   - `maxDelay`: 10000ms

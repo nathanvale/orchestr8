@@ -203,7 +203,7 @@ export class OrchestrationEngine implements IOrchestrationEngine {
         dependsOn: step.dependsOn ?? [],
         config: agentStep?.config,
         input: agentStep?.input,
-        resilience: step.resilience 
+        resilience: step.resilience
           ? this.normalizeResiliencePolicy(step.resilience)
           : workflow.resilience
             ? this.normalizeResiliencePolicy(workflow.resilience)

@@ -221,3 +221,6 @@ When implementing features:
 - /clear
 
 - Always use pnpm format from the root to format any file it is fast enough
+
+- pnpm check should be part of the standard workflow before any commit to catch formatting, linting, type checking, and test
+  issues early.

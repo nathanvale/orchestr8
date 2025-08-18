@@ -29,13 +29,27 @@ Implement the core orchestration engine that executes multi-step workflows with 
 - Structured logging implementation ✅
 - True timeout enforcement for expressions ✅
 
-**🔧 Remaining Medium Priority (1 item):**
-
-- Mapping parser robustness improvements
-
 **✅ Recently Completed:**
 
 - Resilience composition order finalization ✅
+- Mapping parser robustness improvements ✅
+
+**🔧 Remaining Quality Issues (by Severity):**
+
+**High Priority (Implementation Gaps):**
+1. Fallback input override not honored - fallback step's own input ignored
+2. Nested step schema vs flat execution divergence - groups not traversed
+
+**Medium Priority (Technical Consistency):**
+1. Resilience composition not enforced at adapter contract level
+2. Configuration parity - engine limits not threaded through evaluator
+3. Environment whitelist duplication/inconsistency
+4. Condition error handling defaults to "silent false"
+
+**Low Priority (Technical Debt):**
+1. "True" preemptive timeout misleading documentation
+2. Unused type fields and implementation drift  
+3. Memory truncation UX - no partial output preview
 
 ## User Stories
 
@@ -77,7 +91,7 @@ The engine should analyze the workflow graph, identify optimal execution strateg
 **✅ Completed High Priority Items:**
 
 2. **True Timeout Enforcement** - Preemptive cancellation for expression evaluation (500ms limit) ✅
-3. **Expression Expansion Limits** - 64KB max size enforcement during mapping resolution ✅  
+3. **Expression Expansion Limits** - 64KB max size enforcement during mapping resolution ✅
 4. **Dependency Failure Semantics** - Skip behavior implemented for failed/cancelled dependencies ✅
 5. **Structured Logging** - Logger interface wired and lifecycle events implemented ✅
 
@@ -86,11 +100,58 @@ The engine should analyze the workflow graph, identify optimal execution strateg
 6. **Resilience Composition** - Finalize order between retry/timeout/circuit breaker with consistent defaults
 7. **Mapping Parser Robustness** - Support quoted defaults and handle nested ?? expressions
 
-**New Technical Gaps Identified:**
+**Detailed Quality Issues (from Code Review):**
 
-8. **Nested Step Types vs Flat Execution** - Schema defines SequentialStep/ParallelStep but engine uses flat dependency graph
-9. **Configuration Parity** - OrchestrationOptions limits not threaded through to evaluator (uses hard-coded limits)
-10. **Environment Whitelist Inconsistency** - Evaluator uses workflow.allowedEnvVars but engine has unused envWhitelist
+**HIGH PRIORITY:**
+
+8. **Fallback Input Override Not Honored**
+   - **Evidence**: orchestration-engine.ts executeFallback builds fallback node with input: originalNode.input, ignoring any input mapping defined on the fallback step itself
+   - **Impact**: Users defining explicit input for the fallback step will be surprised; results may be wrong
+   - **Action**: Use fallback step's own input if present; otherwise fall back to the original step's input. Add tests for both cases
+
+9. **Schema "Group" Semantics vs Flat Graph Divergence**
+   - **Evidence**: Execution uses a flat dependency graph; ExecutionNode.type allows sequential|parallel and children, but the engine ignores nested groups and group-level maxConcurrency
+   - **Impact**: Workflows authored with nested sequential/parallel will not behave as authored
+   - **Action**: Decide and document. For MVP, de-scope nested groups explicitly and instruct using dependsOn. If keeping groups, implement expansion to a flat DAG respecting group-level properties
+
+**MEDIUM PRIORITY:**
+
+10. **Resilience Composition Control Not Enforced at Adapter Level**
+    - **Evidence**: Commit 4d629ff finalizes default order; engine normalizes policy, but the adapter interface is still applyPolicy(operation, policy, signal?). Composition order relies on the adapter implementation, which isn't codified in the contract
+    - **Impact**: Inconsistent behavior across adapters; ambiguity for consumers
+    - **Action**: Update ResilienceAdapter contract to accept normalized policies and an explicit compositionOrder (e.g., 'retry-cb-timeout' default). Provide a reference adapter in @orchestr8/resilience
+
+11. **Config Parity: Engine Limits Not Threaded Through Evaluator**
+    - **Evidence**: Engine has maxExpansionDepth, maxExpansionSize options; expression-evaluator.ts uses local SECURITY_LIMITS
+    - **Impact**: Tuning engine options won't affect expression evaluation; limits drift
+    - **Action**: Thread engine limits to evaluator (function params or context) and remove hard-coded constants. Add tests for non-defaults
+
+12. **Environment Whitelist Duplication/Inconsistency**
+    - **Evidence**: Evaluator uses workflow.allowedEnvVars; engine carries an unused envWhitelist?: string[] with TODO
+    - **Impact**: Two sources of truth; potential security confusion
+    - **Action**: Choose one (recommend schema-driven workflow.allowedEnvVars) and remove/bridge the other. Document precedence
+
+13. **Condition Error Handling Defaults to "Silent False"**
+    - **Evidence**: evaluateCondition() returns false on invalid expressions in non-strict mode; engine's default strictConditions is false
+    - **Impact**: Typos in conditions silently skip steps; harder to debug
+    - **Action**: Consider defaulting strictConditions to true for runtime safety, or expose a workflow-level toggle. Add tests for invalid conditions raising VALIDATION errors when strict
+
+**LOW PRIORITY:**
+
+14. **"True" Preemptive Timeout Not Actually Preemptive**
+    - **Evidence**: JMESPath search is synchronous; evaluateWithTimeout checks elapsed time after evaluation. It can't interrupt a long evaluation mid-flight
+    - **Impact**: Small with JMESPath (fast), but spec text overpromises
+    - **Action**: Update docs to "post-check timeout" or explore Worker-based evaluation for real preemption if needed
+
+15. **Unused Type Fields and Implementation Drift**
+    - **Evidence**: ExecutionNode.children, types for group nodes are unused; maxMetadataBytes isn't enforced anywhere
+    - **Impact**: Minor maintenance cost and confusion
+    - **Action**: Remove or wire these, and add tests or docs
+
+16. **Memory Truncation UX**
+    - **Evidence**: truncateResult marks truncated: true and omits output; only size metadata is kept
+    - **Impact**: Consumers can't inspect partial output
+    - **Action**: Consider retaining a safe preview (e.g., JSON string prefix) under a documented policy. Keep current default for safety
 
 ### Phase 3: Polish & Optimization (FUTURE)
 
@@ -113,7 +174,8 @@ The engine should analyze the workflow graph, identify optimal execution strateg
 
 **Gap**: Nested groups are not traversed/executed; group-level `maxConcurrency` is not honored.
 
-**Decision Required**: 
+**Decision Required**:
+
 - **Option A**: Implement group expansion layer with proper nested execution
 - **Option B**: Explicitly de-scope nested groups for MVP and document "use dependsOn for sequencing/parallelism"
 
@@ -136,12 +198,22 @@ The engine should analyze the workflow graph, identify optimal execution strateg
 3. Structured logging implementation with correlation ✅
 4. Comprehensive test coverage >80% with edge cases ✅
 
-### Remaining Items (Medium Priority):
+### Next Actions Required (Priority Order):
 
-1. Resilience composition order finalization
-2. Mapping parser robustness improvements  
-3. Nested step semantics decision (implement or de-scope)
-4. Configuration parity for evaluator limits
+**High Priority (Implementation Gaps):**
+1. Fix fallback input precedence (fallback step input > original input); add tests
+2. Decide nested groups architecture: implement group expansion OR explicitly de-scope and document dependsOn-only approach
+
+**Medium Priority (Technical Consistency):**  
+3. Update ResilienceAdapter contract to accept policies and compositionOrder; add reference adapter
+4. Thread engine security limits to evaluator; remove hard-coded constants
+5. Unify env var whitelist (choose schema field) and remove duplicate engine field  
+6. Consider default strictConditions: true (or expose workflow-level flag) and test invalid expressions → VALIDATION
+
+**Low Priority (Polish):**
+7. Clarify docs on condition "timeout" behavior; optionally explore Worker-based preemption
+8. Clean up unused types/fields (children, maxMetadataBytes) or wire them and add tests
+9. Consider retaining safe preview for truncated results
 
 ### Phase 3 (Future):
 

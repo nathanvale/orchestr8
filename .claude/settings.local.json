@@ -46,12 +46,14 @@
       "Bash(pnpm -F @orchestr8/core format)",
       "Bash(pnpm -F @orchestr8/core prettier:*)",
       "mcp__wallaby__wallaby_coveredLinesForTest",
-      "Bash(afplay:*)"
+      "Bash(afplay:*)",
+      "Bash(rg:*)",
+      "mcp__wallaby__wallaby_allTestsForFile",
+      "mcp__wallaby__wallaby_failingTestsForFile",
+      "mcp__wallaby__wallaby_runtimeValues"
     ],
     "deny": [],
     "ask": [],
-    "additionalDirectories": [
-      "/Users/nathanvale"
-    ]
+    "additionalDirectories": ["/Users/nathanvale"]
   }
 }
