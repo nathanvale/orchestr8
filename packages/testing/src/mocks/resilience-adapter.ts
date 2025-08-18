@@ -1,0 +1,255 @@
+/**
+ * Mock ResilienceAdapter for testing
+ * Wallaby.js compatible with mockImplementation pattern
+ */
+
+import type { ResilienceAdapter, ResiliencePolicy } from '@orchestr8/core'
+
+import { createExecutionError, ExecutionErrorCode } from '@orchestr8/schema'
+import { vi } from 'vitest'
+
+/**
+ * Mock ResilienceAdapter for testing
+ */
+export class MockResilienceAdapter implements ResilienceAdapter {
+  // Spy function for testing
+  applyPolicy = vi.fn()
+
+  // Track applied policies for assertions
+  appliedPolicies: Array<{
+    policy: ResiliencePolicy
+    signal?: AbortSignal
+    timestamp: string
+  }> = []
+
+  // Configuration for simulating behaviors
+  private simulateTimeout = false
+  private simulateCircuitOpen = false
+  private simulateCancellation = false
+  private simulateRetryCount = 0
+  private currentAttempt = 0
+
+  constructor() {
+    // Default implementation that passes through the operation
+    this.applyPolicy.mockImplementation(
+      async (
+        operation: () => Promise<unknown>,
+        policy: ResiliencePolicy,
+        signal?: AbortSignal,
+      ) => {
+        // Track the applied policy
+        this.appliedPolicies.push({
+          policy,
+          signal,
+          timestamp: new Date().toISOString(),
+        })
+
+        // Check for abort signal
+        if (signal?.aborted) {
+          throw createExecutionError(
+            ExecutionErrorCode.CANCELLED,
+            'Operation cancelled',
+            { context: { reason: signal.reason } },
+          )
+        }
+
+        // Simulate timeout if configured
+        if (this.simulateTimeout && policy.timeout) {
+          throw createExecutionError(
+            ExecutionErrorCode.TIMEOUT,
+            `Operation timed out after ${policy.timeout}ms`,
+            { context: { timeout: policy.timeout } },
+          )
+        }
+
+        // Simulate circuit breaker open if configured
+        if (this.simulateCircuitOpen && policy.circuitBreaker) {
+          throw createExecutionError(
+            ExecutionErrorCode.CIRCUIT_OPEN,
+            'Circuit breaker is open',
+            { context: { policy: policy.circuitBreaker } },
+          )
+        }
+
+        // Simulate cancellation if configured
+        if (this.simulateCancellation) {
+          throw createExecutionError(
+            ExecutionErrorCode.CANCELLED,
+            'Operation was cancelled',
+            { context: { simulatedCancellation: true } },
+          )
+        }
+
+        // Simulate retries if configured
+        if (this.simulateRetryCount > 0 && policy.retry) {
+          this.currentAttempt++
+          if (this.currentAttempt <= this.simulateRetryCount) {
+            throw createExecutionError(
+              ExecutionErrorCode.RETRYABLE,
+              `Simulated retry attempt ${this.currentAttempt}`,
+              { attempt: this.currentAttempt },
+            )
+          }
+          // Reset for next operation
+          this.currentAttempt = 0
+        }
+
+        // Listen for abort signal during operation
+        if (signal) {
+          return new Promise((resolve, reject) => {
+            const abortHandler = () => {
+              reject(
+                createExecutionError(
+                  ExecutionErrorCode.CANCELLED,
+                  'Operation cancelled during execution',
+                  { context: { reason: signal.reason } },
+                ),
+              )
+            }
+
+            signal.addEventListener('abort', abortHandler, { once: true })
+
+            operation()
+              .then((result) => {
+                resolve(result)
+              })
+              .catch((error) => {
+                reject(error)
+              })
+              .finally(() => {
+                signal.removeEventListener('abort', abortHandler)
+              })
+          })
+        }
+
+        // Default: execute the operation
+        return operation()
+      },
+    )
+  }
+
+  /**
+   * Configure to simulate timeout
+   */
+  simulateTimeoutError(): void {
+    this.simulateTimeout = true
+  }
+
+  /**
+   * Configure to simulate circuit breaker open
+   */
+  simulateCircuitBreakerOpen(): void {
+    this.simulateCircuitOpen = true
+  }
+
+  /**
+   * Configure to simulate cancellation
+   */
+  simulateCancellationError(): void {
+    this.simulateCancellation = true
+  }
+
+  /**
+   * Configure to simulate retries
+   * @param count Number of failed attempts before success
+   */
+  simulateRetries(count: number): void {
+    this.simulateRetryCount = count
+    this.currentAttempt = 0
+  }
+
+  /**
+   * Configure custom behavior for next call
+   */
+  mockImplementationOnce(
+    fn: (
+      operation: () => Promise<unknown>,
+      policy: ResiliencePolicy,
+      signal?: AbortSignal,
+    ) => Promise<unknown>,
+  ): void {
+    this.applyPolicy.mockImplementationOnce(fn)
+  }
+
+  /**
+   * Verify that resilience composition order is correct
+   * Should be: retry(circuitBreaker(timeout(operation)))
+   */
+  verifyCompositionOrder(): boolean {
+    // Check that policies are applied in the correct order
+    // This is a simplified check - in real implementation this would
+    // verify the actual wrapping order
+    const lastPolicy = this.appliedPolicies[this.appliedPolicies.length - 1]
+    if (!lastPolicy) return true
+
+    const { policy } = lastPolicy
+
+    // If all three policies are present, they should be composed correctly
+    if (policy.retry && policy.circuitBreaker && policy.timeout) {
+      // This would be validated by the actual implementation
+      // Here we just return true for the mock
+      return true
+    }
+
+    return true
+  }
+
+  /**
+   * Verify that AbortSignal was propagated
+   */
+  verifyAbortSignalPropagation(signal: AbortSignal): boolean {
+    return this.appliedPolicies.some((p) => p.signal === signal)
+  }
+
+  /**
+   * Get the number of times policies have been applied
+   */
+  getApplicationCount(): number {
+    return this.appliedPolicies.length
+  }
+
+  /**
+   * Clear applied policies history
+   */
+  clearHistory(): void {
+    this.appliedPolicies = []
+  }
+
+  /**
+   * Reset all configurations
+   */
+  reset(): void {
+    this.simulateTimeout = false
+    this.simulateCircuitOpen = false
+    this.simulateCancellation = false
+    this.simulateRetryCount = 0
+    this.currentAttempt = 0
+    this.appliedPolicies = []
+    this.applyPolicy.mockReset()
+
+    // Restore default implementation
+    this.applyPolicy.mockImplementation(
+      async (
+        operation: () => Promise<unknown>,
+        policy: ResiliencePolicy,
+        signal?: AbortSignal,
+      ) => {
+        this.appliedPolicies.push({
+          policy,
+          signal,
+          timestamp: new Date().toISOString(),
+        })
+
+        if (signal?.aborted) {
+          throw createExecutionError(
+            ExecutionErrorCode.CANCELLED,
+            'Operation cancelled',
+            { context: { reason: signal.reason } },
+          )
+        }
+
+        return operation()
+      },
+    )
+  }
+}

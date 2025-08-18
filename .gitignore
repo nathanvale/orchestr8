@@ -12,6 +12,7 @@ storybook-static
 
 # Testing
 coverage
+test-results
 *.lcov
 .nyc_output
 

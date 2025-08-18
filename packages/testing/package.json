@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "exports": {
     ".": {
       "development": "./src/index.ts",
@@ -23,6 +26,7 @@
   },
   "dependencies": {
     "@orchestr8/agent-base": "workspace:*",
+    "@orchestr8/core": "workspace:*",
     "@orchestr8/schema": "workspace:*",
     "msw": "^2.10.2"
   },

@@ -225,7 +225,7 @@ graph TB
             "type": "string",
             "pattern": "^\\$\\{steps\\.[a-zA-Z0-9_-]+\\.output\\.[a-zA-Z0-9_.\\[\\]]+(?:\\?\\?.+)?\\}$"
           },
-          "description": "Maps workflow context to agent input using ${steps.<id>.output.<path>} syntax (ADR-019)"
+          "description": "Maps workflow context to agent input using ${steps.<id>.output.<path>}, ${variables.<name>}, ${env.<name>} with ?? defaults (ADR-019)"
         },
         "expressionSecurity": {
           "type": "object",
@@ -390,11 +390,6 @@ graph TB
           "type": "integer",
           "default": 4000,
           "description": "Maximum delay cap for exponential backoff"
-        },
-        "jitter": {
-          "type": "boolean",
-          "default": true,
-          "description": "Apply full jitter: delay * (0.5 + Math.random() * 0.5)"
         },
         "retryableErrors": {
           "type": "array",
@@ -629,6 +624,7 @@ export const ErrorTaxonomySchema = z.object({
     'CANCELLED',
     'VALIDATION',
     'RETRYABLE',
+    'UNKNOWN',
   ]),
   isRetryable: z.boolean(),
   attempts: z.number().int().min(0),
@@ -1006,8 +1002,9 @@ export class WorkflowMigrator {
       "dependencies": ["github-research"],
       "input": {
         "mapping": {
-          "username": "${variables.targetUser}",
-          "githubData": "${steps.github-research.output}"
+          "username": "${variables.targetUser ?? 'defaultUser'}",
+          "githubData": "${steps.github-research.output}",
+          "apiKey": "${env.GITHUB_API_KEY ?? 'demo-key'}"
         }
       }
     }
@@ -1022,13 +1019,16 @@ export class WorkflowMigrator {
         "maxAttempts": 3,
         "baseDelayMs": 1000,
         "maxDelayMs": 4000,
-        "jitter": true
+        "jitterStrategy": "full-jitter"
       },
       "circuitBreaker": {
-        "key": "github-research",
+        "keyStrategy": {
+          "agentId": true,
+          "includeTarget": true
+        },
         "failureThreshold": 5,
         "resetTimeoutMs": 60000,
-        "halfOpenPolicy": "single-trial"
+        "halfOpenPolicy": "single-probe"
       },
       "compositionOrder": "retry-cb-timeout"
     },
@@ -1102,32 +1102,44 @@ When resolving `${...}` placeholders in mappings, the following precedence order
 
 ```typescript
 function resolveMapping(template: string, context: ExecutionContext): any {
-  return template.replace(/\$\{([^}]+)\}/g, (match, path) => {
-    // Try step outputs first
-    if (path.startsWith('steps.')) {
-      const stepPath = path.substring(6)
-      const value = getStepOutput(context, stepPath)
-      if (value !== undefined) return value
+  return template.replace(/\$\{([^}]+)\}/g, (match, expression) => {
+    // Parse for optional default value syntax: ${path ?? defaultValue}
+    const [path, ...defaultParts] = expression.split('??')
+    const defaultValue = defaultParts.join('??').trim()
+    const cleanPath = path.trim()
+
+    let resolvedValue: any = undefined
+
+    // Try step outputs first (highest precedence)
+    if (cleanPath.startsWith('steps.')) {
+      const stepPath = cleanPath.substring(6)
+      resolvedValue = getStepOutput(context, stepPath)
+    }
+    // Try context variables (medium precedence)
+    else if (cleanPath.startsWith('variables.')) {
+      const varName = cleanPath.substring(10)
+      resolvedValue = context.variables[varName]
+    }
+    // Try environment last (lowest precedence, whitelisted only)
+    else if (cleanPath.startsWith('env.')) {
+      const envName = cleanPath.substring(4)
+      if (isWhitelistedEnvVar(envName)) {
+        resolvedValue = process.env[envName]
+      }
     }
 
-    // Try context variables
-    if (path.startsWith('variables.')) {
-      const varName = path.substring(10)
-      const value = context.variables[varName]
-      if (value !== undefined) return value
+    // Apply default value if resolution yields undefined/null
+    if (resolvedValue === undefined || resolvedValue === null) {
+      if (defaultValue) {
+        return defaultValue
+      }
+      if (context.strict) {
+        throw new Error(`Unresolved mapping: ${match}`)
+      }
+      return ''
     }
 
-    // Try environment last
-    if (path.startsWith('env.')) {
-      const envName = path.substring(4)
-      return process.env[envName] || ''
-    }
-
-    // Default: return empty string or throw error
-    if (context.strict) {
-      throw new Error(`Unresolved mapping: ${match}`)
-    }
-    return ''
+    return resolvedValue
   })
 }
 ```
@@ -1147,8 +1159,8 @@ Conditions use a subset of JMESPath for safe evaluation:
 ```json
 {
   "condition": {
-    "expression": "steps.github_research.output.repositories[?stars > `100`]",
-    "operator": "not-empty"
+    "if": "steps.github_research.output.repositories[?stars > `100`]",
+    "unless": "variables.skipAnalysis"
   }
 }
 ```
@@ -1162,27 +1174,29 @@ class ConditionEvaluator {
   private cache = new Map<string, jmespath.CompiledExpression>()
 
   evaluate(condition: StepCondition, context: ExecutionContext): boolean {
-    // Compile and cache expression
-    let compiled = this.cache.get(condition.expression)
-    if (!compiled) {
-      compiled = jmespath.compile(condition.expression)
-      this.cache.set(condition.expression, compiled)
+    // Check 'if' condition (must be truthy to proceed)
+    if (condition.if) {
+      let compiled = this.cache.get(condition.if)
+      if (!compiled) {
+        compiled = jmespath.compile(condition.if)
+        this.cache.set(condition.if, compiled)
+      }
+      const result = compiled.search(context)
+      if (!result) return false // If evaluates to falsy, skip step
     }
 
-    // Evaluate against context
-    const result = compiled.search(context)
-
-    // Apply operator
-    switch (condition.operator) {
-      case 'equals':
-        return result === condition.value
-      case 'not-empty':
-        return Array.isArray(result) ? result.length > 0 : !!result
-      case 'greater-than':
-        return result > condition.value
-      default:
-        return false
+    // Check 'unless' condition (must be falsy to proceed)
+    if (condition.unless) {
+      let compiled = this.cache.get(condition.unless)
+      if (!compiled) {
+        compiled = jmespath.compile(condition.unless)
+        this.cache.set(condition.unless, compiled)
+      }
+      const result = compiled.search(context)
+      if (result) return false // Unless evaluates to truthy, skip step
     }
+
+    return true // Both conditions satisfied or absent
   }
 }
 ```

@@ -81,17 +81,20 @@ This codebase maintains a **ZERO TOLERANCE** policy for TypeScript `any` types:
 - **ALTERNATIVES REQUIRED**: Use proper types, generics, or `unknown` with type guards
 
 **Why this matters:**
+
 - Type safety is non-negotiable for enterprise-grade reliability
 - `any` defeats the entire purpose of using TypeScript
 - Runtime errors from `any` usage are unacceptable in production
 
 **If you encounter a scenario where `any` seems necessary:**
+
 1. STOP - There's always a type-safe alternative
 2. Use proper generic types or interfaces
 3. Use `unknown` with proper type guards if type is truly unknown
 4. Define specific types for third-party libraries if needed
 
 **Enforcement:**
+
 - ESLint will error on any `any` usage
 - CI/CD pipeline will fail on `any` detection
 - Code reviews will reject PRs containing `any`

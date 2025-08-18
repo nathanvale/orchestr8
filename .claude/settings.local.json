@@ -21,9 +21,28 @@
       "mcp__wallaby__wallaby_allTests",
       "Bash(pnpm add:*)",
       "Bash(pnpm validate:dual-consumption:*)",
-      "Bash(NODE_ENV=development node -e \"import(''@orchestr8/schema'').then(m => console.log(''✅ Dev import works for @orchestr8/schema''))\")"
+      "Bash(NODE_ENV=development node -e \"import(''@orchestr8/schema'').then(m => console.log(''✅ Dev import works for @orchestr8/schema''))\")",
+      "Bash(git push:*)",
+      "Bash(git restore:*)",
+      "Bash(find:*)",
+      "Bash(node:*)",
+      "Bash(pnpm check:*)",
+      "WebSearch",
+      "Bash(grep:*)",
+      "Bash(pnpm run check:*)",
+      "Bash(pnpm -w run check)",
+      "Bash(tsc --showConfig)",
+      "Bash(tsc:*)",
+      "Bash(npx tsc:*)",
+      "Bash(pnpm -F @orchestr8/cli build)",
+      "mcp__wallaby__wallaby_failingTests",
+      "Bash(pnpm exec prettier:*)",
+      "mcp__wallaby__wallaby_runtimeValuesByTest"
     ],
     "deny": [],
-    "ask": []
+    "ask": [],
+    "additionalDirectories": [
+      "/Users/nathanvale"
+    ]
   }
 }

@@ -11,9 +11,21 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
+    pool: 'threads',
+    poolOptions: {
+      threads: {
+        maxThreads: 8,
+        minThreads: 1,
+      },
+    },
     coverage: {
       provider: 'v8',
-      reporter: ['text', 'json', 'html'],
+      reporter: process.env.CI
+        ? ['text', 'json', 'lcov', 'cobertura']
+        : ['text', 'json', 'html'],
+      reportsDirectory: process.env.CI
+        ? './test-results/coverage'
+        : './coverage',
       exclude: [
         'node_modules',
         'dist',
@@ -24,7 +36,13 @@ export default defineConfig({
         '**/types.ts',
       ],
     },
-    setupFiles: [],
+    reporters: process.env.CI ? ['default', 'junit'] : ['default'],
+    outputFile: process.env.CI
+      ? {
+          junit: './test-results/junit.xml',
+        }
+      : undefined,
+    setupFiles: ['./tests/vitest/vitest-setup.ts'],
     include: ['packages/**/*.test.ts', 'packages/**/*.spec.ts'],
     exclude: ['node_modules', 'dist', 'build', '.turbo'],
   },
