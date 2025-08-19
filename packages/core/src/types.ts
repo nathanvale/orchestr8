@@ -45,11 +45,6 @@ export interface ExecutionNode {
   agentId?: string
 
   /**
-   * Nested nodes for sequential/parallel steps
-   */
-  children?: ExecutionNode[]
-
-  /**
    * Dependencies that must complete before this node
    */
   dependsOn: string[]

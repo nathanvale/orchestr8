@@ -44,12 +44,12 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
 **High Priority:**
 
 - [x] ✅ Fallback input override not honored (fallback step input ignored)
-- [ ] Nested step schema vs flat execution divergence (groups not traversed)
+- [x] Nested step schema vs flat execution divergence (groups not traversed)
 
 **Medium Priority:**
 
-- [ ] Resilience composition control not enforced at adapter contract level
-- [ ] Configuration parity - engine limits not threaded through evaluator
+- [x] Resilience composition control not enforced at adapter contract level
+- [x] Configuration parity - engine limits not threaded through evaluator
 - [ ] Environment whitelist duplication/inconsistency (two sources of truth)
 - [ ] Condition error handling defaults to "silent false" (non-strict mode)
 

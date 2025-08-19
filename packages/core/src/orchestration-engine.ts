@@ -45,7 +45,6 @@ interface InternalExecutionContext {
   variables: Record<string, unknown>
   maxResultBytesPerStep: number
   maxMetadataBytes: number
-  envWhitelist?: string[]
 }
 
 /**
@@ -74,7 +73,7 @@ export class OrchestrationEngine implements IOrchestrationEngine {
     this.maxMetadataBytes = options.maxMetadataBytes ?? 128 * 1024
     this.maxExpansionDepth = options.maxExpansionDepth ?? 10
     this.maxExpansionSize = options.maxExpansionSize ?? 64 * 1024
-    this.strictConditions = options.strictConditions ?? false
+    this.strictConditions = options.strictConditions ?? true
   }
 
   /**
@@ -112,7 +111,6 @@ export class OrchestrationEngine implements IOrchestrationEngine {
       variables: variables ?? {},
       maxResultBytesPerStep: this.maxResultBytesPerStep,
       maxMetadataBytes: this.maxMetadataBytes,
-      envWhitelist: undefined, // TODO: Get from workflow or options
     }
 
     // Initialize result
@@ -201,6 +199,19 @@ export class OrchestrationEngine implements IOrchestrationEngine {
 
     // Create nodes for each step
     for (const step of workflow.steps) {
+      // Skip Sequential/Parallel steps - they are organizational only in MVP
+      if (step.type === 'sequential' || step.type === 'parallel') {
+        this.logger.debug('graph.organizational_step', {
+          stepId: step.id,
+          type: step.type,
+          name: step.name,
+          description:
+            'Organizational step (pass-through) - execution order determined by dependsOn',
+        })
+        // Skip adding to execution graph - these are documentation/organization only
+        continue
+      }
+
       // Type-safe access to agent-specific properties
       const agentStep = step.type === 'agent' ? (step as AgentStep) : null
 
@@ -614,8 +625,16 @@ export class OrchestrationEngine implements IOrchestrationEngine {
             result.error!,
             logger,
           )
-        } catch {
+        } catch (error) {
           // Fallback failed, keep original failure
+          logger.error('step.fallback_failed', {
+            originalStepId: node.stepId,
+            fallbackStepId: node.fallbackStepId,
+            originalError: result.error?.message,
+            fallbackError:
+              error instanceof Error ? error.message : String(error),
+            message: 'Fallback execution failed, keeping original step failure',
+          })
         }
       }
     }
@@ -686,11 +705,41 @@ export class OrchestrationEngine implements IOrchestrationEngine {
 
       // Check conditions
       if (node.conditions) {
-        const shouldExecute = await this.evaluateConditions(
-          node.conditions,
-          context,
-          workflow,
-        )
+        let shouldExecute = false
+        try {
+          shouldExecute = await this.evaluateConditions(
+            node.conditions,
+            context,
+            workflow,
+          )
+        } catch (error) {
+          // In strict mode, invalid conditions throw VALIDATION errors
+          // Treat these as condition-not-met and skip the step
+          const isValidationError =
+            (error as ExecutionError).code === ExecutionErrorCode.VALIDATION ||
+            (error instanceof Error &&
+              error.message.includes('Condition evaluation failed'))
+
+          if (isValidationError) {
+            stepLogger.debug('step.skip', {
+              reason: 'invalid-condition',
+              conditions: node.conditions,
+              error: error instanceof Error ? error.message : String(error),
+            })
+
+            context.results.set(node.stepId, {
+              stepId: node.stepId,
+              status: 'skipped',
+              startTime,
+              endTime: new Date().toISOString(),
+              skipReason: 'invalid-condition',
+            })
+            return
+          }
+          // Re-throw other errors
+          throw error
+        }
+
         if (!shouldExecute) {
           stepLogger.debug('step.skip', {
             reason: 'condition-not-met',

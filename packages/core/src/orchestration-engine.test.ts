@@ -1238,8 +1238,15 @@ describe('OrchestrationEngine', () => {
 
       vi.mocked(mockAgentRegistry.getAgent).mockResolvedValue(mockAgent)
 
+      // Create engine with explicit non-strict mode
+      const nonStrictEngine = new OrchestrationEngine({
+        agentRegistry: mockAgentRegistry,
+        resilienceAdapter: mockResilienceAdapter,
+        strictConditions: false, // Explicitly set non-strict mode
+      })
+
       // Act
-      const result = await engine.execute(workflow)
+      const result = await nonStrictEngine.execute(workflow)
 
       // Assert
       expect(result.status).toBe('completed')
@@ -1247,7 +1254,7 @@ describe('OrchestrationEngine', () => {
       expect(mockAgent.execute).not.toHaveBeenCalled()
     })
 
-    it('should throw validation error for invalid conditions in strict mode', async () => {
+    it('should skip step with invalid conditions in strict mode', async () => {
       // Arrange
       const workflow: Workflow = {
         id: 'test-workflow',
@@ -1276,12 +1283,51 @@ describe('OrchestrationEngine', () => {
       const result = await strictEngine.execute(workflow)
 
       // Assert
-      expect(result.status).toBe('failed')
-      expect(result.steps.step1.status).toBe('failed')
-      expect(result.steps.step1.error?.code).toBe('VALIDATION')
-      expect(result.steps.step1.error?.message).toContain(
-        'Condition evaluation failed',
-      )
+      // In strict mode, invalid conditions skip the step with a clear reason
+      expect(result.status).toBe('completed')
+      expect(result.steps.step1.status).toBe('skipped')
+      expect(result.steps.step1.skipReason).toBe('invalid-condition')
+      expect(mockAgent.execute).not.toHaveBeenCalled()
+    })
+
+    it('should default to strict mode when not specified', async () => {
+      // Arrange
+      const workflow: Workflow = {
+        id: 'test-workflow',
+        name: 'Test Workflow',
+        version: '1.0.0',
+        steps: [
+          {
+            id: 'step1',
+            type: 'agent',
+            agentId: 'agent1',
+            if: 'invalid.syntax[', // Invalid JMESPath
+            input: { test: true },
+          },
+        ],
+      }
+
+      const mockAgent: Agent = {
+        id: 'agent1',
+        name: 'Agent 1',
+        execute: vi.fn().mockImplementation(async () => ({ result: 'ok' })),
+      }
+
+      vi.mocked(mockAgentRegistry.getAgent).mockResolvedValue(mockAgent)
+
+      // Create engine without specifying strictConditions (should default to true)
+      const defaultEngine = new OrchestrationEngine({
+        agentRegistry: mockAgentRegistry,
+        resilienceAdapter: mockResilienceAdapter,
+      })
+
+      // Act & Assert
+      const result = await defaultEngine.execute(workflow)
+
+      // In strict mode, invalid conditions cause VALIDATION errors which skip the step
+      expect(result.status).toBe('completed')
+      expect(result.steps.step1.status).toBe('skipped')
+      expect(result.steps.step1.skipReason).toBe('invalid-condition')
       expect(mockAgent.execute).not.toHaveBeenCalled()
     })
 

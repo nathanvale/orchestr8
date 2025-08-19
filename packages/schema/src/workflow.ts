@@ -105,36 +105,84 @@ export interface AgentStep extends BaseStep {
 }
 
 /**
- * Sequential execution group (MVP: Use dependsOn for sequencing)
+ * Sequential execution group - Organizational marker for related steps
  *
- * @deprecated For MVP, nested groups are not supported. Use AgentStep with dependsOn relationships
- * to achieve sequential execution. This type is reserved for post-MVP nested group implementation.
+ * @remarks
+ * In the current implementation, SequentialStep serves as an organizational/documentation
+ * construct only. The orchestration engine uses a flat dependency graph where actual
+ * execution order is determined entirely by the `dependsOn` property of each step.
+ *
+ * Sequential steps are passed through during execution and provide:
+ * - Logical grouping and documentation of related workflow steps
+ * - Semantic intent for workflow visualization tools
+ * - Forward compatibility for future nested execution features
+ *
+ * @example
+ * ```typescript
+ * // Sequential group for documentation (current behavior)
+ * { type: 'sequential', id: 'user-onboarding', name: 'User Onboarding Flow' }
+ *
+ * // Actual execution order via dependsOn
+ * { type: 'agent', id: 'validate', agentId: 'validator', dependsOn: [] }
+ * { type: 'agent', id: 'create', agentId: 'creator', dependsOn: ['validate'] }
+ * { type: 'agent', id: 'notify', agentId: 'notifier', dependsOn: ['create'] }
+ * ```
+ *
+ * @future
+ * In future versions, nested execution with `steps` array may be supported
+ * for true hierarchical workflow composition.
  */
 export interface SequentialStep extends BaseStep {
   type: 'sequential'
 
   /**
-   * @deprecated Nested steps not supported in MVP. Use root-level steps with dependsOn instead.
+   * Child steps array - Reserved for future nested execution support.
+   * Currently not implemented. Use root-level steps with `dependsOn` for sequencing.
    */
   steps?: never
 }
 
 /**
- * Parallel execution group (MVP: Use dependsOn for parallelism)
+ * Parallel execution group - Organizational marker for concurrent steps
  *
- * @deprecated For MVP, nested groups are not supported. Use AgentStep without dependencies
- * to achieve parallel execution. This type is reserved for post-MVP nested group implementation.
+ * @remarks
+ * In the current implementation, ParallelStep serves as an organizational/documentation
+ * construct only. The orchestration engine uses a flat dependency graph where parallel
+ * execution is achieved by steps having the same (or no) dependencies.
+ *
+ * Parallel steps are passed through during execution and provide:
+ * - Logical grouping of steps that can execute concurrently
+ * - Semantic intent for workflow visualization tools
+ * - Forward compatibility for future nested execution features
+ *
+ * @example
+ * ```typescript
+ * // Parallel group for documentation (current behavior)
+ * { type: 'parallel', id: 'data-enrichment', name: 'Enrich Data Sources' }
+ *
+ * // Actual parallel execution via shared dependencies
+ * { type: 'agent', id: 'enrich1', agentId: 'api1', dependsOn: ['fetch'] }
+ * { type: 'agent', id: 'enrich2', agentId: 'api2', dependsOn: ['fetch'] }
+ * { type: 'agent', id: 'enrich3', agentId: 'api3', dependsOn: ['fetch'] }
+ * // These three steps will execute in parallel after 'fetch' completes
+ * ```
+ *
+ * @future
+ * In future versions, nested execution with `steps` array and `maxConcurrency`
+ * may be supported for group-level concurrency control.
  */
 export interface ParallelStep extends BaseStep {
   type: 'parallel'
 
   /**
-   * @deprecated Nested steps not supported in MVP. Use root-level steps with dependsOn instead.
+   * Child steps array - Reserved for future nested execution support.
+   * Currently not implemented. Use root-level steps with same dependencies for parallelism.
    */
   steps?: never
 
   /**
-   * @deprecated Group-level concurrency not supported in MVP. Use workflow.maxConcurrency instead.
+   * Group-level concurrency limit - Reserved for future implementation.
+   * Currently use `workflow.maxConcurrency` for global concurrency control.
    */
   maxConcurrency?: never
 }

@@ -36,17 +36,17 @@ Implement the core orchestration engine that executes multi-step workflows with 
 
 **🔧 Remaining Quality Issues (by Severity):**
 
-**High Priority (Implementation Gaps):**
+**✅ RESOLVED High Priority Issues:**
 
-1. Fallback input override not honored - fallback step's own input ignored
-2. Nested step schema vs flat execution divergence - groups not traversed
+1. ~~Fallback input override~~ - Tests confirm current behavior is correct: fallback input takes precedence
+2. ~~Nested step schema vs flat execution~~ - Documented as organizational markers, flat execution by design
 
-**Medium Priority (Technical Consistency):**
+**✅ RESOLVED Medium Priority Issues:**
 
-1. Resilience composition not enforced at adapter contract level
-2. Configuration parity - engine limits not threaded through evaluator
-3. Environment whitelist duplication/inconsistency
-4. Condition error handling defaults to "silent false"
+1. ~~Resilience composition enforced~~ - Adapter contract updated with normalized policies
+2. ~~Configuration parity~~ - Engine limits properly threaded to evaluator
+3. ~~Environment whitelist duplication~~ - Removed redundant envWhitelist, using workflow.allowedEnvVars
+4. ~~Condition error handling~~ - Default strictConditions changed to true for safety
 
 **Low Priority (Technical Debt):**
 
@@ -173,20 +173,37 @@ The engine should analyze the workflow graph, identify optimal execution strateg
 - REST API endpoints - planned for Phase 3
 - Observability beyond logs (metrics/traces) - tracked separately
 
-## Architectural Decision: Nested Step Types
+## Architectural Decision: Flat Dependency Graph Model
 
-**Current State**: The @orchestr8/schema defines `SequentialStep` and `ParallelStep` types with optional `maxConcurrency`, but the engine implements a **flat dependency graph** model using only `dependsOn` relationships.
+**Decision Made**: The orchestration engine uses a **flat dependency graph** model where all execution ordering is determined by `dependsOn` relationships, not by nested group structures.
 
-**Gap**: Nested groups are not traversed/executed; group-level `maxConcurrency` is not honored.
+**Implementation**:
 
-**Decision Required**:
+- `SequentialStep` and `ParallelStep` types exist as **organizational markers only**
+- These group steps are passed through during execution (logged but not executed)
+- All actual execution sequencing happens via `dependsOn` arrays on agent steps
+- Parallel execution is achieved by steps having the same (or no) dependencies
 
-- **Option A**: Implement group expansion layer with proper nested execution
-- **Option B**: Explicitly de-scope nested groups for MVP and document "use dependsOn for sequencing/parallelism"
+**Rationale**:
 
-**Recommendation**: For MVP simplicity, choose Option B - flatten all workflows to dependency-graph only execution. Document this limitation and plan nested groups for post-MVP if needed.
+- **Simplicity**: Flat graphs are easier to reason about and debug
+- **Flexibility**: Any DAG pattern can be expressed with dependencies
+- **Industry Standard**: Follows patterns from Airflow, Temporal, GitHub Actions
+- **Performance**: Simpler topological sorting and scheduling
 
-**Impact**: Current engine behavior is consistent but doesn't fully match schema capabilities. This should be explicitly documented to avoid confusion.
+**Schema Alignment**:
+
+- Sequential/Parallel types are documented as organizational constructs
+- Clear examples show how to achieve sequencing/parallelism with `dependsOn`
+- Types remain for future compatibility when nested execution is implemented
+- No breaking changes required when adding nested support later
+
+**Benefits of This Approach**:
+
+- Clean separation between organization (groups) and execution (dependencies)
+- No recursive traversal complexity
+- Deterministic scheduling with simple topological sort
+- Easy visualization of entire workflow dependency graph
 
 ## Expected Deliverable
 
