@@ -5,9 +5,9 @@
 export { ConsoleLogger, createConsoleLogger } from './adapters/console.js'
 
 // Adapters
-export { NoopLogger, createNoopLogger } from './adapters/noop.js'
 export { MemoryLogger, createMemoryLogger } from './adapters/memory.js'
 export type { MemoryLogEntry } from './adapters/memory.js'
+export { NoopLogger, createNoopLogger } from './adapters/noop.js'
 
 export {
   PinoAdapter,

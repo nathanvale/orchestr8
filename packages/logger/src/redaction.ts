@@ -46,6 +46,7 @@ export function deepRedact(
   obj: unknown,
   sensitiveKeys: Set<string>,
   maxDepth = 10,
+  currentPath = '',
 ): unknown {
   if (maxDepth <= 0) {
     return '[MAX_DEPTH_EXCEEDED]'
@@ -67,22 +68,26 @@ export function deepRedact(
 
   // Handle arrays
   if (Array.isArray(obj)) {
-    return obj.map((item) => deepRedact(item, sensitiveKeys, maxDepth - 1))
+    return obj.map((item) =>
+      deepRedact(item, sensitiveKeys, maxDepth - 1, currentPath),
+    )
   }
 
   // Handle objects
   const redacted: Record<string, unknown> = {}
 
   for (const [key, value] of Object.entries(obj)) {
-    // Check if key should be redacted
-    if (shouldRedactKey(key, sensitiveKeys)) {
+    const fullPath = currentPath ? `${currentPath}.${key}` : key
+
+    // Check if the full path or the key itself should be redacted
+    if (sensitiveKeys.has(fullPath) || shouldRedactKey(key, sensitiveKeys)) {
       redacted[key] = '[REDACTED]'
     } else if (typeof value === 'string') {
       // Redact string values that might contain secrets
       redacted[key] = redactString(value)
     } else if (typeof value === 'object' && value !== null) {
-      // Recursively redact nested objects
-      redacted[key] = deepRedact(value, sensitiveKeys, maxDepth - 1)
+      // Recursively redact nested objects with the current path
+      redacted[key] = deepRedact(value, sensitiveKeys, maxDepth - 1, fullPath)
     } else {
       redacted[key] = value
     }
@@ -92,7 +97,7 @@ export function deepRedact(
 }
 
 /**
- * Check if a key should be redacted
+ * Check if a key should be redacted (not considering nested paths)
  */
 function shouldRedactKey(key: string, sensitiveKeys: Set<string>): boolean {
   const lowerKey = key.toLowerCase()
@@ -102,23 +107,20 @@ function shouldRedactKey(key: string, sensitiveKeys: Set<string>): boolean {
     return true
   }
 
-  // Check case-insensitive match
+  // Check case-insensitive match for non-nested keys only
   for (const sensitiveKey of sensitiveKeys) {
+    // Skip nested paths - these are handled in deepRedact via fullPath
+    if (sensitiveKey.includes('.')) {
+      continue
+    }
+
     if (lowerKey === sensitiveKey.toLowerCase()) {
       return true
     }
 
-    // Check if key contains sensitive pattern
+    // Check if key contains sensitive pattern (for non-nested keys)
     if (lowerKey.includes(sensitiveKey.toLowerCase())) {
       return true
-    }
-
-    // Check nested path (e.g., 'headers.authorization')
-    if (sensitiveKey.includes('.')) {
-      const parts = sensitiveKey.split('.')
-      if (parts.some((part) => lowerKey.includes(part.toLowerCase()))) {
-        return true
-      }
     }
   }
 

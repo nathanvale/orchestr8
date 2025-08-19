@@ -13,18 +13,18 @@ import {
   type StepResult,
   type Workflow,
   type WorkflowResult,
+  type CompositionOrder,
+  type ResilienceAdapter,
+  type ResiliencePolicy,
 } from '@orchestr8/schema'
 
 import type {
   AgentRegistry,
-  CompositionOrder,
   ExecutionGraph,
   ExecutionNode,
   Logger,
   OrchestrationEngine as IOrchestrationEngine,
   OrchestrationOptions,
-  ResilienceAdapter,
-  ResiliencePolicy,
 } from './types.js'
 
 import { evaluateCondition, resolveMapping } from './expression-evaluator.js'
@@ -63,7 +63,8 @@ export class OrchestrationEngine implements IOrchestrationEngine {
     this.agentRegistry = options.agentRegistry
     this.resilienceAdapter = options.resilienceAdapter
     this.logger = options.logger ?? new NoOpLogger()
-    this.defaultCompositionOrder = options.defaultCompositionOrder ?? 'retry-cb-timeout'
+    this.defaultCompositionOrder =
+      options.defaultCompositionOrder ?? 'retry-cb-timeout'
     this.maxConcurrency = options.maxConcurrency ?? 10
     this.maxResultBytesPerStep = options.maxResultBytesPerStep ?? 512 * 1024
     this.maxMetadataBytes = options.maxMetadataBytes ?? 128 * 1024
@@ -762,8 +763,10 @@ export class OrchestrationEngine implements IOrchestrationEngine {
 
         if (policy) {
           // Check if adapter supports new interface with composition order
-          if ('applyNormalizedPolicy' in this.resilienceAdapter && 
-              typeof this.resilienceAdapter.applyNormalizedPolicy === 'function') {
+          if (
+            'applyNormalizedPolicy' in this.resilienceAdapter &&
+            typeof this.resilienceAdapter.applyNormalizedPolicy === 'function'
+          ) {
             // Use new interface with normalized policy and explicit composition order
             const normalizedPolicy = this.normalizeResiliencePolicy(policy)
             if (normalizedPolicy) {

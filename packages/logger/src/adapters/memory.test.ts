@@ -3,8 +3,10 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest'
-import { MemoryLogger, createMemoryLogger } from './memory.js'
+
 import type { LogLevel } from '../types.js'
+
+import { MemoryLogger, createMemoryLogger } from './memory.js'
 
 describe('MemoryLogger', () => {
   let logger: MemoryLogger

@@ -1,18 +1,18 @@
 # JSON Prompt Schema Specification
 
-This defines the canonical JSON prompt configuration format for @orchestr8 agents.
+This defines the canonical JSON prompt configuration format for @orchestr8 agents with official Anthropic patterns including prompt caching.
 
 > Created: 2025-01-17
-> Version: 1.0.0 (MVP)
-> Scope: JSON prompts only (no XML in MVP)
+> Version: 1.1.0 (MVP + Caching)
+> Scope: JSON prompts with cache_control support
 
 ## Overview
 
-The JSON Prompt Schema provides a structured format for agent prompts that ensures consistency, validation, and safety across all agents in the @orchestr8 system.
+The JSON Prompt Schema provides a structured format for agent prompts that ensures consistency, validation, safety, and performance optimization through caching across all agents in the @orchestr8 system.
 
-## Canonical Fields
+## Canonical Fields with Anthropic Patterns
 
-Every agent prompt must include these standard fields:
+Every agent prompt must include these standard fields, now enhanced with official Anthropic patterns:
 
 ```typescript
 interface AgentPrompt {
@@ -43,6 +43,19 @@ interface AgentPrompt {
 
   // Examples (optional)
   examples?: PromptExample[] // Input/output examples
+
+  // Caching (Anthropic pattern)
+  cacheStrategy?: CacheStrategy // Optional caching configuration
+}
+
+// Cache Strategy for Performance Optimization
+interface CacheStrategy {
+  enabled: boolean
+  cachePoints: Array<{
+    target: 'system' | 'tools' | 'context' | 'examples'
+    cache_control: { type: 'ephemeral' }
+  }>
+  minTokens: number // Minimum tokens for caching (1024 or 2048)
 }
 ```
 
@@ -338,9 +351,9 @@ export class PromptSchemaValidator {
 }
 ```
 
-## Provider Abstraction
+## Provider Abstraction with Caching
 
-The prompt system works with a minimal LLM provider interface:
+The prompt system works with a minimal LLM provider interface, now enhanced with Anthropic's cache_control:
 
 ```typescript
 interface LLMProvider {
@@ -359,11 +372,15 @@ interface LLMOptions {
   maxTokens?: number // Maximum response tokens
   timeout?: number // Execution timeout (ms)
 
-  // MVP: Claude-only for now
-  model?: 'claude-3-opus' | 'claude-3-sonnet' | 'claude-3-haiku'
+  // Updated: Claude 4 models + caching
+  model?:
+    | 'claude-opus-4-20250514'
+    | 'claude-sonnet-4-20250514'
+    | 'claude-3-haiku'
+  enableCaching?: boolean // Enable prompt caching
 }
 
-// MVP Implementation (Claude only)
+// MVP Implementation (Claude with Caching)
 export class ClaudeProvider implements LLMProvider {
   name = 'claude'
 
@@ -375,14 +392,18 @@ export class ClaudeProvider implements LLMProvider {
     // Validate input against schema
     const validatedInput = this.validateInput(prompt.inputSchema, input)
 
-    // Format prompt for Claude
-    const formattedPrompt = this.formatPrompt(prompt, validatedInput)
+    // Format prompt with cache_control if enabled
+    const formattedPrompt = this.formatPromptWithCaching(
+      prompt,
+      validatedInput,
+      options.enableCaching ?? true,
+    )
 
-    // Call Claude API with retry logic
+    // Call Claude API with caching support
     const response = await this.callClaude(formattedPrompt, {
       temperature: options.temperature ?? 0.7,
       maxTokens: options.maxTokens ?? 4096,
-      model: options.model ?? 'claude-3-sonnet',
+      model: options.model ?? 'claude-sonnet-4-20250514',
     })
 
     // Validate output against schema
@@ -414,6 +435,53 @@ ${JSON.stringify(input, null, 2)}
 Please provide output matching this schema:
 ${JSON.stringify(prompt.outputSchema, null, 2)}
     `.trim()
+  }
+
+  // New: Format prompt with Anthropic cache_control
+  private formatPromptWithCaching(
+    prompt: AgentPrompt,
+    input: unknown,
+    enableCaching: boolean,
+  ): AnthropicMessage {
+    const message: AnthropicMessage = {
+      model: prompt.model || 'claude-sonnet-4-20250514',
+      max_tokens: prompt.maxTokens || 4096,
+      system: [],
+      messages: [],
+    }
+
+    // Add system prompt with caching
+    if (prompt.role) {
+      message.system.push({
+        type: 'text',
+        text: this.buildSystemPrompt(prompt),
+        ...(enableCaching && { cache_control: { type: 'ephemeral' } }),
+      })
+    }
+
+    // Add tools with caching on last tool
+    if (prompt.tools && prompt.tools.length > 0) {
+      message.tools = prompt.tools.map((tool, index) => ({
+        ...tool,
+        ...(enableCaching &&
+          index === prompt.tools.length - 1 && {
+            cache_control: { type: 'ephemeral' },
+          }),
+      }))
+    }
+
+    // Add messages
+    message.messages.push({
+      role: 'user',
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify(input),
+        },
+      ],
+    })
+
+    return message
   }
 }
 ```

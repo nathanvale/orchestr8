@@ -3,7 +3,11 @@
  * Wallaby.js compatible with mockImplementation pattern
  */
 
-import type { CompositionOrder, ResilienceAdapter, ResiliencePolicy } from '@orchestr8/core'
+import type {
+  CompositionOrder,
+  ResilienceAdapter,
+  ResiliencePolicy,
+} from '@orchestr8/schema'
 
 import { createExecutionError, ExecutionErrorCode } from '@orchestr8/schema'
 import { vi } from 'vitest'
@@ -53,7 +57,12 @@ export class MockResilienceAdapter implements ResilienceAdapter {
         compositionOrder: CompositionOrder,
         signal?: AbortSignal,
       ) => {
-        return this.executeWithPolicy(operation, normalizedPolicy, signal, compositionOrder)
+        return this.executeWithPolicy(
+          operation,
+          normalizedPolicy,
+          signal,
+          compositionOrder,
+        )
       },
     )
   }
@@ -272,7 +281,12 @@ export class MockResilienceAdapter implements ResilienceAdapter {
         compositionOrder: CompositionOrder,
         signal?: AbortSignal,
       ) => {
-        return this.executeWithPolicy(operation, normalizedPolicy, signal, compositionOrder)
+        return this.executeWithPolicy(
+          operation,
+          normalizedPolicy,
+          signal,
+          compositionOrder,
+        )
       },
     )
   }

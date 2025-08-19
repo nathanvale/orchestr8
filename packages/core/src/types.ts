@@ -2,127 +2,24 @@
  * Core type definitions for the orchestration engine
  */
 
-import type { ExecutionContext } from '@orchestr8/schema'
-import type { Workflow, WorkflowResult } from '@orchestr8/schema'
+import type {
+  ResiliencePolicy,
+  ResilienceAdapter,
+  CompositionOrder,
+  AgentRegistry,
+  Workflow,
+  WorkflowResult,
+} from '@orchestr8/schema'
 
-/**
- * Agent definition for execution
- */
-export interface Agent {
-  /**
-   * Unique agent identifier
-   */
-  id: string
+// Re-export agent types from schema for convenience
+export type { Agent, AgentRegistry } from '@orchestr8/schema'
 
-  /**
-   * Agent name
-   */
-  name: string
-
-  /**
-   * Agent execution function
-   */
-  execute: (
-    input: unknown,
-    context: ExecutionContext,
-    signal?: AbortSignal,
-  ) => Promise<unknown>
-}
-
-/**
- * Registry for agent lookup and management
- */
-export interface AgentRegistry {
-  /**
-   * Get an agent by ID
-   * @param agentId The agent identifier
-   * @returns The agent if found
-   * @throws ExecutionError with VALIDATION code if agent not found
-   */
-  getAgent(agentId: string): Promise<Agent>
-
-  /**
-   * Check if an agent exists
-   * @param agentId The agent identifier
-   */
-  hasAgent(agentId: string): Promise<boolean>
-
-  /**
-   * Register an agent
-   * @param agent The agent to register
-   */
-  registerAgent?(agent: Agent): Promise<void>
-}
-
-/**
- * Resilience policy configuration
- */
-export interface ResiliencePolicy {
-  /**
-   * Retry configuration
-   */
-  retry?: {
-    maxAttempts: number
-    backoffStrategy: 'fixed' | 'exponential'
-    jitterStrategy: 'none' | 'full-jitter'
-    initialDelay: number
-    maxDelay: number
-  }
-
-  /**
-   * Circuit breaker configuration
-   */
-  circuitBreaker?: {
-    failureThreshold: number
-    recoveryTime: number
-    sampleSize: number
-    halfOpenPolicy: 'single-probe' | 'gradual'
-  }
-
-  /**
-   * Timeout in milliseconds
-   */
-  timeout?: number
-}
-
-/**
- * Composition order for resilience patterns
- */
-export type CompositionOrder = 'retry-cb-timeout' | 'timeout-cb-retry'
-
-/**
- * Adapter for applying resilience patterns to operations
- */
-export interface ResilienceAdapter {
-  /**
-   * Apply resilience policies to an operation (legacy method)
-   * @param operation The operation to wrap
-   * @param policy The resilience policy to apply
-   * @param signal Abort signal for cancellation
-   * @returns The wrapped operation
-   * @deprecated Use applyNormalizedPolicy for better control over composition order
-   */
-  applyPolicy<T>(
-    operation: () => Promise<T>,
-    policy: ResiliencePolicy,
-    signal?: AbortSignal,
-  ): Promise<T>
-
-  /**
-   * Apply normalized resilience policies to an operation with explicit composition order
-   * @param operation The operation to wrap
-   * @param normalizedPolicy The normalized resilience policy with all defaults applied
-   * @param compositionOrder The order to compose resilience patterns (e.g., 'retry-cb-timeout')
-   * @param signal Abort signal for cancellation
-   * @returns The wrapped operation
-   */
-  applyNormalizedPolicy?<T>(
-    operation: () => Promise<T>,
-    normalizedPolicy: ResiliencePolicy,
-    compositionOrder: CompositionOrder,
-    signal?: AbortSignal,
-  ): Promise<T>
-}
+// Re-export resilience types from schema for convenience
+export type {
+  ResiliencePolicy,
+  ResilienceAdapter,
+  CompositionOrder,
+} from '@orchestr8/schema'
 
 /**
  * Log level enumeration

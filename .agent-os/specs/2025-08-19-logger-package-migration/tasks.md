@@ -14,7 +14,7 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
   - [x] 1.4 Verify MemoryLogger implements Logger interface correctly
 
 - [ ] 2. Update @orchestr8/core package dependencies
-  - [ ] 2.1 Add "@orchestr8/logger": "workspace:*" to core/package.json dependencies
+  - [ ] 2.1 Add "@orchestr8/logger": "workspace:\*" to core/package.json dependencies
   - [ ] 2.2 Run pnpm install to update lockfile
   - [ ] 2.3 Verify dependency resolution works correctly
 

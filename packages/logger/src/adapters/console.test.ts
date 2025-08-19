@@ -4,11 +4,21 @@ import { describe, expect, it, vi, beforeEach } from 'vitest'
 
 import { ConsoleLogger, createConsoleLogger } from './console.js'
 
+// Helper to strip ANSI color codes
+function stripAnsi(str: string): string {
+  // eslint-disable-next-line no-control-regex
+  return str.replace(/\x1b\[[0-9;]*m/g, '')
+}
+
 // Helper to capture stream output
 class TestStream extends Writable {
   public output: string[] = []
 
-  _write(chunk: any, _encoding: string, callback: () => void): void {
+  _write(
+    chunk: Buffer | string,
+    _encoding: string,
+    callback: () => void,
+  ): void {
     this.output.push(chunk.toString())
     callback()
   }
@@ -21,7 +31,11 @@ class TestStream extends Writable {
     return this.output[this.output.length - 1]
   }
 
-  getJSON(): any {
+  getLastLineStripped(): string {
+    return stripAnsi(this.getLastLine())
+  }
+
+  getJSON(): unknown {
     const line = this.getLastLine()
     return JSON.parse(line)
   }
@@ -154,7 +168,7 @@ describe('ConsoleLogger', () => {
         boolean: true,
       })
 
-      const output = stream.getLastLine()
+      const output = stream.getLastLineStripped()
       expect(output).toContain('string=value')
       expect(output).toContain('number=123')
       expect(output).toContain('boolean=true')
@@ -167,7 +181,7 @@ describe('ConsoleLogger', () => {
         message: 'hello world',
       })
 
-      const output = stream.getLastLine()
+      const output = stream.getLastLineStripped()
       expect(output).toContain('message="hello world"')
     })
 
@@ -264,7 +278,8 @@ describe('ConsoleLogger', () => {
         maxFieldSize: 100,
       })
 
-      const circular: any = { name: 'test' }
+      type CircularRef = { name: string; self?: CircularRef }
+      const circular: CircularRef = { name: 'test' }
       circular.self = circular
 
       // Should not throw

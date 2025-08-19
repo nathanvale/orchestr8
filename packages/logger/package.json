@@ -34,10 +34,10 @@
   "dependencies": {},
   "devDependencies": {
     "@types/node": "^22.5.5",
-    "@vitest/coverage-v8": "^2.1.2",
+    "@vitest/coverage-v8": "^3.2.4",
     "pino": "^9.5.0",
     "typescript": "^5.6.2",
-    "vitest": "^2.1.2"
+    "vitest": "^3.2.4"
   },
   "peerDependencies": {
     "pino": "^9.0.0"

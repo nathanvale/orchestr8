@@ -1,0 +1,29 @@
+{
+  "mcpServers": {
+    "wallaby": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "-c", "node ~/.wallaby/mcp/"],
+      "env": {}
+    },
+    "context7": {
+      "type": "http",
+      "command": "",
+      "url": "https://mcp.context7.com/mcp"
+    },
+    "tavily-mcp": {
+      "command": "npx",
+      "args": ["-y", "tavily-mcp@0.1.2"],
+      "env": {
+        "TAVILY_API_KEY": "${TAVILY_API_KEY}"
+      }
+    },
+    "mcp-server-firecrawl": {
+      "command": "npx",
+      "args": ["-y", "firecrawl-mcp"],
+      "env": {
+        "FIRECRAWL_API_KEY": "${FIRECRAWL_API_KEY}"
+      }
+    }
+  }
+}

@@ -1,9 +1,34 @@
-import { describe, expect, it, beforeEach } from 'vitest'
 import type { Workflow } from '@orchestr8/schema'
-import { MockResilienceAdapter } from '@orchestr8/testing'
+
 import { ReferenceResilienceAdapter } from '@orchestr8/resilience'
-import { OrchestrationEngine } from './orchestration-engine.js'
+import { describe, expect, it, beforeEach, vi } from 'vitest'
+
 import type { Agent, AgentRegistry, ResilienceAdapter } from './types.js'
+
+import { OrchestrationEngine } from './orchestration-engine.js'
+
+// Simple mock resilience adapter for testing
+class MockResilienceAdapter implements ResilienceAdapter {
+  applyPolicy = vi.fn()
+  applyNormalizedPolicy = vi.fn()
+
+  constructor() {
+    // Default implementation that passes through
+    this.applyPolicy.mockImplementation(async (operation) => operation())
+    this.applyNormalizedPolicy.mockImplementation(async (operation) =>
+      operation(),
+    )
+  }
+
+  reset() {
+    this.applyPolicy.mockReset()
+    this.applyNormalizedPolicy.mockReset()
+    this.applyPolicy.mockImplementation(async (operation) => operation())
+    this.applyNormalizedPolicy.mockImplementation(async (operation) =>
+      operation(),
+    )
+  }
+}
 
 describe('Adapter Consistency - Composition Order', () => {
   let mockAgentRegistry: AgentRegistry
@@ -34,8 +59,19 @@ describe('Adapter Consistency - Composition Order', () => {
             type: 'agent',
             agentId: 'test-agent',
             resilience: {
-              retry: { maxAttempts: 3, backoffStrategy: 'exponential', jitterStrategy: 'full-jitter', initialDelay: 1000, maxDelay: 10000 },
-              circuitBreaker: { failureThreshold: 5, recoveryTime: 30000, sampleSize: 10, halfOpenPolicy: 'single-probe' },
+              retry: {
+                maxAttempts: 3,
+                backoffStrategy: 'exponential',
+                jitterStrategy: 'full-jitter',
+                initialDelay: 1000,
+                maxDelay: 10000,
+              },
+              circuitBreaker: {
+                failureThreshold: 5,
+                recoveryTime: 30000,
+                sampleSize: 10,
+                halfOpenPolicy: 'single-probe',
+              },
               timeout: 5000,
             },
           },
@@ -96,7 +132,13 @@ describe('Adapter Consistency - Composition Order', () => {
             type: 'agent',
             agentId: 'test-agent',
             resilience: {
-              retry: { maxAttempts: 2, backoffStrategy: 'fixed', jitterStrategy: 'none', initialDelay: 100, maxDelay: 100 },
+              retry: {
+                maxAttempts: 2,
+                backoffStrategy: 'fixed',
+                jitterStrategy: 'none',
+                initialDelay: 100,
+                maxDelay: 100,
+              },
               timeout: 1000,
             },
           },
@@ -186,7 +228,13 @@ describe('Adapter Consistency - Composition Order', () => {
             type: 'agent',
             agentId: 'test-agent',
             resilience: {
-              retry: { maxAttempts: 2, backoffStrategy: 'fixed', jitterStrategy: 'none', initialDelay: 50, maxDelay: 50 },
+              retry: {
+                maxAttempts: 2,
+                backoffStrategy: 'fixed',
+                jitterStrategy: 'none',
+                initialDelay: 50,
+                maxDelay: 50,
+              },
             },
           },
         ],
@@ -201,11 +249,11 @@ describe('Adapter Consistency - Composition Order', () => {
           })
 
           return engine.execute(workflow)
-        })
+        }),
       )
 
       // All adapters should produce successful results
-      results.forEach(result => {
+      results.forEach((result) => {
         expect(result.status).toBe('completed')
         expect(result.steps).toBeDefined()
         expect(result.executionId).toBeDefined()
@@ -317,7 +365,13 @@ describe('Adapter Consistency - Composition Order', () => {
             type: 'agent',
             agentId: 'test-agent',
             resilience: {
-              retry: { maxAttempts: 2, backoffStrategy: 'fixed', jitterStrategy: 'none', initialDelay: 100, maxDelay: 100 },
+              retry: {
+                maxAttempts: 2,
+                backoffStrategy: 'fixed',
+                jitterStrategy: 'none',
+                initialDelay: 100,
+                maxDelay: 100,
+              },
             },
           },
         ],

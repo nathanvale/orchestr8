@@ -120,7 +120,10 @@ describe('deepRedact', () => {
     }
 
     const sensitiveKeys = new Set(['password', 'token', 'apiKey'])
-    const result = deepRedact(obj, sensitiveKeys) as any
+    const result = deepRedact(obj, sensitiveKeys) as Record<string, unknown> & {
+      user: { name: string; credentials: { password: string; token: string } }
+      config: { apiKey: string; timeout: number }
+    }
 
     expect(result.user.name).toBe('John')
     expect(result.user.credentials.password).toBe('[REDACTED]')
@@ -137,7 +140,10 @@ describe('deepRedact', () => {
     ]
 
     const sensitiveKeys = new Set(['password'])
-    const result = deepRedact(arr, sensitiveKeys) as any[]
+    const result = deepRedact(arr, sensitiveKeys) as Array<{
+      password?: string
+      username?: string
+    }>
 
     expect(result[0].password).toBe('[REDACTED]')
     expect(result[1].password).toBe('[REDACTED]')
@@ -170,7 +176,12 @@ describe('deepRedact', () => {
     }
 
     const sensitiveKeys = new Set(['headers.authorization'])
-    const result = deepRedact(obj, sensitiveKeys) as any
+    const result = deepRedact(obj, sensitiveKeys) as {
+      headers: {
+        authorization: string
+        'content-type': string
+      }
+    }
 
     expect(result.headers.authorization).toBe('[REDACTED]')
     expect(result.headers['content-type']).toBe('application/json')
@@ -199,17 +210,23 @@ describe('deepRedact', () => {
       },
     }
 
-    const result = deepRedact(obj, new Set(['secret']), 2) as any
+    const result = deepRedact(obj, new Set(['secret']), 2) as {
+      level1: { level2: unknown }
+    }
 
     expect(result.level1.level2).toBe('[MAX_DEPTH_EXCEEDED]')
   })
 
   it('should handle circular references gracefully', () => {
-    const obj: any = { name: 'test' }
+    type CircularObj = { name: string; self?: CircularObj }
+    const obj: CircularObj = { name: 'test' }
     obj.self = obj // Circular reference
 
     // Should not throw, max depth prevents infinite recursion
-    const result = deepRedact(obj, new Set(), 5) as any
+    const result = deepRedact(obj, new Set(), 5) as {
+      name: string
+      self?: unknown
+    }
 
     expect(result.name).toBe('test')
     // After 5 levels, circular reference hits max depth
@@ -247,7 +264,11 @@ describe('truncateValue', () => {
     const result = truncateValue(obj, 100)
 
     expect(result.truncated).toBe(true)
-    const truncated = result.value as any
+    const truncated = result.value as {
+      __truncated: boolean
+      __originalSize: number
+      __preview: string
+    }
     expect(truncated.__truncated).toBe(true)
     expect(truncated.__originalSize).toBeGreaterThan(100)
     expect(truncated.__preview).toBeDefined()

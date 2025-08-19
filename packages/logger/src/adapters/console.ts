@@ -92,7 +92,19 @@ export class ConsoleLogger extends BaseLogger {
       ...fields,
     }
 
-    this.stream.write(JSON.stringify(entry) + '\n')
+    // Handle circular references with a replacer function
+    const seen = new WeakSet()
+    const json = JSON.stringify(entry, (_key, value) => {
+      if (typeof value === 'object' && value !== null) {
+        if (seen.has(value)) {
+          return '[Circular]'
+        }
+        seen.add(value)
+      }
+      return value
+    })
+
+    this.stream.write(json + '\n')
   }
 
   private logPretty(level: LogLevel, msg: string, fields: LogFields): void {
@@ -141,13 +153,18 @@ export class ConsoleLogger extends BaseLogger {
         )
       } else if (typeof value === 'object') {
         // For nested objects, show them inline if small, otherwise on new lines
-        const json = JSON.stringify(value)
-        if (json.length < 50) {
-          entries.push(`${COLORS.blue}${key}${COLORS.reset}=${json}`)
-        } else {
-          entries.push(
-            `${COLORS.blue}${key}${COLORS.reset}=${JSON.stringify(value, null, 2)}`,
-          )
+        try {
+          const json = JSON.stringify(value)
+          if (json.length < 50) {
+            entries.push(`${COLORS.blue}${key}${COLORS.reset}=${json}`)
+          } else {
+            entries.push(
+              `${COLORS.blue}${key}${COLORS.reset}=${JSON.stringify(value, null, 2)}`,
+            )
+          }
+        } catch {
+          // Handle circular references
+          entries.push(`${COLORS.blue}${key}${COLORS.reset}=[Circular]`)
         }
       } else {
         entries.push(`${COLORS.blue}${key}${COLORS.reset}=${value}`)

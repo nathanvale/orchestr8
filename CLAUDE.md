@@ -48,17 +48,18 @@ This is a **TypeScript monorepo** using pnpm workspaces and Turborepo for build 
 ### Package Dependencies
 
 ```
-schema (no deps)
+schema (no deps - foundation types)
     ↓
-resilience → schema
+logger (no @orchestr8 deps)
     ↓
 agent-base → schema
+resilience → schema
     ↓
-core → resilience, schema, agent-base
+core → schema, logger
     ↓
-testing → core, agent-base, schema
+testing → schema, agent-base
     ↓
-cli → all packages
+cli → core, schema
 ```
 
 ### Key Architectural Decisions

@@ -1,5 +1,7 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest'
 import type { ResiliencePolicy } from '@orchestr8/core'
+
+import { describe, expect, it, vi, beforeEach } from 'vitest'
+
 import { ReferenceResilienceAdapter } from './reference-adapter.js'
 
 describe('ReferenceResilienceAdapter', () => {
@@ -87,13 +89,16 @@ describe('ReferenceResilienceAdapter', () => {
       const result = await adapter.applyPolicy(failingOperation, policy)
 
       expect(result).toBe('success')
-      expect(operationCallOrder).toEqual(['operation-call-1', 'operation-call-2'])
+      expect(operationCallOrder).toEqual([
+        'operation-call-1',
+        'operation-call-2',
+      ])
       expect(callCount).toBe(2)
     })
 
     it('should timeout operation', async () => {
       const slowOperation = vi.fn().mockImplementation(async () => {
-        await new Promise(resolve => setTimeout(resolve, 100))
+        await new Promise((resolve) => setTimeout(resolve, 100))
         operationCallOrder.push('operation-call-slow')
         return 'success'
       })
@@ -102,7 +107,9 @@ describe('ReferenceResilienceAdapter', () => {
         timeout: 10, // Very short timeout
       }
 
-      await expect(adapter.applyPolicy(slowOperation, policy)).rejects.toThrow('timed out')
+      await expect(adapter.applyPolicy(slowOperation, policy)).rejects.toThrow(
+        'timed out',
+      )
       // Operation should not have completed
       expect(operationCallOrder).toEqual([])
     })
@@ -158,12 +165,12 @@ describe('ReferenceResilienceAdapter', () => {
       const failingOperation = vi.fn().mockImplementation(async () => {
         callCount++
         operationCallOrder.push(`attempt-${callCount}`)
-        
+
         // First attempt fails
         if (callCount === 1) {
           throw new Error('first attempt fails')
         }
-        
+
         // Second attempt succeeds
         return 'success-on-retry'
       })
@@ -193,7 +200,7 @@ describe('ReferenceResilienceAdapter', () => {
 
     it('should prioritize timeout over retry in simple implementation', async () => {
       const slowOperation = vi.fn().mockImplementation(async () => {
-        await new Promise(resolve => setTimeout(resolve, 50))
+        await new Promise((resolve) => setTimeout(resolve, 50))
         return 'should-timeout'
       })
 
@@ -213,14 +220,14 @@ describe('ReferenceResilienceAdapter', () => {
           slowOperation,
           policy,
           'timeout-cb-retry',
-        )
+        ),
       ).rejects.toThrow('timed out')
     })
 
     it('should handle cancellation via AbortSignal', async () => {
       const controller = new AbortController()
       const longOperation = vi.fn().mockImplementation(async () => {
-        await new Promise(resolve => setTimeout(resolve, 1000))
+        await new Promise((resolve) => setTimeout(resolve, 1000))
         return 'should-not-complete'
       })
 
@@ -237,7 +244,7 @@ describe('ReferenceResilienceAdapter', () => {
           policy,
           'retry-cb-timeout',
           controller.signal,
-        )
+        ),
       ).rejects.toThrow('cancelled')
     })
 
@@ -287,7 +294,7 @@ describe('ReferenceResilienceAdapter', () => {
       })
 
       const startTime = Date.now()
-      
+
       const policy: ResiliencePolicy = {
         retry: {
           maxAttempts: 4,
@@ -305,10 +312,10 @@ describe('ReferenceResilienceAdapter', () => {
       )
 
       const duration = Date.now() - startTime
-      
+
       expect(result).toBe('success')
       expect(callCount).toBe(4)
-      
+
       // Should have taken some time due to backoff (at least 10ms for delays)
       expect(duration).toBeGreaterThan(10)
     })
@@ -343,7 +350,7 @@ describe('ReferenceResilienceAdapter', () => {
 
       expect(result).toBe('success')
       expect(callCount).toBe(3)
-      
+
       // Should respect maxDelay: first delay ~50ms, second delay capped at 60ms
       // Total should be around 110ms, not 150ms (50 + 100)
       expect(duration).toBeLessThan(130)

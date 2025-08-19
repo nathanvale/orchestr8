@@ -81,15 +81,21 @@ export abstract class BaseLogger implements Logger {
     return LOG_LEVELS[level] >= LOG_LEVELS[this.level]
   }
 
-  protected redactFields(fields: LogFields): LogFields {
+  protected redactFields(fields: LogFields, seen = new WeakSet()): LogFields {
     const redacted: LogFields = {}
 
     for (const [key, value] of Object.entries(fields)) {
       if (this.shouldRedact(key)) {
         redacted[key] = '[REDACTED]'
       } else if (typeof value === 'object' && value !== null) {
-        // Recursively redact nested objects
-        redacted[key] = this.redactFields(value as LogFields)
+        // Check for circular references
+        if (seen.has(value)) {
+          redacted[key] = '[Circular]'
+        } else {
+          // Track this object and recursively redact nested objects
+          seen.add(value)
+          redacted[key] = this.redactFields(value as LogFields, seen)
+        }
       } else if (
         typeof value === 'string' &&
         value.length > this.maxFieldSize

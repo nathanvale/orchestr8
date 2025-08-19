@@ -2,7 +2,12 @@ import type { Workflow } from '@orchestr8/schema'
 
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 
-import type { Agent, AgentRegistry, ResilienceAdapter, ResiliencePolicy } from './types.js'
+import type {
+  Agent,
+  AgentRegistry,
+  ResilienceAdapter,
+  ResiliencePolicy,
+} from './types.js'
 
 import { OrchestrationEngine } from './orchestration-engine.js'
 
@@ -668,24 +673,36 @@ describe('Resilience Composition Order', () => {
 
   describe('ResilienceAdapter with explicit composition order', () => {
     let newInterfaceAdapter: ResilienceAdapter
-    let compositionCallTracker: Array<{ normalizedPolicy: ResiliencePolicy; compositionOrder: string }>
+    let compositionCallTracker: Array<{
+      normalizedPolicy: ResiliencePolicy
+      compositionOrder: string
+    }>
 
     beforeEach(() => {
       compositionCallTracker = []
-      
+
       // Mock adapter implementing the new interface with explicit compositionOrder
       newInterfaceAdapter = {
-        applyPolicy: vi.fn().mockImplementation(async (operation, policy, signal) => {
-          // For backward compatibility test - old interface
-          operationCallOrder.push('old-interface-call')
-          return operation()
-        }),
-        applyNormalizedPolicy: vi.fn().mockImplementation(async (operation, normalizedPolicy, compositionOrder, signal) => {
-          // Track calls to new interface
-          compositionCallTracker.push({ normalizedPolicy, compositionOrder })
-          operationCallOrder.push(`new-interface-${compositionOrder}`)
-          return operation()
-        })
+        applyPolicy: vi
+          .fn()
+          .mockImplementation(async (operation, _policy, _signal) => {
+            // For backward compatibility test - old interface
+            operationCallOrder.push('old-interface-call')
+            return operation()
+          }),
+        applyNormalizedPolicy: vi
+          .fn()
+          .mockImplementation(
+            async (operation, normalizedPolicy, compositionOrder, _signal) => {
+              // Track calls to new interface
+              compositionCallTracker.push({
+                normalizedPolicy,
+                compositionOrder,
+              })
+              operationCallOrder.push(`new-interface-${compositionOrder}`)
+              return operation()
+            },
+          ),
       }
 
       engine = new OrchestrationEngine({
@@ -702,8 +719,19 @@ describe('Resilience Composition Order', () => {
             type: 'agent',
             agentId: 'test-agent',
             resilience: {
-              retry: { maxAttempts: 3, backoffStrategy: 'exponential', jitterStrategy: 'full-jitter', initialDelay: 1000, maxDelay: 10000 },
-              circuitBreaker: { failureThreshold: 5, recoveryTime: 30000, sampleSize: 10, halfOpenPolicy: 'single-probe' },
+              retry: {
+                maxAttempts: 3,
+                backoffStrategy: 'exponential',
+                jitterStrategy: 'full-jitter',
+                initialDelay: 1000,
+                maxDelay: 10000,
+              },
+              circuitBreaker: {
+                failureThreshold: 5,
+                recoveryTime: 30000,
+                sampleSize: 10,
+                halfOpenPolicy: 'single-probe',
+              },
               timeout: 5000,
             },
           },
@@ -735,7 +763,9 @@ describe('Resilience Composition Order', () => {
       )
 
       expect(compositionCallTracker).toHaveLength(1)
-      expect(compositionCallTracker[0].compositionOrder).toBe('retry-cb-timeout')
+      expect(compositionCallTracker[0].compositionOrder).toBe(
+        'retry-cb-timeout',
+      )
       expect(operationCallOrder).toContain('new-interface-retry-cb-timeout')
     })
 
@@ -754,7 +784,13 @@ describe('Resilience Composition Order', () => {
             type: 'agent',
             agentId: 'test-agent',
             resilience: {
-              retry: { maxAttempts: 2, backoffStrategy: 'fixed', jitterStrategy: 'none', initialDelay: 500, maxDelay: 500 },
+              retry: {
+                maxAttempts: 2,
+                backoffStrategy: 'fixed',
+                jitterStrategy: 'none',
+                initialDelay: 500,
+                maxDelay: 500,
+              },
               timeout: 3000,
             },
           },
@@ -823,7 +859,13 @@ describe('Resilience Composition Order', () => {
             type: 'agent',
             agentId: 'test-agent',
             resilience: {
-              retry: { maxAttempts: 2, backoffStrategy: 'fixed', jitterStrategy: 'none', initialDelay: 100, maxDelay: 100 },
+              retry: {
+                maxAttempts: 2,
+                backoffStrategy: 'fixed',
+                jitterStrategy: 'none',
+                initialDelay: 100,
+                maxDelay: 100,
+              },
             },
           },
         ],

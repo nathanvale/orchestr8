@@ -7,7 +7,7 @@ import type {
   CompositionOrder,
   ResilienceAdapter,
   ResiliencePolicy,
-} from '@orchestr8/core'
+} from '@orchestr8/schema'
 
 /**
  * Simple reference resilience adapter that implements both legacy and new interfaces
@@ -45,7 +45,7 @@ export class ReferenceResilienceAdapter implements ResilienceAdapter {
   ): Promise<T> {
     // For this simple reference implementation, we just log the composition order
     // and apply basic timeout and retry if present
-    
+
     if (signal?.aborted) {
       throw new Error('Operation was cancelled')
     }
@@ -92,14 +92,14 @@ export class ReferenceResilienceAdapter implements ResilienceAdapter {
       }
 
       operation()
-        .then(result => {
+        .then((result) => {
           clearTimeout(timeoutId)
           if (signal) {
             signal.removeEventListener('abort', abortHandler)
           }
           resolve(result)
         })
-        .catch(error => {
+        .catch((error) => {
           clearTimeout(timeoutId)
           if (signal) {
             signal.removeEventListener('abort', abortHandler)
@@ -176,7 +176,7 @@ export class ReferenceResilienceAdapter implements ResilienceAdapter {
    * Sleep for specified milliseconds
    */
   private sleep(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms))
+    return new Promise((resolve) => setTimeout(resolve, ms))
   }
 
   /**

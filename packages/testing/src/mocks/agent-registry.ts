@@ -3,7 +3,7 @@
  * Wallaby.js compatible with mockImplementation pattern
  */
 
-import type { Agent, AgentRegistry } from '@orchestr8/core'
+import type { Agent, AgentRegistry } from '@orchestr8/schema'
 
 import { createExecutionError, ExecutionErrorCode } from '@orchestr8/schema'
 import { vi } from 'vitest'

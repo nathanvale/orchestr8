@@ -297,3 +297,120 @@ MVP timeline takes priority over nested group convenience. The flat dependency g
 - Modified testing utilities to generate dependency chains automatically
 - Added runtime validation with clear error messages
 - Documented migration path for post-MVP nested groups
+
+---
+
+## 2025-01-18: Development Agent Integration
+
+**ID:** DEC-008
+**Status:** Accepted
+**Category:** Technical
+**Stakeholders:** Product Owner, Tech Lead, Development Team
+
+### Decision
+
+Integrate practical development agents (TypeScript, React, Next.js specialists) into @orchestr8 to enable AI-powered code generation and development automation within orchestrated workflows.
+
+### Context
+
+Development teams need automation for repetitive coding tasks while maintaining code quality and consistency. The Claude sub-agent architecture provides a proven pattern for creating specialized development agents that can generate production-quality code.
+
+### Alternatives Considered
+
+1. **GitHub Copilot Integration**
+   - Pros: Popular, well-tested
+   - Cons: Limited control, no orchestration capability
+
+2. **Custom Code Generation**
+   - Pros: Full control
+   - Cons: Complex to build, unproven
+
+3. **Development Sub-Agents**
+   - Pros: Specialized expertise, quality control, orchestratable
+   - Cons: Requires prompt engineering, Claude dependency
+
+### Rationale
+
+Development agents provide:
+
+- Specialized expertise for different technologies
+- Consistent code quality and standards
+- Automated testing and documentation
+- Integration with orchestration workflows
+- Dual deployment flexibility
+
+### Consequences
+
+**Positive:**
+
+- Accelerated development cycles
+- Consistent code quality
+- Reduced repetitive work
+- Automated documentation and testing
+- Seamless integration with existing workflows
+
+**Negative:**
+
+- Complexity in agent coordination
+- Dependence on LLM quality
+- Learning curve for prompt engineering
+- Potential for over-reliance on automation
+
+---
+
+## 2025-01-18: MCP Protocol Integration
+
+**ID:** DEC-009
+**Status:** Proposed
+**Category:** Technical
+**Stakeholders:** Tech Lead, Product Owner, AI Team
+**Related Spec:** @.agent-os/specs/2025-01-18-mcp-integration/
+
+### Decision
+
+Implement Model Context Protocol (MCP) server as the primary interface for AI assistants to interact with @orchestr8, using stdio transport for local development and HTTP for remote access.
+
+### Context
+
+AI assistants like Claude need a standardized way to execute orchestr8 workflows. MCP provides an industry-standard protocol designed specifically for AI-tool interaction, with built-in support for tools, resources, and proper error handling.
+
+### Alternatives Considered
+
+1. **Custom Protocol**
+   - Pros: Full control, tailored to orchestr8
+   - Cons: No ecosystem support, higher maintenance
+
+2. **Direct HTTP API Only**
+   - Pros: Simple, universal
+   - Cons: No AI-specific features, poor discoverability
+
+3. **MCP Protocol** (Selected)
+   - Pros: Standard protocol, AI-optimized, tool discovery
+   - Cons: Additional dependency, protocol complexity
+
+### Rationale
+
+MCP provides:
+
+- Standardized tool discovery and invocation
+- Built-in JSON-RPC error handling
+- Resource access patterns
+- Native Claude Code support
+- Future compatibility with other AI assistants
+
+### Consequences
+
+**Positive:**
+
+- Seamless Claude Code integration
+- Standard protocol reduces learning curve
+- Tool discovery enables natural language usage
+- Correlation tracking for observability
+- Long-polling reduces network overhead
+
+**Negative:**
+
+- Additional protocol layer complexity
+- MCP SDK dependency
+- Need to maintain parity with HTTP API
+- Limited to MCP-compatible AI assistants

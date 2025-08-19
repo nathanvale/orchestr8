@@ -2,6 +2,9 @@
  * @orchestr8/schema - Workflow AST definitions and validation
  */
 
+// Export agent types
+export type { Agent, AgentRegistry } from './agents.js'
+
 // Export error types
 export {
   ExecutionErrorCode,
@@ -9,6 +12,13 @@ export {
   createExecutionError,
   isExecutionError,
 } from './errors.js'
+
+// Export resilience types
+export type {
+  ResiliencePolicy,
+  ResilienceAdapter,
+  CompositionOrder,
+} from './resilience.js'
 
 // Export validators and hash helper
 export { computeWorkflowSchemaHash, validateWorkflow } from './validators.js'

@@ -51,10 +51,31 @@
       "mcp__wallaby__wallaby_allTestsForFile",
       "mcp__wallaby__wallaby_failingTestsForFile",
       "mcp__wallaby__wallaby_runtimeValues",
-      "mcp__wallaby__wallaby_testById"
+      "mcp__wallaby__wallaby_testById",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(gh api:*)",
+      "mcp__context7__resolve-library-id",
+      "mcp__context7__get-library-docs",
+      "Bash(gh search repos:*)",
+      "Bash(mv:*)",
+      "Bash(turbo test:*)",
+      "Bash(pnpm turbo test:*)",
+      "Bash(pnpm exec eslint:*)",
+      "Bash(pnpm -w run format)",
+      "Bash(pnpm:*)",
+      "Bash(npx vitest list:*)"
     ],
     "deny": [],
     "ask": [],
-    "additionalDirectories": ["/Users/nathanvale"]
-  }
+    "additionalDirectories": [
+      "/Users/nathanvale"
+    ]
+  },
+  "enabledMcpjsonServers": [
+    "wallaby",
+    "context7",
+    "tavily-mcp",
+    "mcp-server-firecrawl"
+  ]
 }

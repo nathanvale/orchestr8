@@ -26,7 +26,6 @@
   },
   "dependencies": {
     "@orchestr8/agent-base": "workspace:*",
-    "@orchestr8/core": "workspace:*",
     "@orchestr8/schema": "workspace:*",
     "msw": "^2.10.2"
   },

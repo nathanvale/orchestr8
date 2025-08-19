@@ -21,6 +21,7 @@ export type {
   AgentRegistry,
   ResiliencePolicy,
   ResilienceAdapter,
+  CompositionOrder,
   ExecutionNode,
   ExecutionGraph,
   OrchestrationOptions,

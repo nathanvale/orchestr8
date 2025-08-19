@@ -1,45 +1,76 @@
 /**
- * Logger implementations and utilities
+ * Logger compatibility layer and exports
+ * This file provides a bridge between the core Logger interface and @orchestr8/logger
  */
 
+import {
+  NoopLogger as BaseNoopLogger,
+  MemoryLogger as BaseMemoryLogger,
+  type Logger as LoggerPackageLogger,
+  type LogFields,
+} from '@orchestr8/logger'
+
 import type { Logger, LogLevel } from './types.js'
+
+/**
+ * Adapter to make @orchestr8/logger compatible with core's Logger interface
+ */
+class LoggerAdapter implements Logger {
+  constructor(private readonly logger: LoggerPackageLogger) {}
+
+  log(level: LogLevel, message: string, data?: Record<string, unknown>): void {
+    const fields = data as LogFields | undefined
+    switch (level) {
+      case 'trace':
+        this.logger.trace(message, fields)
+        break
+      case 'debug':
+        this.logger.debug(message, fields)
+        break
+      case 'info':
+        this.logger.info(message, fields)
+        break
+      case 'warn':
+        this.logger.warn(message, fields)
+        break
+      case 'error':
+        this.logger.error(message, fields)
+        break
+    }
+  }
+
+  trace(message: string, data?: Record<string, unknown>): void {
+    this.logger.trace(message, data as LogFields | undefined)
+  }
+
+  debug(message: string, data?: Record<string, unknown>): void {
+    this.logger.debug(message, data as LogFields | undefined)
+  }
+
+  info(message: string, data?: Record<string, unknown>): void {
+    this.logger.info(message, data as LogFields | undefined)
+  }
+
+  warn(message: string, data?: Record<string, unknown>): void {
+    this.logger.warn(message, data as LogFields | undefined)
+  }
+
+  error(message: string, data?: Record<string, unknown>): void {
+    this.logger.error(message, data as LogFields | undefined)
+  }
+
+  child(context: Record<string, unknown>): Logger {
+    return new LoggerAdapter(this.logger.child(context as LogFields))
+  }
+}
 
 /**
  * No-op logger that discards all log entries
  * Used as default when no logger is provided to the orchestration engine
  */
-export class NoOpLogger implements Logger {
-  log(
-    _level: LogLevel,
-    _message: string,
-    _data?: Record<string, unknown>,
-  ): void {
-    // No-op: discard all log entries
-  }
-
-  trace(_message: string, _data?: Record<string, unknown>): void {
-    // No-op
-  }
-
-  debug(_message: string, _data?: Record<string, unknown>): void {
-    // No-op
-  }
-
-  info(_message: string, _data?: Record<string, unknown>): void {
-    // No-op
-  }
-
-  warn(_message: string, _data?: Record<string, unknown>): void {
-    // No-op
-  }
-
-  error(_message: string, _data?: Record<string, unknown>): void {
-    // No-op
-  }
-
-  child(_context: Record<string, unknown>): Logger {
-    // Return same no-op logger
-    return this
+export class NoOpLogger extends LoggerAdapter {
+  constructor() {
+    super(new BaseNoopLogger())
   }
 }
 
@@ -47,60 +78,16 @@ export class NoOpLogger implements Logger {
  * Memory logger that stores log entries in memory for testing
  * Used in tests to verify logging behavior
  */
-export class MemoryLogger implements Logger {
-  private entries: Array<{
-    level: LogLevel
-    message: string
-    data?: Record<string, unknown>
-    timestamp: string
-  }>
-
-  private context: Record<string, unknown> = {}
+export class MemoryLogger extends LoggerAdapter {
+  public memoryLogger: BaseMemoryLogger
 
   constructor(
     context: Record<string, unknown> = {},
-    sharedEntries?: Array<{
-      level: LogLevel
-      message: string
-      data?: Record<string, unknown>
-      timestamp: string
-    }>,
+    baseLogger?: BaseMemoryLogger,
   ) {
-    this.context = { ...context }
-    this.entries = sharedEntries ?? []
-  }
-
-  log(level: LogLevel, message: string, data?: Record<string, unknown>): void {
-    this.entries.push({
-      level,
-      message,
-      data: data ? { ...this.context, ...data } : { ...this.context },
-      timestamp: new Date().toISOString(),
-    })
-  }
-
-  trace(message: string, data?: Record<string, unknown>): void {
-    this.log('trace', message, data)
-  }
-
-  debug(message: string, data?: Record<string, unknown>): void {
-    this.log('debug', message, data)
-  }
-
-  info(message: string, data?: Record<string, unknown>): void {
-    this.log('info', message, data)
-  }
-
-  warn(message: string, data?: Record<string, unknown>): void {
-    this.log('warn', message, data)
-  }
-
-  error(message: string, data?: Record<string, unknown>): void {
-    this.log('error', message, data)
-  }
-
-  child(context: Record<string, unknown>): Logger {
-    return new MemoryLogger({ ...this.context, ...context }, this.entries)
+    const memLogger = baseLogger || new BaseMemoryLogger(context as LogFields)
+    super(memLogger)
+    this.memoryLogger = memLogger
   }
 
   /**
@@ -112,7 +99,12 @@ export class MemoryLogger implements Logger {
     data?: Record<string, unknown>
     timestamp: string
   }> {
-    return [...this.entries]
+    return this.memoryLogger.getEntries().map((entry) => ({
+      level: entry.level,
+      message: entry.message,
+      data: entry.fields || {},
+      timestamp: entry.timestamp,
+    }))
   }
 
   /**
@@ -124,20 +116,32 @@ export class MemoryLogger implements Logger {
     data?: Record<string, unknown>
     timestamp: string
   }> {
-    return this.entries.filter((entry) => entry.level === level)
+    return this.memoryLogger.getEntriesByLevel(level).map((entry) => ({
+      level: entry.level,
+      message: entry.message,
+      data: entry.fields || {},
+      timestamp: entry.timestamp,
+    }))
   }
 
   /**
    * Clear all log entries
    */
   clear(): void {
-    this.entries = []
+    this.memoryLogger.clear()
   }
 
   /**
    * Get number of log entries
    */
   count(): number {
-    return this.entries.length
+    return this.memoryLogger.count()
+  }
+
+  child(context: Record<string, unknown>): MemoryLogger {
+    const childLogger = this.memoryLogger.child(
+      context as LogFields,
+    ) as BaseMemoryLogger
+    return new MemoryLogger(context, childLogger)
   }
 }

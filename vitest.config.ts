@@ -10,7 +10,7 @@ const dirname =
 export default defineConfig({
   test: {
     globals: true,
-    environment: 'node',
+    environment: 'node',  // Using node, not jsdom
     pool: 'threads',
     poolOptions: {
       threads: {
@@ -55,6 +55,7 @@ export default defineConfig({
       '@orchestr8/agent-base': path.resolve(dirname, 'packages/agent-base/src'),
       '@orchestr8/testing': path.resolve(dirname, 'packages/testing/src'),
       '@orchestr8/cli': path.resolve(dirname, 'packages/cli/src'),
+      '@orchestr8/logger': path.resolve(dirname, 'packages/logger/src'),
     },
   },
 })
