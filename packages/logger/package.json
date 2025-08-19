@@ -1,0 +1,68 @@
+{
+  "name": "@orchestr8/logger",
+  "version": "0.1.0",
+  "description": "Structured logging for @orchestr8 with redaction and correlation support",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "module": "./dist/index.js",
+  "exports": {
+    ".": {
+      "development": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src",
+    "!src/**/*.test.ts",
+    "!src/**/*.spec.ts"
+  ],
+  "scripts": {
+    "build": "tsc --build",
+    "clean": "rm -rf dist tsconfig.tsbuildinfo",
+    "dev": "tsc --watch",
+    "test": "vitest",
+    "test:ci": "vitest run --coverage",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "^22.5.5",
+    "@vitest/coverage-v8": "^2.1.2",
+    "pino": "^9.5.0",
+    "typescript": "^5.6.2",
+    "vitest": "^2.1.2"
+  },
+  "peerDependencies": {
+    "pino": "^9.0.0"
+  },
+  "peerDependenciesMeta": {
+    "pino": {
+      "optional": true
+    }
+  },
+  "keywords": [
+    "orchestr8",
+    "logging",
+    "structured-logging",
+    "json",
+    "redaction",
+    "correlation"
+  ],
+  "author": "Nathan Vale",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nathanvale/orchestr8.git",
+    "directory": "packages/logger"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  }
+}
