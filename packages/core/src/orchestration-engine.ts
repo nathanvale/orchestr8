@@ -28,7 +28,11 @@ import type {
   OrchestrationOptions,
 } from './types.js'
 
-import { evaluateCondition, resolveMapping } from './expression-evaluator.js'
+import {
+  evaluateCondition,
+  resolveMapping,
+  type SecurityLimits,
+} from './expression-evaluator.js'
 
 /**
  * Internal execution context for the engine
@@ -1050,20 +1054,32 @@ export class OrchestrationEngine implements IOrchestrationEngine {
 
       // Evaluate 'if' condition
       if (conditions.if) {
+        const limits: SecurityLimits = {
+          maxDepth: this.maxExpansionDepth,
+          maxSize: this.maxExpansionSize,
+          timeout: 500, // Using default timeout for now
+        }
         const result = evaluateCondition(
           conditions.if,
           evalContext,
           this.strictConditions,
+          limits,
         )
         if (!result) return false
       }
 
       // Evaluate 'unless' condition
       if (conditions.unless) {
+        const limits: SecurityLimits = {
+          maxDepth: this.maxExpansionDepth,
+          maxSize: this.maxExpansionSize,
+          timeout: 500, // Using default timeout for now
+        }
         const result = evaluateCondition(
           conditions.unless,
           evalContext,
           this.strictConditions,
+          limits,
         )
         if (result) return false
       }
@@ -1105,7 +1121,11 @@ export class OrchestrationEngine implements IOrchestrationEngine {
 
     for (const [key, value] of Object.entries(input)) {
       if (typeof value === 'string') {
-        resolvedInput[key] = resolveMapping(value, evalContext)
+        const limits: SecurityLimits = {
+          maxDepth: this.maxExpansionDepth,
+          maxSize: this.maxExpansionSize,
+        }
+        resolvedInput[key] = resolveMapping(value, evalContext, limits)
       } else if (value && typeof value === 'object') {
         // Recursively resolve nested objects
         resolvedInput[key] = await this.resolveStepInput(

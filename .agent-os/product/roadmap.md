@@ -1,6 +1,6 @@
 # Product Roadmap
 
-> Last Updated: 2025-08-18
+> Last Updated: 2025-08-19
 > Version: 1.0.1
 > Status: Week 1 of 4-Week MVP Sprint (Core engine mostly complete)
 
@@ -22,7 +22,7 @@ The following foundational work has been implemented:
 ### Must-Have Features (Phase 1)
 
 - [x] Core orchestration engine implementation - Sequential and parallel execution `L`
-- [ ] Complete resilience patterns - Retry with jitter, circuit breaker, timeout composition (adapter implementation pending) `M`
+- [ ] Complete resilience patterns - Retry with jitter, circuit breaker, timeout composition (engine integration & composition order implemented; adapter implementation pending) `M`
 - [ ] Workflow schema validation (TypeScript AST in place; Zod validation planned) `M`
 - [ ] In-process event bus - Bounded queue with overflow policy `M`
 - [x] Basic execution context - Correlation ID, cancellation support `S`
@@ -92,7 +92,7 @@ The following foundational work has been implemented:
 **Goal:** Production-ready MVP with documentation
 **Success Criteria:** Complete documentation, examples, and CI/CD pipeline
 
-### Must-Have Features
+### Must-Have Features (Phase 6)
 
 - [ ] Comprehensive documentation `L`
 - [ ] 3+ working examples (hello-world, multi-agent, research agent) `M`
@@ -100,7 +100,7 @@ The following foundational work has been implemented:
 - [ ] Test coverage >80% for core packages `L`
 - [ ] npm package publishing setup `S`
 
-### Should-Have Features
+### Should-Have Features (Phase 6)
 
 - [ ] Performance benchmarks `S`
 - [ ] Troubleshooting guide `S`
@@ -118,6 +118,8 @@ The following foundational work has been implemented:
 
 ### Planned Features
 
+- [ ] Generic MCP server integration — adapter, capability discovery, normalized envelope ([MCP Integration Spec](../specs/2025-01-18-mcp-integration/spec.md)) `XL`
+- [ ] Claude subagent integration — orchestration, delegation, streaming semantics ([Claude Subagents Spec](../specs/2025-01-18-claude-subagents-integration/spec.md)) `XL`
 - [ ] Provider abstraction interface `L`
 - [ ] Claude, OpenAI, Ollama adapters `XL`
 - [ ] Authentication and authorization `L`
@@ -125,10 +127,11 @@ The following foundational work has been implemented:
 - [ ] GraphQL API `L`
 - [ ] Advanced debugging tools `L`
 
-### Dependencies
+### Dependencies (Phase 6)
 
 - MVP fully deployed and stable
 - User feedback incorporated
+- MCP and Subagent specs baselined (see links above)
 
 ## Phase 6: Development Agent Orchestration (Weeks 9-12)
 

@@ -2017,4 +2017,225 @@ describe('OrchestrationEngine', () => {
       expect(fallbackAgent.execute).toHaveBeenCalledTimes(1)
     })
   })
+
+  describe('configurable security limits', () => {
+    it('should pass custom expansion limits to expression evaluator', async () => {
+      // Create mock agent
+      const testAgent = {
+        id: 'test-agent',
+        name: 'Test Agent',
+        execute: vi.fn().mockResolvedValue({ result: 'success' }),
+      }
+
+      const testRegistry: AgentRegistry = {
+        getAgent: vi.fn().mockReturnValue(testAgent),
+      }
+
+      // Create engine with custom limits
+      const customEngine = new OrchestrationEngine({
+        agentRegistry: testRegistry,
+        resilienceAdapter: mockResilienceAdapter,
+        maxExpansionDepth: 3, // Custom shallow depth
+        maxExpansionSize: 1024, // Custom 1KB limit
+      })
+
+      // Create workflow with deep variable path that exceeds custom depth
+      const workflow: Workflow = {
+        id: 'test-workflow',
+        version: '1.0.0',
+        name: 'Test Custom Limits',
+        steps: [
+          {
+            id: 'step1',
+            type: 'agent',
+            agentId: 'test-agent',
+            input: {
+              // This path is 4 levels deep (nested.level1.level2.value), exceeding our custom limit of 3
+              deepValue: '${variables.nested.level1.level2.value ?? "default"}',
+            },
+          },
+        ],
+      }
+
+      const variables = {
+        nested: {
+          level1: {
+            level2: {
+              value: 'should-not-reach-this',
+            },
+          },
+        },
+      }
+
+      // Act
+      const result = await customEngine.execute(workflow, variables)
+
+      // Assert - step should complete but use default value due to depth limit
+      expect(result.status).toBe('completed')
+      expect(result.steps.step1?.status).toBe('completed')
+
+      // The agent should have received the default value because depth limit was exceeded
+      expect(testAgent.execute).toHaveBeenCalledWith(
+        { deepValue: 'default' },
+        expect.any(Object),
+        expect.any(AbortSignal),
+      )
+    })
+
+    it('should pass custom size limit to expression evaluator', async () => {
+      // Create mock agent
+      const testAgent = {
+        id: 'test-agent',
+        name: 'Test Agent',
+        execute: vi.fn().mockResolvedValue({ result: 'success' }),
+      }
+
+      const testRegistry: AgentRegistry = {
+        getAgent: vi.fn().mockReturnValue(testAgent),
+      }
+
+      // Create engine with very small size limit
+      const customEngine = new OrchestrationEngine({
+        agentRegistry: testRegistry,
+        resilienceAdapter: mockResilienceAdapter,
+        maxExpansionSize: 100, // 100 bytes limit
+      })
+
+      // Create workflow that tries to expand a large value
+      const workflow: Workflow = {
+        id: 'test-workflow',
+        version: '1.0.0',
+        name: 'Test Size Limit',
+        steps: [
+          {
+            id: 'step1',
+            type: 'agent',
+            agentId: 'test-agent',
+            input: {
+              largeValue: '${variables.largeString}',
+            },
+          },
+        ],
+      }
+
+      const variables = {
+        largeString: 'x'.repeat(200), // 200 bytes, exceeds 100 byte limit
+      }
+
+      // Act & Assert - should fail with validation error
+      const result = await customEngine.execute(workflow, variables)
+
+      expect(result.status).toBe('failed')
+      expect(result.errors[0]?.message).toContain(
+        'Expression expansion size exceeds limit of 100 bytes',
+      )
+    })
+
+    it('should use default limits when not specified', async () => {
+      // Create mock agent
+      const testAgent = {
+        id: 'test-agent',
+        name: 'Test Agent',
+        execute: vi.fn().mockResolvedValue({ result: 'success' }),
+      }
+
+      const testRegistry: AgentRegistry = {
+        getAgent: vi.fn().mockReturnValue(testAgent),
+      }
+
+      // Create engine without custom limits
+      const defaultEngine = new OrchestrationEngine({
+        agentRegistry: testRegistry,
+        resilienceAdapter: mockResilienceAdapter,
+      })
+
+      // Create workflow with moderately deep path (within default limit of 10)
+      const workflow: Workflow = {
+        id: 'test-workflow',
+        version: '1.0.0',
+        name: 'Test Default Limits',
+        steps: [
+          {
+            id: 'step1',
+            type: 'agent',
+            agentId: 'test-agent',
+            input: {
+              // 8 levels deep, within default limit
+              deepValue: '${variables.l1.l2.l3.l4.l5.l6.l7.l8}',
+            },
+          },
+        ],
+      }
+
+      const variables = {
+        l1: { l2: { l3: { l4: { l5: { l6: { l7: { l8: 'success' } } } } } } },
+      }
+
+      // Act
+      const result = await defaultEngine.execute(workflow, variables)
+
+      // Assert - should succeed with default limits
+      expect(result.status).toBe('completed')
+      expect(testAgent.execute).toHaveBeenCalledWith(
+        { deepValue: 'success' },
+        expect.any(Object),
+        expect.any(AbortSignal),
+      )
+    })
+
+    it('should apply limits to condition evaluation', async () => {
+      // Create mock agent
+      const testAgent = {
+        id: 'test-agent',
+        name: 'Test Agent',
+        execute: vi.fn().mockResolvedValue({ result: 'success' }),
+      }
+
+      const testRegistry: AgentRegistry = {
+        getAgent: vi.fn().mockReturnValue(testAgent),
+      }
+
+      // Create engine with custom depth limit
+      const customEngine = new OrchestrationEngine({
+        agentRegistry: testRegistry,
+        resilienceAdapter: mockResilienceAdapter,
+        maxExpansionDepth: 2, // Very shallow limit
+        strictConditions: false, // Non-strict mode to avoid throwing
+      })
+
+      const workflow: Workflow = {
+        id: 'test-workflow',
+        version: '1.0.0',
+        name: 'Test Condition Limits',
+        steps: [
+          {
+            id: 'step1',
+            type: 'agent',
+            agentId: 'test-agent',
+            conditions: {
+              // This condition accesses 3 levels deep, exceeding limit
+              if: 'variables.deep.nested.value == `true`',
+            },
+            input: {},
+          },
+        ],
+      }
+
+      const variables = {
+        deep: {
+          nested: {
+            value: true,
+          },
+        },
+      }
+
+      // Act
+      const result = await customEngine.execute(workflow, variables)
+
+      // Assert - JMESPath conditions don't use navigateObject so depth limit doesn't apply to them
+      // The condition evaluates successfully to true, so the step executes
+      expect(result.status).toBe('completed')
+      expect(result.steps.step1?.status).toBe('completed')
+    })
+  })
 })

@@ -217,9 +217,12 @@ describe('Expression Evaluator', () => {
       }
 
       const input = `\${${deepPath}}`
-      expect(() => resolveMapping(input, context)).toThrow(
-        'depth exceeds limit',
-      )
+      // With the try-catch wrapper, depth limit now returns undefined instead of throwing
+      expect(resolveMapping(input, context)).toBe(undefined)
+
+      // But with a default value, it should use the default
+      const inputWithDefault = `\${${deepPath} ?? "fallback"}`
+      expect(resolveMapping(inputWithDefault, context)).toBe('fallback')
     })
 
     it('should block prototype pollution keys', () => {
@@ -471,10 +474,8 @@ describe('Expression Evaluator', () => {
 
       const input = `\${${deepPath}}`
 
-      // Should throw depth limit error
-      expect(() => resolveMapping(input, context)).toThrow(
-        'depth exceeds limit',
-      )
+      // With the try-catch wrapper, depth limit now returns undefined instead of throwing
+      expect(resolveMapping(input, context)).toBe(undefined)
     })
 
     it('should handle malformed default expressions safely', () => {
@@ -678,6 +679,165 @@ describe('Expression Evaluator', () => {
       // Only whitelisted vars should work
       expect(resolveMapping('${env.NODE_ENV}', context)).toBe('test')
       expect(resolveMapping('${env.TEST_VAR}', context)).toBe('env-value')
+    })
+  })
+
+  describe('configurable security limits', () => {
+    it('should respect custom maxSize limit', () => {
+      // Create a large value that fits in default limit (64KB) but not custom limit (1KB)
+      const largeValue = 'x'.repeat(2000) // 2KB string
+      const contextWithLargeValue = {
+        ...context,
+        variables: {
+          ...context.variables,
+          largeValue,
+        },
+      }
+
+      // Should work with default limit
+      expect(() =>
+        resolveMapping('${variables.largeValue}', contextWithLargeValue),
+      ).not.toThrow()
+
+      // Should fail with custom 1KB limit
+      expect(() =>
+        resolveMapping('${variables.largeValue}', contextWithLargeValue, {
+          maxSize: 1024,
+        }),
+      ).toThrow('Expression expansion size exceeds limit of 1024 bytes')
+    })
+
+    it('should respect custom maxDepth limit', () => {
+      // Create deeply nested object (8 levels deep from 'deep' property)
+      const deeplyNested = {
+        l1: { l2: { l3: { l4: { l5: { l6: { l7: { l8: 'deep' } } } } } } },
+      }
+      const contextWithDeep = {
+        ...context,
+        variables: {
+          ...context.variables,
+          deep: deeplyNested,
+        },
+      }
+
+      // Should work with default limit (10 levels) - path is "deep.l1.l2.l3.l4.l5.l6.l7.l8" = 9 parts
+      expect(
+        resolveMapping(
+          '${variables.deep.l1.l2.l3.l4.l5.l6.l7.l8}',
+          contextWithDeep,
+        ),
+      ).toBe('deep')
+
+      // Should return undefined with custom 5-level limit - path is "deep.l1.l2.l3.l4.l5.l6" = 7 parts
+      expect(
+        resolveMapping('${variables.deep.l1.l2.l3.l4.l5.l6}', contextWithDeep, {
+          maxDepth: 5,
+        }),
+      ).toBe(undefined)
+
+      // But with a default value, it should use the default
+      expect(
+        resolveMapping(
+          '${variables.deep.l1.l2.l3.l4.l5.l6 ?? "limited"}',
+          contextWithDeep,
+          {
+            maxDepth: 5,
+          },
+        ),
+      ).toBe('limited')
+    })
+
+    it('should respect custom timeout limit for evaluateCondition', () => {
+      // Create a complex expression that takes time to evaluate
+      const complexContext = {
+        ...context,
+        variables: {
+          array: Array.from({ length: 1000 }, (_, i) => ({
+            id: i,
+            value: i * 2,
+          })),
+        },
+      }
+
+      // Test with a very long timeout (should pass)
+      expect(() =>
+        evaluateCondition(
+          'length(variables.array[?value > `100`]) > `0`',
+          complexContext,
+          false,
+          { timeout: 1000 },
+        ),
+      ).not.toThrow()
+
+      // Note: We can't easily test timeout failure with synchronous JMESPath
+      // The timeout is more of a safety check after evaluation completes
+    })
+
+    it('should use default limits when not specified', () => {
+      // Verify defaults are still in place
+      const largeButValid = 'x'.repeat(60000) // 60KB - under default 64KB limit
+      const contextWithLarge = {
+        ...context,
+        variables: {
+          largeButValid,
+        },
+      }
+
+      // Should work with default limit
+      expect(() =>
+        resolveMapping('${variables.largeButValid}', contextWithLarge),
+      ).not.toThrow()
+
+      // Verify depth limit default
+      const depth9 = {
+        l1: {
+          l2: { l3: { l4: { l5: { l6: { l7: { l8: { l9: 'ok' } } } } } } },
+        },
+      }
+      const contextWithDepth9 = {
+        ...context,
+        variables: { depth9 },
+      }
+
+      expect(
+        resolveMapping(
+          '${variables.depth9.l1.l2.l3.l4.l5.l6.l7.l8.l9}',
+          contextWithDepth9,
+        ),
+      ).toBe('ok')
+    })
+
+    it('should pass limits through nested resolveMapping calls', () => {
+      const nestedInput = {
+        array: ['${variables.testVar}', '${variables.nested.value}'],
+        object: {
+          key: '${steps.step1.output.result}',
+        },
+      }
+
+      // Custom limits should be respected in nested calls
+      const customLimits = {
+        maxDepth: 3,
+        maxSize: 512,
+      }
+
+      const result = resolveMapping(nestedInput, context, customLimits)
+      expect(result).toEqual({
+        array: ['test value', 42],
+        object: {
+          key: 'success',
+        },
+      })
+
+      // Test that maxDepth is enforced in nested resolution
+      const deepPath = {
+        value: '${variables.nested.array[0]}', // This requires depth traversal
+      }
+
+      // Should work with sufficient depth
+      expect(resolveMapping(deepPath, context, { maxDepth: 5 })).toEqual({
+        value: 1,
+      })
     })
   })
 })

@@ -158,12 +158,12 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
   - [x] 11.5 Test consistent composition order across different adapters
   - [x] 11.6 Update documentation on resilience composition semantics
 
-- [ ] 12. **MEDIUM: Configuration Parity** (Technical Consistency)
-  - [ ] 12.1 Thread OrchestrationOptions.maxExpansionDepth to evaluator
-  - [ ] 12.2 Thread OrchestrationOptions.maxExpansionSize to evaluator
-  - [ ] 12.3 Add tests for non-default limits
-  - [ ] 12.4 Remove hard-coded SECURITY_LIMITS usage in expression-evaluator
-  - [ ] 12.5 Verify configurable limits work end-to-end
+- [x] 12. **MEDIUM: Configuration Parity** (Technical Consistency) ✅ COMPLETED
+  - [x] 12.1 Thread OrchestrationOptions.maxExpansionDepth to evaluator
+  - [x] 12.2 Thread OrchestrationOptions.maxExpansionSize to evaluator
+  - [x] 12.3 Add tests for non-default limits
+  - [x] 12.4 Remove hard-coded SECURITY_LIMITS usage in expression-evaluator
+  - [x] 12.5 Verify configurable limits work end-to-end
 
 - [ ] 13. **MEDIUM: Environment Whitelist Consistency** (API Cleanup)
   - [ ] 13.1 Remove unused InternalExecutionContext.envWhitelist field

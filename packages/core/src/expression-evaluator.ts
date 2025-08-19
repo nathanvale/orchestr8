@@ -14,12 +14,21 @@ import * as jmespath from 'jmespath'
 const expressionCache = new Set<string>()
 
 /**
- * Security limits for expression evaluation
+ * Default security limits for expression evaluation
  */
-const SECURITY_LIMITS = {
+const DEFAULT_SECURITY_LIMITS = {
   maxDepth: 10,
   maxSize: 64 * 1024, // 64KB
   timeout: 500, // 500ms as per spec
+}
+
+/**
+ * Security limits interface
+ */
+export interface SecurityLimits {
+  maxDepth?: number
+  maxSize?: number
+  timeout?: number
 }
 
 /**
@@ -32,12 +41,14 @@ const PROTOTYPE_POLLUTION_KEYS = ['__proto__', 'constructor', 'prototype']
  * @param expression The JMESPath expression
  * @param context The execution context
  * @param strictMode If true, throw validation errors for invalid expressions
+ * @param limits Optional security limits to override defaults
  * @returns The evaluation result
  */
 export function evaluateCondition(
   expression: string,
   context: ExecutionContext,
   strictMode = false,
+  limits?: SecurityLimits,
 ): boolean {
   if (!expression) {
     return true // No condition means always true
@@ -57,9 +68,10 @@ export function evaluateCondition(
     }
 
     // Evaluate with timeout protection
+    const timeout = limits?.timeout ?? DEFAULT_SECURITY_LIMITS.timeout
     const result = evaluateWithTimeout(
       () => jmespath.search(data, expression),
-      SECURITY_LIMITS.timeout,
+      timeout,
     )
 
     // Convert to boolean
@@ -88,24 +100,26 @@ export function evaluateCondition(
  * Resolve mapping expressions with ${steps.*}, ${variables.*}, ${env.*} patterns
  * @param input The input object potentially containing expressions
  * @param context The execution context
+ * @param limits Optional security limits to override defaults
  * @returns The resolved object
  */
 export function resolveMapping(
   input: unknown,
   context: ExecutionContext,
+  limits?: SecurityLimits,
 ): unknown {
   if (typeof input === 'string') {
-    return resolveStringExpression(input, context)
+    return resolveStringExpression(input, context, limits)
   }
 
   if (Array.isArray(input)) {
-    return input.map((item) => resolveMapping(item, context))
+    return input.map((item) => resolveMapping(item, context, limits))
   }
 
   if (input && typeof input === 'object') {
     const resolved: Record<string, unknown> = {}
     for (const [key, value] of Object.entries(input)) {
-      resolved[key] = resolveMapping(value, context)
+      resolved[key] = resolveMapping(value, context, limits)
     }
     return resolved
   }
@@ -119,15 +133,16 @@ export function resolveMapping(
 function resolveStringExpression(
   input: string,
   context: ExecutionContext,
+  limits?: SecurityLimits,
 ): unknown {
   // Check if entire string is a single expression
   const singleExpr = extractSingleExpression(input)
   if (singleExpr !== null) {
-    return resolvePlaceholder(singleExpr, context)
+    return resolvePlaceholder(singleExpr, context, limits)
   }
 
   // Replace multiple expressions in string
-  return replaceExpressions(input, context)
+  return replaceExpressions(input, context, limits)
 }
 
 /**
@@ -191,7 +206,11 @@ function extractSingleExpression(input: string): string | null {
 /**
  * Replace all ${...} expressions in a string with their resolved values
  */
-function replaceExpressions(input: string, context: ExecutionContext): string {
+function replaceExpressions(
+  input: string,
+  context: ExecutionContext,
+  limits?: SecurityLimits,
+): string {
   let result = ''
   let i = 0
 
@@ -248,7 +267,7 @@ function replaceExpressions(input: string, context: ExecutionContext): string {
       if (braceCount === 0) {
         // Found complete expression
         const expression = input.slice(expressionStart, j - 1)
-        const value = resolvePlaceholder(expression, context)
+        const value = resolvePlaceholder(expression, context, limits)
         result += value === undefined ? input.slice(i, j) : String(value)
         i = j
       } else {
@@ -373,6 +392,7 @@ function unescapeString(str: string, quoteType: string): string {
 function resolvePlaceholder(
   expression: string,
   context: ExecutionContext,
+  limits?: SecurityLimits,
 ): unknown {
   // Handle default value syntax: expression ?? defaultValue
   const parsedExpression = parseExpressionWithDefault(expression)
@@ -401,16 +421,59 @@ function resolvePlaceholder(
         value = stepResult.stepId
       } else if (property.startsWith('output.')) {
         // Navigate into output object
-        value = navigateObject(stepResult.output, property.substring(7))
+        const maxDepth = limits?.maxDepth ?? DEFAULT_SECURITY_LIMITS.maxDepth
+        try {
+          value = navigateObject(
+            stepResult.output,
+            property.substring(7),
+            maxDepth,
+          )
+        } catch (error) {
+          // If depth limit is exceeded, return undefined for fallback
+          if (
+            error instanceof Error &&
+            error.message.includes('depth exceeds limit')
+          ) {
+            value = undefined
+          } else {
+            throw error
+          }
+        }
       } else {
         // Try to access any other property on the step result
-        value = navigateObject(stepResult, property)
+        const maxDepth = limits?.maxDepth ?? DEFAULT_SECURITY_LIMITS.maxDepth
+        try {
+          value = navigateObject(stepResult, property, maxDepth)
+        } catch (error) {
+          // If depth limit is exceeded, return undefined for fallback
+          if (
+            error instanceof Error &&
+            error.message.includes('depth exceeds limit')
+          ) {
+            value = undefined
+          } else {
+            throw error
+          }
+        }
       }
     }
   } else if (source === 'variables') {
     // Format: variables.varName
     const varPath = parts.slice(1).join('.')
-    value = navigateObject(context.variables, varPath)
+    const maxDepth = limits?.maxDepth ?? DEFAULT_SECURITY_LIMITS.maxDepth
+    try {
+      value = navigateObject(context.variables, varPath, maxDepth)
+    } catch (error) {
+      // If depth limit is exceeded, return undefined for fallback
+      if (
+        error instanceof Error &&
+        error.message.includes('depth exceeds limit')
+      ) {
+        value = undefined
+      } else {
+        throw error
+      }
+    }
   } else if (source === 'env') {
     // Format: env.VAR_NAME
     const envVar = parts[1]
@@ -425,7 +488,8 @@ function resolvePlaceholder(
 
   // Check expansion size limit
   if (resolvedValue !== undefined) {
-    checkExpansionSizeLimit(resolvedValue)
+    const maxSize = limits?.maxSize ?? DEFAULT_SECURITY_LIMITS.maxSize
+    checkExpansionSizeLimit(resolvedValue, maxSize)
   }
 
   return resolvedValue
@@ -434,16 +498,16 @@ function resolvePlaceholder(
 /**
  * Check if a value exceeds the expansion size limit
  */
-function checkExpansionSizeLimit(value: unknown): void {
+function checkExpansionSizeLimit(value: unknown, maxSize: number): void {
   try {
     // Serialize the value to check its size
     const serialized = JSON.stringify(value)
     const byteSize = Buffer.byteLength(serialized, 'utf8')
 
-    if (byteSize > SECURITY_LIMITS.maxSize) {
+    if (byteSize > maxSize) {
       throw createExecutionError(
         ExecutionErrorCode.VALIDATION,
-        `Expression expansion size exceeds limit of ${SECURITY_LIMITS.maxSize} bytes (got ${byteSize} bytes)`,
+        `Expression expansion size exceeds limit of ${maxSize} bytes (got ${byteSize} bytes)`,
       )
     }
   } catch (error) {
@@ -468,7 +532,11 @@ function checkExpansionSizeLimit(value: unknown): void {
 /**
  * Navigate an object path safely
  */
-function navigateObject(obj: unknown, path: string): unknown {
+function navigateObject(
+  obj: unknown,
+  path: string,
+  maxDepth?: number,
+): unknown {
   if (!obj || !path) return undefined
 
   const parts = path.split('.')
@@ -478,10 +546,9 @@ function navigateObject(obj: unknown, path: string): unknown {
   for (const part of parts) {
     // Check depth limit using proper counter
     depth++
-    if (depth > SECURITY_LIMITS.maxDepth) {
-      throw new Error(
-        `Expression depth exceeds limit of ${SECURITY_LIMITS.maxDepth}`,
-      )
+    const depthLimit = maxDepth ?? DEFAULT_SECURITY_LIMITS.maxDepth
+    if (depth > depthLimit) {
+      throw new Error(`Expression depth exceeds limit of ${depthLimit}`)
     }
 
     // Block prototype pollution keys
@@ -597,4 +664,4 @@ export function clearExpressionCache(): void {
 /**
  * Export security limits for testing
  */
-export { SECURITY_LIMITS, PROTOTYPE_POLLUTION_KEYS }
+export { DEFAULT_SECURITY_LIMITS as SECURITY_LIMITS, PROTOTYPE_POLLUTION_KEYS }
