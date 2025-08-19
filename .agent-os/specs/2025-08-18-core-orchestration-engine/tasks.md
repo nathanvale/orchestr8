@@ -180,13 +180,13 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
   - [x] 14.5 Document condition error handling behavior changes ✅ Documented in tests
   - [x] 14.6 Consider workflow-level strictConditions override ✅ Already available via constructor options
 
-- [ ] 15. **LOW: Documentation and Polish** (Technical Debt)
-  - [ ] 15.1 Update timeout documentation from "preemptive" to "post-check"
-  - [ ] 15.2 Clean up unused ExecutionNode.children and maxMetadataBytes
-  - [ ] 15.3 Consider safe preview for truncated memory results
-  - [ ] 15.4 Clean dist before build in schema package
-  - [ ] 15.5 Document Map insertion order invariants
-  - [ ] 15.6 Clean up TODO comments in code
+- [x] 15. **LOW: Documentation and Polish** (Technical Debt) ✅ COMPLETED
+  - [x] 15.1 Update timeout documentation from "preemptive" to "post-check" (no preemptive references found in code)
+  - [x] 15.2 Clean up unused ExecutionNode.children and maxMetadataBytes (removed all maxMetadataBytes references)
+  - [x] 15.3 Consider safe preview for truncated memory results (added documentation comment)
+  - [x] 15.4 Clean dist before build in schema package (updated build script)
+  - [x] 15.5 Document Map insertion order invariants (added comprehensive documentation)
+  - [x] 15.6 Clean up TODO comments in code (fixed and removed TODOs)
 
 - [ ] 16. **FUTURE: Integration Testing & Performance** (Phase 3)
   - [ ] 16.1 Comprehensive integration test suite

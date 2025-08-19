@@ -44,7 +44,6 @@ interface InternalExecutionContext {
   metadata: Record<string, unknown>
   variables: Record<string, unknown>
   maxResultBytesPerStep: number
-  maxMetadataBytes: number
 }
 
 /**
@@ -57,7 +56,6 @@ export class OrchestrationEngine implements IOrchestrationEngine {
   private readonly defaultCompositionOrder: CompositionOrder
   private readonly maxConcurrency: number
   private readonly maxResultBytesPerStep: number
-  private readonly maxMetadataBytes: number
   private readonly maxExpansionDepth: number
   private readonly maxExpansionSize: number
   private readonly strictConditions: boolean
@@ -70,7 +68,6 @@ export class OrchestrationEngine implements IOrchestrationEngine {
       options.defaultCompositionOrder ?? 'retry-cb-timeout'
     this.maxConcurrency = options.maxConcurrency ?? 10
     this.maxResultBytesPerStep = options.maxResultBytesPerStep ?? 512 * 1024
-    this.maxMetadataBytes = options.maxMetadataBytes ?? 128 * 1024
     this.maxExpansionDepth = options.maxExpansionDepth ?? 10
     this.maxExpansionSize = options.maxExpansionSize ?? 64 * 1024
     this.strictConditions = options.strictConditions ?? true
@@ -110,7 +107,6 @@ export class OrchestrationEngine implements IOrchestrationEngine {
       metadata: {},
       variables: variables ?? {},
       maxResultBytesPerStep: this.maxResultBytesPerStep,
-      maxMetadataBytes: this.maxMetadataBytes,
     }
 
     // Initialize result
@@ -192,6 +188,11 @@ export class OrchestrationEngine implements IOrchestrationEngine {
 
   /**
    * Build execution graph from workflow
+   *
+   * Note: JavaScript Map maintains insertion order, which is critical for
+   * deterministic step scheduling. Steps are inserted in workflow definition
+   * order, and this ordering is used as a tiebreaker in scheduleSteps()
+   * when steps have equal dependency counts.
    */
   private buildExecutionGraph(workflow: Workflow): ExecutionGraph {
     const nodes = new Map<string, ExecutionNode>()
@@ -1042,9 +1043,14 @@ export class OrchestrationEngine implements IOrchestrationEngine {
       dependsOn: fallbackDependencies,
       config: agentStep?.config,
       input: fallbackInput, // Use fallback input with proper precedence
-      resilience: undefined, // TODO: Get from step options
-      onError: 'fail',
-      conditions: undefined, // TODO: Get from step options
+      resilience: fallbackStep.resilience
+        ? this.normalizeResiliencePolicy(fallbackStep.resilience)
+        : undefined,
+      onError: fallbackStep.onError || 'fail',
+      conditions:
+        fallbackStep.if || fallbackStep.unless
+          ? { if: fallbackStep.if, unless: fallbackStep.unless }
+          : undefined,
     }
 
     // Log fallback execution
@@ -1192,6 +1198,10 @@ export class OrchestrationEngine implements IOrchestrationEngine {
 
   /**
    * Truncate result to fit within memory limits
+   *
+   * Currently performs simple byte-based truncation to 90% of the limit.
+   * Future enhancement: Consider adding safe JSON preview that shows
+   * truncation point with ellipsis or partial data structure preservation.
    */
   private truncateResult(output: unknown): {
     truncated: boolean

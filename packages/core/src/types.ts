@@ -140,11 +140,6 @@ export interface OrchestrationOptions {
   maxResultBytesPerStep?: number
 
   /**
-   * Maximum metadata size in bytes
-   */
-  maxMetadataBytes?: number
-
-  /**
    * Maximum expression expansion depth
    */
   maxExpansionDepth?: number
