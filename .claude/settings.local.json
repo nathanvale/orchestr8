@@ -64,7 +64,8 @@
       "Bash(pnpm exec eslint:*)",
       "Bash(pnpm -w run format)",
       "Bash(pnpm:*)",
-      "Bash(npx vitest list:*)"
+      "Bash(npx vitest list:*)",
+      "Bash(npx eslint:*)"
     ],
     "deny": [],
     "ask": [],

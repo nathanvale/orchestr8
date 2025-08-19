@@ -10,49 +10,49 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
 
 ### Phase 1: Foundation
 
-- [ ] 1. Error Type Consolidation
-  - [ ] 1.1 Write tests for error types in resilience package
-  - [ ] 1.2 Create CircuitBreakerOpenError with code, retryAfter, nextRetryTime
-  - [ ] 1.3 Create TimeoutError with duration and operation
-  - [ ] 1.4 Create RetryExhaustedError with attempts and lastError
-  - [ ] 1.5 Export all error types from resilience index
-  - [ ] 1.6 Remove duplicate errors from core package
+- [x] 1. Error Type Consolidation
+  - [x] 1.1 Write tests for error types in resilience package
+  - [x] 1.2 Create CircuitBreakerOpenError with code, retryAfter, nextRetryTime
+  - [x] 1.3 Create TimeoutError with duration and operation
+  - [x] 1.4 Create RetryExhaustedError with attempts and lastError
+  - [x] 1.5 Export all error types from resilience index
+  - [x] 1.6 Remove duplicate errors from core package
 
-- [ ] 2. Define Core Interfaces
-  - [ ] 2.1 Write tests for config validation
-  - [ ] 2.2 Define RetryConfig with backoff, jitter, retryOn predicate
-  - [ ] 2.3 Define CircuitBreakerConfig with sliding window params
-  - [ ] 2.4 Define ResilienceContext with workflowId, stepId, correlationId
-  - [ ] 2.5 Update ResilienceAdapter interface with new types
-  - [ ] 2.6 Verify all interface tests pass
+- [x] 2. Define Core Interfaces
+  - [x] 2.1 Write tests for config validation
+  - [x] 2.2 Define RetryConfig with backoff, jitter, retryOn predicate
+  - [x] 2.3 Define CircuitBreakerConfig with sliding window params
+  - [x] 2.4 Define ResilienceContext with workflowId, stepId, correlationId
+  - [x] 2.5 Update ResilienceAdapter interface with new types
+  - [x] 2.6 Verify all interface tests pass
 
 ### Phase 2: Circuit Breaker Implementation
 
-- [ ] 3. Sliding Window State Machine
-  - [ ] 3.1 Write tests for sliding window behavior
-  - [ ] 3.2 Implement circular buffer for outcome tracking
-  - [ ] 3.3 Add per-key state management with Map
-  - [ ] 3.4 Implement state transitions (closed/open/half-open)
-  - [ ] 3.5 Add probe locking for half-open concurrency
-  - [ ] 3.6 Verify window fills before opening circuit
+- [x] 3. Sliding Window State Machine
+  - [x] 3.1 Write tests for sliding window behavior
+  - [x] 3.2 Implement circular buffer for outcome tracking
+  - [x] 3.3 Add per-key state management with Map
+  - [x] 3.4 Implement state transitions (closed/open/half-open)
+  - [x] 3.5 Add probe locking for half-open concurrency
+  - [x] 3.6 Verify window fills before opening circuit
 
-- [ ] 4. Retry with Backoff/Jitter
-  - [ ] 4.1 Write tests for retry strategies
-  - [ ] 4.2 Implement exponential and fixed backoff
-  - [ ] 4.3 Add full jitter calculation
-  - [ ] 4.4 Implement CircuitBreakerOpenError detection (never retry)
-  - [ ] 4.5 Add custom retry predicate support
-  - [ ] 4.6 Verify retry exhaustion error handling
+- [x] 4. Retry with Backoff/Jitter
+  - [x] 4.1 Write tests for retry strategies
+  - [x] 4.2 Implement exponential and fixed backoff
+  - [x] 4.3 Add full jitter calculation
+  - [x] 4.4 Implement CircuitBreakerOpenError detection (never retry)
+  - [x] 4.5 Add custom retry predicate support
+  - [x] 4.6 Verify retry exhaustion error handling
 
 ### Phase 3: Composition Engine
 
-- [ ] 5. Pattern Composition with Validation
-  - [ ] 5.1 Write tests for composition validation
-  - [ ] 5.2 Implement middleware chain pattern
-  - [ ] 5.3 Validate only retry-cb-timeout and timeout-cb-retry
-  - [ ] 5.4 Error on unsupported composition patterns
-  - [ ] 5.5 Skip missing patterns while preserving order
-  - [ ] 5.6 Verify composition order behavior
+- [x] 5. Pattern Composition with Validation
+  - [x] 5.1 Write tests for composition validation
+  - [x] 5.2 Implement middleware chain pattern
+  - [x] 5.3 Validate only retry-cb-timeout and timeout-cb-retry
+  - [x] 5.4 Error on unsupported composition patterns
+  - [x] 5.5 Skip missing patterns while preserving order
+  - [x] 5.6 Verify composition order behavior
 
 - [ ] 6. Context and Key Derivation
   - [ ] 6.1 Write tests for key derivation

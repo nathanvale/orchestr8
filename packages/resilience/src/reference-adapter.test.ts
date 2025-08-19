@@ -258,9 +258,10 @@ describe('ReferenceResilienceAdapter', () => {
       ).rejects.toThrow('cancelled')
     })
 
-    it('should apply circuit breaker (basic implementation)', async () => {
+    it('should apply circuit breaker with successful operations', async () => {
       const policy: ResiliencePolicy = {
         circuitBreaker: {
+          key: 'test-service',
           failureThreshold: 3,
           recoveryTime: 1000,
           sampleSize: 10,
@@ -289,6 +290,507 @@ describe('ReferenceResilienceAdapter', () => {
 
       expect(result).toBe('success')
       expect(operationCallOrder).toEqual(['operation-call'])
+    })
+  })
+
+  describe('circuit breaker', () => {
+    it('should open circuit after failure threshold', async () => {
+      let callCount = 0
+      const failingOperation = vi
+        .fn()
+        .mockImplementation(async (_signal?: AbortSignal) => {
+          callCount++
+          throw new Error(`failure ${callCount}`)
+        })
+
+      const policy: ResiliencePolicy = {
+        circuitBreaker: {
+          key: 'test-cb-1',
+          failureThreshold: 2,
+          recoveryTime: 100,
+          halfOpenPolicy: 'single-probe',
+        },
+      }
+
+      // First failure
+      await expect(
+        adapter.applyNormalizedPolicy(
+          failingOperation,
+          policy,
+          'retry-cb-timeout',
+        ),
+      ).rejects.toThrow('failure 1')
+
+      // Second failure should open the circuit
+      await expect(
+        adapter.applyNormalizedPolicy(
+          failingOperation,
+          policy,
+          'retry-cb-timeout',
+        ),
+      ).rejects.toThrow('failure 2')
+
+      // Third attempt should be rejected immediately by open circuit
+      await expect(
+        adapter.applyNormalizedPolicy(
+          failingOperation,
+          policy,
+          'retry-cb-timeout',
+        ),
+      ).rejects.toThrow('Circuit breaker is open')
+
+      expect(callCount).toBe(2) // Only 2 actual calls, third was rejected
+    })
+
+    it('should transition from open to half-open after recovery time', async () => {
+      let callCount = 0
+      const testOperation = vi
+        .fn()
+        .mockImplementation(async (_signal?: AbortSignal) => {
+          callCount++
+          if (callCount <= 2) {
+            throw new Error(`failure ${callCount}`)
+          }
+          return `success ${callCount}`
+        })
+
+      const policy: ResiliencePolicy = {
+        circuitBreaker: {
+          key: 'test-cb-2',
+          failureThreshold: 2,
+          recoveryTime: 50, // Short recovery for testing
+          halfOpenPolicy: 'single-probe',
+        },
+      }
+
+      // Open the circuit
+      await expect(
+        adapter.applyNormalizedPolicy(
+          testOperation,
+          policy,
+          'retry-cb-timeout',
+        ),
+      ).rejects.toThrow('failure 1')
+
+      await expect(
+        adapter.applyNormalizedPolicy(
+          testOperation,
+          policy,
+          'retry-cb-timeout',
+        ),
+      ).rejects.toThrow('failure 2')
+
+      // Should be open now
+      await expect(
+        adapter.applyNormalizedPolicy(
+          testOperation,
+          policy,
+          'retry-cb-timeout',
+        ),
+      ).rejects.toThrow('Circuit breaker is open')
+
+      // Wait for recovery time
+      await new Promise((resolve) => setTimeout(resolve, 60))
+
+      // Should transition to half-open and allow one attempt
+      const result = await adapter.applyNormalizedPolicy(
+        testOperation,
+        policy,
+        'retry-cb-timeout',
+      )
+
+      expect(result).toBe('success 3')
+      expect(callCount).toBe(3)
+    })
+
+    it('should close circuit after successful probe in half-open state', async () => {
+      let callCount = 0
+      const testOperation = vi
+        .fn()
+        .mockImplementation(async (_signal?: AbortSignal) => {
+          callCount++
+          if (callCount <= 2) {
+            throw new Error(`failure ${callCount}`)
+          }
+          return `success ${callCount}`
+        })
+
+      const policy: ResiliencePolicy = {
+        circuitBreaker: {
+          key: 'test-cb-3',
+          failureThreshold: 2,
+          recoveryTime: 50,
+          halfOpenPolicy: 'single-probe',
+        },
+      }
+
+      // Open the circuit
+      await expect(
+        adapter.applyNormalizedPolicy(
+          testOperation,
+          policy,
+          'retry-cb-timeout',
+        ),
+      ).rejects.toThrow()
+      await expect(
+        adapter.applyNormalizedPolicy(
+          testOperation,
+          policy,
+          'retry-cb-timeout',
+        ),
+      ).rejects.toThrow()
+
+      // Wait for recovery
+      await new Promise((resolve) => setTimeout(resolve, 60))
+
+      // Successful probe should close the circuit
+      await adapter.applyNormalizedPolicy(
+        testOperation,
+        policy,
+        'retry-cb-timeout',
+      )
+
+      // Circuit should be closed, subsequent calls should work
+      const result = await adapter.applyNormalizedPolicy(
+        testOperation,
+        policy,
+        'retry-cb-timeout',
+      )
+
+      expect(result).toBe('success 4')
+    })
+
+    it('should re-open circuit if probe fails in half-open state', async () => {
+      let callCount = 0
+      const testOperation = vi
+        .fn()
+        .mockImplementation(async (_signal?: AbortSignal) => {
+          callCount++
+          if (callCount !== 5) {
+            // Only succeed on the 5th call
+            throw new Error(`failure ${callCount}`)
+          }
+          return `success ${callCount}`
+        })
+
+      const policy: ResiliencePolicy = {
+        circuitBreaker: {
+          key: 'test-cb-4',
+          failureThreshold: 2,
+          recoveryTime: 50,
+          halfOpenPolicy: 'single-probe',
+        },
+      }
+
+      // Open the circuit
+      await expect(
+        adapter.applyNormalizedPolicy(
+          testOperation,
+          policy,
+          'retry-cb-timeout',
+        ),
+      ).rejects.toThrow()
+      await expect(
+        adapter.applyNormalizedPolicy(
+          testOperation,
+          policy,
+          'retry-cb-timeout',
+        ),
+      ).rejects.toThrow()
+
+      // Wait for recovery
+      await new Promise((resolve) => setTimeout(resolve, 60))
+
+      // Probe fails, should re-open
+      await expect(
+        adapter.applyNormalizedPolicy(
+          testOperation,
+          policy,
+          'retry-cb-timeout',
+        ),
+      ).rejects.toThrow('failure 3')
+
+      // Should be open again
+      await expect(
+        adapter.applyNormalizedPolicy(
+          testOperation,
+          policy,
+          'retry-cb-timeout',
+        ),
+      ).rejects.toThrow('Circuit breaker is open')
+
+      expect(callCount).toBe(3) // 2 to open + 1 failed probe
+    })
+
+    it('should handle gradual recovery policy', async () => {
+      let callCount = 0
+      const testOperation = vi
+        .fn()
+        .mockImplementation(async (_signal?: AbortSignal) => {
+          callCount++
+          if (callCount <= 2) {
+            throw new Error(`failure ${callCount}`)
+          }
+          return `success ${callCount}`
+        })
+
+      const policy: ResiliencePolicy = {
+        circuitBreaker: {
+          key: 'test-cb-5',
+          failureThreshold: 2,
+          recoveryTime: 50,
+          halfOpenPolicy: 'gradual', // Requires 3 successes
+        },
+      }
+
+      // Open the circuit
+      await expect(
+        adapter.applyNormalizedPolicy(
+          testOperation,
+          policy,
+          'retry-cb-timeout',
+        ),
+      ).rejects.toThrow()
+      await expect(
+        adapter.applyNormalizedPolicy(
+          testOperation,
+          policy,
+          'retry-cb-timeout',
+        ),
+      ).rejects.toThrow()
+
+      // Wait for recovery
+      await new Promise((resolve) => setTimeout(resolve, 60))
+
+      // Need 3 successful calls to close
+      await adapter.applyNormalizedPolicy(
+        testOperation,
+        policy,
+        'retry-cb-timeout',
+      )
+      await adapter.applyNormalizedPolicy(
+        testOperation,
+        policy,
+        'retry-cb-timeout',
+      )
+      await adapter.applyNormalizedPolicy(
+        testOperation,
+        policy,
+        'retry-cb-timeout',
+      )
+
+      // Circuit should now be closed
+      const result = await adapter.applyNormalizedPolicy(
+        testOperation,
+        policy,
+        'retry-cb-timeout',
+      )
+
+      expect(result).toBe('success 6')
+      expect(callCount).toBe(6)
+    })
+
+    it('should use context for circuit breaker key if not provided', async () => {
+      const policy: ResiliencePolicy = {
+        circuitBreaker: {
+          failureThreshold: 3,
+          recoveryTime: 1000,
+          halfOpenPolicy: 'single-probe',
+        },
+      }
+
+      const context = {
+        workflowId: 'workflow-1',
+        stepId: 'step-1',
+        correlationId: 'corr-1',
+      }
+
+      const result = await adapter.applyNormalizedPolicy(
+        operation,
+        policy,
+        'retry-cb-timeout',
+        undefined,
+        context,
+      )
+
+      expect(result).toBe('success')
+    })
+  })
+
+  describe('composition order', () => {
+    it('should apply patterns in retry-cb-timeout order', async () => {
+      const executionOrder: string[] = []
+
+      const trackingOperation = vi
+        .fn()
+        .mockImplementation(async (_signal?: AbortSignal) => {
+          executionOrder.push('operation')
+          return 'success'
+        })
+
+      const policy: ResiliencePolicy = {
+        retry: {
+          maxAttempts: 2,
+          backoffStrategy: 'fixed',
+          jitterStrategy: 'none',
+          initialDelay: 1,
+          maxDelay: 1,
+        },
+        circuitBreaker: {
+          key: 'test-order-1',
+          failureThreshold: 3,
+          recoveryTime: 1000,
+        },
+        timeout: 1000,
+      }
+
+      const result = await adapter.applyNormalizedPolicy(
+        trackingOperation,
+        policy,
+        'retry-cb-timeout',
+      )
+
+      expect(result).toBe('success')
+      expect(executionOrder).toEqual(['operation'])
+    })
+
+    it('should apply patterns in timeout-cb-retry order', async () => {
+      const executionOrder: string[] = []
+
+      const trackingOperation = vi
+        .fn()
+        .mockImplementation(async (_signal?: AbortSignal) => {
+          executionOrder.push('operation')
+          return 'success'
+        })
+
+      const policy: ResiliencePolicy = {
+        retry: {
+          maxAttempts: 2,
+          backoffStrategy: 'fixed',
+          jitterStrategy: 'none',
+          initialDelay: 1,
+          maxDelay: 1,
+        },
+        circuitBreaker: {
+          key: 'test-order-2',
+          failureThreshold: 3,
+          recoveryTime: 1000,
+        },
+        timeout: 1000,
+      }
+
+      const result = await adapter.applyNormalizedPolicy(
+        trackingOperation,
+        policy,
+        'timeout-cb-retry',
+      )
+
+      expect(result).toBe('success')
+      expect(executionOrder).toEqual(['operation'])
+    })
+
+    it('should handle retry with circuit breaker correctly', async () => {
+      let callCount = 0
+      const failingOperation = vi
+        .fn()
+        .mockImplementation(async (_signal?: AbortSignal) => {
+          callCount++
+          if (callCount < 3) {
+            throw new Error(`attempt ${callCount}`)
+          }
+          return `success ${callCount}`
+        })
+
+      const policy: ResiliencePolicy = {
+        retry: {
+          maxAttempts: 3,
+          backoffStrategy: 'fixed',
+          jitterStrategy: 'none',
+          initialDelay: 1,
+          maxDelay: 1,
+        },
+        circuitBreaker: {
+          key: 'test-retry-cb',
+          failureThreshold: 5, // High threshold so CB doesn't open
+          recoveryTime: 1000,
+        },
+      }
+
+      const result = await adapter.applyNormalizedPolicy(
+        failingOperation,
+        policy,
+        'retry-cb-timeout',
+      )
+
+      expect(result).toBe('success 3')
+      expect(callCount).toBe(3) // Should retry until success
+    })
+
+    it('should respect timeout even with retry', async () => {
+      const slowOperation = vi
+        .fn()
+        .mockImplementation(async (_signal?: AbortSignal) => {
+          await new Promise((resolve) => setTimeout(resolve, 100))
+          return 'should-timeout'
+        })
+
+      const policy: ResiliencePolicy = {
+        retry: {
+          maxAttempts: 3,
+          backoffStrategy: 'fixed',
+          jitterStrategy: 'none',
+          initialDelay: 1,
+          maxDelay: 1,
+        },
+        timeout: 50, // Timeout before operation completes
+      }
+
+      // With retry-cb-timeout order, timeout wraps the operation
+      await expect(
+        adapter.applyNormalizedPolicy(
+          slowOperation,
+          policy,
+          'retry-cb-timeout',
+        ),
+      ).rejects.toThrow('timed out')
+    })
+
+    it('should handle circuit breaker opening during retries', async () => {
+      let callCount = 0
+      const failingOperation = vi
+        .fn()
+        .mockImplementation(async (_signal?: AbortSignal) => {
+          callCount++
+          throw new Error(`failure ${callCount}`)
+        })
+
+      const policy: ResiliencePolicy = {
+        retry: {
+          maxAttempts: 5,
+          backoffStrategy: 'fixed',
+          jitterStrategy: 'none',
+          initialDelay: 1,
+          maxDelay: 1,
+        },
+        circuitBreaker: {
+          key: 'test-cb-retry',
+          failureThreshold: 3, // CB will open after 3 failures
+          recoveryTime: 1000,
+        },
+      }
+
+      // Should fail with circuit breaker open error after 3 attempts
+      await expect(
+        adapter.applyNormalizedPolicy(
+          failingOperation,
+          policy,
+          'retry-cb-timeout',
+        ),
+      ).rejects.toThrow()
+
+      // The circuit should be open after failureThreshold attempts
+      expect(callCount).toBeLessThanOrEqual(3)
     })
   })
 

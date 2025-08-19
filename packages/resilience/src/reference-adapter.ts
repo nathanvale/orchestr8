@@ -10,13 +10,24 @@ import type {
   ResiliencePolicy,
 } from '@orchestr8/schema'
 
-import { TimeoutError } from './errors.js'
+import { CircuitBreakerOpenError, TimeoutError } from './errors.js'
+
+/**
+ * Circuit breaker state
+ */
+interface CircuitBreakerState {
+  status: 'closed' | 'open' | 'half-open'
+  consecutiveFailures: number
+  lastFailureTime?: number
+  successCount: number
+}
 
 /**
  * Simple reference resilience adapter that implements both legacy and new interfaces
  * This adapter demonstrates the interface contract but is not production-ready
  */
 export class ReferenceResilienceAdapter implements ResilienceAdapter {
+  private circuitBreakers = new Map<string, CircuitBreakerState>()
   /**
    * Legacy interface for backward compatibility
    * @deprecated Use applyNormalizedPolicy for better control over composition order
@@ -47,28 +58,61 @@ export class ReferenceResilienceAdapter implements ResilienceAdapter {
     normalizedPolicy: ResiliencePolicy,
     compositionOrder: CompositionOrder,
     signal?: AbortSignal,
-    _context?: ResilienceInvocationContext,
+    context?: ResilienceInvocationContext,
   ): Promise<T> {
-    // For this simple reference implementation, we just log the composition order
-    // and apply basic timeout and retry if present
-    // Context can be used for circuit breaker key derivation in production adapters
-
     if (signal?.aborted) {
       throw new Error('Operation was cancelled')
     }
 
-    // Apply basic timeout if specified
-    if (normalizedPolicy.timeout) {
-      return this.withTimeout(operation, normalizedPolicy.timeout, signal)
+    // Compose the resilience patterns according to the specified order
+    let wrappedOperation = operation
+
+    // Parse composition order and wrap operations
+    const patterns = compositionOrder.split('-')
+
+    // Apply patterns in reverse order (innermost first)
+    for (let i = patterns.length - 1; i >= 0; i--) {
+      const pattern = patterns[i]
+
+      switch (pattern) {
+        case 'retry':
+          if (normalizedPolicy.retry) {
+            const currentOp = wrappedOperation
+            wrappedOperation = (sig?: AbortSignal) =>
+              this.withRetry(currentOp, normalizedPolicy.retry!, sig)
+          }
+          break
+
+        case 'cb':
+          if (normalizedPolicy.circuitBreaker) {
+            const currentOp = wrappedOperation
+            const cbKey = this.getCircuitBreakerKey(
+              normalizedPolicy.circuitBreaker,
+              context,
+            )
+            wrappedOperation = (sig?: AbortSignal) =>
+              this.withCircuitBreaker(
+                currentOp,
+                normalizedPolicy.circuitBreaker!,
+                cbKey,
+                sig,
+              )
+          }
+          break
+
+        case 'timeout':
+          if (normalizedPolicy.timeout) {
+            const currentOp = wrappedOperation
+            const timeoutMs = normalizedPolicy.timeout
+            wrappedOperation = (sig?: AbortSignal) =>
+              this.withTimeout(currentOp, timeoutMs, sig)
+          }
+          break
+      }
     }
 
-    // Apply basic retry if specified
-    if (normalizedPolicy.retry) {
-      return this.withRetry(operation, normalizedPolicy.retry, signal)
-    }
-
-    // No resilience patterns, just execute with signal
-    return operation(signal)
+    // Execute the composed operation
+    return wrappedOperation(signal)
   }
 
   /**
@@ -217,6 +261,128 @@ export class ReferenceResilienceAdapter implements ResilienceAdapter {
     }
 
     return controller.signal
+  }
+
+  /**
+   * Circuit breaker implementation
+   */
+  private async withCircuitBreaker<T>(
+    operation: (signal?: AbortSignal) => Promise<T>,
+    cbPolicy: NonNullable<ResiliencePolicy['circuitBreaker']>,
+    key: string,
+    signal?: AbortSignal,
+  ): Promise<T> {
+    const state = this.getCircuitBreakerState(key)
+
+    // Check if circuit is open
+    if (state.status === 'open') {
+      const timeSinceFailure = Date.now() - (state.lastFailureTime || 0)
+
+      if (timeSinceFailure < cbPolicy.recoveryTime) {
+        // Still in recovery period, reject immediately
+        const retryAfter = new Date(
+          (state.lastFailureTime || 0) + cbPolicy.recoveryTime,
+        )
+        throw new CircuitBreakerOpenError(
+          `Circuit breaker is open for ${key}`,
+          key,
+          retryAfter,
+          state.consecutiveFailures,
+        )
+      }
+
+      // Recovery time has passed, transition to half-open
+      state.status = 'half-open'
+      state.successCount = 0
+    }
+
+    // In half-open state, limit concurrent attempts based on policy
+    if (
+      state.status === 'half-open' &&
+      cbPolicy.halfOpenPolicy === 'single-probe'
+    ) {
+      // For single-probe, we allow one test request
+      // In a production implementation, you'd want to ensure only one concurrent probe
+    }
+
+    try {
+      const result = await operation(signal)
+
+      // Operation succeeded
+      if (state.status === 'half-open') {
+        state.successCount++
+
+        // Check if we've had enough successes to close the circuit
+        const requiredSuccesses = cbPolicy.halfOpenPolicy === 'gradual' ? 3 : 1
+
+        if (state.successCount >= requiredSuccesses) {
+          state.status = 'closed'
+          state.consecutiveFailures = 0
+          state.successCount = 0
+        }
+      } else if (state.status === 'closed') {
+        // Reset failure count on success
+        state.consecutiveFailures = 0
+      }
+
+      return result
+    } catch (error) {
+      // Operation failed
+      state.consecutiveFailures++
+      state.lastFailureTime = Date.now()
+
+      // Check if we should open the circuit
+      if (state.consecutiveFailures >= cbPolicy.failureThreshold) {
+        state.status = 'open'
+      }
+
+      // If we were half-open, go back to open
+      if (state.status === 'half-open') {
+        state.status = 'open'
+        state.successCount = 0
+      }
+
+      throw error
+    }
+  }
+
+  /**
+   * Get or create circuit breaker state
+   */
+  private getCircuitBreakerState(key: string): CircuitBreakerState {
+    let state = this.circuitBreakers.get(key)
+
+    if (!state) {
+      state = {
+        status: 'closed',
+        consecutiveFailures: 0,
+        successCount: 0,
+      }
+      this.circuitBreakers.set(key, state)
+    }
+
+    return state
+  }
+
+  /**
+   * Generate circuit breaker key from policy and context
+   */
+  private getCircuitBreakerKey(
+    cbPolicy: NonNullable<ResiliencePolicy['circuitBreaker']>,
+    context?: ResilienceInvocationContext,
+  ): string {
+    // If a key is provided in the policy, use it
+    if (cbPolicy.key) {
+      return cbPolicy.key
+    }
+
+    // Otherwise, derive from context
+    if (context?.workflowId && context?.stepId) {
+      return `${context.workflowId}:${context.stepId}`
+    }
+
+    // Fallback to a default key
+    return 'default'
   }
 
   /**
