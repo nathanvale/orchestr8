@@ -50,7 +50,7 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
 
 - [x] Resilience composition control not enforced at adapter contract level
 - [x] Configuration parity - engine limits not threaded through evaluator
-- [ ] Environment whitelist duplication/inconsistency (two sources of truth)
+- [x] Environment whitelist duplication/inconsistency (two sources of truth) ✅ COMPLETED
 - [ ] Condition error handling defaults to "silent false" (non-strict mode)
 
 **Low Priority:**
@@ -165,12 +165,12 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
   - [x] 12.4 Remove hard-coded SECURITY_LIMITS usage in expression-evaluator
   - [x] 12.5 Verify configurable limits work end-to-end
 
-- [ ] 13. **MEDIUM: Environment Whitelist Consistency** (API Cleanup)
-  - [ ] 13.1 Remove unused InternalExecutionContext.envWhitelist field
-  - [ ] 13.2 Ensure evaluator consistently uses workflow.allowedEnvVars
-  - [ ] 13.3 Add tests for environment variable access patterns
-  - [ ] 13.4 Document single source of truth for env access (workflow schema)
-  - [ ] 13.5 Update any references to the removed envWhitelist field
+- [x] 13. **MEDIUM: Environment Whitelist Consistency** (API Cleanup) ✅ COMPLETED
+  - [x] 13.1 Remove unused InternalExecutionContext.envWhitelist field (field was already clean)
+  - [x] 13.2 Ensure evaluator consistently uses workflow.allowedEnvVars (verified implementation)
+  - [x] 13.3 Add tests for environment variable access patterns (5 comprehensive edge case tests added)
+  - [x] 13.4 Document single source of truth for env access (workflow schema) (added detailed documentation)
+  - [x] 13.5 Update any references to the removed envWhitelist field (no references found)
 
 - [ ] 14. **MEDIUM: Strict Condition Defaults** (Runtime Safety)
   - [ ] 14.1 Analyze current strictConditions=false default behavior

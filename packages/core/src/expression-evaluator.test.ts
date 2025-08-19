@@ -840,4 +840,160 @@ describe('Expression Evaluator', () => {
       })
     })
   })
+
+  describe('Environment Variable Access Edge Cases', () => {
+    it('should handle workflow with no allowedEnvVars', () => {
+      const workflowWithoutEnvVars: Workflow = {
+        id: 'test-workflow',
+        version: '1.0.0',
+        name: 'Test Workflow',
+        steps: [],
+        // No allowedEnvVars field
+      }
+
+      const contextWithoutEnvVars: ExecutionContext = {
+        ...context,
+        workflow: workflowWithoutEnvVars,
+      }
+
+      // Should return false for conditions
+      expect(
+        evaluateCondition('env.NODE_ENV == `test`', contextWithoutEnvVars),
+      ).toBe(false)
+
+      // Should return undefined for mappings
+      expect(resolveMapping('${env.NODE_ENV}', contextWithoutEnvVars)).toBe(
+        undefined,
+      )
+    })
+
+    it('should handle workflow with empty allowedEnvVars array', () => {
+      const workflowWithEmptyEnvVars: Workflow = {
+        id: 'test-workflow',
+        version: '1.0.0',
+        name: 'Test Workflow',
+        steps: [],
+        allowedEnvVars: [],
+      }
+
+      const contextWithEmptyEnvVars: ExecutionContext = {
+        ...context,
+        workflow: workflowWithEmptyEnvVars,
+      }
+
+      // Should return false for conditions
+      expect(
+        evaluateCondition('env.NODE_ENV == `test`', contextWithEmptyEnvVars),
+      ).toBe(false)
+
+      // Should return undefined for mappings
+      expect(resolveMapping('${env.NODE_ENV}', contextWithEmptyEnvVars)).toBe(
+        undefined,
+      )
+    })
+
+    it('should handle workflow with undefined allowedEnvVars', () => {
+      const workflowWithUndefinedEnvVars: Workflow = {
+        id: 'test-workflow',
+        version: '1.0.0',
+        name: 'Test Workflow',
+        steps: [],
+        allowedEnvVars: undefined,
+      }
+
+      const contextWithUndefinedEnvVars: ExecutionContext = {
+        ...context,
+        workflow: workflowWithUndefinedEnvVars,
+      }
+
+      // Should return false for conditions
+      expect(
+        evaluateCondition(
+          'env.NODE_ENV == `test`',
+          contextWithUndefinedEnvVars,
+        ),
+      ).toBe(false)
+
+      // Should return undefined for mappings
+      expect(
+        resolveMapping('${env.NODE_ENV}', contextWithUndefinedEnvVars),
+      ).toBe(undefined)
+    })
+
+    it('should handle non-existent environment variables even when whitelisted', () => {
+      const workflowWithNonExistentVar: Workflow = {
+        id: 'test-workflow',
+        version: '1.0.0',
+        name: 'Test Workflow',
+        steps: [],
+        allowedEnvVars: ['NON_EXISTENT_VAR'],
+      }
+
+      const contextWithNonExistentVar: ExecutionContext = {
+        ...context,
+        workflow: workflowWithNonExistentVar,
+      }
+
+      // Should handle undefined environment variable gracefully
+      expect(
+        evaluateCondition(
+          'env.NON_EXISTENT_VAR == null',
+          contextWithNonExistentVar,
+        ),
+      ).toBe(true)
+      expect(
+        resolveMapping('${env.NON_EXISTENT_VAR}', contextWithNonExistentVar),
+      ).toBe(undefined)
+      expect(
+        resolveMapping(
+          '${env.NON_EXISTENT_VAR ?? "default"}',
+          contextWithNonExistentVar,
+        ),
+      ).toBe('default')
+    })
+
+    it('should consistently use workflow.allowedEnvVars as single source of truth', () => {
+      // This test verifies that there's no other source of environment variable configuration
+      const testWorkflow: Workflow = {
+        id: 'test-workflow',
+        version: '1.0.0',
+        name: 'Test Workflow',
+        steps: [],
+        allowedEnvVars: ['ALLOWED_VAR_1', 'ALLOWED_VAR_2'],
+      }
+
+      // Set environment variables for testing
+      process.env.ALLOWED_VAR_1 = 'value1'
+      process.env.ALLOWED_VAR_2 = 'value2'
+      process.env.NOT_ALLOWED_VAR = 'blocked'
+
+      const testContext: ExecutionContext = {
+        ...context,
+        workflow: testWorkflow,
+      }
+
+      // Allowed variables should work
+      expect(
+        evaluateCondition('env.ALLOWED_VAR_1 == `value1`', testContext),
+      ).toBe(true)
+      expect(
+        evaluateCondition('env.ALLOWED_VAR_2 == `value2`', testContext),
+      ).toBe(true)
+      expect(resolveMapping('${env.ALLOWED_VAR_1}', testContext)).toBe('value1')
+      expect(resolveMapping('${env.ALLOWED_VAR_2}', testContext)).toBe('value2')
+
+      // Not allowed variables should be blocked
+      expect(
+        evaluateCondition('env.NOT_ALLOWED_VAR == `blocked`', testContext),
+      ).toBe(false)
+      expect(resolveMapping('${env.NOT_ALLOWED_VAR}', testContext)).toBe(
+        undefined,
+      )
+
+      // Clean up
+      delete process.env.ALLOWED_VAR_1
+      delete process.env.ALLOWED_VAR_2
+      delete process.env.NOT_ALLOWED_VAR
+    })
+  })
 })

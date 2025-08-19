@@ -476,6 +476,9 @@ function resolvePlaceholder(
     }
   } else if (source === 'env') {
     // Format: env.VAR_NAME
+    // IMPORTANT: Environment variable access uses workflow.allowedEnvVars as the
+    // single source of truth. This ensures consistent security policy across
+    // all expression evaluation contexts.
     const envVar = parts[1]
     const allowedVars = context.workflow.allowedEnvVars
     if (allowedVars && envVar && allowedVars.includes(envVar)) {
@@ -594,7 +597,18 @@ function navigateObject(
 }
 
 /**
- * Get whitelisted environment variables
+ * Get whitelisted environment variables based on workflow.allowedEnvVars
+ *
+ * IMPORTANT: This function implements the single source of truth for environment
+ * variable access in the orchestration engine. The `allowedVars` parameter should
+ * ALWAYS come from `workflow.allowedEnvVars` - there are no other configuration
+ * sources for environment variable access.
+ *
+ * Security: Only environment variables explicitly listed in `allowedVars` will
+ * be accessible to expressions. All other environment variables are blocked.
+ *
+ * @param allowedVars Array of environment variable names from workflow.allowedEnvVars
+ * @returns Object containing only the allowed environment variables
  */
 function getWhitelistedEnvVars(
   allowedVars?: string[],
