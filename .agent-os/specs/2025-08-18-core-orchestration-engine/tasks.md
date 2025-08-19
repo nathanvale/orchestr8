@@ -36,8 +36,8 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
 
 **🔧 REMAINING MEDIUM PRIORITY GAPS:**
 
-- [ ] Resilience composition order finalization
-- [ ] Mapping parser robustness improvements
+- [x] Resilience composition order finalization
+- [x] Mapping parser robustness improvements
 
 **🆕 UPDATED TECHNICAL GAPS (from Code Review):**
 
