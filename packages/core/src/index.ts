@@ -9,9 +9,6 @@ export {
   clearExpressionCache,
 } from './expression-evaluator.js'
 
-// Export logger implementations
-export { NoOpLogger, MemoryLogger } from './logger.js'
-
 // Export implementation
 export { OrchestrationEngine } from './orchestration-engine.js'
 
@@ -28,8 +25,10 @@ export type {
   OrchestrationEngine as IOrchestrationEngine,
   Logger,
   LogLevel,
-  LogEntry,
 } from './types.js'
+
+// Re-export logger types from @orchestr8/logger for convenience
+export type { LogEntry } from '@orchestr8/logger'
 
 // Re-export commonly used schema types
 export {

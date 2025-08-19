@@ -422,13 +422,13 @@ server.prompt(
 
 ```bash
 # Without arguments
-> /mcp__orchestr8__list_workflows
+> /mcp__io.orchestr8__list_workflows
 
 # With required argument
-> /mcp__orchestr8__analyze_workflow data-pipeline
+> /mcp__io.orchestr8__analyze_workflow data-pipeline
 
 # With multiple arguments
-> /mcp__orchestr8__analyze_workflow data-pipeline performance
+> /mcp__io.orchestr8__analyze_workflow data-pipeline performance
 ```
 
 ## MCP Resources
@@ -523,7 +523,7 @@ server.tool(
 ```typescript
 // Configure permission prompt
 const options = {
-  permissionPromptTool: 'mcp__orchestr8__approval_prompt',
+  permissionPromptTool: 'mcp__io.orchestr8__approval_prompt',
   allowedTools: ['mcp__orchestr8'],
   disallowedTools: ['Bash(rm*)', 'Write'],
 }
@@ -1046,10 +1046,11 @@ server.on('resources/unsubscribe', async (params) => {
    - Restart your client application
 
 4. **Verify Connection**:
-   ```bash
-   # Test the MCP server directly
-   npx @orchestr8/mcp-server --test
-   ```
+
+```bash
+ # Test the MCP server directly
+ npx @orchestr8/mcp-server --test
+```
 
 ## Security Hardening
 

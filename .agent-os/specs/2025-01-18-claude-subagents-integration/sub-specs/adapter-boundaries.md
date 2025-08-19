@@ -177,10 +177,7 @@ describe('Adapter Parity', () => {
   describe('MCP Server', () => {
     testCases.forEach(({ input, expected }) => {
       it(`returns ${expected.status} for ${input.type}`, async () => {
-        const result = await mcpServer.callTool(
-          'mcp__orchestr8__run_workflow',
-          input,
-        )
+        const result = await mcpServer.callTool('run_workflow', input)
         expect(result).toEqual(expected)
       })
     })

@@ -114,6 +114,7 @@ This codebase maintains a **ZERO TOLERANCE** policy for TypeScript `any` types:
 - **Wallaby.js**: Configured for inline test feedback (wallaby.cjs)
 - **MSW**: Mock Service Worker for API mocking in tests
 - **Test Environment**: Always runs with `NODE_ENV=test`
+- **ALWAYS** import structured logging with @orchestr8/logger
 
 ### Code Style
 
@@ -121,7 +122,7 @@ This codebase maintains a **ZERO TOLERANCE** policy for TypeScript `any` types:
 - **ESLint**: With perfectionist plugin for import/export sorting
 - **Prettier**: For consistent formatting
 - **Import Order**: Enforced alphabetically within groups (type, builtin,
-  external, internal)
+  external, internal) **FORMAT WITH PRETTIER** to fix
 
 ### 📚 Extended Documentation
 
@@ -209,6 +210,12 @@ When implementing features:
 - Developer command-line tool
 - Commands: init, create, run, test, inspect
 - Scaffolding and workflow execution
+
+### @orchestr8/logger
+
+- Structured logging for orchestration events/MCP server etc.
+- Correlation ID support for tracing
+- Integration with external logging systems
 
 ## Important Constraints
 

@@ -7,18 +7,16 @@ Detailed specification of MCP tools exposed by the @orchestr8 MCP server.
 
 ## Tool Naming Convention
 
-All orchestr8 MCP tools follow the standard MCP naming pattern:
+All orchestr8 MCP tools use short, human-friendly names per MCP guidance. The client will display or qualify tool names; do not prefix with `mcp__` or server names.
 
-- Format: `mcp__<server>__<tool>`
-- Server namespace: `orchestr8`
-- Full tool names:
-  - `mcp__orchestr8__run_workflow`
-  - `mcp__orchestr8__get_status`
-  - `mcp__orchestr8__cancel_workflow`
+- Tool names:
+  - `run_workflow`
+  - `get_status`
+  - `cancel_workflow`
 
 ## Tool Definitions
 
-### mcp**orchestr8**run_workflow
+### run_workflow
 
 **Purpose:** Execute an orchestr8 workflow with resilience patterns
 
@@ -123,13 +121,13 @@ All orchestr8 MCP tools follow the standard MCP naming pattern:
 }
 ```
 
-**Output Schema:** Returns a [Normalized Result Envelope](./normalized-envelope.md)
+**Output Contract:** Returns a [Normalized Result Envelope](./normalized-envelope.md) serialized into MCP ToolResult `content[0].text`. On tool failures, set `isError: true` and include the envelope with `status: "error"`.
 
 **Example Usage:**
 
 ```typescript
-// In Claude Code or MCP client
-const result = await callTool('mcp__orchestr8__run_workflow', {
+// In Claude Code or any MCP client (short tool names)
+const result = await callTool('run_workflow', {
   workflowId: 'data-processing',
   inputs: {
     source: 's3://bucket/input.csv',
@@ -145,7 +143,7 @@ const result = await callTool('mcp__orchestr8__run_workflow', {
 })
 ```
 
-### mcp**orchestr8**get_status
+### get_status
 
 **Purpose:** Get the status of a running or completed workflow execution
 
@@ -179,15 +177,15 @@ const result = await callTool('mcp__orchestr8__run_workflow', {
 }
 ```
 
-**Output Schema:** Returns a [Normalized Result Envelope](./normalized-envelope.md)
+**Output Contract:** Returns a [Normalized Result Envelope](./normalized-envelope.md) serialized into MCP ToolResult `content[0].text`. On tool failures, set `isError: true`.
 
 **Long-Polling Behavior:**
 
 - If `waitForMs` is provided and status is `running`, the server will poll internally
 - Returns immediately if workflow completes or timeout is reached
-- Polling interval: 100ms (server-side)
+- Polling uses bounded backoff (start ~100ms, cap ~1000ms)
 
-### mcp**orchestr8**cancel_workflow
+### cancel_workflow
 
 **Purpose:** Cancel a running workflow execution
 
@@ -220,7 +218,7 @@ const result = await callTool('mcp__orchestr8__run_workflow', {
 }
 ```
 
-**Output Schema:** Returns a [Normalized Result Envelope](./normalized-envelope.md)
+**Output Contract:** Returns a [Normalized Result Envelope](./normalized-envelope.md) serialized into MCP ToolResult `content[0].text`.
 
 ## Tool Discovery
 
@@ -230,13 +228,12 @@ MCP clients can discover available tools using the standard MCP protocol:
 // List all available tools
 const tools = await mcp.listTools()
 
-// Returns:
+// Returns (example):
 [
   {
-    name: 'mcp__orchestr8__run_workflow',
+    name: 'run_workflow',
     description: 'Execute an orchestr8 workflow with resilience patterns',
-    inputSchema: { /* JSON Schema */ },
-    outputSchema: { $ref: '#/definitions/NormalizedEnvelope' }
+    inputSchema: { /* JSON Schema */ }
   },
   // ... other tools
 ]
@@ -244,7 +241,7 @@ const tools = await mcp.listTools()
 
 ## Error Handling
 
-All tools return errors in the normalized envelope format:
+All tools return errors inside the normalized envelope, serialized in ToolResult content. Set `isError: true` for tool-level failures. Reserve JSON-RPC errors for protocol faults (e.g., parse errors, invalid request).
 
 ```json
 {
@@ -264,23 +261,24 @@ All tools return errors in the normalized envelope format:
 - Correlation IDs must be included in all responses
 - Used for end-to-end tracing across multiple tool calls
 
+## Idempotency Key
+
+- Clients MAY supply `idempotencyKey` (distinct from `executionId`) on `run_workflow` to deduplicate identical start requests
+- The server SHOULD return the same envelope for duplicate keys within a bounded TTL
+
 ## Integration with Claude Code
 
 When using these tools in Claude Code:
 
-1. Configure MCP server in `.claude/mcp.json`
-2. Tools appear with full namespace: `mcp__orchestr8__run_workflow`
-3. Add to allowed tools in agent configuration
+1. Configure the MCP server in `.claude/mcp.json`
+2. Tools appear with their short names: `run_workflow`, `get_status`, `cancel_workflow`
+3. Add short tool names to allowed tools in agent configuration
 4. Claude can invoke tools directly through natural language
 
 Example agent configuration:
 
 ```json
 {
-  "allowedTools": [
-    "mcp__orchestr8__run_workflow",
-    "mcp__orchestr8__get_status",
-    "mcp__orchestr8__cancel_workflow"
-  ]
+  "allowedTools": ["run_workflow", "get_status", "cancel_workflow"]
 }
 ```

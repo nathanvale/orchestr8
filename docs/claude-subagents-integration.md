@@ -77,12 +77,12 @@ The MCP server provides three tools (see MCP API spec for full schemas):
   - Inputs: executionId, reason, correlationId
   - Returns confirmation or error
 
-MCP tool naming in Claude Code follows the pattern `mcp__{server}__{tool}`. These
-three tools should therefore appear to the assistant as:
+MCP tool naming in Claude Code follows the pattern `mcp__{serverId}__{tool}`.
+With serverId `io.orchestr8`, the three tools will appear to the assistant as:
 
-- `mcp__orchestr8__run_workflow`
-- `mcp__orchestr8__get_status`
-- `mcp__orchestr8__cancel_workflow`
+- `mcp__io.orchestr8__run_workflow`
+- `mcp__io.orchestr8__get_status`
+- `mcp__io.orchestr8__cancel_workflow`
 
 Per Anthropic’s MCP connector, Claude will emit `mcp_tool_use` blocks when it
 decides to call these, and the client must respond with `mcp_tool_result` blocks
@@ -118,7 +118,7 @@ by full name (see above pattern).
 ---
 name: orchestr8-bridge
 description: Bridge to orchestr8 workflows via MCP. Use correlationId and return a normalized envelope.
-tools: mcp__orchestr8__run_workflow, mcp__orchestr8__get_status, mcp__orchestr8__cancel_workflow
+tools: mcp__io.orchestr8__run_workflow, mcp__io.orchestr8__get_status, mcp__io.orchestr8__cancel_workflow
 ---
 
 You invoke the `orchestr8` tool to run workflows and return ONLY:
@@ -148,7 +148,7 @@ Coordinator persona (handoff model):
 ---
 name: dev-coordinator
 description: Coordinates typescript-pro and react-pro personas; all execution via orchestr8.
-tools: mcp__orchestr8__run_workflow, mcp__orchestr8__get_status, mcp__orchestr8__cancel_workflow
+tools: mcp__io.orchestr8__run_workflow, mcp__io.orchestr8__get_status, mcp__io.orchestr8__cancel_workflow
 ---
 
 Rules:
@@ -265,7 +265,7 @@ Notes aligned with Anthropic docs:
 MCP permissions & allowlisting:
 
 - Declare explicit allowed tools (e.g. via `--allowedTools` in CLI or persona
-  config) using the full names `mcp__orchestr8__...` to prevent unintended tool
+  config) using the full names `mcp__io.orchestr8__...` to prevent unintended tool
   access.
 
 ## Observability

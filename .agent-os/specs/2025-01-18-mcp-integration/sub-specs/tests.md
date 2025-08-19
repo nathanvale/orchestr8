@@ -29,7 +29,7 @@ describe('Orchestr8MCPServer', () => {
 
   describe('transport', () => {
     it('should connect via stdio transport')
-    it('should connect via HTTP transport')
+    it('should optionally connect via Streamable HTTP transport')
     it('should handle transport errors gracefully')
   })
 })
@@ -67,7 +67,8 @@ describe('run_workflow tool', () => {
     it('should handle workflow not found error')
     it('should handle validation errors')
     it('should handle engine failures')
-    it('should format errors as JSON-RPC')
+    it('should return tool failures via ToolResult with isError and envelope')
+    it('should reserve JSON-RPC errors for protocol faults only')
   })
 })
 ```
@@ -409,6 +410,7 @@ describe('Security Validation', () => {
     it('should redact API keys from logs')
     it('should redact tokens from responses')
     it('should redact passwords from errors')
+    it('should not log to stdout (stdio transport)')
   })
 
   describe('resource access', () => {
@@ -490,6 +492,7 @@ export class MCPTestClient {
       throw new Error(response.error.message)
     }
 
+    // In MCP, envelope is serialized in ToolResult content
     return JSON.parse(response.result.content[0].text)
   }
 }

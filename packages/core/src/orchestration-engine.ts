@@ -4,6 +4,7 @@
 
 import { randomUUID } from 'crypto'
 
+import { NoopLogger } from '@orchestr8/logger'
 import {
   createExecutionError,
   ExecutionErrorCode,
@@ -28,7 +29,6 @@ import type {
 } from './types.js'
 
 import { evaluateCondition, resolveMapping } from './expression-evaluator.js'
-import { NoOpLogger } from './logger.js'
 
 /**
  * Internal execution context for the engine
@@ -62,7 +62,7 @@ export class OrchestrationEngine implements IOrchestrationEngine {
   constructor(options: OrchestrationOptions) {
     this.agentRegistry = options.agentRegistry
     this.resilienceAdapter = options.resilienceAdapter
-    this.logger = options.logger ?? new NoOpLogger()
+    this.logger = options.logger ?? new NoopLogger()
     this.defaultCompositionOrder =
       options.defaultCompositionOrder ?? 'retry-cb-timeout'
     this.maxConcurrency = options.maxConcurrency ?? 10

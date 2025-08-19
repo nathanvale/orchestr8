@@ -22,7 +22,7 @@ This HTTP API adapter builds upon:
 
 ### POST /api/workflows/run
 
-**Purpose:** Execute a workflow (forwards to `mcp__orchestr8__run_workflow`)
+**Purpose:** Execute a workflow (parity with MCP `run_workflow` tool)
 
 **Request:**
 
@@ -46,7 +46,7 @@ Content-Type: application/json
     }
   },
   "correlationId": "req-123",
-  "executionId": "client-generated-uuid"  // Optional: for idempotency
+  "idempotencyKey": "client-generated-uuid"  // Optional: for idempotency (distinct from executionId)
 ```
 
 **Response:**
@@ -65,7 +65,7 @@ Content-Type: application/json
 
 ### GET /api/workflows/status/{executionId}
 
-**Purpose:** Get workflow execution status (forwards to `mcp__orchestr8__get_status`)
+**Purpose:** Get workflow execution status (parity with MCP `get_status` tool)
 
 **Request:**
 
@@ -103,7 +103,7 @@ Content-Type: application/json
 
 ### POST /api/workflows/cancel/{executionId}
 
-**Purpose:** Cancel a running workflow (forwards to `mcp__orchestr8__cancel_workflow`)
+**Purpose:** Cancel a running workflow (parity with MCP `cancel_workflow` tool)
 
 **Request:**
 
@@ -137,7 +137,7 @@ Content-Type: application/json
 All HTTP endpoints return responses using the Normalized Result Envelope defined in:
 **@.agent-os/specs/2025-01-18-mcp-integration/sub-specs/normalized-envelope.md**
 
-This ensures parity with MCP tool responses, enabling clients to use either integration surface interchangeably.
+This ensures parity with MCP tool responses, enabling clients to use either integration surface interchangeably. In MCP, the envelope is serialized into ToolResult content; in HTTP it is the response body.
 
 ## Authentication & Authorization
 
@@ -189,23 +189,23 @@ This ensures parity with MCP tool responses, enabling clients to use either inte
 
 ### Request Idempotency
 
-- Clients can provide `executionId` for idempotent workflow execution
+- Clients can provide `idempotencyKey` for idempotent workflow execution
 - Server maintains execution cache for deduplication (5-minute window)
-- Duplicate requests with same `executionId` return cached result
+- Duplicate requests with same `idempotencyKey` return cached result
 
 ### Implementation
 
 ```typescript
 // Server-side deduplication
 async function runWorkflow(request: RunWorkflowRequest) {
-  if (request.executionId) {
-    const cached = await cache.get(request.executionId)
+  if (request.idempotencyKey) {
+    const cached = await cache.get(request.idempotencyKey)
     if (cached) return cached
   }
 
   const result = await executeWorkflow(request)
-  if (request.executionId) {
-    await cache.set(request.executionId, result, ttl: 300000) // 5 min
+  if (request.idempotencyKey) {
+    await cache.set(request.idempotencyKey, result, ttl: 300000) // 5 min
   }
   return result
 }

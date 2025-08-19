@@ -4,12 +4,12 @@
 
 import type { Workflow } from '@orchestr8/schema'
 
+import { MemoryLogger } from '@orchestr8/logger'
 import { ExecutionErrorCode } from '@orchestr8/schema'
 import { describe, expect, test, vi } from 'vitest'
 
 import type { Agent, AgentRegistry, ResilienceAdapter } from './types.js'
 
-import { MemoryLogger } from './logger.js'
 import { OrchestrationEngine } from './orchestration-engine.js'
 
 // Mock agent for testing
@@ -60,7 +60,7 @@ describe('Structured Logging', () => {
     const startLog = entries.find((e) => e.message === 'workflow.start')
     expect(startLog).toBeDefined()
     expect(startLog?.level).toBe('info')
-    expect(startLog?.data).toMatchObject({
+    expect(startLog?.fields).toMatchObject({
       executionId: expect.any(String),
       workflowId: 'test-workflow',
       workflowVersion: '1.0.0',
@@ -74,7 +74,7 @@ describe('Structured Logging', () => {
     const endLog = entries.find((e) => e.message === 'workflow.end')
     expect(endLog).toBeDefined()
     expect(endLog?.level).toBe('info')
-    expect(endLog?.data).toMatchObject({
+    expect(endLog?.fields).toMatchObject({
       executionId: expect.any(String),
       workflowId: 'test-workflow',
       workflowVersion: '1.0.0',
@@ -115,7 +115,7 @@ describe('Structured Logging', () => {
     const startLog = entries.find((e) => e.message === 'step.start')
     expect(startLog).toBeDefined()
     expect(startLog?.level).toBe('debug')
-    expect(startLog?.data).toMatchObject({
+    expect(startLog?.fields).toMatchObject({
       stepId: 'step1',
       agentId: 'test-agent',
       startTime: expect.any(String),
@@ -127,7 +127,7 @@ describe('Structured Logging', () => {
     const successLog = entries.find((e) => e.message === 'step.success')
     expect(successLog).toBeDefined()
     expect(successLog?.level).toBe('info')
-    expect(successLog?.data).toMatchObject({
+    expect(successLog?.fields).toMatchObject({
       stepId: 'step1',
       agentId: 'test-agent',
       duration: expect.any(Number),
@@ -177,7 +177,7 @@ describe('Structured Logging', () => {
     const errorLog = entries.find((e) => e.message === 'step.error')
     expect(errorLog).toBeDefined()
     expect(errorLog?.level).toBe('error')
-    expect(errorLog?.data).toMatchObject({
+    expect(errorLog?.fields).toMatchObject({
       stepId: 'step1',
       agentId: 'failing-agent',
       error: 'Agent failed',
@@ -237,7 +237,7 @@ describe('Structured Logging', () => {
     const levelStartLog = entries.find((e) => e.message === 'level.start')
     expect(levelStartLog).toBeDefined()
     expect(levelStartLog?.level).toBe('debug')
-    expect(levelStartLog?.data).toMatchObject({
+    expect(levelStartLog?.fields).toMatchObject({
       levelIndex: 0,
       stepCount: 2,
       stepIds: ['step1', 'step2'],
@@ -247,7 +247,7 @@ describe('Structured Logging', () => {
     const failFastLog = entries.find((e) => e.message === 'level.fail-fast')
     expect(failFastLog).toBeDefined()
     expect(failFastLog?.level).toBe('warn')
-    expect(failFastLog?.data).toMatchObject({
+    expect(failFastLog?.fields).toMatchObject({
       levelIndex: 0,
       failedSteps: [
         {
@@ -294,12 +294,12 @@ describe('Structured Logging', () => {
     const conditionSkipLog = entries.find(
       (e) =>
         e.message === 'step.skip' &&
-        e.data?.reason === 'condition-not-met' &&
-        e.data?.stepId === 'step1',
+        e.fields?.reason === 'condition-not-met' &&
+        e.fields?.stepId === 'step1',
     )
     expect(conditionSkipLog).toBeDefined()
     expect(conditionSkipLog?.level).toBe('debug')
-    expect(conditionSkipLog?.data).toMatchObject({
+    expect(conditionSkipLog?.fields).toMatchObject({
       stepId: 'step1',
       reason: 'condition-not-met',
       conditions: { if: 'false' },
@@ -309,12 +309,12 @@ describe('Structured Logging', () => {
     const dependencySkipLog = entries.find(
       (e) =>
         e.message === 'step.skip' &&
-        e.data?.reason === 'dependency-not-completed' &&
-        e.data?.stepId === 'step2',
+        e.fields?.reason === 'dependency-not-completed' &&
+        e.fields?.stepId === 'step2',
     )
     expect(dependencySkipLog).toBeDefined()
     expect(dependencySkipLog?.level).toBe('debug')
-    expect(dependencySkipLog?.data).toMatchObject({
+    expect(dependencySkipLog?.fields).toMatchObject({
       stepId: 'step2',
       reason: 'dependency-not-completed',
       dependency: 'step1',
@@ -379,7 +379,7 @@ describe('Structured Logging', () => {
     const fallbackLog = entries.find((e) => e.message === 'step.fallback')
     expect(fallbackLog).toBeDefined()
     expect(fallbackLog?.level).toBe('info')
-    expect(fallbackLog?.data).toMatchObject({
+    expect(fallbackLog?.fields).toMatchObject({
       originalStepId: 'primary',
       fallbackStepId: 'fallback-step',
       originalError: 'Primary failed',
@@ -413,7 +413,7 @@ describe('Structured Logging', () => {
 
     // Verify all logs include the base context and execution context
     for (const entry of entries) {
-      expect(entry.data).toMatchObject({
+      expect(entry.fields).toMatchObject({
         baseContext: 'test-value',
         executionId: expect.any(String),
         workflowId: 'test-workflow',

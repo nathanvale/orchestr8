@@ -9,6 +9,145 @@ Comprehensive test specifications ensuring identical behavior across all orchest
 
 Parity tests verify that all integration surfaces (MCP, HTTP API, Claude SDK) produce identical results for the same inputs. These tests are critical for ensuring consistent behavior regardless of how orchestr8 is accessed.
 
+## Testing Strategy
+
+### Test Harness Architecture
+
+```typescript
+export class ParityTestHarness {
+  private surfaces: Map<string, IntegrationSurface> = new Map()
+
+  constructor() {
+    this.surfaces.set('MCP', new MCPSurface())
+    this.surfaces.set('HTTP', new HTTPSurface())
+    this.surfaces.set('Claude', new ClaudeSurface())
+  }
+
+  async testAllSurfaces(
+    operation: string,
+    input: any,
+  ): Promise<ParityTestResult> {
+    const results = new Map<string, any>()
+    const errors = new Map<string, Error>()
+
+    // Execute on all surfaces in parallel
+    const promises = Array.from(this.surfaces.entries()).map(
+      async ([name, surface]) => {
+        try {
+          const result = await surface.execute(operation, input)
+          results.set(name, result)
+        } catch (error) {
+          errors.set(name, error)
+        }
+      },
+    )
+
+    await Promise.all(promises)
+
+    // Compare results
+    return this.compareResults(results, errors)
+  }
+
+  private compareResults(
+    results: Map<string, any>,
+    errors: Map<string, Error>,
+  ): ParityTestResult {
+    // All should either succeed or fail
+    if (results.size > 0 && errors.size > 0) {
+      return {
+        parity: false,
+        reason: 'Mixed success/failure across surfaces',
+        details: { results, errors },
+      }
+    }
+
+    // Compare successful results
+    if (results.size > 0) {
+      const normalized = Array.from(results.values()).map((r) =>
+        this.normalizeEnvelope(r),
+      )
+
+      const first = JSON.stringify(normalized[0])
+      const allMatch = normalized.every((r) => JSON.stringify(r) === first)
+
+      return {
+        parity: allMatch,
+        reason: allMatch
+          ? 'All surfaces returned identical results'
+          : 'Results differ',
+        details: { results: normalized },
+      }
+    }
+
+    // Compare errors
+    const errorCodes = Array.from(errors.values()).map((e) => e.code)
+    const allSameError = errorCodes.every((c) => c === errorCodes[0])
+
+    return {
+      parity: allSameError,
+      reason: allSameError
+        ? 'All surfaces failed identically'
+        : 'Different error codes',
+      details: { errors: Array.from(errors.entries()) },
+    }
+  }
+
+  private normalizeEnvelope(envelope: any): any {
+    // Remove surface-specific fields for comparison
+    const { timestamp, duration, ...normalized } = envelope
+    return normalized
+  }
+}
+```
+
+### Mock/Stub Patterns
+
+```typescript
+export class MockOrchestrationEngine {
+  private scenarios: Map<string, ScenarioHandler> = new Map()
+
+  registerScenario(name: string, handler: ScenarioHandler): void {
+    this.scenarios.set(name, handler)
+  }
+
+  async execute(workflowId: string, inputs: any): Promise<any> {
+    const handler = this.scenarios.get(workflowId)
+
+    if (!handler) {
+      throw new Error(`Unknown workflow: ${workflowId}`)
+    }
+
+    return handler(inputs)
+  }
+}
+
+// Test doubles for each surface
+export class MCPSurfaceMock implements IntegrationSurface {
+  constructor(private engine: MockOrchestrationEngine) {}
+
+  async execute(operation: string, input: any): Promise<any> {
+    // Simulate MCP tool call
+    return {
+      type: 'tool_result',
+      content: await this.engine.execute(input.workflowId, input.inputs),
+    }
+  }
+}
+
+export class HTTPSurfaceMock implements IntegrationSurface {
+  constructor(private engine: MockOrchestrationEngine) {}
+
+  async execute(operation: string, input: any): Promise<any> {
+    // Simulate HTTP response
+    const result = await this.engine.execute(input.workflowId, input.inputs)
+    return {
+      status: 200,
+      body: result,
+    }
+  }
+}
+```
+
 ## Test Categories
 
 ### 1. Input Validation Parity
@@ -378,7 +517,8 @@ export async function callSurface(
 ): Promise<NormalizedEnvelope> {
   switch (surface) {
     case 'MCP':
-      return await mcpClient.callTool(`mcp__orchestr8__${tool}`, input)
+      // MCP uses short tool names; envelope is inside ToolResult content
+      return await mcpClient.callTool(`${tool}`, input)
 
     case 'HTTP':
       const endpoint = getHttpEndpoint(tool)
@@ -480,7 +620,7 @@ All parity tests must pass with:
 
 ### Parity Report Format
 
-```
+```text
 PARITY TEST REPORT
 ==================
 
@@ -499,6 +639,177 @@ Test Cases: 156
 OVERALL: 100% PARITY ACHIEVED
 ```
 
+## Performance Benchmarking
+
+### Benchmark Framework
+
+```typescript
+export class PerformanceBenchmark {
+  private metrics: Map<string, Metric[]> = new Map()
+
+  async benchmark(
+    name: string,
+    surfaces: string[],
+    operation: string,
+    input: any,
+    iterations: number = 100,
+  ): Promise<BenchmarkResult> {
+    const results: Map<string, PerformanceStats> = new Map()
+
+    for (const surface of surfaces) {
+      const times: number[] = []
+      const memoryUsage: number[] = []
+
+      // Warm up
+      for (let i = 0; i < 5; i++) {
+        await this.execute(surface, operation, input)
+      }
+
+      // Benchmark
+      for (let i = 0; i < iterations; i++) {
+        const startMem = process.memoryUsage().heapUsed
+        const startTime = process.hrtime.bigint()
+
+        await this.execute(surface, operation, input)
+
+        const endTime = process.hrtime.bigint()
+        const endMem = process.memoryUsage().heapUsed
+
+        times.push(Number(endTime - startTime) / 1_000_000) // Convert to ms
+        memoryUsage.push(endMem - startMem)
+      }
+
+      results.set(surface, this.calculateStats(times, memoryUsage))
+    }
+
+    return {
+      name,
+      iterations,
+      results,
+      comparison: this.comparePerformance(results),
+    }
+  }
+
+  private calculateStats(times: number[], memory: number[]): PerformanceStats {
+    times.sort((a, b) => a - b)
+
+    return {
+      timing: {
+        min: Math.min(...times),
+        max: Math.max(...times),
+        mean: times.reduce((a, b) => a + b) / times.length,
+        median: times[Math.floor(times.length / 2)],
+        p95: times[Math.floor(times.length * 0.95)],
+        p99: times[Math.floor(times.length * 0.99)],
+      },
+      memory: {
+        min: Math.min(...memory),
+        max: Math.max(...memory),
+        mean: memory.reduce((a, b) => a + b) / memory.length,
+      },
+    }
+  }
+
+  private comparePerformance(
+    results: Map<string, PerformanceStats>,
+  ): PerformanceComparison {
+    const surfaces = Array.from(results.keys())
+    const fastest = surfaces.reduce((fast, surface) => {
+      const fastStats = results.get(fast)!
+      const surfaceStats = results.get(surface)!
+      return surfaceStats.timing.median < fastStats.timing.median
+        ? surface
+        : fast
+    })
+
+    const baseline = results.get(fastest)!
+    const comparisons: Map<string, number> = new Map()
+
+    for (const [surface, stats] of results) {
+      const ratio = stats.timing.median / baseline.timing.median
+      comparisons.set(surface, ratio)
+    }
+
+    return {
+      fastest,
+      comparisons,
+      withinTolerance: this.checkTolerance(comparisons),
+    }
+  }
+
+  private checkTolerance(comparisons: Map<string, number>): boolean {
+    // All surfaces should be within 20% of each other
+    const ratios = Array.from(comparisons.values())
+    return Math.max(...ratios) / Math.min(...ratios) < 1.2
+  }
+}
+```
+
+### Benchmark Tests
+
+```typescript
+describe('Performance Benchmarks', () => {
+  const benchmark = new PerformanceBenchmark()
+
+  test('Simple workflow performance', async () => {
+    const result = await benchmark.benchmark(
+      'simple-workflow',
+      ['MCP', 'HTTP', 'Claude'],
+      'run_workflow',
+      { workflowId: 'hello-world', inputs: { name: 'Test' } },
+      100,
+    )
+
+    console.table(result.results)
+    expect(result.comparison.withinTolerance).toBe(true)
+  })
+
+  test('Complex workflow performance', async () => {
+    const result = await benchmark.benchmark(
+      'complex-workflow',
+      ['MCP', 'HTTP', 'Claude'],
+      'run_workflow',
+      {
+        workflowId: 'data-processing',
+        inputs: {
+          data: Array(1000)
+            .fill(0)
+            .map((_, i) => i),
+        },
+      },
+      50,
+    )
+
+    console.table(result.results)
+    expect(result.comparison.withinTolerance).toBe(true)
+  })
+
+  test('Parallel execution performance', async () => {
+    const promises = Array(10)
+      .fill(0)
+      .map((_, i) =>
+        benchmark.benchmark(
+          `parallel-${i}`,
+          ['MCP', 'HTTP'],
+          'run_workflow',
+          { workflowId: 'parallel-task', inputs: { id: i } },
+          10,
+        ),
+      )
+
+    const results = await Promise.all(promises)
+
+    // All should complete within reasonable time
+    const totalTimes = results.map((r) => {
+      const stats = Array.from(r.results.values())
+      return Math.max(...stats.map((s) => s.timing.max))
+    })
+
+    expect(Math.max(...totalTimes)).toBeLessThan(5000) // 5 seconds max
+  })
+})
+```
+
 ## Maintenance
 
 - Run parity tests on every PR
@@ -506,3 +817,5 @@ OVERALL: 100% PARITY ACHIEVED
 - Update when envelope schema changes
 - Monitor for surface-specific drift
 - Report parity violations as P0 bugs
+- Benchmark performance quarterly
+- Track performance regressions in CI/CD

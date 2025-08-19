@@ -3,7 +3,17 @@
 This document provides Claude-focused prompt templates for the orchestr8 integration, aligned with Anthropic's best practices.
 
 > Created: 2025-01-18
-> Version: 1.0.0
+> Version: 1.1.0
+
+## Chain of Thought Pattern
+
+When using tools, encourage pre-analysis with thinking tags:
+
+```xml
+<system>
+Answer the user's request using relevant tools (if they are available). Before calling a tool, do some analysis within <thinking></thinking> tags. First, think about which of the provided tools is the relevant tool to answer the user's request. Second, go through each of the required parameters of the relevant tool and determine if the user has directly provided or given enough information to infer a value. When deciding if the parameter can be inferred, carefully consider all the context to see if it supports a specific value. If all of the required parameters are present or can be reasonably inferred, close the thinking tag and proceed with the tool call. BUT, if one of the values for a required parameter is missing, DO NOT invoke the function (not even with fillers for the missing params) and instead, ask the user to provide the missing parameters. DO NOT ask for more information on optional parameters if it is not provided.
+</system>
+```
 
 ## Orchestrator System Prompt
 
@@ -360,9 +370,198 @@ Instead of exposing internal reasoning:
 - ❌ "I'm thinking about which pattern to use..."
 - ✅ "Using retry pattern for transient error handling"
 
+## Tool Choice Strategy Implementation
+
+```typescript
+// Deterministic tool choice based on context
+export enum ToolChoiceMode {
+  AUTO = 'auto', // Claude decides whether to use tools
+  ANY = 'any', // Must use one of the provided tools
+  NONE = 'none', // Prevent tool use entirely
+  SPECIFIC = 'tool', // Force specific tool usage
+}
+
+export interface ToolChoiceContext {
+  iteration: number
+  messages: Message[]
+  requiresAction: boolean
+  queryType: 'action' | 'information' | 'mixed'
+  workflowState?: 'pending' | 'running' | 'completed'
+}
+
+export function determineToolChoice(context: ToolChoiceContext): ToolChoice {
+  // Force workflow execution for action queries
+  if (context.queryType === 'action' && context.workflowState === 'pending') {
+    return {
+      type: 'tool',
+      name: 'run_workflow',
+    }
+  }
+
+  // Force status check for running workflows
+  if (context.workflowState === 'running') {
+    return {
+      type: 'tool',
+      name: 'get_status',
+    }
+  }
+
+  // Require tool use when action needed
+  if (context.requiresAction && context.iteration < 3) {
+    return { type: 'any' }
+  }
+
+  // Prevent tools for pure information queries
+  if (context.queryType === 'information' && !context.requiresAction) {
+    return { type: 'none' }
+  }
+
+  // Default: Let Claude decide
+  return { type: 'auto' }
+}
+```
+
+## Task Tool Delegation Pattern
+
+Template for using the Task tool for subagent delegation:
+
+```typescript
+// Using Task tool for subagent delegation with tool choice
+const delegationPrompt = {
+  role: 'user',
+  content: 'Process this complex workflow with resilience patterns',
+}
+
+// Force specific subagent execution
+const toolChoice = {
+  type: 'tool',
+  name: 'Task',
+}
+
+const taskToolCall = {
+  type: 'tool_use',
+  name: 'Task',
+  input: {
+    description: 'Execute resilient workflow',
+    prompt: `Execute the data processing workflow with the following requirements:
+      - Input validation against schema
+      - Retry logic with exponential backoff
+      - Circuit breaker for downstream services
+      - Return normalized envelope with metrics`,
+    subagent_type: 'orchestr8-executor',
+  },
+}
+```
+
+## Agent Discovery Pattern
+
+```xml
+<system>
+When the user asks about available capabilities or specialized agents:
+1. Use the /agents command to list available subagents
+2. Describe each agent's specialization
+3. Suggest appropriate agent based on task
+
+When automatically delegating:
+1. Identify task requirements
+2. Match to agent capabilities
+3. Use Task tool with appropriate subagent_type
+4. Monitor execution and handle results
+</system>
+```
+
+## Parallel Tool Execution Pattern
+
+```xml
+<system>
+When multiple independent tasks are identified:
+
+1. Analyze dependencies between tasks
+2. Group independent tasks for parallel execution
+3. Make multiple tool_use blocks in single response
+4. Ensure all tool_results are grouped in single user message
+
+Example workflow:
+- If tasks A, B, C are independent: Execute in parallel
+- If task D depends on A: Execute A first, then D
+- Always maximize parallelization for performance
+</system>
+```
+
+## Token Budget Management
+
+```typescript
+// For Claude Sonnet 3.7 with thinking budget
+const thinkingConfig = {
+  thinking: {
+    type: 'enabled',
+    budget_tokens: 1024, // Allocate tokens for reasoning
+  },
+}
+
+// System prompt for budget-aware execution
+const budgetPrompt = `
+Monitor token usage and optimize for efficiency:
+- Use caching for repeated content >1024 chars
+- Minimize response verbosity
+- Leverage parallel execution to reduce turns
+- Return structured JSON without commentary
+`
+```
+
+## Error Recovery Pattern
+
+```xml
+<system>
+When encountering tool errors:
+
+1. Check if error has is_error: true flag
+2. Analyze error message for retry hints
+3. For retryable errors (network, timeout):
+   - Retry up to 2 times with exponential backoff
+   - Include retry count in subsequent attempts
+4. For validation errors:
+   - Request missing parameters from user
+   - Do not retry with placeholder values
+5. For non-retryable errors:
+   - Provide clear explanation to user
+   - Suggest alternative approaches
+</system>
+```
+
+## Subagent File Template
+
+```yaml
+---
+name: {agent-name}
+description: {when-to-invoke}
+tools: {comma-separated-tools}
+proactive: {true|false}
+---
+
+You are the {agent-role}, specialized in {domain}.
+
+## Core Responsibilities
+- {responsibility-1}
+- {responsibility-2}
+
+## Available Tools
+{tool-descriptions}
+
+## Execution Protocol
+1. {step-1}
+2. {step-2}
+
+## Output Constraints
+- {constraint-1}
+- {constraint-2}
+```
+
 ## References
 
 - [Anthropic Tool Use Best Practices](https://docs.anthropic.com/en/docs/build-with-claude/tool-use)
 - [JSON Output Mode](https://docs.anthropic.com/en/docs/build-with-claude/json-mode)
 - [Prompt Caching](https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching)
 - [Parallel Tool Calls](https://docs.anthropic.com/en/docs/build-with-claude/parallel-tools)
+- [Claude Code Subagents](https://docs.anthropic.com/en/docs/claude-code/sub-agents)
+- [Task Tool Pattern](https://docs.anthropic.com/en/docs/claude-code/common-workflows)

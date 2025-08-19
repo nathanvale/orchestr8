@@ -6,13 +6,13 @@
 
 ## Overview
 
-Implement adaptation layers for orchestr8 integration, including HTTP REST API for CI/CD deployment and Claude-specific optimizations. This spec focuses on thin adapters that forward requests to the core MCP server, ensuring parity across all integration surfaces while enabling LLM-specific features like prompt caching and JSON output mode.
+Implement adaptation layers for orchestr8 integration, including HTTP REST API for CI/CD deployment and Claude-specific optimizations. This spec focuses on thin adapters that forward requests to the core MCP server, ensuring parity across all integration surfaces while enabling LLM-specific features like prompt caching and JSON output mode. Claude-specific features live only in the Claude adapter; the MCP server remains vendor-neutral.
 
 **Foundation**: This spec defines adaptation layers that build upon the core MCP server:
 
 - **MCP Server**: @.agent-os/specs/2025-01-18-mcp-integration/ (canonical implementation)
 - **Tool Schemas**: Defined in MCP spec, reused by all adapters
-- **Normalized Envelope**: Defined in MCP spec, returned by all surfaces
+- **Normalized Envelope**: Defined in MCP spec, returned by all surfaces (in MCP via ToolResult content; in HTTP as response body)
 
 ## User Stories
 
@@ -20,7 +20,7 @@ Implement adaptation layers for orchestr8 integration, including HTTP REST API f
 
 As a developer using Claude Code, I want to invoke orchestr8 workflows from within Claude subagents, so that I can leverage production-grade resilience patterns and structured execution for complex development tasks.
 
-The workflow involves Claude subagents using orchestr8 tools (via MCP integration) to run workflows with full resilience support. Subagents provide rationale-lite summaries for transparency without exposing internal reasoning, while orchestr8 handles deterministic execution. The integration leverages Claude-specific optimizations like prompt caching to reduce costs by 90% and ensures parallel tool calls are handled correctly by grouping tool_result blocks in single user messages.
+The workflow involves Claude subagents using orchestr8 tools (via MCP integration) to run workflows with full resilience support. Subagents provide rationale-lite summaries for transparency without exposing internal reasoning, while orchestr8 handles deterministic execution. The integration leverages Claude-specific optimizations like prompt caching and JSON output mode, and ensures parallel tool calls are handled correctly by grouping tool_result blocks in a single user message (per Anthropic guidance).
 
 ### Dual Deployment Flexibility
 
@@ -38,7 +38,7 @@ Multiple personas in `.claude/agents/` can share the same orchestr8 tool configu
 
 1. **HTTP API Adapter** - REST endpoints that forward to MCP server for CI/CD deployment
 2. **Claude SDK Integration** - Anthropic SDK adapter with prompt caching and JSON output mode
-3. **Claude Agent Templates** - Reusable subagent configurations using `mcp__orchestr8__*` tools
+3. **Claude Agent Templates** - Reusable subagent configurations using the short tool names defined by the MCP server (`run_workflow`, `get_status`, `cancel_workflow`)
 4. **Adapter Boundaries** - Clear separation between adapters and orchestration engine
 5. **Parity Testing** - Comprehensive tests ensuring identical behavior across surfaces
 6. **Cost Optimization** - Prompt caching strategy for 90% token reduction
@@ -58,7 +58,7 @@ Multiple personas in `.claude/agents/` can share the same orchestr8 tool configu
 ## Expected Deliverable
 
 1. **HTTP API adapter** exposing REST endpoints that forward to MCP server
-2. **Claude agent templates** (`.claude/agents/`) using `mcp__orchestr8__*` tools
+2. **Claude agent templates** (`.claude/agents/`) using short tool names (`run_workflow`, `get_status`, `cancel_workflow`)
 3. **Anthropic SDK integration** with prompt caching and JSON output mode
 4. **Adapter boundaries documentation** defining thin pass-through pattern
 5. **Comprehensive parity tests** verifying identical behavior across surfaces
@@ -71,10 +71,22 @@ Multiple personas in `.claude/agents/` can share the same orchestr8 tool configu
 - HTTP API Specification: @.agent-os/specs/2025-01-18-claude-subagents-integration/sub-specs/api-spec.md
 - Tests Specification: @.agent-os/specs/2025-01-18-claude-subagents-integration/sub-specs/tests.md
 - Prompt Templates: @.agent-os/specs/2025-01-18-claude-subagents-integration/sub-specs/prompt-templates.md
+- Subagent Format: @.agent-os/specs/2025-01-18-claude-subagents-integration/sub-specs/subagent-format.md
 - **NEW - Adapter Boundaries**: @.agent-os/specs/2025-01-18-claude-subagents-integration/sub-specs/adapter-boundaries.md
 - **NEW - Parity Tests**: @.agent-os/specs/2025-01-18-claude-subagents-integration/sub-specs/parity-tests.md
+- **NEW - Agent Loop**: @.agent-os/specs/2025-01-18-claude-subagents-integration/sub-specs/agent-loop-spec.md
+- **NEW - Streaming**: @.agent-os/specs/2025-01-18-claude-subagents-integration/sub-specs/streaming-spec.md
 
 ## Key Technical Requirements
+
+### Agent Loop Controls
+
+Agent loops MUST implement safeguards to prevent runaway execution:
+
+- **Maximum Iterations**: 10-15 iterations per conversation turn
+- **Timeout Handling**: 30-second default timeout with configurable overrides
+- **Continuation Support**: Handle `pause_turn` responses for multi-step operations
+- **State Preservation**: Maintain conversation context across loop iterations
 
 ### Parallel Tool Calls
 
@@ -82,11 +94,29 @@ When Claude makes multiple tool_use blocks in a single assistant turn, all corre
 
 ### JSON Output Mode
 
-Structured outputs from subagents MUST use `response_format: { type: 'json_object' }` for deterministic JSON generation, with optional JSON schema constraints for critical flows.
+Structured outputs from subagents MUST use `response_format: { type: 'json_object' }` for deterministic JSON generation, with optional JSON schema constraints for critical flows. Do not rely on model-side validation when using fine-grained tool streaming.
+
+### Streaming Support
+
+Fine-grained tool streaming (`fine-grained-tool-streaming-2025-05-14` beta) requires:
+
+- **Client-side validation**: Server validation disabled in streaming mode
+- **Partial JSON assembly**: Handle `input_json_delta` events
+- **Error recovery**: Graceful handling of incomplete JSON streams
+- **WebSocket/SSE integration**: Real-time progress updates
 
 ### Thinking Block Safety
 
 Internal reasoning (thinking blocks) MUST NOT be logged, stored in envelopes, or exposed to users. Only rationale-lite summaries should be included in responses.
+
+### Tool Choice Strategy
+
+Implement deterministic tool selection based on context:
+
+- **`auto`**: Default mode - Claude decides tool usage
+- **`any`**: Force tool use when action required
+- **`none`**: Prevent tools for information-only queries
+- **`specific`**: Force particular tool for deterministic flows
 
 ## Dependencies
 
@@ -103,5 +133,33 @@ All adapters (HTTP, Claude SDK) are thin pass-through layers that:
 
 1. Validate inputs using shared Zod schemas from MCP spec
 2. Forward requests to the orchestr8 engine
-3. Return normalized envelopes without modification
+3. Return normalized envelopes without modification (no enrichment)
 4. Contain NO business logic, resilience, or state management
+
+## Server identity and naming conventions
+
+- Server identity: This is the orchestr8 MCP server. Use a DNS-style serverId
+  to avoid collisions across clients, e.g., `io.orchestr8` (or your actual
+  domain).
+- Tool registration: Register short tool names only on the server:
+  `run_workflow`, `get_status`, `cancel_workflow`.
+- Host-composed labels: MCP hosts (e.g., Claude) compose display names as
+  `mcp__{serverId}__{toolName}`. Example: `mcp__io.orchestr8__run_workflow`.
+- Do not hardcode the `mcp__` prefix or composed names in server code, schemas,
+  or adapters; it is a client-side convention.
+- Agent templates may show the composed label for Claude clarity, but the
+  underlying contract remains the short tool names on the server.
+
+### Example (Claude MCP entry)
+
+```json
+{
+  "mcpServers": {
+    "io.orchestr8": {
+      "command": "node",
+      "args": ["./packages/mcp-server/dist/index.js"],
+      "type": "stdio"
+    }
+  }
+}
+```

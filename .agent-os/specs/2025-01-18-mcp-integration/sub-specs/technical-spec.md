@@ -98,13 +98,11 @@ export class Orchestr8MCPServer {
 
 ### Tool Naming Convention
 
-All MCP tools follow the naming pattern: `mcp__orchestr8__<tool_name>`
+When accessed through MCP clients, tools appear with their short names:
 
-When accessed through Claude Code or other MCP clients, tools appear as:
-
-- `mcp__orchestr8__run_workflow`
-- `mcp__orchestr8__get_status`
-- `mcp__orchestr8__cancel_workflow`
+- `run_workflow`
+- `get_status`
+- `cancel_workflow`
 
 ### run_workflow Tool
 
@@ -113,7 +111,7 @@ private registerRunWorkflow() {
   this.server.setRequestHandler(
     ToolsCallRequestSchema,
     async (request) => {
-      if (request.params.name === 'mcp__orchestr8__run_workflow') {
+  if (request.params.name === 'run_workflow') {
         const input = RunWorkflowSchema.parse(request.params.arguments)
 
         // Generate correlation ID if not provided
@@ -140,11 +138,11 @@ private registerRunWorkflow() {
             execution.id,
             input.waitForMs
           )
-          return this.formatToolResult(result, correlationId)
+          return this.toToolResult(result, correlationId)
         }
 
         // Return immediate status
-        return this.formatToolResult({
+  return this.toToolResult({
           status: 'running',
           executionId: execution.id,
           workflowId: input.workflowId,
@@ -163,7 +161,7 @@ private registerGetStatus() {
   this.server.setRequestHandler(
     ToolsCallRequestSchema,
     async (request) => {
-      if (request.params.name === 'mcp__orchestr8__get_status') {
+  if (request.params.name === 'get_status') {
         const input = GetStatusSchema.parse(request.params.arguments)
 
         // Get execution status
@@ -177,10 +175,10 @@ private registerGetStatus() {
             input.executionId,
             input.waitForMs
           )
-          return this.formatToolResult(result, input.correlationId)
+          return this.toToolResult(result, input.correlationId)
         }
 
-        return this.formatToolResult({
+        return this.toToolResult({
           status: this.mapExecutionState(status.state),
           executionId: input.executionId,
           workflowId: status.workflowId,
@@ -202,7 +200,7 @@ private registerCancelWorkflow() {
   this.server.setRequestHandler(
     ToolsCallRequestSchema,
     async (request) => {
-      if (request.params.name === 'mcp__orchestr8__cancel_workflow') {
+  if (request.params.name === 'cancel_workflow') {
         const input = CancelWorkflowSchema.parse(request.params.arguments)
 
         try {
@@ -211,14 +209,14 @@ private registerCancelWorkflow() {
             input.reason
           )
 
-          return this.formatToolResult({
+          return this.toToolResult({
             status: 'ok',
             executionId: input.executionId,
             message: 'Workflow cancelled successfully',
             correlationId: input.correlationId
           }, input.correlationId)
         } catch (error) {
-          return this.formatToolResult({
+          return this.toToolResult({
             status: 'error',
             executionId: input.executionId,
             error: this.formatError(error),
@@ -351,15 +349,28 @@ The normalized result envelope is the canonical response format used across all 
 // Import the shared envelope type
 import type { NormalizedEnvelope } from '../schemas/normalized-envelope'
 
-// All tool responses must conform to this schema
-export function formatToolResult(
+// All MCP tool responses must be wrapped in ToolResult content
+// and mark isError when status is 'error'
+import type { ToolResult } from '@modelcontextprotocol/sdk/types.js'
+
+export function toToolResult(
   data: Partial<NormalizedEnvelope>,
   correlationId: string,
-): NormalizedEnvelope {
-  return {
+): ToolResult {
+  const envelope: NormalizedEnvelope = {
     status: data.status ?? 'ok',
     correlationId,
     ...data,
+  } as NormalizedEnvelope
+
+  return {
+    content: [
+      {
+        type: 'text',
+        text: JSON.stringify(envelope),
+      },
+    ],
+    isError: envelope.status === 'error' ? true : undefined,
   }
 }
 ```
@@ -372,7 +383,7 @@ private async pollExecution(
   waitForMs: number
 ): Promise<Partial<NormalizedEnvelope>> {
   const startTime = Date.now()
-  const pollInterval = 100 // ms
+  let pollInterval = 100 // ms (bounded backoff)
 
   while (Date.now() - startTime < waitForMs) {
     const status = await this.engine.getExecutionStatus(executionId)
@@ -388,8 +399,9 @@ private async pollExecution(
       }
     }
 
-    // Wait before next poll
-    await new Promise(resolve => setTimeout(resolve, pollInterval))
+  // Wait before next poll with bounded backoff up to 1000ms
+  await new Promise(resolve => setTimeout(resolve, pollInterval))
+  pollInterval = Math.min(Math.floor(pollInterval * 1.5), 1000)
   }
 
   // Timeout reached, return current status
@@ -417,7 +429,7 @@ export async function createStdioTransport() {
 }
 ```
 
-The stdio transport enables direct communication between the MCP server and AI assistants running locally. Alternative transports (HTTP, WebSocket) can be implemented as adaptation layers that forward requests to this core MCP server.
+The stdio transport enables direct communication between the MCP server and AI assistants running locally. Do not write logs to stdout; use stderr or MCP notifications. Optional Streamable HTTP transport may be added for hosted scenarios.
 
 ## Notifications Support
 

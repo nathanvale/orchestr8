@@ -8,7 +8,7 @@ This defines the canonical response format used across all @orchestr8 integratio
 
 ## Overview
 
-The Normalized Result Envelope provides a consistent response format for all orchestr8 operations, whether invoked through MCP tools or HTTP API endpoints. This ensures parity across integration surfaces and simplifies client implementations.
+The Normalized Result Envelope provides a consistent response format for all orchestr8 operations, whether invoked through MCP tools or HTTP API endpoints. This ensures parity across integration surfaces and simplifies client implementations. Transport note: in MCP, the envelope is serialized into the ToolResult's `content[0].text`; in HTTP, the envelope is returned as the JSON response body.
 
 ## JSON Schema Definition
 
@@ -366,9 +366,9 @@ enum StandardErrorCode {
 All MCP tools (`run_workflow`, `get_status`, `cancel_workflow`) MUST:
 
 1. Return responses matching this schema
-2. Include in tool definition: `"outputSchema": { "$ref": "#/definitions/NormalizedEnvelope" }`
-3. Map internal states to standard status values
-4. Include correlation ID in all responses
+2. Map internal states to standard status values
+3. Include correlation ID in all responses
+4. Serialize the envelope into ToolResult `content[0].text` and set `isError: true` when `status: "error"`
 
 ### HTTP API
 

@@ -10,7 +10,7 @@ const dirname =
 export default defineConfig({
   test: {
     globals: true,
-    environment: 'node',  // Using node, not jsdom
+    environment: 'node', // Using node, not jsdom
     pool: 'threads',
     poolOptions: {
       threads: {

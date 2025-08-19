@@ -6,13 +6,13 @@
 
 ## Overview
 
-Implement Model Context Protocol (MCP) server for @orchestr8, enabling AI assistants to execute and monitor orchestrated workflows through a standardized protocol. This integration provides schema-driven, type-safe access to orchestr8's resilience patterns and execution capabilities via MCP tools and resources.
+Implement a vendor-neutral Model Context Protocol (MCP) server for @orchestr8, enabling AI assistants to execute and monitor orchestrated workflows through a standardized protocol. This integration provides schema-driven, type-safe access to orchestr8's resilience patterns and execution capabilities via MCP tools and resources.
 
-**Integration Surfaces:** This MCP server serves as the foundation for multiple integration patterns:
+**Integration Surfaces:** This MCP server is vendor-neutral and serves as the foundation for multiple integration patterns:
 
 - Direct MCP integration via stdio transport (primary)
-- HTTP API adaptation layer (see @.agent-os/specs/2025-01-18-claude-subagents-integration/)
-- Claude-specific optimizations (see @.agent-os/specs/2025-01-18-claude-subagents-integration/)
+- Optional Streamable HTTP transport (for hosted scenarios)
+- Thin HTTP/Claude adapters (see @.agent-os/specs/2025-01-18-claude-subagents-integration/) that reuse the same contracts
 
 ## User Stories
 
@@ -55,13 +55,13 @@ As a DevOps engineer, I want standardized protocol access to orchestr8, so that 
 ## Spec Scope
 
 1. **MCP Server Implementation** - TypeScript-based server using official MCP SDK
-2. **Core Tool Definitions** - run_workflow, get_status, cancel_workflow with input/output schemas
+2. **Core Tool Definitions** - run_workflow, get_status, cancel_workflow with Zod input schemas; outputs are normalized envelopes returned via MCP ToolResult content
 3. **Resource Providers** - Workflow definitions (workflow://) and execution journals (execution://)
 4. **Capabilities Declaration** - Tools, resources, logging, and notifications support
-5. **Transport Layer** - Primary stdio transport with MCP protocol compliance
-6. **Schema Validation** - Zod-based input validation, JSON Schema output validation
-7. **Long-Polling Support** - Efficient status monitoring via waitForMs parameter
-8. **JSON-RPC Compliance** - Standard error codes and response formats
+5. **Transport Layer** - Primary stdio transport with MCP protocol compliance (no stdout logging)
+6. **Schema Validation** - Zod-based input validation; outputs use a shared normalized envelope
+7. **Long-Polling Support** - Efficient status monitoring via waitForMs parameter with bounded backoff
+8. **JSON-RPC Compliance** - Reserve JSON-RPC errors for protocol faults only; tool failures return ToolResult with envelope and isError=true
 
 ## Out of Scope
 
@@ -76,7 +76,7 @@ As a DevOps engineer, I want standardized protocol access to orchestr8, so that 
 
 ## Expected Deliverable
 
-1. Working MCP server exposing orchestr8 tools with full input/output schemas
+1. Working MCP server exposing orchestr8 tools with Zod input schemas and normalized envelope outputs
 2. Validated against MCP specification 2025-06-18
 3. stdio transport for local AI assistant integration
 4. Resource providers for workflow definitions and execution journals
@@ -104,4 +104,5 @@ This MCP server defines the canonical interface that all adaptation layers must 
 - Normalized result envelope format
 - Correlation ID propagation
 - Error codes and retryability
-- Long-polling behavior
+- Long-polling behavior with bounded backoff
+- No stdout logging in stdio transports (stderr-only for server logs)
