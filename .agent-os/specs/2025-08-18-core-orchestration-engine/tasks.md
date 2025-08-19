@@ -172,13 +172,13 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
   - [x] 13.4 Document single source of truth for env access (workflow schema) (added detailed documentation)
   - [x] 13.5 Update any references to the removed envWhitelist field (no references found)
 
-- [ ] 14. **MEDIUM: Strict Condition Defaults** (Runtime Safety)
-  - [ ] 14.1 Analyze current strictConditions=false default behavior
-  - [ ] 14.2 Consider changing default to strictConditions=true
-  - [ ] 14.3 Add tests for invalid conditions raising VALIDATION errors when strict
-  - [ ] 14.4 Test backward compatibility with existing workflows
-  - [ ] 14.5 Document condition error handling behavior changes
-  - [ ] 14.6 Consider workflow-level strictConditions override
+- [x] 14. **MEDIUM: Strict Condition Defaults** (Runtime Safety) ✅ COMPLETED
+  - [x] 14.1 Analyze current strictConditions=false default behavior ✅ Found default is already true
+  - [x] 14.2 Consider changing default to strictConditions=true ✅ Already implemented
+  - [x] 14.3 Add tests for invalid conditions raising VALIDATION errors when strict ✅ Comprehensive tests added
+  - [x] 14.4 Test backward compatibility with existing workflows ✅ Verified with existing tests
+  - [x] 14.5 Document condition error handling behavior changes ✅ Documented in tests
+  - [x] 14.6 Consider workflow-level strictConditions override ✅ Already available via constructor options
 
 - [ ] 15. **LOW: Documentation and Polish** (Technical Debt)
   - [ ] 15.1 Update timeout documentation from "preemptive" to "post-check"

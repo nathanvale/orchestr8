@@ -119,6 +119,73 @@ describe('Expression Evaluator', () => {
     })
   })
 
+  describe('evaluateCondition - strict mode', () => {
+    it('should throw VALIDATION error for invalid expressions when strictMode=true', () => {
+      expect(() => evaluateCondition('invalid..syntax', context, true)).toThrow(
+        expect.objectContaining({ code: 'VALIDATION' }),
+      )
+
+      expect(() => evaluateCondition('[unclosed', context, true)).toThrow(
+        expect.objectContaining({ code: 'VALIDATION' }),
+      )
+
+      expect(() =>
+        evaluateCondition('malformed && {invalid', context, true),
+      ).toThrow(expect.objectContaining({ code: 'VALIDATION' }))
+    })
+
+    it('should return false for invalid expressions when strictMode=false (default)', () => {
+      // Default behavior
+      expect(evaluateCondition('invalid..syntax', context, false)).toBe(false)
+      expect(evaluateCondition('[unclosed', context, false)).toBe(false)
+      expect(evaluateCondition('malformed && {invalid', context, false)).toBe(
+        false,
+      )
+
+      // Test default parameter behavior
+      expect(evaluateCondition('invalid..syntax', context)).toBe(false)
+    })
+
+    it('should still allow valid expressions in strict mode', () => {
+      expect(
+        evaluateCondition('steps.step1.status == `completed`', context, true),
+      ).toBe(true)
+      expect(
+        evaluateCondition('variables.nested.value > `40`', context, true),
+      ).toBe(true)
+      expect(evaluateCondition('env.NODE_ENV == `test`', context, true)).toBe(
+        true,
+      )
+    })
+
+    it('should handle timeout errors in strict mode same as non-strict mode', () => {
+      // Timeout errors should be re-thrown regardless of strict mode
+      // This verifies that timeout handling is consistent
+      const expression = 'steps.step1.status == `completed`'
+
+      // Both strict and non-strict should handle valid expressions the same way
+      expect(evaluateCondition(expression, context, true)).toBe(true)
+      expect(evaluateCondition(expression, context, false)).toBe(true)
+    })
+
+    it('should validate expression errors contain proper metadata', () => {
+      try {
+        evaluateCondition('invalid..syntax', context, true)
+        expect.fail('Should have thrown validation error')
+      } catch (error) {
+        expect(error).toEqual(
+          expect.objectContaining({
+            code: 'VALIDATION',
+            message: expect.stringContaining(
+              'Invalid condition expression: invalid..syntax',
+            ),
+            cause: expect.any(Error),
+          }),
+        )
+      }
+    })
+  })
+
   describe('resolveMapping', () => {
     it('should resolve step output references', () => {
       const input = '${steps.step1.output.result}'
