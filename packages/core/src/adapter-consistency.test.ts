@@ -14,18 +14,22 @@ class MockResilienceAdapter implements ResilienceAdapter {
 
   constructor() {
     // Default implementation that passes through
-    this.applyPolicy.mockImplementation(async (operation) => operation())
-    this.applyNormalizedPolicy.mockImplementation(async (operation) =>
-      operation(),
+    this.applyPolicy.mockImplementation(async (operation, policy, signal) =>
+      operation(signal),
+    )
+    this.applyNormalizedPolicy.mockImplementation(
+      async (operation, policy, order, signal) => operation(signal),
     )
   }
 
   reset() {
     this.applyPolicy.mockReset()
     this.applyNormalizedPolicy.mockReset()
-    this.applyPolicy.mockImplementation(async (operation) => operation())
-    this.applyNormalizedPolicy.mockImplementation(async (operation) =>
-      operation(),
+    this.applyPolicy.mockImplementation(async (operation, policy, signal) =>
+      operation(signal),
+    )
+    this.applyNormalizedPolicy.mockImplementation(
+      async (operation, policy, order, signal) => operation(signal),
     )
   }
 }
@@ -108,6 +112,10 @@ describe('Adapter Consistency - Composition Order', () => {
         }),
         'retry-cb-timeout',
         expect.any(AbortSignal),
+        expect.objectContaining({
+          stepId: 'step1',
+          correlationId: expect.any(String),
+        }),
       )
 
       // Test with reference adapter (this won't have spy methods, but should work)
@@ -162,6 +170,10 @@ describe('Adapter Consistency - Composition Order', () => {
         }),
         'retry-cb-timeout',
         expect.any(AbortSignal),
+        expect.objectContaining({
+          stepId: 'step1',
+          correlationId: expect.any(String),
+        }),
       )
 
       // Test with timeout-cb-retry composition
@@ -181,15 +193,19 @@ describe('Adapter Consistency - Composition Order', () => {
         }),
         'timeout-cb-retry',
         expect.any(AbortSignal),
+        expect.objectContaining({
+          stepId: 'step1',
+          correlationId: expect.any(String),
+        }),
       )
     })
 
     it('should fall back to legacy interface when applyNormalizedPolicy is not available', async () => {
       // Create legacy adapter that only implements applyPolicy
       const legacyAdapter: ResilienceAdapter = {
-        applyPolicy: async (operation) => {
+        applyPolicy: async (operation, policy, signal) => {
           // Mark that legacy interface was called
-          return operation()
+          return operation(signal)
         },
       }
 
@@ -300,6 +316,10 @@ describe('Adapter Consistency - Composition Order', () => {
         }),
         'retry-cb-timeout', // Default composition order
         expect.any(AbortSignal),
+        expect.objectContaining({
+          stepId: 'step1',
+          correlationId: expect.any(String),
+        }),
       )
     })
   })
@@ -307,12 +327,12 @@ describe('Adapter Consistency - Composition Order', () => {
   describe('Cross-Adapter Interface Compatibility', () => {
     it('should work with adapters implementing only legacy interface', async () => {
       const legacyAdapter: ResilienceAdapter = {
-        applyPolicy: async (operation, policy) => {
+        applyPolicy: async (operation, policy, signal) => {
           // Simple pass-through implementation
           if (policy.timeout) {
             // Just execute without actual timeout for this test
           }
-          return operation()
+          return operation(signal)
         },
       }
 
@@ -343,13 +363,13 @@ describe('Adapter Consistency - Composition Order', () => {
       let newInterfaceCalled = false
 
       const dualAdapter: ResilienceAdapter = {
-        applyPolicy: async (operation) => {
+        applyPolicy: async (operation, policy, signal) => {
           legacyCalled = true
-          return operation()
+          return operation(signal)
         },
-        applyNormalizedPolicy: async (operation) => {
+        applyNormalizedPolicy: async (operation, policy, order, signal) => {
           newInterfaceCalled = true
-          return operation()
+          return operation(signal)
         },
       }
 

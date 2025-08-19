@@ -9,6 +9,7 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
 ## Tasks (Based on P0 Decisions)
 
 ### Phase 1: Foundation
+
 - [ ] 1. Error Type Consolidation
   - [ ] 1.1 Write tests for error types in resilience package
   - [ ] 1.2 Create CircuitBreakerOpenError with code, retryAfter, nextRetryTime
@@ -26,6 +27,7 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
   - [ ] 2.6 Verify all interface tests pass
 
 ### Phase 2: Circuit Breaker Implementation
+
 - [ ] 3. Sliding Window State Machine
   - [ ] 3.1 Write tests for sliding window behavior
   - [ ] 3.2 Implement circular buffer for outcome tracking
@@ -43,6 +45,7 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
   - [ ] 4.6 Verify retry exhaustion error handling
 
 ### Phase 3: Composition Engine
+
 - [ ] 5. Pattern Composition with Validation
   - [ ] 5.1 Write tests for composition validation
   - [ ] 5.2 Implement middleware chain pattern
@@ -60,6 +63,7 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
   - [ ] 6.6 Preserve error stack traces
 
 ### Phase 4: Integration and Polish
+
 - [ ] 7. Production Resilience Adapter
   - [ ] 7.1 Write adapter integration tests
   - [ ] 7.2 Implement adapter using new composition engine

@@ -10,22 +10,26 @@ This is the tests coverage details for the spec detailed in @.agent-os/specs/202
 ### Unit Tests
 
 **ResilienceAdapter Interface**
+
 - Operation accepts optional AbortSignal parameter
 - Context parameter is properly typed and optional
 - Backward compatibility with existing tests maintained
 
 **ResilienceInvocationContext**
+
 - All required fields present (workflowId, stepId)
 - Optional fields handled correctly (correlationId, metadata)
 - Context used for default key derivation
 
 **Error Types**
+
 - TimeoutError includes timeout duration and operation name
 - CircuitBreakerOpenError includes retry timing and failure count
 - Errors serialize correctly for logging
 - Error names are correctly set for instanceof checks
 
 **Policy Types**
+
 - Circuit breaker policy accepts optional key
 - Retry policy supports all backoff strategies
 - Composition order validates allowed values
@@ -34,18 +38,21 @@ This is the tests coverage details for the spec detailed in @.agent-os/specs/202
 ### Integration Tests
 
 **Signal Propagation**
+
 - Middleware can inject its own signal
 - Multiple signals can be combined (timeout + cancellation)
 - Signal propagates through middleware chain
 - Aborted operations clean up correctly
 
 **Context Flow**
+
 - Context passed from engine to adapter
 - Context available in all middleware layers
 - Context used for circuit key when no explicit key
 - Context preserved across retries
 
 **Engine Integration**
+
 - OrchestrationEngine passes signal-accepting functions
 - Existing tests continue to pass
 - New signature works with ReferenceResilienceAdapter
@@ -54,6 +61,7 @@ This is the tests coverage details for the spec detailed in @.agent-os/specs/202
 ### Regression Tests
 
 **Existing Functionality**
+
 - All current resilience tests still pass
 - No breaking changes to public API
 - Performance characteristics unchanged
@@ -62,6 +70,7 @@ This is the tests coverage details for the spec detailed in @.agent-os/specs/202
 ### Type Safety Tests
 
 **Compile-Time Verification**
+
 - No `any` types introduced
 - Strict null checks pass
 - Generic constraints properly enforced
@@ -70,49 +79,53 @@ This is the tests coverage details for the spec detailed in @.agent-os/specs/202
 ## Test Scenarios
 
 ### Scenario 1: Signal Injection
+
 ```typescript
 it('should allow middleware to inject timeout signal', async () => {
-  const operation = vi.fn((signal?: AbortSignal) => 
-    new Promise(resolve => {
-      if (signal?.aborted) throw new Error('Aborted');
-      setTimeout(resolve, 1000);
-    })
-  );
-  
-  const adapter = new TestAdapter();
+  const operation = vi.fn(
+    (signal?: AbortSignal) =>
+      new Promise((resolve) => {
+        if (signal?.aborted) throw new Error('Aborted')
+        setTimeout(resolve, 1000)
+      }),
+  )
+
+  const adapter = new TestAdapter()
   await expect(
-    adapter.execute(operation, { timeout: { ms: 100 } })
-  ).rejects.toThrow(TimeoutError);
-});
+    adapter.execute(operation, { timeout: { ms: 100 } }),
+  ).rejects.toThrow(TimeoutError)
+})
 ```
 
 ### Scenario 2: Context-Based Keys
+
 ```typescript
 it('should derive circuit key from context', async () => {
   const context: ResilienceInvocationContext = {
     workflowId: 'workflow-1',
     stepId: 'step-1',
-    correlationId: 'corr-123'
-  };
-  
-  const expectedKey = 'workflow-1:step-1';
+    correlationId: 'corr-123',
+  }
+
+  const expectedKey = 'workflow-1:step-1'
   // Verify key derivation logic
-});
+})
 ```
 
 ### Scenario 3: Error Metadata
+
 ```typescript
 it('should include retry timing in circuit breaker error', () => {
   const error = new CircuitBreakerOpenError(
     'Circuit open',
     'test-key',
     new Date(Date.now() + 5000),
-    3
-  );
-  
-  expect(error.retryAfter).toBeInstanceOf(Date);
-  expect(error.consecutiveFailures).toBe(3);
-});
+    3,
+  )
+
+  expect(error.retryAfter).toBeInstanceOf(Date)
+  expect(error.consecutiveFailures).toBe(3)
+})
 ```
 
 ## Mocking Requirements

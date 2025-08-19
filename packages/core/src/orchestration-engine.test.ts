@@ -439,6 +439,11 @@ describe('OrchestrationEngine', () => {
           timeout: 5000,
         },
         expect.any(AbortSignal),
+        expect.objectContaining({
+          workflowId: 'resilient-workflow',
+          stepId: 'step1',
+          correlationId: expect.any(String),
+        }),
       )
     })
 

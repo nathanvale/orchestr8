@@ -10,7 +10,7 @@
 Based on review, the following decisions have been made for implementation:
 
 1. **Operation Contract**: Keep minimal `(signal?: AbortSignal) => Promise<T>`, derive keys at adapter layer
-2. **Retry Policy**: Precise config with backoff strategies, jitter, and non-retryable error classification  
+2. **Retry Policy**: Precise config with backoff strategies, jitter, and non-retryable error classification
 3. **Circuit Breaker**: Sliding window with natural displacement, opens when full AND threshold exceeded
 4. **Half-Open State**: Single-probe policy with per-key locking, reject concurrent requests
 5. **Composition**: Support only `retry-cb-timeout` and `timeout-cb-retry` patterns, validate at init
@@ -41,6 +41,7 @@ The circuit breaker should track failure rates, open when thresholds are exceede
 As an architect, I want control over how resilience patterns are composed, so that I can optimize for different failure scenarios.
 
 Different composition orders suit different scenarios:
+
 - `retry-cb-timeout`: Retry wraps circuit breaker wraps timeout - each retry attempt goes through the circuit breaker
 - `timeout-cb-retry`: Timeout wraps circuit breaker wraps retry - the entire retry sequence is bounded by a single timeout
 

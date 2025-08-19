@@ -16,6 +16,7 @@ import {
   type WorkflowResult,
   type CompositionOrder,
   type ResilienceAdapter,
+  type ResilienceInvocationContext,
   type ResiliencePolicy,
 } from '@orchestr8/schema'
 
@@ -788,13 +789,11 @@ export class OrchestrationEngine implements IOrchestrationEngine {
         signal: context.abortSignal,
       }
 
-      // Create step execution function
-      const executeAgent = async () => {
-        return await agent.execute(
-          resolvedInput,
-          agentContext,
-          context.abortSignal,
-        )
+      // Create step execution function that accepts signal
+      const executeAgent = async (signal?: AbortSignal) => {
+        // Use provided signal or fall back to context signal
+        const effectiveSignal = signal || context.abortSignal
+        return await agent.execute(resolvedInput, agentContext, effectiveSignal)
       }
 
       // Apply resilience policies
@@ -816,6 +815,17 @@ export class OrchestrationEngine implements IOrchestrationEngine {
             : undefined)
 
         if (policy) {
+          // Create resilience invocation context
+          const resilienceContext: ResilienceInvocationContext = {
+            workflowId: workflow.id,
+            stepId: node.stepId,
+            correlationId: context.correlationId,
+            metadata: {
+              agentId: node.agentId,
+              dependencies: node.dependsOn,
+            },
+          }
+
           // Check if adapter supports new interface with composition order
           if (
             'applyNormalizedPolicy' in this.resilienceAdapter &&
@@ -829,9 +839,10 @@ export class OrchestrationEngine implements IOrchestrationEngine {
                 normalizedPolicy,
                 this.defaultCompositionOrder,
                 context.abortSignal,
+                resilienceContext,
               )
             } else {
-              output = await executeAgent()
+              output = await executeAgent(context.abortSignal)
             }
           } else {
             // Fall back to legacy interface
@@ -839,13 +850,14 @@ export class OrchestrationEngine implements IOrchestrationEngine {
               executeAgent,
               policy,
               context.abortSignal,
+              resilienceContext,
             )
           }
         } else {
-          output = await executeAgent()
+          output = await executeAgent(context.abortSignal)
         }
       } else {
-        output = await executeAgent()
+        output = await executeAgent(context.abortSignal)
       }
 
       // Truncate output if needed

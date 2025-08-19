@@ -1,4 +1,4 @@
-import type { ResiliencePolicy } from '@orchestr8/core'
+import type { ResiliencePolicy } from '@orchestr8/schema'
 
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 
@@ -6,13 +6,13 @@ import { ReferenceResilienceAdapter } from './reference-adapter.js'
 
 describe('ReferenceResilienceAdapter', () => {
   let adapter: ReferenceResilienceAdapter
-  let operation: () => Promise<string>
+  let operation: (signal?: AbortSignal) => Promise<string>
   let operationCallOrder: string[]
 
   beforeEach(() => {
     adapter = new ReferenceResilienceAdapter()
     operationCallOrder = []
-    operation = vi.fn().mockImplementation(async () => {
+    operation = vi.fn().mockImplementation(async (_signal?: AbortSignal) => {
       operationCallOrder.push('operation-call')
       return 'success'
     })
@@ -67,14 +67,16 @@ describe('ReferenceResilienceAdapter', () => {
 
     it('should retry on failure', async () => {
       let callCount = 0
-      const failingOperation = vi.fn().mockImplementation(async () => {
-        callCount++
-        operationCallOrder.push(`operation-call-${callCount}`)
-        if (callCount < 2) {
-          throw new Error('temporary failure')
-        }
-        return 'success'
-      })
+      const failingOperation = vi
+        .fn()
+        .mockImplementation(async (_signal?: AbortSignal) => {
+          callCount++
+          operationCallOrder.push(`operation-call-${callCount}`)
+          if (callCount < 2) {
+            throw new Error('temporary failure')
+          }
+          return 'success'
+        })
 
       const policy: ResiliencePolicy = {
         retry: {
@@ -97,11 +99,13 @@ describe('ReferenceResilienceAdapter', () => {
     })
 
     it('should timeout operation', async () => {
-      const slowOperation = vi.fn().mockImplementation(async () => {
-        await new Promise((resolve) => setTimeout(resolve, 100))
-        operationCallOrder.push('operation-call-slow')
-        return 'success'
-      })
+      const slowOperation = vi
+        .fn()
+        .mockImplementation(async (_signal?: AbortSignal) => {
+          await new Promise((resolve) => setTimeout(resolve, 100))
+          operationCallOrder.push('operation-call-slow')
+          return 'success'
+        })
 
       const policy: ResiliencePolicy = {
         timeout: 10, // Very short timeout
@@ -162,18 +166,20 @@ describe('ReferenceResilienceAdapter', () => {
 
     it('should handle both retry and timeout (simplified implementation)', async () => {
       let callCount = 0
-      const failingOperation = vi.fn().mockImplementation(async () => {
-        callCount++
-        operationCallOrder.push(`attempt-${callCount}`)
+      const failingOperation = vi
+        .fn()
+        .mockImplementation(async (_signal?: AbortSignal) => {
+          callCount++
+          operationCallOrder.push(`attempt-${callCount}`)
 
-        // First attempt fails
-        if (callCount === 1) {
-          throw new Error('first attempt fails')
-        }
+          // First attempt fails
+          if (callCount === 1) {
+            throw new Error('first attempt fails')
+          }
 
-        // Second attempt succeeds
-        return 'success-on-retry'
-      })
+          // Second attempt succeeds
+          return 'success-on-retry'
+        })
 
       const policy: ResiliencePolicy = {
         retry: {
@@ -199,10 +205,12 @@ describe('ReferenceResilienceAdapter', () => {
     })
 
     it('should prioritize timeout over retry in simple implementation', async () => {
-      const slowOperation = vi.fn().mockImplementation(async () => {
-        await new Promise((resolve) => setTimeout(resolve, 50))
-        return 'should-timeout'
-      })
+      const slowOperation = vi
+        .fn()
+        .mockImplementation(async (_signal?: AbortSignal) => {
+          await new Promise((resolve) => setTimeout(resolve, 50))
+          return 'should-timeout'
+        })
 
       const policy: ResiliencePolicy = {
         retry: {
@@ -226,10 +234,12 @@ describe('ReferenceResilienceAdapter', () => {
 
     it('should handle cancellation via AbortSignal', async () => {
       const controller = new AbortController()
-      const longOperation = vi.fn().mockImplementation(async () => {
-        await new Promise((resolve) => setTimeout(resolve, 1000))
-        return 'should-not-complete'
-      })
+      const longOperation = vi
+        .fn()
+        .mockImplementation(async (_signal?: AbortSignal) => {
+          await new Promise((resolve) => setTimeout(resolve, 1000))
+          return 'should-not-complete'
+        })
 
       const policy: ResiliencePolicy = {
         timeout: 2000,
@@ -285,13 +295,15 @@ describe('ReferenceResilienceAdapter', () => {
   describe('backoff calculation', () => {
     it('should calculate exponential backoff with jitter', async () => {
       let callCount = 0
-      const failingOperation = vi.fn().mockImplementation(async () => {
-        callCount++
-        if (callCount < 4) {
-          throw new Error(`attempt ${callCount} fails`)
-        }
-        return 'success'
-      })
+      const failingOperation = vi
+        .fn()
+        .mockImplementation(async (_signal?: AbortSignal) => {
+          callCount++
+          if (callCount < 4) {
+            throw new Error(`attempt ${callCount} fails`)
+          }
+          return 'success'
+        })
 
       const startTime = Date.now()
 
@@ -322,13 +334,15 @@ describe('ReferenceResilienceAdapter', () => {
 
     it('should respect maxDelay for exponential backoff', async () => {
       let callCount = 0
-      const failingOperation = vi.fn().mockImplementation(async () => {
-        callCount++
-        if (callCount < 3) {
-          throw new Error(`attempt ${callCount} fails`)
-        }
-        return 'success'
-      })
+      const failingOperation = vi
+        .fn()
+        .mockImplementation(async (_signal?: AbortSignal) => {
+          callCount++
+          if (callCount < 3) {
+            throw new Error(`attempt ${callCount} fails`)
+          }
+          return 'success'
+        })
 
       const policy: ResiliencePolicy = {
         retry: {

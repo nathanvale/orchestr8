@@ -43,7 +43,7 @@ describe('Resilience Composition Order', () => {
     compositionTestAdapter = {
       applyPolicy: vi
         .fn()
-        .mockImplementation(async (operation, policy, _signal) => {
+        .mockImplementation(async (operation, policy, signal) => {
           const patterns = []
           if (policy?.retry) patterns.push('retry')
           if (policy?.circuitBreaker) patterns.push('cb')
@@ -66,13 +66,13 @@ describe('Resilience Composition Order', () => {
                   operationCallOrder.push('cb-execute')
                   operationCallOrder.push('retry-enter')
                   operationCallOrder.push('retry-execute')
-                  resolve(operation())
+                  resolve(operation(signal))
                 }, 1)
               })
             }
           }
 
-          return wrappedOperation()
+          return wrappedOperation(signal)
         }),
     }
 
@@ -245,7 +245,7 @@ describe('Resilience Composition Order', () => {
       compositionTestAdapter = {
         applyPolicy: vi
           .fn()
-          .mockImplementation(async (operation, policy, _signal) => {
+          .mockImplementation(async (operation, policy, signal) => {
             const patterns = []
             if (policy?.retry) patterns.push('retry')
             if (policy?.circuitBreaker) patterns.push('cb')
@@ -267,13 +267,13 @@ describe('Resilience Composition Order', () => {
                     operationCallOrder.push('cb-execute')
                     operationCallOrder.push('retry-enter') // Retry is innermost wrapper
                     operationCallOrder.push('retry-execute')
-                    resolve(operation())
+                    resolve(operation(signal))
                   }, 1)
                 })
               }
             }
 
-            return wrappedOperation()
+            return wrappedOperation(signal)
           }),
       }
 
@@ -382,7 +382,7 @@ describe('Resilience Composition Order', () => {
       const timeoutTrackingAdapter: ResilienceAdapter = {
         applyPolicy: vi
           .fn()
-          .mockImplementation(async (operation, policy, _signal) => {
+          .mockImplementation(async (operation, policy, signal) => {
             // Simulate retry-cb-timeout: retry(circuitBreaker(timeout(operation)))
             // Each retry attempt gets its own timeout
             const maxAttempts = policy?.retry?.maxAttempts || 3
@@ -397,7 +397,7 @@ describe('Resilience Composition Order', () => {
 
                 // Each attempt gets its own timeout window
                 const result = await Promise.race([
-                  operation(),
+                  operation(signal),
                   new Promise((_, reject) =>
                     setTimeout(
                       () => reject(new Error('Individual timeout')),
@@ -461,7 +461,7 @@ describe('Resilience Composition Order', () => {
       const overallTimeoutAdapter: ResilienceAdapter = {
         applyPolicy: vi
           .fn()
-          .mockImplementation(async (operation, policy, _signal) => {
+          .mockImplementation(async (operation, policy, signal) => {
             // Simulate timeout-cb-retry: timeout(circuitBreaker(retry(operation)))
             // Overall timeout covers all retry attempts combined
             const maxAttempts = policy?.retry?.maxAttempts || 3
@@ -483,7 +483,7 @@ describe('Resilience Composition Order', () => {
                   operationCallOrder.push(
                     `attempt-${attempt}-within-overall-timeout`,
                   )
-                  return await operation()
+                  return await operation(signal)
                 } catch (error) {
                   operationCallOrder.push(`attempt-${attempt}-failed`)
                   if (attempt === maxAttempts) throw error
@@ -629,6 +629,10 @@ describe('Resilience Composition Order', () => {
           }),
         }),
         expect.any(AbortSignal),
+        expect.objectContaining({
+          stepId: 'step1',
+          correlationId: expect.any(String),
+        }),
       )
     })
 
@@ -667,6 +671,10 @@ describe('Resilience Composition Order', () => {
           }),
         }),
         expect.any(AbortSignal),
+        expect.objectContaining({
+          stepId: 'step1',
+          correlationId: expect.any(String),
+        }),
       )
     })
   })
@@ -685,22 +693,22 @@ describe('Resilience Composition Order', () => {
       newInterfaceAdapter = {
         applyPolicy: vi
           .fn()
-          .mockImplementation(async (operation, _policy, _signal) => {
+          .mockImplementation(async (operation, _policy, signal) => {
             // For backward compatibility test - old interface
             operationCallOrder.push('old-interface-call')
-            return operation()
+            return operation(signal)
           }),
         applyNormalizedPolicy: vi
           .fn()
           .mockImplementation(
-            async (operation, normalizedPolicy, compositionOrder, _signal) => {
+            async (operation, normalizedPolicy, compositionOrder, signal) => {
               // Track calls to new interface
               compositionCallTracker.push({
                 normalizedPolicy,
                 compositionOrder,
               })
               operationCallOrder.push(`new-interface-${compositionOrder}`)
-              return operation()
+              return operation(signal)
             },
           ),
       }
@@ -760,6 +768,10 @@ describe('Resilience Composition Order', () => {
         }),
         'retry-cb-timeout', // Default composition order
         expect.any(AbortSignal),
+        expect.objectContaining({
+          stepId: 'step1',
+          correlationId: expect.any(String),
+        }),
       )
 
       expect(compositionCallTracker).toHaveLength(1)
@@ -809,6 +821,10 @@ describe('Resilience Composition Order', () => {
         }),
         'timeout-cb-retry',
         expect.any(AbortSignal),
+        expect.objectContaining({
+          stepId: 'step1',
+          correlationId: expect.any(String),
+        }),
       )
 
       expect(operationCallOrder).toContain('new-interface-timeout-cb-retry')
@@ -817,10 +833,12 @@ describe('Resilience Composition Order', () => {
     it('should fall back to old interface when applyNormalizedPolicy is not available', async () => {
       // Create adapter with only old interface
       const legacyAdapter: ResilienceAdapter = {
-        applyPolicy: vi.fn().mockImplementation(async (operation) => {
-          operationCallOrder.push('legacy-adapter-call')
-          return operation()
-        }),
+        applyPolicy: vi
+          .fn()
+          .mockImplementation(async (operation, policy, signal) => {
+            operationCallOrder.push('legacy-adapter-call')
+            return operation(signal)
+          }),
       }
 
       const legacyEngine = new OrchestrationEngine({
@@ -847,6 +865,10 @@ describe('Resilience Composition Order', () => {
         expect.any(Function),
         expect.objectContaining({ timeout: 2000 }),
         expect.any(AbortSignal),
+        expect.objectContaining({
+          stepId: 'step1',
+          correlationId: expect.any(String),
+        }),
       )
       expect(operationCallOrder).toContain('legacy-adapter-call')
     })
@@ -880,6 +902,10 @@ describe('Resilience Composition Order', () => {
         }),
         'retry-cb-timeout',
         expect.any(AbortSignal),
+        expect.objectContaining({
+          stepId: 'step1',
+          correlationId: expect.any(String),
+        }),
       )
     })
   })

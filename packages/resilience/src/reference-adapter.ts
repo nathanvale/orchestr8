@@ -6,8 +6,11 @@
 import type {
   CompositionOrder,
   ResilienceAdapter,
+  ResilienceInvocationContext,
   ResiliencePolicy,
 } from '@orchestr8/schema'
+
+import { TimeoutError } from './errors.js'
 
 /**
  * Simple reference resilience adapter that implements both legacy and new interfaces
@@ -19,9 +22,10 @@ export class ReferenceResilienceAdapter implements ResilienceAdapter {
    * @deprecated Use applyNormalizedPolicy for better control over composition order
    */
   async applyPolicy<T>(
-    operation: () => Promise<T>,
+    operation: (signal?: AbortSignal) => Promise<T>,
     policy: ResiliencePolicy,
     signal?: AbortSignal,
+    context?: ResilienceInvocationContext,
   ): Promise<T> {
     // For legacy interface, we use default retry-cb-timeout composition
     const normalizedPolicy = this.normalizePolicy(policy)
@@ -30,6 +34,7 @@ export class ReferenceResilienceAdapter implements ResilienceAdapter {
       normalizedPolicy,
       'retry-cb-timeout',
       signal,
+      context,
     )
   }
 
@@ -38,13 +43,15 @@ export class ReferenceResilienceAdapter implements ResilienceAdapter {
    * This provides better control and consistency across adapters
    */
   async applyNormalizedPolicy<T>(
-    operation: () => Promise<T>,
+    operation: (signal?: AbortSignal) => Promise<T>,
     normalizedPolicy: ResiliencePolicy,
     compositionOrder: CompositionOrder,
     signal?: AbortSignal,
+    _context?: ResilienceInvocationContext,
   ): Promise<T> {
     // For this simple reference implementation, we just log the composition order
     // and apply basic timeout and retry if present
+    // Context can be used for circuit breaker key derivation in production adapters
 
     if (signal?.aborted) {
       throw new Error('Operation was cancelled')
@@ -60,49 +67,64 @@ export class ReferenceResilienceAdapter implements ResilienceAdapter {
       return this.withRetry(operation, normalizedPolicy.retry, signal)
     }
 
-    // No resilience patterns, just execute
-    return operation()
+    // No resilience patterns, just execute with signal
+    return operation(signal)
   }
 
   /**
    * Simple timeout implementation
    */
   private async withTimeout<T>(
-    operation: () => Promise<T>,
+    operation: (signal?: AbortSignal) => Promise<T>,
     timeoutMs: number,
-    signal?: AbortSignal,
+    parentSignal?: AbortSignal,
   ): Promise<T> {
-    if (signal?.aborted) {
+    if (parentSignal?.aborted) {
       throw new Error('Operation was cancelled')
     }
 
     return new Promise<T>((resolve, reject) => {
+      // Create an AbortController for timeout
+      const timeoutController = new AbortController()
+
       const timeoutId = setTimeout(() => {
-        reject(new Error(`Operation timed out after ${timeoutMs}ms`))
+        timeoutController.abort()
+        reject(
+          new TimeoutError(
+            `Operation timed out after ${timeoutMs}ms`,
+            timeoutMs,
+          ),
+        )
       }, timeoutMs)
 
-      // Handle signal cancellation
+      // Combine parent signal with timeout signal
+      const combinedSignal = parentSignal
+        ? this.combineSignals([parentSignal, timeoutController.signal])
+        : timeoutController.signal
+
+      // Handle parent signal cancellation
       const abortHandler = () => {
         clearTimeout(timeoutId)
+        timeoutController.abort()
         reject(new Error('Operation was cancelled'))
       }
 
-      if (signal) {
-        signal.addEventListener('abort', abortHandler, { once: true })
+      if (parentSignal) {
+        parentSignal.addEventListener('abort', abortHandler, { once: true })
       }
 
-      operation()
+      operation(combinedSignal)
         .then((result) => {
           clearTimeout(timeoutId)
-          if (signal) {
-            signal.removeEventListener('abort', abortHandler)
+          if (parentSignal) {
+            parentSignal.removeEventListener('abort', abortHandler)
           }
           resolve(result)
         })
         .catch((error) => {
           clearTimeout(timeoutId)
-          if (signal) {
-            signal.removeEventListener('abort', abortHandler)
+          if (parentSignal) {
+            parentSignal.removeEventListener('abort', abortHandler)
           }
           reject(error)
         })
@@ -113,7 +135,7 @@ export class ReferenceResilienceAdapter implements ResilienceAdapter {
    * Simple retry implementation
    */
   private async withRetry<T>(
-    operation: () => Promise<T>,
+    operation: (signal?: AbortSignal) => Promise<T>,
     retryPolicy: NonNullable<ResiliencePolicy['retry']>,
     signal?: AbortSignal,
   ): Promise<T> {
@@ -125,7 +147,7 @@ export class ReferenceResilienceAdapter implements ResilienceAdapter {
       }
 
       try {
-        return await operation()
+        return await operation(signal)
       } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error))
 
@@ -180,6 +202,24 @@ export class ReferenceResilienceAdapter implements ResilienceAdapter {
   }
 
   /**
+   * Combine multiple abort signals into one
+   */
+  private combineSignals(signals: AbortSignal[]): AbortSignal {
+    const controller = new AbortController()
+
+    for (const signal of signals) {
+      if (signal.aborted) {
+        controller.abort()
+        break
+      }
+
+      signal.addEventListener('abort', () => controller.abort(), { once: true })
+    }
+
+    return controller.signal
+  }
+
+  /**
    * Normalize a resilience policy with default values
    */
   private normalizePolicy(policy: ResiliencePolicy): ResiliencePolicy {
@@ -197,6 +237,7 @@ export class ReferenceResilienceAdapter implements ResilienceAdapter {
 
     if (policy.circuitBreaker) {
       normalized.circuitBreaker = {
+        key: policy.circuitBreaker.key,
         failureThreshold: policy.circuitBreaker.failureThreshold ?? 5,
         recoveryTime: policy.circuitBreaker.recoveryTime ?? 30000,
         sampleSize: policy.circuitBreaker.sampleSize ?? 10,

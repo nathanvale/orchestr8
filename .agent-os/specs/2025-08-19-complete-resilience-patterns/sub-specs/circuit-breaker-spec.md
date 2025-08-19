@@ -17,7 +17,7 @@ Detailed specification for the circuit breaker pattern implementation in @orches
    - Successes reset or reduce failure count
    - Transitions to OPEN when failure threshold exceeded
 
-2. **OPEN** (Blocking Requests) 
+2. **OPEN** (Blocking Requests)
    - All requests immediately fail with CircuitBreakerOpenError
    - No requests reach the protected operation
    - Waits for recovery time before transitioning to HALF-OPEN
@@ -71,7 +71,7 @@ function deriveCircuitKey(context: ResilienceContext): string {
 ```typescript
 interface CircuitBreakerConfig {
   // ... existing fields ...
-  
+
   // Optional custom key for circuit isolation
   key?: string
 }
@@ -99,16 +99,16 @@ interface CircuitBreakerConfig {
 ```typescript
 // GOOD: Bounded, predictable keys
 const goodKeys = [
-  'service:user-api',           // Per service
-  'endpoint:GET:/api/users',    // Per endpoint
-  'workflow:order:step:payment' // Per workflow step
+  'service:user-api', // Per service
+  'endpoint:GET:/api/users', // Per endpoint
+  'workflow:order:step:payment', // Per workflow step
 ]
 
 // BAD: Unbounded, high-cardinality keys
 const badKeys = [
-  `user:${userId}`,              // Per user = millions of circuits
-  `request:${requestId}`,        // Per request = infinite circuits
-  `timestamp:${Date.now()}`      // Time-based = constant growth
+  `user:${userId}`, // Per user = millions of circuits
+  `request:${requestId}`, // Per request = infinite circuits
+  `timestamp:${Date.now()}`, // Time-based = constant growth
 ]
 
 // Key limits enforced:
@@ -126,13 +126,13 @@ const badKeys = [
 interface CircuitBreakerConfig {
   // Failure threshold to open circuit
   failureThreshold: number // e.g., 5
-  
+
   // Time in ms before attempting recovery
   recoveryTime: number // e.g., 30000 (30 seconds)
-  
+
   // Window size for failure tracking
   sampleSize: number // e.g., 10
-  
+
   // Strategy for half-open state
   halfOpenPolicy: 'single-probe' | 'gradual'
 }
@@ -145,7 +145,7 @@ const defaults = {
   failureThreshold: 5,
   recoveryTime: 30000,
   sampleSize: 10,
-  halfOpenPolicy: 'single-probe'
+  halfOpenPolicy: 'single-probe',
 }
 ```
 
@@ -158,18 +158,18 @@ Track last N requests (sampleSize) and calculate failure rate:
 ```typescript
 class SlidingWindow {
   private window: boolean[] = [] // true = success, false = failure
-  
+
   record(success: boolean) {
     this.window.push(success)
     if (this.window.length > this.sampleSize) {
       this.window.shift()
     }
   }
-  
+
   getFailureCount(): number {
-    return this.window.filter(s => !s).length
+    return this.window.filter((s) => !s).length
   }
-  
+
   shouldOpen(threshold: number): boolean {
     if (this.window.length < this.sampleSize) {
       // Not enough samples yet
@@ -187,17 +187,17 @@ Alternative: Track failures within time window (not implemented in MVP):
 ```typescript
 class TimeWindow {
   private failures: number[] = [] // timestamps
-  
+
   record(failed: boolean) {
     if (failed) {
       this.failures.push(Date.now())
     }
     this.cleanup()
   }
-  
+
   private cleanup() {
     const cutoff = Date.now() - this.windowMs
-    this.failures = this.failures.filter(t => t > cutoff)
+    this.failures = this.failures.filter((t) => t > cutoff)
   }
 }
 ```
@@ -214,7 +214,7 @@ if (state.status === 'half-open') {
     throw new CircuitBreakerOpenError()
   }
   state.probing = true
-  
+
   try {
     const result = await operation()
     this.transitionToClosed(key)
@@ -238,13 +238,13 @@ Allow increasing requests during half-open (future enhancement):
 if (state.status === 'half-open') {
   const allowedRequests = Math.min(
     state.successCount + 1,
-    this.maxGradualRequests
+    this.maxGradualRequests,
   )
-  
+
   if (state.currentRequests >= allowedRequests) {
     throw new CircuitBreakerOpenError()
   }
-  
+
   // Proceed with gradual increase
 }
 ```
@@ -259,37 +259,41 @@ Prevent unbounded growth of circuit state:
 class CircuitBreakerManager {
   private circuits = new Map<string, CircuitBreakerState>()
   private lastCleanup = Date.now()
-  
+
   private maybeCleanup() {
-    if (Date.now() - this.lastCleanup > 60000) { // Every minute
+    if (Date.now() - this.lastCleanup > 60000) {
+      // Every minute
       this.cleanup()
     }
   }
-  
+
   private cleanup() {
     const now = Date.now()
     const expired = now - 3600000 // 1 hour
-    
+
     for (const [key, state] of this.circuits) {
-      if (state.lastAccessTime < expired && 
-          state.status === 'closed' && 
-          state.failures === 0) {
+      if (
+        state.lastAccessTime < expired &&
+        state.status === 'closed' &&
+        state.failures === 0
+      ) {
         this.circuits.delete(key)
       }
     }
-    
+
     // Enforce max circuits
     if (this.circuits.size > 1000) {
-      const sorted = Array.from(this.circuits.entries())
-        .sort(([, a], [, b]) => a.lastAccessTime - b.lastAccessTime)
-      
+      const sorted = Array.from(this.circuits.entries()).sort(
+        ([, a], [, b]) => a.lastAccessTime - b.lastAccessTime,
+      )
+
       // Remove oldest 10%
       const toRemove = Math.floor(this.circuits.size * 0.1)
       sorted.slice(0, toRemove).forEach(([key]) => {
         this.circuits.delete(key)
       })
     }
-    
+
     this.lastCleanup = now
   }
 }
@@ -303,7 +307,7 @@ class CircuitBreakerManager {
 export class CircuitBreakerOpenError extends Error {
   public readonly code = 'CIRCUIT_BREAKER_OPEN'
   public readonly retryAfter: number
-  
+
   constructor(nextRetryTime: number) {
     super('Circuit breaker is open - service unavailable')
     this.name = 'CircuitBreakerOpenError'
@@ -313,7 +317,7 @@ export class CircuitBreakerOpenError extends Error {
 
 export class CircuitBreakerHalfOpenError extends Error {
   public readonly code = 'CIRCUIT_BREAKER_HALF_OPEN'
-  
+
   constructor() {
     super('Circuit breaker is half-open - probe in progress')
     this.name = 'CircuitBreakerHalfOpenError'
@@ -356,22 +360,22 @@ class CircuitBreaker {
   private async atomicTransition(
     key: string,
     from: State,
-    to: State
+    to: State,
   ): Promise<boolean> {
     const state = this.circuits.get(key)
-    
+
     if (state?.status !== from) {
       return false // State changed, abort transition
     }
-    
+
     // Atomic update
     state.status = to
     state.transitionTime = Date.now()
-    
+
     if (to === 'open') {
       state.nextHalfOpenTime = Date.now() + this.config.recoveryTime
     }
-    
+
     return true
   }
 }
@@ -389,7 +393,7 @@ class CircuitBreaker {
   constructor() {
     // No need for TimeProvider with vi.useFakeTimers()
   }
-  
+
   private now(): number {
     return Date.now() // Vitest controls this when using fake timers
   }
@@ -403,23 +407,21 @@ describe('Circuit Breaker', () => {
   beforeEach(() => {
     vi.useFakeTimers()
   })
-  
+
   afterEach(() => {
     vi.useRealTimers()
   })
-  
+
   it('should open after threshold failures', async () => {
     const cb = new CircuitBreaker()
-    
+
     // Simulate failures
     for (let i = 0; i < 5; i++) {
       await expect(cb.execute(failingOp)).rejects.toThrow()
     }
-    
+
     // Circuit should be open
-    await expect(cb.execute(operation)).rejects.toThrow(
-      CircuitBreakerOpenError
-    )
+    await expect(cb.execute(operation)).rejects.toThrow(CircuitBreakerOpenError)
   })
 })
 ```

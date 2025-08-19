@@ -49,4 +49,5 @@ The circuit breaker needs context about which workflow and step is executing to 
 
 - Tasks: @.agent-os/specs/2025-08-19-resilience-p0-prerequisites/tasks.md
 - Technical Specification: @.agent-os/specs/2025-08-19-resilience-p0-prerequisites/sub-specs/technical-spec.md
-- Tests Specification: @.agent-os/specs/2025-08-19-resilience-p0-prerequisites/sub-specs/tests.md
+- Tests Specification:
+  @.agent-os/specs/2025-08-19-resilience-p0-prerequisites/sub-specs/tests.md

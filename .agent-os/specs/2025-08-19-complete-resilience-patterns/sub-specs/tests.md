@@ -10,6 +10,7 @@ This is the tests coverage details for the spec detailed in @.agent-os/specs/202
 ### Unit Tests
 
 **CircuitBreaker Class**
+
 - State transitions (closed → open → half-open → closed)
 - Failure threshold detection with sliding window
 - Recovery time enforcement
@@ -19,6 +20,7 @@ This is the tests coverage details for the spec detailed in @.agent-os/specs/202
 - Signal cancellation during circuit operations
 
 **RetryStrategy Class**
+
 - Fixed backoff with configurable delay
 - Exponential backoff with proper scaling
 - Full jitter implementation (0 to max delay)
@@ -28,6 +30,7 @@ This is the tests coverage details for the spec detailed in @.agent-os/specs/202
 - Signal cancellation between retries
 
 **TimeoutWrapper Class**
+
 - Timeout enforcement for operations
 - Signal combination with parent signals
 - Proper cleanup on success and failure
@@ -35,6 +38,7 @@ This is the tests coverage details for the spec detailed in @.agent-os/specs/202
 - Race condition handling
 
 **CompositionEngine Class**
+
 - Middleware stack building from composition order
 - Proper layering for retry-cb-timeout
 - Proper layering for timeout-cb-retry
@@ -44,6 +48,7 @@ This is the tests coverage details for the spec detailed in @.agent-os/specs/202
 ### Integration Tests
 
 **Circuit Breaker Integration**
+
 - Circuit opens after repeated failures across retries
 - Circuit breaker prevents retry storms
 - Recovery testing with real time delays
@@ -51,6 +56,7 @@ This is the tests coverage details for the spec detailed in @.agent-os/specs/202
 - Concurrent request handling
 
 **Composition Order Tests**
+
 - retry-cb-timeout: Each retry goes through circuit breaker
 - timeout-cb-retry: Overall timeout bounds all retries
 - Mixed policies with partial configuration
@@ -58,6 +64,7 @@ This is the tests coverage details for the spec detailed in @.agent-os/specs/202
 - Order precedence validation
 
 **Error Propagation**
+
 - Original error stack preservation
 - Pattern context in error metadata
 - Circuit breaker open error handling
@@ -67,6 +74,7 @@ This is the tests coverage details for the spec detailed in @.agent-os/specs/202
 ### Feature Tests
 
 **End-to-End Workflow Resilience**
+
 - Workflow with failing step recovers via retry
 - Circuit breaker prevents cascade failures
 - Timeout prevents hanging workflows
@@ -74,6 +82,7 @@ This is the tests coverage details for the spec detailed in @.agent-os/specs/202
 - Fallback execution after resilience failure
 
 **Performance Tests**
+
 - Pattern overhead < 1ms
 - Memory usage remains bounded
 - Circuit state cleanup under load
@@ -82,12 +91,14 @@ This is the tests coverage details for the spec detailed in @.agent-os/specs/202
 ### Mocking Requirements
 
 **Time Control (Using Vitest)**
+
 - Use vi.useFakeTimers() for deterministic timing
 - Use vi.setSystemTime() for absolute time control
 - Use vi.advanceTimersByTime() for fast-forwarding
 - Use vi.runAllTimers() for immediate timer execution
 
 **Operation Mocking**
+
 - Configurable failure/success sequences
 - Variable execution times
 - Cancellation simulation
@@ -107,20 +118,20 @@ describe('Circuit Breaker', () => {
     it('should close from half-open on success')
     it('should reopen from half-open on failure')
   })
-  
+
   describe('Failure Detection', () => {
     it('should use sliding window for failure counting')
     it('should not open until sample size reached')
     it('should expire old failures from window')
     it('should reset window on success in closed state')
   })
-  
+
   describe('Half-Open Behavior', () => {
     it('should allow single probe in single-probe mode')
     it('should reject concurrent requests during probe')
     it.skip('should allow gradual traffic in gradual mode') // P1: Post-MVP enhancement
   })
-  
+
   describe('Memory Management', () => {
     it('should cleanup unused circuits after timeout')
     it('should enforce maximum circuit limit')
@@ -139,14 +150,14 @@ describe('Composition Order', () => {
     it('should stop retrying if circuit opens')
     it('should record failures in circuit breaker')
   })
-  
+
   describe('timeout-cb-retry', () => {
     it('should apply single timeout to all retries')
     it('should cancel retries when timeout expires')
     it('should check circuit once before retry sequence')
     it('should fail fast if circuit is open')
   })
-  
+
   describe('Edge Cases', () => {
     it('should handle partial policy configuration')
     it('should skip missing patterns in composition')
@@ -187,33 +198,33 @@ describe('Concurrency', () => {
 ```typescript
 class ResiliencePolicyBuilder {
   private policy: ResiliencePolicy = {}
-  
+
   withRetry(attempts = 3): this {
     this.policy.retry = {
       maxAttempts: attempts,
       backoffStrategy: 'exponential',
       jitterStrategy: 'full-jitter',
       initialDelay: 100,
-      maxDelay: 1000
+      maxDelay: 1000,
     }
     return this
   }
-  
+
   withCircuitBreaker(threshold = 5): this {
     this.policy.circuitBreaker = {
       failureThreshold: threshold,
       recoveryTime: 1000,
       sampleSize: 10,
-      halfOpenPolicy: 'single-probe'
+      halfOpenPolicy: 'single-probe',
     }
     return this
   }
-  
+
   withTimeout(ms = 1000): this {
     this.policy.timeout = ms
     return this
   }
-  
+
   build(): ResiliencePolicy {
     return { ...this.policy }
   }
@@ -227,34 +238,34 @@ class TestOperationBuilder {
   private behavior: 'success' | 'fail' | 'slow' | 'flaky' = 'success'
   private duration = 0
   private failureRate = 1.0
-  
+
   thatSucceeds(): this {
     this.behavior = 'success'
     return this
   }
-  
+
   thatFails(): this {
     this.behavior = 'fail'
     return this
   }
-  
+
   thatTakes(ms: number): this {
     this.duration = ms
     return this
   }
-  
+
   thatFailsRandomly(rate: number): this {
     this.behavior = 'flaky'
     this.failureRate = rate
     return this
   }
-  
+
   build(): () => Promise<string> {
     return async () => {
       if (this.duration > 0) {
         await sleep(this.duration)
       }
-      
+
       switch (this.behavior) {
         case 'success':
           return 'success'
@@ -284,12 +295,12 @@ describe('Performance', () => {
       .withCircuitBreaker()
       .withTimeout()
       .build()
-    
+
     const direct = await measureTime(operation)
     const withResilience = await measureTime(() =>
-      adapter.applyNormalizedPolicy(operation, policy, 'retry-cb-timeout')
+      adapter.applyNormalizedPolicy(operation, policy, 'retry-cb-timeout'),
     )
-    
+
     // Measure multiple runs for percentiles
     const measurements: Array<number> = []
     for (let i = 0; i < 100; i++) {
@@ -297,28 +308,30 @@ describe('Performance', () => {
       await adapter.applyNormalizedPolicy(operation, policy, 'retry-cb-timeout')
       measurements.push(performance.now() - start)
     }
-    
+
     measurements.sort((a, b) => a - b)
     const median = measurements[49]
     const p95 = measurements[94]
-    
+
     expect(median).toBeLessThan(1)
     expect(p95).toBeLessThan(2)
   })
-  
+
   it('should handle 1000 concurrent operations', async () => {
-    const operations = Array(1000).fill(0).map(() =>
-      adapter.applyNormalizedPolicy(
-        async () => 'result',
-        policy,
-        'retry-cb-timeout'
+    const operations = Array(1000)
+      .fill(0)
+      .map(() =>
+        adapter.applyNormalizedPolicy(
+          async () => 'result',
+          policy,
+          'retry-cb-timeout',
+        ),
       )
-    )
-    
+
     const start = Date.now()
     await Promise.all(operations)
     const duration = Date.now() - start
-    
+
     expect(duration).toBeLessThan(2000) // < 2ms per operation average
   })
 })

@@ -27,7 +27,7 @@ const mockRegistry: AgentRegistry = {
 
 // Mock resilience adapter
 const mockResilienceAdapter: ResilienceAdapter = {
-  applyPolicy: vi.fn((operation) => operation()),
+  applyPolicy: vi.fn((operation, policy, signal) => operation(signal)),
 }
 
 describe('Structured Logging', () => {

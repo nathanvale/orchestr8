@@ -17,6 +17,7 @@ export {
 export type {
   ResiliencePolicy,
   ResilienceAdapter,
+  ResilienceInvocationContext,
   CompositionOrder,
 } from './resilience.js'
 

@@ -4,6 +4,20 @@
  */
 
 /**
+ * Context passed to resilience adapters for circuit key derivation and correlation
+ */
+export interface ResilienceInvocationContext {
+  /** Unique identifier for the workflow instance */
+  workflowId: string
+  /** Identifier for the specific step being executed */
+  stepId: string
+  /** Optional correlation ID for tracing across retries and systems */
+  correlationId?: string
+  /** Optional metadata for custom observability */
+  metadata?: Record<string, unknown>
+}
+
+/**
  * Resilience policy configuration
  */
 export interface ResiliencePolicy {
@@ -22,6 +36,8 @@ export interface ResiliencePolicy {
    * Circuit breaker configuration
    */
   circuitBreaker?: {
+    /** Optional explicit key for circuit isolation (defaults to workflowId:stepId) */
+    key?: string
     failureThreshold: number
     recoveryTime: number
     sampleSize: number
@@ -48,27 +64,31 @@ export interface ResilienceAdapter {
    * @param operation The operation to wrap
    * @param policy The resilience policy to apply
    * @param signal Abort signal for cancellation
+   * @param context Optional invocation context for key derivation
    * @returns The wrapped operation
    * @deprecated Use applyNormalizedPolicy for better control over composition order
    */
   applyPolicy<T>(
-    operation: () => Promise<T>,
+    operation: (signal?: AbortSignal) => Promise<T>,
     policy: ResiliencePolicy,
     signal?: AbortSignal,
+    context?: ResilienceInvocationContext,
   ): Promise<T>
 
   /**
    * Apply normalized resilience policies to an operation with explicit composition order
-   * @param operation The operation to wrap
+   * @param operation The operation to wrap - accepts signal for middleware injection
    * @param normalizedPolicy The normalized resilience policy with all defaults applied
    * @param compositionOrder The order to compose resilience patterns (e.g., 'retry-cb-timeout')
    * @param signal Abort signal for cancellation
+   * @param context Optional invocation context for key derivation
    * @returns The wrapped operation
    */
   applyNormalizedPolicy?<T>(
-    operation: () => Promise<T>,
+    operation: (signal?: AbortSignal) => Promise<T>,
     normalizedPolicy: ResiliencePolicy,
     compositionOrder: CompositionOrder,
     signal?: AbortSignal,
+    context?: ResilienceInvocationContext,
   ): Promise<T>
 }

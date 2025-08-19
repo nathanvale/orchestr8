@@ -9,7 +9,9 @@ This is the technical specification for the spec detailed in @.agent-os/specs/20
 ## P0 Implementation Decisions
 
 ### 1. Operation Contract Decision
+
 **Decision**: Keep operation contract minimal - `(signal?: AbortSignal) => Promise<T>`
+
 - Operations remain focused on business logic without resilience context
 - Circuit breaker keys derived at adapter layer via:
   - Mandatory `key` in policy config, OR
@@ -17,7 +19,9 @@ This is the technical specification for the spec detailed in @.agent-os/specs/20
 - Clean separation between operation logic and resilience infrastructure
 
 ### 2. Retry Policy Schema
+
 **Decision**: Precise retry configuration with non-retryable error classification
+
 ```typescript
 interface RetryConfig {
   maxAttempts: number
@@ -35,27 +39,35 @@ interface RetryConfig {
 ```
 
 ### 3. Circuit Breaker Sliding Window
+
 **Decision**: Sliding window with natural displacement
+
 - Window maintains last `sampleSize` outcomes
 - Circuit opens when window is full AND failures >= `failureThreshold`
 - Successes naturally displace failures in window (no reset logic)
 - Window implemented as circular buffer for O(1) operations
 
 ### 4. Half-Open Concurrency Control
+
 **Decision**: Single-probe policy with deterministic rejection
+
 - Per-key probe lock prevents concurrent half-open tests
 - Rejected requests during probe receive `CircuitBreakerOpenError` with `nextRetryTime`
 - Successful probe transitions to closed, failed probe returns to open
 
 ### 5. Composition Order Validation
+
 **Decision**: Support only two patterns for MVP
+
 - Supported: `retry-cb-timeout` and `timeout-cb-retry`
 - Validation at adapter initialization
 - Clear error message for unsupported patterns
 - Skip missing patterns while preserving order
 
 ### 6. Error Consolidation
+
 **Decision**: Single source of truth in @orchestr8/resilience
+
 - One canonical `CircuitBreakerOpenError` class
 - Consistent error properties across all usages
 - Remove duplicates from core package
@@ -70,10 +82,12 @@ export class CircuitBreakerOpenError extends Error {
   public readonly code = 'CIRCUIT_BREAKER_OPEN'
   public readonly retryAfter: number // milliseconds until retry
   public readonly nextRetryTime: number // absolute timestamp
-  
+
   constructor(nextRetryTime: number) {
     const retryAfter = nextRetryTime - Date.now()
-    super(`Circuit breaker is open - service unavailable. Retry after ${retryAfter}ms`)
+    super(
+      `Circuit breaker is open - service unavailable. Retry after ${retryAfter}ms`,
+    )
     this.name = 'CircuitBreakerOpenError'
     this.retryAfter = retryAfter
     this.nextRetryTime = nextRetryTime
@@ -85,7 +99,7 @@ export class TimeoutError extends Error {
   public readonly code = 'TIMEOUT_ERROR'
   public readonly duration: number
   public readonly operation?: string
-  
+
   constructor(duration: number, operation?: string) {
     super(`Operation ${operation || 'unknown'} timed out after ${duration}ms`)
     this.name = 'TimeoutError'
@@ -99,7 +113,7 @@ export class RetryExhaustedError extends Error {
   public readonly code = 'RETRY_EXHAUSTED'
   public readonly attempts: number
   public readonly lastError: Error
-  
+
   constructor(attempts: number, lastError: Error) {
     super(`Retry exhausted after ${attempts} attempts: ${lastError.message}`)
     this.name = 'RetryExhaustedError'
@@ -168,7 +182,7 @@ interface ResilienceContext {
 ### Performance Requirements
 
 - **Target**: Median <1ms, P95 <2ms overhead for pattern application
-- **Measurement Method**: 
+- **Measurement Method**:
   - Warm execution (after JIT compilation)
   - Node.js 20+ on GitHub Actions ubuntu-latest runners
   - Measured as difference between direct operation and wrapped operation
@@ -183,10 +197,12 @@ interface ResilienceContext {
 ### Circuit Breaker Implementation
 
 **Option A: Simple State Machine**
+
 - Pros: Easy to understand, minimal dependencies, predictable behavior
 - Cons: Less sophisticated failure detection, no gradual recovery
 
 **Option B: Sliding Window with Percentiles** (Selected)
+
 - Pros: More accurate failure detection, configurable windows, better for bursty traffic
 - Cons: More complex implementation, slightly higher memory usage
 
@@ -195,10 +211,12 @@ interface ResilienceContext {
 ### Composition Architecture
 
 **Option A: Nested Function Calls**
+
 - Pros: Simple to implement, clear execution flow
 - Cons: Harder to debug, stack depth concerns
 
 **Option B: Middleware Chain Pattern** (Selected)
+
 - Pros: Composable, testable, clear separation of concerns, easier debugging
 - Cons: Slightly more complex initial setup
 
@@ -228,15 +246,15 @@ interface CircuitBreakerConfig {
 
 class CircuitBreaker {
   private states: Map<string, CircuitBreakerState>
-  
+
   async execute<T>(
     operation: ResilientOperation<T>,
     config: CircuitBreakerConfig,
-    context: ResilienceContext
+    context: ResilienceContext,
   ): Promise<T> {
     const key = config.key || this.deriveKey(context)
     const state = this.getOrCreateState(key, config)
-    
+
     // Check circuit state
     if (state.status === 'open') {
       if (Date.now() >= state.nextHalfOpenTime) {
@@ -255,7 +273,7 @@ class CircuitBreaker {
       // Reject concurrent requests during probe
       throw new CircuitBreakerOpenError(state.nextHalfOpenTime)
     }
-    
+
     try {
       const result = await operation(context.signal)
       this.recordSuccess(key, state, config)
@@ -265,35 +283,43 @@ class CircuitBreaker {
       throw error
     }
   }
-  
-  private recordSuccess(key: string, state: CircuitBreakerState, config: CircuitBreakerConfig): void {
+
+  private recordSuccess(
+    key: string,
+    state: CircuitBreakerState,
+    config: CircuitBreakerConfig,
+  ): void {
     // Add success to sliding window
     state.slidingWindow[state.windowIndex] = true
     state.windowIndex = (state.windowIndex + 1) % config.sampleSize
     state.windowSize = Math.min(state.windowSize + 1, config.sampleSize)
-    
+
     if (state.status === 'half-open') {
       state.status = 'closed'
       state.probeInProgress = false
     }
   }
-  
-  private recordFailure(key: string, state: CircuitBreakerState, config: CircuitBreakerConfig): void {
+
+  private recordFailure(
+    key: string,
+    state: CircuitBreakerState,
+    config: CircuitBreakerConfig,
+  ): void {
     // Add failure to sliding window
     state.slidingWindow[state.windowIndex] = false
     state.windowIndex = (state.windowIndex + 1) % config.sampleSize
     state.windowSize = Math.min(state.windowSize + 1, config.sampleSize)
-    
+
     // Check if we should open the circuit
     if (state.windowSize === config.sampleSize) {
-      const failures = state.slidingWindow.filter(outcome => !outcome).length
+      const failures = state.slidingWindow.filter((outcome) => !outcome).length
       if (failures >= config.failureThreshold) {
         state.status = 'open'
         state.nextHalfOpenTime = Date.now() + config.resetTimeout
         state.lastFailureTime = Date.now()
       }
     }
-    
+
     if (state.status === 'half-open') {
       // Failed probe, return to open
       state.status = 'open'
@@ -301,7 +327,7 @@ class CircuitBreaker {
       state.probeInProgress = false
     }
   }
-  
+
   private deriveKey(context: ResilienceContext): string {
     return `${context.workflowId}:${context.stepId}`
   }
@@ -312,45 +338,45 @@ class CircuitBreaker {
 
 ```typescript
 type ResilienceMiddleware<T> = (
-  next: ResilientOperation<T>
+  next: ResilientOperation<T>,
 ) => ResilientOperation<T>
 
 type CompositionOrder = 'retry-cb-timeout' | 'timeout-cb-retry' // Only supported patterns
 
 class CompositionEngine {
   private readonly SUPPORTED_PATTERNS = ['retry-cb-timeout', 'timeout-cb-retry']
-  
+
   composePatterns<T>(
     operation: ResilientOperation<T>,
     policies: ResiliencePolicy,
     order: CompositionOrder,
-    context: ResilienceContext
+    context: ResilienceContext,
   ): ResilientOperation<T> {
     // Validate composition order
     if (!this.SUPPORTED_PATTERNS.includes(order)) {
       throw new Error(
         `Unsupported composition order: ${order}. ` +
-        `Supported patterns: ${this.SUPPORTED_PATTERNS.join(', ')}`
+          `Supported patterns: ${this.SUPPORTED_PATTERNS.join(', ')}`,
       )
     }
-    
+
     const middlewares = this.createMiddlewares(policies, order, context)
-    
+
     // Apply middlewares in reverse order (innermost first)
     return middlewares.reduceRight(
       (next, middleware) => middleware(next),
-      operation
+      operation,
     )
   }
-  
+
   private createMiddlewares(
     policies: ResiliencePolicy,
     order: CompositionOrder,
-    context: ResilienceContext
+    context: ResilienceContext,
   ): Array<ResilienceMiddleware<any>> {
     const patterns = order.split('-') // ['retry', 'cb', 'timeout']
     const middlewares: Array<ResilienceMiddleware<any>> = []
-    
+
     for (const pattern of patterns) {
       switch (pattern) {
         case 'retry':
@@ -360,10 +386,12 @@ class CompositionEngine {
           break
         case 'cb':
           if (policies.circuitBreaker) {
-            middlewares.push(this.createCircuitBreakerMiddleware(
-              policies.circuitBreaker,
-              context
-            ))
+            middlewares.push(
+              this.createCircuitBreakerMiddleware(
+                policies.circuitBreaker,
+                context,
+              ),
+            )
           }
           break
         case 'timeout':
@@ -376,56 +404,61 @@ class CompositionEngine {
           break
       }
     }
-    
+
     return middlewares
   }
-  
-  private createRetryMiddleware(config: RetryConfig): ResilienceMiddleware<any> {
+
+  private createRetryMiddleware(
+    config: RetryConfig,
+  ): ResilienceMiddleware<any> {
     return (next: ResilientOperation<any>) => {
       return async (signal?: AbortSignal) => {
         let lastError: Error
-        
+
         for (let attempt = 1; attempt <= config.maxAttempts; attempt++) {
           try {
             return await next(signal)
           } catch (error) {
             lastError = error as Error
-            
+
             // Check if error is retryable
             if (error instanceof CircuitBreakerOpenError) {
               throw error // Never retry circuit breaker open
             }
-            
+
             if (config.retryOn && !config.retryOn(error as Error)) {
               throw error // Custom predicate says don't retry
             }
-            
+
             if (attempt === config.maxAttempts) {
               throw new RetryExhaustedError(attempt, lastError)
             }
-            
+
             // Calculate delay with backoff and jitter
             const delay = this.calculateDelay(attempt, config)
             await this.sleep(delay, signal)
           }
         }
-        
+
         throw new RetryExhaustedError(config.maxAttempts, lastError!)
       }
     }
   }
-  
+
   private calculateDelay(attempt: number, config: RetryConfig): number {
     let delay = config.initialDelay
-    
+
     if (config.backoffStrategy === 'exponential') {
-      delay = Math.min(config.initialDelay * Math.pow(2, attempt - 1), config.maxDelay)
+      delay = Math.min(
+        config.initialDelay * Math.pow(2, attempt - 1),
+        config.maxDelay,
+      )
     }
-    
+
     if (config.jitterStrategy === 'full') {
       delay = Math.random() * delay
     }
-    
+
     return delay
   }
 }
@@ -472,6 +505,7 @@ class CircuitBreakerOpenError extends Error {
 ## Implementation Phases
 
 ### Phase 1: Foundation (Immediate)
+
 1. **Error Type Consolidation**
    - Create canonical error classes in @orchestr8/resilience
    - Remove duplicates from @orchestr8/core
@@ -484,6 +518,7 @@ class CircuitBreakerOpenError extends Error {
    - Update `ResilienceAdapter` interface
 
 ### Phase 2: Circuit Breaker Implementation
+
 3. **Sliding Window State Machine**
    - Implement circular buffer for outcome tracking
    - Add per-key state management with Map
@@ -497,6 +532,7 @@ class CircuitBreakerOpenError extends Error {
    - Add custom retry predicates
 
 ### Phase 3: Composition Engine
+
 5. **Pattern Composition**
    - Implement middleware chain pattern
    - Validate composition orders at initialization
@@ -510,6 +546,7 @@ class CircuitBreakerOpenError extends Error {
    - Preserve error stack traces
 
 ### Phase 4: Testing & Validation
+
 7. **Comprehensive Test Suite**
    - Unit tests for each pattern
    - Integration tests for compositions
