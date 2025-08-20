@@ -2289,4 +2289,258 @@ describe('OrchestrationEngine', () => {
       expect(result.steps.step1?.status).toBe('completed')
     })
   })
+
+  describe('resilience error mapping', () => {
+    it('should map TimeoutError to TIMEOUT ExecutionError code', async () => {
+      // Arrange - Import TimeoutError
+      const { TimeoutError } = await import('@orchestr8/resilience')
+
+      const testAgent = {
+        id: 'test-agent',
+        name: 'Test Agent',
+        execute: vi
+          .fn()
+          .mockRejectedValue(
+            new TimeoutError('Operation timed out', 5000, 'test-operation'),
+          ),
+      }
+
+      const testRegistry: AgentRegistry = {
+        getAgent: vi.fn().mockReturnValue(testAgent),
+      }
+
+      const engine = new OrchestrationEngine({
+        agentRegistry: testRegistry,
+        resilienceAdapter: mockResilienceAdapter,
+      })
+
+      const workflow: Workflow = {
+        id: 'test-workflow',
+        version: '1.0.0',
+        name: 'Test Timeout Error Mapping',
+        steps: [
+          {
+            id: 'step1',
+            type: 'agent',
+            agentId: 'test-agent',
+            input: {},
+          },
+        ],
+      }
+
+      // Act
+      const result = await engine.execute(workflow, {})
+
+      // Assert
+      expect(result.status).toBe('failed')
+      expect(result.errors).toHaveLength(1)
+      expect(result.errors![0].code).toBe(ExecutionErrorCode.TIMEOUT)
+      expect(result.errors![0].context).toEqual({
+        timeoutMs: 5000,
+        operationName: 'test-operation',
+      })
+    })
+
+    it('should map CircuitBreakerOpenError to CIRCUIT_OPEN ExecutionError code', async () => {
+      // Arrange - Import CircuitBreakerOpenError
+      const { CircuitBreakerOpenError } = await import('@orchestr8/resilience')
+
+      const retryAfter = new Date(Date.now() + 30000) // 30 seconds from now
+      const testAgent = {
+        id: 'test-agent',
+        name: 'Test Agent',
+        execute: vi
+          .fn()
+          .mockRejectedValue(
+            new CircuitBreakerOpenError(
+              'Circuit breaker is open',
+              'test-service',
+              retryAfter,
+              5,
+            ),
+          ),
+      }
+
+      const testRegistry: AgentRegistry = {
+        getAgent: vi.fn().mockReturnValue(testAgent),
+      }
+
+      const engine = new OrchestrationEngine({
+        agentRegistry: testRegistry,
+        resilienceAdapter: mockResilienceAdapter,
+      })
+
+      const workflow: Workflow = {
+        id: 'test-workflow',
+        version: '1.0.0',
+        name: 'Test Circuit Breaker Error Mapping',
+        steps: [
+          {
+            id: 'step1',
+            type: 'agent',
+            agentId: 'test-agent',
+            input: {},
+          },
+        ],
+      }
+
+      // Act
+      const result = await engine.execute(workflow, {})
+
+      // Assert
+      expect(result.status).toBe('failed')
+      expect(result.errors).toHaveLength(1)
+      expect(result.errors![0].code).toBe(ExecutionErrorCode.CIRCUIT_OPEN)
+      expect(result.errors![0].context).toEqual({
+        circuitKey: 'test-service',
+        nextRetryTime: retryAfter.getTime(),
+        consecutiveFailures: 5,
+      })
+    })
+
+    it('should map RetryExhaustedError to RETRYABLE ExecutionError code', async () => {
+      // Arrange - Import RetryExhaustedError
+      const { RetryExhaustedError } = await import('@orchestr8/resilience')
+
+      const originalError = new Error('Service unavailable')
+      const testAgent = {
+        id: 'test-agent',
+        name: 'Test Agent',
+        execute: vi
+          .fn()
+          .mockRejectedValue(
+            new RetryExhaustedError(
+              'Retry exhausted after 3 attempts',
+              3,
+              originalError,
+            ),
+          ),
+      }
+
+      const testRegistry: AgentRegistry = {
+        getAgent: vi.fn().mockReturnValue(testAgent),
+      }
+
+      const engine = new OrchestrationEngine({
+        agentRegistry: testRegistry,
+        resilienceAdapter: mockResilienceAdapter,
+      })
+
+      const workflow: Workflow = {
+        id: 'test-workflow',
+        version: '1.0.0',
+        name: 'Test Retry Exhausted Error Mapping',
+        steps: [
+          {
+            id: 'step1',
+            type: 'agent',
+            agentId: 'test-agent',
+            input: {},
+          },
+        ],
+      }
+
+      // Act
+      const result = await engine.execute(workflow, {})
+
+      // Assert
+      expect(result.status).toBe('failed')
+      expect(result.errors).toHaveLength(1)
+      expect(result.errors![0].code).toBe(ExecutionErrorCode.RETRYABLE)
+      expect(result.errors![0].context).toEqual({
+        attempts: 3,
+        lastError: originalError,
+      })
+    })
+
+    it('should preserve existing ExecutionError codes', async () => {
+      // Arrange
+      const testAgent = {
+        id: 'test-agent',
+        name: 'Test Agent',
+        execute: vi
+          .fn()
+          .mockRejectedValue(
+            createExecutionError(
+              ExecutionErrorCode.VALIDATION,
+              'Validation failed',
+              { context: { field: 'required' } },
+            ),
+          ),
+      }
+
+      const testRegistry: AgentRegistry = {
+        getAgent: vi.fn().mockReturnValue(testAgent),
+      }
+
+      const engine = new OrchestrationEngine({
+        agentRegistry: testRegistry,
+        resilienceAdapter: mockResilienceAdapter,
+      })
+
+      const workflow: Workflow = {
+        id: 'test-workflow',
+        version: '1.0.0',
+        name: 'Test Existing ExecutionError Preservation',
+        steps: [
+          {
+            id: 'step1',
+            type: 'agent',
+            agentId: 'test-agent',
+            input: {},
+          },
+        ],
+      }
+
+      // Act
+      const result = await engine.execute(workflow, {})
+
+      // Assert
+      expect(result.status).toBe('failed')
+      expect(result.errors).toHaveLength(1)
+      expect(result.errors![0].code).toBe(ExecutionErrorCode.VALIDATION)
+      expect(result.errors![0].context).toEqual({ field: 'required' })
+    })
+
+    it('should fall back to UNKNOWN for unrecognized errors', async () => {
+      // Arrange
+      const testAgent = {
+        id: 'test-agent',
+        name: 'Test Agent',
+        execute: vi.fn().mockRejectedValue(new Error('Unknown error type')),
+      }
+
+      const testRegistry: AgentRegistry = {
+        getAgent: vi.fn().mockReturnValue(testAgent),
+      }
+
+      const engine = new OrchestrationEngine({
+        agentRegistry: testRegistry,
+        resilienceAdapter: mockResilienceAdapter,
+      })
+
+      const workflow: Workflow = {
+        id: 'test-workflow',
+        version: '1.0.0',
+        name: 'Test Unknown Error Mapping',
+        steps: [
+          {
+            id: 'step1',
+            type: 'agent',
+            agentId: 'test-agent',
+            input: {},
+          },
+        ],
+      }
+
+      // Act
+      const result = await engine.execute(workflow, {})
+
+      // Assert
+      expect(result.status).toBe('failed')
+      expect(result.errors).toHaveLength(1)
+      expect(result.errors![0].code).toBe(ExecutionErrorCode.UNKNOWN)
+      expect(result.errors![0].message).toBe('Unknown error type')
+    })
+  })
 })

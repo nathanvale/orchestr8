@@ -54,17 +54,11 @@ export interface TimeoutConfig {
 }
 
 /**
- * Extended resilience context with all required fields
+ * Extended resilience context with signal for cancellation
+ * Makes workflowId and stepId optional for standalone usage
  */
-export interface ResilienceContext {
-  /** Workflow identifier */
-  workflowId?: string
-  /** Step identifier */
-  stepId?: string
-  /** Correlation ID for distributed tracing */
-  correlationId?: string
-  /** Additional metadata */
-  metadata?: Record<string, unknown>
+export interface ResilienceContext
+  extends Partial<ResilienceInvocationContext> {
   /** AbortSignal for cancellation propagation */
   signal?: AbortSignal
 }
@@ -87,6 +81,8 @@ export interface CircuitBreakerState {
   nextHalfOpenTime?: number
   /** Lock to prevent concurrent probes in half-open state */
   probeInProgress: boolean
+  /** Last access time for LRU cleanup */
+  lastAccessTime?: number
 }
 
 /**

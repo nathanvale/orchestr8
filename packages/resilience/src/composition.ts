@@ -14,7 +14,9 @@ import type {
   TimeoutConfig,
 } from './types.js'
 
+import { CircuitBreaker } from './circuit-breaker.js'
 import { CircuitBreakerOpenError } from './errors.js'
+import { deriveKey } from './key-derivation.js'
 
 /**
  * Middleware function type - wraps an operation with resilience behavior
@@ -27,7 +29,10 @@ export type ResilienceMiddleware<T> = (
 /**
  * Wrapper function type for individual resilience patterns
  */
-export type PatternWrapper<T, C = RetryConfig | CircuitBreakerConfig | TimeoutConfig> = (
+export type PatternWrapper<
+  T,
+  C = RetryConfig | CircuitBreakerConfig | TimeoutConfig,
+> = (
   operation: ResilientOperation<T>,
   config: C,
   context?: ResilienceContext,
@@ -57,8 +62,13 @@ export class ResilienceComposer {
   /**
    * Set the circuit breaker pattern wrapper implementation
    */
-  setCircuitBreakerWrapper<T>(wrapper: PatternWrapper<T, CircuitBreakerConfig>): void {
-    this.circuitBreakerWrapper = wrapper as PatternWrapper<unknown, CircuitBreakerConfig>
+  setCircuitBreakerWrapper<T>(
+    wrapper: PatternWrapper<T, CircuitBreakerConfig>,
+  ): void {
+    this.circuitBreakerWrapper = wrapper as PatternWrapper<
+      unknown,
+      CircuitBreakerConfig
+    >
   }
 
   /**
@@ -191,9 +201,7 @@ export async function defaultRetryWrapper<T>(
 
   for (let attempt = 1; attempt <= config.maxAttempts; attempt++) {
     // Check for cancellation
-    if (context?.signal?.aborted) {
-      throw new Error('Operation was cancelled')
-    }
+    if (context?.signal?.aborted) throw new Error('Operation was cancelled')
 
     try {
       return await operation(context?.signal)
@@ -220,7 +228,7 @@ export async function defaultRetryWrapper<T>(
           config.jitterStrategy,
         )
 
-        await sleep(delay)
+        await sleep(delay, context?.signal)
       }
     }
   }
@@ -288,17 +296,22 @@ export async function defaultTimeoutWrapper<T>(
 }
 
 /**
- * Default circuit breaker wrapper - placeholder for now
- * Will be replaced with actual implementation from circuit-breaker.ts
+ * Default circuit breaker wrapper using CircuitBreaker class
  */
 export async function defaultCircuitBreakerWrapper<T>(
   operation: ResilientOperation<T>,
   config: CircuitBreakerConfig,
   context?: ResilienceContext,
 ): Promise<T> {
-  // For now, just pass through
-  // Actual implementation will use CircuitBreaker class
-  return operation(context?.signal)
+  // Derive key for circuit isolation
+  const key = deriveKey(context, config)
+
+  // Create or reuse circuit breaker instance
+  // Note: In production, this should be cached/singleton per config
+  const circuitBreaker = new CircuitBreaker(config)
+
+  // Execute through circuit breaker
+  return circuitBreaker.execute(key, () => operation(context?.signal))
 }
 
 /**
@@ -329,8 +342,28 @@ function calculateBackoffDelay(
 /**
  * Sleep for specified milliseconds
  */
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms))
+function sleep(ms: number, signal?: AbortSignal): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (ms <= 0) return resolve()
+    if (signal?.aborted) return reject(new Error('Operation was cancelled'))
+    const timeoutId = setTimeout(() => {
+      cleanup()
+      resolve()
+    }, ms)
+    const onAbort = () => {
+      clearTimeout(timeoutId)
+      cleanup()
+      reject(new Error('Operation was cancelled'))
+    }
+    const cleanup = () => {
+      if (signal && typeof signal.removeEventListener === 'function') {
+        signal.removeEventListener('abort', onAbort)
+      }
+    }
+    if (signal && typeof signal.addEventListener === 'function') {
+      signal.addEventListener('abort', onAbort, { once: true })
+    }
+  })
 }
 
 /**

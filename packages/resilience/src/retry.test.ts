@@ -70,23 +70,20 @@ describe('RetryWrapper', () => {
       const lastError = new Error('persistent failure')
       const operation = vi.fn().mockRejectedValue(lastError)
 
-      // Start execution but don't await yet
-      const promise = retry.execute(operation)
+      // Start execution and immediately attach catch handler
+      const promise = retry.execute(operation).catch((e) => e)
 
       // Run all timers to process retries
       await vi.runAllTimersAsync()
 
-      // Now check the rejection
-      try {
-        await promise
-        expect.fail('Should have thrown')
-      } catch (error) {
-        expect(error).toBeInstanceOf(RetryExhaustedError)
-        if (error instanceof RetryExhaustedError) {
-          expect(error.attempts).toBe(2)
-          expect(error.lastError).toBe(lastError)
-        }
-      }
+      // Now check the error
+      const error = await promise
+      expect(error).toBeInstanceOf(RetryExhaustedError)
+      expect(error).toMatchObject({
+        message: expect.stringContaining('Retry exhausted after 2 attempts'),
+        attempts: 2,
+        lastError,
+      })
 
       expect(operation).toHaveBeenCalledTimes(2)
     })
@@ -149,7 +146,7 @@ describe('RetryWrapper', () => {
       const retry = new RetryWrapper(config)
       const operation = vi.fn().mockRejectedValue(new Error('fail'))
 
-      const promise = retry.execute(operation)
+      const promise = retry.execute(operation).catch((e) => e)
 
       // First attempt fails immediately
       await vi.advanceTimersByTimeAsync(0)
@@ -168,12 +165,8 @@ describe('RetryWrapper', () => {
       expect(operation).toHaveBeenCalledTimes(4)
 
       // Now await the promise to check it's rejected
-      try {
-        await promise
-        expect.fail('Should have thrown')
-      } catch (error) {
-        expect(error).toBeInstanceOf(RetryExhaustedError)
-      }
+      const error = await promise
+      expect(error).toBeInstanceOf(RetryExhaustedError)
     })
 
     it('uses exponential backoff', async () => {
@@ -187,7 +180,7 @@ describe('RetryWrapper', () => {
       const retry = new RetryWrapper(config)
       const operation = vi.fn().mockRejectedValue(new Error('fail'))
 
-      const promise = retry.execute(operation)
+      const promise = retry.execute(operation).catch((e) => e)
 
       // First attempt fails immediately
       await vi.advanceTimersByTimeAsync(0)
@@ -206,12 +199,8 @@ describe('RetryWrapper', () => {
       expect(operation).toHaveBeenCalledTimes(4)
 
       // Now await the promise to check it's rejected
-      try {
-        await promise
-        expect.fail('Should have thrown')
-      } catch (error) {
-        expect(error).toBeInstanceOf(RetryExhaustedError)
-      }
+      const error = await promise
+      expect(error).toBeInstanceOf(RetryExhaustedError)
     })
 
     it('respects maxDelay cap', async () => {
@@ -225,7 +214,7 @@ describe('RetryWrapper', () => {
       const retry = new RetryWrapper(config)
       const operation = vi.fn().mockRejectedValue(new Error('fail'))
 
-      const promise = retry.execute(operation)
+      const promise = retry.execute(operation).catch((e) => e)
 
       // First attempt
       await vi.advanceTimersByTimeAsync(0)
@@ -248,12 +237,8 @@ describe('RetryWrapper', () => {
       expect(operation).toHaveBeenCalledTimes(5)
 
       // Now await the promise to check it's rejected
-      try {
-        await promise
-        expect.fail('Should have thrown')
-      } catch (error) {
-        expect(error).toBeInstanceOf(RetryExhaustedError)
-      }
+      const error = await promise
+      expect(error).toBeInstanceOf(RetryExhaustedError)
     })
   })
 
@@ -272,7 +257,7 @@ describe('RetryWrapper', () => {
         .mockRejectedValueOnce(new Error('fail'))
         .mockResolvedValue('success')
 
-      const promise = retry.execute(operation)
+      const promise = retry.execute(operation).catch((e) => e)
 
       // First attempt
       await vi.advanceTimersByTimeAsync(0)
@@ -304,7 +289,7 @@ describe('RetryWrapper', () => {
         .mockRejectedValueOnce(new Error('fail'))
         .mockResolvedValue('success')
 
-      const promise = retry.execute(operation)
+      const promise = retry.execute(operation).catch((e) => e)
 
       // First attempt
       await vi.advanceTimersByTimeAsync(0)
@@ -464,16 +449,12 @@ describe('RetryWrapper', () => {
       const retry = RetryWrapper.withDefaults()
       const operation = vi.fn().mockRejectedValue(new Error('fail'))
 
-      const promise = retry.execute(operation)
+      const promise = retry.execute(operation).catch((e) => e)
       await vi.runAllTimersAsync()
 
       // Now await the promise to check it's rejected
-      try {
-        await promise
-        expect.fail('Should have thrown')
-      } catch (error) {
-        expect(error).toBeInstanceOf(RetryExhaustedError)
-      }
+      const error = await promise
+      expect(error).toBeInstanceOf(RetryExhaustedError)
       expect(operation).toHaveBeenCalledTimes(3) // Default maxAttempts
     })
   })
@@ -530,16 +511,12 @@ describe('RetryWrapper', () => {
         throw new Error('sync error')
       })
 
-      const promise = retry.execute(operation)
+      const promise = retry.execute(operation).catch((e) => e)
       await vi.runAllTimersAsync()
 
       // Now await the promise to check it's rejected
-      try {
-        await promise
-        expect.fail('Should have thrown')
-      } catch (error) {
-        expect(error).toBeInstanceOf(RetryExhaustedError)
-      }
+      const error = await promise
+      expect(error).toBeInstanceOf(RetryExhaustedError)
       expect(operation).toHaveBeenCalledTimes(2)
     })
   })

@@ -4,10 +4,7 @@
 
 import { describe, expect, it, vi } from 'vitest'
 
-import type {
-  NormalizedResilienceConfig,
-  ResilienceContext,
-} from './types.js'
+import type { NormalizedResilienceConfig, ResilienceContext } from './types.js'
 
 import { ResilienceComposer } from './composition.js'
 import { CircuitBreakerOpenError } from './errors.js'

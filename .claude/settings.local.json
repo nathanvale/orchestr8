@@ -65,7 +65,9 @@
       "Bash(pnpm -w run format)",
       "Bash(pnpm:*)",
       "Bash(npx vitest list:*)",
-      "Bash(npx eslint:*)"
+      "Bash(npx eslint:*)",
+      "Bash(timeout 10 pnpm:*)",
+      "Bash(LOG_LEVEL=none pnpm benchmark)"
     ],
     "deny": [],
     "ask": [],

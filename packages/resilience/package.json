@@ -19,16 +19,19 @@
     "dev": "tsc --watch",
     "test": "vitest",
     "test:ci": "vitest --run",
+    "benchmark": "tsx src/benchmark.ts",
     "lint": "eslint src --max-warnings 0",
     "type-check": "tsc --noEmit",
     "format:check": "prettier --check src",
     "clean": "rimraf dist *.tsbuildinfo"
   },
   "dependencies": {
-    "@orchestr8/schema": "workspace:*"
+    "@orchestr8/schema": "workspace:*",
+    "@orchestr8/logger": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^24.0.8",
+    "tsx": "^4.20.4",
     "typescript": "^5.8.3",
     "vitest": "^3.2.4"
   }

@@ -7,18 +7,33 @@ import type { CircuitBreakerConfig, CircuitBreakerState } from './types.js'
 import { CircuitBreakerOpenError } from './errors.js'
 
 /**
+ * Observer interface for circuit breaker state changes (optional)
+ */
+export interface CircuitBreakerObserver {
+  onStateChange?: (key: string, state: 'closed' | 'open' | 'half-open') => void
+}
+
+/**
  * Circuit breaker with sliding window for outcome tracking
  */
 export class CircuitBreaker {
   private states: Map<string, CircuitBreakerState> = new Map()
   private readonly maxCircuits = 1000 // Bounded state map
+  private lastCleanup = Date.now()
+  private readonly cleanupInterval = 60000 // Cleanup every minute
 
-  constructor(private readonly config: CircuitBreakerConfig) {}
+  constructor(
+    private readonly config: CircuitBreakerConfig,
+    private readonly observer?: CircuitBreakerObserver,
+  ) {}
 
   /**
    * Get or create circuit state for a given key
    */
   private getState(key: string): CircuitBreakerState {
+    // Perform lazy cleanup if needed
+    this.performLazyCleanup()
+
     let state = this.states.get(key)
 
     if (!state) {
@@ -36,11 +51,53 @@ export class CircuitBreaker {
         windowIndex: 0,
         windowSize: 0,
         probeInProgress: false,
+        lastAccessTime: Date.now(),
       }
       this.states.set(key, state)
+    } else {
+      // Update access time for LRU tracking
+      state.lastAccessTime = Date.now()
     }
 
     return state
+  }
+
+  /**
+   * Perform lazy cleanup of expired circuits
+   */
+  private performLazyCleanup(): void {
+    const now = Date.now()
+
+    // Only cleanup periodically
+    if (now - this.lastCleanup < this.cleanupInterval) {
+      return
+    }
+
+    this.lastCleanup = now
+    const expiredThreshold = now - this.config.recoveryTime * 10 // Keep circuits for 10x recovery timeout
+
+    // Remove expired circuits
+    const keysToDelete: string[] = []
+    for (const [key, state] of this.states.entries()) {
+      // Remove if:
+      // 1. Circuit is closed and hasn't been accessed recently
+      // 2. Circuit is open but past its expiry time
+      const isExpired =
+        state.lastAccessTime && state.lastAccessTime < expiredThreshold
+      const isStaleOpen =
+        state.status === 'open' &&
+        state.nextHalfOpenTime &&
+        state.nextHalfOpenTime < expiredThreshold
+
+      if (isExpired || isStaleOpen) {
+        keysToDelete.push(key)
+      }
+    }
+
+    // Delete expired circuits
+    for (const key of keysToDelete) {
+      this.states.delete(key)
+    }
   }
 
   /**
@@ -117,6 +174,7 @@ export class CircuitBreaker {
     // Check for state transitions
     if (state.status === 'open' && this.canTransitionToHalfOpen(state)) {
       state.status = 'half-open'
+      this.observer?.onStateChange?.(key, 'half-open')
       state.probeInProgress = false
     }
 
@@ -135,9 +193,11 @@ export class CircuitBreaker {
       }
 
       case 'half-open': {
-        // Single probe policy - only one request tests recovery
-        if (state.probeInProgress) {
-          // Reject concurrent requests during probe
+        // Half-open behavior depends on policy:
+        // - 'single-probe': allow only one in-flight probe; others rejected
+        // - 'gradual': allow concurrent probes; first success closes circuit
+        const singleProbe = this.config.halfOpenPolicy === 'single-probe'
+        if (singleProbe && state.probeInProgress) {
           const retryAfter = Date.now() + 1000 // Retry in 1 second
           throw new CircuitBreakerOpenError(
             `Circuit breaker '${key}' is testing recovery`,
@@ -147,14 +207,17 @@ export class CircuitBreaker {
           )
         }
 
-        // Acquire probe lock
-        state.probeInProgress = true
+        if (singleProbe) {
+          // Acquire probe lock for single-probe mode
+          state.probeInProgress = true
+        }
 
         try {
           const result = await operation()
 
           // Success - transition to closed
           state.status = 'closed'
+          this.observer?.onStateChange?.(key, 'closed')
           state.probeInProgress = false
           state.lastFailureTime = undefined
           state.nextHalfOpenTime = undefined
@@ -164,11 +227,20 @@ export class CircuitBreaker {
 
           return result
         } catch (error) {
-          // Failure - return to open
-          state.status = 'open'
+          // Failure - return to open for single-probe. In gradual mode, remain half-open
+          if (singleProbe) {
+            state.status = 'open'
+            this.observer?.onStateChange?.(key, 'open')
+            state.nextHalfOpenTime = Date.now() + this.config.recoveryTime
+          } else {
+            // In gradual mode, keep half-open, and set next half-open window to avoid hammering
+            state.status = 'half-open'
+            this.observer?.onStateChange?.(key, 'half-open')
+            state.nextHalfOpenTime =
+              Date.now() + Math.floor(this.config.recoveryTime / 2)
+          }
           state.probeInProgress = false
           state.lastFailureTime = Date.now()
-          state.nextHalfOpenTime = Date.now() + this.config.recoveryTime
 
           // Record failure
           this.recordOutcome(state, false)
@@ -195,6 +267,7 @@ export class CircuitBreaker {
           // Check if circuit should open
           if (this.shouldOpen(state)) {
             state.status = 'open'
+            this.observer?.onStateChange?.(key, 'open')
             state.nextHalfOpenTime = Date.now() + this.config.recoveryTime
           }
 
@@ -223,6 +296,13 @@ export class CircuitBreaker {
    */
   resetAll(): void {
     this.states.clear()
+  }
+
+  /**
+   * Get debug info for a circuit (for testing)
+   */
+  getDebugInfo(key: string): CircuitBreakerState | undefined {
+    return this.states.get(key)
   }
 
   /**

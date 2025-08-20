@@ -8,6 +8,7 @@ import { NoopLogger } from '@orchestr8/logger'
 import {
   createExecutionError,
   ExecutionErrorCode,
+  isExecutionError,
   type AgentStep,
   type ExecutionContext as SchemaExecutionContext,
   type ExecutionError,
@@ -19,6 +20,11 @@ import {
   type ResilienceInvocationContext,
   type ResiliencePolicy,
 } from '@orchestr8/schema'
+import {
+  isTimeoutError,
+  isCircuitBreakerOpenError,
+  isRetryExhaustedError,
+} from '@orchestr8/resilience'
 
 import type {
   AgentRegistry,
@@ -1315,22 +1321,55 @@ export class OrchestrationEngine implements IOrchestrationEngine {
    * Normalize errors to ExecutionError
    */
   private normalizeError(error: unknown, stepId?: string): ExecutionError {
-    // Check if it's already an ExecutionError
-    if (
-      error &&
-      typeof error === 'object' &&
-      'code' in error &&
-      'message' in error &&
-      typeof (error as ExecutionError).code === 'string'
-    ) {
+    // Check if it's already an ExecutionError using proper type guard
+    if (isExecutionError(error)) {
       // It's already an ExecutionError, just add stepId if missing
-      const executionError = error as ExecutionError
-      if (stepId && !executionError.stepId) {
-        return { ...executionError, stepId }
+      if (stepId && !error.stepId) {
+        return { ...error, stepId }
       }
-      return executionError
+      return error
     }
 
+    // Map resilience errors to appropriate ExecutionError codes
+    if (isTimeoutError(error)) {
+      return createExecutionError(ExecutionErrorCode.TIMEOUT, error.message, {
+        stepId,
+        cause: error,
+        context: {
+          timeoutMs: error.timeoutMs,
+          operationName: error.operationName,
+        },
+      })
+    }
+
+    if (isCircuitBreakerOpenError(error)) {
+      return createExecutionError(
+        ExecutionErrorCode.CIRCUIT_OPEN,
+        error.message,
+        {
+          stepId,
+          cause: error,
+          context: {
+            circuitKey: error.circuitKey,
+            nextRetryTime: error.nextRetryTime,
+            consecutiveFailures: error.consecutiveFailures,
+          },
+        },
+      )
+    }
+
+    if (isRetryExhaustedError(error)) {
+      return createExecutionError(ExecutionErrorCode.RETRYABLE, error.message, {
+        stepId,
+        cause: error,
+        context: {
+          attempts: error.attempts,
+          lastError: error.lastError,
+        },
+      })
+    }
+
+    // Fall back to UNKNOWN for unrecognized errors
     return createExecutionError(
       ExecutionErrorCode.UNKNOWN,
       error instanceof Error ? error.message : String(error),

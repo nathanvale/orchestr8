@@ -47,15 +47,60 @@ function applyJitter(delay: number, jitterStrategy: 'none' | 'full'): number {
 /**
  * Sleep for specified milliseconds
  */
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms))
+function sleep(ms: number, signal?: AbortSignal): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (ms <= 0) return resolve()
+    if (signal?.aborted) return reject(new Error('Operation was cancelled'))
+
+    const timeoutId = setTimeout(() => {
+      cleanup()
+      resolve()
+    }, ms)
+
+    const onAbort = () => {
+      clearTimeout(timeoutId)
+      cleanup()
+      reject(new Error('Operation was cancelled'))
+    }
+
+    const cleanup = () => {
+      if (signal && typeof signal.removeEventListener === 'function') {
+        signal.removeEventListener('abort', onAbort)
+      }
+    }
+
+    if (signal && typeof signal.addEventListener === 'function') {
+      signal.addEventListener('abort', onAbort, { once: true })
+    }
+  })
 }
+
+/**
+ * Callback for retry events
+ */
+export type RetryCallback = (
+  attempt: number,
+  delay: number,
+  error: unknown,
+) => void
 
 /**
  * Retry wrapper with configurable backoff and jitter
  */
 export class RetryWrapper {
-  constructor(private readonly config: RetryConfig) {}
+  private attemptCount = 0
+
+  constructor(
+    private readonly config: RetryConfig,
+    private readonly onRetry?: RetryCallback,
+  ) {}
+
+  /**
+   * Get the number of attempts made
+   */
+  getAttemptCount(): number {
+    return this.attemptCount
+  }
 
   /**
    * Execute an operation with retry logic
@@ -66,8 +111,11 @@ export class RetryWrapper {
   ): Promise<T> {
     const retryOn = this.config.retryOn ?? defaultRetryOn
     let lastError: unknown
+    this.attemptCount = 0
 
     for (let attempt = 1; attempt <= this.config.maxAttempts; attempt++) {
+      this.attemptCount = attempt
+
       try {
         // Check for cancellation before each attempt
         if (signal?.aborted) {
@@ -117,8 +165,13 @@ export class RetryWrapper {
         // Apply jitter
         delay = applyJitter(delay, this.config.jitterStrategy)
 
+        // Notify callback if provided
+        if (this.onRetry) {
+          this.onRetry(attempt, delay, error)
+        }
+
         // Wait before next attempt
-        await sleep(delay)
+        await sleep(delay, signal)
       }
     }
 

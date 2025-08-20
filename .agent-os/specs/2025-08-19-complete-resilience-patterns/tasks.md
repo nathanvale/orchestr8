@@ -1,4 +1,4 @@
-# Spec Tasks
+1# Spec Tasks
 
 These are the tasks to be completed for the spec detailed in @.agent-os/specs/2025-08-19-complete-resilience-patterns/spec.md
 
@@ -54,38 +54,65 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
   - [x] 5.5 Skip missing patterns while preserving order
   - [x] 5.6 Verify composition order behavior
 
-- [ ] 6. Context and Key Derivation
-  - [ ] 6.1 Write tests for key derivation
-  - [ ] 6.2 Implement deriveKey from ResilienceContext
-  - [ ] 6.3 Support explicit key in circuit breaker config
-  - [ ] 6.4 Pass context through middleware layers
-  - [ ] 6.5 Propagate AbortSignal correctly
-  - [ ] 6.6 Preserve error stack traces
+- [x] 6. Context and Key Derivation
+  - [x] 6.1 Write tests for key derivation
+  - [x] 6.2 Implement deriveKey from ResilienceContext
+  - [x] 6.3 Support explicit key in circuit breaker config
+  - [x] 6.4 Pass context through middleware layers
+  - [x] 6.5 Propagate AbortSignal correctly
+  - [x] 6.6 Preserve error stack traces
 
 ### Phase 4: Integration and Polish
 
-- [ ] 7. Production Resilience Adapter
-  - [ ] 7.1 Write adapter integration tests
-  - [ ] 7.2 Implement adapter using new composition engine
-  - [ ] 7.3 Add policy normalization with defaults
-  - [ ] 7.4 Handle both legacy and new interfaces
-  - [ ] 7.5 Add proper error handling
-  - [ ] 7.6 Verify all adapter tests pass
+- [x] 7. Production Resilience Adapter
+  - [x] 7.1 Write adapter integration tests
+  - [x] 7.2 Implement adapter using new composition engine
+  - [x] 7.3 Add policy normalization with defaults
+  - [x] 7.4 Handle both legacy and new interfaces
+  - [x] 7.5 Add proper error handling
+  - [x] 7.6 Verify all adapter tests pass
 
-- [ ] 8. Performance and Production Readiness
-  - [ ] 8.1 Write performance benchmarks
-  - [ ] 8.2 Optimize Map lookups (O(1))
-  - [ ] 8.3 Implement bounded state maps (max 1000 circuits)
-  - [ ] 8.4 Add lazy cleanup for expired circuits
-  - [ ] 8.5 Verify < 1ms median overhead
-  - [ ] 8.6 Run full test suite with pnpm check
+- [x] 8. Performance and Production Readiness
+  - [x] 8.1 Write performance benchmarks
+  - [x] 8.2 Optimize Map lookups (O(1))
+  - [x] 8.3 Implement bounded state maps (max 1000 circuits)
+  - [x] 8.4 Add lazy cleanup for expired circuits
+  - [x] 8.5 Verify < 1ms median overhead
+  - [x] 8.6 Run full test suite with pnpm check
 
 ## Success Criteria
 
-- [ ] Circuit breaker properly manages state transitions
-- [ ] Composition orders behave according to specification
-- [ ] All existing tests continue to pass
-- [ ] New test coverage exceeds 95%
-- [ ] Performance overhead less than 1ms
-- [ ] Memory usage remains bounded under load
-- [ ] Clear documentation and examples provided
+- [x] Circuit breaker properly manages state transitions
+- [x] Composition orders behave according to specification
+- [x] All existing tests continue to pass
+- [x] New test coverage exceeds 95%
+- [x] Performance overhead less than 1ms
+- [x] Memory usage remains bounded under load
+- [x] Clear documentation and examples provided
+
+## TODOs (P0/P1/P2 Integration Follow-ups)
+
+> Added: 2025-08-20 — Derived from integration review of @orchestr8/core ↔ @orchestr8/resilience
+
+### P0
+
+- [ ] Monitor CI for flakiness regressions in timing-sensitive tests (reference adapter); retain fake timers where applicable
+
+### P1
+
+- [x] Core: map resilience errors to schema ExecutionError codes
+  - [x] Map TimeoutError to TIMEOUT code with timeout metadata  
+  - [x] Map CircuitBreakerOpenError to CIRCUIT_OPEN code for analytics
+  - [x] Map RetryExhaustedError to RETRYABLE with attempts/lastError metadata
+  - [x] Add unit tests for error mapping and propagation
+- [ ] Core: add E2E integration test using ProductionResilienceAdapter
+  - [ ] Validate retry + timeout + circuit breaker flows with real composition
+  - [ ] Assert signal propagation (abort during backoff and timeout)
+- [ ] Docs: composition order guidance
+  - [ ] Document when to prefer `retry-cb-timeout` vs `timeout-cb-retry` with trade-offs
+
+### P2
+
+- [ ] DX: provide a default production adapter binding in core (optional factory/default)
+- [ ] Observability: align standard telemetry fields across core/resilience (workflowId, stepId, correlationId)
+- [ ] Docs: expand resilience examples (policy presets, CB tuning, retry predicates by error class)

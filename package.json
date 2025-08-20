@@ -24,6 +24,10 @@
     "clean:all": "pnpm clean && rm -rf node_modules",
     "fresh": "pnpm clean:all && pnpm install",
     "check": "turbo format:check lint type-check && turbo test -- --run",
+    "example:pr-auto-fix": "tsx scripts/examples/pr-auto-fix-gh.ts",
+    "example:pr-lifecycle": "tsx scripts/examples/pr-lifecycle-gh.ts",
+    "example:convex-seed": "tsx scripts/examples/convex-seed-init.ts",
+    "example:multi-llm": "tsx scripts/examples/multi-llm-fanout-aggregate.ts",
     "validate:dual-consumption": "node scripts/validate-dual-consumption.js"
   },
   "devDependencies": {

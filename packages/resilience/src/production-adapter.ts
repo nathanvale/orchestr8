@@ -9,6 +9,8 @@ import type {
   ResiliencePolicy,
 } from '@orchestr8/schema'
 
+import type { CircuitBreakerObserver } from './circuit-breaker.js'
+import type { ResilienceTelemetry } from './observability.js'
 import type {
   CircuitBreakerConfig,
   NormalizedResilienceConfig,
@@ -21,6 +23,8 @@ import type {
 import { CircuitBreaker } from './circuit-breaker.js'
 import { ResilienceComposer } from './composition.js'
 import { TimeoutError } from './errors.js'
+import { deriveKey } from './key-derivation.js'
+import { defaultTelemetry } from './observability.js'
 import { RetryWrapper } from './retry.js'
 
 /**
@@ -29,9 +33,21 @@ import { RetryWrapper } from './retry.js'
 export class ProductionResilienceAdapter implements ResilienceAdapter {
   private readonly composer: ResilienceComposer
   private readonly circuitBreakers: Map<string, CircuitBreaker> = new Map()
+  private readonly cbAccessTimes: Map<string, number> = new Map()
+  private readonly maxCircuitInstances: number
+  private readonly circuitObserver?: CircuitBreakerObserver
+  private readonly telemetry: ResilienceTelemetry
 
-  constructor() {
+  constructor(options?: {
+    maxInstances?: number
+    circuitObserver?: CircuitBreakerObserver
+    telemetry?: ResilienceTelemetry
+  }) {
     this.composer = new ResilienceComposer()
+    this.maxCircuitInstances = options?.maxInstances ?? 1000
+    this.telemetry = options?.telemetry ?? defaultTelemetry
+    this.circuitObserver =
+      options?.circuitObserver ?? this.telemetry.createCircuitBreakerObserver()
 
     // Set up pattern wrappers
     this.composer.setRetryWrapper(this.wrapWithRetry.bind(this))
@@ -80,14 +96,41 @@ export class ProductionResilienceAdapter implements ResilienceAdapter {
       signal,
     }
 
-    // Use composition engine to create middleware
-    const middleware = this.composer.compose<T>(
-      normalized,
+    // Log composition start
+    this.telemetry.logEvent('composition_start', resilienceContext, {
       compositionOrder,
-    )
+      policies: {
+        retry: !!normalized.retry,
+        circuitBreaker: !!normalized.circuitBreaker,
+        timeout: !!normalized.timeout,
+      },
+    })
 
-    // Execute through middleware
-    return middleware(operation, resilienceContext)
+    const timer = this.telemetry.startTimer('resilience_composition')
+
+    try {
+      // Use composition engine to create middleware
+      const middleware = this.composer.compose<T>(normalized, compositionOrder)
+
+      // Execute through middleware
+      const result = await middleware(operation, resilienceContext)
+
+      const duration = timer()
+      this.telemetry.logEvent('composition_complete', resilienceContext, {
+        compositionOrder,
+        duration,
+      })
+
+      return result
+    } catch (error) {
+      const duration = timer()
+      this.telemetry.logEvent('composition_error', resilienceContext, {
+        compositionOrder,
+        duration,
+        error: error instanceof Error ? error.message : String(error),
+      })
+      throw error
+    }
   }
 
   /**
@@ -98,8 +141,48 @@ export class ProductionResilienceAdapter implements ResilienceAdapter {
     config: RetryConfig,
     context?: ResilienceContext,
   ): Promise<T> {
-    const retryWrapper = new RetryWrapper(config)
-    return retryWrapper.execute(operation, context?.signal)
+    const retryWrapper = new RetryWrapper(config, (attempt, delay, error) => {
+      if (attempt > 1) {
+        this.telemetry.logEvent('retry_attempt', context ?? {}, {
+          attempt,
+          maxAttempts: config.maxAttempts,
+          error: error instanceof Error ? error.message : String(error),
+        })
+      }
+
+      if (delay > 0) {
+        this.telemetry.logEvent('retry_backoff', context ?? {}, {
+          attempt,
+          delay,
+          strategy: config.backoffStrategy,
+          jitter: config.jitterStrategy,
+        })
+      }
+    })
+
+    try {
+      const result = await retryWrapper.execute(operation, context?.signal)
+
+      // Log success if there were retries
+      if (retryWrapper.getAttemptCount() > 1) {
+        this.telemetry.logEvent('retry_success', context ?? {}, {
+          attempts: retryWrapper.getAttemptCount(),
+          maxAttempts: config.maxAttempts,
+        })
+      }
+
+      return result
+    } catch (error) {
+      // Log exhausted retries
+      if (retryWrapper.getAttemptCount() >= config.maxAttempts) {
+        this.telemetry.logEvent('retry_exhausted', context ?? {}, {
+          attempts: retryWrapper.getAttemptCount(),
+          maxAttempts: config.maxAttempts,
+          finalError: error instanceof Error ? error.message : String(error),
+        })
+      }
+      throw error
+    }
   }
 
   /**
@@ -110,27 +193,39 @@ export class ProductionResilienceAdapter implements ResilienceAdapter {
     config: CircuitBreakerConfig,
     context?: ResilienceContext,
   ): Promise<T> {
-    // Derive circuit breaker key
-    const key = this.deriveCircuitBreakerKey(config, context)
+    // Derive keys
+    const baseKey = this.deriveCircuitBreakerKey(config, context)
+    const compositeKey = this.computeCompositeKey(config, context)
 
-    // Get or create circuit breaker for this key
-    let circuitBreaker = this.circuitBreakers.get(key)
+    // Get or create circuit breaker for this composite key (config-aware)
+    let circuitBreaker = this.circuitBreakers.get(compositeKey)
     if (!circuitBreaker) {
-      circuitBreaker = new CircuitBreaker(config)
+      circuitBreaker = new CircuitBreaker(config, this.circuitObserver)
 
-      // Bounded map - remove oldest if at limit
-      if (this.circuitBreakers.size >= 1000) {
-        const firstKey = this.circuitBreakers.keys().next().value
-        if (firstKey) {
-          this.circuitBreakers.delete(firstKey)
+      // Bounded map - LRU eviction if at limit
+      if (this.circuitBreakers.size >= this.maxCircuitInstances) {
+        let lruKey: string | undefined
+        let lruTime = Number.POSITIVE_INFINITY
+        for (const [key, ts] of this.cbAccessTimes.entries()) {
+          if (ts < lruTime) {
+            lruTime = ts
+            lruKey = key
+          }
+        }
+        if (lruKey) {
+          this.circuitBreakers.delete(lruKey)
+          this.cbAccessTimes.delete(lruKey)
         }
       }
 
-      this.circuitBreakers.set(key, circuitBreaker)
+      this.circuitBreakers.set(compositeKey, circuitBreaker)
     }
 
+    // Access time update for LRU bookkeeping
+    this.cbAccessTimes.set(compositeKey, Date.now())
+
     // Execute through circuit breaker
-    return circuitBreaker.execute(key, () => operation(context?.signal))
+    return circuitBreaker.execute(baseKey, () => operation(context?.signal))
   }
 
   /**
@@ -149,10 +244,18 @@ export class ProductionResilienceAdapter implements ResilienceAdapter {
     return new Promise<T>((resolve, reject) => {
       const timeoutController = new AbortController()
       let timeoutId: ReturnType<typeof setTimeout>
+      let timedOut = false
 
       // Create timeout
       timeoutId = setTimeout(() => {
+        timedOut = true
         timeoutController.abort()
+
+        this.telemetry.logEvent('timeout_triggered', context ?? {}, {
+          duration: config.duration,
+          operationName: config.operationName,
+        })
+
         reject(
           new TimeoutError(
             `Operation timed out after ${config.duration}ms`,
@@ -163,7 +266,7 @@ export class ProductionResilienceAdapter implements ResilienceAdapter {
 
       // Combine signals if parent signal exists
       const combinedSignal = context?.signal
-        ? this.combineSignals([context.signal, timeoutController.signal])
+        ? AbortSignal.any([context.signal, timeoutController.signal])
         : timeoutController.signal
 
       // Handle parent cancellation
@@ -173,7 +276,10 @@ export class ProductionResilienceAdapter implements ResilienceAdapter {
         reject(new Error('Operation was cancelled'))
       }
 
-      if (context?.signal) {
+      if (
+        context?.signal &&
+        typeof context.signal.addEventListener === 'function'
+      ) {
         context.signal.addEventListener('abort', abortHandler, { once: true })
       }
 
@@ -181,14 +287,28 @@ export class ProductionResilienceAdapter implements ResilienceAdapter {
       operation(combinedSignal)
         .then((result) => {
           clearTimeout(timeoutId)
-          if (context?.signal) {
+
+          if (!timedOut) {
+            this.telemetry.logEvent('timeout_cleared', context ?? {}, {
+              duration: config.duration,
+              operationName: config.operationName,
+            })
+          }
+
+          if (
+            context?.signal &&
+            typeof context.signal.removeEventListener === 'function'
+          ) {
             context.signal.removeEventListener('abort', abortHandler)
           }
           resolve(result)
         })
         .catch((error) => {
           clearTimeout(timeoutId)
-          if (context?.signal) {
+          if (
+            context?.signal &&
+            typeof context.signal.removeEventListener === 'function'
+          ) {
             context.signal.removeEventListener('abort', abortHandler)
           }
           reject(error)
@@ -203,37 +323,53 @@ export class ProductionResilienceAdapter implements ResilienceAdapter {
     config: CircuitBreakerConfig,
     context?: ResilienceContext,
   ): string {
-    // Use explicit key if provided
-    if (config.key) {
-      return config.key
-    }
-
-    // Derive from context
-    if (context?.workflowId && context?.stepId) {
-      return CircuitBreaker.deriveKey(context.workflowId, context.stepId)
-    }
-
-    // Fallback to default
-    return 'default'
+    // Use the centralized key derivation function
+    return deriveKey(context, config)
   }
 
   /**
-   * Combine multiple abort signals into one
+   * Compute a composite cache key that includes the base circuit key and a
+   * stable hash of the circuit breaker configuration. This prevents reusing a
+   * CircuitBreaker instance across different configs for the same base key.
    */
-  private combineSignals(signals: AbortSignal[]): AbortSignal {
-    const controller = new AbortController()
+  private computeCompositeKey(
+    config: CircuitBreakerConfig,
+    context?: ResilienceContext,
+  ): string {
+    const baseKey = this.deriveCircuitBreakerKey(config, context)
+    const hash = this.hashCircuitBreakerConfig(config)
+    return `${baseKey}::${hash}`
+  }
 
-    for (const signal of signals) {
-      if (signal.aborted) {
-        controller.abort()
-        return controller.signal
-      }
-
-      signal.addEventListener('abort', () => controller.abort(), { once: true })
+  /**
+   * Create a stable, deterministic hash for circuit breaker config.
+   * Uses sorted JSON stringification and a lightweight FNV-1a hash.
+   */
+  private hashCircuitBreakerConfig(config: CircuitBreakerConfig): string {
+    const stableStringify = (obj: unknown): string => {
+      if (obj === null || typeof obj !== 'object') return JSON.stringify(obj)
+      if (Array.isArray(obj)) return `[${obj.map(stableStringify).join(',')}]`
+      const entries = Object.entries(obj as Record<string, unknown>).sort(
+        ([a], [b]) => (a < b ? -1 : a > b ? 1 : 0),
+      )
+      return `{${entries
+        .map(([k, v]) => `${JSON.stringify(k)}:${stableStringify(v)}`)
+        .join(',')}}`
     }
 
-    return controller.signal
+    const str = stableStringify(config)
+    // FNV-1a 32-bit hash
+    let hash = 0x811c9dc5
+    for (let i = 0; i < str.length; i++) {
+      hash ^= str.charCodeAt(i)
+      // 32-bit overflow via multiplication by FNV prime 16777619
+      hash = (hash >>> 0) * 0x01000193
+      hash >>>= 0
+    }
+    return hash.toString(16)
   }
+
+  // combineSignals removed in favor of AbortSignal.any (Node >= 20)
 
   /**
    * Normalize a resilience policy with default values
@@ -248,7 +384,10 @@ export class ProductionResilienceAdapter implements ResilienceAdapter {
       let jitterStrategy: 'none' | 'full' = 'full'
       if (policy.retry.jitterStrategy === 'none') {
         jitterStrategy = 'none'
-      } else if (policy.retry.jitterStrategy === 'full-jitter' || !policy.retry.jitterStrategy) {
+      } else if (
+        policy.retry.jitterStrategy === 'full-jitter' ||
+        !policy.retry.jitterStrategy
+      ) {
         jitterStrategy = 'full'
       }
 
@@ -285,16 +424,29 @@ export class ProductionResilienceAdapter implements ResilienceAdapter {
    * Get circuit breaker state for monitoring (optional)
    */
   getCircuitBreakerState(key: string): unknown {
-    const cb = this.circuitBreakers.get(key)
-    return cb?.getCircuitState(key)
+    // Find the most recent CB instance matching the base key
+    let found: CircuitBreaker | undefined
+    for (const [compositeKey, cb] of Array.from(
+      this.circuitBreakers.entries(),
+    ).reverse()) {
+      const base = this.extractBaseKey(compositeKey)
+      if (base === key) {
+        found = cb
+        break
+      }
+    }
+    return found?.getCircuitState(key)
   }
 
   /**
    * Reset a specific circuit (for testing)
    */
   resetCircuit(key: string): void {
-    const cb = this.circuitBreakers.get(key)
-    cb?.reset(key)
+    // Reset all CB instances that match the base key
+    for (const [compositeKey, cb] of this.circuitBreakers.entries()) {
+      const base = this.extractBaseKey(compositeKey)
+      if (base === key) cb.reset(key)
+    }
   }
 
   /**
@@ -305,5 +457,11 @@ export class ProductionResilienceAdapter implements ResilienceAdapter {
       cb.resetAll()
     }
     this.circuitBreakers.clear()
+  }
+
+  /** Extract the base key from a composite key `${base}::${hash}` */
+  private extractBaseKey(compositeKey: string): string {
+    const idx = compositeKey.lastIndexOf('::')
+    return idx === -1 ? compositeKey : compositeKey.slice(0, idx)
   }
 }
