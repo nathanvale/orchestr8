@@ -182,6 +182,81 @@ Engine policies:
 
 See docs/errors.md for mappings and recipes.
 
+## Performance Characteristics
+
+### Event Bus Performance
+
+The core includes a high-performance bounded event bus with the following characteristics:
+
+#### Performance Targets
+
+- **Emission Latency**: < 1ms p95 (2ms in CI environments)
+- **Throughput**: > 10,000 events/second
+- **Orchestration Overhead**: < 100ms total
+- **Queue Recovery**: < 500ms from saturation
+- **Memory Overhead**: < 10MB for 1000 events
+
+#### Queue Management
+
+The event bus uses a circular buffer implementation for O(1) queue operations:
+
+- **Default Queue Size**: 1000 events
+- **Overflow Policy**: `dropOldest` - oldest events are dropped when queue is full
+- **High Water Mark**: Tracks maximum queue size reached
+- **Drop Rate Tracking**: Events dropped per minute (configurable interval)
+
+#### Configuration
+
+```ts
+const eventBus = new BoundedEventBus({
+  maxQueueSize: 1000, // Maximum events in queue
+  overflowPolicy: 'dropOldest', // How to handle overflow
+  warnOnDrop: true, // Log warnings when events dropped
+  metricsInterval: 60000, // Metrics calculation interval (ms)
+  maxListenersPerEvent: 100, // Max listeners per event type
+  enableMemoryTracking: false, // Enable memory usage tracking
+})
+```
+
+#### Performance Testing
+
+Run performance benchmarks with:
+
+```bash
+PERF=1 pnpm test event-bus-benchmark.test.ts
+```
+
+Run stress tests:
+
+```bash
+pnpm test event-bus-stress.test.ts
+```
+
+#### Design Decisions
+
+1. **Circular Buffer**: Chosen for O(1) enqueue/dequeue operations and predictable memory usage
+2. **queueMicrotask**: Used for async event processing to minimize latency
+3. **Event Isolation**: Events are shallow-cloned to prevent listener mutations (Error objects preserved for stack traces)
+4. **Bounded Queue**: Prevents unbounded memory growth under high load
+5. **Drop Oldest Policy**: Prioritizes newest events during overflow conditions
+6. **Metrics Sampling**: Memory tracking uses sampling (1 in 100 events) to minimize overhead
+
+#### Monitoring
+
+Get runtime metrics:
+
+```ts
+const metrics = eventBus.getMetrics()
+// {
+//   droppedCount: 0,
+//   lastDropTimestamp: null,
+//   highWaterMark: 245,
+//   queueSize: 12,
+//   dropRate: 0,
+//   listeners: Map { 'workflow.started' => 3 }
+// }
+```
+
 ## Links
 
 - docs/overview.md – conceptual overview

@@ -12,6 +12,8 @@ import type {
   WorkflowResult,
 } from '@orchestr8/schema'
 
+import type { BoundedEventBus, EventBusConfig } from './event-bus.js'
+
 // Re-export logger types from @orchestr8/logger for convenience
 export type { Logger, LogLevel } from '@orchestr8/logger'
 
@@ -154,6 +156,13 @@ export interface OrchestrationOptions {
    * When true, invalid conditions throw validation errors instead of silently returning false
    */
   strictConditions?: boolean
+
+  /**
+   * Optional event bus for workflow and step lifecycle events
+   * Can be either a BoundedEventBus instance or configuration to create one
+   * If not provided, creates an internal bus with default configuration
+   */
+  eventBus?: BoundedEventBus | EventBusConfig
 }
 
 /**

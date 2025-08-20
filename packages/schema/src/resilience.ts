@@ -15,6 +15,10 @@ export interface ResilienceInvocationContext {
   correlationId?: string
   /** Optional metadata for custom observability */
   metadata?: Record<string, unknown>
+  /** Optional event emitter for resilience events */
+  eventEmitter?: {
+    emit(event: unknown): void
+  }
 }
 
 /**

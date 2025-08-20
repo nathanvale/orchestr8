@@ -46,8 +46,17 @@ export class ProductionResilienceAdapter implements ResilienceAdapter {
     this.composer = new ResilienceComposer()
     this.maxCircuitInstances = options?.maxInstances ?? 1000
     this.telemetry = options?.telemetry ?? defaultTelemetry
-    this.circuitObserver =
-      options?.circuitObserver ?? this.telemetry.createCircuitBreakerObserver()
+
+    // Create a composite observer that includes both telemetry and event emission
+    const telemetryObserver = this.telemetry.createCircuitBreakerObserver()
+    this.circuitObserver = options?.circuitObserver ?? {
+      onStateChange: (key: string, state: 'closed' | 'open' | 'half-open') => {
+        // Call telemetry observer if it exists
+        telemetryObserver?.onStateChange?.(key, state)
+
+        // Note: Event emission will be handled per-invocation in wrapWithCircuitBreaker
+      },
+    }
 
     // Set up pattern wrappers
     this.composer.setRetryWrapper(this.wrapWithRetry.bind(this))
@@ -142,11 +151,20 @@ export class ProductionResilienceAdapter implements ResilienceAdapter {
     context?: ResilienceContext,
   ): Promise<T> {
     const retryWrapper = new RetryWrapper(config, (attempt, delay, error) => {
-      if (attempt > 1) {
-        this.telemetry.logEvent('retry_attempt', context ?? {}, {
+      // Log retry attempt (this is called before each retry, starting from attempt 1)
+      this.telemetry.logEvent('retry_attempt', context ?? {}, {
+        attempt,
+        maxAttempts: config.maxAttempts,
+        error: error instanceof Error ? error.message : String(error),
+      })
+
+      // Emit retry attempted event if emitter is available
+      if (context?.eventEmitter) {
+        context.eventEmitter.emit({
+          type: 'retry.attempted',
+          stepId: context.stepId,
           attempt,
-          maxAttempts: config.maxAttempts,
-          error: error instanceof Error ? error.message : String(error),
+          delay,
         })
       }
 
@@ -200,7 +218,31 @@ export class ProductionResilienceAdapter implements ResilienceAdapter {
     // Get or create circuit breaker for this composite key (config-aware)
     let circuitBreaker = this.circuitBreakers.get(compositeKey)
     if (!circuitBreaker) {
-      circuitBreaker = new CircuitBreaker(config, this.circuitObserver)
+      // Create observer that combines telemetry and event emission
+      const observer: CircuitBreakerObserver = {
+        onStateChange: (
+          key: string,
+          state: 'closed' | 'open' | 'half-open',
+        ) => {
+          // Call the main observer
+          this.circuitObserver?.onStateChange?.(key, state)
+
+          // Emit event if circuit opens and emitter is available
+          if (state === 'open' && context?.eventEmitter) {
+            // Count failures in sliding window (approximation)
+            const failures = Math.ceil(
+              config.failureThreshold * config.sampleSize,
+            )
+            context.eventEmitter.emit({
+              type: 'circuitBreaker.opened',
+              key: baseKey,
+              failures,
+            })
+          }
+        },
+      }
+
+      circuitBreaker = new CircuitBreaker(config, observer)
 
       // Bounded map - LRU eviction if at limit
       if (this.circuitBreakers.size >= this.maxCircuitInstances) {
@@ -255,6 +297,15 @@ export class ProductionResilienceAdapter implements ResilienceAdapter {
           duration: config.duration,
           operationName: config.operationName,
         })
+
+        // Emit timeout event if emitter is available
+        if (context?.eventEmitter) {
+          context.eventEmitter.emit({
+            type: 'timeout.exceeded',
+            stepId: context.stepId,
+            duration: config.duration,
+          })
+        }
 
         reject(
           new TimeoutError(

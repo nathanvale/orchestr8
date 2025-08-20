@@ -30,6 +30,7 @@ import type {
   OrchestrationOptions,
 } from './types.js'
 
+import { BoundedEventBus } from './event-bus.js'
 import {
   evaluateCondition,
   resolveMapping,
@@ -61,6 +62,7 @@ export class OrchestrationEngine implements IOrchestrationEngine {
   private readonly maxExpansionDepth: number
   private readonly maxExpansionSize: number
   private readonly strictConditions: boolean
+  private readonly eventBus: BoundedEventBus
 
   constructor(options: OrchestrationOptions) {
     this.agentRegistry = options.agentRegistry
@@ -73,6 +75,12 @@ export class OrchestrationEngine implements IOrchestrationEngine {
     this.maxExpansionDepth = options.maxExpansionDepth ?? 10
     this.maxExpansionSize = options.maxExpansionSize ?? 64 * 1024
     this.strictConditions = options.strictConditions ?? true
+
+    // Initialize event bus
+    this.eventBus =
+      options.eventBus instanceof BoundedEventBus
+        ? options.eventBus
+        : new BoundedEventBus(options.eventBus || {}, this.logger)
   }
 
   /**
@@ -99,6 +107,26 @@ export class OrchestrationEngine implements IOrchestrationEngine {
       stepCount: workflow.steps.length,
       variables: variables ?? {},
       startTime,
+    })
+
+    // Emit execution queued event
+    this.eventBus.emitEvent({
+      type: 'execution.queued',
+      executionId,
+      workflowId: workflow.id,
+    })
+
+    // Emit workflow started event
+    this.eventBus.emitEvent({
+      type: 'workflow.started',
+      workflowId: workflow.id,
+      timestamp: startTimestamp,
+    })
+
+    // Emit execution started event
+    this.eventBus.emitEvent({
+      type: 'execution.started',
+      executionId,
     })
 
     // Create internal execution context
@@ -166,6 +194,13 @@ export class OrchestrationEngine implements IOrchestrationEngine {
       // Check if cancelled
       if (context.abortSignal.aborted) {
         result.status = 'cancelled'
+
+        // Emit execution cancelled event
+        this.eventBus.emitEvent({
+          type: 'execution.cancelled',
+          executionId,
+          reason: 'User requested cancellation',
+        })
       }
     } catch (error) {
       result.status = 'failed'
@@ -175,6 +210,27 @@ export class OrchestrationEngine implements IOrchestrationEngine {
     // Set final timing
     result.endTime = new Date().toISOString()
     result.duration = Date.now() - startTimestamp
+
+    // Emit workflow completion event
+    if (result.status === 'completed') {
+      this.eventBus.emitEvent({
+        type: 'workflow.completed',
+        workflowId: workflow.id,
+        duration: result.duration,
+      })
+    } else if (result.status === 'failed' && result.errors?.length) {
+      // Emit workflow failed event with the first error
+      // Convert ExecutionError to Error for event bus
+      const executionError = result.errors[0]!
+      const error = new Error(executionError.message)
+      error.name = executionError.code
+
+      this.eventBus.emitEvent({
+        type: 'workflow.failed',
+        workflowId: workflow.id,
+        error,
+      })
+    }
 
     // Log workflow completion
     workflowLogger.info('workflow.end', {
@@ -666,6 +722,13 @@ export class OrchestrationEngine implements IOrchestrationEngine {
       onError: node.onError,
     })
 
+    // Emit step started event
+    this.eventBus.emitEvent({
+      type: 'step.started',
+      stepId: node.stepId,
+      executionId: context.correlationId,
+    })
+
     // Check if this step has already been executed (e.g., as a fallback)
     const existingResult = context.results.get(node.stepId)
     if (existingResult && existingResult.status === 'completed') {
@@ -816,7 +879,7 @@ export class OrchestrationEngine implements IOrchestrationEngine {
             : undefined)
 
         if (policy) {
-          // Create resilience invocation context
+          // Create resilience invocation context with event emitter
           const resilienceContext: ResilienceInvocationContext = {
             workflowId: workflow.id,
             stepId: node.stepId,
@@ -824,6 +887,45 @@ export class OrchestrationEngine implements IOrchestrationEngine {
             metadata: {
               agentId: node.agentId,
               dependencies: node.dependsOn,
+            },
+            eventEmitter: {
+              emit: (event: unknown) => {
+                // Type-safe event emission for resilience events
+                if (
+                  event &&
+                  typeof event === 'object' &&
+                  'type' in event &&
+                  typeof (event as { type: string }).type === 'string'
+                ) {
+                  const resilienceEvent = event as {
+                    type: string
+                    stepId?: string
+                    [key: string]: unknown
+                  }
+
+                  // Map to our typed resilience events
+                  if (resilienceEvent.type === 'retry.attempted') {
+                    this.eventBus.emitEvent({
+                      type: 'retry.attempted',
+                      stepId: node.stepId,
+                      attempt: (resilienceEvent.attempt as number) ?? 0,
+                      delay: (resilienceEvent.delay as number) ?? 0,
+                    })
+                  } else if (resilienceEvent.type === 'circuitBreaker.opened') {
+                    this.eventBus.emitEvent({
+                      type: 'circuitBreaker.opened',
+                      key: (resilienceEvent.key as string) ?? '',
+                      failures: (resilienceEvent.failures as number) ?? 0,
+                    })
+                  } else if (resilienceEvent.type === 'timeout.exceeded') {
+                    this.eventBus.emitEvent({
+                      type: 'timeout.exceeded',
+                      stepId: node.stepId,
+                      duration: (resilienceEvent.duration as number) ?? 0,
+                    })
+                  }
+                }
+              },
             },
           }
 
@@ -877,6 +979,13 @@ export class OrchestrationEngine implements IOrchestrationEngine {
         ...result,
       })
 
+      // Emit step completed event
+      this.eventBus.emitEvent({
+        type: 'step.completed',
+        stepId: node.stepId,
+        output: result.truncated ? undefined : output,
+      })
+
       // Log successful completion
       stepLogger.info('step.success', {
         duration,
@@ -900,6 +1009,20 @@ export class OrchestrationEngine implements IOrchestrationEngine {
         endTime,
         cancelled: isCancelled,
       })
+
+      // Emit step failed event (unless cancelled)
+      if (!isCancelled) {
+        // Convert ExecutionError to Error for event bus
+        const error = new Error(executionError.message)
+        error.name = executionError.code
+
+        this.eventBus.emitEvent({
+          type: 'step.failed',
+          stepId: node.stepId,
+          error,
+          retryable: node.onError === 'retry' || !!node.resilience?.retry,
+        })
+      }
 
       // Handle error based on policy
       if (node.onError === 'fallback' && node.fallbackStepId && !isCancelled) {

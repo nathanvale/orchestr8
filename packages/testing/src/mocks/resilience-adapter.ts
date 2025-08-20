@@ -6,6 +6,7 @@
 import type {
   CompositionOrder,
   ResilienceAdapter,
+  ResilienceInvocationContext,
   ResiliencePolicy,
 } from '@orchestr8/schema'
 
@@ -28,6 +29,7 @@ export class MockResilienceAdapter implements ResilienceAdapter {
     signal?: AbortSignal
     timestamp: string
     compositionOrder?: CompositionOrder
+    context?: ResilienceInvocationContext
   }> = []
 
   // Configuration for simulating behaviors
@@ -44,8 +46,15 @@ export class MockResilienceAdapter implements ResilienceAdapter {
         operation: () => Promise<unknown>,
         policy: ResiliencePolicy,
         signal?: AbortSignal,
+        context?: ResilienceInvocationContext,
       ) => {
-        return this.executeWithPolicy(operation, policy, signal)
+        return this.executeWithPolicy(
+          operation,
+          policy,
+          signal,
+          undefined,
+          context,
+        )
       },
     )
 
@@ -56,12 +65,14 @@ export class MockResilienceAdapter implements ResilienceAdapter {
         normalizedPolicy: ResiliencePolicy,
         compositionOrder: CompositionOrder,
         signal?: AbortSignal,
+        context?: ResilienceInvocationContext,
       ) => {
         return this.executeWithPolicy(
           operation,
           normalizedPolicy,
           signal,
           compositionOrder,
+          context,
         )
       },
     )
@@ -72,6 +83,7 @@ export class MockResilienceAdapter implements ResilienceAdapter {
     policy: ResiliencePolicy,
     signal?: AbortSignal,
     compositionOrder?: CompositionOrder,
+    context?: ResilienceInvocationContext,
   ): Promise<unknown> {
     // Track the applied policy
     this.appliedPolicies.push({
@@ -79,6 +91,7 @@ export class MockResilienceAdapter implements ResilienceAdapter {
       signal,
       timestamp: new Date().toISOString(),
       compositionOrder,
+      context,
     })
 
     // Check for abort signal
@@ -92,6 +105,14 @@ export class MockResilienceAdapter implements ResilienceAdapter {
 
     // Simulate timeout if configured
     if (this.simulateTimeout && policy.timeout) {
+      // Emit timeout event if context with emitter is provided
+      if (context?.eventEmitter) {
+        context.eventEmitter.emit({
+          type: 'timeout.exceeded',
+          stepId: context.stepId,
+          duration: policy.timeout,
+        })
+      }
       throw createExecutionError(
         ExecutionErrorCode.TIMEOUT,
         `Operation timed out after ${policy.timeout}ms`,
@@ -121,6 +142,16 @@ export class MockResilienceAdapter implements ResilienceAdapter {
     if (this.simulateRetryCount > 0 && policy.retry) {
       this.currentAttempt++
       if (this.currentAttempt <= this.simulateRetryCount) {
+        // Emit retry event if context with emitter is provided
+        if (context?.eventEmitter && this.currentAttempt > 1) {
+          const delay = policy.retry.initialDelay || 100
+          context.eventEmitter.emit({
+            type: 'retry.attempted',
+            stepId: context.stepId,
+            attempt: this.currentAttempt,
+            delay,
+          })
+        }
         throw createExecutionError(
           ExecutionErrorCode.RETRYABLE,
           `Simulated retry attempt ${this.currentAttempt}`,
@@ -201,6 +232,7 @@ export class MockResilienceAdapter implements ResilienceAdapter {
       operation: () => Promise<unknown>,
       policy: ResiliencePolicy,
       signal?: AbortSignal,
+      context?: ResilienceInvocationContext,
     ) => Promise<unknown>,
   ): void {
     this.applyPolicy.mockImplementationOnce(fn)
@@ -269,8 +301,15 @@ export class MockResilienceAdapter implements ResilienceAdapter {
         operation: () => Promise<unknown>,
         policy: ResiliencePolicy,
         signal?: AbortSignal,
+        context?: ResilienceInvocationContext,
       ) => {
-        return this.executeWithPolicy(operation, policy, signal)
+        return this.executeWithPolicy(
+          operation,
+          policy,
+          signal,
+          undefined,
+          context,
+        )
       },
     )
 
@@ -280,12 +319,14 @@ export class MockResilienceAdapter implements ResilienceAdapter {
         normalizedPolicy: ResiliencePolicy,
         compositionOrder: CompositionOrder,
         signal?: AbortSignal,
+        context?: ResilienceInvocationContext,
       ) => {
         return this.executeWithPolicy(
           operation,
           normalizedPolicy,
           signal,
           compositionOrder,
+          context,
         )
       },
     )

@@ -2,9 +2,8 @@
  * @orchestr8/core - Core orchestration engine
  */
 
-// Export implementation
+// Export event bus implementation and types
 export { BoundedEventBus } from './event-bus.js'
-// Export event bus types
 export type {
   EventBusConfig,
   EventBusMetrics,
@@ -14,6 +13,9 @@ export type {
   StepEvent,
   ResilienceEvent,
 } from './event-bus.js'
+// Export journal implementation and types
+export { ExecutionJournal } from './execution-journal.js'
+export type { JournalEntry } from './execution-journal.js'
 export {
   evaluateCondition,
   resolveMapping,

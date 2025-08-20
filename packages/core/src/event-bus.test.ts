@@ -2,13 +2,24 @@ import type { Logger } from '@orchestr8/logger'
 
 /* global queueMicrotask */
 import { EventEmitter } from 'node:events'
+import { performance } from 'node:perf_hooks'
 
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+  beforeAll,
+  afterAll,
+} from 'vitest'
 
 import type {
   BoundedEventBus,
   EventBusConfig,
   OrchestrationEvent,
+  ResilienceEvent,
 } from './event-bus.js'
 
 describe('BoundedEventBus', () => {
@@ -800,6 +811,373 @@ describe('BoundedEventBus', () => {
 
       // Should be very fast without memory tracking
       expect(emitTime).toBeLessThan(100) // Less than 100ms for 1000 events
+    })
+  })
+
+  describe('Fake Timers and Mocked Memory', () => {
+    beforeEach(() => {
+      vi.useFakeTimers()
+    })
+
+    afterEach(() => {
+      vi.useRealTimers()
+    })
+
+    it('should throttle drop warnings using fake timers', async () => {
+      const { BoundedEventBus } = await import('./event-bus.js')
+      const logger = {
+        warn: vi.fn(),
+        error: vi.fn(),
+        info: vi.fn(),
+        debug: vi.fn(),
+      }
+
+      const metricsInterval = 60000 // 1 minute
+      eventBus = new BoundedEventBus(
+        {
+          maxQueueSize: 2,
+          warnOnDrop: true,
+          metricsInterval,
+        },
+        logger as Logger,
+      )
+
+      // Block processing to force drops
+      eventBus.on('timer.test' as OrchestrationEvent['type'], async () => {
+        await new Promise(() => {}) // Never resolves
+      })
+
+      // Emit events to trigger drops
+      for (let i = 0; i < 10; i++) {
+        eventBus.emitEvent({ type: 'timer.test', id: i } as OrchestrationEvent)
+      }
+
+      // Process microtasks
+      await vi.runAllTimersAsync()
+
+      // Should warn once initially
+      expect(logger.warn).toHaveBeenCalledTimes(1)
+
+      // Emit more events
+      for (let i = 10; i < 20; i++) {
+        eventBus.emitEvent({ type: 'timer.test', id: i } as OrchestrationEvent)
+      }
+
+      await vi.runAllTimersAsync()
+
+      // Still only one warning (throttled)
+      expect(logger.warn).toHaveBeenCalledTimes(1)
+
+      // Advance time past metrics interval
+      await vi.advanceTimersByTimeAsync(metricsInterval + 1)
+
+      // Emit more events
+      for (let i = 20; i < 30; i++) {
+        eventBus.emitEvent({ type: 'timer.test', id: i } as OrchestrationEvent)
+      }
+
+      await vi.runAllTimersAsync()
+
+      // Now should have second warning
+      expect(logger.warn).toHaveBeenCalledTimes(2)
+    })
+
+    it('should calculate drop rate with fake timers', async () => {
+      const { BoundedEventBus } = await import('./event-bus.js')
+      const metricsInterval = 10000 // 10 seconds
+
+      eventBus = new BoundedEventBus({
+        maxQueueSize: 1,
+        warnOnDrop: false,
+        metricsInterval,
+      })
+
+      // Block processing
+      eventBus.on('droprate.test' as OrchestrationEvent['type'], async () => {
+        await new Promise(() => {}) // Never resolves
+      })
+
+      // Emit events to cause drops
+      for (let i = 0; i < 10; i++) {
+        eventBus.emitEvent({
+          type: 'droprate.test',
+          id: i,
+        } as OrchestrationEvent)
+      }
+
+      await vi.runAllTimersAsync()
+
+      let metrics = eventBus.getMetrics()
+      // 9 drops in 10 seconds = 54 drops per minute
+      expect(metrics.dropRate).toBe(54)
+
+      // Advance time past metrics interval
+      await vi.advanceTimersByTimeAsync(metricsInterval + 1)
+
+      // Emit more events in new interval
+      for (let i = 10; i < 15; i++) {
+        eventBus.emitEvent({
+          type: 'droprate.test',
+          id: i,
+        } as OrchestrationEvent)
+      }
+
+      await vi.runAllTimersAsync()
+
+      metrics = eventBus.getMetrics()
+      // Only counts drops in current interval (4 drops = 24/min)
+      expect(metrics.dropRate).toBe(24)
+    })
+
+
+    it('should test circuit breaker timing with fake timers', async () => {
+      const { BoundedEventBus } = await import('./event-bus.js')
+
+      eventBus = new BoundedEventBus({
+        maxQueueSize: 100,
+        metricsInterval: 5000,
+      })
+
+      const events: OrchestrationEvent[] = []
+      eventBus.on('circuitBreaker.opened', (event) => {
+        events.push(event)
+      })
+
+      // Emit circuit breaker event
+      eventBus.emitEvent({
+        type: 'circuitBreaker.opened',
+        key: 'test-service',
+        failures: 5,
+      })
+
+      await vi.runAllTimersAsync()
+
+      expect(events).toHaveLength(1)
+      expect(events[0].type).toBe('circuitBreaker.opened')
+
+      // Simulate circuit breaker reset after timeout
+      await vi.advanceTimersByTimeAsync(60000) // 1 minute
+
+      eventBus.emitEvent({
+        type: 'circuitBreaker.opened',
+        key: 'test-service',
+        failures: 0, // Reset
+      })
+
+      await vi.runAllTimersAsync()
+
+      expect(events).toHaveLength(2)
+    })
+
+    it('should test retry delays with fake timers', async () => {
+      const { BoundedEventBus } = await import('./event-bus.js')
+
+      eventBus = new BoundedEventBus({ maxQueueSize: 100 })
+
+      const retryEvents: Array<{
+        attempt: number
+        delay: number
+        timestamp: number
+      }> = []
+
+      eventBus.on('retry.attempted', (event) => {
+        const retryEvent = event as ResilienceEvent & {
+          type: 'retry.attempted'
+        }
+        retryEvents.push({
+          attempt: retryEvent.attempt,
+          delay: retryEvent.delay,
+          timestamp: Date.now(),
+        })
+      })
+
+      const startTime = Date.now()
+
+      // Emit retry events with delays
+      eventBus.emitEvent({
+        type: 'retry.attempted',
+        stepId: 'step-1',
+        attempt: 1,
+        delay: 1000,
+      })
+
+      await vi.advanceTimersByTimeAsync(1000)
+
+      eventBus.emitEvent({
+        type: 'retry.attempted',
+        stepId: 'step-1',
+        attempt: 2,
+        delay: 2000,
+      })
+
+      await vi.advanceTimersByTimeAsync(2000)
+
+      eventBus.emitEvent({
+        type: 'retry.attempted',
+        stepId: 'step-1',
+        attempt: 3,
+        delay: 4000,
+      })
+
+      await vi.runAllTimersAsync()
+
+      expect(retryEvents).toHaveLength(3)
+      expect(retryEvents[0].delay).toBe(1000)
+      expect(retryEvents[1].delay).toBe(2000)
+      expect(retryEvents[2].delay).toBe(4000)
+
+      // Verify timing with fake timers
+      const elapsed = Date.now() - startTime
+      expect(elapsed).toBeGreaterThanOrEqual(3000) // At least 1000 + 2000ms
+    })
+  })
+
+  describe('Latency Validation', () => {
+    it('should achieve < 1ms p95 emission latency with queueMicrotask', async () => {
+      const { BoundedEventBus } = await import('./event-bus.js')
+      eventBus = new BoundedEventBus({ maxQueueSize: 1000 })
+
+      const latencies: number[] = []
+      const listener = vi.fn()
+      eventBus.on('latency.test', listener)
+
+      // Measure emission latency for many events
+      for (let i = 0; i < 1000; i++) {
+        const start = performance.now()
+        eventBus.emitEvent({
+          type: 'latency.test',
+          id: i,
+        } as OrchestrationEvent)
+        const end = performance.now()
+        latencies.push(end - start)
+      }
+
+      // Calculate p95 latency
+      latencies.sort((a, b) => a - b)
+      const p95Index = Math.floor(latencies.length * 0.95)
+      const p95Latency = latencies[p95Index] ?? 0
+
+      console.log(`P95 emission latency: ${p95Latency.toFixed(3)}ms`)
+
+      // Emission should be very fast (< 1ms)
+      expect(p95Latency).toBeLessThan(1.0)
+
+      // Wait for all events to be processed
+      await new Promise((resolve) => setTimeout(resolve, 100))
+      expect(listener).toHaveBeenCalledTimes(1000)
+    })
+
+    it('should maintain low latency with multiple listeners', async () => {
+      const { BoundedEventBus } = await import('./event-bus.js')
+      eventBus = new BoundedEventBus({ maxQueueSize: 1000 })
+
+      const latencies: number[] = []
+
+      // Add 10 listeners
+      for (let i = 0; i < 10; i++) {
+        eventBus.on('multi.latency', vi.fn())
+      }
+
+      // Measure latency with multiple listeners
+      for (let i = 0; i < 500; i++) {
+        const start = performance.now()
+        eventBus.emitEvent({
+          type: 'multi.latency',
+          id: i,
+        } as OrchestrationEvent)
+        const end = performance.now()
+        latencies.push(end - start)
+      }
+
+      latencies.sort((a, b) => a - b)
+      const p95Latency = latencies[Math.floor(latencies.length * 0.95)] ?? 0
+
+      console.log(`P95 latency with 10 listeners: ${p95Latency.toFixed(3)}ms`)
+
+      // Should still be fast even with multiple listeners
+      expect(p95Latency).toBeLessThan(2.0)
+    })
+
+    it('should validate queueMicrotask scheduling efficiency', async () => {
+      const { BoundedEventBus } = await import('./event-bus.js')
+      eventBus = new BoundedEventBus({ maxQueueSize: 1000 })
+
+      const processingTimes: number[] = []
+      let lastProcessedTime = 0
+
+      eventBus.on('scheduling.test', () => {
+        const now = performance.now()
+        if (lastProcessedTime > 0) {
+          processingTimes.push(now - lastProcessedTime)
+        }
+        lastProcessedTime = now
+      })
+
+      // Emit events rapidly
+      for (let i = 0; i < 100; i++) {
+        eventBus.emitEvent({
+          type: 'scheduling.test',
+          id: i,
+        } as OrchestrationEvent)
+      }
+
+      // Wait for processing
+      await new Promise((resolve) => setTimeout(resolve, 50))
+
+      // Calculate average time between processing
+      const avgTime =
+        processingTimes.reduce((sum, t) => sum + t, 0) / processingTimes.length
+
+      console.log(`Average time between processing: ${avgTime.toFixed(3)}ms`)
+
+      // Processing should be efficient
+      expect(avgTime).toBeLessThan(1.0)
+    })
+
+    it('should measure end-to-end latency from emit to listener', async () => {
+      const { BoundedEventBus } = await import('./event-bus.js')
+      eventBus = new BoundedEventBus({ maxQueueSize: 1000 })
+
+      const endToEndLatencies: number[] = []
+      const emitTimes = new Map<number, number>()
+
+      eventBus.on('e2e.latency', (event: OrchestrationEvent) => {
+        const receiveTime = performance.now()
+        const eventId = (event as { type: string; id: number }).id
+        const emitTime = emitTimes.get(eventId)
+        if (emitTime) {
+          endToEndLatencies.push(receiveTime - emitTime)
+        }
+      })
+
+      // Emit events and track emit times
+      for (let i = 0; i < 500; i++) {
+        const emitTime = performance.now()
+        emitTimes.set(i, emitTime)
+        eventBus.emitEvent({
+          type: 'e2e.latency',
+          id: i,
+        } as OrchestrationEvent)
+      }
+
+      // Wait for all events to be processed
+      await new Promise((resolve) => setTimeout(resolve, 100))
+
+      // Calculate statistics
+      endToEndLatencies.sort((a, b) => a - b)
+      const p50 =
+        endToEndLatencies[Math.floor(endToEndLatencies.length * 0.5)] ?? 0
+      const p95 =
+        endToEndLatencies[Math.floor(endToEndLatencies.length * 0.95)] ?? 0
+      const p99 =
+        endToEndLatencies[Math.floor(endToEndLatencies.length * 0.99)] ?? 0
+
+      console.log(
+        `End-to-end latency - P50: ${p50.toFixed(3)}ms, P95: ${p95.toFixed(3)}ms, P99: ${p99.toFixed(3)}ms`,
+      )
+
+      // P95 should be under 3ms for local execution (relaxed for CI/Wallaby)
+      expect(p95).toBeLessThan(3.0)
     })
   })
 })

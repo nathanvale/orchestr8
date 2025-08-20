@@ -50,7 +50,7 @@ Success Criteria:
   - Zod schema for workflow/agent JSON (centralized in `packages/schema`)
   - JSON Schema generation for docs/validation
   - Runtime parsing + friendly errors
-- [ ] In-Process Event Bus — Phase 1
+- [x] In-Process Event Bus — Phase 1
   - Bounded queue with overflow policy (drop-latest + warn)
   - Topics: `execution.started`, `step.started`, `step.completed`, `execution.completed`, `execution.failed`
   - Simple publish/subscribe API; in-memory subscribers only
