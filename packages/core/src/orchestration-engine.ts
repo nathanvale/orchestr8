@@ -20,11 +20,6 @@ import {
   type ResilienceInvocationContext,
   type ResiliencePolicy,
 } from '@orchestr8/schema'
-import {
-  isTimeoutError,
-  isCircuitBreakerOpenError,
-  isRetryExhaustedError,
-} from '@orchestr8/resilience'
 
 import type {
   AgentRegistry,
@@ -1331,18 +1326,37 @@ export class OrchestrationEngine implements IOrchestrationEngine {
     }
 
     // Map resilience errors to appropriate ExecutionError codes
-    if (isTimeoutError(error)) {
+    // Use inline type guards to avoid import dependencies
+    if (
+      error instanceof Error &&
+      error.name === 'TimeoutError' &&
+      'timeoutMs' in error
+    ) {
+      const timeoutError = error as Error & {
+        timeoutMs: number
+        operationName?: string
+      }
       return createExecutionError(ExecutionErrorCode.TIMEOUT, error.message, {
         stepId,
         cause: error,
         context: {
-          timeoutMs: error.timeoutMs,
-          operationName: error.operationName,
+          timeoutMs: timeoutError.timeoutMs,
+          operationName: timeoutError.operationName,
         },
       })
     }
 
-    if (isCircuitBreakerOpenError(error)) {
+    if (
+      error instanceof Error &&
+      error.name === 'CircuitBreakerOpenError' &&
+      'circuitKey' in error &&
+      'nextRetryTime' in error
+    ) {
+      const circuitError = error as Error & {
+        circuitKey: string
+        nextRetryTime: number
+        consecutiveFailures: number
+      }
       return createExecutionError(
         ExecutionErrorCode.CIRCUIT_OPEN,
         error.message,
@@ -1350,21 +1364,29 @@ export class OrchestrationEngine implements IOrchestrationEngine {
           stepId,
           cause: error,
           context: {
-            circuitKey: error.circuitKey,
-            nextRetryTime: error.nextRetryTime,
-            consecutiveFailures: error.consecutiveFailures,
+            circuitKey: circuitError.circuitKey,
+            nextRetryTime: circuitError.nextRetryTime,
+            consecutiveFailures: circuitError.consecutiveFailures,
           },
         },
       )
     }
 
-    if (isRetryExhaustedError(error)) {
+    if (
+      error instanceof Error &&
+      error.name === 'RetryExhaustedError' &&
+      'attempts' in error
+    ) {
+      const retryError = error as Error & {
+        attempts: number
+        lastError?: unknown
+      }
       return createExecutionError(ExecutionErrorCode.RETRYABLE, error.message, {
         stepId,
         cause: error,
         context: {
-          attempts: error.attempts,
-          lastError: error.lastError,
+          attempts: retryError.attempts,
+          lastError: retryError.lastError,
         },
       })
     }
