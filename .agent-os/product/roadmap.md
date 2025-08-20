@@ -1,188 +1,192 @@
 # Product Roadmap
 
-> Last Updated: 2025-08-19
-> Version: 1.0.1
-> Status: Week 1 of 4-Week MVP Sprint (Core engine mostly complete)
+> Last Updated: 2025-08-20
+> Version: 1.1.0
+> Status: MVP cut focused on JSON model, Event Bus (Phase 1), CLI v0, and minimal MCP bootstrap
+
+## MVP Scope at a Glance
+
+Do the least to ship a usable MVP that can:
+
+- Define workflows/agents in JSON and validate them
+- Run agents/workflows locally via CLI quickly
+- Emit execution events on an in-process event bus (Phase 1)
+- Optionally start a minimal MCP server to run agents from any MCP client (e.g., Anthropic Cloud, other LLMs)
+
+Non-goals for MVP: REST API, dashboard, OpenTelemetry, distributed execution, provider adapters.
+
+---
 
 ## Phase 0: Already Completed
 
-The following foundational work has been implemented:
+Foundations done:
 
-- [x] TypeScript configuration with strict mode
-- [x] Project initialization and git setup
-- [x] Configure TypeScript with strict mode and project references
-- [x] Setup Vitest for testing across packages
-- [x] Verify pnpm install, build, and test commands work
+- [x] TypeScript strict mode and project refs
+- [x] pnpm install/build/test verified
+- [x] Vitest test setup across packages
+- [x] Core orchestration engine (sequential/parallel)
+- [x] Basic resilience composition (retry/timeout/circuit breaker order) — adapters may follow post-MVP
+- [x] Error taxonomy and optional structured logging
 
-## Phase 1: MVP Core (Week 1 - Current)
+---
 
-**Goal:** Deliver working orchestration engine with basic resilience
-**Success Criteria:** Can execute multi-step workflows with retry/timeout/circuit breaker
+## Phase 1: MVP Cut — Engine + JSON + Event Bus + CLI (Target: 1 week)
 
-### Must-Have Features (Phase 1)
+Goal: Let developers create, test, and run agents and JSON workflows via the CLI with eventing and a minimal journal.
 
-- [x] Core orchestration engine implementation - Sequential and parallel execution `L`
-- [x] Complete resilience patterns - Retry with jitter, circuit breaker, timeout composition (engine integration & composition order implemented; adapter implementation pending) `M`
-- [x] Workflow schema validation (TypeScript AST in place; Zod validation planned) `M`
-- [ ] In-process event bus - Bounded queue with overflow policy `M`
-- [x] Basic execution context - Correlation ID, cancellation support `S`
+Success Criteria:
 
-### Should-Have Features (Phase 1)
+- `o8 create:agent` scaffolds a runnable agent and basic test
+- `pnpm o8 test` executes tests successfully (or `o8 test` if installed globally)
+- `pnpm o8 run ./examples/hello.json` executes successfully
+- `pnpm o8 run --agentId github.pr.monitor` can open a PR and report status
+- Event bus publishes lifecycle events; consumers can subscribe
+- JSON is validated (Zod + JSON Schema doc) and rejected on invalid input
+- Minimal journal can be inspected for a run
 
-- [x] AbortSignal propagation through execution chain `M`
-- [ ] Memory-safe execution journal `M`
-- [x] Structured error taxonomy `S`
-- [x] Structured logging (opt-in, no-op by default) `S`
+### Must-Haves
 
-### Dependencies (Phase 1)
+- [ ] JSON Execution Model (minimal)
+  - Zod schema for workflow/agent JSON (centralized in `packages/schema`)
+  - JSON Schema generation for docs/validation
+  - Runtime parsing + friendly errors
+- [ ] In-Process Event Bus — Phase 1
+  - Bounded queue with overflow policy (drop-latest + warn)
+  - Topics: `execution.started`, `step.started`, `step.completed`, `execution.completed`, `execution.failed`
+  - Simple publish/subscribe API; in-memory subscribers only
+- [ ] Minimal Execution Journal
+  - Append-only in-memory ring buffer by `runId`
+  - Export on-demand as JSON (printed by CLI `--inspect`)
+- [ ] CLI v0 (fast loop)
+  - `o8 init` — create minimal config and example
+  - `o8 create:agent` — scaffold tiny agent shell (optional template)
+  - `o8 run <workflow.json>` — run and stream events
+  - `o8 test` — run unit tests (delegate to `vitest`) and show quick status
+  - `o8 inspect <runId>` — dump journal for a run
+- [ ] Agents package scaffold
+  - Create `packages/agents` monorepo package to host built-in agents
+  - Wire into `pnpm-workspace.yaml` and TS project references
+  - Provide public export surface with stable agent IDs
+  - Place MVP agent here (`github.pr.monitor`)
+- [ ] Built-in GitHub PR agent (gh CLI)
+  - Agent ID: `github.pr.monitor`
+  - Location: `packages/agents`
+  - Creates a PR (using `gh pr create`) and continuously polls status checks
+  - Emits event bus updates per tick; writes to minimal journal
+  - Input: baseBranch, headBranch, title, body?, draft?, pollIntervalMs?, timeoutMs?
+  - Output: { prNumber, url, status: 'passed' | 'failed' | 'timeout', checks: Array<{ name, status, url? }>}
+- [ ] Examples
+  - `hello-world` + `fanout-aggregate` using the JSON model
+  - `github-pr-monitor` demonstrating PR creation and check polling
+- [ ] Tests (Vitest)
+  - Schema happy/invalid paths
+  - Event bus bounded queue + topic fan-out
+  - CLI `run` happy path (smoke), `inspect` output
 
-- TypeScript strict mode configuration
-- Vitest test setup
+### Should-Haves (time-permitting)
 
-## Phase 2: Framework & CLI (Week 2)
+- [ ] Journal tail/follow mode in CLI
+- [ ] Agent scaffolding templates beyond the minimal shell
+- [ ] Retry adapter parity tests
 
-**Goal:** Provide developer tools and agent framework
-**Success Criteria:** Developers can create, test, and run agents via CLI
+### Out of Scope (deferred)
 
-### Must-Have Features (Phase 2)
+- REST API, WebSocket server, dashboard, OpenTelemetry
+- Persistent journal/datastore; cross-process subscribers
 
-- [ ] BaseAgent abstract class with validation hooks `M`
-- [ ] Agent test harness with MSW integration `M`
-- [ ] CLI tool with core commands (init, create, run, test, inspect) `L`
-- [ ] Workflow execution via CLI `M`
-- [ ] Journal inspection capability `S`
+---
 
-### Should-Have Features (Phase 2)
+## Phase 2: MCP Bootstrap (Target: +1 week)
 
-- [ ] Agent scaffolding templates `S`
-- [ ] Test coverage reporting `S`
-- [ ] Chain of Thought support in BaseAgent `M`
+Goal: Run agents from any MCP-compatible client with a minimal server.
 
-### Dependencies (Phase 2)
+Success Criteria:
 
-- Core orchestration engine completed
-- Resilience patterns working
+- Start a local MCP server and invoke `o8.runWorkflow` with a JSON payload
+- Receive basic status/result via MCP response
+- Document how to connect from Anthropic Cloud code or any MCP client
 
-## Phase 3: API & Observability (Week 3)
+### Must-Haves (MCP)
 
-**Goal:** Enable monitoring and REST API access
-**Success Criteria:** Can monitor executions via API and dashboard
+- [ ] Minimal MCP server (stdio) with one command
+  - Command: `o8.runWorkflow` accepting normalized envelope + JSON workflow
+  - Capability discovery with a minimal manifest
+- [ ] Normalized envelope (subset) aligned to spec
+  - Reference: [MCP Integration Spec](../specs/2025-01-18-mcp-integration/spec.md)
+- [ ] CLI integration
+  - `o8 mcp start` — start server
+  - Docs: how to point MCP client to the server
+- [ ] Tests
+  - Contract tests: command availability, payload validation, response shape
 
-### Must-Have Features (Phase 3)
+### Non-Goals
 
-- [ ] REST API with 4 core endpoints (execute, status, journal, cancel) `M`
-- [ ] WebSocket server for real-time updates `M`
-- [ ] React dashboard with live monitoring `L`
-- [ ] OpenTelemetry integration (minimal mode) `M`
-- [ ] Idempotency support with TTL `S`
+- Tools/resources sync, streaming deltas, advanced auth
+- Multi-tenant isolation, rate limiting, tracing
 
-### Should-Have Features (Phase 3)
+---
 
-- [ ] ETag support for caching `S`
-- [ ] Dashboard metrics visualization `M`
-- [ ] Performance monitoring `S`
+## Phase 3: API & Observability (Post-MVP, optional)
 
-### Dependencies (Phase 3)
+- [ ] REST API: execute, status, journal, cancel
+- [ ] WebSocket server for live events
+- [ ] Minimal dashboard UI
+- [ ] OpenTelemetry (basic spans)
+- [ ] Idempotency with TTL
 
-- CLI and agent framework functional
-- Execution journal implemented
+---
 
-## Phase 4: Documentation & Polish (Week 4)
+## Post-MVP Backlog
 
-**Goal:** Production-ready MVP with documentation
-**Success Criteria:** Complete documentation, examples, and CI/CD pipeline
+- [ ] Provider abstraction + Claude/OpenAI/Ollama adapters
+- [ ] Distributed execution
+- [ ] AuthN/AuthZ
+- [ ] GraphQL API
+- [ ] Advanced debugging tools
+- [ ] Claude subagents integration (see spec)
 
-### Must-Have Features (Phase 6)
+### Future Scope (additional ideas)
 
-- [ ] Comprehensive documentation `L`
-- [ ] 3+ working examples (hello-world, multi-agent, research agent) `M`
-- [ ] CI/CD pipeline with GitHub Actions `M`
-- [ ] Test coverage >80% for core packages `L`
-- [ ] npm package publishing setup `S`
+- [ ] Durable event bus with broker support (Kafka/NATS), backpressure, replayable topics
+- [ ] Persistent journal + replay (SQLite/Postgres/S3), retention policies, DLQ handling
+- [ ] Scheduling & triggers: cron, webhooks, GitHub webhooks to start workflows/agents
+- [ ] Secrets management: Vault/AWS Secrets/GCP Secrets; redaction and scoped mounts per agent
+- [ ] Sandbox/isolation: OCI/Firecracker sandboxes with CPU/memory/time quotas and FS policies
+- [ ] Remote executors: worker pool with autoscaling, work-stealing, and priority queues
+- [ ] Cost/token accounting: per-run cost, budgets, alerts, per-agent/token rate caps
+- [ ] Versioned workflow registry: immutable versions, migrations, changelogs, rollback
+- [ ] TUI for CLI: interactive event stream, filters, state inspection, cancellations
+- [ ] Kubernetes operator: CRDs for workflows, status surfaces, GitOps integration (Argo/Flux)
 
-### Should-Have Features (Phase 6)
+---
 
-- [ ] Performance benchmarks `S`
-- [ ] Troubleshooting guide `S`
-- [ ] API documentation `M`
+## Timeline (lean)
 
-### Dependencies (Phase 4)
+- Week 1: Phase 1 complete (JSON, Event Bus P1, CLI v0, examples, tests)
+- Week 2: Phase 2 MCP bootstrap (single command, envelope subset, docs)
 
-- All core functionality complete
-- Dashboard operational
+---
 
-## Phase 5: Multi-Provider & Enterprise (Post-MVP)
+## Acceptance Tests (high level)
 
-**Goal:** Add LLM provider abstraction and enterprise features
-**Success Criteria:** Support for multiple LLM providers including local models
+- JSON Schema: invalid workflow rejected with helpful error path
+- Event Bus: publish 1k events with capacity 100 — no crash, overflow warnings
+- CLI: `o8 run examples/hello.json` prints started/completed and exit code 0
+- Journal: `o8 inspect <runId>` shows steps with timestamps
+- MCP: client can call `o8.runWorkflow` and receive result
+- MCP (Cloud Code): manual acceptance follows `../specs/2025-01-18-mcp-integration/sub-specs/cloud-code-integration.md` and must pass
 
-### Planned Features
+---
 
-- [ ] Generic MCP server integration — adapter, capability discovery, normalized envelope ([MCP Integration Spec](../specs/2025-01-18-mcp-integration/spec.md)) `XL`
-- [ ] Claude subagent integration — orchestration, delegation, streaming semantics ([Claude Subagents Spec](../specs/2025-01-18-claude-subagents-integration/spec.md)) `XL`
-- [ ] Provider abstraction interface `L`
-- [ ] Claude, OpenAI, Ollama adapters `XL`
-- [ ] Authentication and authorization `L`
-- [ ] Distributed execution support `XL`
-- [ ] GraphQL API `L`
-- [ ] Advanced debugging tools `L`
+## Quality Gates (lean)
 
-### Dependencies (Phase 6)
+- All tests passing; coverage ≥60% in core packages (`schema`, `core`)
+- Memory stable for typical runs; no unbounded growth
+- Lint + typecheck clean
 
-- MVP fully deployed and stable
-- User feedback incorporated
-- MCP and Subagent specs baselined (see links above)
+---
 
-## Phase 6: Development Agent Orchestration (Weeks 9-12)
+## References
 
-**Goal:** Enable @orchestr8 to orchestrate AI development agents for automated code generation, refactoring, and optimization
-**Success Criteria:** Working development agents with 95%+ code quality, dual deployment capability
-
-### Must-Have Features
-
-- [ ] Development agent framework - Base classes for code-generating agents `L`
-- [ ] XML prompt templates - Structured prompts for development tasks `L`
-- [ ] TypeScript Pro agent - Advanced TypeScript development capabilities `L`
-- [ ] React/Next.js agents - Frontend development automation `L`
-- [ ] Agent orchestration - Multi-agent coordination for complex tasks `XL`
-
-### Should-Have Features
-
-- [ ] Backend Architect agent - System design and API development `L`
-- [ ] Context Manager - Project state tracking and knowledge graph `M`
-- [ ] Agent Organizer - Team delegation and task decomposition `M`
-- [ ] Quality validation - Code review and testing automation `M`
-
-### Dependencies
-
-- Phase 5 completion (Multi-Provider support)
-- TypeScript/React/Next.js ecosystem knowledge
-- Claude API access for agent execution
-
-## Effort Scale
-
-- `XS`: < 4 hours
-- `S`: 4-8 hours
-- `M`: 1-2 days
-- `L`: 3-5 days
-- `XL`: 1+ weeks
-
-## Success Metrics
-
-### MVP Targets (End of Week 4)
-
-- ✅ CLI executes workflows successfully
-- ✅ REST API serves all 4 endpoints
-- ✅ Basic resilience patterns functional
-- ✅ Dashboard displays real-time updates
-- ✅ 80% test coverage on core packages
-- ✅ <100ms orchestration overhead (p95)
-- ✅ Documentation complete on Docusaurus
-
-### Quality Gates
-
-- All tests passing
-- No critical security vulnerabilities
-- Memory usage <200MB for typical workflows
-- API response times <500ms (p95)
-- Zero data loss in execution journal
+- MCP Integration Spec: `../specs/2025-01-18-mcp-integration/spec.md`
+- Product Technical Spec: `./technical-spec.md`

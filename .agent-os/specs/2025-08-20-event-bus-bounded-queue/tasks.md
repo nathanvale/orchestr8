@@ -16,24 +16,24 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
   - [x] 1.6 Add queueMicrotask scheduling for async emission
   - [x] 1.7 Verify all core tests pass
 
-- [ ] 2. Implement Bounded Queue Mechanism
-  - [ ] 2.1 Write tests for queue capacity enforcement
-  - [ ] 2.2 Implement internal queue data structure (circular buffer)
-  - [ ] 2.3 Add queue size tracking and bounds checking
-  - [ ] 2.4 Implement FIFO event processing with queueMicrotask
-  - [ ] 2.5 Add optional memory tracking (sampling heuristic)
-  - [ ] 2.6 Implement hybrid event cloning (shallow + Error preservation)
-  - [ ] 2.7 Verify queue management tests pass
+- [x] 2. Implement Bounded Queue Mechanism
+  - [x] 2.1 Write tests for queue capacity enforcement
+  - [x] 2.2 Implement internal queue data structure (circular buffer)
+  - [x] 2.3 Add queue size tracking and bounds checking
+  - [x] 2.4 Implement FIFO event processing with queueMicrotask
+  - [x] 2.5 Add optional memory tracking (sampling heuristic)
+  - [x] 2.6 Implement hybrid event cloning (shallow + Error preservation)
+  - [x] 2.7 Verify queue management tests pass
 
-- [ ] 3. Add Overflow Policy and Metrics
-  - [ ] 3.1 Write tests for dropOldest overflow behavior
-  - [ ] 3.2 Implement dropOldest policy when queue is full
-  - [ ] 3.3 Add dropped event counting and metrics collection
-  - [ ] 3.4 Implement drop rate calculation with rolling window
-  - [ ] 3.5 Add warning logs with throttling (max 1/minute)
-  - [ ] 3.6 Update getMetrics() to include all metric fields
-  - [ ] 3.7 Document queueMicrotask scheduling decision
-  - [ ] 3.8 Verify overflow handling tests pass
+- [x] 3. Add Overflow Policy and Metrics
+  - [x] 3.1 Write tests for dropOldest overflow behavior
+  - [x] 3.2 Implement dropOldest policy when queue is full
+  - [x] 3.3 Add dropped event counting and metrics collection
+  - [x] 3.4 Implement drop rate calculation with rolling window
+  - [x] 3.5 Add warning logs with throttling (max 1/minute)
+  - [x] 3.6 Update getMetrics() to include all metric fields
+  - [x] 3.7 Document queueMicrotask scheduling decision
+  - [x] 3.8 Verify overflow handling tests pass
 
 - [ ] 4. Integrate with Orchestration Components
   - [ ] 4.1 Write integration tests for ExecutionEngine events
@@ -121,3 +121,43 @@ The tasks should be executed in the following order to ensure proper dependencie
 - Focus on reliability and performance over features for the MVP
 - Consider future extensibility but don't over-engineer the initial implementation
 - Ensure clear documentation of overflow behavior for production operations
+
+## Production readiness (P0–P3)
+
+The following remediation tasks must be completed before promoting to production, ordered by priority from the latest assessment (2025-08-20).
+
+### P0 — Queue performance (blocker)
+
+- [ ] Replace internal array-based queue (shift) with an O(1) ring buffer
+  - [ ] Implement fixed-size circular buffer (head/tail indices) for enqueue/dequeue
+  - [ ] Preserve dropOldest semantics by advancing head on overflow
+  - [ ] Keep FIFO ordering guarantees within a step
+- [ ] Add unit tests covering large bursts (> capacity) and ordering under load
+- [ ] Validate latency/throughput against targets after the change
+
+### P1 — Metrics interval and overflow coverage
+
+- [ ] Use `config.metricsInterval` for the drop-rate window (currently fixed at 60s)
+- [ ] Align warning throttling to the interval or document it remains 60s explicitly
+- [ ] Add overflow-focused tests:
+  - [ ] When capacity is exceeded, oldest events are dropped (dropOldest)
+  - [ ] `droppedCount` increments and `lastDropTimestamp` updates
+  - [ ] `dropRate` reflects events in the configured interval window
+  - [ ] `warnOnDrop` throttles to 1 per minute (or per configured interval)
+  - [ ] Newer events continue processing after overflow
+
+### P2 — Performance and operability
+
+- [ ] Add a micro-benchmark harness to measure:
+  - [ ] 10,000 events/second sustained with ~100 listeners
+  - [ ] Emission latency distribution (p95 < 1ms, p99 < 5ms)
+- [ ] Document results and add a short performance note to package docs
+- [ ] Clarify event immutability expectations in docs; optionally `Object.freeze` top-level events in dev builds
+- [ ] Enhance listener error logging to include `error.stack` when available
+- [ ] Confirm Node engine constraints for deployment (core requires Node >= 22)
+
+### P3 — Nice-to-haves (deferred)
+
+- [ ] Implement optional memory-tracking heuristic (sample 1/100 events, running average)
+  - Or remove `enableMemoryTracking` flag for now to avoid dead configuration
+- [ ] Consider API ergonomics: optional `emit(event)` alias for `emitEvent(event)` while preserving type safety

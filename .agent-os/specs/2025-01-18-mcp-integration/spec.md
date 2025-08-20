@@ -91,6 +91,7 @@ As a DevOps engineer, I want standardized protocol access to orchestr8, so that 
 - **MCP Tools Specification**: @.agent-os/specs/2025-01-18-mcp-integration/sub-specs/mcp-tools-spec.md
 - Tests Specification: @.agent-os/specs/2025-01-18-mcp-integration/sub-specs/tests.md
 - **Normalized Result Envelope**: @.agent-os/specs/2025-01-18-mcp-integration/sub-specs/normalized-envelope.md
+- **Claude/Cloud Code Integration (MVP)**: @.agent-os/specs/2025-01-18-mcp-integration/sub-specs/cloud-code-integration.md
 
 ## Related Specifications
 

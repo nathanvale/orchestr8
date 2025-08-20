@@ -1,6 +1,7 @@
-import { EventEmitter } from 'node:events'
-
 import type { Logger } from '@orchestr8/logger'
+
+/* global queueMicrotask */
+import { EventEmitter } from 'node:events'
 
 /**
  * Configuration for the BoundedEventBus
@@ -88,11 +89,81 @@ interface QueuedEvent {
 }
 
 /**
+ * Circular buffer implementation for O(1) queue operations
+ */
+class CircularBuffer<T> {
+  private readonly buffer: (T | undefined)[]
+  private head = 0 // Index where next item will be dequeued
+  private tail = 0 // Index where next item will be enqueued
+  private size = 0
+  private readonly capacity: number
+
+  constructor(capacity: number) {
+    if (capacity <= 0) {
+      throw new Error('Capacity must be greater than 0')
+    }
+    this.capacity = capacity
+    this.buffer = new Array(capacity)
+  }
+
+  enqueue(item: T): boolean {
+    if (this.size === this.capacity) {
+      return false // Queue is full
+    }
+
+    this.buffer[this.tail] = item
+    this.tail = (this.tail + 1) % this.capacity
+    this.size++
+    return true
+  }
+
+  dequeue(): T | undefined {
+    if (this.size === 0) {
+      return undefined
+    }
+
+    const item = this.buffer[this.head]
+    this.buffer[this.head] = undefined // Clear reference
+    this.head = (this.head + 1) % this.capacity
+    this.size--
+    return item
+  }
+
+  dropOldest(): T | undefined {
+    if (this.size === 0) {
+      return undefined
+    }
+
+    const dropped = this.dequeue()
+    return dropped
+  }
+
+  getSize(): number {
+    return this.size
+  }
+
+  isFull(): boolean {
+    return this.size === this.capacity
+  }
+
+  isEmpty(): boolean {
+    return this.size === 0
+  }
+
+  clear(): void {
+    this.buffer.fill(undefined)
+    this.head = 0
+    this.tail = 0
+    this.size = 0
+  }
+}
+
+/**
  * BoundedEventBus with queue management and overflow handling
  */
 export class BoundedEventBus extends EventEmitter {
   private readonly config: Required<EventBusConfig>
-  private readonly queue: QueuedEvent[] = []
+  private readonly queue: CircularBuffer<QueuedEvent>
   private readonly logger?: Logger
 
   // Metrics tracking
@@ -104,6 +175,10 @@ export class BoundedEventBus extends EventEmitter {
 
   // Processing state
   private isProcessing = false
+
+  // Memory tracking
+  private memoryEstimate = 0
+  private sampleCounter = 0
 
   constructor(config: EventBusConfig = {}, logger?: Logger) {
     super()
@@ -125,6 +200,9 @@ export class BoundedEventBus extends EventEmitter {
 
     this.logger = logger
 
+    // Initialize circular buffer with configured capacity
+    this.queue = new CircularBuffer<QueuedEvent>(this.config.maxQueueSize)
+
     // Set max listeners per event type
     this.setMaxListeners(this.config.maxListenersPerEvent)
   }
@@ -139,12 +217,18 @@ export class BoundedEventBus extends EventEmitter {
       timestamp: Date.now(),
     }
 
-    // Check queue capacity
-    if (this.queue.length >= this.config.maxQueueSize) {
-      this.handleOverflow()
+    // Track memory if enabled
+    if (this.config.enableMemoryTracking) {
+      this.trackMemory(queuedEvent)
     }
 
-    this.queue.push(queuedEvent)
+    // Try to enqueue, handle overflow if queue is full
+    if (!this.queue.enqueue(queuedEvent)) {
+      this.handleOverflow()
+      // After dropping oldest, enqueue the new event
+      this.queue.enqueue(queuedEvent)
+    }
+
     this.updateHighWaterMark()
 
     // Schedule processing if not already scheduled
@@ -194,7 +278,7 @@ export class BoundedEventBus extends EventEmitter {
       droppedCount: this.droppedCount,
       lastDropTimestamp: this.lastDropTimestamp,
       highWaterMark: this.highWaterMark,
-      queueSize: this.queue.length,
+      queueSize: this.queue.getSize(),
       dropRate: this.calculateDropRate(),
       listeners,
     }
@@ -204,8 +288,8 @@ export class BoundedEventBus extends EventEmitter {
    * Process queued events
    */
   private async processQueue(): Promise<void> {
-    while (this.queue.length > 0) {
-      const queuedEvent = this.queue.shift()
+    while (!this.queue.isEmpty()) {
+      const queuedEvent = this.queue.dequeue()
       if (!queuedEvent) break
 
       // Emit to listeners with error isolation
@@ -218,7 +302,7 @@ export class BoundedEventBus extends EventEmitter {
     this.isProcessing = false
 
     // Check if more events were added while processing
-    if (this.queue.length > 0 && !this.isProcessing) {
+    if (!this.queue.isEmpty() && !this.isProcessing) {
       this.isProcessing = true
       queueMicrotask(() => this.processQueue())
     }
@@ -257,7 +341,7 @@ export class BoundedEventBus extends EventEmitter {
     if ('error' in event) {
       const eventWithError = event as StepEvent | WorkflowEvent
       if ('error' in eventWithError && eventWithError.error instanceof Error) {
-        (cloned as typeof eventWithError).error = eventWithError.error
+        ;(cloned as typeof eventWithError).error = eventWithError.error
       }
     }
 
@@ -269,8 +353,8 @@ export class BoundedEventBus extends EventEmitter {
    */
   private handleOverflow(): void {
     if (this.config.overflowPolicy === 'dropOldest') {
-      // Remove oldest event
-      const dropped = this.queue.shift()
+      // Remove oldest event using circular buffer's dropOldest
+      const dropped = this.queue.dropOldest()
       if (dropped) {
         this.droppedCount++
         this.lastDropTimestamp = Date.now()
@@ -281,13 +365,14 @@ export class BoundedEventBus extends EventEmitter {
           this.dropTimestamps = this.dropTimestamps.slice(-100)
         }
 
-        // Log warning (throttled to 1 per minute)
+        // Log warning (throttled using configured metrics interval)
         if (this.config.warnOnDrop) {
           const now = Date.now()
-          if (now - this.lastWarnTime > 60000) {
+          // Use metricsInterval for warning throttling (default 60000ms = 1 minute)
+          if (now - this.lastWarnTime > this.config.metricsInterval) {
             this.logger?.warn('Event queue overflow - dropping oldest event', {
               droppedCount: this.droppedCount,
-              queueSize: this.queue.length,
+              queueSize: this.queue.getSize(),
               eventType: dropped.event.type,
             })
             this.lastWarnTime = now
@@ -301,23 +386,83 @@ export class BoundedEventBus extends EventEmitter {
    * Update high water mark
    */
   private updateHighWaterMark(): void {
-    if (this.queue.length > this.highWaterMark) {
-      this.highWaterMark = this.queue.length
+    const currentSize = this.queue.getSize()
+    if (currentSize > this.highWaterMark) {
+      this.highWaterMark = currentSize
     }
   }
 
   /**
-   * Calculate drop rate (events per minute)
+   * Calculate drop rate (events per configured interval, normalized to per minute)
    */
   private calculateDropRate(): number {
     if (this.dropTimestamps.length === 0) return 0
 
     const now = Date.now()
-    const oneMinuteAgo = now - 60000
+    const windowStart = now - this.config.metricsInterval
 
-    // Count drops in last minute
-    const recentDrops = this.dropTimestamps.filter((ts) => ts > oneMinuteAgo)
+    // Count drops in the configured metrics interval
+    const recentDrops = this.dropTimestamps.filter((ts) => ts > windowStart)
 
-    return recentDrops.length
+    // Calculate rate per minute (normalize to 60000ms regardless of interval)
+    const ratePerMinute =
+      (recentDrops.length * 60000) / this.config.metricsInterval
+    return Math.round(ratePerMinute)
+  }
+
+  /**
+   * Track memory usage using sampling heuristic
+   */
+  private trackMemory(event: QueuedEvent): void {
+    if (!this.config.enableMemoryTracking) return
+
+    // Sample 1 in 100 events
+    this.sampleCounter++
+    if (this.sampleCounter % 100 === 0) {
+      try {
+        // Estimate size of the event
+        const eventSize = this.estimateEventSize(event)
+
+        // Update running average
+        this.memoryEstimate = this.memoryEstimate * 0.9 + eventSize * 0.1
+      } catch {
+        // Ignore errors in memory tracking
+      }
+    }
+  }
+
+  /**
+   * Estimate the size of an event in bytes
+   */
+  private estimateEventSize(event: QueuedEvent): number {
+    // Simple heuristic: count string lengths and object properties
+    let size = 0
+
+    const countSize = (obj: unknown, depth = 0): void => {
+      if (depth > 5) return // Prevent deep recursion
+
+      if (typeof obj === 'string') {
+        size += obj.length * 2 // Approximate UTF-16 size
+      } else if (typeof obj === 'number') {
+        size += 8
+      } else if (typeof obj === 'boolean') {
+        size += 4
+      } else if (obj && typeof obj === 'object') {
+        if (obj instanceof Error) {
+          // Don't traverse Error objects deeply
+          size += 100 + (obj.message?.length ?? 0) * 2
+        } else if (Array.isArray(obj)) {
+          obj.forEach((item) => countSize(item, depth + 1))
+        } else {
+          for (const key in obj) {
+            size += key.length * 2
+            countSize((obj as Record<string, unknown>)[key], depth + 1)
+          }
+        }
+      }
+    }
+
+    countSize(event)
+    return size
   }
 }

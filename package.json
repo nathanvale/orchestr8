@@ -28,6 +28,9 @@
     "example:pr-lifecycle": "tsx scripts/examples/pr-lifecycle-gh.ts",
     "example:convex-seed": "tsx scripts/examples/convex-seed-init.ts",
     "example:multi-llm": "tsx scripts/examples/multi-llm-fanout-aggregate.ts",
+    "example:core:quick-start": "tsx scripts/examples/core-quick-start.ts",
+    "example:core:fallback-retry": "tsx scripts/examples/core-fallback-retry.ts",
+    "example:core:conditions-env": "tsx scripts/examples/core-conditions-env.ts",
     "validate:dual-consumption": "node scripts/validate-dual-consumption.js"
   },
   "devDependencies": {

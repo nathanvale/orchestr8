@@ -2,17 +2,8 @@
  * @orchestr8/core - Core orchestration engine
  */
 
-// Export expression evaluation
-export {
-  evaluateCondition,
-  resolveMapping,
-  clearExpressionCache,
-} from './expression-evaluator.js'
-
 // Export implementation
 export { BoundedEventBus } from './event-bus.js'
-export { OrchestrationEngine } from './orchestration-engine.js'
-
 // Export event bus types
 export type {
   EventBusConfig,
@@ -23,6 +14,13 @@ export type {
   StepEvent,
   ResilienceEvent,
 } from './event-bus.js'
+export {
+  evaluateCondition,
+  resolveMapping,
+  clearExpressionCache,
+} from './expression-evaluator.js'
+
+export { OrchestrationEngine } from './orchestration-engine.js'
 
 // Export core types and interfaces
 export type {

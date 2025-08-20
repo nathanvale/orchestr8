@@ -541,3 +541,8 @@ jobs:
         with:
           files: ./packages/mcp-server/coverage/lcov.info
 ```
+
+## Acceptance (Cloud Code / Claude Code)
+
+- Manual acceptance must follow the steps in `./cloud-code-integration.md` and is required for MVP sign-off
+- Automated counterparts should live in `packages/mcp-server/__tests__/acceptance/cloud-code.test.ts` to validate tool discovery, schema exposure, and a happy-path `run_work` call
