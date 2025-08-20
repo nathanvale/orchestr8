@@ -10,7 +10,19 @@ export {
 } from './expression-evaluator.js'
 
 // Export implementation
+export { BoundedEventBus } from './event-bus.js'
 export { OrchestrationEngine } from './orchestration-engine.js'
+
+// Export event bus types
+export type {
+  EventBusConfig,
+  EventBusMetrics,
+  OrchestrationEvent,
+  WorkflowEvent,
+  ExecutionEvent,
+  StepEvent,
+  ResilienceEvent,
+} from './event-bus.js'
 
 // Export core types and interfaces
 export type {
