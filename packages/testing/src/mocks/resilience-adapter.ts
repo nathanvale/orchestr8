@@ -102,7 +102,7 @@ export class MockResilienceAdapter implements ResilienceAdapter {
     // Simulate circuit breaker open if configured
     if (this.simulateCircuitOpen && policy.circuitBreaker) {
       throw createExecutionError(
-        ExecutionErrorCode.CIRCUIT_OPEN,
+        ExecutionErrorCode.CIRCUIT_BREAKER_OPEN,
         'Circuit breaker is open',
         { context: { policy: policy.circuitBreaker } },
       )

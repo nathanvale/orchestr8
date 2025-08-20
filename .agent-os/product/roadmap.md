@@ -22,8 +22,8 @@ The following foundational work has been implemented:
 ### Must-Have Features (Phase 1)
 
 - [x] Core orchestration engine implementation - Sequential and parallel execution `L`
-- [ ] Complete resilience patterns - Retry with jitter, circuit breaker, timeout composition (engine integration & composition order implemented; adapter implementation pending) `M`
-- [ ] Workflow schema validation (TypeScript AST in place; Zod validation planned) `M`
+- [x] Complete resilience patterns - Retry with jitter, circuit breaker, timeout composition (engine integration & composition order implemented; adapter implementation pending) `M`
+- [x] Workflow schema validation (TypeScript AST in place; Zod validation planned) `M`
 - [ ] In-process event bus - Bounded queue with overflow policy `M`
 - [x] Basic execution context - Correlation ID, cancellation support `S`
 

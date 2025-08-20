@@ -1358,7 +1358,7 @@ export class OrchestrationEngine implements IOrchestrationEngine {
         consecutiveFailures: number
       }
       return createExecutionError(
-        ExecutionErrorCode.CIRCUIT_OPEN,
+        ExecutionErrorCode.CIRCUIT_BREAKER_OPEN,
         error.message,
         {
           stepId,

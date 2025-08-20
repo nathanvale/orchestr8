@@ -53,7 +53,8 @@ describe('Resilience Error Types', () => {
       expect(error).toBeInstanceOf(CircuitBreakerOpenError)
       expect(error).toBeInstanceOf(Error)
       expect(error.name).toBe('CircuitBreakerOpenError')
-      expect(error.code).toBe('CIRCUIT_OPEN')
+      expect(error.code).toBe('CIRCUIT_BREAKER_OPEN')
+      expect(error.legacyCode).toBe('CIRCUIT_OPEN') // Deprecated alias
       expect(error.message).toBe('Circuit breaker is open')
       expect(error.circuitKey).toBe('service:operation')
       expect(error.retryAfter).toBe(retryAfter)

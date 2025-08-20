@@ -13,6 +13,15 @@ export {
   isExecutionError,
 } from './errors.js'
 
+// Export expression validation utilities
+export {
+  ExpressionValidator,
+  DEFAULT_EXPRESSION_SECURITY,
+  type ExpressionSecurityConfig,
+  type ExpressionContext,
+  type ExpressionValidationResult,
+} from './expression-validator.js'
+
 // Export resilience types
 export type {
   ResiliencePolicy,
@@ -21,10 +30,14 @@ export type {
   CompositionOrder,
 } from './resilience.js'
 
-// Export validators and hash helper
-export { computeWorkflowSchemaHash, validateWorkflow } from './validators.js'
+// Export validators and hash helper (backward compatibility)
+export {
+  computeWorkflowSchemaHash,
+  validateWorkflow,
+  isValidWorkflow,
+} from './validators.js'
 
-// Export workflow types
+// Export workflow types (original TypeScript interfaces)
 export type {
   BaseStep,
   AgentStep,
@@ -36,3 +49,43 @@ export type {
   StepResult,
   WorkflowResult,
 } from './workflow.js'
+
+// Export Zod schemas and validation utilities
+export {
+  // Zod schemas
+  WorkflowSchema,
+  WorkflowStepSchema,
+  WorkflowMetadataSchema,
+  WorkflowContextSchema,
+  AgentInvocationSchema,
+  StepInputSchema,
+  StepOutputSchema,
+  StepConditionSchema,
+  RetryPolicySchema,
+  CircuitBreakerPolicySchema,
+  ConcurrencyPolicySchema,
+  ResilienceBudgetSchema,
+  StepPoliciesSchema,
+  GlobalPoliciesSchema,
+  ErrorTaxonomySchema,
+  ExpressionSecuritySchema,
+
+  // Schema validator class
+  WorkflowSchemaValidator,
+
+  // Zod-derived types
+  type WorkflowZod,
+  type WorkflowStepZod,
+  type WorkflowMetadata,
+  type WorkflowContext,
+  type AgentInvocation,
+  type StepInput,
+  type StepOutput,
+  type StepCondition,
+  type RetryPolicy,
+  type CircuitBreakerPolicy,
+  type ConcurrencyPolicy,
+  type ResilienceBudget,
+  type StepPolicies,
+  type GlobalPolicies,
+} from './zod-schemas.js'

@@ -96,23 +96,70 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
 
 ### P0
 
-- [ ] Monitor CI for flakiness regressions in timing-sensitive tests (reference adapter); retain fake timers where applicable
+- [x] Monitor CI for flakiness regressions in timing-sensitive tests (reference adapter); retain fake timers where applicable
+
+- [ ] Align canonical error contracts in resilience
+  - [ ] CircuitBreakerOpenError: set code to 'CIRCUIT_BREAKER_OPEN' and expose
+        nextRetryTime: number explicitly
+  - [ ] Keep retryAfter: Date and existing code 'CIRCUIT_OPEN' as deprecated
+        aliases for backward compatibility and update type guards
+  - [ ] Ensure all timeout paths raise TimeoutError (including default
+        timeout wrapper) to keep core error mapping stable
+
+- [ ] Define circuit breaker failureThreshold semantics and update config/tests
+  - [ ] Decide absolute count vs rate; if supporting both, add a clear
+        thresholdMode: 'count' | 'rate' or interpret values ≤ 1 as rate and
+    > 1 as count
+  - [ ] Update CircuitBreakerConfig types/validation and adjust E2E using 0.5
+        to match the chosen semantics
+
+- [ ] Enforce performance targets in CI
+  - [ ] Unskip/enable perf benchmarks with CI-friendly thresholds (median < 1ms,
+        p95 < 2ms overhead) and document acceptable CI variance
+  - [ ] Gate perf in test:ci and add brief docs on handling flakes/fallbacks
 
 ### P1
 
 - [x] Core: map resilience errors to schema ExecutionError codes
-  - [x] Map TimeoutError to TIMEOUT code with timeout metadata  
+  - [x] Map TimeoutError to TIMEOUT code with timeout metadata
   - [x] Map CircuitBreakerOpenError to CIRCUIT_OPEN code for analytics
   - [x] Map RetryExhaustedError to RETRYABLE with attempts/lastError metadata
   - [x] Add unit tests for error mapping and propagation
-- [ ] Core: add E2E integration test using ProductionResilienceAdapter
-  - [ ] Validate retry + timeout + circuit breaker flows with real composition
-  - [ ] Assert signal propagation (abort during backoff and timeout)
-- [ ] Docs: composition order guidance
-  - [ ] Document when to prefer `retry-cb-timeout` vs `timeout-cb-retry` with trade-offs
+- [x] Core: add E2E integration test using ProductionResilienceAdapter
+  - [x] Validate retry + timeout + circuit breaker flows with real composition
+  - [x] Assert signal propagation (abort during backoff and timeout)
+- [x] Docs: composition order guidance
+  - [x] Document when to prefer `retry-cb-timeout` vs `timeout-cb-retry` with trade-offs
+
+- [ ] Composition default wrappers consistency
+  - [ ] Standardize error types across default wrappers (or mark them
+        internal-only) so production paths consistently use the
+        ProductionResilienceAdapter
+
+- [ ] Circuit breaker instance lifecycle & telemetry in adapter
+  - [ ] Add periodic cleanup/eviction telemetry and unit tests for LRU
+        management in ProductionResilienceAdapter
+  - [ ] Expose safe diagnostics for instance counts and last-access tracking
+
+- [ ] Observability polish
+  - [ ] Enrich telemetry with failure rate, open duration, probe outcomes,
+        and assert on hooks firing in tests
 
 ### P2
 
 - [ ] DX: provide a default production adapter binding in core (optional factory/default)
 - [ ] Observability: align standard telemetry fields across core/resilience (workflowId, stepId, correlationId)
 - [ ] Docs: expand resilience examples (policy presets, CB tuning, retry predicates by error class)
+
+- [ ] Half-open gradual recovery strategy
+  - [ ] Design configurable ramp-up with guardrails and tests
+
+- [ ] Additional composition orders (if needed by product)
+  - [ ] Validate, document trade-offs, and add tests
+
+- [ ] Documentation improvements
+  - [ ] Key derivation hygiene (bounded cardinality) with examples
+  - [ ] Threshold semantics (count vs rate) with worked examples
+  - [ ] Migration notes for updated error contracts
+
+- [ ] Explore distributed circuit breaker (explicitly post-MVP)

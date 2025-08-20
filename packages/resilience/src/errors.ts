@@ -23,7 +23,12 @@ export class TimeoutError extends Error {
  */
 export class CircuitBreakerOpenError extends Error {
   readonly name = 'CircuitBreakerOpenError'
-  readonly code = 'CIRCUIT_OPEN'
+  readonly code = 'CIRCUIT_BREAKER_OPEN'
+
+  /**
+   * @deprecated Use 'code' property instead
+   */
+  readonly legacyCode = 'CIRCUIT_OPEN'
 
   constructor(
     message: string,

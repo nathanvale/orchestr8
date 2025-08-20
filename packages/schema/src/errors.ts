@@ -3,6 +3,8 @@
  */
 export const ExecutionErrorCode = {
   TIMEOUT: 'TIMEOUT',
+  CIRCUIT_BREAKER_OPEN: 'CIRCUIT_BREAKER_OPEN',
+  /** @deprecated Use CIRCUIT_BREAKER_OPEN instead */
   CIRCUIT_OPEN: 'CIRCUIT_OPEN',
   CANCELLED: 'CANCELLED',
   VALIDATION: 'VALIDATION',

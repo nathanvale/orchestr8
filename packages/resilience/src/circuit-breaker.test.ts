@@ -414,6 +414,115 @@ describe('CircuitBreaker', () => {
     })
   })
 
+  describe('Rate-based Threshold', () => {
+    it('opens circuit when failure rate exceeds threshold', async () => {
+      const config: CircuitBreakerConfig = {
+        failureThreshold: 0.5, // 50% failure rate
+        recoveryTime: 1000,
+        sampleSize: 4,
+        halfOpenPolicy: 'single-probe',
+      }
+      const cb = new CircuitBreaker(config)
+
+      const successOp = vi.fn().mockResolvedValue('success')
+      const failOp = vi.fn().mockRejectedValue(new Error('fail'))
+
+      // Fill window: 2 successes, 2 failures = 50% failure rate
+      await cb.execute('key', successOp)
+      await cb.execute('key', successOp)
+      await expect(cb.execute('key', failOp)).rejects.toThrow('fail')
+      await expect(cb.execute('key', failOp)).rejects.toThrow('fail')
+
+      // Circuit should be open (50% failure rate met)
+      await expect(cb.execute('key', successOp)).rejects.toThrow(
+        CircuitBreakerOpenError,
+      )
+
+      const state = cb.getCircuitState('key')
+      expect(state?.status).toBe('open')
+    })
+
+    it('does not open circuit when failure rate is below threshold', async () => {
+      const config: CircuitBreakerConfig = {
+        failureThreshold: 0.75, // 75% failure rate
+        recoveryTime: 1000,
+        sampleSize: 4,
+        halfOpenPolicy: 'single-probe',
+      }
+      const cb = new CircuitBreaker(config)
+
+      const successOp = vi.fn().mockResolvedValue('success')
+      const failOp = vi.fn().mockRejectedValue(new Error('fail'))
+
+      // Fill window: 2 successes, 2 failures = 50% failure rate
+      await cb.execute('key', successOp)
+      await cb.execute('key', successOp)
+      await expect(cb.execute('key', failOp)).rejects.toThrow('fail')
+      await expect(cb.execute('key', failOp)).rejects.toThrow('fail')
+
+      // Circuit should remain closed (50% < 75% threshold)
+      const result = await cb.execute('key', successOp)
+      expect(result).toBe('success')
+
+      const state = cb.getCircuitState('key')
+      expect(state?.status).toBe('closed')
+    })
+
+    it('treats 1.0 as 100% failure rate', async () => {
+      const config: CircuitBreakerConfig = {
+        failureThreshold: 1.0, // 100% failure rate
+        recoveryTime: 1000,
+        sampleSize: 3,
+        halfOpenPolicy: 'single-probe',
+      }
+      const cb = new CircuitBreaker(config)
+
+      const successOp = vi.fn().mockResolvedValue('success')
+      const failOp = vi.fn().mockRejectedValue(new Error('fail'))
+
+      // Fill window with all failures
+      await expect(cb.execute('key', failOp)).rejects.toThrow('fail')
+      await expect(cb.execute('key', failOp)).rejects.toThrow('fail')
+      await expect(cb.execute('key', failOp)).rejects.toThrow('fail')
+
+      // Circuit should be open (100% failure rate)
+      await expect(cb.execute('key', successOp)).rejects.toThrow(
+        CircuitBreakerOpenError,
+      )
+
+      const state = cb.getCircuitState('key')
+      expect(state?.status).toBe('open')
+    })
+
+    it('treats values > 1 as absolute count', async () => {
+      const config: CircuitBreakerConfig = {
+        failureThreshold: 2, // Absolute count of 2 failures
+        recoveryTime: 1000,
+        sampleSize: 5,
+        halfOpenPolicy: 'single-probe',
+      }
+      const cb = new CircuitBreaker(config)
+
+      const successOp = vi.fn().mockResolvedValue('success')
+      const failOp = vi.fn().mockRejectedValue(new Error('fail'))
+
+      // Fill window: 3 successes, 2 failures
+      await cb.execute('key', successOp)
+      await cb.execute('key', successOp)
+      await cb.execute('key', successOp)
+      await expect(cb.execute('key', failOp)).rejects.toThrow('fail')
+      await expect(cb.execute('key', failOp)).rejects.toThrow('fail')
+
+      // Circuit should be open (2 failures = threshold)
+      await expect(cb.execute('key', successOp)).rejects.toThrow(
+        CircuitBreakerOpenError,
+      )
+
+      const state = cb.getCircuitState('key')
+      expect(state?.status).toBe('open')
+    })
+  })
+
   describe('Edge Cases', () => {
     it('handles gradual half-open policy', async () => {
       const config: CircuitBreakerConfig = {

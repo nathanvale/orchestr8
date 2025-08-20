@@ -33,7 +33,11 @@ export interface RetryConfig {
 export interface CircuitBreakerConfig {
   /** Optional explicit key for circuit isolation (defaults to workflowId:stepId) */
   key?: string
-  /** Number of failures required to open the circuit */
+  /**
+   * Failure threshold to open the circuit:
+   * - Values > 1: Absolute count of failures
+   * - Values <= 1: Failure rate (e.g., 0.5 = 50% failure rate)
+   */
   failureThreshold: number
   /** Time in milliseconds before attempting recovery (half-open) */
   recoveryTime: number

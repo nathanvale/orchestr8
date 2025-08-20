@@ -5,7 +5,10 @@ import { performance } from 'node:perf_hooks'
 import { ProductionResilienceAdapter } from './production-adapter.js'
 
 // Environment variable gate for performance benchmarks
-if (process.env.PERF !== '1') {
+const isCI = process.env.CI === 'true'
+const isPerfMode = process.env.PERF === '1'
+
+if (!isPerfMode && !isCI) {
   console.log(
     '🏃‍♂️ Performance benchmarks are gated behind PERF=1 environment variable',
   )
@@ -116,14 +119,33 @@ class BenchmarkSuite {
   private validatePerformanceTargets(): void {
     console.log('\n✅ Performance Target Validation\n')
 
+    // Use relaxed thresholds in CI to account for variability
+    const medianTarget = isCI ? 2.0 : 1.0 // 2ms in CI, 1ms locally
+    const p95Target = isCI ? 5.0 : 2.0 // 5ms in CI, 2ms locally
+
+    let allPassed = true
     for (const result of this.results) {
-      const passes = result.medianTime < 1.0
+      const medianPasses = result.medianTime < medianTarget
+      const p95Passes = result.p95Time < p95Target
+      const passes = medianPasses && p95Passes
+
+      if (!passes) allPassed = false
+
       const emoji = passes ? '✅' : '❌'
       const status = passes ? 'PASS' : 'FAIL'
 
+      console.log(`${emoji} ${result.name}: ${status}`)
       console.log(
-        `${emoji} ${result.name}: ${status} (median: ${result.medianTime.toFixed(3)}ms, target: <1ms)`,
+        `    Median: ${result.medianTime.toFixed(3)}ms (target: <${medianTarget}ms) ${medianPasses ? '✅' : '❌'}`,
       )
+      console.log(
+        `    P95:    ${result.p95Time.toFixed(3)}ms (target: <${p95Target}ms) ${p95Passes ? '✅' : '❌'}`,
+      )
+    }
+
+    if (!allPassed && isCI) {
+      console.log('\n❌ Performance targets not met in CI')
+      process.exit(1)
     }
   }
 }

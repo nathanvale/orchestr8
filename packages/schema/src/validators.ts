@@ -1,158 +1,124 @@
 /**
  * Workflow schema validation and hash computation
+ * Enhanced with Zod validation for comprehensive type checking
  */
 
-import { createHash } from 'node:crypto'
+import type { Workflow } from './workflow.js'
 
-import type { Workflow, WorkflowStep } from './workflow.js'
+import { WorkflowSchemaValidator, type WorkflowZod } from './zod-schemas.js'
 
 /**
  * Compute a hash of the workflow schema structure
  * This is a constant hash for a given schema version, NOT unique per workflow
- *
+ * @deprecated Use WorkflowSchemaValidator.calculateSchemaHash() instead
  * @returns The current schema version hash
  */
 export function computeWorkflowSchemaHash(): string {
-  // This represents the structure/version of the workflow schema itself
-  // It should be updated when the schema structure changes
-  const schemaVersion = '1.0.0'
-  const schemaStructure = {
-    version: schemaVersion,
-    fields: [
-      'id',
-      'version',
-      'name',
-      'description',
-      'schemaHash',
-      'variables',
-      'allowedEnvVars',
-      'steps',
-      'timeout',
-      'maxConcurrency',
-      'resilience',
-    ],
-    stepTypes: ['agent', 'sequential', 'parallel'],
-    errorCodes: [
-      'TIMEOUT',
-      'CIRCUIT_OPEN',
-      'CANCELLED',
-      'VALIDATION',
-      'RETRYABLE',
-      'UNKNOWN',
-    ],
-  }
-
-  const hash = createHash('sha256')
-  hash.update(JSON.stringify(schemaStructure))
-  return hash.digest('hex').substring(0, 16) // Use first 16 chars for brevity
+  return WorkflowSchemaValidator.calculateSchemaHash()
 }
 
 /**
- * Validate that a workflow conforms to the expected schema
+ * Validate that a workflow conforms to the expected schema using Zod
  * @param workflow The workflow to validate
- * @returns True if valid, throws error if invalid
+ * @returns The validated workflow with proper typing
+ * @throws Error if validation fails with detailed error messages
  */
-export function validateWorkflow(workflow: Workflow): boolean {
-  // Basic structure validation
-  if (!workflow.id || typeof workflow.id !== 'string') {
-    throw new Error('Workflow must have a valid id')
-  }
+export function validateWorkflow(workflow: unknown): Workflow {
+  // First validate with Zod for comprehensive type checking
+  const validatedWorkflow = WorkflowSchemaValidator.validateWorkflow(workflow)
 
-  if (!workflow.version || typeof workflow.version !== 'string') {
-    throw new Error('Workflow must have a valid version')
-  }
+  // Additional domain-specific validations that Zod can't handle
+  validateStepReferences(validatedWorkflow)
+  checkCircularDependencies(validatedWorkflow.steps)
 
-  if (!workflow.name || typeof workflow.name !== 'string') {
-    throw new Error('Workflow must have a valid name')
-  }
-
-  if (!Array.isArray(workflow.steps) || workflow.steps.length === 0) {
-    throw new Error('Workflow must have at least one step')
-  }
-
-  // Validate each step
-  const stepIds = new Set<string>()
-  validateSteps(workflow.steps, stepIds)
-
-  // Check for circular dependencies
-  checkCircularDependencies(workflow.steps)
-
-  return true
+  // Convert back to the existing Workflow type for backward compatibility
+  return validatedWorkflow as Workflow
 }
 
 /**
- * Validate workflow steps recursively
+ * Check if a workflow is valid without throwing
+ * @param workflow The workflow to check
+ * @returns True if valid, false otherwise
  */
-function validateSteps(steps: WorkflowStep[], stepIds: Set<string>): void {
-  for (const step of steps) {
-    // Check for duplicate IDs
+export function isValidWorkflow(workflow: unknown): workflow is Workflow {
+  try {
+    validateWorkflow(workflow)
+    return true
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Validate step references and cross-references in a Zod-validated workflow
+ * This handles validations that require understanding relationships between steps
+ */
+function validateStepReferences(workflow: WorkflowZod): void {
+  const stepIds = new Set<string>()
+
+  // Check for duplicate step IDs (though Zod should catch basic structure issues)
+  for (const step of workflow.steps) {
     if (stepIds.has(step.id)) {
       throw new Error(`Duplicate step ID: ${step.id}`)
     }
     stepIds.add(step.id)
+  }
 
-    // Validate step type
-    if (!['agent', 'sequential', 'parallel'].includes(step.type)) {
-      throw new Error(`Invalid step type: ${step.type}`)
-    }
-
-    // Validate agent-specific fields
-    if (step.type === 'agent') {
-      if (!step.agentId || typeof step.agentId !== 'string') {
-        throw new Error(`Agent step ${step.id} must have a valid agentId`)
+  // Validate dependency references and fallback references
+  for (const step of workflow.steps) {
+    // Check that all dependencies reference existing steps
+    if (step.dependsOn) {
+      for (const depId of step.dependsOn) {
+        if (!stepIds.has(depId)) {
+          throw new Error(
+            `Step ${step.id} depends on non-existent step: ${depId}`,
+          )
+        }
       }
     }
 
-    // MVP: Nested groups are deprecated - validate that steps property is not used
-    if (step.type === 'sequential' || step.type === 'parallel') {
-      // TypeScript should prevent this, but add runtime check for safety
-      if ('steps' in step && step.steps !== undefined) {
+    // Check that fallback references point to existing steps
+    if (step.onError === 'fallback' && step.fallbackStepId) {
+      if (!stepIds.has(step.fallbackStepId)) {
         throw new Error(
-          `${step.type} step ${step.id}: Nested groups are not supported in MVP. ` +
-            `Use root-level steps with dependsOn relationships instead.`,
+          `Step ${step.id} fallback references non-existent step: ${step.fallbackStepId}`,
         )
       }
     }
 
-    // Validate error handling
-    if (
-      step.onError &&
-      !['fail', 'continue', 'retry', 'fallback'].includes(step.onError)
-    ) {
-      throw new Error(
-        `Invalid onError policy for step ${step.id}: ${step.onError}`,
-      )
-    }
-
-    // Validate fallback reference
-    if (step.onError === 'fallback' && !step.fallbackStepId) {
-      throw new Error(
-        `Step ${step.id} has onError: 'fallback' but no fallbackStepId`,
-      )
+    // Check that steps don't depend on themselves
+    if (step.dependsOn?.includes(step.id)) {
+      throw new Error(`Step ${step.id} cannot depend on itself`)
     }
   }
 }
 
 /**
- * Check for circular dependencies in workflow steps
+ * Check for circular dependencies in workflow steps using depth-first search
  */
-function checkCircularDependencies(steps: WorkflowStep[]): void {
+function checkCircularDependencies(
+  steps: Array<{ id: string; dependsOn?: string[] }>,
+): void {
   const graph = buildDependencyGraph(steps)
   const visited = new Set<string>()
   const recursionStack = new Set<string>()
 
-  function hasCycle(nodeId: string): boolean {
+  function hasCycle(nodeId: string, path: string[] = []): boolean {
     visited.add(nodeId)
     recursionStack.add(nodeId)
+    path.push(nodeId)
 
     const dependencies = graph.get(nodeId) || []
     for (const dep of dependencies) {
       if (!visited.has(dep)) {
-        if (hasCycle(dep)) {
+        if (hasCycle(dep, [...path])) {
           return true
         }
       } else if (recursionStack.has(dep)) {
-        return true
+        // Found a cycle - provide detailed error message
+        const cycleStart = path.indexOf(dep)
+        const cyclePath = [...path.slice(cycleStart), dep].join(' → ')
+        throw new Error(`Circular dependency detected: ${cyclePath}`)
       }
     }
 
@@ -162,11 +128,7 @@ function checkCircularDependencies(steps: WorkflowStep[]): void {
 
   for (const nodeId of graph.keys()) {
     if (!visited.has(nodeId)) {
-      if (hasCycle(nodeId)) {
-        throw new Error(
-          `Circular dependency detected involving step: ${nodeId}`,
-        )
-      }
+      hasCycle(nodeId)
     }
   }
 }
@@ -174,24 +136,14 @@ function checkCircularDependencies(steps: WorkflowStep[]): void {
 /**
  * Build a dependency graph from workflow steps
  */
-function buildDependencyGraph(steps: WorkflowStep[]): Map<string, string[]> {
+function buildDependencyGraph(
+  steps: Array<{ id: string; dependsOn?: string[] }>,
+): Map<string, string[]> {
   const graph = new Map<string, string[]>()
 
-  function addStep(step: WorkflowStep): void {
-    if (step.dependsOn && step.dependsOn.length > 0) {
-      graph.set(step.id, step.dependsOn)
-    } else {
-      graph.set(step.id, [])
-    }
-
-    // MVP: Skip nested step processing for sequential/parallel - they use dependsOn instead
-    // if (step.type === 'sequential' || step.type === 'parallel') {
-    //   // Nested steps not supported in MVP
-    // }
-  }
-
   for (const step of steps) {
-    addStep(step)
+    // Every step gets an entry, even if it has no dependencies
+    graph.set(step.id, step.dependsOn || [])
   }
 
   return graph

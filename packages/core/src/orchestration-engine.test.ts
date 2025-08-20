@@ -2341,7 +2341,7 @@ describe('OrchestrationEngine', () => {
       })
     })
 
-    it('should map CircuitBreakerOpenError to CIRCUIT_OPEN ExecutionError code', async () => {
+    it('should map CircuitBreakerOpenError to CIRCUIT_BREAKER_OPEN ExecutionError code', async () => {
       // Arrange - Import CircuitBreakerOpenError
       const { CircuitBreakerOpenError } = await import('@orchestr8/resilience')
 
@@ -2390,7 +2390,9 @@ describe('OrchestrationEngine', () => {
       // Assert
       expect(result.status).toBe('failed')
       expect(result.errors).toHaveLength(1)
-      expect(result.errors![0].code).toBe(ExecutionErrorCode.CIRCUIT_OPEN)
+      expect(result.errors![0].code).toBe(
+        ExecutionErrorCode.CIRCUIT_BREAKER_OPEN,
+      )
       expect(result.errors![0].context).toEqual({
         circuitKey: 'test-service',
         nextRetryTime: retryAfter.getTime(),

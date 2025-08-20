@@ -152,7 +152,18 @@ export class CircuitBreaker {
     }
 
     const failures = this.countFailures(state)
-    return failures >= this.config.failureThreshold
+
+    // Interpret threshold based on value:
+    // - Values > 1: Absolute count of failures
+    // - Values <= 1: Failure rate (percentage)
+    if (this.config.failureThreshold <= 1) {
+      // Rate-based threshold
+      const failureRate = failures / this.config.sampleSize
+      return failureRate >= this.config.failureThreshold
+    } else {
+      // Count-based threshold
+      return failures >= this.config.failureThreshold
+    }
   }
 
   /**

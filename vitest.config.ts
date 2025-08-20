@@ -35,6 +35,12 @@ export default defineConfig({
         '**/*.d.ts',
         '**/types.ts',
       ],
+      thresholds: {
+        branches: 80,
+        functions: 80,
+        lines: 80,
+        statements: 80,
+      },
     },
     reporters: process.env.CI ? ['default', 'junit'] : ['default'],
     outputFile: process.env.CI

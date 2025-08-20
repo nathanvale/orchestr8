@@ -15,7 +15,7 @@ import type {
 } from './types.js'
 
 import { CircuitBreaker } from './circuit-breaker.js'
-import { CircuitBreakerOpenError } from './errors.js'
+import { CircuitBreakerOpenError, TimeoutError } from './errors.js'
 import { deriveKey } from './key-derivation.js'
 
 /**
@@ -257,7 +257,12 @@ export async function defaultTimeoutWrapper<T>(
     // Create timeout
     timeoutId = setTimeout(() => {
       timeoutController.abort()
-      reject(new Error(`Operation timed out after ${config.duration}ms`))
+      reject(
+        new TimeoutError(
+          `Operation timed out after ${config.duration}ms`,
+          config.duration,
+        ),
+      )
     }, config.duration)
 
     // Combine signals if parent signal exists
