@@ -3,11 +3,11 @@
  * Consolidates and validates all performance targets
  */
 
-import type { OrchestrationEvent } from './event-bus.js'
-
 import { performance } from 'node:perf_hooks'
 
 import { describe, it, expect } from 'vitest'
+
+import type { OrchestrationEvent } from './event-bus.js'
 
 import { BoundedEventBus } from './event-bus.js'
 
@@ -106,11 +106,8 @@ describe.skipIf(!isPerfMode && !isCI)(
 
     it('should validate throughput target', async () => {
       const eventBus = new BoundedEventBus({ maxQueueSize: 20000 })
-      let processedCount = 0
 
-      eventBus.on('perf.throughput', () => {
-        processedCount++
-      })
+      eventBus.on('perf.throughput', () => {})
 
       const eventCount = 10000
       const startTime = performance.now()
@@ -150,7 +147,7 @@ describe.skipIf(!isPerfMode && !isCI)(
       for (let i = 0; i < 5; i++) {
         eventBus.on('perf.overhead', async () => {
           // Simulate some work
-          await new Promise((resolve) => setImmediate(resolve))
+          await new Promise((resolve) => setTimeout(resolve, 0))
         })
       }
 
@@ -196,13 +193,11 @@ describe.skipIf(!isPerfMode && !isCI)(
       })
 
       let slowProcessing = true
-      let processedCount = 0
 
       eventBus.on('perf.recovery', async () => {
         if (slowProcessing) {
           await new Promise((resolve) => setTimeout(resolve, 50))
         }
-        processedCount++
       })
 
       // Saturate the queue
@@ -263,10 +258,8 @@ describe.skipIf(!isPerfMode && !isCI)(
       }
 
       // Process events
-      let processed = 0
-      eventBus.on('perf.memory', () => {
-        processed++
-      })
+
+      eventBus.on('perf.memory', () => {})
 
       await new Promise((resolve) => setTimeout(resolve, 500))
 
@@ -350,7 +343,7 @@ describe.skipIf(!isPerfMode && !isCI)(
       const concurrentEmitters = 10
       const eventsPerEmitter = 1000
 
-      const emitTimes: number[] = []
+      // Track emit times for performance validation
 
       // Create concurrent emitters
       const emitters = Array.from({ length: concurrentEmitters }, (_, i) =>

@@ -4,8 +4,15 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+overrides:
+  '@orchestr8/resilience': link:packages/resilience
+
 importers:
   .:
+    dependencies:
+      '@orchestr8/resilience':
+        specifier: link:packages/resilience
+        version: link:packages/resilience
     devDependencies:
       '@eslint/js':
         specifier: ^9.30.0
@@ -116,7 +123,7 @@ importers:
         version: 0.16.0
     devDependencies:
       '@orchestr8/resilience':
-        specifier: workspace:*
+        specifier: link:../resilience
         version: link:../resilience
       '@types/jmespath':
         specifier: ^0.15.2
@@ -157,6 +164,9 @@ importers:
       '@orchestr8/logger':
         specifier: workspace:*
         version: link:../logger
+      '@orchestr8/resilience':
+        specifier: 'link:'
+        version: 'link:'
       '@orchestr8/schema':
         specifier: workspace:*
         version: link:../schema
@@ -179,6 +189,9 @@ importers:
       zod:
         specifier: ^3.25.74
         version: 3.25.76
+      zod-to-json-schema:
+        specifier: ^3.24.6
+        version: 3.24.6(zod@3.25.76)
     devDependencies:
       '@types/node':
         specifier: ^24.0.8
@@ -2990,6 +3003,14 @@ packages:
       }
     engines: { node: '>=18' }
 
+  zod-to-json-schema@3.24.6:
+    resolution:
+      {
+        integrity: sha512-h/z3PKvcTcTetyjl1fkj79MHNEjm+HpD6NXheWjzOekY7kV+lwDYnHw+ivHkijnCSMz1yJaWBD9vu/Fcmk+vEg==,
+      }
+    peerDependencies:
+      zod: ^3.24.1
+
   zod@3.25.76:
     resolution:
       {
@@ -4726,5 +4747,9 @@ snapshots:
   yocto-queue@0.1.0: {}
 
   yoctocolors-cjs@2.1.2: {}
+
+  zod-to-json-schema@3.24.6(zod@3.25.76):
+    dependencies:
+      zod: 3.25.76
 
   zod@3.25.76: {}

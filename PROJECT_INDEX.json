@@ -1,0 +1,5686 @@
+{
+  "indexed_at": "2025-08-22T07:10:23.601398",
+  "root": ".",
+  "project_structure": {
+    "type": "tree",
+    "root": ".",
+    "tree": [
+      ".",
+      "\u251c\u2500\u2500 docs/",
+      "\u2502   \u2514\u2500\u2500 sub-specs/",
+      "\u251c\u2500\u2500 packages/ (376 files)",
+      "\u2502   \u251c\u2500\u2500 agent-base/ (8 files)",
+      "\u2502   \u2502   \u251c\u2500\u2500 src/ (2 files)",
+      "\u2502   \u2502   \u2514\u2500\u2500 package.json",
+      "\u2502   \u251c\u2500\u2500 cli/ (31 files)",
+      "\u2502   \u2502   \u251c\u2500\u2500 src/ (13 files)",
+      "\u2502   \u2502   \u2502   \u2514\u2500\u2500 commands/ (10 files)",
+      "\u2502   \u2502   \u2514\u2500\u2500 package.json",
+      "\u2502   \u251c\u2500\u2500 core/ (61 files)",
+      "\u2502   \u2502   \u251c\u2500\u2500 docs/",
+      "\u2502   \u2502   \u251c\u2500\u2500 src/ (27 files)",
+      "\u2502   \u2502   \u251c\u2500\u2500 package.json",
+      "\u2502   \u2502   \u2514\u2500\u2500 README.md",
+      "\u2502   \u251c\u2500\u2500 logger/ (69 files)",
+      "\u2502   \u2502   \u251c\u2500\u2500 docs/",
+      "\u2502   \u2502   \u251c\u2500\u2500 src/ (15 files)",
+      "\u2502   \u2502   \u2502   \u251c\u2500\u2500 adapters/ (7 files)",
+      "\u2502   \u2502   \u2502   \u2514\u2500\u2500 formatters/",
+      "\u2502   \u2502   \u2514\u2500\u2500 package.json",
+      "\u2502   \u251c\u2500\u2500 resilience/ (54 files)",
+      "\u2502   \u2502   \u251c\u2500\u2500 docs/",
+      "\u2502   \u2502   \u251c\u2500\u2500 src/ (24 files)",
+      "\u2502   \u2502   \u251c\u2500\u2500 package.json",
+      "\u2502   \u2502   \u2514\u2500\u2500 README.md",
+      "\u2502   \u251c\u2500\u2500 schema/ (123 files)",
+      "\u2502   \u2502   \u251c\u2500\u2500 packages/",
+      "\u2502   \u2502   \u2502   \u2514\u2500\u2500 schema/",
+      "\u2502   \u2502   \u2502       \u2514\u2500\u2500 src/",
+      "\u2502   \u2502   \u2502           \u2514\u2500\u2500 generation/",
+      "\u2502   \u2502   \u251c\u2500\u2500 scripts/",
+      "\u2502   \u2502   \u251c\u2500\u2500 src/ (29 files)",
+      "\u2502   \u2502   \u2502   \u251c\u2500\u2500 agent/ (2 files)",
+      "\u2502   \u2502   \u2502   \u251c\u2500\u2500 events/ (1 files)",
+      "\u2502   \u2502   \u2502   \u251c\u2500\u2500 generation/ (3 files)",
+      "\u2502   \u2502   \u2502   \u251c\u2500\u2500 validation/ (6 files)",
+      "\u2502   \u2502   \u2502   \u2514\u2500\u2500 workflow/ (5 files)",
+      "\u2502   \u2502   \u2514\u2500\u2500 package.json",
+      "\u2502   \u2514\u2500\u2500 testing/ (30 files)",
+      "\u2502       \u251c\u2500\u2500 src/ (6 files)",
+      "\u2502       \u2502   \u251c\u2500\u2500 mocks/ (2 files)",
+      "\u2502       \u2502   \u2514\u2500\u2500 utilities/ (2 files)",
+      "\u2502       \u2514\u2500\u2500 package.json",
+      "\u251c\u2500\u2500 scripts/ (8 files)",
+      "\u2502   \u2514\u2500\u2500 examples/ (7 files)",
+      "\u2502       \u2514\u2500\u2500 README.md",
+      "\u251c\u2500\u2500 tests/ (1 files)",
+      "\u2502   \u2514\u2500\u2500 vitest/ (1 files)",
+      "\u251c\u2500\u2500 package.json",
+      "\u2514\u2500\u2500 README.md"
+    ]
+  },
+  "documentation_map": {
+    "README.md": {
+      "sections": [
+        "@orchestr8",
+        "Overview",
+        "Project Structure",
+        "Getting Started",
+        "Install dependencies",
+        "Build all packages",
+        "Run tests",
+        "Development mode",
+        "Development",
+        "Status"
+      ],
+      "architecture_hints": []
+    },
+    "CLAUDE.md": {
+      "sections": [
+        "CLAUDE.md",
+        "Build & Development Commands",
+        "Install dependencies (uses pnpm)",
+        "Build all packages",
+        "Run tests",
+        "Run a single test file",
+        "Linting and formatting",
+        "Type checking",
+        "Clean builds",
+        "Development"
+      ],
+      "architecture_hints": []
+    },
+    "docs/DOCUMENTATION_IMPROVEMENTS.md": {
+      "sections": [
+        "Documentation Improvements Summary",
+        "\u2705 Completed Improvements",
+        "1. **Created Official Pattern Documentation**",
+        "2. **Updated Existing Documentation**",
+        "3. **Verified Sub-Agent Format**",
+        "\ud83d\udd04 Migration Guide",
+        "From Old XML Patterns to Official Patterns",
+        "Implementing Cache Control",
+        "\ud83d\udcda Key References",
+        "Official Patterns Now Documented"
+      ],
+      "architecture_hints": []
+    },
+    "docs/claude-subagents-integration.md": {
+      "sections": [
+        "Claude subagents \u2194 orchestr8 integration",
+        "Summary",
+        "Why this matters",
+        "Collaboration model in Claude Code",
+        "Architecture overview",
+        "Specifications Reference",
+        "Core Specifications",
+        "Tool Actions (Claude \u2192 orchestr8)",
+        "HTTP endpoints (reference)",
+        "Claude subagent templates"
+      ],
+      "architecture_hints": []
+    },
+    "docs/tasks.md": {
+      "sections": [
+        "@orchestr8 MVP Tasks - 4 Week Sprint",
+        "Realistic Hour Allocation (160 hours total)",
+        "Week 1: 40 hours",
+        "Week 2: 40 hours",
+        "Week 3: 42 hours",
+        "Week 4: 34 hours + 16 hours buffer",
+        "Operational Semantics Clarifications (pre\u2011Week 1)",
+        "4-Week MVP Task Breakdown",
+        "Week 1: Foundation (Jan 20-24)",
+        "Day 1: Turborepo Setup (6 hours)"
+      ],
+      "architecture_hints": []
+    },
+    "docs/spec.md": {
+      "sections": [
+        "@orchestr8 Agent Orchestration System - MVP Specification",
+        "Executive Summary",
+        "MVP System Architecture",
+        "MVP Addition: Dual Deployment for a TypeScript Research Agent (scoped)",
+        "User Stories - MVP Focus",
+        "Developer Building Agents (Week 1-2)",
+        "DevOps Monitoring Execution (Week 3-4)",
+        "Spec Scope - MVP Components Only",
+        "1. Core Orchestration Engine (Week 1)",
+        "2. Basic Resilience Patterns (Week 1)"
+      ],
+      "architecture_hints": []
+    },
+    "packages/core/README.md": {
+      "sections": [
+        "@orchestr8/core",
+        "Installation",
+        "Quick start",
+        "Usage scenarios",
+        "API reference (high level)",
+        "Configuration options",
+        "Error handling"
+      ],
+      "architecture_hints": []
+    },
+    "packages/resilience/README.md": {
+      "sections": [
+        "@orchestr8/resilience",
+        "Features",
+        "Installation",
+        "Quick Start",
+        "Configuration",
+        "Retry Configuration",
+        "Circuit Breaker Configuration",
+        "Timeout Configuration",
+        "Composition Orders",
+        "retry-cb-timeout (Recommended)"
+      ],
+      "architecture_hints": []
+    },
+    "packages/resilience/docs/BENCHMARK_TARGETS.md": {
+      "sections": [
+        "Benchmark Targets and CI Integration",
+        "Performance Targets",
+        "Primary Targets",
+        "Measurement Methodology",
+        "Target Validation",
+        "Benchmark Test Cases",
+        "Core Benchmark Scenarios",
+        "Expected Results",
+        "CI Integration",
+        "Environment Variable Gating"
+      ],
+      "architecture_hints": []
+    },
+    "packages/resilience/docs/POLICY_NORMALIZATION.md": {
+      "sections": [
+        "Policy Normalization Guide",
+        "Overview",
+        "Default Values",
+        "Retry Configuration Defaults",
+        "Circuit Breaker Configuration Defaults",
+        "Timeout Configuration",
+        "Policy Transformation Logic",
+        "Jitter Strategy Mapping",
+        "Timeout Policy Mapping",
+        "Composition Patterns"
+      ],
+      "architecture_hints": []
+    },
+    "packages/resilience/docs/COMPOSITION_ORDER_GUIDE.md": {
+      "sections": [
+        "Resilience Pattern Composition Order Guide",
+        "Overview",
+        "Supported Composition Orders",
+        "1. `retry-cb-timeout` (Default)",
+        "2. `timeout-cb-retry`",
+        "When to Use Each Order",
+        "Use `retry-cb-timeout` When",
+        "Use `timeout-cb-retry` When",
+        "Behavioral Differences",
+        "Circuit Breaker Interaction"
+      ],
+      "architecture_hints": []
+    },
+    "packages/resilience/docs/PERFORMANCE_CI.md": {
+      "sections": [
+        "Performance Testing in CI",
+        "Overview",
+        "Performance Targets",
+        "Local Development",
+        "CI Environment",
+        "Running Benchmarks",
+        "Locally",
+        "Run performance benchmarks",
+        "Or run benchmark directly",
+        "In CI"
+      ],
+      "architecture_hints": []
+    },
+    "packages/logger/docs/pino-adapter-example.md": {
+      "sections": [
+        "Pino Logger Adapter for @orchestr8/core",
+        "Installation",
+        "or",
+        "Basic Pino Adapter Implementation",
+        "Usage with OrchestrationEngine",
+        "Production Configuration",
+        "Log Structure",
+        "Workflow Lifecycle Logs",
+        "Step Lifecycle Logs",
+        "Error Logs"
+      ],
+      "architecture_hints": []
+    },
+    "packages/core/docs/examples.md": {
+      "sections": [
+        "Examples",
+        "Quick start",
+        "Fallback + retry",
+        "Conditions + env allowlist"
+      ],
+      "architecture_hints": []
+    },
+    "packages/core/docs/workflows.md": {
+      "sections": [
+        "Workflows and execution",
+        "Step types",
+        "Scheduling",
+        "Cancellation and fail-fast",
+        "Dependency results",
+        "Fallbacks",
+        "Retrying",
+        "Results"
+      ],
+      "architecture_hints": []
+    },
+    "packages/core/docs/overview.md": {
+      "sections": [
+        "Overview"
+      ],
+      "architecture_hints": []
+    },
+    "packages/core/docs/api.md": {
+      "sections": [
+        "API",
+        "Exports from `@orchestr8/core`",
+        "OrchestrationEngine",
+        "OrchestrationOptions",
+        "execute"
+      ],
+      "architecture_hints": []
+    },
+    "packages/core/docs/errors.md": {
+      "sections": [
+        "Error handling",
+        "Codes",
+        "Where errors surface",
+        "Fallback semantics",
+        "Continue-on-error",
+        "Retry",
+        "Examples"
+      ],
+      "architecture_hints": []
+    },
+    "packages/core/docs/configuration.md": {
+      "sections": [
+        "Configuration",
+        "OrchestrationOptions",
+        "Notes"
+      ],
+      "architecture_hints": []
+    },
+    "packages/core/docs/logging.md": {
+      "sections": [
+        "Logging",
+        "Event names and contexts",
+        "Recommendations"
+      ],
+      "architecture_hints": []
+    },
+    "packages/core/docs/expressions.md": {
+      "sections": [
+        "Expressions",
+        "Conditions (JMESPath)",
+        "Input mapping (${...})"
+      ],
+      "architecture_hints": []
+    },
+    "scripts/examples/README.md": {
+      "sections": [
+        "Examples",
+        "PR auto-fix (gh CLI)",
+        "from repo root",
+        "customize",
+        "PR lifecycle (gh CLI)",
+        "from repo root",
+        "customize",
+        "Multi-LLM fan-out + Grok aggregation",
+        "Convex data seed/init",
+        "from repo root"
+      ],
+      "architecture_hints": []
+    },
+    ".agent-os/product/api-spec.md": {
+      "sections": [
+        "API Specification - Index",
+        "Quick Reference",
+        "MVP Scope (4 weeks)",
+        "Post-MVP (Future Phases)",
+        "Core APIs",
+        "Orchestrator API",
+        "Agent API",
+        "Resilience API",
+        "Workflow Builder API"
+      ],
+      "architecture_hints": []
+    },
+    ".agent-os/product/technical-spec.md": {
+      "sections": [
+        "Technical Specification - MVP Focus",
+        "MVP Technical Summary",
+        "Technical Requirements - MVP Only",
+        "Core Technology Stack (Minimal)",
+        "MVP Package Architecture",
+        "MVP Resilience Implementation",
+        "Basic Patterns Only",
+        "Resilience Helper Implementation (Per ADR-004)"
+      ],
+      "architecture_hints": []
+    },
+    ".agent-os/product/mission.md": {
+      "sections": [
+        "Product Mission",
+        "Pitch",
+        "Users",
+        "Primary Customers",
+        "User Personas",
+        "The Problem",
+        "Unreliable Agent Execution",
+        "Lack of Execution Visibility",
+        "Complex Multi-Agent Coordination",
+        "Differentiators"
+      ],
+      "architecture_hints": []
+    },
+    ".agent-os/product/tech-stack.md": {
+      "sections": [
+        "Technical Stack",
+        "Core Technology",
+        "Application Framework",
+        "Build & Development",
+        "Testing Stack",
+        "Test Framework",
+        "Core Libraries",
+        "CLI Development",
+        "API Development",
+        "Observability"
+      ],
+      "architecture_hints": []
+    },
+    ".agent-os/product/architecture-decisions.md": {
+      "sections": [
+        "Architecture Decision Records (ADRs) - MVP Focus",
+        "ADR Template",
+        "ADR-001: Modular Monorepo for MVP",
+        "Context (ADR-001)",
+        "Decision Drivers (ADR-001)",
+        "Decision (ADR-001)",
+        "Consequences (ADR-001)",
+        "Adoption Plan (ADR-001)",
+        "ADR-002: JSON Prompts Instead of XML (with Scoped Exception)",
+        "Context (ADR-002)"
+      ],
+      "architecture_hints": []
+    },
+    ".agent-os/product/roadmap.md": {
+      "sections": [
+        "Product Roadmap",
+        "MVP Scope at a Glance",
+        "Phase 0: Already Completed",
+        "Phase 1: MVP Cut \u2014 Engine + JSON + Event Bus + CLI (Target: 1 week)",
+        "Must-Haves",
+        "Should-Haves (time-permitting)",
+        "Out of Scope (deferred)",
+        "Phase 2: MCP Bootstrap (Target: +1 week)",
+        "Must-Haves (MCP)",
+        "Non-Goals"
+      ],
+      "architecture_hints": []
+    },
+    ".agent-os/product/decisions.md": {
+      "sections": [
+        "Product Decisions Log",
+        "2025-08-17: Initial Product Planning",
+        "Decision",
+        "Context",
+        "Alternatives Considered",
+        "Rationale",
+        "Consequences",
+        "2025-08-17: Technology Stack Selection",
+        "Decision",
+        "Context"
+      ],
+      "architecture_hints": []
+    },
+    ".agent-os/specs/2025-08-19-complete-resilience-patterns/tasks.md": {
+      "sections": [
+        "Tasks (Based on P0 Decisions)",
+        "Phase 1: Foundation",
+        "Phase 2: Circuit Breaker Implementation",
+        "Phase 3: Composition Engine",
+        "Phase 4: Integration and Polish",
+        "Success Criteria",
+        "TODOs (P0/P1/P2 Integration Follow-ups)",
+        "P0"
+      ],
+      "architecture_hints": []
+    },
+    ".agent-os/specs/2025-08-19-complete-resilience-patterns/spec.md": {
+      "sections": [
+        "Spec Requirements Document",
+        "P0 Implementation Decisions Summary",
+        "Overview",
+        "User Stories",
+        "Production-Ready Resilience",
+        "Circuit Breaker Protection",
+        "Configurable Composition Order",
+        "Spec Scope",
+        "Out of Scope",
+        "Expected Deliverable"
+      ],
+      "architecture_hints": []
+    },
+    ".agent-os/specs/2025-01-18-mcp-integration/tasks.md": {
+      "sections": [
+        "Spec Tasks",
+        "Tasks",
+        "Estimated Effort",
+        "Success Criteria"
+      ],
+      "architecture_hints": []
+    },
+    ".agent-os/specs/2025-01-18-mcp-integration/spec.md": {
+      "sections": [
+        "Spec Requirements Document",
+        "Overview",
+        "User Stories",
+        "AI Developer Story",
+        "Platform Engineer Story",
+        "DevOps Engineer Story",
+        "Spec Scope",
+        "Out of Scope",
+        "Expected Deliverable",
+        "Spec Documentation"
+      ],
+      "architecture_hints": []
+    },
+    ".agent-os/specs/2025-08-19-logger-package-migration/tasks.md": {
+      "sections": [
+        "Spec Tasks",
+        "Tasks"
+      ],
+      "architecture_hints": []
+    },
+    ".agent-os/specs/2025-08-19-logger-package-migration/spec.md": {
+      "sections": [
+        "Spec Requirements Document",
+        "Overview",
+        "User Stories",
+        "Centralized Logging Infrastructure",
+        "Consistent Testing Infrastructure",
+        "Spec Scope",
+        "Out of Scope",
+        "Expected Deliverable",
+        "Spec Documentation"
+      ],
+      "architecture_hints": []
+    },
+    ".agent-os/specs/2025-08-20-json-execution-model/tasks.md": {
+      "sections": [
+        "Spec Tasks",
+        "MVP Tasks (Week 3 Sprint)",
+        "Day 1-2: Schema Foundation",
+        "Day 2-3: JSON Execution Model",
+        "Day 3-4: Enhanced Execution Journal",
+        "Day 4-5: Core Integration",
+        "Day 5: API Implementation (Deferred to CLI)",
+        "Day 5-6: Code Review Fixes",
+        "Day 6-7: Production Readiness & Integration"
+      ],
+      "architecture_hints": []
+    },
+    ".agent-os/specs/2025-08-20-json-execution-model/spec.md": {
+      "sections": [
+        "Spec Requirements Document",
+        "Overview",
+        "User Stories",
+        "Developer Defining Workflows",
+        "API Consumer Validating Payloads",
+        "Documentation Consumer",
+        "MVP Scope",
+        "Core Deliverables (Week 3)",
+        "MVP Constraints",
+        "Future Enhancements (Post-MVP)"
+      ],
+      "architecture_hints": []
+    },
+    ".agent-os/specs/2025-08-18-core-orchestration-engine/tasks.md": {
+      "sections": [
+        "Spec Tasks",
+        "Implementation Status",
+        "Tasks"
+      ],
+      "architecture_hints": []
+    },
+    ".agent-os/specs/2025-08-18-core-orchestration-engine/spec.md": {
+      "sections": [
+        "Spec Requirements Document",
+        "Overview",
+        "User Stories",
+        "Sequential Workflow Execution",
+        "Parallel Workflow Execution",
+        "Hybrid Sequential-Parallel Execution",
+        "Spec Scope",
+        "Phase 1: Core Engine Implementation (\u2705 COMPLETED)",
+        "Phase 2: Hardening & Reliability (\u2705 MOSTLY COMPLETE)"
+      ],
+      "architecture_hints": []
+    },
+    ".agent-os/specs/2025-08-20-workflow-schema-validation/tasks.md": {
+      "sections": [
+        "Spec Tasks",
+        "Tasks"
+      ],
+      "architecture_hints": []
+    },
+    ".agent-os/specs/2025-08-20-workflow-schema-validation/spec.md": {
+      "sections": [
+        "Spec Requirements Document",
+        "Overview",
+        "User Stories",
+        "Developer Experience Enhancement",
+        "Security-Aware Expression Validation",
+        "Schema Versioning and Compatibility",
+        "Spec Scope",
+        "Out of Scope",
+        "Expected Deliverable",
+        "Spec Documentation"
+      ],
+      "architecture_hints": []
+    },
+    ".agent-os/specs/2025-08-18-monorepo-initialization/tasks.md": {
+      "sections": [
+        "Spec Tasks",
+        "Tasks"
+      ],
+      "architecture_hints": []
+    },
+    ".agent-os/specs/2025-08-18-monorepo-initialization/spec.md": {
+      "sections": [
+        "Spec Requirements Document",
+        "Overview",
+        "User Stories",
+        "Developer Experience Story",
+        "Package Consumer Story",
+        "Spec Scope",
+        "Out of Scope",
+        "Expected Deliverable",
+        "Spec Documentation"
+      ],
+      "architecture_hints": []
+    },
+    ".agent-os/specs/2025-01-18-claude-subagents-integration/tasks.md": {
+      "sections": [
+        "Spec Tasks",
+        "Tasks",
+        "Implementation Order Rationale",
+        "Success Metrics"
+      ],
+      "architecture_hints": []
+    },
+    ".agent-os/specs/2025-01-18-claude-subagents-integration/spec.md": {
+      "sections": [
+        "Spec Requirements Document",
+        "Overview",
+        "User Stories",
+        "Development Agent Orchestration",
+        "Dual Deployment Flexibility",
+        "Collaborative Agent Coordination",
+        "Spec Scope",
+        "Out of Scope",
+        "Expected Deliverable",
+        "Spec Documentation"
+      ],
+      "architecture_hints": []
+    },
+    ".agent-os/specs/2025-08-20-event-bus-bounded-queue/tasks.md": {
+      "sections": [
+        "Spec Tasks",
+        "Tasks",
+        "Implementation Order",
+        "Time Estimates",
+        "Dependencies",
+        "Internal Dependencies",
+        "External Dependencies",
+        "Success Criteria",
+        "Risk Mitigation",
+        "Risk: Event Loss During High Load"
+      ],
+      "architecture_hints": []
+    },
+    ".agent-os/specs/2025-08-20-event-bus-bounded-queue/spec.md": {
+      "sections": [
+        "Spec Requirements Document",
+        "Overview",
+        "User Stories",
+        "Orchestration Engine Developer",
+        "DevOps Engineer Monitoring Execution",
+        "Spec Scope",
+        "Out of Scope",
+        "Expected Deliverable",
+        "Implementation Decisions",
+        "Wildcard Pattern Support"
+      ],
+      "architecture_hints": []
+    },
+    ".agent-os/specs/2025-08-20-event-bus-bounded-queue/sub-specs/technical-spec.md": {
+      "sections": [
+        "Technical Specification",
+        "Technical Requirements",
+        "Core Event Bus Implementation",
+        "Bounded Queue Specifications",
+        "Overflow Policy Implementation",
+        "Event Type Definitions",
+        "Performance Constraints",
+        "Approach Options",
+        "External Dependencies",
+        "Integration with OrchestrationOptions"
+      ],
+      "architecture_hints": []
+    },
+    ".agent-os/specs/2025-08-20-event-bus-bounded-queue/sub-specs/tests.md": {
+      "sections": [
+        "Tests Specification",
+        "Test Coverage",
+        "Unit Tests",
+        "Integration Tests",
+        "Performance Tests",
+        "Property-Based Tests",
+        "Mocking Requirements",
+        "Test Utilities",
+        "Coverage Requirements",
+        "Test Execution Strategy"
+      ],
+      "architecture_hints": []
+    },
+    ".agent-os/specs/2025-01-18-claude-subagents-integration/sub-specs/api-spec.md": {
+      "sections": [
+        "HTTP API Specification",
+        "Overview",
+        "Foundation References",
+        "HTTP API Endpoints",
+        "POST /api/workflows/run",
+        "GET /api/workflows/status/{executionId}",
+        "POST /api/workflows/cancel/{executionId}",
+        "Response Format",
+        "Authentication & Authorization",
+        "Claude Code Authentication"
+      ],
+      "architecture_hints": []
+    },
+    ".agent-os/specs/2025-01-18-claude-subagents-integration/sub-specs/parity-tests.md": {
+      "sections": [
+        "Parity Tests Specification",
+        "Overview",
+        "Testing Strategy",
+        "Test Harness Architecture",
+        "Mock/Stub Patterns",
+        "Test Categories",
+        "1. Input Validation Parity"
+      ],
+      "architecture_hints": []
+    },
+    ".agent-os/specs/2025-01-18-claude-subagents-integration/sub-specs/technical-spec.md": {
+      "sections": [
+        "Technical Specification",
+        "Technical Requirements",
+        "Core Integration Architecture",
+        "Performance Requirements",
+        "Security Requirements",
+        "Approach Options",
+        "Option A: Separate Implementations",
+        "Option B: Shared Core with Adapters (Selected)",
+        "Option C: MCP-Only with HTTP Proxy",
+        "Architecture Design"
+      ],
+      "architecture_hints": []
+    },
+    ".agent-os/specs/2025-01-18-claude-subagents-integration/sub-specs/prompt-templates.md": {
+      "sections": [
+        "Prompt Templates",
+        "Chain of Thought Pattern",
+        "Orchestrator System Prompt",
+        "Goals",
+        "Constraints",
+        "Optimization Hints",
+        "Output Schema",
+        "Sub-agent Template",
+        "Responsibility",
+        "Inputs"
+      ],
+      "architecture_hints": []
+    },
+    ".agent-os/specs/2025-01-18-claude-subagents-integration/sub-specs/agent-loop-spec.md": {
+      "sections": [
+        "Agent Loop Specification",
+        "Overview",
+        "Loop Architecture",
+        "Core Components",
+        "Safeguards and Limits",
+        "Iteration Limits",
+        "Timeout Management",
+        "Continuation Handling",
+        "pause_turn Support",
+        "State Preservation"
+      ],
+      "architecture_hints": []
+    },
+    ".agent-os/specs/2025-01-18-claude-subagents-integration/sub-specs/tests.md": {
+      "sections": [
+        "Tests Specification",
+        "Test Coverage",
+        "Unit Tests",
+        "Integration Tests",
+        "Parity Tests",
+        "End-to-End Tests",
+        "Performance Tests",
+        "Security Tests"
+      ],
+      "architecture_hints": []
+    },
+    ".agent-os/specs/2025-01-18-claude-subagents-integration/sub-specs/adapter-boundaries.md": {
+      "sections": [
+        "Adapter Boundaries Specification",
+        "Core Principle",
+        "Adapter Responsibilities",
+        "What Adapters DO",
+        "What Adapters DO NOT DO",
+        "Implementation Pattern",
+        "Correct Adapter Implementation",
+        "Incorrect Adapter Implementation \u274c",
+        "Adapter Types",
+        "HTTP API Adapter"
+      ],
+      "architecture_hints": []
+    },
+    ".agent-os/specs/2025-01-18-claude-subagents-integration/sub-specs/streaming-spec.md": {
+      "sections": [
+        "Streaming Specification",
+        "Overview",
+        "Streaming Architecture",
+        "Beta Configuration",
+        "Partial JSON Assembly",
+        "StreamingJsonAssembler",
+        "WebSocket Integration",
+        "Real-time Streaming Client"
+      ],
+      "architecture_hints": []
+    },
+    ".agent-os/specs/2025-01-18-claude-subagents-integration/sub-specs/subagent-format.md": {
+      "sections": [
+        "Subagent Format Specification",
+        "Subagent File Format",
+        "File Structure",
+        "Storage Locations",
+        "Orchestr8 Subagent Definitions",
+        "Orchestr8 Executor Agent",
+        "Core Responsibilities",
+        "Available Tools",
+        "Execution Protocol",
+        "Error Handling"
+      ],
+      "architecture_hints": []
+    },
+    ".agent-os/specs/2025-08-18-monorepo-initialization/sub-specs/technical-spec.md": {
+      "sections": [
+        "Technical Specification",
+        "Technical Requirements",
+        "Monorepo Structure",
+        "Package Architecture",
+        "TypeScript Configuration",
+        "Testing Infrastructure",
+        "Build Configuration",
+        "Approach Options",
+        "External Dependencies",
+        "Root Dependencies"
+      ],
+      "architecture_hints": []
+    },
+    ".agent-os/specs/2025-08-18-monorepo-initialization/sub-specs/tests.md": {
+      "sections": [
+        "Tests Specification",
+        "Test Coverage",
+        "Build System Tests",
+        "Package Structure Tests",
+        "TypeScript Configuration Tests",
+        "Wallaby.js Integration Tests",
+        "Development Workflow Tests",
+        "Mocking Requirements",
+        "Validation Against Mnemosyne"
+      ],
+      "architecture_hints": []
+    },
+    ".agent-os/specs/2025-08-20-workflow-schema-validation/sub-specs/technical-spec.md": {
+      "sections": [
+        "Technical Specification",
+        "Technical Requirements",
+        "Zod Schema Implementation",
+        "Expression Validation Engine",
+        "Schema Versioning System",
+        "Integration Requirements",
+        "Approach Options",
+        "External Dependencies",
+        "Implementation Architecture",
+        "File Structure"
+      ],
+      "architecture_hints": []
+    },
+    ".agent-os/specs/2025-08-20-workflow-schema-validation/sub-specs/tests.md": {
+      "sections": [
+        "Tests Specification",
+        "Test Coverage",
+        "Unit Tests",
+        "Integration Tests",
+        "Mocking Requirements",
+        "Test Scenarios",
+        "Positive Test Cases (24 tests)",
+        "Negative Test Cases (22 tests)"
+      ],
+      "architecture_hints": []
+    },
+    ".agent-os/specs/2025-08-18-core-orchestration-engine/sub-specs/implementation-readiness.md": {
+      "sections": [
+        "Implementation Readiness Checklist",
+        "Executive Summary",
+        "Critical Readiness Domains",
+        "1. Expression Semantics Resolution \ud83d\udd34",
+        "2. Error Taxonomy Alignment \u2705",
+        "3. Scheduler Determinism \ud83d\udd34",
+        "4. Integration Contracts \ud83d\udd34",
+        "5. Concurrency and Cancellation \ud83d\udd34"
+      ],
+      "architecture_hints": []
+    },
+    ".agent-os/specs/2025-08-18-core-orchestration-engine/sub-specs/repository-prerequisites.md": {
+      "sections": [
+        "Repository Prerequisites",
+        "Overview",
+        "Node.js Version Requirements",
+        "Engine Specification",
+        "Validation Command",
+        "Verify Node version meets requirements",
+        "JMESPath Dependency",
+        "Package Installation",
+        "Import verification",
+        "TypeScript Configuration"
+      ],
+      "architecture_hints": []
+    },
+    ".agent-os/specs/2025-08-18-core-orchestration-engine/sub-specs/technical-spec.md": {
+      "sections": [
+        "Technical Specification",
+        "Implementation Status Summary",
+        "Phase 2 Gap Analysis",
+        "\u2705 Resolved Critical Gaps (Previously Blocking)",
+        "\ud83d\udd27 Current Quality Issues (Priority Order)"
+      ],
+      "architecture_hints": []
+    },
+    ".agent-os/specs/2025-08-18-core-orchestration-engine/sub-specs/nested-groups-decision.md": {
+      "sections": [
+        "Nested Groups Decision Document",
+        "Summary",
+        "Problem Statement",
+        "Evidence of the Gap",
+        "Decision Options Evaluated",
+        "Option A: Implement Group Expansion Layer",
+        "Option B: De-scope Nested Groups for MVP \u2705 **SELECTED**",
+        "Rationale",
+        "Implementation Changes Made",
+        "Schema Updates (`packages/schema/src/workflow.ts`)"
+      ],
+      "architecture_hints": []
+    },
+    ".agent-os/specs/2025-08-18-core-orchestration-engine/sub-specs/dependency-semantics.md": {
+      "sections": [
+        "Dependency Failure Semantics",
+        "Purpose",
+        "\u2705 Implemented Behavior",
+        "Proposed Semantics",
+        "Option A: Skip on Any Non-Success (RECOMMENDED)",
+        "Option B: Differentiated Handling",
+        "Impact Analysis",
+        "Option A Impact:",
+        "Option B Impact:",
+        "Decision Criteria"
+      ],
+      "architecture_hints": []
+    },
+    ".agent-os/specs/2025-08-18-core-orchestration-engine/sub-specs/engine-contracts.md": {
+      "sections": [
+        "Engine Contracts",
+        "Type Locations",
+        "Agent Registry Interface",
+        "AgentRegistry Contract - DECISION REQUIRED",
+        "Agent Interface - DECISION REQUIRED",
+        "Integration Points",
+        "Resilience Adapter Interface",
+        "ResilienceAdapter Contract - DECISION REQUIRED",
+        "Policy Application Strategy"
+      ],
+      "architecture_hints": []
+    },
+    ".agent-os/specs/2025-08-18-core-orchestration-engine/sub-specs/pre-implementation-gap-analysis.md": {
+      "sections": [
+        "Pre-Implementation Gap Analysis",
+        "Executive Summary",
+        "Critical Gap Analysis",
+        "1. Expression Semantics Inconsistency (HIGH PRIORITY)",
+        "2. Fallback vs Journaling Scope Conflict (MEDIUM PRIORITY)",
+        "3. Error Taxonomy Schema Mismatch (HIGH PRIORITY)",
+        "4. Scheduler Semantics Inconsistency (HIGH PRIORITY)"
+      ],
+      "architecture_hints": []
+    },
+    ".agent-os/specs/2025-08-18-core-orchestration-engine/sub-specs/schema-semantics-alignment.md": {
+      "sections": [
+        "Schema Semantics Alignment",
+        "Purpose",
+        "Expression Evaluation Standards",
+        "Condition Evaluation: JMESPath Only",
+        "Mapping Placeholders: ${} Pattern Resolution",
+        "Transform Processing: JMESPath Post-Mapping"
+      ],
+      "architecture_hints": []
+    },
+    ".agent-os/specs/2025-08-18-core-orchestration-engine/sub-specs/schema-alignment.md": {
+      "sections": [
+        "Schema Alignment",
+        "Schema Contract Validation",
+        "Critical Alignment Points",
+        "Validation Responsibilities",
+        "Workflow Validation",
+        "Cycle Detection Implementation",
+        "Dependencies Array Normalization"
+      ],
+      "architecture_hints": []
+    },
+    ".agent-os/specs/2025-08-18-core-orchestration-engine/sub-specs/tests.md": {
+      "sections": [
+        "Tests Specification",
+        "Test Coverage Requirements",
+        "Critical Bug Fix Tests (IMMEDIATE PRIORITY)",
+        "Expression Evaluator Bugs",
+        "Test Coverage",
+        "Unit Tests",
+        "Integration Contract Tests"
+      ],
+      "architecture_hints": []
+    },
+    ".agent-os/specs/2025-08-18-core-orchestration-engine/sub-specs/structured-logging.md": {
+      "sections": [
+        "Structured Logging for Core Orchestration Engine",
+        "Purpose",
+        "Non-goals",
+        "Design",
+        "Logger interface (core-owned)",
+        "Pino integration (consumer-owned)",
+        "Event taxonomy",
+        "Fields and redaction",
+        "Configuration",
+        "Performance"
+      ],
+      "architecture_hints": []
+    },
+    ".agent-os/specs/2025-08-20-json-execution-model/sub-specs/api-spec.md": {
+      "sections": [
+        "API Specification",
+        "MVP Endpoints",
+        "Essential Validation (Required for MVP)",
+        "POST /workflows/validate",
+        "GET /schemas/workflow",
+        "Phase 2: Batch Operations (Month 3)",
+        "Phase 3: Real-time Validation (Month 4)",
+        "Basic Schema Retrieval (Required for MVP)",
+        "GET /schemas/workflow",
+        "Future API Enhancements (Post-MVP)"
+      ],
+      "architecture_hints": []
+    },
+    ".agent-os/specs/2025-08-20-json-execution-model/sub-specs/technical-spec.md": {
+      "sections": [
+        "Technical Specification",
+        "MVP Technical Requirements",
+        "Schema Organization",
+        "JSON Schema Generation",
+        "Runtime Validation",
+        "Error Formatting",
+        "MVP Performance Requirements",
+        "Approach Options",
+        "External Dependencies",
+        "Implementation Details"
+      ],
+      "architecture_hints": []
+    },
+    ".agent-os/specs/2025-08-20-json-execution-model/sub-specs/tests.md": {
+      "sections": [
+        "Tests Specification",
+        "MVP Test Coverage (Week 3 Focus)",
+        "Unit Tests",
+        "Integration Tests",
+        "MVP Performance Tests",
+        "Future Test Enhancements (Post-MVP)",
+        "Phase 1: Advanced Testing (Month 2)",
+        "Phase 2: Contract Testing (Month 3)",
+        "Phase 3: Chaos Engineering (Month 4)",
+        "Mocking Requirements"
+      ],
+      "architecture_hints": []
+    },
+    ".agent-os/specs/2025-08-20-json-execution-model/sub-specs/code-review-enhanced-journal.md": {
+      "sections": [
+        "Enhanced Execution Journal Code Review",
+        "Executive Summary",
+        "Code Review Summary",
+        "Critical Issues \ud83d\udea8",
+        "1. Missing Integration with JSON Execution Model",
+        "2. Event Bus Memory Leak Risk in Concurrent Scenarios",
+        "Warnings \u26a0\ufe0f",
+        "1. Inconsistent Error Handling Between Manual and Auto Recording",
+        "2. Test Coverage Gaps for Edge Cases"
+      ],
+      "architecture_hints": []
+    },
+    ".agent-os/specs/2025-08-19-logger-package-migration/sub-specs/technical-spec.md": {
+      "sections": [
+        "Technical Specification",
+        "Technical Requirements",
+        "Logger Package Enhancements",
+        "Core Package Modifications",
+        "Import Path Updates",
+        "Dependency Architecture",
+        "Before Migration",
+        "After Migration",
+        "Implementation Details",
+        "MemoryLogger Implementation"
+      ],
+      "architecture_hints": []
+    },
+    ".agent-os/specs/2025-08-19-logger-package-migration/sub-specs/tests.md": {
+      "sections": [
+        "Tests Specification",
+        "Test Coverage",
+        "Unit Tests",
+        "Integration Tests",
+        "Migration Verification Tests",
+        "Test Execution Strategy",
+        "Mocking Requirements"
+      ],
+      "architecture_hints": []
+    },
+    ".agent-os/specs/2025-01-18-mcp-integration/sub-specs/technical-spec.md": {
+      "sections": [
+        "Technical Specification",
+        "Architecture Overview",
+        "MCP Server Implementation",
+        "Server Configuration",
+        "Tool Definitions",
+        "Tool Naming Convention",
+        "run_workflow Tool",
+        "get_status Tool",
+        "cancel_workflow Tool"
+      ],
+      "architecture_hints": []
+    },
+    ".agent-os/specs/2025-01-18-mcp-integration/sub-specs/tests.md": {
+      "sections": [
+        "Tests Specification",
+        "Test Coverage Requirements",
+        "Unit Tests",
+        "MCP Server Core",
+        "Tool Handlers",
+        "Resource Providers",
+        "Schema Validation",
+        "Integration Tests",
+        "MCP Protocol Compliance"
+      ],
+      "architecture_hints": []
+    },
+    ".agent-os/specs/2025-01-18-mcp-integration/sub-specs/normalized-envelope.md": {
+      "sections": [
+        "Normalized Result Envelope Specification",
+        "Overview",
+        "JSON Schema Definition"
+      ],
+      "architecture_hints": []
+    },
+    ".agent-os/specs/2025-01-18-mcp-integration/sub-specs/cloud-code-integration.md": {
+      "sections": [
+        "Anthropic Cloud Code / Claude Code Integration (MVP)",
+        "What works in MVP",
+        "Tool contract (MVP)",
+        "Prerequisites",
+        "Start the orchestr8 MCP server",
+        "Connect from Claude Code / Cloud Code",
+        "Trigger from a sub-agent (example flows)",
+        "Security and guardrails",
+        "Future (post-MVP)",
+        "References"
+      ],
+      "architecture_hints": []
+    },
+    ".agent-os/specs/2025-01-18-mcp-integration/sub-specs/mcp-tools-spec.md": {
+      "sections": [
+        "MCP Tools Specification",
+        "Tool Naming Convention",
+        "Tool Definitions",
+        "run_workflow",
+        "get_status",
+        "cancel_workflow"
+      ],
+      "architecture_hints": []
+    },
+    ".agent-os/specs/2025-08-19-complete-resilience-patterns/sub-specs/technical-spec.md": {
+      "sections": [
+        "Technical Specification",
+        "P0 Implementation Decisions",
+        "1. Operation Contract Decision",
+        "2. Retry Policy Schema",
+        "3. Circuit Breaker Sliding Window",
+        "4. Half-Open Concurrency Control",
+        "5. Composition Order Validation",
+        "6. Error Consolidation",
+        "Type Definitions and API Contracts",
+        "Consolidated Error Types"
+      ],
+      "architecture_hints": []
+    },
+    ".agent-os/specs/2025-08-19-complete-resilience-patterns/sub-specs/tests.md": {
+      "sections": [
+        "Tests Specification",
+        "Test Coverage",
+        "Unit Tests",
+        "Integration Tests",
+        "Feature Tests",
+        "Mocking Requirements",
+        "Test Scenarios",
+        "Circuit Breaker Scenarios",
+        "Composition Order Scenarios",
+        "Error Handling Scenarios"
+      ],
+      "architecture_hints": []
+    },
+    ".agent-os/specs/2025-08-19-complete-resilience-patterns/sub-specs/circuit-breaker-spec.md": {
+      "sections": [
+        "Circuit Breaker Specification",
+        "Overview",
+        "State Transitions",
+        "States",
+        "State Transition Diagram",
+        "Circuit Key Derivation",
+        "Default Key Strategy",
+        "Custom Key Support",
+        "Key Hygiene Patterns",
+        "Configuration"
+      ],
+      "architecture_hints": []
+    },
+    ".agent-os/specs/2025-08-19-complete-resilience-patterns/sub-specs/composition-spec.md": {
+      "sections": [
+        "Composition Order Specification",
+        "Overview",
+        "Composition Semantics - Clarified",
+        "retry-cb-timeout",
+        "timeout-cb-retry",
+        "Implementation Pattern",
+        "Middleware Approach",
+        "Middleware Implementations",
+        "Retry Middleware"
+      ],
+      "architecture_hints": []
+    },
+    ".agent-os/specs/2025-08-19-complete-resilience-patterns/2025-08-19-resilience-p0-prerequisites/tasks.md": {
+      "sections": [
+        "Spec Tasks",
+        "Tasks"
+      ],
+      "architecture_hints": []
+    },
+    ".agent-os/specs/2025-08-19-complete-resilience-patterns/2025-08-19-resilience-p0-prerequisites/spec.md": {
+      "sections": [
+        "Spec Requirements Document",
+        "Overview",
+        "User Stories",
+        "Signal Propagation for Middleware",
+        "Circuit Breaker Key Derivation",
+        "Spec Scope",
+        "Out of Scope",
+        "Expected Deliverable",
+        "Spec Documentation"
+      ],
+      "architecture_hints": []
+    },
+    ".agent-os/specs/2025-08-19-complete-resilience-patterns/2025-08-19-resilience-p0-prerequisites/sub-specs/technical-spec.md": {
+      "sections": [
+        "Technical Specification",
+        "Technical Requirements",
+        "Operation Signature Changes",
+        "Invocation Context Structure",
+        "Policy Type Extensions",
+        "Error Types",
+        "Approach Options",
+        "Option A: Minimal Changes (Selected)",
+        "Option B: Complete Overhaul",
+        "Implementation Strategy"
+      ],
+      "architecture_hints": []
+    },
+    ".agent-os/specs/2025-08-19-complete-resilience-patterns/2025-08-19-resilience-p0-prerequisites/sub-specs/tests.md": {
+      "sections": [
+        "Tests Specification",
+        "Test Coverage",
+        "Unit Tests",
+        "Integration Tests",
+        "Regression Tests",
+        "Type Safety Tests",
+        "Test Scenarios",
+        "Scenario 1: Signal Injection",
+        "Scenario 2: Context-Based Keys",
+        "Scenario 3: Error Metadata"
+      ],
+      "architecture_hints": []
+    },
+    "docs/sub-specs/cli-spec.md": {
+      "sections": [
+        "CLI Tool Specification with Auto-Server",
+        "Overview",
+        "CLI Architecture",
+        "CLI Commands",
+        "MVP Commands (Reduced Scope)",
+        "Essential Commands for Week 2 MVP",
+        "Utility commands",
+        "Deferred Commands (Post-MVP)",
+        "Server management - DEFERRED to Phase 2",
+        "orchestr8 start                      # Complex process management"
+      ],
+      "architecture_hints": []
+    },
+    "docs/sub-specs/api-spec.md": {
+      "sections": [
+        "API Specification - Index",
+        "Quick Reference",
+        "MVP Scope (4 weeks)",
+        "Post-MVP (Future Phases)",
+        "Core APIs",
+        "Orchestrator API",
+        "Agent API",
+        "Resilience API",
+        "Workflow Builder API"
+      ],
+      "architecture_hints": []
+    },
+    "docs/sub-specs/technical-spec.md": {
+      "sections": [
+        "Technical Specification - MVP Focus",
+        "MVP Technical Summary",
+        "Technical Requirements - MVP Only",
+        "Core Technology Stack (Minimal)",
+        "MVP Package Architecture",
+        "MVP Resilience Implementation",
+        "Basic Patterns Only",
+        "Resilience Helper Implementation (Per ADR-004)"
+      ],
+      "architecture_hints": []
+    },
+    "docs/sub-specs/prompt-schema.md": {
+      "sections": [
+        "JSON Prompt Schema Specification",
+        "Overview",
+        "Canonical Fields with Anthropic Patterns",
+        "Zod Validation Schema"
+      ],
+      "architecture_hints": []
+    },
+    "docs/sub-specs/prioritized-fixes.md": {
+      "sections": [
+        "Prioritized Fixes and Improvements",
+        "Executive Summary",
+        "Priority 1: Critical Fixes (Week 1)",
+        "1. Remove nyc References",
+        "2. Update CI to Codecov v4",
+        "3. Add CI Concurrency Control",
+        "Priority 2: Environment Consistency (Week 1)",
+        "4. Set TZ and LANG in CI",
+        "5. Pin Node.js Minor Versions",
+        "Priority 3: Test Alignment (Week 2)"
+      ],
+      "architecture_hints": []
+    },
+    "docs/sub-specs/agent-prompt-engineering.md": {
+      "sections": [
+        "Agent Prompt Engineering Specification",
+        "Overview",
+        "Core Principles",
+        "XML-Structured Prompt Architecture",
+        "Base Agent Prompt Template",
+        "Agent Identity",
+        "Context and Environment",
+        "Task Instructions",
+        "Reasoning Framework",
+        "Examples and Patterns"
+      ],
+      "architecture_hints": []
+    },
+    "docs/sub-specs/dashboard-spec.md": {
+      "sections": [
+        "Real-Time Dashboard Specification",
+        "Overview",
+        "Dashboard Architecture",
+        "Technology Stack (Per ADR-016)",
+        "Frontend Framework",
+        "Real-time Communication",
+        "Visualization Libraries",
+        "State Management",
+        "Build and Development",
+        "Dashboard Features"
+      ],
+      "architecture_hints": []
+    },
+    "docs/sub-specs/lean-mvp.md": {
+      "sections": [
+        "Lean MVP Specification - @orchestr8 Agent Orchestration System",
+        "Executive Summary",
+        "MVP Architecture (Simplified)",
+        "4-Week MVP Timeline",
+        "Core MVP Components",
+        "1. Orchestration Engine (Week 1)",
+        "2. Workflow AST and Schema (Week 1)",
+        "3. Developer CLI (Week 2)"
+      ],
+      "architecture_hints": []
+    },
+    "docs/sub-specs/post-mvp-features.md": {
+      "sections": [
+        "Post-MVP Features",
+        "Phase 2: Foundation Extensions (Weeks 5-8)",
+        "XML Prompt Templates",
+        "GraphQL API",
+        "WebSocket Support",
+        "Basic Authentication",
+        "Phase 3: Visual Tools & Debugging (Weeks 9-12)",
+        "Visual Workflow Builder",
+        "Time Travel Debugger",
+        "Event Sourcing"
+      ],
+      "architecture_hints": []
+    },
+    "docs/sub-specs/testing-architecture.md": {
+      "sections": [
+        "Testing Architecture Specification",
+        "Vitest Project Architecture",
+        "Project Separation Strategy",
+        "Project Configurations",
+        "Main Vitest Configuration",
+        "Wallaby.js Configuration",
+        "Unified Wallaby Setup"
+      ],
+      "architecture_hints": []
+    },
+    "docs/sub-specs/api-spec-mvp.md": {
+      "sections": [
+        "MVP API Specification",
+        "Core TypeScript APIs",
+        "Orchestrator API",
+        "Agent API",
+        "Resilience API (MVP Only)",
+        "REST API Endpoints (MVP Only)",
+        "Base URL",
+        "1. Execute Workflow"
+      ],
+      "architecture_hints": []
+    },
+    "docs/sub-specs/execution-semantics.md": {
+      "sections": [
+        "Execution Semantics Specification",
+        "Overview",
+        "Execution State Machine",
+        "Step Execution Flow",
+        "Deterministic Execution Rules",
+        "1. Step Boundaries",
+        "2. Execution Order",
+        "3. Data Flow"
+      ],
+      "architecture_hints": []
+    },
+    "docs/sub-specs/tests.md": {
+      "sections": [
+        "Tests Specification",
+        "Testing Architecture Overview",
+        "Test Coverage Strategy",
+        "MVP Coverage Requirements (ADR-009 Aligned)",
+        "ADR Traceability Matrix"
+      ],
+      "architecture_hints": []
+    },
+    "docs/sub-specs/architecture-decisions.md": {
+      "sections": [
+        "Architecture Decision Records (ADRs) - MVP Focus",
+        "ADR Template",
+        "ADR-001: Modular Monorepo for MVP",
+        "Context (ADR-001)",
+        "Decision Drivers (ADR-001)",
+        "Decision (ADR-001)",
+        "Consequences (ADR-001)",
+        "Adoption Plan (ADR-001)",
+        "ADR-002: JSON Prompts Instead of XML (with Scoped Exception)",
+        "Context (ADR-002)"
+      ],
+      "architecture_hints": []
+    },
+    "docs/sub-specs/prompt-caching.md": {
+      "sections": [
+        "Prompt Caching Specification",
+        "Overview",
+        "Core Concepts",
+        "Cache Lifetime",
+        "Supported Models",
+        "Implementation Pattern",
+        "Basic Cache Control Structure",
+        "Multi-Level Caching with Tools",
+        "Caching Strategy for @orchestr8",
+        "1. System Prompt Caching"
+      ],
+      "architecture_hints": []
+    },
+    "docs/sub-specs/cross-repo-agent-distribution.md": {
+      "sections": [
+        "Cross\u2011Repository Sub\u2011Agent Distribution (MVP\u2011Scoped)",
+        "Goals",
+        "Non\u2011Goals (MVP)",
+        "Package Layout (Source Repo)",
+        "CLI Installer (research-agents)",
+        "Enhanced Safety Measures (Post-Architectural Review)",
+        "Core Behaviors",
+        "Example Usage",
+        "Global install",
+        "Project dev-dep"
+      ],
+      "architecture_hints": []
+    },
+    "docs/sub-specs/ci-cd-pipeline.md": {
+      "sections": [
+        "CI/CD Pipeline Specification",
+        "Executive Summary",
+        "Core CI/CD Requirements",
+        "1. Coverage Reporting (v8 + Codecov v4)",
+        "2. GitHub Actions Workflow",
+        ".github/workflows/ci.yml",
+        "Concurrency management - cancel in-progress runs"
+      ],
+      "architecture_hints": []
+    },
+    "docs/sub-specs/prompt-examples.md": {
+      "sections": [
+        "Prompt Examples",
+        "JSON Prompt Examples (Standard)",
+        "Example 1: Basic Hello World Agent",
+        "Example 2: Changelog Generation Agent"
+      ],
+      "architecture_hints": []
+    },
+    "docs/sub-specs/workflow-ast-schema.md": {
+      "sections": [
+        "Workflow AST Schema Specification",
+        "Overview",
+        "AST Structure",
+        "JSON Schema Definition"
+      ],
+      "architecture_hints": []
+    },
+    "docs/sub-specs/adr-conformance-tests.md": {
+      "sections": [
+        "ADR Conformance Test Specification",
+        "Overview",
+        "ADR-002: JSON Schema Versioning Conformance",
+        "Test Requirements",
+        "ADR-007: Local-Only Security Conformance",
+        "Test Requirements"
+      ],
+      "architecture_hints": []
+    },
+    "docs/sub-specs/examples-spec.md": {
+      "sections": [
+        "Example 1: Hello World (Simple Sequential)",
+        "Purpose",
+        "Workflow Definition",
+        "Expected Execution",
+        "Test Validation",
+        "Example 2: Data Pipeline (Parallel Processing)",
+        "Purpose",
+        "Workflow Definition"
+      ],
+      "architecture_hints": []
+    },
+    "docs/sub-specs/measurement-plan.md": {
+      "sections": [
+        "Measurement Plan - MVP Testing Methodology",
+        "Overview",
+        "Core Metrics Framework",
+        "Performance Benchmarks",
+        "Orchestration Overhead Testing",
+        "Test Implementation",
+        "Success Criteria with Latency Distributions",
+        "Latency Distribution Analysis"
+      ],
+      "architecture_hints": []
+    },
+    "docs/sub-specs/mcp-tools.md": {
+      "sections": [
+        "MCP Tools Specification",
+        "Overview",
+        "Core MCP Patterns",
+        "Slash Commands for Tool Execution",
+        "Execute without arguments",
+        "Execute with arguments (space-separated)",
+        "Multiple arguments",
+        "Resource References with @ Mentions",
+        "GitHub issue reference",
+        "Documentation reference"
+      ],
+      "architecture_hints": []
+    },
+    "docs/sub-specs/api-spec-future.md": {
+      "sections": [
+        "Future API Specification (Post-MVP)",
+        "Advanced REST Endpoints",
+        "Agent Management",
+        "Agent Registry & Discovery",
+        "Workflow Management",
+        "Visual Builder Support",
+        "Debugging & Replay",
+        "Time Travel Debugger",
+        "GraphQL API",
+        "WebSocket API"
+      ],
+      "architecture_hints": []
+    },
+    "docs/sub-specs/hello-world-implementation.md": {
+      "sections": [
+        "Hello World Multi-Agent Orchestrator - Implementation Guide",
+        "Overview",
+        "System Architecture",
+        "Implementation Structure",
+        "Core Package Structure",
+        "Core Implementation",
+        "1. Hello World Orchestrator"
+      ],
+      "architecture_hints": []
+    },
+    "docs/sub-specs/dual-deployment-mvp.md": {
+      "sections": [
+        "Dual Deployment (MVP-Scoped)",
+        "Goals",
+        "Non\u2011Goals (MVP)",
+        "Simplified Design (Behavior Drift Prevention)",
+        "Single Source of Truth Pattern",
+        "Thin Adapter Layer (Minimal Surface Area)",
+        "Behavior Drift Prevention Measures"
+      ],
+      "architecture_hints": []
+    },
+    "docs/sub-specs/prompt-quality-measurement.md": {
+      "sections": [
+        "Prompt Quality Measurement Framework",
+        "Overview",
+        "Core Capabilities",
+        "Adherence Scoring System",
+        "Score Calculation Architecture",
+        "Scoring Methodology"
+      ],
+      "architecture_hints": []
+    },
+    "docs/sub-specs/security-and-operations.md": {
+      "sections": [
+        "Security and Operations - MVP Policies",
+        "Overview",
+        "Security Architecture - MVP",
+        "PII Handling Policy",
+        "MVP Stance: No PII Storage",
+        "PII Detection Patterns",
+        "PII Compliance Statement",
+        "Data Retention Policy",
+        "MVP Retention: Minimal and Local",
+        "Retention Implementation"
+      ],
+      "architecture_hints": []
+    },
+    "docs/sub-specs/chain-of-thought.md": {
+      "sections": [
+        "Chain of Thought Specification",
+        "Overview",
+        "Official Anthropic Patterns",
+        "Pattern 1: Basic Chain of Thought",
+        "Pattern 2: Guided Chain of Thought",
+        "Pattern 3: Structured XML Tags (RECOMMENDED)",
+        "Implementation for @orchestr8 Agents",
+        "Agent Prompt Template with Chain of Thought",
+        "Workflow Analysis Example",
+        "Multi-Step Reasoning Pattern"
+      ],
+      "architecture_hints": []
+    }
+  },
+  "directory_purposes": {
+    "docs": "Project documentation",
+    "scripts": "Build and utility scripts",
+    "tests/vitest": "Test files and test utilities",
+    "docs/sub-specs": "Test specifications",
+    ".agent-os/product": "Test files and test utilities",
+    "packages/agent-base": "Test files and test utilities",
+    "packages/core": "Test files and test utilities",
+    "packages/logger": "Test files and test utilities",
+    "packages/cli": "Test files and test utilities",
+    "packages/testing": "Test files and test utilities",
+    "packages/schema": "Test files and test utilities",
+    "packages/resilience": "Test files and test utilities",
+    "packages/agent-base/src": "Source code root directory",
+    "packages/core/docs": "Project documentation",
+    "packages/core/src": "Source code root directory",
+    "packages/logger/docs": "Project documentation",
+    "packages/logger/src": "Source code root directory",
+    "packages/cli/src": "Source code root directory",
+    "packages/testing/src": "Source code root directory",
+    "packages/schema/src": "Source code root directory",
+    "packages/resilience/docs": "Project documentation",
+    "packages/resilience/src": "Source code root directory",
+    "packages/schema/src/workflow": "Test files and test utilities",
+    "packages/schema/src/validation": "Test files and test utilities",
+    "packages/schema/src/generation": "Test files and test utilities",
+    "packages/testing/src/utilities": "Test files and test utilities",
+    "packages/cli/src/commands": "Test files and test utilities",
+    "packages/logger/src/adapters": "Test files and test utilities",
+    ".agent-os/specs/2025-08-19-complete-resilience-patterns": "Test files and test utilities",
+    ".agent-os/specs/2025-01-18-mcp-integration": "Test files and test utilities",
+    ".agent-os/specs/2025-08-19-logger-package-migration": "Test files and test utilities",
+    ".agent-os/specs/2025-08-20-json-execution-model": "Test files and test utilities",
+    ".agent-os/specs/2025-08-18-core-orchestration-engine": "Test files and test utilities",
+    ".agent-os/specs/2025-08-20-workflow-schema-validation": "Test files and test utilities",
+    ".agent-os/specs/2025-08-18-monorepo-initialization": "Test files and test utilities",
+    ".agent-os/specs/2025-01-18-claude-subagents-integration": "Test files and test utilities",
+    ".agent-os/specs/2025-08-20-event-bus-bounded-queue": "Test files and test utilities",
+    ".agent-os/specs/2025-08-19-complete-resilience-patterns/sub-specs": "Test specifications",
+    ".agent-os/specs/2025-08-19-complete-resilience-patterns/2025-08-19-resilience-p0-prerequisites": "Test files and test utilities",
+    ".agent-os/specs/2025-01-18-mcp-integration/sub-specs": "Test specifications",
+    ".agent-os/specs/2025-08-19-logger-package-migration/sub-specs": "Test specifications",
+    ".agent-os/specs/2025-08-20-json-execution-model/sub-specs": "Test specifications",
+    ".agent-os/specs/2025-08-18-core-orchestration-engine/sub-specs": "Test specifications",
+    ".agent-os/specs/2025-08-20-workflow-schema-validation/sub-specs": "Test specifications",
+    ".agent-os/specs/2025-08-18-monorepo-initialization/sub-specs": "Test specifications",
+    ".agent-os/specs/2025-01-18-claude-subagents-integration/sub-specs": "Test specifications",
+    ".agent-os/specs/2025-08-20-event-bus-bounded-queue/sub-specs": "Test specifications",
+    ".agent-os/specs/2025-08-19-complete-resilience-patterns/2025-08-19-resilience-p0-prerequisites/sub-specs": "Test specifications"
+  },
+  "stats": {
+    "total_files": 156,
+    "total_directories": 85,
+    "fully_parsed": {
+      "javascript": 3,
+      "typescript": 132
+    },
+    "listed_only": {
+      "json": 21
+    },
+    "markdown_files": 121
+  },
+  "files": {
+    "tsconfig-cache.json": {
+      "language": "json",
+      "parsed": false,
+      "purpose": "Configuration"
+    },
+    "turbo.json": {
+      "language": "json",
+      "parsed": false
+    },
+    ".mcp.json": {
+      "language": "json",
+      "parsed": false
+    },
+    "prettier.config.js": {
+      "language": "javascript",
+      "parsed": false,
+      "purpose": "Configuration"
+    },
+    "package.json": {
+      "language": "json",
+      "parsed": false
+    },
+    "tsconfig.json": {
+      "language": "json",
+      "parsed": false,
+      "purpose": "Configuration"
+    },
+    "eslint.config.js": {
+      "language": "javascript",
+      "parsed": false,
+      "purpose": "Configuration"
+    },
+    "vitest.config.ts": {
+      "language": "typescript",
+      "parsed": false,
+      "purpose": "Test file"
+    },
+    "PROJECT_INDEX.json": {
+      "language": "json",
+      "parsed": false
+    },
+    ".claude/settings.local.json": {
+      "language": "json",
+      "parsed": false,
+      "purpose": "Configuration"
+    },
+    "scripts/validate-dual-consumption.js": {
+      "language": "javascript",
+      "parsed": false
+    },
+    "packages/agent-base/package.json": {
+      "language": "json",
+      "parsed": false
+    },
+    "packages/agent-base/tsconfig.json": {
+      "language": "json",
+      "parsed": false,
+      "purpose": "Configuration"
+    },
+    "packages/agent-base/vitest.config.ts": {
+      "language": "typescript",
+      "parsed": false,
+      "purpose": "Test file"
+    },
+    "packages/core/package.json": {
+      "language": "json",
+      "parsed": false
+    },
+    "packages/core/tsconfig.json": {
+      "language": "json",
+      "parsed": false,
+      "purpose": "Configuration"
+    },
+    "packages/core/vitest.config.ts": {
+      "language": "typescript",
+      "parsed": false,
+      "purpose": "Test file"
+    },
+    "packages/logger/package.json": {
+      "language": "json",
+      "parsed": false
+    },
+    "packages/logger/tsconfig.json": {
+      "language": "json",
+      "parsed": false,
+      "purpose": "Configuration"
+    },
+    "packages/logger/vitest.config.ts": {
+      "language": "typescript",
+      "parsed": false,
+      "purpose": "Test file"
+    },
+    "packages/cli/package.json": {
+      "language": "json",
+      "parsed": false
+    },
+    "packages/cli/tsconfig.json": {
+      "language": "json",
+      "parsed": false,
+      "purpose": "Configuration"
+    },
+    "packages/cli/vitest.config.ts": {
+      "language": "typescript",
+      "parsed": false,
+      "purpose": "Test file"
+    },
+    "packages/testing/package.json": {
+      "language": "json",
+      "parsed": false
+    },
+    "packages/testing/tsconfig.json": {
+      "language": "json",
+      "parsed": false,
+      "purpose": "Configuration"
+    },
+    "packages/testing/vitest.config.ts": {
+      "language": "typescript",
+      "parsed": false,
+      "purpose": "Test file"
+    },
+    "packages/schema/package.json": {
+      "language": "json",
+      "parsed": false
+    },
+    "packages/schema/tsconfig.json": {
+      "language": "json",
+      "parsed": false,
+      "purpose": "Configuration"
+    },
+    "packages/schema/vitest.config.ts": {
+      "language": "typescript",
+      "parsed": false,
+      "purpose": "Test file"
+    },
+    "packages/resilience/package.json": {
+      "language": "json",
+      "parsed": false
+    },
+    "packages/resilience/tsconfig.json": {
+      "language": "json",
+      "parsed": false,
+      "purpose": "Configuration"
+    },
+    "packages/resilience/vitest.config.ts": {
+      "language": "typescript",
+      "parsed": false,
+      "purpose": "Test file"
+    },
+    "packages/resilience/src/key-derivation.test.ts": {
+      "language": "typescript",
+      "parsed": false,
+      "purpose": "Test file"
+    },
+    "packages/resilience/src/errors.test.ts": {
+      "language": "typescript",
+      "parsed": false,
+      "purpose": "Test file"
+    },
+    "packages/resilience/src/key-derivation.ts": {
+      "language": "typescript",
+      "parsed": true,
+      "functions": {
+        "deriveKey": "(context?: ResilienceContext, config?: CircuitBreakerConfig,): string"
+      },
+      "classes": {},
+      "variables": [
+        "workflowId",
+        "stepId"
+      ],
+      "call_graph": {}
+    },
+    "packages/resilience/src/observability.test.ts": {
+      "language": "typescript",
+      "parsed": false,
+      "purpose": "Test file"
+    },
+    "packages/resilience/src/index.test.ts": {
+      "language": "typescript",
+      "parsed": false,
+      "purpose": "Test file"
+    },
+    "packages/resilience/src/retry.test.ts": {
+      "language": "typescript",
+      "parsed": false,
+      "purpose": "Test file"
+    },
+    "packages/resilience/src/composition.ts": {
+      "language": "typescript",
+      "parsed": true,
+      "imports": [
+        "./circuit-breaker.js",
+        "./errors.js",
+        "./key-derivation.js"
+      ],
+      "functions": {
+        "defaultRetryWrapper": {
+          "calls": [
+            "calculateBackoffDelay",
+            "sleep"
+          ],
+          "signature": "async (operation: ResilientOperation<T>, config: RetryConfig, context?: ResilienceContext,): Promise<T>"
+        },
+        "defaultTimeoutWrapper": {
+          "calls": [
+            "combineSignals"
+          ],
+          "signature": "async (operation: ResilientOperation<T>, config: TimeoutConfig, context?: ResilienceContext,): Promise<T>"
+        },
+        "defaultCircuitBreakerWrapper": "async (operation: ResilientOperation<T>, config: CircuitBreakerConfig, context?: ResilienceContext,): Promise<T>",
+        "calculateBackoffDelay": {
+          "signature": "(attempt: number, initialDelay: number, maxDelay: number, backoffStrategy: 'fixed' | 'exponential', jitterStrategy: 'none' | 'full',): number",
+          "called_by": [
+            "defaultRetryWrapper"
+          ]
+        },
+        "sleep": {
+          "calls": [
+            "cleanup"
+          ],
+          "signature": "(ms: number, signal?: AbortSignal): Promise<void>",
+          "called_by": [
+            "defaultRetryWrapper"
+          ]
+        },
+        "combineSignals": {
+          "signature": "(signals: AbortSignal[]): AbortSignal",
+          "called_by": [
+            "defaultTimeoutWrapper"
+          ]
+        },
+        "abortHandler": "()",
+        "onAbort": {
+          "calls": [
+            "cleanup"
+          ],
+          "signature": "()"
+        },
+        "cleanup": {
+          "signature": "()",
+          "called_by": [
+            "sleep",
+            "onAbort",
+            "sleep",
+            "onAbort"
+          ]
+        }
+      },
+      "classes": {
+        "ResilienceComposer": {
+          "methods": {
+            "wrappedOperation": "async (signal?: AbortSignal)"
+          },
+          "doc": "Resilience pattern composition engine"
+        }
+      },
+      "constants": {
+        "SUPPORTED_ORDERS": "collection"
+      },
+      "variables": [
+        "patterns",
+        "wrappedOperation",
+        "i",
+        "pattern",
+        "currentOp",
+        "retryConfig",
+        "wrapper",
+        "layerContext",
+        "cbConfig",
+        "timeoutConfig",
+        "attempt",
+        "delay",
+        "timeoutController",
+        "combinedSignal",
+        "abortHandler",
+        "key",
+        "circuitBreaker",
+        "timeoutId",
+        "onAbort",
+        "cleanup",
+        "controller"
+      ],
+      "call_graph": {}
+    },
+    "packages/resilience/src/errors.ts": {
+      "language": "typescript",
+      "parsed": true,
+      "functions": {
+        "isTimeoutError": "(error: unknown): error is TimeoutError",
+        "isCircuitBreakerOpenError": "(error: unknown,): error is CircuitBreakerOpenError",
+        "isRetryExhaustedError": "(error: unknown,): error is RetryExhaustedError"
+      },
+      "classes": {
+        "TimeoutError": {
+          "methods": {
+            "__init__": "(message: string, public readonly timeoutMs: number, public readonly operationName?: string,)"
+          },
+          "extends": "Error",
+          "type": "exception",
+          "doc": "Error types for resilience patterns"
+        },
+        "CircuitBreakerOpenError": {
+          "methods": {
+            "__init__": "(message: string, public readonly circuitKey: string, public readonly retryAfter: Date, public readonly consecutiveFailures: number,)"
+          },
+          "extends": "Error",
+          "type": "exception",
+          "doc": "Error types for resilience patterns"
+        },
+        "RetryExhaustedError": {
+          "methods": {
+            "__init__": "(message: string, public readonly attempts: number, public readonly lastError?: unknown,)"
+          },
+          "extends": "Error",
+          "type": "exception",
+          "doc": "Error types for resilience patterns"
+        }
+      },
+      "call_graph": {}
+    },
+    "packages/resilience/src/types.test.ts": {
+      "language": "typescript",
+      "parsed": true,
+      "purpose": "Test file",
+      "imports": [
+        "vitest"
+      ],
+      "functions": {
+        "operation": "async (signal)",
+        "numberOp": "async ()",
+        "objectOp": "async ()"
+      },
+      "classes": {},
+      "variables": [
+        "config",
+        "controller",
+        "context",
+        "state",
+        "closedState",
+        "halfOpenState",
+        "retryOnly",
+        "timeoutOnly",
+        "empty"
+      ],
+      "call_graph": {}
+    },
+    "packages/resilience/src/context-propagation.test.ts": {
+      "language": "typescript",
+      "parsed": false,
+      "purpose": "Test file"
+    },
+    "packages/resilience/src/composition.test.ts": {
+      "language": "typescript",
+      "parsed": false,
+      "purpose": "Test file"
+    },
+    "packages/resilience/src/circuit-breaker.test.ts": {
+      "language": "typescript",
+      "parsed": false,
+      "purpose": "Test file"
+    },
+    "packages/resilience/src/circuit-breaker.ts": {
+      "language": "typescript",
+      "parsed": true,
+      "imports": [
+        "./errors.js"
+      ],
+      "functions": {},
+      "classes": {
+        "CircuitBreaker": {
+          "methods": {
+            "getCircuitState": "(key: string): CircuitBreakerState | undefined",
+            "reset": "(key: string): void",
+            "resetAll": "(): void",
+            "getDebugInfo": "(key: string): CircuitBreakerState | undefined",
+            "__init__": "(private readonly config: CircuitBreakerConfig, private readonly observer?: CircuitBreakerObserver,)"
+          },
+          "doc": "Circuit breaker implementation with sliding window"
+        }
+      },
+      "variables": [
+        "state",
+        "firstKey",
+        "now",
+        "expiredThreshold",
+        "isExpired",
+        "isStaleOpen",
+        "failures",
+        "limit",
+        "i",
+        "failureRate",
+        "retryAfter",
+        "singleProbe",
+        "result"
+      ],
+      "interfaces": {
+        "CircuitBreakerObserver": {
+          "doc": "Circuit breaker implementation with sliding window"
+        }
+      },
+      "call_graph": {}
+    },
+    "packages/resilience/src/retry.ts": {
+      "language": "typescript",
+      "parsed": true,
+      "imports": [
+        "./errors.js",
+        "./errors.js"
+      ],
+      "functions": {
+        "calculateExponentialDelay": "(attempt: number, initialDelay: number, maxDelay: number,): number",
+        "applyJitter": "(delay: number, jitterStrategy: 'none' | 'full'): number",
+        "sleep": {
+          "calls": [
+            "cleanup"
+          ],
+          "signature": "(ms: number, signal?: AbortSignal): Promise<void>",
+          "called_by": [
+            "defaultRetryWrapper"
+          ]
+        },
+        "defaultRetryOn": "(error: unknown): boolean",
+        "onAbort": {
+          "calls": [
+            "cleanup"
+          ],
+          "signature": "()"
+        },
+        "cleanup": {
+          "signature": "()",
+          "called_by": [
+            "sleep",
+            "onAbort",
+            "sleep",
+            "onAbort"
+          ]
+        }
+      },
+      "classes": {
+        "RetryWrapper": {
+          "methods": {
+            "getAttemptCount": "(): number",
+            "__init__": "(private readonly config: RetryConfig, private readonly onRetry?: RetryCallback,)"
+          },
+          "doc": "Retry implementation with backoff and jitter strategies"
+        }
+      },
+      "variables": [
+        "defaultRetryOn",
+        "exponentialDelay",
+        "timeoutId",
+        "onAbort",
+        "cleanup",
+        "retryOn",
+        "attempt",
+        "error",
+        "result",
+        "config"
+      ],
+      "call_graph": {}
+    },
+    "packages/resilience/src/production-adapter.test.ts": {
+      "language": "typescript",
+      "parsed": false,
+      "purpose": "Test file"
+    },
+    "packages/resilience/src/types.ts": {
+      "language": "typescript",
+      "parsed": false
+    },
+    "packages/resilience/src/observability.ts": {
+      "language": "typescript",
+      "parsed": true,
+      "imports": [
+        "@orchestr8/logger"
+      ],
+      "functions": {
+        "createResilienceTelemetry": "(logger?: Logger,): ResilienceTelemetry"
+      },
+      "classes": {
+        "DefaultResilienceTelemetry": {
+          "methods": {
+            "constructor": "(logger?: Logger)",
+            "createCircuitBreakerObserver": "(): CircuitBreakerObserver",
+            "startTimer": "(operation: string): () => number",
+            "getLogger": "(): Logger",
+            "__init__": "(logger?: Logger)"
+          },
+          "doc": "Observability integration for resilience patterns"
+        }
+      },
+      "variables": [
+        "level",
+        "message",
+        "startTime",
+        "duration",
+        "defaultTelemetry"
+      ],
+      "interfaces": {
+        "ResilienceTelemetry": {
+          "doc": "Observability integration for resilience patterns"
+        }
+      },
+      "call_graph": {}
+    },
+    "packages/resilience/src/reference-adapter.ts": {
+      "language": "typescript",
+      "parsed": true,
+      "imports": [
+        "./errors.js"
+      ],
+      "functions": {},
+      "classes": {
+        "ReferenceResilienceAdapter": {
+          "methods": {
+            "wrappedOperation": "(sig?: AbortSignal)"
+          },
+          "doc": "Reference implementation of ResilienceAdapter with explicit composition order"
+        }
+      },
+      "variables": [
+        "normalizedPolicy",
+        "wrappedOperation",
+        "patterns",
+        "i",
+        "pattern",
+        "currentOp",
+        "cbKey",
+        "timeoutMs",
+        "timeoutController",
+        "timeoutId",
+        "combinedSignal",
+        "abortHandler",
+        "attempt",
+        "delay",
+        "controller",
+        "state",
+        "timeSinceFailure",
+        "retryAfter",
+        "result",
+        "requiredSuccesses",
+        "normalized"
+      ],
+      "interfaces": {
+        "CircuitBreakerState": {
+          "doc": "Reference implementation of ResilienceAdapter with explicit composition order"
+        }
+      },
+      "call_graph": {}
+    },
+    "packages/resilience/src/reference-adapter.test.ts": {
+      "language": "typescript",
+      "parsed": false,
+      "purpose": "Test file"
+    },
+    "packages/resilience/src/circuit-breaker-cleanup.test.ts": {
+      "language": "typescript",
+      "parsed": false,
+      "purpose": "Test file"
+    },
+    "packages/resilience/src/benchmark.test.ts": {
+      "language": "typescript",
+      "parsed": false,
+      "purpose": "Test file"
+    },
+    "packages/resilience/src/index.ts": {
+      "language": "typescript",
+      "parsed": false,
+      "purpose": "Application entry point"
+    },
+    "packages/resilience/src/benchmark.ts": {
+      "language": "typescript",
+      "parsed": true,
+      "imports": [
+        "node:perf_hooks",
+        "./production-adapter.js"
+      ],
+      "functions": {
+        "runBenchmarks": {
+          "calls": [
+            "successOperation"
+          ],
+          "signature": "async (): Promise<void>"
+        },
+        "successOperation": {
+          "signature": "async ()",
+          "called_by": [
+            "runBenchmarks"
+          ]
+        },
+        "failingOperation": "async ()",
+        "slowOperation": "async ()",
+        "operationWithFailures": "async ()"
+      },
+      "classes": {
+        "BenchmarkSuite": {
+          "methods": {
+            "printResults": "(): void"
+          }
+        }
+      },
+      "variables": [
+        "isCI",
+        "isPerfMode",
+        "i",
+        "start",
+        "end",
+        "totalTime",
+        "meanTime",
+        "medianTime",
+        "p95Time",
+        "p99Time",
+        "minTime",
+        "maxTime",
+        "result",
+        "medianTarget",
+        "p95Target",
+        "allPassed",
+        "medianPasses",
+        "p95Passes",
+        "passes",
+        "emoji",
+        "status",
+        "suite",
+        "adapter",
+        "context",
+        "successOperation",
+        "failingOperation",
+        "slowOperation",
+        "testContext",
+        "attempt",
+        "operationWithFailures",
+        "operations",
+        "opContext"
+      ],
+      "interfaces": {
+        "BenchmarkResult": {},
+        "BenchmarkOptions": {}
+      },
+      "call_graph": {}
+    },
+    "packages/resilience/src/production-adapter.ts": {
+      "language": "typescript",
+      "parsed": true,
+      "imports": [
+        "./circuit-breaker.js",
+        "./composition.js",
+        "./errors.js",
+        "./key-derivation.js",
+        "./observability.js",
+        "./retry.js"
+      ],
+      "functions": {},
+      "classes": {
+        "ProductionResilienceAdapter": {
+          "methods": {
+            "getCircuitBreakerState": "(key: string): unknown",
+            "resetCircuit": "(key: string): void",
+            "resetAllCircuits": "(): void",
+            "__init__": "(options?: { maxInstances?: number circuitObserver?: CircuitBreakerObserver telemetry?: ResilienceTelemetry })"
+          },
+          "doc": "Production resilience adapter implementation using composition engine"
+        }
+      },
+      "variables": [
+        "telemetryObserver",
+        "normalized",
+        "resilienceContext",
+        "timer",
+        "middleware",
+        "result",
+        "duration",
+        "retryWrapper",
+        "baseKey",
+        "compositeKey",
+        "circuitBreaker",
+        "observer",
+        "failures",
+        "lruTime",
+        "timeoutController",
+        "timedOut",
+        "combinedSignal",
+        "abortHandler",
+        "hash",
+        "stableStringify",
+        "entries",
+        "str",
+        "i",
+        "base",
+        "idx"
+      ],
+      "call_graph": {}
+    },
+    "packages/schema/src/resilience.ts": {
+      "language": "typescript",
+      "parsed": false
+    },
+    "packages/schema/src/errors.test.ts": {
+      "language": "typescript",
+      "parsed": false,
+      "purpose": "Test file"
+    },
+    "packages/schema/src/index.test.ts": {
+      "language": "typescript",
+      "parsed": false,
+      "purpose": "Test file"
+    },
+    "packages/schema/src/workflow.ts": {
+      "language": "typescript",
+      "parsed": false
+    },
+    "packages/schema/src/errors.ts": {
+      "language": "typescript",
+      "parsed": true,
+      "functions": {
+        "createExecutionError": "(code: ExecutionErrorCodeType, message: string, options?: { stepId?: string attempt?: number cause?: Error | ExecutionError context?: Record<string, unknown> },): ExecutionError",
+        "isExecutionError": "(error: unknown): error is ExecutionError"
+      },
+      "classes": {},
+      "interfaces": {
+        "ExecutionError": {
+          "doc": "Error codes for execution failures"
+        }
+      },
+      "call_graph": {}
+    },
+    "packages/schema/src/schema-hash-drift.test.ts": {
+      "language": "typescript",
+      "parsed": false,
+      "purpose": "Test file"
+    },
+    "packages/schema/src/agents.ts": {
+      "language": "typescript",
+      "parsed": false
+    },
+    "packages/schema/src/expression-validator.ts": {
+      "language": "typescript",
+      "parsed": true,
+      "functions": {
+        "traverse": "(obj: unknown): void"
+      },
+      "classes": {
+        "ExpressionValidator": {
+          "methods": {},
+          "doc": "Expression validation for workflow input mapping"
+        }
+      },
+      "variables": [
+        "match",
+        "innerExpression",
+        "defaultMatch",
+        "pathExpression",
+        "defaultValue",
+        "defaultValidation",
+        "depth",
+        "security",
+        "validation",
+        "result",
+        "pathParts",
+        "stepId",
+        "stepResult",
+        "envVarName",
+        "allowedList",
+        "bracketMatch",
+        "baseValue",
+        "index",
+        "key",
+        "serialized",
+        "sizeInBytes",
+        "patterns",
+        "trimmed",
+        "traverse",
+        "expressions"
+      ],
+      "interfaces": {
+        "ExpressionSecurityConfig": {
+          "doc": "Expression validation for workflow input mapping"
+        },
+        "ExpressionContext": {
+          "doc": "Expression validation for workflow input mapping"
+        },
+        "ExpressionValidationResult": {
+          "doc": "Expression validation for workflow input mapping"
+        }
+      },
+      "call_graph": {}
+    },
+    "packages/schema/src/zod-schemas.ts": {
+      "language": "typescript",
+      "parsed": true,
+      "imports": [
+        "node:crypto",
+        "zod"
+      ],
+      "functions": {},
+      "classes": {
+        "WorkflowSchemaValidator": {
+          "methods": {},
+          "doc": "Comprehensive Zod schemas for workflow validation"
+        }
+      },
+      "variables": [
+        "canonicalSchema",
+        "sortedJson",
+        "expectedHash",
+        "parsed",
+        "errorMessage",
+        "path"
+      ],
+      "call_graph": {}
+    },
+    "packages/schema/src/validators.ts": {
+      "language": "typescript",
+      "parsed": true,
+      "imports": [
+        "./zod-schemas.js"
+      ],
+      "functions": {
+        "computeWorkflowSchemaHash": "(): string",
+        "validateWorkflow": {
+          "calls": [
+            "checkCircularDependencies",
+            "validateStepReferences",
+            "validateWorkflow"
+          ],
+          "signature": "(workflow: unknown): Workflow",
+          "called_by": [
+            "validateWorkflow",
+            "isValidWorkflow",
+            "validateWorkflow",
+            "validateWorkflowOrThrow"
+          ]
+        },
+        "isValidWorkflow": {
+          "calls": [
+            "validateWorkflow"
+          ],
+          "signature": "(workflow: unknown): workflow is Workflow"
+        },
+        "validateStepReferences": {
+          "signature": "(workflow: WorkflowZod): void",
+          "called_by": [
+            "validateWorkflow"
+          ]
+        },
+        "checkCircularDependencies": {
+          "calls": [
+            "buildDependencyGraph",
+            "hasCycle"
+          ],
+          "signature": "(steps: Array<{ id: string; dependsOn?: string[] }>,): void",
+          "called_by": [
+            "validateWorkflow"
+          ]
+        },
+        "hasCycle": {
+          "calls": [
+            "hasCycle"
+          ],
+          "signature": "(nodeId: string, path: string[] = []): boolean",
+          "called_by": [
+            "checkCircularDependencies",
+            "hasCycle"
+          ]
+        },
+        "buildDependencyGraph": {
+          "signature": "(steps: Array<{ id: string; dependsOn?: string[] }>,): Map<string, string[]>",
+          "called_by": [
+            "checkCircularDependencies"
+          ]
+        }
+      },
+      "classes": {},
+      "variables": [
+        "validatedWorkflow",
+        "stepIds",
+        "graph",
+        "visited",
+        "recursionStack",
+        "dependencies",
+        "cycleStart",
+        "cyclePath"
+      ],
+      "call_graph": {}
+    },
+    "packages/schema/src/dual-consumption.test.ts": {
+      "language": "typescript",
+      "parsed": false,
+      "purpose": "Test file"
+    },
+    "packages/schema/src/index.ts": {
+      "language": "typescript",
+      "parsed": false,
+      "purpose": "Application entry point"
+    },
+    "packages/schema/src/agent/agent-schema.ts": {
+      "language": "typescript",
+      "parsed": false
+    },
+    "packages/schema/src/agent/index.ts": {
+      "language": "typescript",
+      "parsed": false,
+      "purpose": "Application entry point"
+    },
+    "packages/schema/src/workflow/policies-schema.ts": {
+      "language": "typescript",
+      "parsed": false
+    },
+    "packages/schema/src/workflow/workflow-schema.ts": {
+      "language": "typescript",
+      "parsed": false
+    },
+    "packages/schema/src/workflow/step-schema.ts": {
+      "language": "typescript",
+      "parsed": false
+    },
+    "packages/schema/src/workflow/index.ts": {
+      "language": "typescript",
+      "parsed": false,
+      "purpose": "Application entry point"
+    },
+    "packages/schema/src/workflow/workflow-schema.test.ts": {
+      "language": "typescript",
+      "parsed": false,
+      "purpose": "Test file"
+    },
+    "packages/schema/src/events/event-schemas.ts": {
+      "language": "typescript",
+      "parsed": false
+    },
+    "packages/schema/src/validation/workflow-validator.test.ts": {
+      "language": "typescript",
+      "parsed": false,
+      "purpose": "Test file"
+    },
+    "packages/schema/src/validation/workflow-validator.ts": {
+      "language": "typescript",
+      "parsed": true,
+      "imports": [
+        "../agent/agent-schema.js",
+        "../workflow/workflow-schema.js",
+        "./validator.js"
+      ],
+      "functions": {
+        "validateWorkflow": {
+          "calls": [
+            "validateWorkflow"
+          ],
+          "signature": "(data: unknown): ValidationResult<Workflow>",
+          "called_by": [
+            "validateWorkflow",
+            "isValidWorkflow",
+            "validateWorkflow",
+            "validateWorkflowOrThrow"
+          ]
+        },
+        "validateAgent": {
+          "calls": [
+            "validateAgent"
+          ],
+          "signature": "(data: unknown,): ValidationResult<AgentDefinition>",
+          "called_by": [
+            "validateAgent",
+            "validateAgentOrThrow"
+          ]
+        },
+        "validateWorkflowOrThrow": {
+          "calls": [
+            "validateWorkflow"
+          ],
+          "signature": "(data: unknown): Workflow"
+        },
+        "validateAgentOrThrow": {
+          "calls": [
+            "validateAgent"
+          ],
+          "signature": "(data: unknown): AgentDefinition"
+        }
+      },
+      "classes": {
+        "WorkflowValidator": {
+          "methods": {
+            "constructor": "()",
+            "validateWorkflow": {
+              "signature": "(data: unknown): ValidationResult<Workflow>",
+              "called_by": [
+                "validateWorkflow",
+                "isValidWorkflow",
+                "validateWorkflowOrThrow"
+              ]
+            },
+            "validateStructure": "(data: unknown): ",
+            "getErrorSummary": "(data: unknown): string | null",
+            "__init__": "()"
+          },
+          "extends": "SchemaValidator",
+          "doc": "Workflow-specific validation utilities"
+        },
+        "AgentValidator": {
+          "methods": {
+            "constructor": "()",
+            "validateAgent": {
+              "signature": "(data: unknown): ValidationResult<AgentDefinition>",
+              "called_by": [
+                "validateAgent",
+                "validateAgentOrThrow"
+              ]
+            },
+            "__init__": "()"
+          },
+          "extends": "SchemaValidator",
+          "doc": "Workflow-specific validation utilities"
+        }
+      },
+      "variables": [
+        "result",
+        "workflow",
+        "metadata",
+        "stepObj",
+        "agent",
+        "dependencies",
+        "stepIds",
+        "step",
+        "duplicates",
+        "category",
+        "message",
+        "workflowValidator",
+        "agentValidator",
+        "summary"
+      ],
+      "call_graph": {}
+    },
+    "packages/schema/src/validation/simple-benchmark.test.ts": {
+      "language": "typescript",
+      "parsed": true,
+      "purpose": "Test file",
+      "imports": [
+        "perf_hooks",
+        "vitest",
+        "./workflow-validator.js"
+      ],
+      "functions": {
+        "measureTime": {
+          "signature": "(fn: ()",
+          "called_by": [
+            "benchmark",
+            "benchmark"
+          ]
+        },
+        "benchmark": {
+          "calls": [
+            "measureTime"
+          ],
+          "signature": "(name: string, fn: ()"
+        },
+        "createTestWorkflow": "(stepCount: number = 50)",
+        "concurrentValidations": "async (): Promise<void>"
+      },
+      "classes": {},
+      "variables": [
+        "createTestWorkflow",
+        "start",
+        "result",
+        "end",
+        "i",
+        "avg",
+        "p95",
+        "p99",
+        "max",
+        "invalidWorkflow",
+        "concurrentValidations",
+        "promises",
+        "results",
+        "batch",
+        "batchAvg",
+        "firstBatch",
+        "lastBatch",
+        "degradation",
+        "beforeMemory",
+        "afterMemory",
+        "memoryIncrease",
+        "memoryIncreaseMB",
+        "stepCounts",
+        "workflow",
+        "avgCachedDuration"
+      ],
+      "call_graph": {}
+    },
+    "packages/schema/src/validation/formatter.test.ts": {
+      "language": "typescript",
+      "parsed": false,
+      "purpose": "Test file"
+    },
+    "packages/schema/src/validation/formatter.ts": {
+      "language": "typescript",
+      "parsed": true,
+      "functions": {},
+      "classes": {
+        "SchemaErrorFormatter": {
+          "methods": {
+            "constructor": "()",
+            "format": "(error: z.ZodError): FormattedError[]",
+            "formatAsString": "(error: z.ZodError): string",
+            "formatAsJSON": "(error: z.ZodError): object",
+            "__init__": "()"
+          },
+          "doc": "Schema error formatter for user-friendly validation messages"
+        }
+      },
+      "variables": [
+        "path",
+        "message",
+        "expected",
+        "example",
+        "patternBase",
+        "pathBase",
+        "formatted",
+        "msg"
+      ],
+      "interfaces": {
+        "FormattedError": {
+          "doc": "Schema error formatter for user-friendly validation messages"
+        }
+      },
+      "call_graph": {}
+    },
+    "packages/schema/src/validation/validator.ts": {
+      "language": "typescript",
+      "parsed": true,
+      "imports": [
+        "./formatter.js"
+      ],
+      "functions": {
+        "createValidator": "(schema: T, options?: { cacheEnabled?: boolean; maxCacheSize?: number },): SchemaValidator<T>",
+        "validateSchema": "(schema: T, data: unknown,): ValidationResult<z.infer<T>>"
+      },
+      "classes": {
+        "SchemaValidator": {
+          "methods": {
+            "validate": "(data: unknown): ValidationResult<z.infer<T>>",
+            "validateOrThrow": "(data: unknown): z.infer<T>",
+            "parse": "(data: unknown): ValidationResult<z.infer<T>>",
+            "getErrorString": "(data: unknown): string | null",
+            "clearCache": "(): void",
+            "getCacheSize": "(): number",
+            "__init__": "(schema: T, options: { cacheEnabled?: boolean; maxCacheSize?: number } = {},)"
+          },
+          "doc": "Schema validation utilities"
+        },
+        "ValidationError": {
+          "methods": {
+            "getFormattedMessage": "(): string",
+            "__init__": "(message: string, public readonly errors: FormattedError[],)"
+          },
+          "extends": "Error",
+          "type": "exception",
+          "doc": "Schema validation utilities"
+        }
+      },
+      "variables": [
+        "cacheKey",
+        "result",
+        "msg",
+        "firstKey",
+        "validator"
+      ],
+      "call_graph": {}
+    },
+    "packages/schema/src/generation/json-schema.ts": {
+      "language": "typescript",
+      "parsed": true,
+      "imports": [
+        "zod-to-json-schema",
+        "../agent/index.js",
+        "../workflow/index.js"
+      ],
+      "functions": {
+        "generateJsonSchema": {
+          "calls": [
+            "getSchemaExamples"
+          ],
+          "signature": "(schema: T, options: JsonSchemaGenerationOptions = {},): JsonSchema",
+          "called_by": [
+            "generateNamedSchema",
+            "generateAllSchemas"
+          ]
+        },
+        "generateNamedSchema": {
+          "calls": [
+            "generateJsonSchema"
+          ],
+          "signature": "(name: SchemaName, options: JsonSchemaGenerationOptions = {},): JsonSchema",
+          "called_by": [
+            "getJsonSchemaString"
+          ]
+        },
+        "generateAllSchemas": {
+          "calls": [
+            "generateJsonSchema"
+          ],
+          "signature": "(options: JsonSchemaGenerationOptions = {},): Record<SchemaName, JsonSchema>"
+        },
+        "getSchemaExamples": {
+          "signature": "(_schema: ZodType): unknown[]",
+          "called_by": [
+            "generateJsonSchema"
+          ]
+        },
+        "validateAgainstSchema": "(name: SchemaName, data: unknown,): ",
+        "getJsonSchemaString": {
+          "calls": [
+            "generateNamedSchema"
+          ],
+          "signature": "(name: SchemaName, options: JsonSchemaGenerationOptions = {},): string",
+          "called_by": [
+            "exportSchemasToDirectory"
+          ]
+        },
+        "exportSchemasToDirectory": {
+          "calls": [
+            "getJsonSchemaString"
+          ],
+          "signature": "async (outputDir: string, options: JsonSchemaGenerationOptions = {},): Promise<void>"
+        }
+      },
+      "classes": {},
+      "constants": {
+        "SCHEMA_REGISTRY": "collection"
+      },
+      "variables": [
+        "jsonSchema",
+        "schemaObj",
+        "schema",
+        "result",
+        "schemaJson",
+        "outputPath",
+        "indexContent"
+      ],
+      "interfaces": {
+        "JsonSchemaGenerationOptions": {
+          "doc": "JSON Schema generation utilities for workflow and agent schemas"
+        }
+      },
+      "call_graph": {}
+    },
+    "packages/schema/src/generation/index.ts": {
+      "language": "typescript",
+      "parsed": false,
+      "purpose": "Application entry point"
+    },
+    "packages/schema/src/generation/json-schema.test.ts": {
+      "language": "typescript",
+      "parsed": false,
+      "purpose": "Test file"
+    },
+    "packages/testing/src/index.test.ts": {
+      "language": "typescript",
+      "parsed": false,
+      "purpose": "Test file"
+    },
+    "packages/testing/src/index.ts": {
+      "language": "typescript",
+      "parsed": false,
+      "purpose": "Application entry point"
+    },
+    "packages/testing/src/mocks/agent-registry.ts": {
+      "language": "typescript",
+      "parsed": true,
+      "imports": [
+        "@orchestr8/schema",
+        "vitest"
+      ],
+      "functions": {},
+      "classes": {
+        "MockAgent": {
+          "methods": {
+            "constructor": "(id: string, name?: string)",
+            "mockReturnValue": "(value: unknown): this",
+            "mockRejectedValue": "(error: Error): this",
+            "__init__": "(id: string, name?: string)"
+          },
+          "doc": "Mock AgentRegistry for testing"
+        },
+        "MockAgentRegistry": {
+          "methods": {
+            "constructor": "()",
+            "addMockAgent": "(id: string, name?: string): MockAgent",
+            "simulateAgentNotFound": "(agentId: string): void",
+            "simulateLookupFailure": "(error: Error): void",
+            "clear": "(): void",
+            "reset": "(): void",
+            "__init__": "()"
+          },
+          "doc": "Mock AgentRegistry for testing"
+        }
+      },
+      "variables": [
+        "agent"
+      ],
+      "call_graph": {}
+    },
+    "packages/testing/src/mocks/resilience-adapter.ts": {
+      "language": "typescript",
+      "parsed": true,
+      "imports": [
+        "@orchestr8/schema",
+        "vitest"
+      ],
+      "functions": {},
+      "classes": {
+        "MockResilienceAdapter": {
+          "methods": {
+            "constructor": "()",
+            "simulateTimeoutError": "(): void",
+            "simulateCircuitBreakerOpen": "(): void",
+            "simulateCancellationError": "(): void",
+            "simulateRetries": "(count: number): void",
+            "verifyCompositionOrder": "(): boolean",
+            "verifyAbortSignalPropagation": "(signal: AbortSignal): boolean",
+            "getApplicationCount": "(): number",
+            "clearHistory": "(): void",
+            "reset": "(): void",
+            "__init__": "()"
+          },
+          "doc": "Mock ResilienceAdapter for testing"
+        }
+      },
+      "variables": [
+        "delay",
+        "abortHandler",
+        "lastPolicy"
+      ],
+      "call_graph": {}
+    },
+    "packages/testing/src/utilities/test-helpers.ts": {
+      "language": "typescript",
+      "parsed": true,
+      "purpose": "Test file",
+      "imports": [
+        "vitest"
+      ],
+      "functions": {
+        "createSuccessfulStepResult": "(stepId: string, output: unknown = { success: true },): StepResult",
+        "createFailedStepResult": "(stepId: string, error: ExecutionError,): StepResult",
+        "createSkippedStepResult": "(stepId: string): StepResult",
+        "createCancelledStepResult": "(stepId: string): StepResult",
+        "createSuccessfulWorkflowResult": "(executionId: string, steps: Record<string, StepResult>,): WorkflowResult",
+        "waitFor": "async (condition: ()",
+        "createDeferredPromise": "(): ",
+        "createTimeoutController": "(timeout: number): AbortController",
+        "calculateJsonSize": "(obj: unknown): number",
+        "createLargeData": "(sizeInKb: number): string",
+        "createCircularReference": "(): Record<string, unknown>"
+      },
+      "classes": {},
+      "variables": [
+        "now",
+        "startTime",
+        "promise",
+        "controller",
+        "fakeTimers",
+        "chars",
+        "targetSize",
+        "result"
+      ],
+      "call_graph": {}
+    },
+    "packages/testing/src/utilities/workflow-builder.ts": {
+      "language": "typescript",
+      "parsed": true,
+      "functions": {
+        "createAgentStep": {
+          "signature": "(id: string, agentId: string, options?: Partial<AgentStep>,): AgentStep",
+          "called_by": [
+            "createParallelWorkflow",
+            "createHybridWorkflow"
+          ]
+        },
+        "createSequentialWorkflow": "(stepCount: number = 3): Workflow",
+        "createParallelWorkflow": {
+          "calls": [
+            "createAgentStep"
+          ],
+          "signature": "(stepCount: number = 3): Workflow"
+        },
+        "createWorkflowWithDependencies": "(): Workflow",
+        "createHybridWorkflow": {
+          "calls": [
+            "createAgentStep"
+          ],
+          "signature": "(): Workflow"
+        }
+      },
+      "classes": {
+        "WorkflowBuilder": {
+          "methods": {
+            "withId": "(id: string): this",
+            "withName": "(name: string): this",
+            "withVersion": "(version: string): this",
+            "withVariables": "(variables: Record<string, unknown>): this",
+            "withAllowedEnvVars": "(vars: string[]): this",
+            "withTimeout": {
+              "signature": "(timeout: number): this",
+              "called_by": [
+                "delay"
+              ]
+            },
+            "withMaxConcurrency": "(maxConcurrency: number): this",
+            "build": "(): Workflow"
+          },
+          "doc": "Test utilities for building workflows"
+        }
+      },
+      "variables": [
+        "step",
+        "chainedSteps",
+        "previousStep",
+        "parallelSteps",
+        "builder",
+        "i",
+        "sequentialSteps"
+      ],
+      "call_graph": {}
+    },
+    "packages/cli/src/index.test.ts": {
+      "language": "typescript",
+      "parsed": false,
+      "purpose": "Test file"
+    },
+    "packages/cli/src/cli.ts": {
+      "language": "typescript",
+      "parsed": false
+    },
+    "packages/cli/src/index.ts": {
+      "language": "typescript",
+      "parsed": false,
+      "purpose": "Application entry point"
+    },
+    "packages/cli/src/commands/init.ts": {
+      "language": "typescript",
+      "parsed": false
+    },
+    "packages/cli/src/commands/create-agent.test.ts": {
+      "language": "typescript",
+      "parsed": false,
+      "purpose": "Test file"
+    },
+    "packages/cli/src/commands/init.test.ts": {
+      "language": "typescript",
+      "parsed": false,
+      "purpose": "Test file"
+    },
+    "packages/cli/src/commands/inspect.test.ts": {
+      "language": "typescript",
+      "parsed": false,
+      "purpose": "Test file"
+    },
+    "packages/cli/src/commands/test.test.ts": {
+      "language": "typescript",
+      "parsed": true,
+      "purpose": "Test file",
+      "imports": [
+        "vitest",
+        "fs/promises",
+        "./test.js"
+      ],
+      "functions": {},
+      "classes": {
+        "MockOrchestrationEngine": {
+          "methods": {
+            "execute": {
+              "signature": "()",
+              "called_by": [
+                "main"
+              ]
+            }
+          }
+        },
+        "MockWorkflowValidator": {
+          "methods": {
+            "validate": "(data: any)"
+          }
+        }
+      },
+      "variables": [
+        "exitSpy",
+        "mockReaddir",
+        "mockReadFile",
+        "consoleSpy"
+      ],
+      "call_graph": {}
+    },
+    "packages/cli/src/commands/inspect.ts": {
+      "language": "typescript",
+      "parsed": true,
+      "purpose": "Test file",
+      "imports": [
+        "commander",
+        "fs/promises",
+        "@orchestr8/core"
+      ],
+      "functions": {
+        "getStatusEmoji": "(status: string): string",
+        "formatDuration": "(ms: number): string",
+        "formatTime": "(ms: number): string"
+      },
+      "classes": {},
+      "variables": [
+        "inspectCommand",
+        "journal",
+        "executionIds",
+        "exportData",
+        "duration",
+        "execution",
+        "baseTime",
+        "stepEntries",
+        "uniqueSteps",
+        "stepEvents",
+        "startEvent",
+        "endEvent",
+        "stepStart",
+        "stepEnd",
+        "status",
+        "totalTime",
+        "minutes",
+        "seconds",
+        "totalSeconds",
+        "hours",
+        "milliseconds"
+      ],
+      "call_graph": {}
+    },
+    "packages/cli/src/commands/run.test.ts": {
+      "language": "typescript",
+      "parsed": true,
+      "purpose": "Test file",
+      "imports": [
+        "vitest",
+        "fs/promises",
+        "./run.js"
+      ],
+      "functions": {},
+      "classes": {
+        "MockOrchestrationEngine": {
+          "methods": {
+            "execute": {
+              "signature": "()",
+              "called_by": [
+                "main"
+              ]
+            }
+          }
+        },
+        "MockJsonExecutionModel": {
+          "methods": {
+            "serializeWorkflow": "(workflow: any)"
+          }
+        },
+        "MockWorkflowValidator": {
+          "methods": {
+            "validate": "(data: any)"
+          }
+        }
+      },
+      "variables": [
+        "mockReadFile",
+        "consoleSpy",
+        "exitSpy",
+        "mockWriteFile",
+        "mockWatch",
+        "processOnSpy"
+      ],
+      "call_graph": {}
+    },
+    "packages/cli/src/commands/test.ts": {
+      "language": "typescript",
+      "parsed": true,
+      "purpose": "Test file",
+      "imports": [
+        "commander",
+        "fs/promises",
+        "fs",
+        "path",
+        "@orchestr8/core",
+        "@orchestr8/schema"
+      ],
+      "functions": {
+        "checkAssertion": {
+          "signature": "(result: any, assertion: any): boolean",
+          "called_by": [
+            "runTest"
+          ]
+        },
+        "runTest": {
+          "calls": [
+            "OrchestrationEngine",
+            "checkAssertion",
+            "hasAgent"
+          ],
+          "signature": "async (testPath: string): Promise<TestResult>",
+          "called_by": [
+            "runAllTests"
+          ]
+        },
+        "runAllTests": {
+          "calls": [
+            "runTest"
+          ],
+          "signature": "async (): Promise<TestResult[]>"
+        }
+      },
+      "classes": {},
+      "variables": [
+        "testCommand",
+        "runTest",
+        "startTime",
+        "testContent",
+        "testData",
+        "validator",
+        "validation",
+        "engine",
+        "validatedWorkflow",
+        "workflow",
+        "result",
+        "passed",
+        "runAllTests",
+        "testDir",
+        "files",
+        "workflowDir",
+        "results",
+        "failed",
+        "totalDuration",
+        "watchDir",
+        "watcher",
+        "operator",
+        "actual"
+      ],
+      "interfaces": {
+        "WorkflowTest": {},
+        "TestResult": {}
+      },
+      "call_graph": {}
+    },
+    "packages/cli/src/commands/create-agent.ts": {
+      "language": "typescript",
+      "parsed": false
+    },
+    "packages/cli/src/commands/run.ts": {
+      "language": "typescript",
+      "parsed": true,
+      "imports": [
+        "commander",
+        "fs/promises",
+        "fs",
+        "path",
+        "@orchestr8/core",
+        "@orchestr8/schema"
+      ],
+      "functions": {
+        "executeWorkflow": {
+          "calls": [
+            "getAgent",
+            "hasAgent"
+          ],
+          "signature": "async ()"
+        }
+      },
+      "classes": {},
+      "variables": [
+        "runCommand",
+        "executeWorkflow",
+        "workflowContent",
+        "validator",
+        "validation",
+        "validatedWorkflow",
+        "workflow",
+        "executionModel",
+        "serializedWorkflow",
+        "agentRegistry",
+        "resilienceAdapter",
+        "engine",
+        "startTime",
+        "result",
+        "duration",
+        "outputData",
+        "watcher"
+      ],
+      "call_graph": {}
+    },
+    "packages/logger/src/correlation.test.ts": {
+      "language": "typescript",
+      "parsed": false,
+      "purpose": "Test file"
+    },
+    "packages/logger/src/correlation.ts": {
+      "language": "typescript",
+      "parsed": true,
+      "imports": [
+        "node:crypto"
+      ],
+      "functions": {
+        "generateCorrelationId": {
+          "signature": "(prefix = 'o8'): string",
+          "called_by": [
+            "extractCorrelationId"
+          ]
+        },
+        "extractCorrelationId": {
+          "calls": [
+            "generateCorrelationId"
+          ],
+          "signature": "(source: unknown, fallbackPrefix = 'o8',): string"
+        }
+      },
+      "classes": {
+        "CorrelationContext": {
+          "methods": {},
+          "doc": "Generate a correlation ID with optional prefix"
+        }
+      },
+      "variables": [
+        "key",
+        "previousKey"
+      ],
+      "call_graph": {}
+    },
+    "packages/logger/src/redaction.test.ts": {
+      "language": "typescript",
+      "parsed": false,
+      "purpose": "Test file"
+    },
+    "packages/logger/src/types.ts": {
+      "language": "typescript",
+      "parsed": false
+    },
+    "packages/logger/src/logger.ts": {
+      "language": "typescript",
+      "parsed": true,
+      "functions": {
+        "getLogLevelFromEnv": "(): LogLevel",
+        "getPrettyFromEnv": "(): boolean",
+        "getRedactKeysFromEnv": "(): string[]",
+        "getMaxFieldSizeFromEnv": "(): number"
+      },
+      "classes": {
+        "BaseLogger": {
+          "methods": {
+            "constructor": "(options: LoggerOptions = {}, bindings: LogFields = {})",
+            "trace": "(msg: string, fields?: LogFields): void",
+            "debug": "(msg: string, fields?: LogFields): void",
+            "info": "(msg: string, fields?: LogFields): void",
+            "warn": "(msg: string, fields?: LogFields): void",
+            "error": "(msg: string, fields?: LogFields): void",
+            "__init__": "(options: LoggerOptions = {}, bindings: LogFields = {})"
+          },
+          "doc": "Default keys to redact from logs"
+        }
+      },
+      "constants": {
+        "DEFAULT_REDACT_KEYS": "collection"
+      },
+      "variables": [
+        "redacted",
+        "lowerKey",
+        "envLevel",
+        "envRedact",
+        "envSize",
+        "size"
+      ],
+      "call_graph": {}
+    },
+    "packages/logger/src/index.ts": {
+      "language": "typescript",
+      "parsed": true,
+      "purpose": "Application entry point",
+      "imports": [
+        "./adapters/console.js",
+        "./adapters/noop.js",
+        "./adapters/pino.js",
+        "./logger.js"
+      ],
+      "functions": {
+        "createLogger": "async (options?: LoggerOptions): Promise<Logger>",
+        "createLoggerSync": "(options?: LoggerOptions): Logger"
+      },
+      "classes": {},
+      "variables": [
+        "mergedOptions",
+        "level"
+      ],
+      "call_graph": {}
+    },
+    "packages/logger/src/logger.test.ts": {
+      "language": "typescript",
+      "parsed": true,
+      "purpose": "Test file",
+      "imports": [
+        "vitest",
+        "./logger.js"
+      ],
+      "functions": {},
+      "classes": {
+        "TestLogger": {
+          "methods": {
+            "child": "(bindings: LogFields): TestLogger"
+          },
+          "extends": "BaseLogger"
+        }
+      },
+      "variables": [
+        "mergedFields",
+        "redactedFields",
+        "logger",
+        "fields",
+        "redacted",
+        "user",
+        "profile",
+        "headers",
+        "parent",
+        "child"
+      ],
+      "call_graph": {}
+    },
+    "packages/logger/src/redaction.ts": {
+      "language": "typescript",
+      "parsed": true,
+      "functions": {
+        "redactString": {
+          "signature": "(value: string): string",
+          "called_by": [
+            "deepRedact"
+          ]
+        },
+        "deepRedact": {
+          "calls": [
+            "deepRedact",
+            "redactString",
+            "shouldRedactKey"
+          ],
+          "signature": "(obj: unknown, sensitiveKeys: Set<string>, maxDepth = 10, currentPath = '',): unknown",
+          "called_by": [
+            "deepRedact"
+          ]
+        },
+        "shouldRedactKey": {
+          "signature": "(key: string, sensitiveKeys: Set<string>): boolean",
+          "called_by": [
+            "deepRedact"
+          ]
+        },
+        "truncateValue": "(value: unknown, maxSize: number,): "
+      },
+      "classes": {},
+      "constants": {
+        "SECRET_PATTERNS": "collection"
+      },
+      "variables": [
+        "redacted",
+        "fullPath",
+        "lowerKey",
+        "json"
+      ],
+      "call_graph": {}
+    },
+    "packages/logger/src/adapters/noop.ts": {
+      "language": "typescript",
+      "parsed": true,
+      "functions": {
+        "createNoopLogger": "(): Logger"
+      },
+      "classes": {
+        "NoopLogger": {
+          "methods": {
+            "constructor": "(_options?: LoggerOptions, bindings: LogFields = {})",
+            "child": "(bindings: LogFields): Logger",
+            "trace": "(_msg: string, _fields?: LogFields): void",
+            "debug": "(_msg: string, _fields?: LogFields): void",
+            "info": "(_msg: string, _fields?: LogFields): void",
+            "warn": "(_msg: string, _fields?: LogFields): void",
+            "error": "(_msg: string, _fields?: LogFields): void",
+            "__init__": "(_options?: LoggerOptions, bindings: LogFields = {})"
+          },
+          "doc": "No-op logger that discards all log messages."
+        }
+      },
+      "call_graph": {}
+    },
+    "packages/logger/src/adapters/console.test.ts": {
+      "language": "typescript",
+      "parsed": true,
+      "purpose": "Test file",
+      "imports": [
+        "node:stream",
+        "vitest",
+        "./console.js"
+      ],
+      "functions": {
+        "stripAnsi": {
+          "signature": "(str: string): string",
+          "called_by": [
+            "TestStream.getLastLine"
+          ]
+        }
+      },
+      "classes": {
+        "TestStream": {
+          "methods": {
+            "clear": "(): void",
+            "getLastLine": {
+              "calls": [
+                "stripAnsi"
+              ],
+              "signature": "(): string"
+            },
+            "getLastLineStripped": "(): string",
+            "getJSON": "(): unknown"
+          },
+          "extends": "Writable"
+        }
+      },
+      "variables": [
+        "line",
+        "logger",
+        "output",
+        "warn",
+        "error",
+        "child",
+        "child1",
+        "child2",
+        "circular",
+        "stream"
+      ],
+      "call_graph": {}
+    },
+    "packages/logger/src/adapters/pino.ts": {
+      "language": "typescript",
+      "parsed": true,
+      "imports": [
+        "../logger.js"
+      ],
+      "functions": {
+        "createPinoOptions": {
+          "calls": [
+            "createTruncationSerializers"
+          ],
+          "signature": "(options: LoggerOptions = {}): PinoOptions",
+          "called_by": [
+            "createPinoLogger"
+          ]
+        },
+        "createTruncationSerializers": {
+          "signature": "(maxSize: number,): Record<string, (value: unknown) => unknown>",
+          "called_by": [
+            "createPinoOptions"
+          ]
+        },
+        "createPinoLogger": {
+          "calls": [
+            "createPinoOptions"
+          ],
+          "signature": "async (options?: LoggerOptions,): Promise<Logger>"
+        },
+        "isPinoAvailable": "async (): Promise<boolean>",
+        "truncate": "(value: unknown): unknown"
+      },
+      "classes": {
+        "PinoAdapter": {
+          "methods": {
+            "constructor": "(pino: PinoLogger)",
+            "child": "(bindings: LogFields): Logger",
+            "trace": "(msg: string, fields?: LogFields): void",
+            "debug": "(msg: string, fields?: LogFields): void",
+            "info": "(msg: string, fields?: LogFields): void",
+            "warn": "(msg: string, fields?: LogFields): void",
+            "error": "(msg: string, fields?: LogFields): void",
+            "__init__": "(pino: PinoLogger)"
+          },
+          "doc": "Type definitions for Pino (when available as peer dependency)"
+        }
+      },
+      "variables": [
+        "redactPaths",
+        "pinoOptions",
+        "truncate",
+        "json",
+        "pinoModule",
+        "pino",
+        "pinoLogger"
+      ],
+      "interfaces": {
+        "PinoLogger": {
+          "doc": "Type definitions for Pino (when available as peer dependency)"
+        },
+        "PinoOptions": {
+          "doc": "Type definitions for Pino (when available as peer dependency)"
+        }
+      },
+      "call_graph": {}
+    },
+    "packages/logger/src/adapters/memory.ts": {
+      "language": "typescript",
+      "parsed": true,
+      "functions": {
+        "createMemoryLogger": "(context?: LogFields): MemoryLogger"
+      },
+      "classes": {
+        "MemoryLogger": {
+          "methods": {
+            "constructor": "(context: LogFields = {}, sharedEntries?: MemoryLogEntry[])",
+            "trace": "(message: string, fields?: LogFields): void",
+            "debug": "(message: string, fields?: LogFields): void",
+            "info": "(message: string, fields?: LogFields): void",
+            "warn": "(message: string, fields?: LogFields): void",
+            "error": "(message: string, fields?: LogFields): void",
+            "child": "(bindings: LogFields): Logger",
+            "getEntries": "(): MemoryLogEntry[]",
+            "getEntriesByLevel": "(level: LogLevel): MemoryLogEntry[]",
+            "clear": "(): void",
+            "count": "(): number",
+            "__init__": "(context: LogFields = {}, sharedEntries?: MemoryLogEntry[])"
+          },
+          "doc": "Memory logger adapter for testing"
+        }
+      },
+      "variables": [
+        "entry"
+      ],
+      "interfaces": {
+        "MemoryLogEntry": {
+          "doc": "Memory logger adapter for testing"
+        }
+      },
+      "call_graph": {}
+    },
+    "packages/logger/src/adapters/memory.test.ts": {
+      "language": "typescript",
+      "parsed": false,
+      "purpose": "Test file"
+    },
+    "packages/logger/src/adapters/noop.test.ts": {
+      "language": "typescript",
+      "parsed": false,
+      "purpose": "Test file"
+    },
+    "packages/logger/src/adapters/console.ts": {
+      "language": "typescript",
+      "parsed": true,
+      "imports": [
+        "../logger.js"
+      ],
+      "functions": {
+        "createConsoleLogger": "(options?: LoggerOptions): Logger"
+      },
+      "classes": {
+        "ConsoleLogger": {
+          "methods": {
+            "constructor": "(options: LoggerOptions = {}, bindings: LogFields = {})",
+            "child": "(bindings: LogFields): Logger",
+            "__init__": "(options: LoggerOptions = {}, bindings: LogFields = {})"
+          },
+          "extends": "BaseLogger",
+          "doc": "ANSI color codes for pretty printing"
+        }
+      },
+      "constants": {
+        "COLORS": "collection"
+      },
+      "variables": [
+        "mergedFields",
+        "redactedFields",
+        "entry",
+        "seen",
+        "json",
+        "timestamp",
+        "levelColor",
+        "levelLabel",
+        "line",
+        "displayValue",
+        "color"
+      ],
+      "call_graph": {}
+    },
+    "packages/core/src/enhanced-execution-journal.ts": {
+      "language": "typescript",
+      "parsed": true,
+      "imports": [
+        "@orchestr8/schema"
+      ],
+      "functions": {},
+      "classes": {
+        "EnhancedExecutionJournal": {
+          "methods": {
+            "recordManualEvent": "(event: OrchestrationEvent): void",
+            "addEntry": "(executionId: string, entry: EnhancedJournalEntry): void",
+            "exportExecution": "(executionId: string): string",
+            "exportAll": "(): string",
+            "createExecutionState": "(executionId: string): ",
+            "getExecutionIds": "(): string[]",
+            "clearExecution": "(executionId: string): void",
+            "clearAll": "(): void",
+            "getCurrentSize": "(): number",
+            "getExecutionCount": "(): number",
+            "dispose": "async (): Promise<void>",
+            "__init__": "(options: { eventBus?: BoundedEventBus maxEntriesPerExecution?: number maxTotalSizeBytes?: number maxFieldSizeBytes?: number } = {},)"
+          },
+          "doc": "Enhanced Execution Journal for tracking workflow executions"
+        },
+        "JournalManager": {
+          "methods": {},
+          "doc": "Enhanced Execution Journal for tracking workflow executions"
+        }
+      },
+      "variables": [
+        "isValid",
+        "shouldContinue",
+        "shouldValidateStrict",
+        "errorMessage",
+        "eventValidation",
+        "warningMessage",
+        "validationResult",
+        "executionId",
+        "workflowId",
+        "stepId",
+        "entry",
+        "entries",
+        "context",
+        "journal",
+        "entrySize",
+        "removedEntry",
+        "executionIds",
+        "journalSize",
+        "json",
+        "byteSize",
+        "ratio",
+        "truncateLength",
+        "finalLength",
+        "exportData",
+        "startEntry",
+        "endEntry",
+        "startTime",
+        "endTime",
+        "duration",
+        "stepCount",
+        "retryCount",
+        "errorCount",
+        "summaryWithWarning",
+        "stepEntries",
+        "allStepIds",
+        "stepEvents",
+        "completedEvent",
+        "failedEvent",
+        "validator",
+        "fullExecutionState"
+      ],
+      "interfaces": {
+        "ValidationResult": {
+          "doc": "Enhanced Execution Journal for tracking workflow executions"
+        },
+        "EnhancedJournalEntry": {
+          "doc": "Enhanced Execution Journal for tracking workflow executions"
+        },
+        "JournalExport": {
+          "doc": "Enhanced Execution Journal for tracking workflow executions"
+        }
+      },
+      "call_graph": {}
+    },
+    "packages/core/src/expression-evaluator.test.ts": {
+      "language": "typescript",
+      "parsed": false,
+      "purpose": "Test file"
+    },
+    "packages/core/src/orchestration-engine.test.ts": {
+      "language": "typescript",
+      "parsed": true,
+      "purpose": "Test file",
+      "imports": [
+        "@orchestr8/schema",
+        "vitest",
+        "./orchestration-engine.js"
+      ],
+      "functions": {
+        "createMockAgent": "(id: string): Agent",
+        "createDelayedAgent": "(id: string, delay: number): Agent"
+      },
+      "classes": {},
+      "variables": [
+        "workflow",
+        "mockAgent1",
+        "mockAgent2",
+        "result",
+        "createMockAgent",
+        "timeout",
+        "mockAgent3",
+        "originalBuildGraph",
+        "graph",
+        "abortController",
+        "promise",
+        "parentAbortController",
+        "failAgent",
+        "parallelAgent",
+        "level1Step1Completed",
+        "level1Step2Completed",
+        "createDelayedAgent",
+        "mockAgent4",
+        "largeData",
+        "attemptCount",
+        "mockAgent",
+        "retryConfig",
+        "i",
+        "nonStrictEngine",
+        "defaultEngine",
+        "failingAgent",
+        "dependentAgent",
+        "cancelledAgent",
+        "conditionalAgent",
+        "successAgent",
+        "agent1",
+        "agent2",
+        "agent3",
+        "fallbackAgent",
+        "mockRegistry",
+        "engine",
+        "testAgent",
+        "testRegistry",
+        "customEngine",
+        "variables",
+        "retryAfter",
+        "originalError"
+      ],
+      "call_graph": {}
+    },
+    "packages/core/src/index.test.ts": {
+      "language": "typescript",
+      "parsed": false,
+      "purpose": "Test file"
+    },
+    "packages/core/src/orchestration-engine.ts": {
+      "language": "typescript",
+      "parsed": true,
+      "imports": [
+        "crypto",
+        "@orchestr8/logger",
+        "@orchestr8/schema",
+        "./event-bus.js",
+        "./expression-evaluator.js"
+      ],
+      "functions": {},
+      "classes": {
+        "OrchestrationEngine": {
+          "methods": {
+            "constructor": "(options: OrchestrationOptions)",
+            "__init__": "(options: OrchestrationOptions)"
+          },
+          "doc": "Core orchestration engine implementation"
+        },
+        "Semaphore": {
+          "methods": {
+            "constructor": "(permits: number)",
+            "acquire": "async (): Promise<() => void>",
+            "__init__": "(permits: number)"
+          },
+          "doc": "Core orchestration engine implementation"
+        }
+      },
+      "variables": [
+        "executionId",
+        "startTime",
+        "startTimestamp",
+        "workflowLogger",
+        "context",
+        "result",
+        "graph",
+        "failedSteps",
+        "unrecoverableFailures",
+        "hasSuccessfulFallback",
+        "workflowStep",
+        "hasContinueError",
+        "executionError",
+        "error",
+        "nodes",
+        "agentStep",
+        "node",
+        "levels",
+        "visited",
+        "recursionStack",
+        "hasCycle",
+        "completed",
+        "remaining",
+        "sortedLevel",
+        "originalOrder",
+        "depDiff",
+        "aIndex",
+        "bIndex",
+        "levelIndex",
+        "level",
+        "futureIndex",
+        "futureLevel",
+        "levelFailures",
+        "shouldFailFast",
+        "currentLevelIndex",
+        "levelAbortController",
+        "combinedSignal",
+        "semaphore",
+        "promise",
+        "stepContext",
+        "stepLogger",
+        "existingResult",
+        "depResult",
+        "shouldExecute",
+        "isValidationError",
+        "agent",
+        "resolvedInput",
+        "agentContext",
+        "executeAgent",
+        "effectiveSignal",
+        "policy",
+        "resilienceContext",
+        "resilienceEvent",
+        "normalizedPolicy",
+        "endTime",
+        "duration",
+        "isCancelled",
+        "existingFallbackResult",
+        "fallbackStep",
+        "fallbackAgentStep",
+        "originalStep",
+        "originalAgentStep",
+        "fallbackShouldInheritInput",
+        "originalResult",
+        "fallbackDependencies",
+        "fallbackInput",
+        "fallbackNode",
+        "fallbackResult",
+        "evalContext",
+        "limits",
+        "serialized",
+        "byteSize",
+        "targetBytes",
+        "low",
+        "high",
+        "bestFit",
+        "mid",
+        "testStr",
+        "testBytes",
+        "truncatedStr",
+        "policyObj",
+        "normalized",
+        "retry",
+        "cb",
+        "timeoutError",
+        "circuitError",
+        "retryError",
+        "next"
+      ],
+      "interfaces": {
+        "InternalExecutionContext": {
+          "doc": "Core orchestration engine implementation"
+        }
+      },
+      "call_graph": {}
+    },
+    "packages/core/src/json-execution-model.test.ts": {
+      "language": "typescript",
+      "parsed": false,
+      "purpose": "Test file"
+    },
+    "packages/core/src/json-execution-model.ts": {
+      "language": "typescript",
+      "parsed": true,
+      "purpose": "Data model",
+      "imports": [
+        "@orchestr8/logger",
+        "@orchestr8/schema"
+      ],
+      "functions": {},
+      "classes": {
+        "JsonExecutionModel": {
+          "methods": {
+            "constructor": "(config?: JsonExecutionConfig)",
+            "serializeWorkflow": "(workflow: Workflow): string",
+            "deserializeWorkflow": "(json: string): Workflow",
+            "serializeExecutionState": "(state: ExecutionState): string",
+            "deserializeExecutionState": "(json: string): ExecutionState",
+            "createStepExecutionState": "(stepId: string): StepExecutionState",
+            "finalizeExecutionState": "(state: ExecutionState): ExecutionState",
+            "toWorkflowResult": "(state: ExecutionState): WorkflowResult",
+            "getJournal": "(): ReadonlyArray<ExecutionJournalEntry>",
+            "exportJournal": "(): string",
+            "clearJournal": "(): void",
+            "normalizeResiliencePolicy": "(policy: unknown): ResiliencePolicy | undefined",
+            "generateDeterministicId": "(seed: string, timestamp?: number): string",
+            "__init__": "(config?: JsonExecutionConfig)"
+          },
+          "doc": "JSON Execution Model implementation"
+        },
+        "HTTPExecutionContext": {
+          "methods": {
+            "generateETag": "(content: unknown): string",
+            "generateLocationHeader": "(executionId: string): string",
+            "calculateRetryAfter": "(attempt: number): string",
+            "validatePayload": "async (payload: unknown, mode: 'sync' | 'async' | 'journal'): void"
+          },
+          "doc": "JSON Execution Model implementation"
+        }
+      },
+      "variables": [
+        "json",
+        "executionId",
+        "state",
+        "updatedState",
+        "truncatedJournal",
+        "truncatedJson",
+        "policyObj",
+        "normalized",
+        "retry",
+        "cb",
+        "stepIds",
+        "size",
+        "actualTimestamp",
+        "hash",
+        "entry",
+        "journalJson",
+        "keepCount",
+        "delay",
+        "maxSize",
+        "syncedState",
+        "executionEvents",
+        "statusEvents",
+        "latestStatusEvent",
+        "stepEvents",
+        "failedIndex",
+        "startMs",
+        "endMs",
+        "validator",
+        "enhancedEntry",
+        "result"
+      ],
+      "interfaces": {
+        "ExecutionState": {
+          "doc": "JSON Execution Model implementation"
+        },
+        "StepExecutionState": {
+          "doc": "JSON Execution Model implementation"
+        },
+        "ExecutionJournalEntry": {
+          "doc": "JSON Execution Model implementation"
+        },
+        "JsonExecutionConfig": {
+          "doc": "JSON Execution Model implementation"
+        }
+      },
+      "call_graph": {}
+    },
+    "packages/core/src/structured-logging.test.ts": {
+      "language": "typescript",
+      "parsed": false,
+      "purpose": "Test file"
+    },
+    "packages/core/src/event-bus-integration.test.ts": {
+      "language": "typescript",
+      "parsed": false,
+      "purpose": "Test file"
+    },
+    "packages/core/src/enhanced-execution-journal.test.ts": {
+      "language": "typescript",
+      "parsed": true,
+      "purpose": "Test file",
+      "imports": [
+        "vitest",
+        "./enhanced-execution-journal.js",
+        "./event-bus.js"
+      ],
+      "functions": {
+        "emitEvents": "async ()"
+      },
+      "classes": {},
+      "variables": [
+        "entry1",
+        "entry2",
+        "smallJournal",
+        "i",
+        "entry",
+        "entries",
+        "largeData",
+        "recorded",
+        "dataField",
+        "byteSize",
+        "tinyJournal",
+        "exec",
+        "latestEntries",
+        "initialSize",
+        "afterAddSize",
+        "events",
+        "json",
+        "exported",
+        "ids",
+        "extremelyLargeData",
+        "data",
+        "promises",
+        "indices",
+        "execId",
+        "totalEntries",
+        "minimalJournal",
+        "journal1",
+        "journal2",
+        "eventBus",
+        "journal",
+        "eventsEmitted",
+        "eventsProcessed",
+        "originalAddEntry",
+        "emitEvents",
+        "emitPromise",
+        "disposePromise",
+        "disposePromises",
+        "disposeStart",
+        "disposeDuration",
+        "execution",
+        "fastJournal",
+        "integrityJournal",
+        "j",
+        "remainingExecutions",
+        "current",
+        "previous",
+        "concurrentJournal",
+        "writer",
+        "reader",
+        "exporter",
+        "finalExport",
+        "eventBusRecords",
+        "manualRecords",
+        "emitter",
+        "recorder",
+        "allEntries",
+        "eventBusEntries",
+        "manualEntries",
+        "newEventBus",
+        "reconnectedJournal",
+        "stateJournal",
+        "stateEntries"
+      ],
+      "call_graph": {}
+    },
+    "packages/core/src/expression-evaluator.ts": {
+      "language": "typescript",
+      "parsed": true,
+      "imports": [
+        "@orchestr8/schema",
+        "jmespath"
+      ],
+      "functions": {
+        "evaluateCondition": {
+          "calls": [
+            "evaluateWithTimeout",
+            "getWhitelistedEnvVars"
+          ],
+          "signature": "(expression: string, context: ExecutionContext, strictMode = false, limits?: SecurityLimits,): boolean"
+        },
+        "resolveMapping": {
+          "calls": [
+            "resolveMapping",
+            "resolveStringExpression"
+          ],
+          "signature": "(input: unknown, context: ExecutionContext, limits?: SecurityLimits,): unknown",
+          "called_by": [
+            "resolveMapping"
+          ]
+        },
+        "resolveStringExpression": {
+          "calls": [
+            "extractSingleExpression",
+            "replaceExpressions",
+            "resolvePlaceholder"
+          ],
+          "signature": "(input: string, context: ExecutionContext, limits?: SecurityLimits,): unknown",
+          "called_by": [
+            "resolveMapping"
+          ]
+        },
+        "extractSingleExpression": {
+          "signature": "(input: string): string | null",
+          "called_by": [
+            "resolveStringExpression"
+          ]
+        },
+        "replaceExpressions": {
+          "signature": "(input: string, context: ExecutionContext, limits?: SecurityLimits,): string",
+          "called_by": [
+            "resolveStringExpression"
+          ]
+        },
+        "parseExpressionWithDefault": {
+          "signature": "(expression: string): ",
+          "called_by": [
+            "resolvePlaceholder"
+          ]
+        },
+        "parseQuotedString": {
+          "calls": [
+            "unescapeString"
+          ],
+          "signature": "(input: string): string | undefined"
+        },
+        "unescapeString": {
+          "signature": "(str: string, quoteType: string): string",
+          "called_by": [
+            "parseQuotedString"
+          ]
+        },
+        "resolvePlaceholder": {
+          "calls": [
+            "checkExpansionSizeLimit",
+            "navigateObject",
+            "parseExpressionWithDefault"
+          ],
+          "signature": "(expression: string, context: ExecutionContext, limits?: SecurityLimits,): unknown",
+          "called_by": [
+            "resolveStringExpression"
+          ]
+        },
+        "checkExpansionSizeLimit": {
+          "signature": "(value: unknown, maxSize: number): void",
+          "called_by": [
+            "resolvePlaceholder"
+          ]
+        },
+        "navigateObject": {
+          "signature": "(obj: unknown, path: string, maxDepth?: number,): unknown",
+          "called_by": [
+            "resolvePlaceholder"
+          ]
+        },
+        "getWhitelistedEnvVars": {
+          "signature": "(allowedVars?: string[],): Record<string, string | undefined>",
+          "called_by": [
+            "evaluateCondition"
+          ]
+        },
+        "evaluateWithTimeout": {
+          "signature": "(fn: ()",
+          "called_by": [
+            "evaluateCondition"
+          ]
+        },
+        "clearExpressionCache": "(): void"
+      },
+      "classes": {},
+      "constants": {
+        "DEFAULT_SECURITY_LIMITS": "collection"
+      },
+      "variables": [
+        "expressionCache",
+        "data",
+        "timeout",
+        "result",
+        "singleExpr",
+        "content",
+        "braceCount",
+        "inQuotes",
+        "quoteChar",
+        "escaped",
+        "i",
+        "char",
+        "expressionStart",
+        "j",
+        "expression",
+        "value",
+        "nextChar",
+        "expr",
+        "defaultRaw",
+        "defaultValue",
+        "trimmed",
+        "parsedExpression",
+        "parts",
+        "source",
+        "stepId",
+        "property",
+        "stepResult",
+        "maxDepth",
+        "varPath",
+        "envVar",
+        "allowedVars",
+        "resolvedValue",
+        "maxSize",
+        "serialized",
+        "byteSize",
+        "current",
+        "depth",
+        "depthLimit",
+        "arrayMatch",
+        "objWithKey",
+        "arrayValue",
+        "objCurrent",
+        "startTime",
+        "timeoutController",
+        "timeoutId",
+        "elapsed"
+      ],
+      "interfaces": {
+        "SecurityLimits": {
+          "doc": "Expression evaluation for conditions and mappings"
+        }
+      },
+      "call_graph": {}
+    },
+    "packages/core/src/resilience-composition.test.ts": {
+      "language": "typescript",
+      "parsed": true,
+      "purpose": "Test file",
+      "imports": [
+        "vitest",
+        "./orchestration-engine.js"
+      ],
+      "functions": {
+        "retryPromise": "async (async ()"
+      },
+      "classes": {},
+      "variables": [
+        "patterns",
+        "wrappedOperation",
+        "workflow",
+        "result",
+        "attemptCount",
+        "timeoutTrackingAdapter",
+        "maxAttempts",
+        "timeout",
+        "attempt",
+        "engine",
+        "overallTimeoutAdapter",
+        "overallTimeout",
+        "overallTimeoutPromise",
+        "retryPromise",
+        "defaultComposition",
+        "rationale",
+        "compositionMappings",
+        "customEngine",
+        "legacyAdapter",
+        "legacyEngine"
+      ],
+      "call_graph": {}
+    },
+    "packages/core/src/execution-consistency-validator.ts": {
+      "language": "typescript",
+      "parsed": true,
+      "imports": [
+        "@orchestr8/schema"
+      ],
+      "functions": {},
+      "classes": {
+        "ExecutionConsistencyValidator": {
+          "methods": {
+            "validateAndCorrectJournalEntry": "(entry: EnhancedJournalEntryZod): ",
+            "createConsistencySummary": "(results: ConsistencyValidationResult[]): "
+          },
+          "doc": "Execution Consistency Validator"
+        }
+      },
+      "variables": [
+        "executionStateValid",
+        "relevantEntries",
+        "timestampConsistency",
+        "stepProgressConsistency",
+        "isConsistent",
+        "startEvent",
+        "endEvent",
+        "stateStartTime",
+        "journalStartTime",
+        "timeDiff",
+        "stateEndTime",
+        "journalEndTime",
+        "journalDuration",
+        "durationDiff",
+        "stepEvents",
+        "journalCompletedSteps",
+        "journalFailedSteps",
+        "stateCompletedSteps",
+        "stateFailedSteps",
+        "statusEvents",
+        "latestStatusEvent",
+        "corrected",
+        "correctedEntry",
+        "totalExecutions",
+        "consistentExecutions",
+        "totalErrors",
+        "totalWarnings",
+        "allErrors",
+        "allWarnings",
+        "errorCounts",
+        "warningCounts",
+        "key",
+        "commonIssues"
+      ],
+      "interfaces": {
+        "ConsistencyValidationResult": {
+          "doc": "Execution Consistency Validator"
+        }
+      },
+      "call_graph": {}
+    },
+    "packages/core/src/types.ts": {
+      "language": "typescript",
+      "parsed": false
+    },
+    "packages/core/src/journal-execution-integration.test.ts": {
+      "language": "typescript",
+      "parsed": true,
+      "purpose": "Test file",
+      "imports": [
+        "@orchestr8/schema",
+        "vitest",
+        "./enhanced-execution-journal.js",
+        "./event-bus.js",
+        "./execution-consistency-validator.js",
+        "./json-execution-model.js"
+      ],
+      "functions": {
+        "listener": "(_event: unknown)",
+        "streamingPromise": "async (async ()",
+        "recordingPromise": "async (async ()"
+      },
+      "classes": {},
+      "variables": [
+        "testWorkflow",
+        "variables",
+        "executionState",
+        "step1Result",
+        "step2Result",
+        "step3Result",
+        "updatedState",
+        "stepState",
+        "finalState",
+        "journalEntries",
+        "consistencyResult",
+        "attempt",
+        "step2Error",
+        "step1State",
+        "step2State",
+        "cancelEvent",
+        "validEntry",
+        "invalidEntry",
+        "entries",
+        "serialized",
+        "deserialized",
+        "originalEnv",
+        "invalidData",
+        "baseTime",
+        "journalStartTime",
+        "startEvent",
+        "executionStartMs",
+        "journalStartMs",
+        "actualDiff",
+        "stepEntry",
+        "hasStepInconsistency",
+        "testError",
+        "failureEvent",
+        "hasStatusInconsistency",
+        "malformedEntry",
+        "result",
+        "execution1",
+        "execution2",
+        "entries1",
+        "entries2",
+        "results",
+        "summary",
+        "largeWorkflow",
+        "i",
+        "stepId",
+        "smallJournal",
+        "extremelyLargeEvent",
+        "executionStates",
+        "promises",
+        "stepPromises",
+        "completeTimestamp",
+        "completionTimestamp",
+        "completedStates",
+        "hasExecutionStart",
+        "hasWorkflowComplete",
+        "stepCount",
+        "eventTypes",
+        "listener",
+        "journalEvents",
+        "smallEventBus",
+        "journalWithBackpressure",
+        "eventCount",
+        "metrics",
+        "startTime",
+        "endTime",
+        "duration",
+        "eventsPerSecond",
+        "testDuration",
+        "targetEventsPerSecond",
+        "eventsSent",
+        "streamingPromise",
+        "interval",
+        "actualDuration",
+        "actualEventsPerSecond",
+        "bursts",
+        "totalEvents",
+        "eventInterval",
+        "expectedTotal",
+        "controller",
+        "newExecutionState",
+        "newEntries",
+        "testJournal",
+        "recordingPromise",
+        "entriesBeforeDispose",
+        "entriesBeforeDisconnect",
+        "disconnectedJournal",
+        "disconnectedExecId",
+        "disconnectedEntries",
+        "reconnectedJournal",
+        "reconnectedExecId",
+        "reconnectedEntries",
+        "finalTimestamp",
+        "finalEntries",
+        "complexWorkflow",
+        "executionPlan",
+        "phasePromises",
+        "processingTime",
+        "stepCompleteTimestamp",
+        "finalStatus",
+        "workflowCompleteTimestamp",
+        "stepStartTimes",
+        "validateStart",
+        "parallelStarts",
+        "retryWorkflow",
+        "retryEvents",
+        "retryTimes",
+        "timeDiff"
+      ],
+      "call_graph": {}
+    },
+    "packages/core/src/json-execution-model-performance.test.ts": {
+      "language": "typescript",
+      "parsed": true,
+      "purpose": "Test file",
+      "imports": [
+        "perf_hooks",
+        "@orchestr8/schema",
+        "vitest",
+        "./json-execution-model.js"
+      ],
+      "functions": {
+        "measureTime": {
+          "signature": "(fn: ()",
+          "called_by": [
+            "benchmark",
+            "benchmark"
+          ]
+        },
+        "benchmark": {
+          "calls": [
+            "measureTime"
+          ],
+          "signature": "(name: string, fn: ()"
+        },
+        "createTestWorkflow": "(stepCount: number = 50): Workflow",
+        "createComplexExecutionState": "(stepCount: number = 50,): ExecutionState"
+      },
+      "classes": {},
+      "variables": [
+        "createTestWorkflow",
+        "createComplexExecutionState",
+        "completedStepCount",
+        "completedSteps",
+        "start",
+        "result",
+        "end",
+        "i",
+        "sortedDurations",
+        "avg",
+        "min",
+        "max",
+        "p50",
+        "p95",
+        "p99",
+        "serialized",
+        "deserialized",
+        "stepCounts",
+        "workflow",
+        "stepResult",
+        "updatedState",
+        "timestamp",
+        "id1",
+        "id2",
+        "workflows",
+        "id",
+        "mockResponse",
+        "etag",
+        "initialMemory",
+        "finalMemory",
+        "memoryIncrease",
+        "memoryIncreaseMB",
+        "largeWorkflow",
+        "invalidWorkflow",
+        "invalidJson",
+        "promises",
+        "results",
+        "executionStates"
+      ],
+      "call_graph": {}
+    },
+    "packages/core/src/adapter-consistency.test.ts": {
+      "language": "typescript",
+      "parsed": true,
+      "purpose": "Test file",
+      "imports": [
+        "@orchestr8/resilience",
+        "vitest",
+        "./orchestration-engine.js"
+      ],
+      "functions": {},
+      "classes": {
+        "MockResilienceAdapter": {
+          "methods": {
+            "constructor": "()",
+            "reset": "()",
+            "__init__": "()"
+          }
+        }
+      },
+      "variables": [
+        "mockAdapter",
+        "referenceAdapter",
+        "workflow",
+        "mockEngine",
+        "referenceEngine",
+        "result",
+        "mockAdapter1",
+        "mockAdapter2",
+        "engine1",
+        "engine2",
+        "legacyAdapter",
+        "engine",
+        "adapters",
+        "results",
+        "legacyCalled",
+        "newInterfaceCalled",
+        "dualAdapter"
+      ],
+      "call_graph": {}
+    },
+    "packages/core/src/event-bus-performance-validation.test.ts": {
+      "language": "typescript",
+      "parsed": false,
+      "purpose": "Test file"
+    },
+    "packages/core/src/event-bus-benchmark.test.ts": {
+      "language": "typescript",
+      "parsed": true,
+      "purpose": "Test file",
+      "imports": [
+        "node:perf_hooks",
+        "vitest",
+        "./event-bus.js"
+      ],
+      "functions": {},
+      "classes": {
+        "EventBusBenchmarkSuite": {
+          "methods": {
+            "printResults": "(): void",
+            "getResults": "(): BenchmarkResult[]"
+          },
+          "doc": "Performance benchmarks for BoundedEventBus"
+        }
+      },
+      "variables": [
+        "isPerfMode",
+        "isCI",
+        "i",
+        "totalStart",
+        "start",
+        "end",
+        "totalEnd",
+        "totalTime",
+        "meanTime",
+        "medianTime",
+        "p95Time",
+        "p99Time",
+        "minTime",
+        "maxTime",
+        "throughput",
+        "result",
+        "emissionLatencyTarget",
+        "throughputTarget",
+        "allPassed",
+        "emissionBenchmarks",
+        "p95Passes",
+        "emoji",
+        "throughputBenchmarks",
+        "throughputPasses",
+        "eventBus",
+        "eventsReceived",
+        "event",
+        "listenerCount",
+        "eventsPerBatch",
+        "actualThroughput",
+        "slowProcessingActive",
+        "metrics",
+        "modificationAttempts",
+        "originalData",
+        "eventBusWithTracking",
+        "eventBusWithoutTracking",
+        "withTrackingResult",
+        "withoutTrackingResult",
+        "overhead",
+        "results",
+        "hasGoodLatency",
+        "hasGoodThroughput"
+      ],
+      "interfaces": {
+        "BenchmarkResult": {
+          "doc": "Performance benchmarks for BoundedEventBus"
+        },
+        "BenchmarkOptions": {
+          "doc": "Performance benchmarks for BoundedEventBus"
+        }
+      },
+      "call_graph": {}
+    },
+    "packages/core/src/index.ts": {
+      "language": "typescript",
+      "parsed": false,
+      "purpose": "Application entry point"
+    },
+    "packages/core/src/event-bus.ts": {
+      "language": "typescript",
+      "parsed": true,
+      "imports": [
+        "node:events",
+        "node:perf_hooks"
+      ],
+      "functions": {},
+      "classes": {
+        "CircularBuffer": {
+          "methods": {
+            "constructor": "(capacity: number)",
+            "enqueue": "(item: T): boolean",
+            "dequeue": "(): T | undefined",
+            "dropOldest": "(): T | undefined",
+            "getSize": "(): number",
+            "isFull": "(): boolean",
+            "isEmpty": "(): boolean",
+            "clear": "(): void",
+            "__init__": "(capacity: number)"
+          },
+          "doc": "Configuration for the BoundedEventBus"
+        },
+        "BoundedEventBus": {
+          "methods": {
+            "constructor": "(config: EventBusConfig = {}, logger?: Logger)",
+            "emitEvent": "(event: OrchestrationEvent): boolean",
+            "emitEventAsync": "async (event: OrchestrationEvent): Promise<boolean>",
+            "getMetrics": "(): EventBusMetrics",
+            "__init__": "(config: EventBusConfig = {}, logger?: Logger)"
+          },
+          "extends": "EventEmitter",
+          "doc": "Configuration for the BoundedEventBus"
+        }
+      },
+      "variables": [
+        "item",
+        "dropped",
+        "result",
+        "queuedEvent",
+        "currentQueueSize",
+        "utilization",
+        "excessUtilization",
+        "normalizedExcess",
+        "baseDelay",
+        "exponentialFactor",
+        "listeners",
+        "count",
+        "avgBatchSize",
+        "avgProcessingTimeMs",
+        "avgLagMs",
+        "cycleStartTime",
+        "processingStartTimestamp",
+        "lagMs",
+        "processingTimeMs",
+        "cloned",
+        "eventWithError",
+        "now",
+        "currentSize",
+        "windowStart",
+        "recentDrops",
+        "ratePerMinute",
+        "eventSize",
+        "size",
+        "countSize"
+      ],
+      "interfaces": {
+        "EventBusConfig": {
+          "doc": "Configuration for the BoundedEventBus"
+        },
+        "EventBusMetrics": {
+          "doc": "Configuration for the BoundedEventBus"
+        },
+        "QueuedEvent": {
+          "doc": "Configuration for the BoundedEventBus"
+        }
+      },
+      "call_graph": {}
+    },
+    "packages/core/src/event-bus-backpressure.test.ts": {
+      "language": "typescript",
+      "parsed": false,
+      "purpose": "Test file"
+    },
+    "packages/core/src/e2e-resilience-integration.test.ts": {
+      "language": "typescript",
+      "parsed": false,
+      "purpose": "Test file"
+    },
+    "packages/core/src/event-bus-stress.test.ts": {
+      "language": "typescript",
+      "parsed": false,
+      "purpose": "Test file"
+    },
+    "packages/core/src/event-bus-property.test.ts": {
+      "language": "typescript",
+      "parsed": false,
+      "purpose": "Test file"
+    },
+    "packages/core/src/execution-journal.ts": {
+      "language": "typescript",
+      "parsed": true,
+      "functions": {},
+      "classes": {
+        "ExecutionJournal": {
+          "methods": {
+            "constructor": "(eventBus: BoundedEventBus, maxEntries = 10000)",
+            "getEntries": "(): ReadonlyArray<JournalEntry>",
+            "getEntriesByType": "(eventType: string): ReadonlyArray<JournalEntry>",
+            "getEntriesByExecution": "(executionId: string): ReadonlyArray<JournalEntry>",
+            "getEntriesByWorkflow": "(workflowId: string): ReadonlyArray<JournalEntry>",
+            "getEntriesByStep": "(stepId: string): ReadonlyArray<JournalEntry>",
+            "clear": "(): void",
+            "size": "(): number",
+            "dispose": "(): void",
+            "__init__": "(eventBus: BoundedEventBus, maxEntries = 10000)"
+          },
+          "doc": "Execution journal for tracking workflow and step events"
+        }
+      },
+      "variables": [
+        "event"
+      ],
+      "interfaces": {
+        "JournalEntry": {
+          "doc": "Execution journal for tracking workflow and step events"
+        }
+      },
+      "call_graph": {}
+    },
+    "packages/core/src/event-bus.test.ts": {
+      "language": "typescript",
+      "parsed": false,
+      "purpose": "Test file"
+    },
+    "packages/agent-base/src/index.test.ts": {
+      "language": "typescript",
+      "parsed": false,
+      "purpose": "Test file"
+    },
+    "packages/agent-base/src/index.ts": {
+      "language": "typescript",
+      "parsed": false,
+      "purpose": "Application entry point"
+    },
+    "scripts/examples/core-fallback-retry.ts": {
+      "language": "typescript",
+      "parsed": true,
+      "imports": [
+        "@orchestr8/core"
+      ],
+      "functions": {
+        "withTimeout": {
+          "signature": "async ()",
+          "called_by": [
+            "delay"
+          ]
+        },
+        "delay": {
+          "calls": [
+            "delay",
+            "withTimeout"
+          ],
+          "signature": "async (ms: number)",
+          "called_by": [
+            "delay"
+          ]
+        }
+      },
+      "classes": {
+        "MemoryAgentRegistry": {
+          "methods": {
+            "getAgent": {
+              "signature": "async (id: string): Promise<Agent>",
+              "called_by": [
+                "executeWorkflow"
+              ]
+            },
+            "hasAgent": {
+              "signature": "async (id: string): Promise<boolean>",
+              "called_by": [
+                "executeWorkflow",
+                "runTest"
+              ]
+            },
+            "registerAgent": "async (agent: Agent): Promise<void>"
+          }
+        }
+      },
+      "variables": [
+        "a",
+        "adapter",
+        "withTimeout",
+        "controller",
+        "timer",
+        "composite",
+        "retry",
+        "attempt",
+        "delay",
+        "base",
+        "jitter",
+        "wait",
+        "registry",
+        "counter",
+        "reason",
+        "workflow",
+        "engine",
+        "result"
+      ],
+      "call_graph": {}
+    },
+    "scripts/examples/multi-llm-fanout-aggregate.ts": {
+      "language": "typescript",
+      "parsed": true,
+      "imports": [
+        "@orchestr8/core",
+        "@orchestr8/logger",
+        "@orchestr8/resilience",
+        "@orchestr8/schema"
+      ],
+      "functions": {
+        "httpJson": "async (url: string, init: { method?: string; headers?: Record<string, string>; body?: string },): Promise<unknown>",
+        "buildWorkflow": {
+          "signature": "(): Workflow",
+          "called_by": [
+            "main",
+            "main",
+            "main",
+            "main"
+          ]
+        },
+        "main": {
+          "calls": [
+            "buildWorkflow",
+            "execute"
+          ],
+          "signature": "async (): Promise<void>"
+        },
+        "fetchFn": "(()"
+      },
+      "classes": {
+        "InMemoryAgentRegistry": {
+          "methods": {
+            "getAgent": {
+              "signature": "async (agentId: string): Promise<Agent>",
+              "called_by": [
+                "executeWorkflow"
+              ]
+            },
+            "hasAgent": {
+              "signature": "async (agentId: string): Promise<boolean>",
+              "called_by": [
+                "executeWorkflow",
+                "runTest"
+              ]
+            },
+            "registerAgent": "async (agent: Agent): Promise<void>"
+          }
+        }
+      },
+      "variables": [
+        "fetchFn",
+        "f",
+        "a",
+        "res",
+        "text",
+        "openaiChat",
+        "body",
+        "data",
+        "anthropicMessages",
+        "localChat",
+        "url",
+        "grokAggregate",
+        "system",
+        "raw",
+        "parsed",
+        "notifyEcho",
+        "logger",
+        "registry",
+        "workflow",
+        "prompt",
+        "openaiModel",
+        "claudeModel",
+        "localModel",
+        "grokModel",
+        "temperature",
+        "engine",
+        "result",
+        "finalOut",
+        "final"
+      ],
+      "call_graph": {}
+    },
+    "scripts/examples/pr-auto-fix-gh.ts": {
+      "language": "typescript",
+      "parsed": true,
+      "imports": [
+        "node:child_process",
+        "node:fs",
+        "node:path",
+        "@orchestr8/core",
+        "@orchestr8/logger",
+        "@orchestr8/resilience",
+        "@orchestr8/schema"
+      ],
+      "functions": {
+        "getBool": "(input: unknown, fallback = false): boolean",
+        "execCommand": {
+          "signature": "async (options: { command: string args: Array<string> cwd?: string env?: StringMap signal?: AbortSignal }): Promise<",
+          "called_by": [
+            "view"
+          ]
+        },
+        "buildWorkflow": {
+          "signature": "(): Workflow",
+          "called_by": [
+            "main",
+            "main",
+            "main",
+            "main"
+          ]
+        },
+        "main": {
+          "calls": [
+            "buildWorkflow",
+            "execute"
+          ],
+          "signature": "async (): Promise<void>"
+        }
+      },
+      "classes": {
+        "InMemoryAgentRegistry": {
+          "methods": {
+            "getAgent": {
+              "signature": "async (agentId: string): Promise<Agent>",
+              "called_by": [
+                "executeWorkflow"
+              ]
+            },
+            "hasAgent": {
+              "signature": "async (agentId: string): Promise<boolean>",
+              "called_by": [
+                "executeWorkflow",
+                "runTest"
+              ]
+            },
+            "registerAgent": "async (agent: Agent): Promise<void>"
+          }
+        }
+      },
+      "variables": [
+        "agent",
+        "child",
+        "stdout",
+        "stderr",
+        "shellExecAgent",
+        "result",
+        "codeGenAgent",
+        "dryRun",
+        "revParse",
+        "checkout",
+        "dir",
+        "file",
+        "content",
+        "add",
+        "commit",
+        "push",
+        "head",
+        "githubPrAgent",
+        "env",
+        "ghVersion",
+        "args",
+        "created",
+        "output",
+        "match",
+        "prUrl",
+        "logger",
+        "registry",
+        "workflow",
+        "repo",
+        "branch",
+        "plan",
+        "analysisSummary",
+        "base",
+        "testCommand",
+        "engine",
+        "pr"
+      ],
+      "call_graph": {}
+    },
+    "scripts/examples/core-quick-start.ts": {
+      "language": "typescript",
+      "parsed": true,
+      "imports": [
+        "@orchestr8/core"
+      ],
+      "functions": {},
+      "classes": {
+        "MemoryAgentRegistry": {
+          "methods": {
+            "getAgent": {
+              "signature": "async (id: string): Promise<Agent>",
+              "called_by": [
+                "executeWorkflow"
+              ]
+            },
+            "hasAgent": {
+              "signature": "async (id: string): Promise<boolean>",
+              "called_by": [
+                "executeWorkflow",
+                "runTest"
+              ]
+            },
+            "registerAgent": "async (agent: Agent): Promise<void>"
+          }
+        }
+      },
+      "variables": [
+        "a",
+        "noResilience",
+        "registry",
+        "name",
+        "text",
+        "workflow",
+        "engine",
+        "result"
+      ],
+      "call_graph": {}
+    },
+    "scripts/examples/pr-lifecycle-gh.ts": {
+      "language": "typescript",
+      "parsed": true,
+      "imports": [
+        "node:child_process",
+        "node:fs",
+        "node:path",
+        "@orchestr8/core",
+        "@orchestr8/logger",
+        "@orchestr8/resilience",
+        "@orchestr8/schema"
+      ],
+      "functions": {
+        "execCommand": {
+          "signature": "async (options: { command: string args: Array<string> cwd?: string env?: StringMap signal?: AbortSignal }): Promise<",
+          "called_by": [
+            "view"
+          ]
+        },
+        "buildWorkflow": {
+          "signature": "(): Workflow",
+          "called_by": [
+            "main",
+            "main",
+            "main",
+            "main"
+          ]
+        },
+        "main": {
+          "calls": [
+            "buildWorkflow",
+            "execute"
+          ],
+          "signature": "async (): Promise<void>"
+        },
+        "run": "async (cmd: string)",
+        "view": {
+          "calls": [
+            "execCommand"
+          ],
+          "signature": "async (): Promise<GhPrView>"
+        }
+      },
+      "classes": {
+        "InMemoryAgentRegistry": {
+          "methods": {
+            "getAgent": {
+              "signature": "async (agentId: string): Promise<Agent>",
+              "called_by": [
+                "executeWorkflow"
+              ]
+            },
+            "hasAgent": {
+              "signature": "async (agentId: string): Promise<boolean>",
+              "called_by": [
+                "executeWorkflow",
+                "runTest"
+              ]
+            },
+            "registerAgent": "async (agent: Agent): Promise<void>"
+          }
+        }
+      },
+      "variables": [
+        "a",
+        "child",
+        "stdout",
+        "stderr",
+        "shellExecJson",
+        "res",
+        "text",
+        "codeGen",
+        "run",
+        "autofixDir",
+        "stamp",
+        "githubPrCreate",
+        "env",
+        "githubPrWaitChecks",
+        "interval",
+        "maxMs",
+        "started",
+        "view",
+        "data",
+        "pending",
+        "failed",
+        "success",
+        "policyEvaluate",
+        "required",
+        "minAppr",
+        "maxFiles",
+        "found",
+        "ok",
+        "approvals",
+        "changedFiles",
+        "pass",
+        "githubPrLabel",
+        "args",
+        "githubPrMerge",
+        "flag",
+        "githubPrComment",
+        "notifyEcho",
+        "logger",
+        "registry",
+        "workflow",
+        "repo",
+        "base",
+        "branch",
+        "title",
+        "body",
+        "requiredContexts",
+        "minApprovals",
+        "maxChangedFiles",
+        "mergeMethod",
+        "dryRun",
+        "engine",
+        "result",
+        "merged"
+      ],
+      "call_graph": {}
+    },
+    "scripts/examples/core-conditions-env.ts": {
+      "language": "typescript",
+      "parsed": true,
+      "imports": [
+        "@orchestr8/core"
+      ],
+      "functions": {},
+      "classes": {
+        "MemoryAgentRegistry": {
+          "methods": {
+            "getAgent": {
+              "signature": "async (id: string): Promise<Agent>",
+              "called_by": [
+                "executeWorkflow"
+              ]
+            },
+            "hasAgent": {
+              "signature": "async (id: string): Promise<boolean>",
+              "called_by": [
+                "executeWorkflow",
+                "runTest"
+              ]
+            },
+            "registerAgent": "async (agent: Agent): Promise<void>"
+          }
+        }
+      },
+      "variables": [
+        "a",
+        "adapter",
+        "registry",
+        "workflow",
+        "engine",
+        "result"
+      ],
+      "call_graph": {}
+    },
+    "scripts/examples/convex-seed-init.ts": {
+      "language": "typescript",
+      "parsed": true,
+      "imports": [
+        "node:child_process",
+        "node:fs",
+        "@orchestr8/core",
+        "@orchestr8/logger",
+        "@orchestr8/resilience",
+        "@orchestr8/schema"
+      ],
+      "functions": {
+        "execCommand": {
+          "signature": "async (options: { command: string args: Array<string> cwd?: string env?: StringMap signal?: AbortSignal }): Promise<",
+          "called_by": [
+            "view"
+          ]
+        },
+        "buildWorkflow": {
+          "signature": "(): Workflow",
+          "called_by": [
+            "main",
+            "main",
+            "main",
+            "main"
+          ]
+        },
+        "main": {
+          "calls": [
+            "buildWorkflow",
+            "execute"
+          ],
+          "signature": "async (): Promise<void>"
+        }
+      },
+      "classes": {
+        "InMemoryAgentRegistry": {
+          "methods": {
+            "getAgent": {
+              "signature": "async (agentId: string): Promise<Agent>",
+              "called_by": [
+                "executeWorkflow"
+              ]
+            },
+            "hasAgent": {
+              "signature": "async (agentId: string): Promise<boolean>",
+              "called_by": [
+                "executeWorkflow",
+                "runTest"
+              ]
+            },
+            "registerAgent": "async (agent: Agent): Promise<void>"
+          }
+        }
+      },
+      "variables": [
+        "a",
+        "child",
+        "stdout",
+        "stderr",
+        "shellExecJson",
+        "res",
+        "text",
+        "parsed",
+        "notifyEcho",
+        "logger",
+        "registry",
+        "workflow",
+        "repo",
+        "seedScript",
+        "seedArgs",
+        "verifyScript",
+        "verifyArgs",
+        "engine",
+        "result",
+        "ok"
+      ],
+      "call_graph": {}
+    },
+    "tests/vitest/vitest-setup.ts": {
+      "language": "typescript",
+      "parsed": false,
+      "purpose": "Test file"
+    }
+  },
+  "dependency_graph": {
+    "packages/resilience/src/types.test.ts": [
+      "vitest"
+    ],
+    "packages/resilience/src/observability.ts": [
+      "@orchestr8/logger"
+    ],
+    "packages/resilience/src/benchmark.ts": [
+      "node:perf_hooks"
+    ],
+    "packages/schema/src/zod-schemas.ts": [
+      "node:crypto",
+      "zod"
+    ],
+    "packages/schema/src/validation/simple-benchmark.test.ts": [
+      "perf_hooks",
+      "vitest"
+    ],
+    "packages/schema/src/generation/json-schema.ts": [
+      "zod-to-json-schema"
+    ],
+    "packages/testing/src/mocks/agent-registry.ts": [
+      "@orchestr8/schema",
+      "vitest"
+    ],
+    "packages/testing/src/mocks/resilience-adapter.ts": [
+      "@orchestr8/schema",
+      "vitest"
+    ],
+    "packages/testing/src/utilities/test-helpers.ts": [
+      "vitest"
+    ],
+    "packages/cli/src/commands/test.test.ts": [
+      "vitest",
+      "fs/promises"
+    ],
+    "packages/cli/src/commands/inspect.ts": [
+      "commander",
+      "fs/promises",
+      "@orchestr8/core"
+    ],
+    "packages/cli/src/commands/run.test.ts": [
+      "vitest",
+      "fs/promises"
+    ],
+    "packages/cli/src/commands/test.ts": [
+      "commander",
+      "fs/promises",
+      "fs",
+      "path",
+      "@orchestr8/core",
+      "@orchestr8/schema"
+    ],
+    "packages/cli/src/commands/run.ts": [
+      "commander",
+      "fs/promises",
+      "fs",
+      "path",
+      "@orchestr8/core",
+      "@orchestr8/schema"
+    ],
+    "packages/logger/src/correlation.ts": [
+      "node:crypto"
+    ],
+    "packages/logger/src/logger.test.ts": [
+      "vitest"
+    ],
+    "packages/logger/src/adapters/console.test.ts": [
+      "node:stream",
+      "vitest"
+    ],
+    "packages/core/src/enhanced-execution-journal.ts": [
+      "@orchestr8/schema"
+    ],
+    "packages/core/src/orchestration-engine.test.ts": [
+      "@orchestr8/schema",
+      "vitest"
+    ],
+    "packages/core/src/orchestration-engine.ts": [
+      "crypto",
+      "@orchestr8/logger",
+      "@orchestr8/schema"
+    ],
+    "packages/core/src/json-execution-model.ts": [
+      "@orchestr8/logger",
+      "@orchestr8/schema"
+    ],
+    "packages/core/src/enhanced-execution-journal.test.ts": [
+      "vitest"
+    ],
+    "packages/core/src/expression-evaluator.ts": [
+      "@orchestr8/schema",
+      "jmespath"
+    ],
+    "packages/core/src/resilience-composition.test.ts": [
+      "vitest"
+    ],
+    "packages/core/src/execution-consistency-validator.ts": [
+      "@orchestr8/schema"
+    ],
+    "packages/core/src/journal-execution-integration.test.ts": [
+      "@orchestr8/schema",
+      "vitest"
+    ],
+    "packages/core/src/json-execution-model-performance.test.ts": [
+      "perf_hooks",
+      "@orchestr8/schema",
+      "vitest"
+    ],
+    "packages/core/src/adapter-consistency.test.ts": [
+      "@orchestr8/resilience",
+      "vitest"
+    ],
+    "packages/core/src/event-bus-benchmark.test.ts": [
+      "node:perf_hooks",
+      "vitest"
+    ],
+    "packages/core/src/event-bus.ts": [
+      "node:events",
+      "node:perf_hooks"
+    ],
+    "scripts/examples/core-fallback-retry.ts": [
+      "@orchestr8/core"
+    ],
+    "scripts/examples/multi-llm-fanout-aggregate.ts": [
+      "@orchestr8/core",
+      "@orchestr8/logger",
+      "@orchestr8/resilience",
+      "@orchestr8/schema"
+    ],
+    "scripts/examples/pr-auto-fix-gh.ts": [
+      "node:child_process",
+      "node:fs",
+      "node:path",
+      "@orchestr8/core",
+      "@orchestr8/logger",
+      "@orchestr8/resilience",
+      "@orchestr8/schema"
+    ],
+    "scripts/examples/core-quick-start.ts": [
+      "@orchestr8/core"
+    ],
+    "scripts/examples/pr-lifecycle-gh.ts": [
+      "node:child_process",
+      "node:fs",
+      "node:path",
+      "@orchestr8/core",
+      "@orchestr8/logger",
+      "@orchestr8/resilience",
+      "@orchestr8/schema"
+    ],
+    "scripts/examples/core-conditions-env.ts": [
+      "@orchestr8/core"
+    ],
+    "scripts/examples/convex-seed-init.ts": [
+      "node:child_process",
+      "node:fs",
+      "@orchestr8/core",
+      "@orchestr8/logger",
+      "@orchestr8/resilience",
+      "@orchestr8/schema"
+    ]
+  },
+  "staleness_check": 1755205824.292197
+}

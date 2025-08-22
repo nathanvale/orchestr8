@@ -43,7 +43,9 @@ pnpm validate:dual-consumption
 
 ## Architecture Overview
 
-This is a **TypeScript monorepo** using pnpm workspaces and Turborepo for build orchestration. The architecture follows a modular package design for the @orchestr8 agent orchestration platform.
+This is a **TypeScript monorepo** using pnpm workspaces and Turborepo for build
+orchestration. The architecture follows a modular package design for the
+@orchestr8 agent orchestration platform.
 
 ### Package Dependencies
 
@@ -225,7 +227,7 @@ When implementing features:
 - **Test Coverage Target**: >80% for core packages
 - **Performance**: <100ms orchestration overhead (p95)
 
-- ALWAYS follow best practive of using .js extensions for all TypeScript imports
+- ALWAYS follow best practice of using .js extensions for all TypeScript imports
 - /clear
 
 - Always use pnpm format from the root to format any file it is fast enough

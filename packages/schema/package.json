@@ -15,7 +15,8 @@
     }
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && npm run generate:schemas",
+    "generate:schemas": "node scripts/generate-schemas.mjs",
     "dev": "tsc --watch",
     "test": "vitest",
     "test:ci": "vitest --run",
@@ -25,7 +26,8 @@
     "clean": "rimraf dist *.tsbuildinfo"
   },
   "dependencies": {
-    "zod": "^3.25.74"
+    "zod": "^3.25.74",
+    "zod-to-json-schema": "^3.24.6"
   },
   "devDependencies": {
     "@types/node": "^24.0.8",

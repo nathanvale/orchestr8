@@ -46,7 +46,7 @@ Success Criteria:
 
 ### Must-Haves
 
-- [ ] JSON Execution Model (minimal)
+- [x] JSON Execution Model (minimal)
   - Zod schema for workflow/agent JSON (centralized in `packages/schema`)
   - JSON Schema generation for docs/validation
   - Runtime parsing + friendly errors
@@ -54,10 +54,10 @@ Success Criteria:
   - Bounded queue with overflow policy (drop-latest + warn)
   - Topics: `execution.started`, `step.started`, `step.completed`, `execution.completed`, `execution.failed`
   - Simple publish/subscribe API; in-memory subscribers only
-- [ ] Minimal Execution Journal
+- [x] Minimal Execution Journal
   - Append-only in-memory ring buffer by `runId`
   - Export on-demand as JSON (printed by CLI `--inspect`)
-- [ ] CLI v0 (fast loop)
+- [x] CLI v0 (fast loop)
   - `o8 init` — create minimal config and example
   - `o8 create:agent` — scaffold tiny agent shell (optional template)
   - `o8 run <workflow.json>` — run and stream events
