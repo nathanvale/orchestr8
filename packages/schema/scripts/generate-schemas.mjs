@@ -10,7 +10,7 @@ import { join, dirname } from 'path'
 import { fileURLToPath } from 'url'
 
 // Import the generation utilities
-import { generateAllSchemas, getJsonSchemaString } from '../dist/esm/index.js'
+import { generateAllSchemas } from '../dist/esm/index.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
