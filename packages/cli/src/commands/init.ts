@@ -1,6 +1,7 @@
-import { Command } from 'commander'
 import fs from 'fs/promises'
 import path from 'path'
+
+import { Command } from 'commander'
 
 const defaultConfig = {
   version: '1.0.0',

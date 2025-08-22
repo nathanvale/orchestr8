@@ -1,9 +1,12 @@
-import { describe, expect, it, vi } from 'vitest'
 import fs from 'fs/promises'
+import * as path from 'path'
+
+import { describe, expect, it, vi } from 'vitest'
+
 import { runCommand } from './run.js'
-import type { OrchestrationEngine } from '@orchestr8/core'
 
 vi.mock('fs/promises')
+vi.mock('path')
 vi.mock('@orchestr8/core', () => {
   class MockOrchestrationEngine {
     execute() {
@@ -16,7 +19,11 @@ vi.mock('@orchestr8/core', () => {
   }
 
   class MockJsonExecutionModel {
-    serializeWorkflow(workflow: any) {
+    serializeWorkflow(workflow: {
+      id: string
+      name: string
+      steps?: unknown[]
+    }) {
       return {
         id: workflow.id,
         name: workflow.name,
@@ -33,7 +40,7 @@ vi.mock('@orchestr8/core', () => {
 
 vi.mock('@orchestr8/schema', () => {
   class MockWorkflowValidator {
-    validate(data: any) {
+    validate(_data: unknown) {
       return {
         valid: true,
         data: {
@@ -60,8 +67,34 @@ vi.mock('@orchestr8/schema', () => {
 })
 
 describe('run command', () => {
+  // Mock process.cwd() to return a consistent value
+  const originalCwd = process.cwd
+  beforeEach(() => {
+    process.cwd = vi.fn().mockReturnValue('/current/working/dir')
+
+    // Set up path mocks
+    vi.mocked(path.dirname).mockReturnValue('./')
+    vi.mocked(path.resolve).mockImplementation((...paths) => {
+      const joined = paths.join('/')
+      if (paths[0]?.startsWith('/')) {
+        return joined
+      }
+      return `/current/working/dir/${joined}`
+    })
+    vi.mocked(path.isAbsolute).mockImplementation(
+      (pathStr) => pathStr?.startsWith('/') || false,
+    )
+  })
+
+  afterEach(() => {
+    process.cwd = originalCwd
+  })
+
   it('executes workflow from JSON file', async () => {
     const mockReadFile = vi.mocked(fs.readFile)
+    const mockAccess = vi.mocked(fs.access)
+
+    mockAccess.mockImplementation(() => Promise.resolve())
     mockReadFile.mockImplementation(() =>
       Promise.resolve(
         JSON.stringify({
@@ -85,7 +118,10 @@ describe('run command', () => {
 
     await runCommand.parseAsync(['node', 'test', './workflow.json'])
 
-    expect(mockReadFile).toHaveBeenCalledWith('./workflow.json', 'utf-8')
+    expect(mockReadFile).toHaveBeenCalledWith(
+      '/current/working/dir/./workflow.json',
+      'utf-8',
+    )
     expect(consoleSpy).toHaveBeenCalledWith(
       expect.stringContaining('Executing workflow: Test Workflow'),
     )
@@ -109,7 +145,7 @@ describe('run command', () => {
 
     try {
       await runCommand.parseAsync(['node', 'test', './invalid.json'])
-    } catch (error) {
+    } catch {
       // Expected to throw due to mocked process.exit
     }
 
@@ -120,6 +156,9 @@ describe('run command', () => {
 
   it('saves execution result when output specified', async () => {
     const mockReadFile = vi.mocked(fs.readFile)
+    const mockAccess = vi.mocked(fs.access)
+
+    mockAccess.mockImplementation(() => Promise.resolve())
     mockReadFile.mockImplementation(() =>
       Promise.resolve(
         JSON.stringify({
@@ -142,7 +181,7 @@ describe('run command', () => {
     ])
 
     expect(mockWriteFile).toHaveBeenCalledWith(
-      './result.json',
+      '/current/working/dir/./result.json',
       expect.stringContaining('"runId": "test-run-id"'),
       'utf-8',
     )
@@ -150,6 +189,9 @@ describe('run command', () => {
 
   it('watches workflow file for changes', async () => {
     const mockReadFile = vi.mocked(fs.readFile)
+    const mockAccess = vi.mocked(fs.access)
+
+    mockAccess.mockImplementation(() => Promise.resolve())
     mockReadFile.mockImplementation(() =>
       Promise.resolve(
         JSON.stringify({
@@ -194,7 +236,7 @@ describe('run command', () => {
         './workflow.json',
         '--watch',
       ])
-    } catch (error) {
+    } catch {
       // Expected to exit
     }
 

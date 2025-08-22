@@ -1,0 +1,61 @@
+                        # Spec Tasks
+
+These are the tasks to be completed for the spec detailed in @.agent-os/specs/2025-08-22-npm-publishing-distribution/spec.md
+
+> Created: 2025-08-22
+> Status: Ready for Implementation
+
+## Tasks
+
+- [x] 1. Configure Changesets for Monorepo Versioning
+  - [x] 1.1 Install and configure @changesets/cli
+  - [x] 1.2 Set up changeset config with GitHub integration
+  - [x] 1.3 Configure package access levels and ignore list
+  - [x] 1.4 Test basic changeset creation and version workflows
+  - [x] 1.5 Verify changeset status and validation commands
+
+- [x] 2. Set Up Dual ES/CJS Module Exports
+  - [x] 2.1 Write tests for dual module consumption patterns
+  - [x] 2.2 Configure TypeScript compilation for multiple targets
+  - [x] 2.3 Update package.json exports field for all packages
+  - [x] 2.4 Create build scripts for ES and CJS outputs
+  - [x] 2.5 Add package.json generation for output directories
+  - [x] 2.6 Implement dual consumption validation script
+  - [x] 2.7 Verify all tests pass with dual module builds
+
+- [ ] 3. Configure NPM Organization and Publishing
+  - [ ] 3.1 Write tests for NPM scope and publishing validation
+  - [ ] 3.2 Create @orchestr8 NPM organization
+  - [ ] 3.3 Set up team members and publishing permissions
+  - [ ] 3.4 Generate automation tokens for CI/CD
+  - [ ] 3.5 Configure 2FA bypass for automation
+  - [ ] 3.6 Test manual publishing workflow
+  - [ ] 3.7 Verify all publishing tests pass
+
+- [ ] 4. Implement GitHub Actions Release Workflow
+  - [ ] 4.1 Write tests for CI/CD workflow validation
+  - [ ] 4.2 Create release.yml workflow with changeset action
+  - [ ] 4.3 Create ci.yml workflow for PR validation
+  - [ ] 4.4 Configure GitHub repository secrets
+  - [ ] 4.5 Set up changeset status validation
+  - [ ] 4.6 Test workflow execution with dry-run publishing
+  - [ ] 4.7 Verify all CI/CD tests pass
+
+- [ ] 5. Configure Version Strategy and Pre-releases
+  - [ ] 5.1 Write tests for version progression workflows
+  - [ ] 5.2 Set initial version numbers for Beta RC packages
+  - [ ] 5.3 Set initial version numbers for Alpha packages
+  - [ ] 5.4 Configure pre-release mode settings
+  - [ ] 5.5 Set up NPM dist tags for pre-releases
+  - [ ] 5.6 Test version graduation workflows
+  - [ ] 5.7 Verify all versioning tests pass
+
+- [ ] 6. End-to-End Publishing Validation
+  - [ ] 6.1 Write comprehensive E2E publishing tests
+  - [ ] 6.2 Create initial changesets for first release
+  - [ ] 6.3 Test full changeset → version → publish cycle
+  - [ ] 6.4 Validate package installation in consumer projects
+  - [ ] 6.5 Test dual module consumption in real projects
+  - [ ] 6.6 Monitor package registry and download stats
+  - [ ] 6.7 Document publishing runbook and procedures
+  - [ ] 6.8 Verify all E2E tests pass

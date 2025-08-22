@@ -29,7 +29,6 @@
       "cache": true
     },
     "type-check": {
-      "dependsOn": ["^build"],
       "inputs": ["src/**", "tsconfig.json", "tsconfig*.json", "package.json"],
       "outputs": ["**/*.tsbuildinfo"]
     },

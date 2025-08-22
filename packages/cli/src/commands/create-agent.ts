@@ -1,6 +1,7 @@
-import { Command } from 'commander'
 import fs from 'fs/promises'
 import path from 'path'
+
+import { Command } from 'commander'
 
 interface AgentTemplate {
   id: string
@@ -54,9 +55,45 @@ const templates: Record<string, Partial<AgentTemplate>> = {
   },
 }
 
+/**
+ * Validates agent name to ensure it's safe for file system and follows naming conventions
+ * @param name The agent name to validate
+ * @returns The validated and trimmed agent name
+ * @throws Error if the name is invalid
+ */
+function validateAgentName(name: string): string {
+  // Check for empty or whitespace-only names
+  if (!name || name.trim().length === 0) {
+    throw new Error('Agent name cannot be empty')
+  }
+
+  const trimmedName = name.trim()
+
+  // Check length
+  if (trimmedName.length < 2 || trimmedName.length > 64) {
+    throw new Error('Agent name must be between 2 and 64 characters')
+  }
+
+  // Check for valid characters (alphanumeric, hyphens, underscores)
+  if (!/^[a-zA-Z0-9_-]+$/.test(trimmedName)) {
+    throw new Error(
+      'Agent name can only contain letters, numbers, hyphens, and underscores',
+    )
+  }
+
+  // Check that it doesn't start or end with special characters
+  if (/^[-_]|[-_]$/.test(trimmedName)) {
+    throw new Error(
+      'Agent name cannot start or end with hyphens or underscores',
+    )
+  }
+
+  return trimmedName
+}
+
 export const createAgentCommand = new Command('create:agent')
   .description('Create a new agent definition')
-  .argument('<name>', 'Agent name')
+  .argument('<name>', 'Agent name (alphanumeric, hyphens, underscores only)')
   .option('-d, --description <desc>', 'Agent description')
   .option(
     '-t, --template <type>',
@@ -64,61 +101,125 @@ export const createAgentCommand = new Command('create:agent')
     'local',
   )
   .option('-f, --force', 'Overwrite existing agent')
+  .option('-v, --verbose', 'Verbose output')
   .action(async (name: string, options) => {
-    const agentsDir = path.join(process.cwd(), 'agents')
-    const agentPath = path.join(agentsDir, `${name}.json`)
+    try {
+      // Validate agent name
+      const validatedName = validateAgentName(name)
 
-    // Check if agent already exists
-    if (!options.force) {
-      try {
-        await fs.access(agentPath)
-        console.log(
-          `⚠️  Agent ${name} already exists. Use --force to overwrite.`,
-        )
+      // Validate template
+      const availableTemplates = Object.keys(templates)
+      if (!availableTemplates.includes(options.template)) {
+        console.error(`❌ Unknown template: ${options.template}`)
+        console.error(`Available templates: ${availableTemplates.join(', ')}`)
+        process.exitCode = 1
         return
-      } catch {
-        // File doesn't exist, proceed
       }
-    }
 
-    // Create agents directory if it doesn't exist
-    await fs.mkdir(agentsDir, { recursive: true })
+      const agentsDir = path.join(process.cwd(), 'agents')
+      const agentPath = path.join(agentsDir, `${validatedName}.json`)
 
-    // Get template
-    const template = templates[options.template] || templates.local
-    if (!template) {
-      console.error(`❌ Unknown template: ${options.template}`)
-      return
-    }
+      // Check if agent already exists
+      if (!options.force) {
+        try {
+          await fs.access(agentPath)
+          console.log(
+            `⚠️  Agent ${validatedName} already exists. Use --force to overwrite.`,
+          )
+          return
+        } catch {
+          // File doesn't exist, proceed
+        }
+      }
 
-    // Create agent definition
-    const agent: AgentTemplate = {
-      id: name,
-      name: name.charAt(0).toUpperCase() + name.slice(1).replace(/-/g, ' '),
-      description: options.description || `${name} agent for orchestr8`,
-      type: template.type!,
-      version: '1.0.0',
-      config: JSON.parse(
-        JSON.stringify(template.config).replace(/{{name}}/g, name),
-      ),
-      capabilities: template.capabilities || [],
-    }
+      // Create agents directory if it doesn't exist
+      try {
+        await fs.mkdir(agentsDir, { recursive: true })
+      } catch (error) {
+        const code = (error as { code?: string }).code
+        if (code === 'EACCES') {
+          throw new Error('Permission denied: Cannot create agents directory')
+        }
+        throw error
+      }
 
-    // Write agent file
-    await fs.writeFile(agentPath, JSON.stringify(agent, null, 2), 'utf-8')
+      // Get template (we already validated it exists above)
+      const template = templates[options.template]!
 
-    console.log(`✅ Created agent: agents/${name}.json`)
-    console.log(`\nAgent configuration:`)
-    console.log(`  Type: ${agent.type}`)
-    console.log(`  Capabilities: ${agent.capabilities.join(', ')}`)
+      // Validate description if provided
+      if (options.description && options.description.length > 500) {
+        throw new Error('Description must be less than 500 characters')
+      }
 
-    if (agent.type === 'local') {
-      console.log(
-        `\nNext step: Implement your agent logic in agents/${name}.js`,
-      )
-    } else if (agent.type === 'http') {
-      console.log(
-        `\nNext step: Implement your HTTP endpoint at ${(agent.config as any).endpoint}`,
-      )
+      // Create agent definition
+      const agent: AgentTemplate = {
+        id: validatedName,
+        name:
+          validatedName.charAt(0).toUpperCase() +
+          validatedName.slice(1).replace(/-/g, ' '),
+        description:
+          options.description || `${validatedName} agent for orchestr8`,
+        type: template.type!,
+        version: '1.0.0',
+        config: JSON.parse(
+          JSON.stringify(template.config).replace(/{{name}}/g, validatedName),
+        ),
+        capabilities: template.capabilities || [],
+      }
+
+      // Write agent file with error handling
+      try {
+        await fs.writeFile(agentPath, JSON.stringify(agent, null, 2), 'utf-8')
+      } catch (error) {
+        const code = (error as { code?: string }).code
+        if (code === 'EACCES') {
+          throw new Error(`Permission denied: Cannot write to ${agentPath}`)
+        } else if (code === 'ENOSPC') {
+          throw new Error('No space left on device')
+        }
+        throw error
+      }
+
+      console.log(`✅ Created agent: agents/${validatedName}.json`)
+      console.log(`\nAgent configuration:`)
+      console.log(`  ID: ${agent.id}`)
+      console.log(`  Name: ${agent.name}`)
+      console.log(`  Type: ${agent.type}`)
+      console.log(`  Capabilities: ${agent.capabilities.join(', ')}`)
+
+      if (options.verbose) {
+        console.log(`  Description: ${agent.description}`)
+        console.log(`  Version: ${agent.version}`)
+        console.log(`  Config: ${JSON.stringify(agent.config, null, 2)}`)
+      }
+
+      // Provide next steps based on template type
+      if (agent.type === 'local') {
+        console.log(
+          `\nNext step: Implement your agent logic in agents/${validatedName}.js`,
+        )
+      } else if (agent.type === 'http') {
+        console.log(
+          `\nNext step: Implement your HTTP endpoint at ${(agent.config as Record<string, unknown>).endpoint}`,
+        )
+      } else if (agent.type === 'lambda') {
+        console.log(
+          `\nNext step: Deploy your Lambda function with name: ${(agent.config as Record<string, unknown>).functionName}`,
+        )
+      } else if (agent.type === 'container') {
+        console.log(
+          `\nNext step: Build and publish your container image: ${(agent.config as Record<string, unknown>).image}`,
+        )
+      }
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error)
+      console.error(`❌ Failed to create agent: ${errorMessage}`)
+
+      if (options.verbose && error instanceof Error && error.stack) {
+        console.error(error.stack)
+      }
+
+      process.exitCode = 1
     }
   })

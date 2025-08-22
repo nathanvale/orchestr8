@@ -4,6 +4,7 @@
     "module": "ESNext",
     "lib": ["ES2022"],
     "moduleResolution": "bundler",
+    "customConditions": ["development"],
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
@@ -11,29 +12,7 @@
     "noUncheckedIndexedAccess": true,
     "noEmit": true,
     "resolveJsonModule": true,
-    "allowJs": false,
-    "composite": true,
-    "declaration": true,
-    "declarationMap": true,
-    "incremental": true,
-    "paths": {
-      "@orchestr8/core": ["./packages/core/src"],
-      "@orchestr8/resilience": ["./packages/resilience/src"],
-      "@orchestr8/agent-base": ["./packages/agent-base/src"],
-      "@orchestr8/testing": ["./packages/testing/src"],
-      "@orchestr8/schema": ["./packages/schema/src"],
-      "@orchestr8/cli": ["./packages/cli/src"],
-      "@orchestr8/logger": ["./packages/logger/src"]
-    }
+    "allowJs": false
   },
-  "references": [
-    { "path": "./packages/schema" },
-    { "path": "./packages/agent-base" },
-    { "path": "./packages/resilience" },
-    { "path": "./packages/core" },
-    { "path": "./packages/testing" },
-    { "path": "./packages/cli" },
-    { "path": "./packages/logger" }
-  ],
   "exclude": ["node_modules", "dist", "build", ".turbo"]
 }
