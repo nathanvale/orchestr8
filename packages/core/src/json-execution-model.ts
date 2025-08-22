@@ -17,7 +17,13 @@ import type {
 import crypto, { randomUUID } from 'crypto'
 
 import { NoopLogger } from '@orchestr8/logger'
-import { createExecutionError, ExecutionErrorCode } from '@orchestr8/schema'
+import {
+  createExecutionError,
+  ExecutionErrorCode,
+  ExecutionStateSchema,
+  type EnhancedJournalEntryZod,
+  type OrchestrationEventZod,
+} from '@orchestr8/schema'
 
 import type { Logger } from './types.js'
 
@@ -133,7 +139,17 @@ export class JsonExecutionModel {
    */
   deserializeWorkflow(json: string): Workflow {
     this.validatePayloadSize(json, 'workflow')
-    const workflow = JSON.parse(json) as Workflow
+
+    let workflow: Workflow
+    try {
+      workflow = JSON.parse(json) as Workflow
+    } catch (error) {
+      throw createExecutionError(
+        ExecutionErrorCode.VALIDATION,
+        `Invalid JSON in workflow: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      )
+    }
+
     if (this.strictValidation) {
       this.validateWorkflow(workflow)
     }
@@ -148,7 +164,7 @@ export class JsonExecutionModel {
     variables?: Record<string, unknown>,
   ): ExecutionState {
     const executionId = this.deterministicIds
-      ? this.generateDeterministicId(workflow.id, Date.now())
+      ? this.generateDeterministicId(workflow.id)
       : randomUUID()
 
     const state: ExecutionState = {
@@ -176,9 +192,91 @@ export class JsonExecutionModel {
   }
 
   /**
+   * Update step execution state
+   */
+  updateStepExecutionState(
+    state: ExecutionState,
+    stepId: string,
+    status: 'completed' | 'failed' | 'running' | 'cancelled',
+    result?: StepResult,
+  ): ExecutionState {
+    const updatedState = { ...state }
+
+    // Update step arrays based on status
+    if (
+      status === 'completed' &&
+      !updatedState.completedSteps.includes(stepId)
+    ) {
+      updatedState.completedSteps = [...updatedState.completedSteps, stepId]
+      // Remove from other arrays if present
+      updatedState.failedSteps = updatedState.failedSteps.filter(
+        (id) => id !== stepId,
+      )
+      updatedState.cancelledSteps = updatedState.cancelledSteps.filter(
+        (id) => id !== stepId,
+      )
+    } else if (
+      status === 'failed' &&
+      !updatedState.failedSteps.includes(stepId)
+    ) {
+      updatedState.failedSteps = [...updatedState.failedSteps, stepId]
+      // Remove from other arrays if present
+      updatedState.completedSteps = updatedState.completedSteps.filter(
+        (id) => id !== stepId,
+      )
+      updatedState.cancelledSteps = updatedState.cancelledSteps.filter(
+        (id) => id !== stepId,
+      )
+    } else if (
+      status === 'cancelled' &&
+      !updatedState.cancelledSteps.includes(stepId)
+    ) {
+      updatedState.cancelledSteps = [...updatedState.cancelledSteps, stepId]
+      // Remove from other arrays if present
+      updatedState.completedSteps = updatedState.completedSteps.filter(
+        (id) => id !== stepId,
+      )
+      updatedState.failedSteps = updatedState.failedSteps.filter(
+        (id) => id !== stepId,
+      )
+    }
+
+    // Store step result if provided
+    if (result) {
+      updatedState.stepResults = {
+        ...updatedState.stepResults,
+        [stepId]: result,
+      }
+    }
+
+    return updatedState
+  }
+
+  /**
    * Serialize execution state to JSON
+   * Now includes schema validation for data consistency
    */
   serializeExecutionState(state: ExecutionState): string {
+    if (this.strictValidation) {
+      try {
+        ExecutionStateSchema.parse(state)
+      } catch (error) {
+        this.logger.warn(
+          'Execution state validation failed during serialization',
+          {
+            executionId: state.executionId,
+            error: error instanceof Error ? error.message : String(error),
+          },
+        )
+        if (this.strictValidation) {
+          throw createExecutionError(
+            ExecutionErrorCode.VALIDATION,
+            `Execution state validation failed: ${error instanceof Error ? error.message : String(error)}`,
+          )
+        }
+      }
+    }
+
     const json = JSON.stringify(state, null, 2)
     this.validatePayloadSize(json, 'execution-state')
     return json
@@ -186,17 +284,39 @@ export class JsonExecutionModel {
 
   /**
    * Deserialize execution state from JSON
+   * Now includes schema validation for data consistency
    */
   deserializeExecutionState(json: string): ExecutionState {
     this.validatePayloadSize(json, 'execution-state')
+
+    let state: ExecutionState
     try {
-      return JSON.parse(json) as ExecutionState
+      state = JSON.parse(json) as ExecutionState
     } catch (error) {
       throw createExecutionError(
         ExecutionErrorCode.VALIDATION,
-        `Failed to deserialize execution state: ${error instanceof Error ? error.message : String(error)}`,
+        `Failed to parse execution state JSON: ${error instanceof Error ? error.message : String(error)}`,
       )
     }
+
+    if (this.strictValidation) {
+      try {
+        ExecutionStateSchema.parse(state)
+      } catch (error) {
+        this.logger.warn(
+          'Execution state validation failed during deserialization',
+          {
+            error: error instanceof Error ? error.message : String(error),
+          },
+        )
+        throw createExecutionError(
+          ExecutionErrorCode.VALIDATION,
+          `Execution state validation failed: ${error instanceof Error ? error.message : String(error)}`,
+        )
+      }
+    }
+
+    return state
   }
 
   /**
@@ -280,9 +400,32 @@ export class JsonExecutionModel {
    * Convert execution state to workflow result
    */
   toWorkflowResult(state: ExecutionState): WorkflowResult {
+    // Map execution state status to workflow result status
+    let resultStatus: 'completed' | 'failed' | 'cancelled'
+    switch (state.status) {
+      case 'completed':
+        resultStatus = 'completed'
+        break
+      case 'failed':
+        resultStatus = 'failed'
+        break
+      case 'cancelled':
+        resultStatus = 'cancelled'
+        break
+      case 'pending':
+      case 'validating':
+      case 'running':
+        // These are intermediate states, map to completed for now
+        // In practice, this method should only be called for terminal states
+        resultStatus = 'completed'
+        break
+      default:
+        resultStatus = 'failed'
+    }
+
     return {
       executionId: state.executionId,
-      status: state.status === 'running' ? 'completed' : state.status,
+      status: resultStatus,
       steps: state.stepResults,
       variables: state.variables,
       startTime: state.startTime,
@@ -382,21 +525,21 @@ export class JsonExecutionModel {
     if (!workflow.id) {
       throw createExecutionError(
         ExecutionErrorCode.VALIDATION,
-        'Workflow must have an id'
+        'Workflow must have an id',
       )
     }
 
     if (!workflow.version) {
       throw createExecutionError(
         ExecutionErrorCode.VALIDATION,
-        'Workflow must have a version'
+        'Workflow must have a version',
       )
     }
 
     if (!workflow.steps || workflow.steps.length === 0) {
       throw createExecutionError(
         ExecutionErrorCode.VALIDATION,
-        'Workflow must have at least one step'
+        'Workflow must have at least one step',
       )
     }
 
@@ -406,7 +549,7 @@ export class JsonExecutionModel {
       if (stepIds.has(step.id)) {
         throw createExecutionError(
           ExecutionErrorCode.VALIDATION,
-          `Duplicate step ID: ${step.id}`
+          `Duplicate step ID: ${step.id}`,
         )
       }
       stepIds.add(step.id)
@@ -419,7 +562,7 @@ export class JsonExecutionModel {
           if (!stepIds.has(dep)) {
             throw createExecutionError(
               ExecutionErrorCode.VALIDATION,
-              `Step '${step.id}' depends on non-existent step '${dep}'`
+              `Step '${step.id}' depends on non-existent step '${dep}'`,
             )
           }
         }
@@ -435,7 +578,7 @@ export class JsonExecutionModel {
     if (size > this.maxPayloadSize) {
       throw createExecutionError(
         ExecutionErrorCode.VALIDATION,
-        `${type} payload size ${size} exceeds maximum ${this.maxPayloadSize} bytes`
+        `${type} payload size ${size} exceeds maximum ${this.maxPayloadSize} bytes`,
       )
     }
   }
@@ -443,13 +586,15 @@ export class JsonExecutionModel {
   /**
    * Generate deterministic ID
    */
-  private generateDeterministicId(seed: string, timestamp: number): string {
-    // Simple deterministic ID generation (in production, use proper hashing)
-    const hash = Buffer.from(`${seed}-${timestamp}`)
-      .toString('base64')
-      .replace(/[+/]/g, '')
+  generateDeterministicId(seed: string, timestamp?: number): string {
+    const actualTimestamp = timestamp ?? Date.now()
+    // Simple deterministic ID generation using hex encoding
+    const hash = crypto
+      .createHash('sha256')
+      .update(`${seed}-${actualTimestamp}`)
+      .digest('hex')
       .substring(0, 16)
-    return `exec-${hash}`
+    return hash
   }
 
   /**
@@ -539,6 +684,153 @@ export class HTTPExecutionContext {
         return this.journalMaxSize
       default:
         return this.asyncMaxSize
+    }
+  }
+
+  /**
+   * Sync execution state with journal data to ensure consistency
+   * This method validates that journal entries align with execution state
+   */
+  syncWithJournal(
+    executionState: ExecutionState,
+    journalEntries: Array<{
+      timestamp: number
+      executionId?: string
+      stepId?: string
+      type: string
+      data: unknown
+    }>,
+  ): ExecutionState {
+    const syncedState = { ...executionState }
+
+    // Validate that execution ID matches
+    const executionEvents = journalEntries.filter(
+      (entry) => entry.executionId === executionState.executionId,
+    )
+
+    if (executionEvents.length === 0) {
+      console.warn('No journal entries found for execution', {
+        executionId: executionState.executionId,
+      })
+      return syncedState
+    }
+
+    // Find latest status from journal events
+    const statusEvents = executionEvents.filter(
+      (entry) =>
+        entry.type.includes('execution.') || entry.type.includes('workflow.'),
+    )
+
+    const latestStatusEvent = statusEvents.sort(
+      (a, b) => b.timestamp - a.timestamp,
+    )[0]
+
+    if (latestStatusEvent) {
+      // Update status based on journal data
+      if (latestStatusEvent.type.includes('completed')) {
+        syncedState.status = 'completed'
+        syncedState.endTime = new Date(
+          latestStatusEvent.timestamp,
+        ).toISOString()
+      } else if (latestStatusEvent.type.includes('failed')) {
+        syncedState.status = 'failed'
+        syncedState.endTime = new Date(
+          latestStatusEvent.timestamp,
+        ).toISOString()
+      } else if (latestStatusEvent.type.includes('cancelled')) {
+        syncedState.status = 'cancelled'
+        syncedState.endTime = new Date(
+          latestStatusEvent.timestamp,
+        ).toISOString()
+      } else if (latestStatusEvent.type.includes('started')) {
+        if (syncedState.status === 'pending') {
+          syncedState.status = 'running'
+        }
+      }
+    }
+
+    // Update step results from journal
+    const stepEvents = executionEvents.filter((entry) => entry.stepId)
+    for (const stepEvent of stepEvents) {
+      if (stepEvent.type === 'step.completed' && stepEvent.stepId) {
+        if (!syncedState.completedSteps.includes(stepEvent.stepId)) {
+          syncedState.completedSteps.push(stepEvent.stepId)
+        }
+        // Remove from failed if present
+        const failedIndex = syncedState.failedSteps.indexOf(stepEvent.stepId)
+        if (failedIndex > -1) {
+          syncedState.failedSteps.splice(failedIndex, 1)
+        }
+      } else if (stepEvent.type === 'step.failed' && stepEvent.stepId) {
+        if (!syncedState.failedSteps.includes(stepEvent.stepId)) {
+          syncedState.failedSteps.push(stepEvent.stepId)
+        }
+      }
+    }
+
+    // Calculate duration if both start and end times exist
+    if (syncedState.startTime && syncedState.endTime) {
+      const startMs = new Date(syncedState.startTime).getTime()
+      const endMs = new Date(syncedState.endTime).getTime()
+      syncedState.duration = endMs - startMs
+    }
+
+    return syncedState
+  }
+
+  /**
+   * Validate execution state consistency with journal data
+   */
+  async validateConsistency(
+    executionState: ExecutionState,
+    journalEntries: Array<{
+      timestamp: number
+      executionId?: string
+      stepId?: string
+      type: string
+      data: unknown
+    }>,
+  ): Promise<{
+    isConsistent: boolean
+    errors: string[]
+    warnings: string[]
+  }> {
+    // Import the validator dynamically to avoid circular dependency
+    const { ExecutionConsistencyValidator } = await import(
+      './execution-consistency-validator.js'
+    )
+    const validator = new ExecutionConsistencyValidator()
+
+    // Convert journal entries to the expected format
+    const enhancedEntries: EnhancedJournalEntryZod[] = journalEntries.map(
+      (entry) => {
+        const enhancedEntry: EnhancedJournalEntryZod = {
+          timestamp: entry.timestamp,
+          type: entry.type,
+          data: entry.data as OrchestrationEventZod, // Type assertion for data field
+        }
+
+        // Only include optional fields if they have values
+        if (entry.executionId) {
+          enhancedEntry.executionId = entry.executionId
+        }
+        if (entry.stepId) {
+          enhancedEntry.stepId = entry.stepId
+        }
+        // Note: workflowId and metadata are not available in the input journal entry type
+
+        return enhancedEntry
+      },
+    )
+
+    const result = validator.validateExecutionConsistency(
+      executionState,
+      enhancedEntries,
+    )
+    return {
+      isConsistent: result.isConsistent,
+      errors: result.errors,
+      warnings: result.warnings,
     }
   }
 

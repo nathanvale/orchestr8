@@ -26,8 +26,9 @@
     "clean": "rimraf dist *.tsbuildinfo"
   },
   "dependencies": {
-    "@orchestr8/schema": "workspace:*",
-    "@orchestr8/logger": "workspace:*"
+    "@orchestr8/logger": "workspace:*",
+    "@orchestr8/resilience": "link:/Users/nathanvale/code/@orchestr8/packages/resilience",
+    "@orchestr8/schema": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^24.0.8",

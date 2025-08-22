@@ -3,9 +3,9 @@
  * These tests validate behavior under extreme load conditions
  */
 
-import type { OrchestrationEvent } from './event-bus.js'
-
 import { describe, it, expect, beforeEach, vi } from 'vitest'
+
+import type { OrchestrationEvent } from './event-bus.js'
 
 import { BoundedEventBus } from './event-bus.js'
 
@@ -308,7 +308,7 @@ describe('Event Bus Stress Tests', () => {
             } as OrchestrationEvent)
             // Small random delay to simulate real conditions
             if (j % 100 === 0) {
-              await new Promise((resolve) => setImmediate(resolve))
+              await new Promise((resolve) => setTimeout(resolve, 0))
             }
           }
         }
@@ -356,14 +356,11 @@ describe('Event Bus Stress Tests', () => {
         metricsInterval: 100, // Short interval for testing
       })
 
-      let actualProcessed = 0
       let actualDropped = 0
       const queueSizes: number[] = []
 
       // Track actual processing
-      eventBus.on('stress.metrics', () => {
-        actualProcessed++
-      })
+      eventBus.on('stress.metrics', () => {})
 
       // Phase 1: Slow processing to cause drops
       eventBus.on('stress.metrics', async () => {

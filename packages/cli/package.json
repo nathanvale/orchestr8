@@ -7,7 +7,8 @@
     "node": ">=20.0.0"
   },
   "bin": {
-    "orchestr8": "./dist/index.js"
+    "o8": "./dist/cli.js",
+    "orchestr8": "./dist/cli.js"
   },
   "exports": {
     ".": {

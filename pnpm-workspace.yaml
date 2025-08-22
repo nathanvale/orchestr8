@@ -1,2 +1,4 @@
 packages:
-  - 'packages/*'
+  - packages/*
+overrides:
+  '@orchestr8/resilience': link:packages/resilience
