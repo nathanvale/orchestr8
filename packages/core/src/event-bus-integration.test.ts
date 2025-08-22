@@ -2,8 +2,6 @@
  * Integration tests for event bus with orchestration engine
  */
 
-/* global setImmediate */
-
 import { NoopLogger } from '@orchestr8/logger'
 import { ProductionResilienceAdapter } from '@orchestr8/resilience'
 import {
@@ -188,7 +186,7 @@ describe('Event Bus Integration', () => {
       expect(result.status).toBe('completed')
 
       // Allow microtasks to complete
-      await new Promise((resolve) => setImmediate(() => resolve(undefined)))
+      await new Promise((resolve) => setTimeout(() => resolve(undefined), 0))
 
       // Check workflow events were emitted
       const workflowEvents = capturedEvents.filter((e) =>
@@ -227,7 +225,7 @@ describe('Event Bus Integration', () => {
       expect(result.status).toBe('failed')
 
       // Allow microtasks to complete
-      await new Promise((resolve) => setImmediate(() => resolve(undefined)))
+      await new Promise((resolve) => setTimeout(() => resolve(undefined), 0))
 
       // Check workflow failed event was emitted
       const failedEvent = capturedEvents.find(
@@ -261,7 +259,7 @@ describe('Event Bus Integration', () => {
       await engine.execute(workflow)
 
       // Allow microtasks to complete
-      await new Promise((resolve) => setImmediate(() => resolve(undefined)))
+      await new Promise((resolve) => setTimeout(() => resolve(undefined), 0))
 
       // Check execution events
       const executionEvents = capturedEvents.filter((e) =>
@@ -304,7 +302,7 @@ describe('Event Bus Integration', () => {
       expect(result.status).toBe('cancelled')
 
       // Allow microtasks to complete
-      await new Promise((resolve) => setImmediate(() => resolve(undefined)))
+      await new Promise((resolve) => setTimeout(() => resolve(undefined), 0))
 
       // Check cancelled event
       const cancelledEvent = capturedEvents.find(
@@ -345,7 +343,7 @@ describe('Event Bus Integration', () => {
       await engine.execute(workflow)
 
       // Allow microtasks to complete
-      await new Promise((resolve) => setImmediate(() => resolve(undefined)))
+      await new Promise((resolve) => setTimeout(() => resolve(undefined), 0))
 
       // Check step events
       const stepEvents = capturedEvents.filter((e) =>
@@ -394,7 +392,7 @@ describe('Event Bus Integration', () => {
       await engine.execute(workflow)
 
       // Allow microtasks to complete
-      await new Promise((resolve) => setImmediate(() => resolve(undefined)))
+      await new Promise((resolve) => setTimeout(() => resolve(undefined), 0))
 
       // Check step failed event
       const failedEvent = capturedEvents.find(
@@ -429,7 +427,7 @@ describe('Event Bus Integration', () => {
       const result = await engine.execute(workflow)
 
       // Allow setImmediate to complete for journal recording
-      await new Promise((resolve) => setImmediate(() => resolve(undefined)))
+      await new Promise((resolve) => setTimeout(() => resolve(undefined), 0))
 
       // Check journal entries
       const entries = journal.getEntries()
@@ -473,7 +471,7 @@ describe('Event Bus Integration', () => {
       expect(executionTime).toBeLessThan(1000) // Should complete in less than 1 second
 
       // Allow journal to catch up
-      await new Promise((resolve) => setImmediate(() => resolve(undefined)))
+      await new Promise((resolve) => setTimeout(() => resolve(undefined), 0))
 
       // Check all events were recorded
       const entries = journal.getEntries()
@@ -529,7 +527,7 @@ describe('Event Bus Integration', () => {
       await engine.execute(workflow)
 
       // Allow microtasks to complete
-      await new Promise((resolve) => setImmediate(() => resolve(undefined)))
+      await new Promise((resolve) => setTimeout(() => resolve(undefined), 0))
 
       // Also wait a bit more for retry delay
       await new Promise((resolve) => setTimeout(resolve, 50))
@@ -570,7 +568,7 @@ describe('Event Bus Integration', () => {
       await engine.execute(workflow)
 
       // Allow microtasks to complete
-      await new Promise((resolve) => setImmediate(() => resolve(undefined)))
+      await new Promise((resolve) => setTimeout(() => resolve(undefined), 0))
 
       // Check timeout event was emitted
       const timeoutEvent = capturedEvents.find(
@@ -617,7 +615,7 @@ describe('Event Bus Integration', () => {
       await engine.execute(workflow)
 
       // Allow journal to process events
-      await new Promise((resolve) => setImmediate(() => resolve(undefined)))
+      await new Promise((resolve) => setTimeout(() => resolve(undefined), 0))
 
       // Verify journal recorded events
       const entries = testJournal.getEntries()
@@ -730,7 +728,7 @@ describe('Event Bus Integration', () => {
       await engine.execute(workflow)
 
       // Allow queue to fully process
-      await new Promise((resolve) => setImmediate(() => resolve(undefined)))
+      await new Promise((resolve) => setTimeout(() => resolve(undefined), 0))
 
       // Get metrics
       const metrics = eventBus.getMetrics()

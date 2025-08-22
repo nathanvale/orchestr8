@@ -1,24 +1,32 @@
 {
   "name": "@orchestr8/cli",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "type": "module",
   "engines": {
-    "node": ">=20.0.0"
+    "node": ">=22.0.0"
   },
   "bin": {
-    "orchestr8": "./dist/index.js"
+    "o8": "./dist/esm/cli.js",
+    "orchestr8": "./dist/esm/cli.js"
   },
   "exports": {
     ".": {
       "development": "./src/index.ts",
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "default": "./dist/index.js"
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/esm/index.js",
+      "default": "./dist/esm/index.js"
     }
   },
+  "main": "./dist/esm/index.js",
+  "module": "./dist/esm/index.js",
+  "types": "./dist/types/index.d.ts",
   "scripts": {
-    "build": "tsc",
+    "build": "npm run build:clean && npm run build:esm && npm run build:types",
+    "build:clean": "rimraf dist *.tsbuildinfo",
+    "build:esm": "tsc -p tsconfig.esm.json",
+    "build:cjs": "echo 'CJS build disabled for CLI package'",
+    "build:types": "tsc -p tsconfig.types.json",
     "dev": "tsc --watch",
     "test": "vitest",
     "test:ci": "vitest --run",
@@ -33,7 +41,7 @@
     "commander": "^14.0.0"
   },
   "devDependencies": {
-    "@types/node": "^24.0.8",
+    "@types/node": "^22.5.5",
     "typescript": "^5.8.3",
     "vitest": "^3.2.4"
   }

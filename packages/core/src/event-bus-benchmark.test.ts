@@ -3,11 +3,11 @@
  * Run with: PERF=1 pnpm test event-bus-benchmark.test.ts
  */
 
-import type { OrchestrationEvent } from './event-bus.js'
-
 import { performance } from 'node:perf_hooks'
 
 import { describe, it, expect, beforeEach } from 'vitest'
+
+import type { OrchestrationEvent } from './event-bus.js'
 
 import { BoundedEventBus } from './event-bus.js'
 
@@ -232,11 +232,8 @@ describe.skipIf(!isPerfMode && !isCI)(
 
     it('should benchmark throughput with small events', async () => {
       const eventBus = new BoundedEventBus({ maxQueueSize: 10000 })
-      let processedCount = 0
 
-      eventBus.on('step.started', () => {
-        processedCount++
-      })
+      eventBus.on('step.started', () => {})
 
       const eventsPerBatch = 1000
       const result = await suite.benchmark(
@@ -252,7 +249,7 @@ describe.skipIf(!isPerfMode && !isCI)(
             eventBus.emitEvent(event)
           }
           // Wait for processing
-          await new Promise((resolve) => setImmediate(resolve))
+          await new Promise((resolve) => setTimeout(resolve, 0))
         },
         { iterations: 10, warmupIterations: 2 },
       )
@@ -268,11 +265,8 @@ describe.skipIf(!isPerfMode && !isCI)(
 
     it('should benchmark throughput with complex events', async () => {
       const eventBus = new BoundedEventBus({ maxQueueSize: 10000 })
-      let processedCount = 0
 
-      eventBus.on('step.completed', () => {
-        processedCount++
-      })
+      eventBus.on('step.completed', () => {})
 
       const eventsPerBatch = 1000
       const result = await suite.benchmark(
@@ -300,7 +294,7 @@ describe.skipIf(!isPerfMode && !isCI)(
             eventBus.emitEvent(event)
           }
           // Wait for processing
-          await new Promise((resolve) => setImmediate(resolve))
+          await new Promise((resolve) => setTimeout(resolve, 0))
         },
         { iterations: 10, warmupIterations: 2 },
       )
@@ -320,17 +314,15 @@ describe.skipIf(!isPerfMode && !isCI)(
       })
 
       let slowProcessingActive = true
-      let processedCount = 0
 
       // Add a slow listener to cause queue buildup
       eventBus.on('test.burst', async () => {
         if (slowProcessingActive) {
           await new Promise((resolve) => setTimeout(resolve, 10))
         }
-        processedCount++
       })
 
-      const result = await suite.benchmark(
+      await suite.benchmark(
         'Queue Saturation Recovery',
         async () => {
           // Burst emit events
@@ -355,7 +347,7 @@ describe.skipIf(!isPerfMode && !isCI)(
 
       const metrics = eventBus.getMetrics()
       console.log(`Dropped events: ${metrics.droppedCount}`)
-      console.log(`Processed events: ${processedCount}`)
+      console.log(`Total events emitted: 2000`)
 
       expect(metrics.droppedCount).toBeGreaterThan(0)
     }, 60000)
@@ -380,10 +372,10 @@ describe.skipIf(!isPerfMode && !isCI)(
             type: 'test.isolation',
             data: { value: 'original' },
           } as OrchestrationEvent
-          
+
           const originalData = JSON.stringify(event.data)
           eventBus.emitEvent(event)
-          
+
           // Verify the original event wasn't modified (shallow clone protects top level)
           expect(JSON.stringify(event.data)).toBe(originalData)
         },
@@ -449,10 +441,10 @@ describe.skipIf(!isPerfMode && !isCI)(
       // This test runs last to print all results
       // Only print if we have results (other tests ran)
       const results = suite.getResults()
-      
+
       if (results.length > 0) {
         suite.printResults()
-        
+
         // Verify key performance targets
         const emissionBenchmarks = results.filter((r) =>
           r.name.includes('Emission'),

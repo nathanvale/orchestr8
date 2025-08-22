@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "engines": {
-    "node": ">=20.0.0"
+    "node": ">=22.0.0"
   },
   "packageManager": "pnpm@10.10.0",
   "workspaces": [
@@ -34,6 +34,8 @@
     "validate:dual-consumption": "node scripts/validate-dual-consumption.js"
   },
   "devDependencies": {
+    "@changesets/changelog-github": "^0.5.1",
+    "@changesets/cli": "^2.29.6",
     "@eslint/js": "^9.30.0",
     "@types/node": "^22.0.0",
     "@typescript-eslint/eslint-plugin": "^8.0.0",
@@ -53,5 +55,8 @@
     "typescript": "^5.8.3",
     "vite": "^6.3.5",
     "vitest": "^3.2.4"
+  },
+  "dependencies": {
+    "@orchestr8/resilience": "link:packages/resilience"
   }
 }

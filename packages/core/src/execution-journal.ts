@@ -2,8 +2,6 @@
  * Execution journal for tracking workflow and step events
  */
 
-/* global setImmediate */
-
 import type { BoundedEventBus, OrchestrationEvent } from './event-bus.js'
 
 /**
@@ -59,8 +57,8 @@ export class ExecutionJournal {
    * Record an event to the journal with backpressure safety
    */
   private recordEvent(event: OrchestrationEvent): void {
-    // Use setImmediate to ensure backpressure safety - don't block the event bus
-    setImmediate(() => {
+    // Use setTimeout to ensure backpressure safety - don't block the event bus
+    setTimeout(() => {
       // Enforce max entries limit (drop oldest if needed)
       if (this.entries.length >= this.maxEntries) {
         this.entries.shift() // Remove oldest entry

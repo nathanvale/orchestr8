@@ -2,6 +2,16 @@
  * @orchestr8/core - Core orchestration engine
  */
 
+// Export enhanced journal for MVP
+export {
+  EnhancedExecutionJournal,
+  JournalManager,
+} from './enhanced-execution-journal.js'
+export type {
+  EnhancedJournalEntry,
+  JournalExport,
+} from './enhanced-execution-journal.js'
+
 // Export event bus implementation and types
 export { BoundedEventBus } from './event-bus.js'
 export type {
@@ -13,6 +23,11 @@ export type {
   StepEvent,
   ResilienceEvent,
 } from './event-bus.js'
+
+// Export consistency validator
+export { ExecutionConsistencyValidator } from './execution-consistency-validator.js'
+export type { ConsistencyValidationResult } from './execution-consistency-validator.js'
+
 // Export journal implementation and types
 export { ExecutionJournal } from './execution-journal.js'
 export type { JournalEntry } from './execution-journal.js'
@@ -21,6 +36,18 @@ export {
   resolveMapping,
   clearExpressionCache,
 } from './expression-evaluator.js'
+
+// Export JSON execution model
+export {
+  JsonExecutionModel,
+  HTTPExecutionContext,
+} from './json-execution-model.js'
+export type {
+  ExecutionState,
+  StepExecutionState,
+  ExecutionJournalEntry,
+  JsonExecutionConfig,
+} from './json-execution-model.js'
 
 export { OrchestrationEngine } from './orchestration-engine.js'
 

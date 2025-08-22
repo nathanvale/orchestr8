@@ -1,21 +1,29 @@
 {
   "name": "@orchestr8/resilience",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "type": "module",
   "engines": {
-    "node": ">=20.0.0"
+    "node": ">=22.0.0"
   },
   "exports": {
     ".": {
       "development": "./src/index.ts",
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "default": "./dist/index.js"
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.js",
+      "default": "./dist/esm/index.js"
     }
   },
+  "main": "./dist/cjs/index.js",
+  "module": "./dist/esm/index.js",
+  "types": "./dist/types/index.d.ts",
   "scripts": {
-    "build": "tsc",
+    "build": "npm run build:clean && npm run build:esm && npm run build:cjs && npm run build:types",
+    "build:clean": "rimraf dist *.tsbuildinfo",
+    "build:esm": "tsc -p tsconfig.esm.json",
+    "build:cjs": "tsc -p tsconfig.cjs.json && echo '{\"type\":\"commonjs\"}' > dist/cjs/package.json",
+    "build:types": "tsc -p tsconfig.types.json",
     "dev": "tsc --watch",
     "test": "vitest",
     "test:ci": "vitest --run",
@@ -26,11 +34,11 @@
     "clean": "rimraf dist *.tsbuildinfo"
   },
   "dependencies": {
-    "@orchestr8/schema": "workspace:*",
-    "@orchestr8/logger": "workspace:*"
+    "@orchestr8/logger": "workspace:*",
+    "@orchestr8/schema": "workspace:*"
   },
   "devDependencies": {
-    "@types/node": "^24.0.8",
+    "@types/node": "^22.5.5",
     "tsx": "^4.20.4",
     "typescript": "^5.8.3",
     "vitest": "^3.2.4"
