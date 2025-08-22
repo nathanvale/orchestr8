@@ -51,13 +51,13 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
 
 ### Day 5: API Implementation (Deferred to CLI)
 
-- [x] 5. CLI Implementation (Next Priority)
-  - [x] 5.1 Create CLI package structure
-  - [x] 5.2 Implement `o8 init` command
-  - [x] 5.3 Implement `o8 create:agent` command
-  - [x] 5.4 Implement `o8 run <workflow.json>` command
-  - [x] 5.5 Implement `o8 test` command
-  - [x] 5.6 Implement `o8 inspect <runId>` command
+- [ ] 5. CLI Implementation (Next Priority)
+  - [ ] 5.1 Create CLI package structure
+  - [ ] 5.2 Implement `o8 init` command
+  - [ ] 5.3 Implement `o8 create:agent` command
+  - [ ] 5.4 Implement `o8 run <workflow.json>` command
+  - [ ] 5.5 Implement `o8 test` command
+  - [ ] 5.6 Implement `o8 inspect <runId>` command
 
 ### Day 5-6: Code Review Fixes
 
@@ -71,112 +71,29 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
 
 #### P1 - High Priority Issues (Should fix before merge)
 
-- [x] 7. Fix High Priority Issues
-  - [x] 7.1 Add try-catch for `JSON.parse()` in `deserializeWorkflow()` at `packages/core/src/json-execution-model.ts:134`
-  - [x] 7.2 Improve event subscription cleanup in `packages/core/src/enhanced-execution-journal.ts:82-104`
-  - [x] 7.3 Add proper disposal pattern for journal lifecycle management
-  - [x] 7.4 Prevent memory leaks from orphaned event listeners
+- [ ] 7. Fix High Priority Issues
+  - [ ] 7.1 Add try-catch for `JSON.parse()` in `deserializeWorkflow()` at `packages/core/src/json-execution-model.ts:134`
+  - [ ] 7.2 Improve event subscription cleanup in `packages/core/src/enhanced-execution-journal.ts:82-104`
+  - [ ] 7.3 Add proper disposal pattern for journal lifecycle management
+  - [ ] 7.4 Prevent memory leaks from orphaned event listeners
 
 #### P2 - Medium Priority Issues (Important but not blocking)
 
-- [x] 8. Complete Missing MVP Requirements
-  - [x] 8.1 Install and integrate `zod-to-json-schema` package
-  - [x] 8.2 Implement JSON Schema generation utilities in `/generation` directory
-  - [x] 8.3 Add build-time schema generation script
-  - [x] 8.4 Create comprehensive tests for `EnhancedExecutionJournal` class
-  - [x] 8.5 Add performance benchmarks for <100ms validation requirement
-  - [x] 8.6 Verify 80% test coverage target is achieved
+- [ ] 8. Complete Missing MVP Requirements
+  - [ ] 8.1 Install and integrate `zod-to-json-schema` package
+  - [ ] 8.2 Implement JSON Schema generation utilities in `/generation` directory
+  - [ ] 8.3 Add build-time schema generation script
+  - [ ] 8.4 Create comprehensive tests for `EnhancedExecutionJournal` class
+  - [ ] 8.5 Add performance benchmarks for <100ms validation requirement
+  - [ ] 8.6 Verify 80% test coverage target is achieved
 
 #### P3 - Low Priority Issues (Nice to have improvements)
 
-- [x] 9. Quality Improvements
-  - [x] 9.1 Fix race condition in journal entry processing (`packages/core/src/enhanced-execution-journal.ts:128-135`)
-  - [x] 9.2 Standardize schema export aliasing in `packages/schema/src/index.ts`
-  - [x] 9.3 Optimize string truncation using Buffer operations (`packages/core/src/enhanced-execution-journal.ts:243-249`)
-  - [x] 9.4 Add ordered queue processing instead of `setImmediate`
-
-### Day 6-7: Production Readiness & Integration
-
-#### P0 - Critical Production Blockers (Must fix before production deployment)
-
-- [x] 10. JSON Execution Model Integration
-  - [x] 10.1 Add schema validation integration between journal and JSON execution model
-  - [x] 10.2 Implement structured serialization following execution model patterns
-  - [x] 10.3 Add validation for execution event schemas before recording
-  - [x] 10.4 Ensure data consistency across orchestration platform components
-  - [x] 10.5 Write comprehensive tests for journal-execution model integration
-
-- [x] 11. Event Bus Memory Leak Prevention
-  - [x] 11.1 Implement backpressure handling for high-throughput scenarios
-  - [x] 11.2 Add bounded queue management with configurable limits
-  - [x] 11.3 Prevent unbounded growth of pending entries under load
-  - [x] 11.4 Add monitoring and alerting for queue depth and processing lag
-
-- [x] 12. Consistent Error Handling
-  - [x] 12.1 Unify error handling patterns between manual and automatic recording
-  - [x] 12.2 Implement graceful degradation for both recording paths
-  - [x] 12.3 Add proper error logging and recovery mechanisms
-  - [x] 12.4 Ensure no silent failures in production scenarios
-
-#### P1 - Production Readiness (High Priority for MVP completion)
-
-- [x] 13. Performance Benchmarking
-  - [x] 13.1 Add performance tests to verify <100ms validation requirement
-  - [x] 13.2 Implement benchmark suite for journal operations under load
-  - [x] 13.3 Add memory usage profiling and optimization
-  - [x] 13.4 Verify compliance with JSON execution model performance SLAs
-
-- [x] 14. Edge Case Test Coverage
-  - [x] 14.1 Add tests for journal disposal during active event processing
-  - [x] 14.2 Test race conditions between eviction and new entries
-  - [x] 14.3 Add comprehensive concurrent scenario testing
-  - [x] 14.4 Test event bus disconnection and reconnection scenarios
-
-- [x] 15. Integration Tests with Event Bus
-  - [x] 15.1 Create comprehensive journal + event bus interaction tests
-  - [x] 15.2 Test high-throughput event streaming scenarios
-  - [x] 15.3 Verify resource cleanup in all integration scenarios
-  - [x] 15.4 Add end-to-end workflow execution with journal validation
-
-#### P2 - Enhanced Capabilities (Medium Priority for operational excellence)
-
-- [ ] 16. Structured Export Format Enhancement
-  - [ ] 16.1 Align journal export with JSON execution model specifications
-  - [ ] 16.2 Add schema validation metadata to exports
-  - [ ] 16.3 Implement execution state checkpoints in export format
-  - [ ] 16.4 Add debugging metadata for troubleshooting capabilities
-
-- [ ] 17. Configurable Retention Policies
-  - [ ] 17.1 Add time-based retention policies beyond size limits
-  - [ ] 17.2 Implement execution-count-based retention strategies
-  - [ ] 17.3 Add configurable eviction policies for different deployment scenarios
-  - [ ] 17.4 Create retention policy management and monitoring tools
-
-- [ ] 18. Production Observability
-  - [ ] 18.1 Integrate structured logging with @orchestr8/logger
-  - [ ] 18.2 Add metrics for journal operations and performance
-  - [ ] 18.3 Implement health checks and monitoring endpoints
-  - [ ] 18.4 Add tracing and debugging capabilities for production issues
-
-#### P3 - Optimization & Polish (Low Priority enhancements)
-
-- [ ] 19. Journal Compression
-  - [ ] 19.1 Implement compression for large execution journal entries
-  - [ ] 19.2 Add configurable compression strategies based on payload size
-  - [ ] 19.3 Optimize memory usage while maintaining audit trail completeness
-  - [ ] 19.4 Add compression performance benchmarks and monitoring
-
-- [ ] 20. Advanced Performance Profiling
-  - [ ] 20.1 Add detailed performance metrics and profiling capabilities
-  - [ ] 20.2 Implement adaptive performance tuning based on usage patterns
-  - [ ] 20.3 Add automated performance regression detection
-  - [ ] 20.4 Create performance dashboard and alerting system
-
-- [ ] 21. Documentation Updates
-  - [ ] 21.1 Update technical documentation for JSON execution model integration
-  - [ ] 21.2 Add operational runbooks for production deployment
-  - [ ] 21.3 Create troubleshooting guides for common journal issues
-  - [ ] 21.4 Document performance tuning and optimization strategies
+- [ ] 9. Quality Improvements
+  - [ ] 9.1 Fix race condition in journal entry processing (`packages/core/src/enhanced-execution-journal.ts:128-135`)
+  - [ ] 9.2 Standardize schema export aliasing in `packages/schema/src/index.ts`
+  - [ ] 9.3 Optimize string truncation using Buffer operations (`packages/core/src/enhanced-execution-journal.ts:243-249`)
+  - [ ] 9.4 Add ordered queue processing instead of `setImmediate`
 
 ## Future Tasks (Post-MVP)
 

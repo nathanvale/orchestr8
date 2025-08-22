@@ -4,7 +4,14 @@ import type { Logger } from '@orchestr8/logger'
 import { EventEmitter } from 'node:events'
 import { performance } from 'node:perf_hooks'
 
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from 'vitest'
 
 import type {
   BoundedEventBus,
