@@ -103,6 +103,7 @@ describe('Journal-Execution Model Integration', () => {
       journal.recordManualEvent({
         type: 'step.completed',
         stepId: 'step1',
+        executionId: executionState.executionId,
         output: step1Result.output,
         timestamp: Date.now(),
       })
@@ -127,6 +128,7 @@ describe('Journal-Execution Model Integration', () => {
       journal.recordManualEvent({
         type: 'step.completed',
         stepId: 'step2',
+        executionId: executionState.executionId,
         output: step2Result.output,
         timestamp: Date.now(),
       })
@@ -151,6 +153,7 @@ describe('Journal-Execution Model Integration', () => {
       journal.recordManualEvent({
         type: 'step.completed',
         stepId: 'step3',
+        executionId: executionState.executionId,
         output: step3Result.output,
         timestamp: Date.now(),
       })
@@ -225,6 +228,7 @@ describe('Journal-Execution Model Integration', () => {
       journal.recordManualEvent({
         type: 'step.completed',
         stepId: 'step1',
+        executionId: executionState.executionId,
         output: step1Result.output,
         timestamp: Date.now(),
       })
@@ -265,6 +269,7 @@ describe('Journal-Execution Model Integration', () => {
       journal.recordManualEvent({
         type: 'step.failed',
         stepId: 'step2',
+        executionId: executionState.executionId,
         error: {
           name: step2Error.name || 'Error',
           message: step2Error.message,
@@ -349,6 +354,7 @@ describe('Journal-Execution Model Integration', () => {
       journal.recordManualEvent({
         type: 'step.completed',
         stepId: 'step1',
+        executionId: executionState.executionId,
         output: { success: true },
         timestamp: Date.now(),
       })
@@ -1006,6 +1012,7 @@ describe('Journal-Execution Model Integration', () => {
             journal.recordManualEvent({
               type: event.type,
               stepId: 'step1',
+              executionId: executionState.executionId,
               output: { result: 'test' },
               timestamp: Date.now(),
             })

@@ -624,16 +624,21 @@ export class JsonExecutionModel {
     // Check journal size and truncate if needed
     const journalJson = JSON.stringify(this.journal)
     if (journalJson.length > this.maxJournalSize) {
+      // Capture original length before mutation
+      const originalLength = this.journal.length
+
       // Remove oldest entries (keep last 75%)
-      const keepCount = Math.floor(this.journal.length * 0.75)
-      this.journal.splice(0, this.journal.length - keepCount)
+      const keepCount = Math.floor(originalLength * 0.75)
+      const removedCount = originalLength - keepCount
+
+      this.journal.splice(0, removedCount)
 
       // Add truncation marker
       this.journal.unshift({
         timestamp: new Date().toISOString(),
         executionId,
         event: 'journal.truncated',
-        data: { removedEntries: this.journal.length - keepCount },
+        data: { removedEntries: removedCount },
       })
     }
   }
@@ -664,7 +669,9 @@ export class HTTPExecutionContext {
   }
 
   validatePayload(payload: unknown, mode: 'sync' | 'async' | 'journal'): void {
-    const size = JSON.stringify(payload).length
+    // Cache stringified value to avoid double stringification
+    const stringifiedPayload = JSON.stringify(payload)
+    const size = Buffer.byteLength(stringifiedPayload, 'utf8')
     const maxSize = this.getMaxSize(mode)
 
     if (size > maxSize) {
