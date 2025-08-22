@@ -280,9 +280,19 @@ export class JsonExecutionModel {
    * Convert execution state to workflow result
    */
   toWorkflowResult(state: ExecutionState): WorkflowResult {
+    // Map internal execution states to final workflow result states
+    const status: 'completed' | 'failed' | 'cancelled' =
+      state.status === 'completed'
+        ? 'completed'
+        : state.status === 'failed'
+          ? 'failed'
+          : state.status === 'cancelled'
+            ? 'cancelled'
+            : 'completed' // Default for pending/validating/running states
+
     return {
       executionId: state.executionId,
-      status: state.status === 'running' ? 'completed' : state.status,
+      status,
       steps: state.stepResults,
       variables: state.variables,
       startTime: state.startTime,
@@ -382,21 +392,21 @@ export class JsonExecutionModel {
     if (!workflow.id) {
       throw createExecutionError(
         ExecutionErrorCode.VALIDATION,
-        'Workflow must have an id'
+        'Workflow must have an id',
       )
     }
 
     if (!workflow.version) {
       throw createExecutionError(
         ExecutionErrorCode.VALIDATION,
-        'Workflow must have a version'
+        'Workflow must have a version',
       )
     }
 
     if (!workflow.steps || workflow.steps.length === 0) {
       throw createExecutionError(
         ExecutionErrorCode.VALIDATION,
-        'Workflow must have at least one step'
+        'Workflow must have at least one step',
       )
     }
 
@@ -406,7 +416,7 @@ export class JsonExecutionModel {
       if (stepIds.has(step.id)) {
         throw createExecutionError(
           ExecutionErrorCode.VALIDATION,
-          `Duplicate step ID: ${step.id}`
+          `Duplicate step ID: ${step.id}`,
         )
       }
       stepIds.add(step.id)
@@ -419,7 +429,7 @@ export class JsonExecutionModel {
           if (!stepIds.has(dep)) {
             throw createExecutionError(
               ExecutionErrorCode.VALIDATION,
-              `Step '${step.id}' depends on non-existent step '${dep}'`
+              `Step '${step.id}' depends on non-existent step '${dep}'`,
             )
           }
         }
@@ -435,7 +445,7 @@ export class JsonExecutionModel {
     if (size > this.maxPayloadSize) {
       throw createExecutionError(
         ExecutionErrorCode.VALIDATION,
-        `${type} payload size ${size} exceeds maximum ${this.maxPayloadSize} bytes`
+        `${type} payload size ${size} exceeds maximum ${this.maxPayloadSize} bytes`,
       )
     }
   }

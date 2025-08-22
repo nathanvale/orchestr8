@@ -11,8 +11,6 @@ import {
   expect,
   it,
   vi,
-  beforeAll,
-  afterAll,
 } from 'vitest'
 
 import type {
@@ -928,7 +926,6 @@ describe('BoundedEventBus', () => {
       // Only counts drops in current interval (4 drops = 24/min)
       expect(metrics.dropRate).toBe(24)
     })
-
 
     it('should test circuit breaker timing with fake timers', async () => {
       const { BoundedEventBus } = await import('./event-bus.js')
