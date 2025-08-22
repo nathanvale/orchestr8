@@ -1,5 +1,7 @@
-import { describe, expect, it, vi } from 'vitest'
 import fs from 'fs/promises'
+
+import { describe, expect, it, vi } from 'vitest'
+
 import { testCommand } from './test.js'
 
 vi.mock('fs/promises')
@@ -9,7 +11,8 @@ vi.mock('@orchestr8/core', () => {
       return Promise.resolve({
         executionId: 'test-run-id',
         status: 'completed',
-        result: { data: 'test' },
+        steps: { data: 'test' },
+        variables: {},
       })
     }
   }
@@ -21,7 +24,7 @@ vi.mock('@orchestr8/core', () => {
 
 vi.mock('@orchestr8/schema', () => {
   class MockWorkflowValidator {
-    validate(data: any) {
+    validate(_data: unknown) {
       return {
         valid: true,
         data: {
@@ -58,7 +61,7 @@ describe('test command', () => {
         { name: 'workflow1.test.json', isFile: () => true },
         { name: 'workflow2.test.json', isFile: () => true },
         { name: 'not-a-test.json', isFile: () => true },
-      ] as any),
+      ] as fs.Dirent[]),
     )
 
     const mockReadFile = vi.mocked(fs.readFile)

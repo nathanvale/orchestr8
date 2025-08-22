@@ -1,5 +1,6 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest'
 import fs from 'fs/promises'
+
+import { describe, expect, it, vi, beforeEach } from 'vitest'
 
 // Mock fs/promises
 vi.mock('fs/promises')
@@ -10,7 +11,7 @@ vi.mock('@orchestr8/core', () => {
     getExecutionIds: vi.fn(() => ['test-run-id']),
     exportExecution: vi.fn((id) => {
       if (id === 'test-run-id') {
-        return {
+        return JSON.stringify({
           executionId: 'test-run-id',
           workflowId: 'test-workflow',
           startTime: Date.parse('2025-01-01T00:00:00Z'),
@@ -37,7 +38,7 @@ vi.mock('@orchestr8/core', () => {
             errorCount: 0,
             status: 'completed',
           },
-        }
+        })
       }
       return null
     }),
