@@ -55,3 +55,6 @@ temp
 .agent-os/.obsidian/**
 .obsidian/workspace.json
 **/.obsidian/workspace.json
+
+# Project metadata
+PROJECT_INDEX.json
