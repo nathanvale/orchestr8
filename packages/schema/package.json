@@ -34,12 +34,12 @@
     "clean": "rimraf dist *.tsbuildinfo"
   },
   "dependencies": {
-    "zod": "^3.25.74",
-    "zod-to-json-schema": "^3.24.6"
+    "zod": "^3.25.74"
   },
   "devDependencies": {
     "@types/node": "^24.0.8",
     "typescript": "^5.8.3",
-    "vitest": "^3.2.4"
+    "vitest": "^3.2.4",
+    "zod-to-json-schema": "^3.24.6"
   }
 }
