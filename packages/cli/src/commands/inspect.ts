@@ -1,6 +1,11 @@
-import { Command } from 'commander'
 import fs from 'fs/promises'
-import { JournalManager } from '@orchestr8/core'
+
+import {
+  JournalManager,
+  type JournalExport,
+  type EnhancedJournalEntry,
+} from '@orchestr8/core'
+import { Command } from 'commander'
 
 export const inspectCommand = new Command('inspect')
   .description('Inspect workflow execution details')
@@ -30,8 +35,9 @@ export const inspectCommand = new Command('inspect')
       }
 
       executionIds.forEach((id) => {
-        const exportData = journal.exportExecution(id) as any
-        if (exportData) {
+        const exportJson = journal.exportExecution(id)
+        try {
+          const exportData: JournalExport = JSON.parse(exportJson)
           const duration = exportData.duration
             ? `${exportData.duration}ms`
             : 'In progress'
@@ -45,6 +51,9 @@ export const inspectCommand = new Command('inspect')
           }
           console.log(`    Duration: ${duration}`)
           console.log()
+        } catch {
+          console.log(`  ${id} - Error parsing execution data`)
+          console.log()
         }
       })
 
@@ -53,9 +62,17 @@ export const inspectCommand = new Command('inspect')
     }
 
     // Get specific execution
-    const execution = journal.exportExecution(runId) as any
+    const executionJson = journal.exportExecution(runId)
+    let execution: JournalExport
 
-    if (!execution) {
+    try {
+      execution = JSON.parse(executionJson)
+    } catch {
+      console.error(`❌ Error parsing execution data for ${runId}`)
+      return
+    }
+
+    if (!execution || !execution.executionId) {
       console.error(`❌ Execution not found: ${runId}`)
       console.log('\nTip: Run `o8 inspect` to list all executions')
       return
@@ -94,18 +111,23 @@ export const inspectCommand = new Command('inspect')
       console.log(`00:00:00 - Workflow started`)
 
       // Extract step information from entries
-      const stepEntries = execution.entries.filter((e: any) => e.stepId)
+      const stepEntries = execution.entries.filter(
+        (e: EnhancedJournalEntry) => e.stepId,
+      )
       const uniqueSteps = Array.from(
-        new Set(stepEntries.map((e: any) => e.stepId)),
+        new Set(stepEntries.map((e: EnhancedJournalEntry) => e.stepId)),
       )
 
       uniqueSteps.forEach((stepId, index) => {
-        const stepEvents = stepEntries.filter((e: any) => e.stepId === stepId)
+        const stepEvents = stepEntries.filter(
+          (e: EnhancedJournalEntry) => e.stepId === stepId,
+        )
         const startEvent = stepEvents.find(
-          (e: any) => e.type === 'step.started',
+          (e: EnhancedJournalEntry) => e.type === 'step.started',
         )
         const endEvent = stepEvents.find(
-          (e: any) => e.type === 'step.completed' || e.type === 'step.failed',
+          (e: EnhancedJournalEntry) =>
+            e.type === 'step.completed' || e.type === 'step.failed',
         )
 
         if (startEvent) {
@@ -135,18 +157,23 @@ export const inspectCommand = new Command('inspect')
       console.log('\nStep Details:')
       console.log('=============\n')
 
-      const stepEntries = execution.entries.filter((e: any) => e.stepId)
+      const stepEntries = execution.entries.filter(
+        (e: EnhancedJournalEntry) => e.stepId,
+      )
       const uniqueSteps = Array.from(
-        new Set(stepEntries.map((e: any) => e.stepId)),
+        new Set(stepEntries.map((e: EnhancedJournalEntry) => e.stepId)),
       )
 
       uniqueSteps.forEach((stepId, index) => {
-        const stepEvents = stepEntries.filter((e: any) => e.stepId === stepId)
+        const stepEvents = stepEntries.filter(
+          (e: EnhancedJournalEntry) => e.stepId === stepId,
+        )
         const startEvent = stepEvents.find(
-          (e: any) => e.type === 'step.started',
+          (e: EnhancedJournalEntry) => e.type === 'step.started',
         )
         const endEvent = stepEvents.find(
-          (e: any) => e.type === 'step.completed' || e.type === 'step.failed',
+          (e: EnhancedJournalEntry) =>
+            e.type === 'step.completed' || e.type === 'step.failed',
         )
 
         console.log(`Step ${index + 1}: ${stepId}`)
@@ -163,7 +190,7 @@ export const inspectCommand = new Command('inspect')
         }
 
         if (options.verbose) {
-          stepEvents.forEach((event: any) => {
+          stepEvents.forEach((event: EnhancedJournalEntry) => {
             console.log(`  Event: ${event.type}`)
             if (event.data) {
               console.log(

@@ -11,6 +11,7 @@ const rootDir = resolve(__dirname, '..')
 
 const packages = [
   'schema',
+  'logger',
   'resilience',
   'core',
   'agent-base',
@@ -41,9 +42,46 @@ for (const pkg of packages) {
       issues.push('❌ Missing "import" field in exports')
     }
 
+    if (!packageJson.exports?.['.']?.require) {
+      issues.push('❌ Missing "require" field in exports')
+    }
+
+    // Check for proper dual module structure
+    if (!packageJson.main || !packageJson.main.includes('dist/cjs/index.js')) {
+      issues.push(
+        '❌ Missing or incorrect "main" field (should point to dist/cjs/index.js)',
+      )
+    }
+
+    if (
+      !packageJson.module ||
+      !packageJson.module.includes('dist/esm/index.js')
+    ) {
+      issues.push(
+        '❌ Missing or incorrect "module" field (should point to dist/esm/index.js)',
+      )
+    }
+
+    if (
+      !packageJson.types ||
+      !packageJson.types.includes('dist/types/index.d.ts')
+    ) {
+      issues.push(
+        '❌ Missing or incorrect "types" field (should point to dist/types/index.d.ts)',
+      )
+    }
+
     const exportOrder = Object.keys(packageJson.exports?.['.'] || {})
     if (exportOrder[0] !== 'development') {
       issues.push('⚠️  "development" should be first in exports')
+    }
+
+    // Check build script configuration
+    if (
+      !packageJson.scripts?.build ||
+      !packageJson.scripts.build.includes('build:esm')
+    ) {
+      issues.push('❌ Missing dual-build scripts')
     }
 
     if (issues.length > 0) {

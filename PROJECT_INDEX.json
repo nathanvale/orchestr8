@@ -1,51 +1,52 @@
 {
-  "indexed_at": "2025-08-22T07:10:23.601398",
+  "indexed_at": "2025-08-23T05:42:20.087221",
   "root": ".",
   "project_structure": {
     "type": "tree",
     "root": ".",
     "tree": [
       ".",
-      "\u251c\u2500\u2500 docs/",
+      "\u251c\u2500\u2500 docs/ (4 files)",
       "\u2502   \u2514\u2500\u2500 sub-specs/",
-      "\u251c\u2500\u2500 packages/ (376 files)",
-      "\u2502   \u251c\u2500\u2500 agent-base/ (8 files)",
+      "\u251c\u2500\u2500 packages/ (623 files)",
+      "\u2502   \u251c\u2500\u2500 agent-base/ (14 files)",
       "\u2502   \u2502   \u251c\u2500\u2500 src/ (2 files)",
       "\u2502   \u2502   \u2514\u2500\u2500 package.json",
-      "\u2502   \u251c\u2500\u2500 cli/ (31 files)",
-      "\u2502   \u2502   \u251c\u2500\u2500 src/ (13 files)",
-      "\u2502   \u2502   \u2502   \u2514\u2500\u2500 commands/ (10 files)",
+      "\u2502   \u251c\u2500\u2500 cli/ (42 files)",
+      "\u2502   \u2502   \u251c\u2500\u2500 src/ (14 files)",
+      "\u2502   \u2502   \u2502   \u2514\u2500\u2500 commands/ (11 files)",
+      "\u2502   \u2502   \u2502       \u2514\u2500\u2500 __tests__/",
       "\u2502   \u2502   \u2514\u2500\u2500 package.json",
-      "\u2502   \u251c\u2500\u2500 core/ (61 files)",
-      "\u2502   \u2502   \u251c\u2500\u2500 docs/",
-      "\u2502   \u2502   \u251c\u2500\u2500 src/ (27 files)",
+      "\u2502   \u251c\u2500\u2500 core/ (94 files)",
+      "\u2502   \u2502   \u251c\u2500\u2500 docs/ (4 files)",
+      "\u2502   \u2502   \u251c\u2500\u2500 src/ (30 files)",
       "\u2502   \u2502   \u251c\u2500\u2500 package.json",
       "\u2502   \u2502   \u2514\u2500\u2500 README.md",
-      "\u2502   \u251c\u2500\u2500 logger/ (69 files)",
-      "\u2502   \u2502   \u251c\u2500\u2500 docs/",
-      "\u2502   \u2502   \u251c\u2500\u2500 src/ (15 files)",
-      "\u2502   \u2502   \u2502   \u251c\u2500\u2500 adapters/ (7 files)",
+      "\u2502   \u251c\u2500\u2500 logger/ (122 files)",
+      "\u2502   \u2502   \u251c\u2500\u2500 docs/ (4 files)",
+      "\u2502   \u2502   \u251c\u2500\u2500 src/ (33 files)",
+      "\u2502   \u2502   \u2502   \u251c\u2500\u2500 adapters/ (15 files)",
       "\u2502   \u2502   \u2502   \u2514\u2500\u2500 formatters/",
       "\u2502   \u2502   \u2514\u2500\u2500 package.json",
-      "\u2502   \u251c\u2500\u2500 resilience/ (54 files)",
-      "\u2502   \u2502   \u251c\u2500\u2500 docs/",
+      "\u2502   \u251c\u2500\u2500 resilience/ (89 files)",
+      "\u2502   \u2502   \u251c\u2500\u2500 docs/ (4 files)",
       "\u2502   \u2502   \u251c\u2500\u2500 src/ (24 files)",
       "\u2502   \u2502   \u251c\u2500\u2500 package.json",
       "\u2502   \u2502   \u2514\u2500\u2500 README.md",
-      "\u2502   \u251c\u2500\u2500 schema/ (123 files)",
+      "\u2502   \u251c\u2500\u2500 schema/ (228 files)",
       "\u2502   \u2502   \u251c\u2500\u2500 packages/",
       "\u2502   \u2502   \u2502   \u2514\u2500\u2500 schema/",
       "\u2502   \u2502   \u2502       \u2514\u2500\u2500 src/",
       "\u2502   \u2502   \u2502           \u2514\u2500\u2500 generation/",
       "\u2502   \u2502   \u251c\u2500\u2500 scripts/",
-      "\u2502   \u2502   \u251c\u2500\u2500 src/ (29 files)",
-      "\u2502   \u2502   \u2502   \u251c\u2500\u2500 agent/ (2 files)",
-      "\u2502   \u2502   \u2502   \u251c\u2500\u2500 events/ (1 files)",
-      "\u2502   \u2502   \u2502   \u251c\u2500\u2500 generation/ (3 files)",
-      "\u2502   \u2502   \u2502   \u251c\u2500\u2500 validation/ (6 files)",
-      "\u2502   \u2502   \u2502   \u2514\u2500\u2500 workflow/ (5 files)",
+      "\u2502   \u2502   \u251c\u2500\u2500 src/ (70 files)",
+      "\u2502   \u2502   \u2502   \u251c\u2500\u2500 agent/ (6 files)",
+      "\u2502   \u2502   \u2502   \u251c\u2500\u2500 events/ (3 files)",
+      "\u2502   \u2502   \u2502   \u251c\u2500\u2500 generation/ (7 files)",
+      "\u2502   \u2502   \u2502   \u251c\u2500\u2500 validation/ (12 files)",
+      "\u2502   \u2502   \u2502   \u2514\u2500\u2500 workflow/ (13 files)",
       "\u2502   \u2502   \u2514\u2500\u2500 package.json",
-      "\u2502   \u2514\u2500\u2500 testing/ (30 files)",
+      "\u2502   \u2514\u2500\u2500 testing/ (34 files)",
       "\u2502       \u251c\u2500\u2500 src/ (6 files)",
       "\u2502       \u2502   \u251c\u2500\u2500 mocks/ (2 files)",
       "\u2502       \u2502   \u2514\u2500\u2500 utilities/ (2 files)",
@@ -87,6 +88,12 @@
         "Type checking",
         "Clean builds",
         "Development"
+      ],
+      "architecture_hints": []
+    },
+    ".changeset/README.md": {
+      "sections": [
+        "Changesets"
       ],
       "architecture_hints": []
     },
@@ -150,6 +157,22 @@
       ],
       "architecture_hints": []
     },
+    "packages/agent-base/CHANGELOG.md": {
+      "sections": [
+        "@orchestr8/agent-base",
+        "0.1.1",
+        "Patch Changes"
+      ],
+      "architecture_hints": []
+    },
+    "packages/core/CHANGELOG.md": {
+      "sections": [
+        "@orchestr8/core",
+        "0.1.1",
+        "Patch Changes"
+      ],
+      "architecture_hints": []
+    },
     "packages/core/README.md": {
       "sections": [
         "@orchestr8/core",
@@ -159,6 +182,30 @@
         "API reference (high level)",
         "Configuration options",
         "Error handling"
+      ],
+      "architecture_hints": []
+    },
+    "packages/cli/CHANGELOG.md": {
+      "sections": [
+        "@orchestr8/cli",
+        "0.1.1",
+        "Patch Changes"
+      ],
+      "architecture_hints": []
+    },
+    "packages/schema/CHANGELOG.md": {
+      "sections": [
+        "@orchestr8/schema",
+        "0.1.1",
+        "Patch Changes"
+      ],
+      "architecture_hints": []
+    },
+    "packages/resilience/CHANGELOG.md": {
+      "sections": [
+        "@orchestr8/resilience",
+        "0.1.1",
+        "Patch Changes"
       ],
       "architecture_hints": []
     },
@@ -567,6 +614,28 @@
       ],
       "architecture_hints": []
     },
+    ".agent-os/specs/2025-08-22-json-model-merge-fixes/tasks.md": {
+      "sections": [
+        "Spec Tasks",
+        "Tasks"
+      ],
+      "architecture_hints": []
+    },
+    ".agent-os/specs/2025-08-22-json-model-merge-fixes/spec.md": {
+      "sections": [
+        "Spec Requirements Document",
+        "Overview",
+        "User Stories",
+        "Developer Merging Code",
+        "CI/CD Pipeline Reliability",
+        "Code Quality Maintenance",
+        "Spec Scope",
+        "Out of Scope",
+        "Expected Deliverable",
+        "Spec Documentation"
+      ],
+      "architecture_hints": []
+    },
     ".agent-os/specs/2025-08-20-workflow-schema-validation/tasks.md": {
       "sections": [
         "Spec Tasks",
@@ -603,6 +672,28 @@
         "User Stories",
         "Developer Experience Story",
         "Package Consumer Story",
+        "Spec Scope",
+        "Out of Scope",
+        "Expected Deliverable",
+        "Spec Documentation"
+      ],
+      "architecture_hints": []
+    },
+    ".agent-os/specs/2025-08-22-typescript-config-cleanup/tasks.md": {
+      "sections": [
+        "Spec Tasks",
+        "Tasks"
+      ],
+      "architecture_hints": []
+    },
+    ".agent-os/specs/2025-08-22-typescript-config-cleanup/spec.md": {
+      "sections": [
+        "Spec Requirements Document",
+        "Overview",
+        "User Stories",
+        "Developer Build Experience",
+        "Developer Type-Checking Experience",
+        "CI/CD Pipeline Reliability",
         "Spec Scope",
         "Out of Scope",
         "Expected Deliverable",
@@ -661,6 +752,87 @@
         "Expected Deliverable",
         "Implementation Decisions",
         "Wildcard Pattern Support"
+      ],
+      "architecture_hints": []
+    },
+    ".agent-os/specs/2025-08-22-npm-publishing-distribution/tasks.md": {
+      "sections": [
+        "Tasks"
+      ],
+      "architecture_hints": []
+    },
+    ".agent-os/specs/2025-08-22-npm-publishing-distribution/spec.md": {
+      "sections": [
+        "Spec Requirements Document",
+        "Overview",
+        "User Stories",
+        "Package Consumer (Developer)",
+        "Package Maintainer (Core Team)",
+        "Early Adopter (Beta Tester)",
+        "Spec Scope",
+        "Out of Scope",
+        "Expected Deliverable",
+        "Spec Documentation"
+      ],
+      "architecture_hints": []
+    },
+    ".agent-os/specs/2025-08-22-npm-publishing-distribution/sub-specs/publishing-strategy.md": {
+      "sections": [
+        "Publishing Strategy",
+        "Package Maturity Tiers",
+        "Beta RC Packages (Production Ready)",
+        "Alpha Packages (Development/Preview)",
+        "Internal Packages (Not Published)",
+        "Version Progression Strategy",
+        "Beta RC to Stable Path",
+        "Alpha to Beta Path",
+        "Release Cadence",
+        "Development Releases"
+      ],
+      "architecture_hints": []
+    },
+    ".agent-os/specs/2025-08-22-npm-publishing-distribution/sub-specs/technical-spec.md": {
+      "sections": [
+        "Technical Specification",
+        "Technical Requirements",
+        "Dual Module Export Configuration",
+        "Changesets Integration",
+        "Build Pipeline Enhancement",
+        "NPM Organization Setup",
+        "Version Strategy Implementation",
+        "Approach Options",
+        "External Dependencies",
+        "Implementation Architecture"
+      ],
+      "architecture_hints": []
+    },
+    ".agent-os/specs/2025-08-22-npm-publishing-distribution/sub-specs/tests.md": {
+      "sections": [
+        "Tests Specification",
+        "Test Coverage",
+        "Unit Tests",
+        "Integration Tests",
+        "End-to-End Tests",
+        "Performance Tests",
+        "Mocking Requirements",
+        "NPM Registry Mocking",
+        "GitHub API Mocking",
+        "File System Mocking"
+      ],
+      "architecture_hints": []
+    },
+    ".agent-os/specs/2025-08-22-npm-publishing-distribution/sub-specs/ci-cd-spec.md": {
+      "sections": [
+        "CI/CD Specification",
+        "GitHub Actions Workflow Architecture",
+        "Release Workflow (.github/workflows/release.yml)",
+        "Pull Request Validation (.github/workflows/ci.yml)",
+        "Secret Configuration",
+        "Required GitHub Secrets",
+        "NPM Token Setup Process",
+        "Changeset Automation Workflow",
+        "Developer Workflow",
+        "Automated Release Process"
       ],
       "architecture_hints": []
     },
@@ -822,6 +994,34 @@
       ],
       "architecture_hints": []
     },
+    ".agent-os/specs/2025-08-22-typescript-config-cleanup/sub-specs/technical-spec.md": {
+      "sections": [
+        "Technical Specification",
+        "Technical Requirements",
+        "TypeScript Configuration Standardization",
+        "Build System Requirements",
+        "Module Resolution Requirements",
+        "Approach Options",
+        "Implementation Strategy",
+        "Phase 1: Remove TypeScript Project References",
+        "Phase 2: Standardize Type-Checking",
+        "Phase 3: Fix Build Configurations"
+      ],
+      "architecture_hints": []
+    },
+    ".agent-os/specs/2025-08-22-typescript-config-cleanup/sub-specs/tests.md": {
+      "sections": [
+        "Tests Specification",
+        "Test Coverage",
+        "Unit Tests",
+        "Integration Tests",
+        "Regression Tests",
+        "Performance Tests",
+        "Mocking Requirements",
+        "Test Environment Setup"
+      ],
+      "architecture_hints": []
+    },
     ".agent-os/specs/2025-08-18-monorepo-initialization/sub-specs/technical-spec.md": {
       "sections": [
         "Technical Specification",
@@ -878,6 +1078,35 @@
         "Negative Test Cases (22 tests)"
       ],
       "architecture_hints": []
+    },
+    ".agent-os/specs/2025-08-22-json-model-merge-fixes/sub-specs/technical-spec.md": {
+      "sections": [
+        "Technical Specification",
+        "Technical Requirements",
+        "Critical Fix Requirements",
+        "High Priority Requirements",
+        "Approach Options",
+        "Option A: Quick Fix (Selected)",
+        "Option B: Complete Overhaul",
+        "External Dependencies",
+        "Required Tools",
+        "New Dependencies"
+      ],
+      "architecture_hints": []
+    },
+    ".agent-os/specs/2025-08-22-json-model-merge-fixes/sub-specs/tests.md": {
+      "sections": [
+        "Tests Specification",
+        "Test Coverage",
+        "Unit Tests",
+        "Integration Tests",
+        "Test Stability Requirements",
+        "Mocking Requirements",
+        "Test Execution Strategy"
+      ],
+      "architecture_hints": [
+        "I/O"
+      ]
     },
     ".agent-os/specs/2025-08-18-core-orchestration-engine/sub-specs/implementation-readiness.md": {
       "sections": [
@@ -1695,33 +1924,39 @@
     ".agent-os/specs/2025-08-19-logger-package-migration": "Test files and test utilities",
     ".agent-os/specs/2025-08-20-json-execution-model": "Test files and test utilities",
     ".agent-os/specs/2025-08-18-core-orchestration-engine": "Test files and test utilities",
+    ".agent-os/specs/2025-08-22-json-model-merge-fixes": "Test files and test utilities",
     ".agent-os/specs/2025-08-20-workflow-schema-validation": "Test files and test utilities",
     ".agent-os/specs/2025-08-18-monorepo-initialization": "Test files and test utilities",
+    ".agent-os/specs/2025-08-22-typescript-config-cleanup": "Configuration files and settings",
     ".agent-os/specs/2025-01-18-claude-subagents-integration": "Test files and test utilities",
     ".agent-os/specs/2025-08-20-event-bus-bounded-queue": "Test files and test utilities",
+    ".agent-os/specs/2025-08-22-npm-publishing-distribution": "Test files and test utilities",
     ".agent-os/specs/2025-08-19-complete-resilience-patterns/sub-specs": "Test specifications",
     ".agent-os/specs/2025-08-19-complete-resilience-patterns/2025-08-19-resilience-p0-prerequisites": "Test files and test utilities",
     ".agent-os/specs/2025-01-18-mcp-integration/sub-specs": "Test specifications",
     ".agent-os/specs/2025-08-19-logger-package-migration/sub-specs": "Test specifications",
     ".agent-os/specs/2025-08-20-json-execution-model/sub-specs": "Test specifications",
     ".agent-os/specs/2025-08-18-core-orchestration-engine/sub-specs": "Test specifications",
+    ".agent-os/specs/2025-08-22-json-model-merge-fixes/sub-specs": "Test specifications",
     ".agent-os/specs/2025-08-20-workflow-schema-validation/sub-specs": "Test specifications",
     ".agent-os/specs/2025-08-18-monorepo-initialization/sub-specs": "Test specifications",
+    ".agent-os/specs/2025-08-22-typescript-config-cleanup/sub-specs": "Test specifications",
     ".agent-os/specs/2025-01-18-claude-subagents-integration/sub-specs": "Test specifications",
     ".agent-os/specs/2025-08-20-event-bus-bounded-queue/sub-specs": "Test specifications",
+    ".agent-os/specs/2025-08-22-npm-publishing-distribution/sub-specs": "Test specifications",
     ".agent-os/specs/2025-08-19-complete-resilience-patterns/2025-08-19-resilience-p0-prerequisites/sub-specs": "Test specifications"
   },
   "stats": {
-    "total_files": 156,
-    "total_directories": 85,
+    "total_files": 256,
+    "total_directories": 98,
     "fully_parsed": {
-      "javascript": 3,
-      "typescript": 132
+      "javascript": 32,
+      "typescript": 166
     },
     "listed_only": {
-      "json": 21
+      "json": 58
     },
-    "markdown_files": 121
+    "markdown_files": 142
   },
   "files": {
     "tsconfig-cache.json": {
@@ -1765,6 +2000,11 @@
       "language": "json",
       "parsed": false
     },
+    ".changeset/config.json": {
+      "language": "json",
+      "parsed": false,
+      "purpose": "Configuration"
+    },
     ".claude/settings.local.json": {
       "language": "json",
       "parsed": false,
@@ -1774,9 +2014,24 @@
       "language": "javascript",
       "parsed": false
     },
+    "packages/agent-base/tsconfig.types.json": {
+      "language": "json",
+      "parsed": false,
+      "purpose": "Configuration"
+    },
+    "packages/agent-base/tsconfig.esm.json": {
+      "language": "json",
+      "parsed": false,
+      "purpose": "Configuration"
+    },
     "packages/agent-base/package.json": {
       "language": "json",
       "parsed": false
+    },
+    "packages/agent-base/tsconfig.cjs.json": {
+      "language": "json",
+      "parsed": false,
+      "purpose": "Configuration"
     },
     "packages/agent-base/tsconfig.json": {
       "language": "json",
@@ -1788,9 +2043,24 @@
       "parsed": false,
       "purpose": "Test file"
     },
+    "packages/core/tsconfig.types.json": {
+      "language": "json",
+      "parsed": false,
+      "purpose": "Configuration"
+    },
+    "packages/core/tsconfig.esm.json": {
+      "language": "json",
+      "parsed": false,
+      "purpose": "Configuration"
+    },
     "packages/core/package.json": {
       "language": "json",
       "parsed": false
+    },
+    "packages/core/tsconfig.cjs.json": {
+      "language": "json",
+      "parsed": false,
+      "purpose": "Configuration"
     },
     "packages/core/tsconfig.json": {
       "language": "json",
@@ -1802,9 +2072,24 @@
       "parsed": false,
       "purpose": "Test file"
     },
+    "packages/logger/tsconfig.types.json": {
+      "language": "json",
+      "parsed": false,
+      "purpose": "Configuration"
+    },
+    "packages/logger/tsconfig.esm.json": {
+      "language": "json",
+      "parsed": false,
+      "purpose": "Configuration"
+    },
     "packages/logger/package.json": {
       "language": "json",
       "parsed": false
+    },
+    "packages/logger/tsconfig.cjs.json": {
+      "language": "json",
+      "parsed": false,
+      "purpose": "Configuration"
     },
     "packages/logger/tsconfig.json": {
       "language": "json",
@@ -1816,9 +2101,24 @@
       "parsed": false,
       "purpose": "Test file"
     },
+    "packages/cli/tsconfig.types.json": {
+      "language": "json",
+      "parsed": false,
+      "purpose": "Configuration"
+    },
+    "packages/cli/tsconfig.esm.json": {
+      "language": "json",
+      "parsed": false,
+      "purpose": "Configuration"
+    },
     "packages/cli/package.json": {
       "language": "json",
       "parsed": false
+    },
+    "packages/cli/tsconfig.cjs.json": {
+      "language": "json",
+      "parsed": false,
+      "purpose": "Configuration"
     },
     "packages/cli/tsconfig.json": {
       "language": "json",
@@ -1830,9 +2130,24 @@
       "parsed": false,
       "purpose": "Test file"
     },
+    "packages/testing/tsconfig.types.json": {
+      "language": "json",
+      "parsed": false,
+      "purpose": "Configuration"
+    },
+    "packages/testing/tsconfig.esm.json": {
+      "language": "json",
+      "parsed": false,
+      "purpose": "Configuration"
+    },
     "packages/testing/package.json": {
       "language": "json",
       "parsed": false
+    },
+    "packages/testing/tsconfig.cjs.json": {
+      "language": "json",
+      "parsed": false,
+      "purpose": "Configuration"
     },
     "packages/testing/tsconfig.json": {
       "language": "json",
@@ -1844,9 +2159,24 @@
       "parsed": false,
       "purpose": "Test file"
     },
+    "packages/schema/tsconfig.types.json": {
+      "language": "json",
+      "parsed": false,
+      "purpose": "Configuration"
+    },
+    "packages/schema/tsconfig.esm.json": {
+      "language": "json",
+      "parsed": false,
+      "purpose": "Configuration"
+    },
     "packages/schema/package.json": {
       "language": "json",
       "parsed": false
+    },
+    "packages/schema/tsconfig.cjs.json": {
+      "language": "json",
+      "parsed": false,
+      "purpose": "Configuration"
     },
     "packages/schema/tsconfig.json": {
       "language": "json",
@@ -1858,9 +2188,24 @@
       "parsed": false,
       "purpose": "Test file"
     },
+    "packages/resilience/tsconfig.types.json": {
+      "language": "json",
+      "parsed": false,
+      "purpose": "Configuration"
+    },
+    "packages/resilience/tsconfig.esm.json": {
+      "language": "json",
+      "parsed": false,
+      "purpose": "Configuration"
+    },
     "packages/resilience/package.json": {
       "language": "json",
       "parsed": false
+    },
+    "packages/resilience/tsconfig.cjs.json": {
+      "language": "json",
+      "parsed": false,
+      "purpose": "Configuration"
     },
     "packages/resilience/tsconfig.json": {
       "language": "json",
@@ -2416,6 +2761,133 @@
       ],
       "call_graph": {}
     },
+    "packages/resilience/docs/.obsidian/app.json": {
+      "language": "json",
+      "parsed": false,
+      "purpose": "Application entry point"
+    },
+    "packages/resilience/docs/.obsidian/core-plugins.json": {
+      "language": "json",
+      "parsed": false
+    },
+    "packages/resilience/docs/.obsidian/appearance.json": {
+      "language": "json",
+      "parsed": false
+    },
+    "packages/schema/src/zod-schemas.js": {
+      "language": "javascript",
+      "parsed": true,
+      "imports": [
+        "node:crypto",
+        "zod"
+      ],
+      "functions": {},
+      "classes": {
+        "WorkflowSchemaValidator": {
+          "methods": {},
+          "static_constants": {
+            "CURRENT_SCHEMA_VERSION": "str"
+          },
+          "doc": "Comprehensive Zod schemas for workflow validation"
+        }
+      },
+      "variables": [
+        "canonicalSchema",
+        "sortedJson",
+        "expectedHash",
+        "parsed",
+        "errorMessage",
+        "path"
+      ],
+      "call_graph": {}
+    },
+    "packages/schema/src/workflow.d.ts": {
+      "language": "typescript",
+      "parsed": false
+    },
+    "packages/schema/src/validators.js": {
+      "language": "javascript",
+      "parsed": true,
+      "imports": [
+        "./zod-schemas.js"
+      ],
+      "functions": {
+        "computeWorkflowSchemaHash": "()",
+        "validateWorkflow": {
+          "calls": [
+            "checkCircularDependencies",
+            "validateStepReferences",
+            "validateWorkflow"
+          ],
+          "signature": "(workflow)",
+          "called_by": [
+            "validateWorkflow",
+            "isValidWorkflow",
+            "validateWorkflow",
+            "isValidWorkflow",
+            "validateWorkflow",
+            "validateWorkflowOrThrow",
+            "validateWorkflow",
+            "validateWorkflowOrThrow"
+          ]
+        },
+        "isValidWorkflow": {
+          "calls": [
+            "validateWorkflow"
+          ],
+          "signature": "(workflow)"
+        },
+        "validateStepReferences": {
+          "signature": "(workflow)",
+          "called_by": [
+            "validateWorkflow",
+            "validateWorkflow"
+          ]
+        },
+        "checkCircularDependencies": {
+          "calls": [
+            "buildDependencyGraph",
+            "hasCycle"
+          ],
+          "signature": "(steps)",
+          "called_by": [
+            "validateWorkflow",
+            "validateWorkflow"
+          ]
+        },
+        "hasCycle": {
+          "calls": [
+            "hasCycle"
+          ],
+          "signature": "(nodeId, path = [])",
+          "called_by": [
+            "checkCircularDependencies",
+            "hasCycle",
+            "checkCircularDependencies",
+            "hasCycle"
+          ]
+        },
+        "buildDependencyGraph": {
+          "signature": "(steps)",
+          "called_by": [
+            "checkCircularDependencies",
+            "checkCircularDependencies"
+          ]
+        }
+      },
+      "classes": {},
+      "variables": [
+        "validatedWorkflow",
+        "stepIds",
+        "graph",
+        "visited",
+        "recursionStack",
+        "dependencies",
+        "cycleStart",
+        "cyclePath"
+      ],
+      "call_graph": {}
+    },
     "packages/schema/src/resilience.ts": {
       "language": "typescript",
       "parsed": false
@@ -2425,6 +2897,10 @@
       "parsed": false,
       "purpose": "Test file"
     },
+    "packages/schema/src/agents.js": {
+      "language": "javascript",
+      "parsed": false
+    },
     "packages/schema/src/index.test.ts": {
       "language": "typescript",
       "parsed": false,
@@ -2433,6 +2909,71 @@
     "packages/schema/src/workflow.ts": {
       "language": "typescript",
       "parsed": false
+    },
+    "packages/schema/src/errors.d.ts": {
+      "language": "typescript",
+      "parsed": true,
+      "functions": {
+        "createExecutionError": "(code: ExecutionErrorCodeType, message: string, options?: { stepId?: string attempt?: number cause?: Error | ExecutionError context?: Record<string, unknown> },): ExecutionError\n/**\n * Type guard to check if an error is an ExecutionError\n */\nexport declare function isExecutionError(\n  error: unknown,\n): error is ExecutionError\n//# sourceMappingURL=errors.d.ts.map"
+      },
+      "classes": {},
+      "interfaces": {
+        "ExecutionError": {
+          "doc": "Error codes for execution failures"
+        }
+      },
+      "call_graph": {}
+    },
+    "packages/schema/src/expression-validator.js": {
+      "language": "javascript",
+      "parsed": true,
+      "functions": {
+        "traverse": "(obj)"
+      },
+      "classes": {
+        "ExpressionValidator": {
+          "methods": {},
+          "static_constants": {
+            "EXPRESSION_PATTERN": "value"
+          },
+          "doc": "Expression validation for workflow input mapping"
+        }
+      },
+      "constants": {
+        "DEFAULT_EXPRESSION_SECURITY": "collection"
+      },
+      "variables": [
+        "errors",
+        "warnings",
+        "match",
+        "innerExpression",
+        "defaultMatch",
+        "pathExpression",
+        "defaultValue",
+        "defaultValidation",
+        "depth",
+        "security",
+        "validation",
+        "result",
+        "pathParts",
+        "stepId",
+        "stepResult",
+        "envVarName",
+        "allowedList",
+        "bracketMatch",
+        "baseValue",
+        "index",
+        "key",
+        "serialized",
+        "sizeInBytes",
+        "patterns",
+        "trimmed",
+        "expressions",
+        "traverse",
+        "allErrors",
+        "allWarnings"
+      ],
+      "call_graph": {}
     },
     "packages/schema/src/errors.ts": {
       "language": "typescript",
@@ -2449,10 +2990,28 @@
       },
       "call_graph": {}
     },
+    "packages/schema/src/validators.d.ts": {
+      "language": "typescript",
+      "parsed": true,
+      "functions": {
+        "computeWorkflowSchemaHash": "(): string\n/**\n * Validate that a workflow conforms to the expected schema using Zod\n * @param workflow The workflow to validate\n * @returns The validated workflow with proper typing\n * @throws Error if validation fails with detailed error messages\n */\nexport declare function validateWorkflow(workflow: unknown): Workflow\n/**\n * Check if a workflow is valid without throwing\n * @param workflow The workflow to check\n * @returns True if valid, false otherwise\n */\nexport declare function isValidWorkflow(workflow: unknown): workflow is Workflow\n//# sourceMappingURL=validators.d.ts.map"
+      },
+      "classes": {},
+      "call_graph": {}
+    },
     "packages/schema/src/schema-hash-drift.test.ts": {
       "language": "typescript",
       "parsed": false,
       "purpose": "Test file"
+    },
+    "packages/schema/src/index.js": {
+      "language": "javascript",
+      "parsed": false,
+      "purpose": "Application entry point"
+    },
+    "packages/schema/src/agents.d.ts": {
+      "language": "typescript",
+      "parsed": false
     },
     "packages/schema/src/agents.ts": {
       "language": "typescript",
@@ -2510,6 +3069,20 @@
       },
       "call_graph": {}
     },
+    "packages/schema/src/workflow.js": {
+      "language": "javascript",
+      "parsed": false
+    },
+    "packages/schema/src/errors.js": {
+      "language": "javascript",
+      "parsed": true,
+      "functions": {
+        "createExecutionError": "(code, message, options)",
+        "isExecutionError": "(error)"
+      },
+      "classes": {},
+      "call_graph": {}
+    },
     "packages/schema/src/zod-schemas.ts": {
       "language": "typescript",
       "parsed": true,
@@ -2553,6 +3126,10 @@
             "validateWorkflow",
             "isValidWorkflow",
             "validateWorkflow",
+            "isValidWorkflow",
+            "validateWorkflow",
+            "validateWorkflowOrThrow",
+            "validateWorkflow",
             "validateWorkflowOrThrow"
           ]
         },
@@ -2565,6 +3142,7 @@
         "validateStepReferences": {
           "signature": "(workflow: WorkflowZod): void",
           "called_by": [
+            "validateWorkflow",
             "validateWorkflow"
           ]
         },
@@ -2575,6 +3153,7 @@
           ],
           "signature": "(steps: Array<{ id: string; dependsOn?: string[] }>,): void",
           "called_by": [
+            "validateWorkflow",
             "validateWorkflow"
           ]
         },
@@ -2585,12 +3164,15 @@
           "signature": "(nodeId: string, path: string[] = []): boolean",
           "called_by": [
             "checkCircularDependencies",
+            "hasCycle",
+            "checkCircularDependencies",
             "hasCycle"
           ]
         },
         "buildDependencyGraph": {
           "signature": "(steps: Array<{ id: string; dependsOn?: string[] }>,): Map<string, string[]>",
           "called_by": [
+            "checkCircularDependencies",
             "checkCircularDependencies"
           ]
         }
@@ -2608,6 +3190,34 @@
       ],
       "call_graph": {}
     },
+    "packages/schema/src/zod-schemas.d.ts": {
+      "language": "typescript",
+      "parsed": true,
+      "imports": [
+        "zod"
+      ],
+      "functions": {},
+      "classes": {
+        "WorkflowSchemaValidator": {
+          "methods": {},
+          "doc": "Comprehensive Zod schemas for workflow validation"
+        }
+      },
+      "call_graph": {}
+    },
+    "packages/schema/src/resilience.js": {
+      "language": "javascript",
+      "parsed": false
+    },
+    "packages/schema/src/typescript-config.test.ts": {
+      "language": "typescript",
+      "parsed": false,
+      "purpose": "Test file"
+    },
+    "packages/schema/src/resilience.d.ts": {
+      "language": "typescript",
+      "parsed": false
+    },
     "packages/schema/src/dual-consumption.test.ts": {
       "language": "typescript",
       "parsed": false,
@@ -2618,8 +3228,48 @@
       "parsed": false,
       "purpose": "Application entry point"
     },
+    "packages/schema/src/expression-validator.d.ts": {
+      "language": "typescript",
+      "parsed": true,
+      "functions": {},
+      "classes": {
+        "ExpressionValidator": {
+          "methods": {},
+          "doc": "Expression validation for workflow input mapping"
+        }
+      },
+      "interfaces": {
+        "ExpressionSecurityConfig": {
+          "doc": "Expression validation for workflow input mapping"
+        },
+        "ExpressionContext": {
+          "doc": "Expression validation for workflow input mapping"
+        },
+        "ExpressionValidationResult": {
+          "doc": "Expression validation for workflow input mapping"
+        }
+      },
+      "call_graph": {}
+    },
+    "packages/schema/src/index.d.ts": {
+      "language": "typescript",
+      "parsed": false
+    },
+    "packages/schema/src/agent/agent-schema.d.ts": {
+      "language": "typescript",
+      "parsed": false
+    },
     "packages/schema/src/agent/agent-schema.ts": {
       "language": "typescript",
+      "parsed": false
+    },
+    "packages/schema/src/agent/index.js": {
+      "language": "javascript",
+      "parsed": false,
+      "purpose": "Application entry point"
+    },
+    "packages/schema/src/agent/agent-schema.js": {
+      "language": "javascript",
       "parsed": false
     },
     "packages/schema/src/agent/index.ts": {
@@ -2627,8 +3277,41 @@
       "parsed": false,
       "purpose": "Application entry point"
     },
+    "packages/schema/src/agent/index.d.ts": {
+      "language": "typescript",
+      "parsed": false
+    },
     "packages/schema/src/workflow/policies-schema.ts": {
       "language": "typescript",
+      "parsed": false
+    },
+    "packages/schema/src/workflow/workflow-schema.js": {
+      "language": "javascript",
+      "parsed": false
+    },
+    "packages/schema/src/workflow/step-schema.d.ts": {
+      "language": "typescript",
+      "parsed": false
+    },
+    "packages/schema/src/workflow/policies-schema.d.ts": {
+      "language": "typescript",
+      "parsed": false
+    },
+    "packages/schema/src/workflow/workflow-schema.d.ts": {
+      "language": "typescript",
+      "parsed": false
+    },
+    "packages/schema/src/workflow/step-schema.js": {
+      "language": "javascript",
+      "parsed": false
+    },
+    "packages/schema/src/workflow/index.js": {
+      "language": "javascript",
+      "parsed": false,
+      "purpose": "Application entry point"
+    },
+    "packages/schema/src/workflow/policies-schema.js": {
+      "language": "javascript",
       "parsed": false
     },
     "packages/schema/src/workflow/workflow-schema.ts": {
@@ -2644,19 +3327,91 @@
       "parsed": false,
       "purpose": "Application entry point"
     },
+    "packages/schema/src/workflow/index.d.ts": {
+      "language": "typescript",
+      "parsed": false
+    },
     "packages/schema/src/workflow/workflow-schema.test.ts": {
       "language": "typescript",
       "parsed": false,
       "purpose": "Test file"
     },
+    "packages/schema/src/events/event-schemas.d.ts": {
+      "language": "typescript",
+      "parsed": false
+    },
     "packages/schema/src/events/event-schemas.ts": {
       "language": "typescript",
+      "parsed": false
+    },
+    "packages/schema/src/events/event-schemas.js": {
+      "language": "javascript",
       "parsed": false
     },
     "packages/schema/src/validation/workflow-validator.test.ts": {
       "language": "typescript",
       "parsed": false,
       "purpose": "Test file"
+    },
+    "packages/schema/src/validation/formatter.js": {
+      "language": "javascript",
+      "parsed": true,
+      "functions": {},
+      "classes": {
+        "SchemaErrorFormatter": {
+          "methods": {
+            "constructor": "()",
+            "format": {
+              "signature": "(error)",
+              "called_by": [
+                "SchemaErrorFormatter.formatAsJSON"
+              ]
+            },
+            "formatSingleError": "(issue)",
+            "formatPath": "(path)",
+            "getHumanMessage": {
+              "calls": [
+                "formatType"
+              ],
+              "signature": "(issue)"
+            },
+            "formatType": {
+              "signature": "(type)",
+              "called_by": [
+                "SchemaErrorFormatter.getHumanMessage",
+                "SchemaErrorFormatter.getExpectedType"
+              ]
+            },
+            "getExpectedType": {
+              "calls": [
+                "formatType"
+              ],
+              "signature": "(issue)"
+            },
+            "getExample": "(path, issue)",
+            "formatAsString": "(error)",
+            "formatAsJSON": {
+              "calls": [
+                "format"
+              ],
+              "signature": "(error)"
+            },
+            "__init__": "()"
+          },
+          "doc": "Schema error formatter for user-friendly validation messages"
+        }
+      },
+      "variables": [
+        "path",
+        "message",
+        "expected",
+        "example",
+        "patternBase",
+        "pathBase",
+        "formatted",
+        "msg"
+      ],
+      "call_graph": {}
     },
     "packages/schema/src/validation/workflow-validator.ts": {
       "language": "typescript",
@@ -2676,6 +3431,10 @@
             "validateWorkflow",
             "isValidWorkflow",
             "validateWorkflow",
+            "isValidWorkflow",
+            "validateWorkflow",
+            "validateWorkflowOrThrow",
+            "validateWorkflow",
             "validateWorkflowOrThrow"
           ]
         },
@@ -2685,6 +3444,8 @@
           ],
           "signature": "(data: unknown,): ValidationResult<AgentDefinition>",
           "called_by": [
+            "validateAgent",
+            "validateAgentOrThrow",
             "validateAgent",
             "validateAgentOrThrow"
           ]
@@ -2709,13 +3470,18 @@
             "validateWorkflow": {
               "signature": "(data: unknown): ValidationResult<Workflow>",
               "called_by": [
-                "validateWorkflow",
                 "isValidWorkflow",
-                "validateWorkflowOrThrow"
+                "validateWorkflowOrThrow",
+                "validateWorkflow"
               ]
             },
             "validateStructure": "(data: unknown): ",
-            "getErrorSummary": "(data: unknown): string | null",
+            "getErrorSummary": {
+              "signature": "(data: unknown): string | null",
+              "called_by": [
+                "validateWorkflowOrThrow"
+              ]
+            },
             "__init__": "()"
           },
           "extends": "SchemaValidator",
@@ -2727,8 +3493,8 @@
             "validateAgent": {
               "signature": "(data: unknown): ValidationResult<AgentDefinition>",
               "called_by": [
-                "validateAgent",
-                "validateAgentOrThrow"
+                "validateAgentOrThrow",
+                "validateAgent"
               ]
             },
             "__init__": "()"
@@ -2753,6 +3519,126 @@
         "agentValidator",
         "summary"
       ],
+      "call_graph": {}
+    },
+    "packages/schema/src/validation/workflow-validator.d.ts": {
+      "language": "typescript",
+      "parsed": true,
+      "imports": [
+        "../agent/agent-schema.js",
+        "../workflow/workflow-schema.js",
+        "./validator.js"
+      ],
+      "functions": {
+        "validateWorkflow": {
+          "signature": "(data: unknown,): ValidationResult<Workflow>\nexport declare function validateAgent(\n  data: unknown,\n): ValidationResult<AgentDefinition>\n/**\n * Validate and throw with formatted error message\n */\nexport declare function validateWorkflowOrThrow(data: unknown): Workflow\n/**\n * Validate and throw with formatted error message\n */\nexport declare function validateAgentOrThrow(data: unknown): AgentDefinition\n//# sourceMappingURL=workflow-validator.d.ts.map",
+          "called_by": [
+            "validateWorkflow",
+            "isValidWorkflow",
+            "validateWorkflow",
+            "isValidWorkflow",
+            "validateWorkflow",
+            "validateWorkflowOrThrow",
+            "validateWorkflow",
+            "validateWorkflowOrThrow"
+          ]
+        }
+      },
+      "classes": {
+        "WorkflowValidator": {
+          "methods": {
+            "validateWorkflow": {
+              "signature": "(data: unknown): ValidationResult<Workflow>\n  /**\n   * Validate workflow and provide suggestions for fixes\n   */\n  validateWithSuggestions(data: unknown): ValidationResult<Workflow> &",
+              "called_by": [
+                "isValidWorkflow",
+                "validateWorkflowOrThrow",
+                "validateWorkflow"
+              ]
+            },
+            "validateStructure": "(data: unknown): "
+          },
+          "extends": "SchemaValidator",
+          "doc": "Workflow-specific validation utilities"
+        },
+        "AgentValidator": {
+          "methods": {},
+          "extends": "SchemaValidator",
+          "doc": "Workflow-specific validation utilities"
+        }
+      },
+      "call_graph": {}
+    },
+    "packages/schema/src/validation/validator.js": {
+      "language": "javascript",
+      "parsed": true,
+      "imports": [
+        "./formatter.js"
+      ],
+      "functions": {
+        "createValidator": "(schema, options)",
+        "validateSchema": {
+          "calls": [
+            "validate"
+          ],
+          "signature": "(schema, data)"
+        }
+      },
+      "classes": {
+        "SchemaValidator": {
+          "methods": {
+            "constructor": "(schema, options = {})",
+            "validate": {
+              "signature": "(data)",
+              "called_by": [
+                "validateSchema"
+              ]
+            },
+            "validateOrThrow": "(data)",
+            "parse": "(data)",
+            "getErrorString": "(data)",
+            "clearCache": "()",
+            "getCacheSize": "()",
+            "getCacheKey": "(data)",
+            "addToCache": "(key, result)",
+            "__init__": "(schema, options = {})"
+          },
+          "doc": "Schema validation utilities"
+        },
+        "ValidationError": {
+          "methods": {
+            "constructor": "(message, errors)",
+            "getFormattedMessage": "()",
+            "__init__": "(message, errors)"
+          },
+          "extends": "Error",
+          "type": "exception",
+          "doc": "Schema validation utilities"
+        }
+      },
+      "variables": [
+        "cacheKey",
+        "result",
+        "msg",
+        "firstKey",
+        "validator"
+      ],
+      "call_graph": {}
+    },
+    "packages/schema/src/validation/formatter.d.ts": {
+      "language": "typescript",
+      "parsed": true,
+      "functions": {},
+      "classes": {
+        "SchemaErrorFormatter": {
+          "methods": {},
+          "doc": "Schema error formatter for user-friendly validation messages"
+        }
+      },
+      "interfaces": {
+        "FormattedError": {
+          "doc": "Schema error formatter for user-friendly validation messages"
+        }
+      },
       "call_graph": {}
     },
     "packages/schema/src/validation/simple-benchmark.test.ts": {
@@ -2811,6 +3697,29 @@
       ],
       "call_graph": {}
     },
+    "packages/schema/src/validation/validator.d.ts": {
+      "language": "typescript",
+      "parsed": true,
+      "imports": [
+        "./formatter.js"
+      ],
+      "functions": {
+        "createValidator": "(schema: T, options?: { cacheEnabled?: boolean maxCacheSize?: number },): SchemaValidator<T>\n/**\n * Validate data with a schema (convenience function)\n */\nexport declare function validateSchema<T extends z.ZodType>(\n  schema: T,\n  data: unknown,\n): ValidationResult<z.infer<T>>\n//# sourceMappingURL=validator.d.ts.map"
+      },
+      "classes": {
+        "SchemaValidator": {
+          "methods": {},
+          "doc": "Schema validation utilities"
+        },
+        "ValidationError": {
+          "methods": {},
+          "extends": "Error",
+          "type": "exception",
+          "doc": "Schema validation utilities"
+        }
+      },
+      "call_graph": {}
+    },
     "packages/schema/src/validation/formatter.test.ts": {
       "language": "typescript",
       "parsed": false,
@@ -2824,7 +3733,12 @@
         "SchemaErrorFormatter": {
           "methods": {
             "constructor": "()",
-            "format": "(error: z.ZodError): FormattedError[]",
+            "format": {
+              "signature": "(error: z.ZodError): FormattedError[]",
+              "called_by": [
+                "SchemaErrorFormatter.formatAsJSON"
+              ]
+            },
             "formatAsString": "(error: z.ZodError): string",
             "formatAsJSON": "(error: z.ZodError): object",
             "__init__": "()"
@@ -2849,6 +3763,120 @@
       },
       "call_graph": {}
     },
+    "packages/schema/src/validation/workflow-validator.js": {
+      "language": "javascript",
+      "parsed": true,
+      "imports": [
+        "../agent/agent-schema.js",
+        "../workflow/workflow-schema.js",
+        "./validator.js"
+      ],
+      "functions": {
+        "validateWorkflow": {
+          "calls": [
+            "validateWorkflow"
+          ],
+          "signature": "(data)",
+          "called_by": [
+            "validateWorkflow",
+            "isValidWorkflow",
+            "validateWorkflow",
+            "isValidWorkflow",
+            "validateWorkflow",
+            "validateWorkflowOrThrow",
+            "validateWorkflow",
+            "validateWorkflowOrThrow"
+          ]
+        },
+        "validateAgent": {
+          "calls": [
+            "validateAgent"
+          ],
+          "signature": "(data)",
+          "called_by": [
+            "validateAgent",
+            "validateAgentOrThrow",
+            "validateAgent",
+            "validateAgentOrThrow"
+          ]
+        },
+        "validateWorkflowOrThrow": {
+          "calls": [
+            "getErrorSummary",
+            "validateWorkflow"
+          ],
+          "signature": "(data)"
+        },
+        "validateAgentOrThrow": {
+          "calls": [
+            "validateAgent"
+          ],
+          "signature": "(data)"
+        }
+      },
+      "classes": {
+        "WorkflowValidator": {
+          "methods": {
+            "constructor": "()",
+            "validateWorkflow": {
+              "signature": "(data)",
+              "called_by": [
+                "isValidWorkflow",
+                "validateWorkflowOrThrow",
+                "validateWorkflow"
+              ]
+            },
+            "validateWithSuggestions": "(data)",
+            "validateStructure": "(data)",
+            "getErrorSummary": {
+              "signature": "(data)",
+              "called_by": [
+                "validateWorkflowOrThrow"
+              ]
+            },
+            "categorizeError": "(path)",
+            "__init__": "()"
+          },
+          "extends": "SchemaValidator",
+          "doc": "Workflow-specific validation utilities"
+        },
+        "AgentValidator": {
+          "methods": {
+            "constructor": "()",
+            "validateAgent": {
+              "signature": "(data)",
+              "called_by": [
+                "validateAgentOrThrow",
+                "validateAgent"
+              ]
+            },
+            "__init__": "()"
+          },
+          "extends": "SchemaValidator",
+          "doc": "Workflow-specific validation utilities"
+        }
+      },
+      "variables": [
+        "result",
+        "suggestions",
+        "issues",
+        "workflow",
+        "metadata",
+        "stepObj",
+        "agent",
+        "dependencies",
+        "stepIds",
+        "step",
+        "duplicates",
+        "errorsByCategory",
+        "category",
+        "message",
+        "summary",
+        "workflowValidator",
+        "agentValidator"
+      ],
+      "call_graph": {}
+    },
     "packages/schema/src/validation/validator.ts": {
       "language": "typescript",
       "parsed": true,
@@ -2862,7 +3890,12 @@
       "classes": {
         "SchemaValidator": {
           "methods": {
-            "validate": "(data: unknown): ValidationResult<z.infer<T>>",
+            "validate": {
+              "signature": "(data: unknown): ValidationResult<z.infer<T>>",
+              "called_by": [
+                "validateSchema"
+              ]
+            },
             "validateOrThrow": "(data: unknown): z.infer<T>",
             "parse": "(data: unknown): ValidationResult<z.infer<T>>",
             "getErrorString": "(data: unknown): string | null",
@@ -2907,6 +3940,8 @@
           "signature": "(schema: T, options: JsonSchemaGenerationOptions = {},): JsonSchema",
           "called_by": [
             "generateNamedSchema",
+            "generateAllSchemas",
+            "generateNamedSchema",
             "generateAllSchemas"
           ]
         },
@@ -2916,6 +3951,7 @@
           ],
           "signature": "(name: SchemaName, options: JsonSchemaGenerationOptions = {},): JsonSchema",
           "called_by": [
+            "getJsonSchemaString",
             "getJsonSchemaString"
           ]
         },
@@ -2928,6 +3964,7 @@
         "getSchemaExamples": {
           "signature": "(_schema: ZodType): unknown[]",
           "called_by": [
+            "generateJsonSchema",
             "generateJsonSchema"
           ]
         },
@@ -2938,6 +3975,7 @@
           ],
           "signature": "(name: SchemaName, options: JsonSchemaGenerationOptions = {},): string",
           "called_by": [
+            "exportSchemasToDirectory",
             "exportSchemasToDirectory"
           ]
         },
@@ -2968,6 +4006,40 @@
       },
       "call_graph": {}
     },
+    "packages/schema/src/generation/json-schema.d.ts": {
+      "language": "typescript",
+      "parsed": true,
+      "functions": {
+        "generateJsonSchema": {
+          "signature": "(schema: T, options?: JsonSchemaGenerationOptions,): JsonSchema\n/**\n * Generate JSON Schema for a named schema from the registry\n */\nexport declare function generateNamedSchema(\n  name: SchemaName,\n  options?: JsonSchemaGenerationOptions,\n): JsonSchema\n/**\n * Generate all JSON Schemas from the registry\n */\nexport declare function generateAllSchemas(\n  options?: JsonSchemaGenerationOptions,\n): Record<SchemaName, JsonSchema>\n/**\n * Validate JSON data against a named schema\n */\nexport declare function validateAgainstSchema(\n  name: SchemaName,\n  data: unknown,\n):",
+          "called_by": [
+            "generateNamedSchema",
+            "generateAllSchemas",
+            "generateNamedSchema",
+            "generateAllSchemas"
+          ]
+        },
+        "getJsonSchemaString": {
+          "signature": "(name: SchemaName, options?: JsonSchemaGenerationOptions,): string\n/**\n * Export all schemas to a directory (used by build script)\n */\nexport declare function exportSchemasToDirectory(\n  outputDir: string,\n  options?: JsonSchemaGenerationOptions,\n): Promise<void>\nexport",
+          "called_by": [
+            "exportSchemasToDirectory",
+            "exportSchemasToDirectory"
+          ]
+        }
+      },
+      "classes": {},
+      "interfaces": {
+        "JsonSchemaGenerationOptions": {
+          "doc": "JSON Schema generation utilities for workflow and agent schemas"
+        }
+      },
+      "call_graph": {}
+    },
+    "packages/schema/src/generation/index.js": {
+      "language": "javascript",
+      "parsed": false,
+      "purpose": "Application entry point"
+    },
     "packages/schema/src/generation/index.ts": {
       "language": "typescript",
       "parsed": false,
@@ -2977,6 +4049,101 @@
       "language": "typescript",
       "parsed": false,
       "purpose": "Test file"
+    },
+    "packages/schema/src/generation/index.d.ts": {
+      "language": "typescript",
+      "parsed": false
+    },
+    "packages/schema/src/generation/json-schema.js": {
+      "language": "javascript",
+      "parsed": true,
+      "imports": [
+        "zod-to-json-schema",
+        "../agent/index.js",
+        "../workflow/index.js"
+      ],
+      "functions": {
+        "generateJsonSchema": {
+          "calls": [
+            "getSchemaExamples"
+          ],
+          "signature": "(schema, options = {})",
+          "called_by": [
+            "generateNamedSchema",
+            "generateAllSchemas",
+            "generateNamedSchema",
+            "generateAllSchemas"
+          ]
+        },
+        "generateNamedSchema": {
+          "calls": [
+            "generateJsonSchema"
+          ],
+          "signature": "(name, options = {})",
+          "called_by": [
+            "getJsonSchemaString",
+            "getJsonSchemaString"
+          ]
+        },
+        "generateAllSchemas": {
+          "calls": [
+            "generateJsonSchema"
+          ],
+          "signature": "(options = {})"
+        },
+        "getSchemaExamples": {
+          "signature": "(_schema)",
+          "called_by": [
+            "generateJsonSchema",
+            "generateJsonSchema"
+          ]
+        },
+        "validateAgainstSchema": "(name, data)",
+        "getJsonSchemaString": {
+          "calls": [
+            "generateNamedSchema"
+          ],
+          "signature": "(name, options = {})",
+          "called_by": [
+            "exportSchemasToDirectory",
+            "exportSchemasToDirectory"
+          ]
+        },
+        "exportSchemasToDirectory": {
+          "calls": [
+            "getJsonSchemaString"
+          ],
+          "signature": "async (outputDir, options = {})"
+        }
+      },
+      "classes": {},
+      "constants": {
+        "SCHEMA_REGISTRY": "collection"
+      },
+      "variables": [
+        "jsonSchema",
+        "schemaObj",
+        "schema",
+        "schemas",
+        "result",
+        "schemaJson",
+        "outputPath",
+        "indexContent"
+      ],
+      "call_graph": {}
+    },
+    "packages/schema/.agent-os/.obsidian/app.json": {
+      "language": "json",
+      "parsed": false,
+      "purpose": "Application entry point"
+    },
+    "packages/schema/.agent-os/.obsidian/core-plugins.json": {
+      "language": "json",
+      "parsed": false
+    },
+    "packages/schema/.agent-os/.obsidian/appearance.json": {
+      "language": "json",
+      "parsed": false
     },
     "packages/testing/src/index.test.ts": {
       "language": "typescript",
@@ -3154,7 +4321,43 @@
     },
     "packages/cli/src/cli.ts": {
       "language": "typescript",
-      "parsed": false
+      "parsed": true,
+      "imports": [
+        "fs",
+        "path",
+        "url",
+        "commander",
+        "./commands/create-agent.js",
+        "./commands/init.js",
+        "./commands/inspect.js",
+        "./commands/run.js",
+        "./commands/test.js"
+      ],
+      "functions": {
+        "validateWorkflowName": "(name: string): string"
+      },
+      "classes": {},
+      "variables": [
+        "packageJson",
+        "program",
+        "trimmedName",
+        "fs",
+        "path",
+        "validatedName",
+        "workflowsDir",
+        "workflowPath",
+        "code",
+        "workflow",
+        "errorMessage",
+        "cwd",
+        "resolvedPath",
+        "content",
+        "stats",
+        "maxSize",
+        "validator",
+        "result"
+      ],
+      "call_graph": {}
     },
     "packages/cli/src/index.ts": {
       "language": "typescript",
@@ -3175,6 +4378,11 @@
       "parsed": false,
       "purpose": "Test file"
     },
+    "packages/cli/src/commands/types.test.ts": {
+      "language": "typescript",
+      "parsed": false,
+      "purpose": "Test file"
+    },
     "packages/cli/src/commands/inspect.test.ts": {
       "language": "typescript",
       "parsed": false,
@@ -3185,8 +4393,8 @@
       "parsed": true,
       "purpose": "Test file",
       "imports": [
-        "vitest",
         "fs/promises",
+        "vitest",
         "./test.js"
       ],
       "functions": {},
@@ -3203,7 +4411,12 @@
         },
         "MockWorkflowValidator": {
           "methods": {
-            "validate": "(data: any)"
+            "validate": {
+              "signature": "(_data: unknown)",
+              "called_by": [
+                "validateSchema"
+              ]
+            }
           }
         }
       },
@@ -3220,9 +4433,9 @@
       "parsed": true,
       "purpose": "Test file",
       "imports": [
-        "commander",
         "fs/promises",
-        "@orchestr8/core"
+        "@orchestr8/core",
+        "commander"
       ],
       "functions": {
         "getStatusEmoji": "(status: string): string",
@@ -3234,9 +4447,10 @@
         "inspectCommand",
         "journal",
         "executionIds",
+        "exportJson",
         "exportData",
         "duration",
-        "execution",
+        "executionJson",
         "baseTime",
         "stepEntries",
         "uniqueSteps",
@@ -3260,8 +4474,9 @@
       "parsed": true,
       "purpose": "Test file",
       "imports": [
-        "vitest",
         "fs/promises",
+        "path",
+        "vitest",
         "./run.js"
       ],
       "functions": {},
@@ -3277,18 +4492,24 @@
           }
         },
         "MockJsonExecutionModel": {
-          "methods": {
-            "serializeWorkflow": "(workflow: any)"
-          }
+          "methods": {}
         },
         "MockWorkflowValidator": {
           "methods": {
-            "validate": "(data: any)"
+            "validate": {
+              "signature": "(_data: unknown)",
+              "called_by": [
+                "validateSchema"
+              ]
+            }
           }
         }
       },
       "variables": [
+        "originalCwd",
+        "joined",
         "mockReadFile",
+        "mockAccess",
         "consoleSpy",
         "exitSpy",
         "mockWriteFile",
@@ -3302,16 +4523,16 @@
       "parsed": true,
       "purpose": "Test file",
       "imports": [
-        "commander",
-        "fs/promises",
         "fs",
+        "fs/promises",
         "path",
         "@orchestr8/core",
-        "@orchestr8/schema"
+        "@orchestr8/schema",
+        "commander"
       ],
       "functions": {
         "checkAssertion": {
-          "signature": "(result: any, assertion: any): boolean",
+          "signature": "(result: WorkflowResult, assertion: TestAssertion,): boolean",
           "called_by": [
             "runTest"
           ]
@@ -3361,6 +4582,7 @@
         "actual"
       ],
       "interfaces": {
+        "TestAssertion": {},
         "WorkflowTest": {},
         "TestResult": {}
       },
@@ -3368,32 +4590,65 @@
     },
     "packages/cli/src/commands/create-agent.ts": {
       "language": "typescript",
-      "parsed": false
+      "parsed": true,
+      "imports": [
+        "fs/promises",
+        "path",
+        "commander"
+      ],
+      "functions": {
+        "validateAgentName": "(name: string): string"
+      },
+      "classes": {},
+      "variables": [
+        "trimmedName",
+        "createAgentCommand",
+        "validatedName",
+        "availableTemplates",
+        "agentsDir",
+        "agentPath",
+        "code",
+        "template",
+        "agent",
+        "errorMessage"
+      ],
+      "interfaces": {
+        "AgentTemplate": {}
+      },
+      "call_graph": {}
     },
     "packages/cli/src/commands/run.ts": {
       "language": "typescript",
       "parsed": true,
       "imports": [
-        "commander",
-        "fs/promises",
         "fs",
+        "fs/promises",
         "path",
         "@orchestr8/core",
-        "@orchestr8/schema"
+        "@orchestr8/schema",
+        "commander"
       ],
       "functions": {
-        "executeWorkflow": {
-          "calls": [
-            "getAgent",
-            "hasAgent"
-          ],
-          "signature": "async ()"
+        "validateFilePath": "(filePath: string, baseDir?: string): string",
+        "executeWorkflow": "async ()",
+        "cleanup": {
+          "signature": "()",
+          "called_by": [
+            "sleep",
+            "onAbort",
+            "sleep",
+            "onAbort"
+          ]
         }
       },
       "classes": {},
       "variables": [
+        "cwd",
+        "base",
+        "resolved",
         "runCommand",
         "executeWorkflow",
+        "resolvedWorkflowPath",
         "workflowContent",
         "validator",
         "validation",
@@ -3407,8 +4662,13 @@
         "startTime",
         "result",
         "duration",
+        "resolvedOutputPath",
+        "outputDir",
         "outputData",
-        "watcher"
+        "errorMessage",
+        "resolvedWatchPath",
+        "watcher",
+        "cleanup"
       ],
       "call_graph": {}
     },
@@ -3416,6 +4676,21 @@
       "language": "typescript",
       "parsed": false,
       "purpose": "Test file"
+    },
+    "packages/logger/src/redaction.d.ts": {
+      "language": "typescript",
+      "parsed": true,
+      "functions": {
+        "redactString": {
+          "signature": "(value: string): string\n/**\n * Deep redact sensitive data from an object\n */\nexport declare function deepRedact(\n  obj: unknown,\n  sensitiveKeys: Set<string>,\n  maxDepth?: number,\n  currentPath?: string,\n): unknown\n/**\n * Truncate large values to prevent log bloat\n */\nexport declare function truncateValue(\n  value: unknown,\n  maxSize: number,\n):",
+          "called_by": [
+            "deepRedact",
+            "deepRedact"
+          ]
+        }
+      },
+      "classes": {},
+      "call_graph": {}
     },
     "packages/logger/src/correlation.ts": {
       "language": "typescript",
@@ -3427,6 +4702,7 @@
         "generateCorrelationId": {
           "signature": "(prefix = 'o8'): string",
           "called_by": [
+            "extractCorrelationId",
             "extractCorrelationId"
           ]
         },
@@ -3449,10 +4725,182 @@
       ],
       "call_graph": {}
     },
+    "packages/logger/src/types.js": {
+      "language": "javascript",
+      "parsed": false
+    },
+    "packages/logger/src/logger.js": {
+      "language": "javascript",
+      "parsed": true,
+      "functions": {
+        "getLogLevelFromEnv": "()",
+        "getPrettyFromEnv": "()",
+        "getRedactKeysFromEnv": "()",
+        "getMaxFieldSizeFromEnv": "()"
+      },
+      "classes": {
+        "BaseLogger": {
+          "methods": {
+            "constructor": "(options = {}, bindings = {})",
+            "trace": {
+              "signature": "(msg, fields)",
+              "called_by": [
+                "PinoAdapter.trace",
+                "PinoAdapter.child"
+              ]
+            },
+            "debug": {
+              "signature": "(msg, fields)",
+              "called_by": [
+                "PinoAdapter.debug"
+              ]
+            },
+            "info": {
+              "signature": "(msg, fields)",
+              "called_by": [
+                "PinoAdapter.info"
+              ]
+            },
+            "warn": {
+              "signature": "(msg, fields)",
+              "called_by": [
+                "PinoAdapter.warn"
+              ]
+            },
+            "error": {
+              "signature": "(msg, fields)",
+              "called_by": [
+                "PinoAdapter.error"
+              ]
+            },
+            "shouldLog": "(level)",
+            "redactFields": "(fields, seen = new WeakSet())",
+            "shouldRedact": "(key)",
+            "mergeFields": "(fields)",
+            "__init__": "(options = {}, bindings = {})"
+          },
+          "doc": "Default keys to redact from logs"
+        }
+      },
+      "constants": {
+        "DEFAULT_REDACT_KEYS": "collection"
+      },
+      "variables": [
+        "redacted",
+        "lowerKey",
+        "envLevel",
+        "envRedact",
+        "envSize",
+        "size"
+      ],
+      "call_graph": {}
+    },
+    "packages/logger/src/types.d.ts": {
+      "language": "typescript",
+      "parsed": false
+    },
+    "packages/logger/src/redaction.js": {
+      "language": "javascript",
+      "parsed": true,
+      "functions": {
+        "redactString": {
+          "signature": "(value)",
+          "called_by": [
+            "deepRedact",
+            "deepRedact"
+          ]
+        },
+        "deepRedact": {
+          "calls": [
+            "deepRedact",
+            "redactString",
+            "shouldRedactKey"
+          ],
+          "signature": "(obj, sensitiveKeys, maxDepth = 10, currentPath = '',)",
+          "called_by": [
+            "deepRedact",
+            "deepRedact"
+          ]
+        },
+        "shouldRedactKey": {
+          "signature": "(key, sensitiveKeys)",
+          "called_by": [
+            "deepRedact",
+            "deepRedact"
+          ]
+        },
+        "truncateValue": "(value, maxSize)"
+      },
+      "classes": {},
+      "constants": {
+        "SECRET_PATTERNS": "collection"
+      },
+      "variables": [
+        "redacted",
+        "fullPath",
+        "lowerKey",
+        "json"
+      ],
+      "call_graph": {}
+    },
+    "packages/logger/src/index.js": {
+      "language": "javascript",
+      "parsed": true,
+      "purpose": "Application entry point",
+      "imports": [
+        "./adapters/console.js",
+        "./adapters/noop.js",
+        "./adapters/pino.js",
+        "./logger.js"
+      ],
+      "functions": {
+        "createLogger": "async (options)",
+        "createLoggerSync": "(options)"
+      },
+      "classes": {},
+      "variables": [
+        "mergedOptions",
+        "level"
+      ],
+      "call_graph": {}
+    },
     "packages/logger/src/redaction.test.ts": {
       "language": "typescript",
       "parsed": false,
       "purpose": "Test file"
+    },
+    "packages/logger/src/correlation.js": {
+      "language": "javascript",
+      "parsed": true,
+      "imports": [
+        "node:crypto"
+      ],
+      "functions": {
+        "generateCorrelationId": {
+          "signature": "(prefix = 'o8')",
+          "called_by": [
+            "extractCorrelationId",
+            "extractCorrelationId"
+          ]
+        },
+        "extractCorrelationId": {
+          "calls": [
+            "generateCorrelationId"
+          ],
+          "signature": "(source, fallbackPrefix = 'o8')"
+        }
+      },
+      "classes": {
+        "CorrelationContext": {
+          "methods": {},
+          "doc": "Generate a correlation ID with optional prefix"
+        }
+      },
+      "variables": [
+        "key",
+        "previousKey"
+      ],
+      "call_graph": {}
     },
     "packages/logger/src/types.ts": {
       "language": "typescript",
@@ -3471,11 +4919,37 @@
         "BaseLogger": {
           "methods": {
             "constructor": "(options: LoggerOptions = {}, bindings: LogFields = {})",
-            "trace": "(msg: string, fields?: LogFields): void",
-            "debug": "(msg: string, fields?: LogFields): void",
-            "info": "(msg: string, fields?: LogFields): void",
-            "warn": "(msg: string, fields?: LogFields): void",
-            "error": "(msg: string, fields?: LogFields): void",
+            "trace": {
+              "signature": "(msg: string, fields?: LogFields): void",
+              "called_by": [
+                "PinoAdapter.trace",
+                "PinoAdapter.child"
+              ]
+            },
+            "debug": {
+              "signature": "(msg: string, fields?: LogFields): void",
+              "called_by": [
+                "PinoAdapter.debug"
+              ]
+            },
+            "info": {
+              "signature": "(msg: string, fields?: LogFields): void",
+              "called_by": [
+                "PinoAdapter.info"
+              ]
+            },
+            "warn": {
+              "signature": "(msg: string, fields?: LogFields): void",
+              "called_by": [
+                "PinoAdapter.warn"
+              ]
+            },
+            "error": {
+              "signature": "(msg: string, fields?: LogFields): void",
+              "called_by": [
+                "PinoAdapter.error"
+              ]
+            },
             "__init__": "(options: LoggerOptions = {}, bindings: LogFields = {})"
           },
           "doc": "Default keys to redact from logs"
@@ -3492,6 +4966,40 @@
         "envSize",
         "size"
       ],
+      "call_graph": {}
+    },
+    "packages/logger/src/logger.d.ts": {
+      "language": "typescript",
+      "parsed": true,
+      "functions": {
+        "getLogLevelFromEnv": "(): LogLevel\n/**\n * Check if pretty printing is enabled from environment\n */\nexport declare function getPrettyFromEnv(): boolean\n/**\n * Get additional redact keys from environment\n */\nexport declare function getRedactKeysFromEnv(): string[]\n/**\n * Get max field size from environment\n */\nexport declare function getMaxFieldSizeFromEnv(): number\n//# sourceMappingURL=logger.d.ts.map"
+      },
+      "classes": {
+        "BaseLogger": {
+          "methods": {},
+          "doc": "Default keys to redact from logs"
+        }
+      },
+      "call_graph": {}
+    },
+    "packages/logger/src/correlation.d.ts": {
+      "language": "typescript",
+      "parsed": true,
+      "functions": {
+        "generateCorrelationId": {
+          "signature": "async (prefix?: string): string\n/**\n * Extract correlation ID from various sources\n */\nexport declare function extractCorrelationId(\n  source: unknown,\n  fallbackPrefix?: string,\n): string\n/**\n * Context for propagating correlation IDs through async operations\n */\nexport declare class CorrelationContext",
+          "called_by": [
+            "extractCorrelationId",
+            "extractCorrelationId"
+          ]
+        }
+      },
+      "classes": {
+        "CorrelationContext": {
+          "methods": {},
+          "doc": "Generate a correlation ID with optional prefix"
+        }
+      },
       "call_graph": {}
     },
     "packages/logger/src/index.ts": {
@@ -3515,6 +5023,20 @@
       ],
       "call_graph": {}
     },
+    "packages/logger/src/index.d.ts": {
+      "language": "typescript",
+      "parsed": true,
+      "imports": [
+        "./adapters/console.js",
+        "./adapters/noop.js",
+        "./adapters/pino.js"
+      ],
+      "functions": {
+        "createLogger": "async (options?: LoggerOptions): Promise<Logger>\n/**\n * Create a logger instance synchronously (console or noop only).\n * Use this when async initialization is not possible.\n */\nexport declare function createLoggerSync(options?: LoggerOptions): Logger\ndeclare const _default:"
+      },
+      "classes": {},
+      "call_graph": {}
+    },
     "packages/logger/src/logger.test.ts": {
       "language": "typescript",
       "parsed": true,
@@ -3527,7 +5049,13 @@
       "classes": {
         "TestLogger": {
           "methods": {
-            "child": "(bindings: LogFields): TestLogger"
+            "child": {
+              "signature": "(bindings: LogFields): TestLogger",
+              "called_by": [
+                "PinoAdapter.__init__",
+                "PinoAdapter.constructor"
+              ]
+            }
           },
           "extends": "BaseLogger"
         }
@@ -3553,6 +5081,7 @@
         "redactString": {
           "signature": "(value: string): string",
           "called_by": [
+            "deepRedact",
             "deepRedact"
           ]
         },
@@ -3564,12 +5093,14 @@
           ],
           "signature": "(obj: unknown, sensitiveKeys: Set<string>, maxDepth = 10, currentPath = '',): unknown",
           "called_by": [
+            "deepRedact",
             "deepRedact"
           ]
         },
         "shouldRedactKey": {
           "signature": "(key: string, sensitiveKeys: Set<string>): boolean",
           "called_by": [
+            "deepRedact",
             "deepRedact"
           ]
         },
@@ -3587,6 +5118,248 @@
       ],
       "call_graph": {}
     },
+    "packages/logger/src/adapters/pino.js": {
+      "language": "javascript",
+      "parsed": true,
+      "imports": [
+        "../logger.js"
+      ],
+      "functions": {
+        "createPinoOptions": {
+          "calls": [
+            "createTruncationSerializers"
+          ],
+          "signature": "(options = {})",
+          "called_by": [
+            "createPinoLogger",
+            "createPinoLogger"
+          ]
+        },
+        "createTruncationSerializers": {
+          "signature": "(maxSize)",
+          "called_by": [
+            "createPinoOptions",
+            "createPinoOptions"
+          ]
+        },
+        "createPinoLogger": {
+          "calls": [
+            "createPinoOptions"
+          ],
+          "signature": "async (options)"
+        },
+        "isPinoAvailable": "async ()",
+        "truncate": "(value)"
+      },
+      "classes": {
+        "PinoAdapter": {
+          "methods": {
+            "constructor": {
+              "calls": [
+                "child"
+              ],
+              "signature": "(pino)"
+            },
+            "child": {
+              "calls": [
+                "trace"
+              ],
+              "signature": "(bindings)",
+              "called_by": [
+                "PinoAdapter.__init__",
+                "PinoAdapter.constructor"
+              ]
+            },
+            "trace": {
+              "calls": [
+                "trace"
+              ],
+              "signature": "(msg, fields)",
+              "called_by": [
+                "PinoAdapter.trace",
+                "PinoAdapter.child"
+              ]
+            },
+            "debug": {
+              "calls": [
+                "debug"
+              ],
+              "signature": "(msg, fields)",
+              "called_by": [
+                "PinoAdapter.debug"
+              ]
+            },
+            "info": {
+              "calls": [
+                "info"
+              ],
+              "signature": "(msg, fields)",
+              "called_by": [
+                "PinoAdapter.info"
+              ]
+            },
+            "warn": {
+              "calls": [
+                "warn"
+              ],
+              "signature": "(msg, fields)",
+              "called_by": [
+                "PinoAdapter.warn"
+              ]
+            },
+            "error": {
+              "calls": [
+                "error"
+              ],
+              "signature": "(msg, fields)",
+              "called_by": [
+                "PinoAdapter.error"
+              ]
+            },
+            "__init__": {
+              "calls": [
+                "child"
+              ],
+              "signature": "(pino)"
+            }
+          },
+          "doc": "Pino adapter for the Logger interface."
+        }
+      },
+      "variables": [
+        "redactPaths",
+        "pinoOptions",
+        "truncate",
+        "json",
+        "pinoModule",
+        "pino",
+        "pinoLogger"
+      ],
+      "call_graph": {}
+    },
+    "packages/logger/src/adapters/console.js": {
+      "language": "javascript",
+      "parsed": true,
+      "imports": [
+        "../logger.js"
+      ],
+      "functions": {
+        "createConsoleLogger": "(options)"
+      },
+      "classes": {
+        "ConsoleLogger": {
+          "methods": {
+            "constructor": "(options = {}, bindings = {})",
+            "child": {
+              "signature": "(bindings)",
+              "called_by": [
+                "PinoAdapter.__init__",
+                "PinoAdapter.constructor"
+              ]
+            },
+            "log": {
+              "signature": "(level, msg, fields)",
+              "called_by": [
+                "MemoryLogger.trace",
+                "MemoryLogger.info",
+                "MemoryLogger.debug",
+                "MemoryLogger.warn"
+              ]
+            },
+            "logJSON": "(level, msg, fields)",
+            "logPretty": "(level, msg, fields)",
+            "formatFields": "(fields)",
+            "__init__": "(options = {}, bindings = {})"
+          },
+          "extends": "BaseLogger",
+          "doc": "ANSI color codes for pretty printing"
+        }
+      },
+      "constants": {
+        "COLORS": "collection"
+      },
+      "variables": [
+        "mergedFields",
+        "redactedFields",
+        "entry",
+        "seen",
+        "json",
+        "timestamp",
+        "levelColor",
+        "levelLabel",
+        "line",
+        "entries",
+        "displayValue",
+        "color"
+      ],
+      "call_graph": {}
+    },
+    "packages/logger/src/adapters/console.d.ts": {
+      "language": "typescript",
+      "parsed": true,
+      "imports": [
+        "../logger.js"
+      ],
+      "functions": {
+        "createConsoleLogger": "(options?: LoggerOptions): Logger\n//# sourceMappingURL=console.d.ts.map"
+      },
+      "classes": {
+        "ConsoleLogger": {
+          "methods": {},
+          "extends": "BaseLogger",
+          "doc": "Console logger implementation using console methods."
+        }
+      },
+      "call_graph": {}
+    },
+    "packages/logger/src/adapters/memory.d.ts": {
+      "language": "typescript",
+      "parsed": true,
+      "functions": {
+        "createMemoryLogger": "(context?: LogFields): MemoryLogger\n//# sourceMappingURL=memory.d.ts.map"
+      },
+      "classes": {
+        "MemoryLogger": {
+          "methods": {},
+          "doc": "Memory logger adapter for testing"
+        }
+      },
+      "interfaces": {
+        "MemoryLogEntry": {
+          "doc": "Memory logger adapter for testing"
+        }
+      },
+      "call_graph": {}
+    },
+    "packages/logger/src/adapters/pino.d.ts": {
+      "language": "typescript",
+      "parsed": true,
+      "functions": {
+        "createPinoOptions": {
+          "signature": "(options?: LoggerOptions): PinoOptions\n/**\n * Create a Pino logger instance\n * @throws",
+          "called_by": [
+            "createPinoLogger",
+            "createPinoLogger"
+          ]
+        },
+        "createPinoLogger": "(options?: LoggerOptions,): Promise<Logger>\n/**\n * Check if Pino is available\n */\nexport declare function isPinoAvailable(): Promise<boolean>\nexport"
+      },
+      "classes": {
+        "PinoAdapter": {
+          "methods": {},
+          "doc": "Type definitions for Pino (when available as peer dependency)"
+        }
+      },
+      "interfaces": {
+        "PinoLogger": {
+          "doc": "Type definitions for Pino (when available as peer dependency)"
+        },
+        "PinoOptions": {
+          "doc": "Type definitions for Pino (when available as peer dependency)"
+        }
+      },
+      "call_graph": {}
+    },
     "packages/logger/src/adapters/noop.ts": {
       "language": "typescript",
       "parsed": true,
@@ -3597,14 +5370,143 @@
         "NoopLogger": {
           "methods": {
             "constructor": "(_options?: LoggerOptions, bindings: LogFields = {})",
-            "child": "(bindings: LogFields): Logger",
-            "trace": "(_msg: string, _fields?: LogFields): void",
-            "debug": "(_msg: string, _fields?: LogFields): void",
-            "info": "(_msg: string, _fields?: LogFields): void",
-            "warn": "(_msg: string, _fields?: LogFields): void",
-            "error": "(_msg: string, _fields?: LogFields): void",
+            "child": {
+              "signature": "(bindings: LogFields): Logger",
+              "called_by": [
+                "PinoAdapter.__init__",
+                "PinoAdapter.constructor"
+              ]
+            },
+            "trace": {
+              "signature": "(_msg: string, _fields?: LogFields): void",
+              "called_by": [
+                "PinoAdapter.trace",
+                "PinoAdapter.child"
+              ]
+            },
+            "debug": {
+              "signature": "(_msg: string, _fields?: LogFields): void",
+              "called_by": [
+                "PinoAdapter.debug"
+              ]
+            },
+            "info": {
+              "signature": "(_msg: string, _fields?: LogFields): void",
+              "called_by": [
+                "PinoAdapter.info"
+              ]
+            },
+            "warn": {
+              "signature": "(_msg: string, _fields?: LogFields): void",
+              "called_by": [
+                "PinoAdapter.warn"
+              ]
+            },
+            "error": {
+              "signature": "(_msg: string, _fields?: LogFields): void",
+              "called_by": [
+                "PinoAdapter.error"
+              ]
+            },
             "__init__": "(_options?: LoggerOptions, bindings: LogFields = {})"
           },
+          "doc": "No-op logger that discards all log messages."
+        }
+      },
+      "call_graph": {}
+    },
+    "packages/logger/src/adapters/memory.js": {
+      "language": "javascript",
+      "parsed": true,
+      "functions": {
+        "createMemoryLogger": "(context)"
+      },
+      "classes": {
+        "MemoryLogger": {
+          "methods": {
+            "constructor": "(context = {}, sharedEntries)",
+            "log": {
+              "signature": "(level, message, fields)",
+              "called_by": [
+                "MemoryLogger.trace",
+                "MemoryLogger.info",
+                "MemoryLogger.debug",
+                "MemoryLogger.warn"
+              ]
+            },
+            "trace": {
+              "calls": [
+                "log"
+              ],
+              "signature": "(message, fields)",
+              "called_by": [
+                "PinoAdapter.trace",
+                "PinoAdapter.child"
+              ]
+            },
+            "debug": {
+              "calls": [
+                "log"
+              ],
+              "signature": "(message, fields)",
+              "called_by": [
+                "PinoAdapter.debug"
+              ]
+            },
+            "info": {
+              "calls": [
+                "log"
+              ],
+              "signature": "(message, fields)",
+              "called_by": [
+                "PinoAdapter.info"
+              ]
+            },
+            "warn": {
+              "calls": [
+                "log"
+              ],
+              "signature": "(message, fields)",
+              "called_by": [
+                "PinoAdapter.warn"
+              ]
+            },
+            "error": {
+              "signature": "(message, fields)",
+              "called_by": [
+                "PinoAdapter.error"
+              ]
+            },
+            "child": {
+              "signature": "(bindings)",
+              "called_by": [
+                "PinoAdapter.__init__",
+                "PinoAdapter.constructor"
+              ]
+            },
+            "getEntries": "()",
+            "getEntriesByLevel": "(level)",
+            "clear": "()",
+            "count": "()",
+            "__init__": "(context = {}, sharedEntries)"
+          },
+          "doc": "Memory logger adapter for testing"
+        }
+      },
+      "variables": [
+        "entry"
+      ],
+      "call_graph": {}
+    },
+    "packages/logger/src/adapters/noop.d.ts": {
+      "language": "typescript",
+      "parsed": true,
+      "functions": {
+        "createNoopLogger": "(): Logger\n//# sourceMappingURL=noop.d.ts.map"
+      },
+      "classes": {
+        "NoopLogger": {
+          "methods": {},
           "doc": "No-op logger that discards all log messages."
         }
       },
@@ -3670,12 +5572,14 @@
           ],
           "signature": "(options: LoggerOptions = {}): PinoOptions",
           "called_by": [
+            "createPinoLogger",
             "createPinoLogger"
           ]
         },
         "createTruncationSerializers": {
           "signature": "(maxSize: number,): Record<string, (value: unknown) => unknown>",
           "called_by": [
+            "createPinoOptions",
             "createPinoOptions"
           ]
         },
@@ -3692,12 +5596,44 @@
         "PinoAdapter": {
           "methods": {
             "constructor": "(pino: PinoLogger)",
-            "child": "(bindings: LogFields): Logger",
-            "trace": "(msg: string, fields?: LogFields): void",
-            "debug": "(msg: string, fields?: LogFields): void",
-            "info": "(msg: string, fields?: LogFields): void",
-            "warn": "(msg: string, fields?: LogFields): void",
-            "error": "(msg: string, fields?: LogFields): void",
+            "child": {
+              "signature": "(bindings: LogFields): Logger",
+              "called_by": [
+                "PinoAdapter.__init__",
+                "PinoAdapter.constructor"
+              ]
+            },
+            "trace": {
+              "signature": "(msg: string, fields?: LogFields): void",
+              "called_by": [
+                "PinoAdapter.trace",
+                "PinoAdapter.child"
+              ]
+            },
+            "debug": {
+              "signature": "(msg: string, fields?: LogFields): void",
+              "called_by": [
+                "PinoAdapter.debug"
+              ]
+            },
+            "info": {
+              "signature": "(msg: string, fields?: LogFields): void",
+              "called_by": [
+                "PinoAdapter.info"
+              ]
+            },
+            "warn": {
+              "signature": "(msg: string, fields?: LogFields): void",
+              "called_by": [
+                "PinoAdapter.warn"
+              ]
+            },
+            "error": {
+              "signature": "(msg: string, fields?: LogFields): void",
+              "called_by": [
+                "PinoAdapter.error"
+              ]
+            },
             "__init__": "(pino: PinoLogger)"
           },
           "doc": "Type definitions for Pino (when available as peer dependency)"
@@ -3732,12 +5668,44 @@
         "MemoryLogger": {
           "methods": {
             "constructor": "(context: LogFields = {}, sharedEntries?: MemoryLogEntry[])",
-            "trace": "(message: string, fields?: LogFields): void",
-            "debug": "(message: string, fields?: LogFields): void",
-            "info": "(message: string, fields?: LogFields): void",
-            "warn": "(message: string, fields?: LogFields): void",
-            "error": "(message: string, fields?: LogFields): void",
-            "child": "(bindings: LogFields): Logger",
+            "trace": {
+              "signature": "(message: string, fields?: LogFields): void",
+              "called_by": [
+                "PinoAdapter.trace",
+                "PinoAdapter.child"
+              ]
+            },
+            "debug": {
+              "signature": "(message: string, fields?: LogFields): void",
+              "called_by": [
+                "PinoAdapter.debug"
+              ]
+            },
+            "info": {
+              "signature": "(message: string, fields?: LogFields): void",
+              "called_by": [
+                "PinoAdapter.info"
+              ]
+            },
+            "warn": {
+              "signature": "(message: string, fields?: LogFields): void",
+              "called_by": [
+                "PinoAdapter.warn"
+              ]
+            },
+            "error": {
+              "signature": "(message: string, fields?: LogFields): void",
+              "called_by": [
+                "PinoAdapter.error"
+              ]
+            },
+            "child": {
+              "signature": "(bindings: LogFields): Logger",
+              "called_by": [
+                "PinoAdapter.__init__",
+                "PinoAdapter.constructor"
+              ]
+            },
             "getEntries": "(): MemoryLogEntry[]",
             "getEntriesByLevel": "(level: LogLevel): MemoryLogEntry[]",
             "clear": "(): void",
@@ -3780,7 +5748,13 @@
         "ConsoleLogger": {
           "methods": {
             "constructor": "(options: LoggerOptions = {}, bindings: LogFields = {})",
-            "child": "(bindings: LogFields): Logger",
+            "child": {
+              "signature": "(bindings: LogFields): Logger",
+              "called_by": [
+                "PinoAdapter.__init__",
+                "PinoAdapter.constructor"
+              ]
+            },
             "__init__": "(options: LoggerOptions = {}, bindings: LogFields = {})"
           },
           "extends": "BaseLogger",
@@ -3804,6 +5778,74 @@
         "color"
       ],
       "call_graph": {}
+    },
+    "packages/logger/src/adapters/noop.js": {
+      "language": "javascript",
+      "parsed": true,
+      "functions": {
+        "createNoopLogger": "()"
+      },
+      "classes": {
+        "NoopLogger": {
+          "methods": {
+            "constructor": "(_options, bindings = {})",
+            "child": {
+              "signature": "(bindings)",
+              "called_by": [
+                "PinoAdapter.__init__",
+                "PinoAdapter.constructor"
+              ]
+            },
+            "trace": {
+              "signature": "(_msg, _fields)",
+              "called_by": [
+                "PinoAdapter.trace",
+                "PinoAdapter.child"
+              ]
+            },
+            "debug": {
+              "signature": "(_msg, _fields)",
+              "called_by": [
+                "PinoAdapter.debug"
+              ]
+            },
+            "info": {
+              "signature": "(_msg, _fields)",
+              "called_by": [
+                "PinoAdapter.info"
+              ]
+            },
+            "warn": {
+              "signature": "(_msg, _fields)",
+              "called_by": [
+                "PinoAdapter.warn"
+              ]
+            },
+            "error": {
+              "signature": "(_msg, _fields)",
+              "called_by": [
+                "PinoAdapter.error"
+              ]
+            },
+            "__init__": "(_options, bindings = {})"
+          },
+          "doc": "No-op logger that discards all log messages."
+        }
+      },
+      "call_graph": {}
+    },
+    "packages/logger/docs/.obsidian/app.json": {
+      "language": "json",
+      "parsed": false,
+      "purpose": "Application entry point"
+    },
+    "packages/logger/docs/.obsidian/core-plugins.json": {
+      "language": "json",
+      "parsed": false
+    },
+    "packages/logger/docs/.obsidian/appearance.json": {
+      "language": "json",
+      "parsed": false
     },
     "packages/core/src/enhanced-execution-journal.ts": {
       "language": "typescript",
@@ -3848,6 +5890,7 @@
         "stepId",
         "entry",
         "entries",
+        "processedCount",
         "context",
         "journal",
         "entrySize",
@@ -3956,6 +5999,16 @@
       "call_graph": {}
     },
     "packages/core/src/index.test.ts": {
+      "language": "typescript",
+      "parsed": false,
+      "purpose": "Test file"
+    },
+    "packages/core/src/dual-module-consumption.test.ts": {
+      "language": "typescript",
+      "parsed": false,
+      "purpose": "Test file"
+    },
+    "packages/core/src/turbo-config.test.ts": {
       "language": "typescript",
       "parsed": false,
       "purpose": "Test file"
@@ -4262,7 +6315,22 @@
         "newEventBus",
         "reconnectedJournal",
         "stateJournal",
-        "stateEntries"
+        "stateEntries",
+        "initialListenerCount",
+        "finalListenerCount",
+        "entriesAfterDispose",
+        "initialCount",
+        "finalEntries",
+        "emissionPromise",
+        "initialExecutionCount",
+        "numExecutions",
+        "eventsPerExecution",
+        "eventId",
+        "currentSize",
+        "currentExecutionCount",
+        "executionIds",
+        "halfCount",
+        "sizeAfterClearing"
       ],
       "call_graph": {}
     },
@@ -4927,6 +6995,15 @@
       },
       "call_graph": {}
     },
+    "packages/core/src/validate-dual-consumption.test.ts": {
+      "language": "typescript",
+      "parsed": false,
+      "functions": {},
+      "classes": {},
+      "updated_by_hook": true,
+      "updated_at": "2025-08-23T05:46:31.299216",
+      "purpose": "Test file"
+    },
     "packages/core/src/event-bus-backpressure.test.ts": {
       "language": "typescript",
       "parsed": false,
@@ -4983,6 +7060,19 @@
       "parsed": false,
       "purpose": "Test file"
     },
+    "packages/core/docs/.obsidian/app.json": {
+      "language": "json",
+      "parsed": false,
+      "purpose": "Application entry point"
+    },
+    "packages/core/docs/.obsidian/core-plugins.json": {
+      "language": "json",
+      "parsed": false
+    },
+    "packages/core/docs/.obsidian/appearance.json": {
+      "language": "json",
+      "parsed": false
+    },
     "packages/agent-base/src/index.test.ts": {
       "language": "typescript",
       "parsed": false,
@@ -5020,16 +7110,10 @@
       "classes": {
         "MemoryAgentRegistry": {
           "methods": {
-            "getAgent": {
-              "signature": "async (id: string): Promise<Agent>",
-              "called_by": [
-                "executeWorkflow"
-              ]
-            },
+            "getAgent": "async (id: string): Promise<Agent>",
             "hasAgent": {
               "signature": "async (id: string): Promise<boolean>",
               "called_by": [
-                "executeWorkflow",
                 "runTest"
               ]
             },
@@ -5091,16 +7175,10 @@
       "classes": {
         "InMemoryAgentRegistry": {
           "methods": {
-            "getAgent": {
-              "signature": "async (agentId: string): Promise<Agent>",
-              "called_by": [
-                "executeWorkflow"
-              ]
-            },
+            "getAgent": "async (agentId: string): Promise<Agent>",
             "hasAgent": {
               "signature": "async (agentId: string): Promise<boolean>",
               "called_by": [
-                "executeWorkflow",
                 "runTest"
               ]
             },
@@ -5181,16 +7259,10 @@
       "classes": {
         "InMemoryAgentRegistry": {
           "methods": {
-            "getAgent": {
-              "signature": "async (agentId: string): Promise<Agent>",
-              "called_by": [
-                "executeWorkflow"
-              ]
-            },
+            "getAgent": "async (agentId: string): Promise<Agent>",
             "hasAgent": {
               "signature": "async (agentId: string): Promise<boolean>",
               "called_by": [
-                "executeWorkflow",
                 "runTest"
               ]
             },
@@ -5248,16 +7320,10 @@
       "classes": {
         "MemoryAgentRegistry": {
           "methods": {
-            "getAgent": {
-              "signature": "async (id: string): Promise<Agent>",
-              "called_by": [
-                "executeWorkflow"
-              ]
-            },
+            "getAgent": "async (id: string): Promise<Agent>",
             "hasAgent": {
               "signature": "async (id: string): Promise<boolean>",
               "called_by": [
-                "executeWorkflow",
                 "runTest"
               ]
             },
@@ -5323,16 +7389,10 @@
       "classes": {
         "InMemoryAgentRegistry": {
           "methods": {
-            "getAgent": {
-              "signature": "async (agentId: string): Promise<Agent>",
-              "called_by": [
-                "executeWorkflow"
-              ]
-            },
+            "getAgent": "async (agentId: string): Promise<Agent>",
             "hasAgent": {
               "signature": "async (agentId: string): Promise<boolean>",
               "called_by": [
-                "executeWorkflow",
                 "runTest"
               ]
             },
@@ -5407,16 +7467,10 @@
       "classes": {
         "MemoryAgentRegistry": {
           "methods": {
-            "getAgent": {
-              "signature": "async (id: string): Promise<Agent>",
-              "called_by": [
-                "executeWorkflow"
-              ]
-            },
+            "getAgent": "async (id: string): Promise<Agent>",
             "hasAgent": {
               "signature": "async (id: string): Promise<boolean>",
               "called_by": [
-                "executeWorkflow",
                 "runTest"
               ]
             },
@@ -5472,16 +7526,10 @@
       "classes": {
         "InMemoryAgentRegistry": {
           "methods": {
-            "getAgent": {
-              "signature": "async (agentId: string): Promise<Agent>",
-              "called_by": [
-                "executeWorkflow"
-              ]
-            },
+            "getAgent": "async (agentId: string): Promise<Agent>",
             "hasAgent": {
               "signature": "async (agentId: string): Promise<boolean>",
               "called_by": [
-                "executeWorkflow",
                 "runTest"
               ]
             },
@@ -5513,6 +7561,19 @@
       ],
       "call_graph": {}
     },
+    "docs/.obsidian/app.json": {
+      "language": "json",
+      "parsed": false,
+      "purpose": "Application entry point"
+    },
+    "docs/.obsidian/core-plugins.json": {
+      "language": "json",
+      "parsed": false
+    },
+    "docs/.obsidian/appearance.json": {
+      "language": "json",
+      "parsed": false
+    },
     "tests/vitest/vitest-setup.ts": {
       "language": "typescript",
       "parsed": false,
@@ -5529,16 +7590,61 @@
     "packages/resilience/src/benchmark.ts": [
       "node:perf_hooks"
     ],
+    "packages/schema/src/zod-schemas.js": [
+      "node:crypto",
+      "zod"
+    ],
+    "packages/schema/src/validators.js": [
+      "packages/schema/src/zod-schemas.js"
+    ],
     "packages/schema/src/zod-schemas.ts": [
       "node:crypto",
       "zod"
     ],
+    "packages/schema/src/validators.ts": [
+      "packages/schema/src/zod-schemas.js"
+    ],
+    "packages/schema/src/zod-schemas.d.ts": [
+      "zod"
+    ],
+    "packages/schema/src/validation/workflow-validator.ts": [
+      "packages/schema/src/agent/agent-schema.js",
+      "packages/schema/src/workflow/workflow-schema.js",
+      "packages/schema/src/validation/validator.js"
+    ],
+    "packages/schema/src/validation/workflow-validator.d.ts": [
+      "packages/schema/src/agent/agent-schema.js",
+      "packages/schema/src/workflow/workflow-schema.js",
+      "packages/schema/src/validation/validator.js"
+    ],
+    "packages/schema/src/validation/validator.js": [
+      "packages/schema/src/validation/formatter.js"
+    ],
     "packages/schema/src/validation/simple-benchmark.test.ts": [
       "perf_hooks",
-      "vitest"
+      "vitest",
+      "packages/schema/src/validation/workflow-validator.js"
+    ],
+    "packages/schema/src/validation/validator.d.ts": [
+      "packages/schema/src/validation/formatter.js"
+    ],
+    "packages/schema/src/validation/workflow-validator.js": [
+      "packages/schema/src/agent/agent-schema.js",
+      "packages/schema/src/workflow/workflow-schema.js",
+      "packages/schema/src/validation/validator.js"
+    ],
+    "packages/schema/src/validation/validator.ts": [
+      "packages/schema/src/validation/formatter.js"
     ],
     "packages/schema/src/generation/json-schema.ts": [
-      "zod-to-json-schema"
+      "zod-to-json-schema",
+      "packages/schema/src/agent/index.js",
+      "packages/schema/src/workflow/index.js"
+    ],
+    "packages/schema/src/generation/json-schema.js": [
+      "zod-to-json-schema",
+      "packages/schema/src/agent/index.js",
+      "packages/schema/src/workflow/index.js"
     ],
     "packages/testing/src/mocks/agent-registry.ts": [
       "@orchestr8/schema",
@@ -5551,44 +7657,93 @@
     "packages/testing/src/utilities/test-helpers.ts": [
       "vitest"
     ],
+    "packages/cli/src/cli.ts": [
+      "fs",
+      "path",
+      "url",
+      "commander"
+    ],
     "packages/cli/src/commands/test.test.ts": [
-      "vitest",
-      "fs/promises"
+      "fs/promises",
+      "vitest"
     ],
     "packages/cli/src/commands/inspect.ts": [
-      "commander",
       "fs/promises",
-      "@orchestr8/core"
+      "@orchestr8/core",
+      "commander"
     ],
     "packages/cli/src/commands/run.test.ts": [
-      "vitest",
-      "fs/promises"
+      "fs/promises",
+      "path",
+      "vitest"
     ],
     "packages/cli/src/commands/test.ts": [
-      "commander",
-      "fs/promises",
       "fs",
+      "fs/promises",
       "path",
       "@orchestr8/core",
-      "@orchestr8/schema"
+      "@orchestr8/schema",
+      "commander"
+    ],
+    "packages/cli/src/commands/create-agent.ts": [
+      "fs/promises",
+      "path",
+      "commander"
     ],
     "packages/cli/src/commands/run.ts": [
-      "commander",
-      "fs/promises",
       "fs",
+      "fs/promises",
       "path",
       "@orchestr8/core",
-      "@orchestr8/schema"
+      "@orchestr8/schema",
+      "commander"
     ],
     "packages/logger/src/correlation.ts": [
       "node:crypto"
     ],
+    "packages/logger/src/index.js": [
+      "packages/logger/src/adapters/console.js",
+      "packages/logger/src/adapters/noop.js",
+      "packages/logger/src/adapters/pino.js",
+      "packages/logger/src/logger.js"
+    ],
+    "packages/logger/src/correlation.js": [
+      "node:crypto"
+    ],
+    "packages/logger/src/index.ts": [
+      "packages/logger/src/adapters/console.js",
+      "packages/logger/src/adapters/noop.js",
+      "packages/logger/src/adapters/pino.js",
+      "packages/logger/src/logger.js"
+    ],
+    "packages/logger/src/index.d.ts": [
+      "packages/logger/src/adapters/console.js",
+      "packages/logger/src/adapters/noop.js",
+      "packages/logger/src/adapters/pino.js"
+    ],
     "packages/logger/src/logger.test.ts": [
-      "vitest"
+      "vitest",
+      "packages/logger/src/logger.js"
+    ],
+    "packages/logger/src/adapters/pino.js": [
+      "packages/logger/src/logger.js"
+    ],
+    "packages/logger/src/adapters/console.js": [
+      "packages/logger/src/logger.js"
+    ],
+    "packages/logger/src/adapters/console.d.ts": [
+      "packages/logger/src/logger.js"
     ],
     "packages/logger/src/adapters/console.test.ts": [
       "node:stream",
-      "vitest"
+      "vitest",
+      "packages/logger/src/adapters/console.js"
+    ],
+    "packages/logger/src/adapters/pino.ts": [
+      "packages/logger/src/logger.js"
+    ],
+    "packages/logger/src/adapters/console.ts": [
+      "packages/logger/src/logger.js"
     ],
     "packages/core/src/enhanced-execution-journal.ts": [
       "@orchestr8/schema"
@@ -5682,5 +7837,5 @@
       "@orchestr8/schema"
     ]
   },
-  "staleness_check": 1755205824.292197
+  "staleness_check": 1755286941.200712
 }

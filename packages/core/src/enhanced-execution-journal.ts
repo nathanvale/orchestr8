@@ -329,7 +329,7 @@ export class EnhancedExecutionJournal {
   }
 
   /**
-   * Process pending entries in queue
+   * Process pending entries in queue with ordered processing
    */
   private processPendingEntries(): void {
     if (this.isProcessingQueue || this.isDisposed) return
@@ -340,16 +340,37 @@ export class EnhancedExecutionJournal {
 
     this.isProcessingQueue = true
 
-    // Use setTimeout to avoid blocking
+    // Use queueMicrotask for ordered processing instead of setTimeout
     this.processingPromise = new Promise<void>((resolve) => {
-      setTimeout(() => {
-        // Process all pending entries
+      globalThis.queueMicrotask(() => {
+        // Early exit if disposed during queuing
+        if (this.isDisposed) {
+          this.isProcessingQueue = false
+          this.processingPromise = null
+          resolve()
+          return
+        }
+
+        // Process all pending entries atomically
         const entries = this.pendingEntries.splice(0)
+        let processedCount = 0
+
         for (const { executionId, entry } of entries) {
           if (!this.isDisposed) {
             this.addEntry(executionId, entry)
+            processedCount++
+
+            // Check memory limits every 10 entries during batch processing
+            if (
+              processedCount % 10 === 0 &&
+              this.currentSizeBytes > this.maxTotalSizeBytes
+            ) {
+              // Force additional eviction if we're still over limit
+              this.evictOldestExecutions(0)
+            }
           }
         }
+
         this.isProcessingQueue = false
         this.processingPromise = null
 

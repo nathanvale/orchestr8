@@ -1,6 +1,6 @@
 {
   "name": "@orchestr8/schema",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "type": "module",
   "engines": {
@@ -9,13 +9,21 @@
   "exports": {
     ".": {
       "development": "./src/index.ts",
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "default": "./dist/index.js"
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.js",
+      "default": "./dist/esm/index.js"
     }
   },
+  "main": "./dist/cjs/index.js",
+  "module": "./dist/esm/index.js",
+  "types": "./dist/types/index.d.ts",
   "scripts": {
-    "build": "tsc && npm run generate:schemas",
+    "build": "npm run build:clean && npm run build:esm && npm run build:cjs && npm run build:types && npm run generate:schemas",
+    "build:clean": "rimraf dist *.tsbuildinfo",
+    "build:esm": "tsc -p tsconfig.esm.json",
+    "build:cjs": "tsc -p tsconfig.cjs.json && echo '{\"type\":\"commonjs\"}' > dist/cjs/package.json",
+    "build:types": "tsc -p tsconfig.types.json",
     "generate:schemas": "node scripts/generate-schemas.mjs",
     "dev": "tsc --watch",
     "test": "vitest",

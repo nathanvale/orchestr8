@@ -1,6 +1,9 @@
 {
   "$schema": "https://unpkg.com/@changesets/config@3.1.1/schema.json",
-  "changelog": ["@changesets/changelog-github", { "repo": "nathanvale/@orchestr8" }],
+  "changelog": [
+    "@changesets/changelog-github",
+    { "repo": "nathanvale/@orchestr8" }
+  ],
   "commit": false,
   "fixed": [],
   "linked": [],

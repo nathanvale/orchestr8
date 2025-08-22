@@ -1,19 +1,26 @@
-import { Command } from 'commander'
-import fs from 'fs/promises'
 import { watch } from 'fs'
+import fs from 'fs/promises'
 import path from 'path'
-import { OrchestrationEngine, JsonExecutionModel } from '@orchestr8/core'
-import { WorkflowValidator } from '@orchestr8/schema'
+
+import { OrchestrationEngine } from '@orchestr8/core'
+import {
+  WorkflowValidator,
+  type Workflow,
+  type WorkflowResult,
+} from '@orchestr8/schema'
+import { Command } from 'commander'
+
+interface TestAssertion {
+  type: 'output' | 'status' | 'duration'
+  expected: unknown
+  operator?: 'equals' | 'contains' | 'lessThan' | 'greaterThan'
+}
 
 interface WorkflowTest {
   id: string
   name: string
   steps: unknown[]
-  assertions?: Array<{
-    type: 'output' | 'status' | 'duration'
-    expected: unknown
-    operator?: 'equals' | 'contains' | 'lessThan' | 'greaterThan'
-  }>
+  assertions?: TestAssertion[]
   setup?: unknown
   teardown?: unknown
 }
@@ -65,7 +72,7 @@ export const testCommand = new Command('test')
                 execute: async (input: unknown) => ({ output: input }),
               }
             },
-            async hasAgent(id: string) {
+            async hasAgent(_id: string) {
               return true
             },
           },
@@ -74,19 +81,41 @@ export const testCommand = new Command('test')
               operation: (signal?: AbortSignal) => Promise<T>,
               policy: unknown,
               signal?: AbortSignal,
-              context?: unknown,
+              _context?: unknown,
             ): Promise<T> {
               return operation(signal)
             },
           },
         })
 
-        // Transform validation data to Workflow
+        // Transform validation data to legacy Workflow format
         const validatedWorkflow = validation.data!
-        const workflow: any = {
-          ...validatedWorkflow,
+        const workflow: Workflow = {
           id: validatedWorkflow.metadata?.id || testData.id,
           name: validatedWorkflow.metadata?.name || testData.name,
+          version: validatedWorkflow.version,
+          steps: (validatedWorkflow.steps || []).map((step) => {
+            if (step.type === 'agent') {
+              // Transform new schema agent step to legacy format
+              return {
+                id: step.id,
+                name: step.name,
+                type: 'agent' as const,
+                agentId: step.agent.id,
+                config: step.agent.config,
+                input: step.input,
+                dependsOn: step.dependencies,
+              }
+            } else {
+              // Pass through non-agent steps (sequential, parallel)
+              return {
+                id: step.id,
+                name: step.name,
+                type: step.type,
+                dependsOn: step.dependencies,
+              }
+            }
+          }),
         }
 
         const result = await engine.execute(workflow)
@@ -235,17 +264,27 @@ export const testCommand = new Command('test')
     }
   })
 
-function checkAssertion(result: any, assertion: any): boolean {
+function checkAssertion(
+  result: WorkflowResult,
+  assertion: TestAssertion,
+): boolean {
   // Simple assertion checking - in real implementation, this would be more robust
   const operator = assertion.operator || 'equals'
   const actual =
     assertion.type === 'output'
-      ? result.result
+      ? result.steps
       : assertion.type === 'status'
         ? result.status
         : assertion.type === 'duration'
-          ? result.duration
+          ? result.endTime && result.startTime
+            ? new Date(result.endTime).getTime() -
+              new Date(result.startTime).getTime()
+            : null
           : null
+
+  if (actual === null || actual === undefined) {
+    return assertion.expected === null || assertion.expected === undefined
+  }
 
   switch (operator) {
     case 'equals':
@@ -253,9 +292,15 @@ function checkAssertion(result: any, assertion: any): boolean {
     case 'contains':
       return JSON.stringify(actual).includes(JSON.stringify(assertion.expected))
     case 'lessThan':
-      return actual < assertion.expected
+      return typeof actual === 'number' &&
+        typeof assertion.expected === 'number'
+        ? actual < assertion.expected
+        : false
     case 'greaterThan':
-      return actual > assertion.expected
+      return typeof actual === 'number' &&
+        typeof assertion.expected === 'number'
+        ? actual > assertion.expected
+        : false
     default:
       return false
   }

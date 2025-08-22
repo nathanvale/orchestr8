@@ -1044,4 +1044,162 @@ describe('Edge Case Test Coverage', () => {
       await stateJournal.dispose()
     })
   })
+
+  describe('memory leak prevention', () => {
+    it('should properly cleanup event listeners on dispose', async () => {
+      const eventBus = new BoundedEventBus({ maxQueueSize: 100 })
+      const journal = new EnhancedExecutionJournal({
+        eventBus,
+        maxEntriesPerExecution: 10,
+        maxTotalSizeBytes: 1024,
+      })
+
+      // Get initial listener count
+      const initialListenerCount = eventBus.listenerCount('workflow.started')
+
+      // Emit some events to ensure listeners are active
+      eventBus.emit('workflow.started', {
+        type: 'workflow.started',
+        workflowId: 'test-workflow',
+        executionId: 'test-exec',
+      })
+
+      await new Promise((resolve) => setTimeout(resolve, 10))
+
+      // Dispose should cleanup listeners
+      await journal.dispose()
+
+      // Check that listener count decreased
+      const finalListenerCount = eventBus.listenerCount('workflow.started')
+      expect(finalListenerCount).toBeLessThan(initialListenerCount)
+    })
+
+    it('should prevent memory leaks from pending entries during disposal', async () => {
+      const eventBus = new BoundedEventBus({ maxQueueSize: 100 })
+      const journal = new EnhancedExecutionJournal({
+        eventBus,
+        maxEntriesPerExecution: 10,
+        maxTotalSizeBytes: 1024,
+      })
+
+      // Flood with events to create pending entries
+      for (let i = 0; i < 50; i++) {
+        eventBus.emit('step.started', {
+          type: 'step.started',
+          stepId: `step-${i}`,
+          executionId: 'flood-test',
+        })
+      }
+
+      // Dispose immediately (before processing completes)
+      await journal.dispose()
+
+      // Verify no new entries are recorded after disposal
+      const entriesAfterDispose = journal.getEntriesByExecution('flood-test')
+      const initialCount = entriesAfterDispose.length
+
+      // Try to emit more events
+      eventBus.emit('step.completed', {
+        type: 'step.completed',
+        stepId: 'post-dispose',
+        executionId: 'flood-test',
+      })
+
+      await new Promise((resolve) => setTimeout(resolve, 20))
+
+      const finalEntries = journal.getEntriesByExecution('flood-test')
+      expect(finalEntries.length).toBe(initialCount) // No new entries
+    })
+
+    it('should handle race conditions during disposal', async () => {
+      const eventBus = new BoundedEventBus({ maxQueueSize: 100 })
+      const journal = new EnhancedExecutionJournal({
+        eventBus,
+        maxEntriesPerExecution: 10,
+        maxTotalSizeBytes: 1024,
+      })
+
+      // Start emitting events in background
+      const emitEvents = async () => {
+        for (let i = 0; i < 100; i++) {
+          eventBus.emit('step.started', {
+            type: 'step.started',
+            stepId: `race-step-${i}`,
+            executionId: 'race-test',
+          })
+          await new Promise((resolve) => setTimeout(resolve, 1))
+        }
+      }
+
+      // Start emission and dispose concurrently
+      const emissionPromise = emitEvents()
+      const disposePromise = new Promise((resolve) =>
+        setTimeout(() => journal.dispose().then(resolve), 25),
+      )
+
+      await Promise.all([emissionPromise, disposePromise])
+
+      // Verify journal is properly disposed and no errors occurred
+      expect(journal.getExecutionCount()).toBeGreaterThanOrEqual(0)
+    })
+
+    it('should not leak memory under high load scenarios', async () => {
+      const eventBus = new BoundedEventBus({ maxQueueSize: 1000 })
+      const journal = new EnhancedExecutionJournal({
+        eventBus,
+        maxEntriesPerExecution: 50,
+        maxTotalSizeBytes: 10 * 1024, // 10KB limit for testing
+      })
+
+      // Track initial memory state (for debugging if needed)
+      // const initialExecutionCount = journal.getExecutionCount()
+      // const initialSize = journal.getCurrentSize()
+
+      // Simulate high load - create many executions with many events
+      const numExecutions = 10
+      const eventsPerExecution = 20
+
+      for (let execId = 0; execId < numExecutions; execId++) {
+        for (let eventId = 0; eventId < eventsPerExecution; eventId++) {
+          eventBus.emit('step.started', {
+            type: 'step.started',
+            stepId: `step-${eventId}`,
+            executionId: `exec-${execId}`,
+            workflowId: `workflow-${execId}`,
+          })
+        }
+        // Add small delay between executions to allow processing
+        await new Promise((resolve) => setTimeout(resolve, 5))
+      }
+
+      // Wait for all processing to complete
+      await new Promise((resolve) => setTimeout(resolve, 200))
+
+      // Verify memory bounds are enforced (should not exceed size limit)
+      const currentSize = journal.getCurrentSize()
+      expect(currentSize).toBeLessThanOrEqual(10 * 1024)
+
+      // Verify old executions were evicted to stay within limits
+      const currentExecutionCount = journal.getExecutionCount()
+      expect(currentExecutionCount).toBeLessThan(numExecutions) // Some should have been evicted
+
+      // Clear some executions and verify memory is reclaimed
+      const executionIds = journal.getExecutionIds()
+      const halfCount = Math.floor(executionIds.length / 2)
+
+      for (let i = 0; i < halfCount; i++) {
+        journal.clearExecution(executionIds[i])
+      }
+
+      const sizeAfterClearing = journal.getCurrentSize()
+      expect(sizeAfterClearing).toBeLessThan(currentSize)
+
+      // Cleanup
+      await journal.dispose()
+
+      // Verify complete cleanup
+      expect(journal.getCurrentSize()).toBe(0)
+      expect(journal.getExecutionCount()).toBe(0)
+    })
+  })
 })

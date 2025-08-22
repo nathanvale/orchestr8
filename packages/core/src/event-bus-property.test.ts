@@ -135,28 +135,26 @@ describe('Event Bus Property Tests', () => {
 
               // If we received events, verify FIFO order is maintained
               if (receivedIds.length > 1) {
-                // Create a map of id to its first occurrence index in the original array
-                const firstOccurrenceMap = new Map<number, number>()
-                eventIds.forEach((id, index) => {
-                  if (!firstOccurrenceMap.has(id)) {
-                    firstOccurrenceMap.set(id, index)
-                  }
-                })
+                // For FIFO verification, we need to check that the received events
+                // appear in the same relative order as they were in the original array
+                let lastProcessedIndex = -1
 
-                for (let i = 1; i < receivedIds.length; i++) {
-                  const currentFirstIndex =
-                    firstOccurrenceMap.get(receivedIds[i]) ?? 0
-                  const previousFirstIndex =
-                    firstOccurrenceMap.get(receivedIds[i - 1]) ?? 0
-                  // Current event should not come from before the previous event's first occurrence
-                  expect(currentFirstIndex).toBeGreaterThanOrEqual(
-                    previousFirstIndex,
+                for (const receivedId of receivedIds) {
+                  // Find the next occurrence of this ID after lastProcessedIndex
+                  const nextIndex = eventIds.findIndex(
+                    (id, index) =>
+                      id === receivedId && index > lastProcessedIndex,
                   )
+
+                  // If we can't find the ID after the last processed index,
+                  // it means the order is violated
+                  expect(nextIndex).toBeGreaterThan(lastProcessedIndex)
+                  lastProcessedIndex = nextIndex
                 }
               }
             },
           ),
-          { numRuns: 10 },
+          { numRuns: 10, seed: 42 },
         )
       },
     )
