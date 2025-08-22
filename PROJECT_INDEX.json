@@ -1,5 +1,5 @@
 {
-  "indexed_at": "2025-08-23T05:42:20.087221",
+  "indexed_at": "2025-08-23T07:11:48.098905",
   "root": ".",
   "project_structure": {
     "type": "tree",
@@ -8,7 +8,7 @@
       ".",
       "\u251c\u2500\u2500 docs/ (4 files)",
       "\u2502   \u2514\u2500\u2500 sub-specs/",
-      "\u251c\u2500\u2500 packages/ (623 files)",
+      "\u251c\u2500\u2500 packages/ (564 files)",
       "\u2502   \u251c\u2500\u2500 agent-base/ (14 files)",
       "\u2502   \u2502   \u251c\u2500\u2500 src/ (2 files)",
       "\u2502   \u2502   \u2514\u2500\u2500 package.json",
@@ -22,10 +22,10 @@
       "\u2502   \u2502   \u251c\u2500\u2500 src/ (30 files)",
       "\u2502   \u2502   \u251c\u2500\u2500 package.json",
       "\u2502   \u2502   \u2514\u2500\u2500 README.md",
-      "\u2502   \u251c\u2500\u2500 logger/ (122 files)",
+      "\u2502   \u251c\u2500\u2500 logger/ (103 files)",
       "\u2502   \u2502   \u251c\u2500\u2500 docs/ (4 files)",
-      "\u2502   \u2502   \u251c\u2500\u2500 src/ (33 files)",
-      "\u2502   \u2502   \u2502   \u251c\u2500\u2500 adapters/ (15 files)",
+      "\u2502   \u2502   \u251c\u2500\u2500 src/ (15 files)",
+      "\u2502   \u2502   \u2502   \u251c\u2500\u2500 adapters/ (7 files)",
       "\u2502   \u2502   \u2502   \u2514\u2500\u2500 formatters/",
       "\u2502   \u2502   \u2514\u2500\u2500 package.json",
       "\u2502   \u251c\u2500\u2500 resilience/ (89 files)",
@@ -33,18 +33,18 @@
       "\u2502   \u2502   \u251c\u2500\u2500 src/ (24 files)",
       "\u2502   \u2502   \u251c\u2500\u2500 package.json",
       "\u2502   \u2502   \u2514\u2500\u2500 README.md",
-      "\u2502   \u251c\u2500\u2500 schema/ (228 files)",
+      "\u2502   \u251c\u2500\u2500 schema/ (188 files)",
       "\u2502   \u2502   \u251c\u2500\u2500 packages/",
       "\u2502   \u2502   \u2502   \u2514\u2500\u2500 schema/",
       "\u2502   \u2502   \u2502       \u2514\u2500\u2500 src/",
       "\u2502   \u2502   \u2502           \u2514\u2500\u2500 generation/",
       "\u2502   \u2502   \u251c\u2500\u2500 scripts/",
-      "\u2502   \u2502   \u251c\u2500\u2500 src/ (70 files)",
-      "\u2502   \u2502   \u2502   \u251c\u2500\u2500 agent/ (6 files)",
-      "\u2502   \u2502   \u2502   \u251c\u2500\u2500 events/ (3 files)",
-      "\u2502   \u2502   \u2502   \u251c\u2500\u2500 generation/ (7 files)",
-      "\u2502   \u2502   \u2502   \u251c\u2500\u2500 validation/ (12 files)",
-      "\u2502   \u2502   \u2502   \u2514\u2500\u2500 workflow/ (13 files)",
+      "\u2502   \u2502   \u251c\u2500\u2500 src/ (30 files)",
+      "\u2502   \u2502   \u2502   \u251c\u2500\u2500 agent/ (2 files)",
+      "\u2502   \u2502   \u2502   \u251c\u2500\u2500 events/ (1 files)",
+      "\u2502   \u2502   \u2502   \u251c\u2500\u2500 generation/ (3 files)",
+      "\u2502   \u2502   \u2502   \u251c\u2500\u2500 validation/ (6 files)",
+      "\u2502   \u2502   \u2502   \u2514\u2500\u2500 workflow/ (5 files)",
       "\u2502   \u2502   \u2514\u2500\u2500 package.json",
       "\u2502   \u2514\u2500\u2500 testing/ (34 files)",
       "\u2502       \u251c\u2500\u2500 src/ (6 files)",
@@ -1947,16 +1947,16 @@
     ".agent-os/specs/2025-08-19-complete-resilience-patterns/2025-08-19-resilience-p0-prerequisites/sub-specs": "Test specifications"
   },
   "stats": {
-    "total_files": 256,
+    "total_files": 198,
     "total_directories": 98,
     "fully_parsed": {
-      "javascript": 32,
-      "typescript": 166
+      "javascript": 3,
+      "typescript": 137
     },
     "listed_only": {
       "json": 58
     },
-    "markdown_files": 142
+    "markdown_files": 141
   },
   "files": {
     "tsconfig-cache.json": {
@@ -2774,120 +2774,6 @@
       "language": "json",
       "parsed": false
     },
-    "packages/schema/src/zod-schemas.js": {
-      "language": "javascript",
-      "parsed": true,
-      "imports": [
-        "node:crypto",
-        "zod"
-      ],
-      "functions": {},
-      "classes": {
-        "WorkflowSchemaValidator": {
-          "methods": {},
-          "static_constants": {
-            "CURRENT_SCHEMA_VERSION": "str"
-          },
-          "doc": "Comprehensive Zod schemas for workflow validation"
-        }
-      },
-      "variables": [
-        "canonicalSchema",
-        "sortedJson",
-        "expectedHash",
-        "parsed",
-        "errorMessage",
-        "path"
-      ],
-      "call_graph": {}
-    },
-    "packages/schema/src/workflow.d.ts": {
-      "language": "typescript",
-      "parsed": false
-    },
-    "packages/schema/src/validators.js": {
-      "language": "javascript",
-      "parsed": true,
-      "imports": [
-        "./zod-schemas.js"
-      ],
-      "functions": {
-        "computeWorkflowSchemaHash": "()",
-        "validateWorkflow": {
-          "calls": [
-            "checkCircularDependencies",
-            "validateStepReferences",
-            "validateWorkflow"
-          ],
-          "signature": "(workflow)",
-          "called_by": [
-            "validateWorkflow",
-            "isValidWorkflow",
-            "validateWorkflow",
-            "isValidWorkflow",
-            "validateWorkflow",
-            "validateWorkflowOrThrow",
-            "validateWorkflow",
-            "validateWorkflowOrThrow"
-          ]
-        },
-        "isValidWorkflow": {
-          "calls": [
-            "validateWorkflow"
-          ],
-          "signature": "(workflow)"
-        },
-        "validateStepReferences": {
-          "signature": "(workflow)",
-          "called_by": [
-            "validateWorkflow",
-            "validateWorkflow"
-          ]
-        },
-        "checkCircularDependencies": {
-          "calls": [
-            "buildDependencyGraph",
-            "hasCycle"
-          ],
-          "signature": "(steps)",
-          "called_by": [
-            "validateWorkflow",
-            "validateWorkflow"
-          ]
-        },
-        "hasCycle": {
-          "calls": [
-            "hasCycle"
-          ],
-          "signature": "(nodeId, path = [])",
-          "called_by": [
-            "checkCircularDependencies",
-            "hasCycle",
-            "checkCircularDependencies",
-            "hasCycle"
-          ]
-        },
-        "buildDependencyGraph": {
-          "signature": "(steps)",
-          "called_by": [
-            "checkCircularDependencies",
-            "checkCircularDependencies"
-          ]
-        }
-      },
-      "classes": {},
-      "variables": [
-        "validatedWorkflow",
-        "stepIds",
-        "graph",
-        "visited",
-        "recursionStack",
-        "dependencies",
-        "cycleStart",
-        "cyclePath"
-      ],
-      "call_graph": {}
-    },
     "packages/schema/src/resilience.ts": {
       "language": "typescript",
       "parsed": false
@@ -2897,10 +2783,6 @@
       "parsed": false,
       "purpose": "Test file"
     },
-    "packages/schema/src/agents.js": {
-      "language": "javascript",
-      "parsed": false
-    },
     "packages/schema/src/index.test.ts": {
       "language": "typescript",
       "parsed": false,
@@ -2909,71 +2791,6 @@
     "packages/schema/src/workflow.ts": {
       "language": "typescript",
       "parsed": false
-    },
-    "packages/schema/src/errors.d.ts": {
-      "language": "typescript",
-      "parsed": true,
-      "functions": {
-        "createExecutionError": "(code: ExecutionErrorCodeType, message: string, options?: { stepId?: string attempt?: number cause?: Error | ExecutionError context?: Record<string, unknown> },): ExecutionError\n/**\n * Type guard to check if an error is an ExecutionError\n */\nexport declare function isExecutionError(\n  error: unknown,\n): error is ExecutionError\n//# sourceMappingURL=errors.d.ts.map"
-      },
-      "classes": {},
-      "interfaces": {
-        "ExecutionError": {
-          "doc": "Error codes for execution failures"
-        }
-      },
-      "call_graph": {}
-    },
-    "packages/schema/src/expression-validator.js": {
-      "language": "javascript",
-      "parsed": true,
-      "functions": {
-        "traverse": "(obj)"
-      },
-      "classes": {
-        "ExpressionValidator": {
-          "methods": {},
-          "static_constants": {
-            "EXPRESSION_PATTERN": "value"
-          },
-          "doc": "Expression validation for workflow input mapping"
-        }
-      },
-      "constants": {
-        "DEFAULT_EXPRESSION_SECURITY": "collection"
-      },
-      "variables": [
-        "errors",
-        "warnings",
-        "match",
-        "innerExpression",
-        "defaultMatch",
-        "pathExpression",
-        "defaultValue",
-        "defaultValidation",
-        "depth",
-        "security",
-        "validation",
-        "result",
-        "pathParts",
-        "stepId",
-        "stepResult",
-        "envVarName",
-        "allowedList",
-        "bracketMatch",
-        "baseValue",
-        "index",
-        "key",
-        "serialized",
-        "sizeInBytes",
-        "patterns",
-        "trimmed",
-        "expressions",
-        "traverse",
-        "allErrors",
-        "allWarnings"
-      ],
-      "call_graph": {}
     },
     "packages/schema/src/errors.ts": {
       "language": "typescript",
@@ -2990,28 +2807,10 @@
       },
       "call_graph": {}
     },
-    "packages/schema/src/validators.d.ts": {
-      "language": "typescript",
-      "parsed": true,
-      "functions": {
-        "computeWorkflowSchemaHash": "(): string\n/**\n * Validate that a workflow conforms to the expected schema using Zod\n * @param workflow The workflow to validate\n * @returns The validated workflow with proper typing\n * @throws Error if validation fails with detailed error messages\n */\nexport declare function validateWorkflow(workflow: unknown): Workflow\n/**\n * Check if a workflow is valid without throwing\n * @param workflow The workflow to check\n * @returns True if valid, false otherwise\n */\nexport declare function isValidWorkflow(workflow: unknown): workflow is Workflow\n//# sourceMappingURL=validators.d.ts.map"
-      },
-      "classes": {},
-      "call_graph": {}
-    },
     "packages/schema/src/schema-hash-drift.test.ts": {
       "language": "typescript",
       "parsed": false,
       "purpose": "Test file"
-    },
-    "packages/schema/src/index.js": {
-      "language": "javascript",
-      "parsed": false,
-      "purpose": "Application entry point"
-    },
-    "packages/schema/src/agents.d.ts": {
-      "language": "typescript",
-      "parsed": false
     },
     "packages/schema/src/agents.ts": {
       "language": "typescript",
@@ -3069,20 +2868,6 @@
       },
       "call_graph": {}
     },
-    "packages/schema/src/workflow.js": {
-      "language": "javascript",
-      "parsed": false
-    },
-    "packages/schema/src/errors.js": {
-      "language": "javascript",
-      "parsed": true,
-      "functions": {
-        "createExecutionError": "(code, message, options)",
-        "isExecutionError": "(error)"
-      },
-      "classes": {},
-      "call_graph": {}
-    },
     "packages/schema/src/zod-schemas.ts": {
       "language": "typescript",
       "parsed": true,
@@ -3126,10 +2911,6 @@
             "validateWorkflow",
             "isValidWorkflow",
             "validateWorkflow",
-            "isValidWorkflow",
-            "validateWorkflow",
-            "validateWorkflowOrThrow",
-            "validateWorkflow",
             "validateWorkflowOrThrow"
           ]
         },
@@ -3142,7 +2923,6 @@
         "validateStepReferences": {
           "signature": "(workflow: WorkflowZod): void",
           "called_by": [
-            "validateWorkflow",
             "validateWorkflow"
           ]
         },
@@ -3153,7 +2933,6 @@
           ],
           "signature": "(steps: Array<{ id: string; dependsOn?: string[] }>,): void",
           "called_by": [
-            "validateWorkflow",
             "validateWorkflow"
           ]
         },
@@ -3164,15 +2943,12 @@
           "signature": "(nodeId: string, path: string[] = []): boolean",
           "called_by": [
             "checkCircularDependencies",
-            "hasCycle",
-            "checkCircularDependencies",
             "hasCycle"
           ]
         },
         "buildDependencyGraph": {
           "signature": "(steps: Array<{ id: string; dependsOn?: string[] }>,): Map<string, string[]>",
           "called_by": [
-            "checkCircularDependencies",
             "checkCircularDependencies"
           ]
         }
@@ -3190,33 +2966,10 @@
       ],
       "call_graph": {}
     },
-    "packages/schema/src/zod-schemas.d.ts": {
-      "language": "typescript",
-      "parsed": true,
-      "imports": [
-        "zod"
-      ],
-      "functions": {},
-      "classes": {
-        "WorkflowSchemaValidator": {
-          "methods": {},
-          "doc": "Comprehensive Zod schemas for workflow validation"
-        }
-      },
-      "call_graph": {}
-    },
-    "packages/schema/src/resilience.js": {
-      "language": "javascript",
-      "parsed": false
-    },
     "packages/schema/src/typescript-config.test.ts": {
       "language": "typescript",
       "parsed": false,
       "purpose": "Test file"
-    },
-    "packages/schema/src/resilience.d.ts": {
-      "language": "typescript",
-      "parsed": false
     },
     "packages/schema/src/dual-consumption.test.ts": {
       "language": "typescript",
@@ -3228,48 +2981,8 @@
       "parsed": false,
       "purpose": "Application entry point"
     },
-    "packages/schema/src/expression-validator.d.ts": {
-      "language": "typescript",
-      "parsed": true,
-      "functions": {},
-      "classes": {
-        "ExpressionValidator": {
-          "methods": {},
-          "doc": "Expression validation for workflow input mapping"
-        }
-      },
-      "interfaces": {
-        "ExpressionSecurityConfig": {
-          "doc": "Expression validation for workflow input mapping"
-        },
-        "ExpressionContext": {
-          "doc": "Expression validation for workflow input mapping"
-        },
-        "ExpressionValidationResult": {
-          "doc": "Expression validation for workflow input mapping"
-        }
-      },
-      "call_graph": {}
-    },
-    "packages/schema/src/index.d.ts": {
-      "language": "typescript",
-      "parsed": false
-    },
-    "packages/schema/src/agent/agent-schema.d.ts": {
-      "language": "typescript",
-      "parsed": false
-    },
     "packages/schema/src/agent/agent-schema.ts": {
       "language": "typescript",
-      "parsed": false
-    },
-    "packages/schema/src/agent/index.js": {
-      "language": "javascript",
-      "parsed": false,
-      "purpose": "Application entry point"
-    },
-    "packages/schema/src/agent/agent-schema.js": {
-      "language": "javascript",
       "parsed": false
     },
     "packages/schema/src/agent/index.ts": {
@@ -3277,41 +2990,8 @@
       "parsed": false,
       "purpose": "Application entry point"
     },
-    "packages/schema/src/agent/index.d.ts": {
-      "language": "typescript",
-      "parsed": false
-    },
     "packages/schema/src/workflow/policies-schema.ts": {
       "language": "typescript",
-      "parsed": false
-    },
-    "packages/schema/src/workflow/workflow-schema.js": {
-      "language": "javascript",
-      "parsed": false
-    },
-    "packages/schema/src/workflow/step-schema.d.ts": {
-      "language": "typescript",
-      "parsed": false
-    },
-    "packages/schema/src/workflow/policies-schema.d.ts": {
-      "language": "typescript",
-      "parsed": false
-    },
-    "packages/schema/src/workflow/workflow-schema.d.ts": {
-      "language": "typescript",
-      "parsed": false
-    },
-    "packages/schema/src/workflow/step-schema.js": {
-      "language": "javascript",
-      "parsed": false
-    },
-    "packages/schema/src/workflow/index.js": {
-      "language": "javascript",
-      "parsed": false,
-      "purpose": "Application entry point"
-    },
-    "packages/schema/src/workflow/policies-schema.js": {
-      "language": "javascript",
       "parsed": false
     },
     "packages/schema/src/workflow/workflow-schema.ts": {
@@ -3327,91 +3007,19 @@
       "parsed": false,
       "purpose": "Application entry point"
     },
-    "packages/schema/src/workflow/index.d.ts": {
-      "language": "typescript",
-      "parsed": false
-    },
     "packages/schema/src/workflow/workflow-schema.test.ts": {
       "language": "typescript",
       "parsed": false,
       "purpose": "Test file"
     },
-    "packages/schema/src/events/event-schemas.d.ts": {
-      "language": "typescript",
-      "parsed": false
-    },
     "packages/schema/src/events/event-schemas.ts": {
       "language": "typescript",
-      "parsed": false
-    },
-    "packages/schema/src/events/event-schemas.js": {
-      "language": "javascript",
       "parsed": false
     },
     "packages/schema/src/validation/workflow-validator.test.ts": {
       "language": "typescript",
       "parsed": false,
       "purpose": "Test file"
-    },
-    "packages/schema/src/validation/formatter.js": {
-      "language": "javascript",
-      "parsed": true,
-      "functions": {},
-      "classes": {
-        "SchemaErrorFormatter": {
-          "methods": {
-            "constructor": "()",
-            "format": {
-              "signature": "(error)",
-              "called_by": [
-                "SchemaErrorFormatter.formatAsJSON"
-              ]
-            },
-            "formatSingleError": "(issue)",
-            "formatPath": "(path)",
-            "getHumanMessage": {
-              "calls": [
-                "formatType"
-              ],
-              "signature": "(issue)"
-            },
-            "formatType": {
-              "signature": "(type)",
-              "called_by": [
-                "SchemaErrorFormatter.getHumanMessage",
-                "SchemaErrorFormatter.getExpectedType"
-              ]
-            },
-            "getExpectedType": {
-              "calls": [
-                "formatType"
-              ],
-              "signature": "(issue)"
-            },
-            "getExample": "(path, issue)",
-            "formatAsString": "(error)",
-            "formatAsJSON": {
-              "calls": [
-                "format"
-              ],
-              "signature": "(error)"
-            },
-            "__init__": "()"
-          },
-          "doc": "Schema error formatter for user-friendly validation messages"
-        }
-      },
-      "variables": [
-        "path",
-        "message",
-        "expected",
-        "example",
-        "patternBase",
-        "pathBase",
-        "formatted",
-        "msg"
-      ],
-      "call_graph": {}
     },
     "packages/schema/src/validation/workflow-validator.ts": {
       "language": "typescript",
@@ -3431,10 +3039,6 @@
             "validateWorkflow",
             "isValidWorkflow",
             "validateWorkflow",
-            "isValidWorkflow",
-            "validateWorkflow",
-            "validateWorkflowOrThrow",
-            "validateWorkflow",
             "validateWorkflowOrThrow"
           ]
         },
@@ -3444,8 +3048,6 @@
           ],
           "signature": "(data: unknown,): ValidationResult<AgentDefinition>",
           "called_by": [
-            "validateAgent",
-            "validateAgentOrThrow",
             "validateAgent",
             "validateAgentOrThrow"
           ]
@@ -3471,17 +3073,12 @@
               "signature": "(data: unknown): ValidationResult<Workflow>",
               "called_by": [
                 "isValidWorkflow",
-                "validateWorkflowOrThrow",
-                "validateWorkflow"
-              ]
-            },
-            "validateStructure": "(data: unknown): ",
-            "getErrorSummary": {
-              "signature": "(data: unknown): string | null",
-              "called_by": [
+                "validateWorkflow",
                 "validateWorkflowOrThrow"
               ]
             },
+            "validateStructure": "(data: unknown): ",
+            "getErrorSummary": "(data: unknown): string | null",
             "__init__": "()"
           },
           "extends": "SchemaValidator",
@@ -3519,126 +3116,6 @@
         "agentValidator",
         "summary"
       ],
-      "call_graph": {}
-    },
-    "packages/schema/src/validation/workflow-validator.d.ts": {
-      "language": "typescript",
-      "parsed": true,
-      "imports": [
-        "../agent/agent-schema.js",
-        "../workflow/workflow-schema.js",
-        "./validator.js"
-      ],
-      "functions": {
-        "validateWorkflow": {
-          "signature": "(data: unknown,): ValidationResult<Workflow>\nexport declare function validateAgent(\n  data: unknown,\n): ValidationResult<AgentDefinition>\n/**\n * Validate and throw with formatted error message\n */\nexport declare function validateWorkflowOrThrow(data: unknown): Workflow\n/**\n * Validate and throw with formatted error message\n */\nexport declare function validateAgentOrThrow(data: unknown): AgentDefinition\n//# sourceMappingURL=workflow-validator.d.ts.map",
-          "called_by": [
-            "validateWorkflow",
-            "isValidWorkflow",
-            "validateWorkflow",
-            "isValidWorkflow",
-            "validateWorkflow",
-            "validateWorkflowOrThrow",
-            "validateWorkflow",
-            "validateWorkflowOrThrow"
-          ]
-        }
-      },
-      "classes": {
-        "WorkflowValidator": {
-          "methods": {
-            "validateWorkflow": {
-              "signature": "(data: unknown): ValidationResult<Workflow>\n  /**\n   * Validate workflow and provide suggestions for fixes\n   */\n  validateWithSuggestions(data: unknown): ValidationResult<Workflow> &",
-              "called_by": [
-                "isValidWorkflow",
-                "validateWorkflowOrThrow",
-                "validateWorkflow"
-              ]
-            },
-            "validateStructure": "(data: unknown): "
-          },
-          "extends": "SchemaValidator",
-          "doc": "Workflow-specific validation utilities"
-        },
-        "AgentValidator": {
-          "methods": {},
-          "extends": "SchemaValidator",
-          "doc": "Workflow-specific validation utilities"
-        }
-      },
-      "call_graph": {}
-    },
-    "packages/schema/src/validation/validator.js": {
-      "language": "javascript",
-      "parsed": true,
-      "imports": [
-        "./formatter.js"
-      ],
-      "functions": {
-        "createValidator": "(schema, options)",
-        "validateSchema": {
-          "calls": [
-            "validate"
-          ],
-          "signature": "(schema, data)"
-        }
-      },
-      "classes": {
-        "SchemaValidator": {
-          "methods": {
-            "constructor": "(schema, options = {})",
-            "validate": {
-              "signature": "(data)",
-              "called_by": [
-                "validateSchema"
-              ]
-            },
-            "validateOrThrow": "(data)",
-            "parse": "(data)",
-            "getErrorString": "(data)",
-            "clearCache": "()",
-            "getCacheSize": "()",
-            "getCacheKey": "(data)",
-            "addToCache": "(key, result)",
-            "__init__": "(schema, options = {})"
-          },
-          "doc": "Schema validation utilities"
-        },
-        "ValidationError": {
-          "methods": {
-            "constructor": "(message, errors)",
-            "getFormattedMessage": "()",
-            "__init__": "(message, errors)"
-          },
-          "extends": "Error",
-          "type": "exception",
-          "doc": "Schema validation utilities"
-        }
-      },
-      "variables": [
-        "cacheKey",
-        "result",
-        "msg",
-        "firstKey",
-        "validator"
-      ],
-      "call_graph": {}
-    },
-    "packages/schema/src/validation/formatter.d.ts": {
-      "language": "typescript",
-      "parsed": true,
-      "functions": {},
-      "classes": {
-        "SchemaErrorFormatter": {
-          "methods": {},
-          "doc": "Schema error formatter for user-friendly validation messages"
-        }
-      },
-      "interfaces": {
-        "FormattedError": {
-          "doc": "Schema error formatter for user-friendly validation messages"
-        }
-      },
       "call_graph": {}
     },
     "packages/schema/src/validation/simple-benchmark.test.ts": {
@@ -3697,29 +3174,6 @@
       ],
       "call_graph": {}
     },
-    "packages/schema/src/validation/validator.d.ts": {
-      "language": "typescript",
-      "parsed": true,
-      "imports": [
-        "./formatter.js"
-      ],
-      "functions": {
-        "createValidator": "(schema: T, options?: { cacheEnabled?: boolean maxCacheSize?: number },): SchemaValidator<T>\n/**\n * Validate data with a schema (convenience function)\n */\nexport declare function validateSchema<T extends z.ZodType>(\n  schema: T,\n  data: unknown,\n): ValidationResult<z.infer<T>>\n//# sourceMappingURL=validator.d.ts.map"
-      },
-      "classes": {
-        "SchemaValidator": {
-          "methods": {},
-          "doc": "Schema validation utilities"
-        },
-        "ValidationError": {
-          "methods": {},
-          "extends": "Error",
-          "type": "exception",
-          "doc": "Schema validation utilities"
-        }
-      },
-      "call_graph": {}
-    },
     "packages/schema/src/validation/formatter.test.ts": {
       "language": "typescript",
       "parsed": false,
@@ -3733,12 +3187,7 @@
         "SchemaErrorFormatter": {
           "methods": {
             "constructor": "()",
-            "format": {
-              "signature": "(error: z.ZodError): FormattedError[]",
-              "called_by": [
-                "SchemaErrorFormatter.formatAsJSON"
-              ]
-            },
+            "format": "(error: z.ZodError): FormattedError[]",
             "formatAsString": "(error: z.ZodError): string",
             "formatAsJSON": "(error: z.ZodError): object",
             "__init__": "()"
@@ -3763,120 +3212,6 @@
       },
       "call_graph": {}
     },
-    "packages/schema/src/validation/workflow-validator.js": {
-      "language": "javascript",
-      "parsed": true,
-      "imports": [
-        "../agent/agent-schema.js",
-        "../workflow/workflow-schema.js",
-        "./validator.js"
-      ],
-      "functions": {
-        "validateWorkflow": {
-          "calls": [
-            "validateWorkflow"
-          ],
-          "signature": "(data)",
-          "called_by": [
-            "validateWorkflow",
-            "isValidWorkflow",
-            "validateWorkflow",
-            "isValidWorkflow",
-            "validateWorkflow",
-            "validateWorkflowOrThrow",
-            "validateWorkflow",
-            "validateWorkflowOrThrow"
-          ]
-        },
-        "validateAgent": {
-          "calls": [
-            "validateAgent"
-          ],
-          "signature": "(data)",
-          "called_by": [
-            "validateAgent",
-            "validateAgentOrThrow",
-            "validateAgent",
-            "validateAgentOrThrow"
-          ]
-        },
-        "validateWorkflowOrThrow": {
-          "calls": [
-            "getErrorSummary",
-            "validateWorkflow"
-          ],
-          "signature": "(data)"
-        },
-        "validateAgentOrThrow": {
-          "calls": [
-            "validateAgent"
-          ],
-          "signature": "(data)"
-        }
-      },
-      "classes": {
-        "WorkflowValidator": {
-          "methods": {
-            "constructor": "()",
-            "validateWorkflow": {
-              "signature": "(data)",
-              "called_by": [
-                "isValidWorkflow",
-                "validateWorkflowOrThrow",
-                "validateWorkflow"
-              ]
-            },
-            "validateWithSuggestions": "(data)",
-            "validateStructure": "(data)",
-            "getErrorSummary": {
-              "signature": "(data)",
-              "called_by": [
-                "validateWorkflowOrThrow"
-              ]
-            },
-            "categorizeError": "(path)",
-            "__init__": "()"
-          },
-          "extends": "SchemaValidator",
-          "doc": "Workflow-specific validation utilities"
-        },
-        "AgentValidator": {
-          "methods": {
-            "constructor": "()",
-            "validateAgent": {
-              "signature": "(data)",
-              "called_by": [
-                "validateAgentOrThrow",
-                "validateAgent"
-              ]
-            },
-            "__init__": "()"
-          },
-          "extends": "SchemaValidator",
-          "doc": "Workflow-specific validation utilities"
-        }
-      },
-      "variables": [
-        "result",
-        "suggestions",
-        "issues",
-        "workflow",
-        "metadata",
-        "stepObj",
-        "agent",
-        "dependencies",
-        "stepIds",
-        "step",
-        "duplicates",
-        "errorsByCategory",
-        "category",
-        "message",
-        "summary",
-        "workflowValidator",
-        "agentValidator"
-      ],
-      "call_graph": {}
-    },
     "packages/schema/src/validation/validator.ts": {
       "language": "typescript",
       "parsed": true,
@@ -3890,12 +3225,7 @@
       "classes": {
         "SchemaValidator": {
           "methods": {
-            "validate": {
-              "signature": "(data: unknown): ValidationResult<z.infer<T>>",
-              "called_by": [
-                "validateSchema"
-              ]
-            },
+            "validate": "(data: unknown): ValidationResult<z.infer<T>>",
             "validateOrThrow": "(data: unknown): z.infer<T>",
             "parse": "(data: unknown): ValidationResult<z.infer<T>>",
             "getErrorString": "(data: unknown): string | null",
@@ -3940,8 +3270,6 @@
           "signature": "(schema: T, options: JsonSchemaGenerationOptions = {},): JsonSchema",
           "called_by": [
             "generateNamedSchema",
-            "generateAllSchemas",
-            "generateNamedSchema",
             "generateAllSchemas"
           ]
         },
@@ -3951,7 +3279,6 @@
           ],
           "signature": "(name: SchemaName, options: JsonSchemaGenerationOptions = {},): JsonSchema",
           "called_by": [
-            "getJsonSchemaString",
             "getJsonSchemaString"
           ]
         },
@@ -3964,7 +3291,6 @@
         "getSchemaExamples": {
           "signature": "(_schema: ZodType): unknown[]",
           "called_by": [
-            "generateJsonSchema",
             "generateJsonSchema"
           ]
         },
@@ -3975,7 +3301,6 @@
           ],
           "signature": "(name: SchemaName, options: JsonSchemaGenerationOptions = {},): string",
           "called_by": [
-            "exportSchemasToDirectory",
             "exportSchemasToDirectory"
           ]
         },
@@ -4006,40 +3331,6 @@
       },
       "call_graph": {}
     },
-    "packages/schema/src/generation/json-schema.d.ts": {
-      "language": "typescript",
-      "parsed": true,
-      "functions": {
-        "generateJsonSchema": {
-          "signature": "(schema: T, options?: JsonSchemaGenerationOptions,): JsonSchema\n/**\n * Generate JSON Schema for a named schema from the registry\n */\nexport declare function generateNamedSchema(\n  name: SchemaName,\n  options?: JsonSchemaGenerationOptions,\n): JsonSchema\n/**\n * Generate all JSON Schemas from the registry\n */\nexport declare function generateAllSchemas(\n  options?: JsonSchemaGenerationOptions,\n): Record<SchemaName, JsonSchema>\n/**\n * Validate JSON data against a named schema\n */\nexport declare function validateAgainstSchema(\n  name: SchemaName,\n  data: unknown,\n):",
-          "called_by": [
-            "generateNamedSchema",
-            "generateAllSchemas",
-            "generateNamedSchema",
-            "generateAllSchemas"
-          ]
-        },
-        "getJsonSchemaString": {
-          "signature": "(name: SchemaName, options?: JsonSchemaGenerationOptions,): string\n/**\n * Export all schemas to a directory (used by build script)\n */\nexport declare function exportSchemasToDirectory(\n  outputDir: string,\n  options?: JsonSchemaGenerationOptions,\n): Promise<void>\nexport",
-          "called_by": [
-            "exportSchemasToDirectory",
-            "exportSchemasToDirectory"
-          ]
-        }
-      },
-      "classes": {},
-      "interfaces": {
-        "JsonSchemaGenerationOptions": {
-          "doc": "JSON Schema generation utilities for workflow and agent schemas"
-        }
-      },
-      "call_graph": {}
-    },
-    "packages/schema/src/generation/index.js": {
-      "language": "javascript",
-      "parsed": false,
-      "purpose": "Application entry point"
-    },
     "packages/schema/src/generation/index.ts": {
       "language": "typescript",
       "parsed": false,
@@ -4049,88 +3340,6 @@
       "language": "typescript",
       "parsed": false,
       "purpose": "Test file"
-    },
-    "packages/schema/src/generation/index.d.ts": {
-      "language": "typescript",
-      "parsed": false
-    },
-    "packages/schema/src/generation/json-schema.js": {
-      "language": "javascript",
-      "parsed": true,
-      "imports": [
-        "zod-to-json-schema",
-        "../agent/index.js",
-        "../workflow/index.js"
-      ],
-      "functions": {
-        "generateJsonSchema": {
-          "calls": [
-            "getSchemaExamples"
-          ],
-          "signature": "(schema, options = {})",
-          "called_by": [
-            "generateNamedSchema",
-            "generateAllSchemas",
-            "generateNamedSchema",
-            "generateAllSchemas"
-          ]
-        },
-        "generateNamedSchema": {
-          "calls": [
-            "generateJsonSchema"
-          ],
-          "signature": "(name, options = {})",
-          "called_by": [
-            "getJsonSchemaString",
-            "getJsonSchemaString"
-          ]
-        },
-        "generateAllSchemas": {
-          "calls": [
-            "generateJsonSchema"
-          ],
-          "signature": "(options = {})"
-        },
-        "getSchemaExamples": {
-          "signature": "(_schema)",
-          "called_by": [
-            "generateJsonSchema",
-            "generateJsonSchema"
-          ]
-        },
-        "validateAgainstSchema": "(name, data)",
-        "getJsonSchemaString": {
-          "calls": [
-            "generateNamedSchema"
-          ],
-          "signature": "(name, options = {})",
-          "called_by": [
-            "exportSchemasToDirectory",
-            "exportSchemasToDirectory"
-          ]
-        },
-        "exportSchemasToDirectory": {
-          "calls": [
-            "getJsonSchemaString"
-          ],
-          "signature": "async (outputDir, options = {})"
-        }
-      },
-      "classes": {},
-      "constants": {
-        "SCHEMA_REGISTRY": "collection"
-      },
-      "variables": [
-        "jsonSchema",
-        "schemaObj",
-        "schema",
-        "schemas",
-        "result",
-        "schemaJson",
-        "outputPath",
-        "indexContent"
-      ],
-      "call_graph": {}
     },
     "packages/schema/.agent-os/.obsidian/app.json": {
       "language": "json",
@@ -4411,12 +3620,7 @@
         },
         "MockWorkflowValidator": {
           "methods": {
-            "validate": {
-              "signature": "(_data: unknown)",
-              "called_by": [
-                "validateSchema"
-              ]
-            }
+            "validate": "(_data: unknown)"
           }
         }
       },
@@ -4496,12 +3700,7 @@
         },
         "MockWorkflowValidator": {
           "methods": {
-            "validate": {
-              "signature": "(_data: unknown)",
-              "called_by": [
-                "validateSchema"
-              ]
-            }
+            "validate": "(_data: unknown)"
           }
         }
       },
@@ -4677,21 +3876,6 @@
       "parsed": false,
       "purpose": "Test file"
     },
-    "packages/logger/src/redaction.d.ts": {
-      "language": "typescript",
-      "parsed": true,
-      "functions": {
-        "redactString": {
-          "signature": "(value: string): string\n/**\n * Deep redact sensitive data from an object\n */\nexport declare function deepRedact(\n  obj: unknown,\n  sensitiveKeys: Set<string>,\n  maxDepth?: number,\n  currentPath?: string,\n): unknown\n/**\n * Truncate large values to prevent log bloat\n */\nexport declare function truncateValue(\n  value: unknown,\n  maxSize: number,\n):",
-          "called_by": [
-            "deepRedact",
-            "deepRedact"
-          ]
-        }
-      },
-      "classes": {},
-      "call_graph": {}
-    },
     "packages/logger/src/correlation.ts": {
       "language": "typescript",
       "parsed": true,
@@ -4702,7 +3886,6 @@
         "generateCorrelationId": {
           "signature": "(prefix = 'o8'): string",
           "called_by": [
-            "extractCorrelationId",
             "extractCorrelationId"
           ]
         },
@@ -4725,182 +3908,10 @@
       ],
       "call_graph": {}
     },
-    "packages/logger/src/types.js": {
-      "language": "javascript",
-      "parsed": false
-    },
-    "packages/logger/src/logger.js": {
-      "language": "javascript",
-      "parsed": true,
-      "functions": {
-        "getLogLevelFromEnv": "()",
-        "getPrettyFromEnv": "()",
-        "getRedactKeysFromEnv": "()",
-        "getMaxFieldSizeFromEnv": "()"
-      },
-      "classes": {
-        "BaseLogger": {
-          "methods": {
-            "constructor": "(options = {}, bindings = {})",
-            "trace": {
-              "signature": "(msg, fields)",
-              "called_by": [
-                "PinoAdapter.trace",
-                "PinoAdapter.child"
-              ]
-            },
-            "debug": {
-              "signature": "(msg, fields)",
-              "called_by": [
-                "PinoAdapter.debug"
-              ]
-            },
-            "info": {
-              "signature": "(msg, fields)",
-              "called_by": [
-                "PinoAdapter.info"
-              ]
-            },
-            "warn": {
-              "signature": "(msg, fields)",
-              "called_by": [
-                "PinoAdapter.warn"
-              ]
-            },
-            "error": {
-              "signature": "(msg, fields)",
-              "called_by": [
-                "PinoAdapter.error"
-              ]
-            },
-            "shouldLog": "(level)",
-            "redactFields": "(fields, seen = new WeakSet())",
-            "shouldRedact": "(key)",
-            "mergeFields": "(fields)",
-            "__init__": "(options = {}, bindings = {})"
-          },
-          "doc": "Default keys to redact from logs"
-        }
-      },
-      "constants": {
-        "DEFAULT_REDACT_KEYS": "collection"
-      },
-      "variables": [
-        "redacted",
-        "lowerKey",
-        "envLevel",
-        "envRedact",
-        "envSize",
-        "size"
-      ],
-      "call_graph": {}
-    },
-    "packages/logger/src/types.d.ts": {
-      "language": "typescript",
-      "parsed": false
-    },
-    "packages/logger/src/redaction.js": {
-      "language": "javascript",
-      "parsed": true,
-      "functions": {
-        "redactString": {
-          "signature": "(value)",
-          "called_by": [
-            "deepRedact",
-            "deepRedact"
-          ]
-        },
-        "deepRedact": {
-          "calls": [
-            "deepRedact",
-            "redactString",
-            "shouldRedactKey"
-          ],
-          "signature": "(obj, sensitiveKeys, maxDepth = 10, currentPath = '',)",
-          "called_by": [
-            "deepRedact",
-            "deepRedact"
-          ]
-        },
-        "shouldRedactKey": {
-          "signature": "(key, sensitiveKeys)",
-          "called_by": [
-            "deepRedact",
-            "deepRedact"
-          ]
-        },
-        "truncateValue": "(value, maxSize)"
-      },
-      "classes": {},
-      "constants": {
-        "SECRET_PATTERNS": "collection"
-      },
-      "variables": [
-        "redacted",
-        "fullPath",
-        "lowerKey",
-        "json"
-      ],
-      "call_graph": {}
-    },
-    "packages/logger/src/index.js": {
-      "language": "javascript",
-      "parsed": true,
-      "purpose": "Application entry point",
-      "imports": [
-        "./adapters/console.js",
-        "./adapters/noop.js",
-        "./adapters/pino.js",
-        "./logger.js"
-      ],
-      "functions": {
-        "createLogger": "async (options)",
-        "createLoggerSync": "(options)"
-      },
-      "classes": {},
-      "variables": [
-        "mergedOptions",
-        "level"
-      ],
-      "call_graph": {}
-    },
     "packages/logger/src/redaction.test.ts": {
       "language": "typescript",
       "parsed": false,
       "purpose": "Test file"
-    },
-    "packages/logger/src/correlation.js": {
-      "language": "javascript",
-      "parsed": true,
-      "imports": [
-        "node:crypto"
-      ],
-      "functions": {
-        "generateCorrelationId": {
-          "signature": "(prefix = 'o8')",
-          "called_by": [
-            "extractCorrelationId",
-            "extractCorrelationId"
-          ]
-        },
-        "extractCorrelationId": {
-          "calls": [
-            "generateCorrelationId"
-          ],
-          "signature": "(source, fallbackPrefix = 'o8')"
-        }
-      },
-      "classes": {
-        "CorrelationContext": {
-          "methods": {},
-          "doc": "Generate a correlation ID with optional prefix"
-        }
-      },
-      "variables": [
-        "key",
-        "previousKey"
-      ],
-      "call_graph": {}
     },
     "packages/logger/src/types.ts": {
       "language": "typescript",
@@ -4919,37 +3930,11 @@
         "BaseLogger": {
           "methods": {
             "constructor": "(options: LoggerOptions = {}, bindings: LogFields = {})",
-            "trace": {
-              "signature": "(msg: string, fields?: LogFields): void",
-              "called_by": [
-                "PinoAdapter.trace",
-                "PinoAdapter.child"
-              ]
-            },
-            "debug": {
-              "signature": "(msg: string, fields?: LogFields): void",
-              "called_by": [
-                "PinoAdapter.debug"
-              ]
-            },
-            "info": {
-              "signature": "(msg: string, fields?: LogFields): void",
-              "called_by": [
-                "PinoAdapter.info"
-              ]
-            },
-            "warn": {
-              "signature": "(msg: string, fields?: LogFields): void",
-              "called_by": [
-                "PinoAdapter.warn"
-              ]
-            },
-            "error": {
-              "signature": "(msg: string, fields?: LogFields): void",
-              "called_by": [
-                "PinoAdapter.error"
-              ]
-            },
+            "trace": "(msg: string, fields?: LogFields): void",
+            "debug": "(msg: string, fields?: LogFields): void",
+            "info": "(msg: string, fields?: LogFields): void",
+            "warn": "(msg: string, fields?: LogFields): void",
+            "error": "(msg: string, fields?: LogFields): void",
             "__init__": "(options: LoggerOptions = {}, bindings: LogFields = {})"
           },
           "doc": "Default keys to redact from logs"
@@ -4966,40 +3951,6 @@
         "envSize",
         "size"
       ],
-      "call_graph": {}
-    },
-    "packages/logger/src/logger.d.ts": {
-      "language": "typescript",
-      "parsed": true,
-      "functions": {
-        "getLogLevelFromEnv": "(): LogLevel\n/**\n * Check if pretty printing is enabled from environment\n */\nexport declare function getPrettyFromEnv(): boolean\n/**\n * Get additional redact keys from environment\n */\nexport declare function getRedactKeysFromEnv(): string[]\n/**\n * Get max field size from environment\n */\nexport declare function getMaxFieldSizeFromEnv(): number\n//# sourceMappingURL=logger.d.ts.map"
-      },
-      "classes": {
-        "BaseLogger": {
-          "methods": {},
-          "doc": "Default keys to redact from logs"
-        }
-      },
-      "call_graph": {}
-    },
-    "packages/logger/src/correlation.d.ts": {
-      "language": "typescript",
-      "parsed": true,
-      "functions": {
-        "generateCorrelationId": {
-          "signature": "async (prefix?: string): string\n/**\n * Extract correlation ID from various sources\n */\nexport declare function extractCorrelationId(\n  source: unknown,\n  fallbackPrefix?: string,\n): string\n/**\n * Context for propagating correlation IDs through async operations\n */\nexport declare class CorrelationContext",
-          "called_by": [
-            "extractCorrelationId",
-            "extractCorrelationId"
-          ]
-        }
-      },
-      "classes": {
-        "CorrelationContext": {
-          "methods": {},
-          "doc": "Generate a correlation ID with optional prefix"
-        }
-      },
       "call_graph": {}
     },
     "packages/logger/src/index.ts": {
@@ -5023,20 +3974,6 @@
       ],
       "call_graph": {}
     },
-    "packages/logger/src/index.d.ts": {
-      "language": "typescript",
-      "parsed": true,
-      "imports": [
-        "./adapters/console.js",
-        "./adapters/noop.js",
-        "./adapters/pino.js"
-      ],
-      "functions": {
-        "createLogger": "async (options?: LoggerOptions): Promise<Logger>\n/**\n * Create a logger instance synchronously (console or noop only).\n * Use this when async initialization is not possible.\n */\nexport declare function createLoggerSync(options?: LoggerOptions): Logger\ndeclare const _default:"
-      },
-      "classes": {},
-      "call_graph": {}
-    },
     "packages/logger/src/logger.test.ts": {
       "language": "typescript",
       "parsed": true,
@@ -5049,13 +3986,7 @@
       "classes": {
         "TestLogger": {
           "methods": {
-            "child": {
-              "signature": "(bindings: LogFields): TestLogger",
-              "called_by": [
-                "PinoAdapter.__init__",
-                "PinoAdapter.constructor"
-              ]
-            }
+            "child": "(bindings: LogFields): TestLogger"
           },
           "extends": "BaseLogger"
         }
@@ -5081,7 +4012,6 @@
         "redactString": {
           "signature": "(value: string): string",
           "called_by": [
-            "deepRedact",
             "deepRedact"
           ]
         },
@@ -5093,14 +4023,12 @@
           ],
           "signature": "(obj: unknown, sensitiveKeys: Set<string>, maxDepth = 10, currentPath = '',): unknown",
           "called_by": [
-            "deepRedact",
             "deepRedact"
           ]
         },
         "shouldRedactKey": {
           "signature": "(key: string, sensitiveKeys: Set<string>): boolean",
           "called_by": [
-            "deepRedact",
             "deepRedact"
           ]
         },
@@ -5118,248 +4046,6 @@
       ],
       "call_graph": {}
     },
-    "packages/logger/src/adapters/pino.js": {
-      "language": "javascript",
-      "parsed": true,
-      "imports": [
-        "../logger.js"
-      ],
-      "functions": {
-        "createPinoOptions": {
-          "calls": [
-            "createTruncationSerializers"
-          ],
-          "signature": "(options = {})",
-          "called_by": [
-            "createPinoLogger",
-            "createPinoLogger"
-          ]
-        },
-        "createTruncationSerializers": {
-          "signature": "(maxSize)",
-          "called_by": [
-            "createPinoOptions",
-            "createPinoOptions"
-          ]
-        },
-        "createPinoLogger": {
-          "calls": [
-            "createPinoOptions"
-          ],
-          "signature": "async (options)"
-        },
-        "isPinoAvailable": "async ()",
-        "truncate": "(value)"
-      },
-      "classes": {
-        "PinoAdapter": {
-          "methods": {
-            "constructor": {
-              "calls": [
-                "child"
-              ],
-              "signature": "(pino)"
-            },
-            "child": {
-              "calls": [
-                "trace"
-              ],
-              "signature": "(bindings)",
-              "called_by": [
-                "PinoAdapter.__init__",
-                "PinoAdapter.constructor"
-              ]
-            },
-            "trace": {
-              "calls": [
-                "trace"
-              ],
-              "signature": "(msg, fields)",
-              "called_by": [
-                "PinoAdapter.trace",
-                "PinoAdapter.child"
-              ]
-            },
-            "debug": {
-              "calls": [
-                "debug"
-              ],
-              "signature": "(msg, fields)",
-              "called_by": [
-                "PinoAdapter.debug"
-              ]
-            },
-            "info": {
-              "calls": [
-                "info"
-              ],
-              "signature": "(msg, fields)",
-              "called_by": [
-                "PinoAdapter.info"
-              ]
-            },
-            "warn": {
-              "calls": [
-                "warn"
-              ],
-              "signature": "(msg, fields)",
-              "called_by": [
-                "PinoAdapter.warn"
-              ]
-            },
-            "error": {
-              "calls": [
-                "error"
-              ],
-              "signature": "(msg, fields)",
-              "called_by": [
-                "PinoAdapter.error"
-              ]
-            },
-            "__init__": {
-              "calls": [
-                "child"
-              ],
-              "signature": "(pino)"
-            }
-          },
-          "doc": "Pino adapter for the Logger interface."
-        }
-      },
-      "variables": [
-        "redactPaths",
-        "pinoOptions",
-        "truncate",
-        "json",
-        "pinoModule",
-        "pino",
-        "pinoLogger"
-      ],
-      "call_graph": {}
-    },
-    "packages/logger/src/adapters/console.js": {
-      "language": "javascript",
-      "parsed": true,
-      "imports": [
-        "../logger.js"
-      ],
-      "functions": {
-        "createConsoleLogger": "(options)"
-      },
-      "classes": {
-        "ConsoleLogger": {
-          "methods": {
-            "constructor": "(options = {}, bindings = {})",
-            "child": {
-              "signature": "(bindings)",
-              "called_by": [
-                "PinoAdapter.__init__",
-                "PinoAdapter.constructor"
-              ]
-            },
-            "log": {
-              "signature": "(level, msg, fields)",
-              "called_by": [
-                "MemoryLogger.trace",
-                "MemoryLogger.info",
-                "MemoryLogger.debug",
-                "MemoryLogger.warn"
-              ]
-            },
-            "logJSON": "(level, msg, fields)",
-            "logPretty": "(level, msg, fields)",
-            "formatFields": "(fields)",
-            "__init__": "(options = {}, bindings = {})"
-          },
-          "extends": "BaseLogger",
-          "doc": "ANSI color codes for pretty printing"
-        }
-      },
-      "constants": {
-        "COLORS": "collection"
-      },
-      "variables": [
-        "mergedFields",
-        "redactedFields",
-        "entry",
-        "seen",
-        "json",
-        "timestamp",
-        "levelColor",
-        "levelLabel",
-        "line",
-        "entries",
-        "displayValue",
-        "color"
-      ],
-      "call_graph": {}
-    },
-    "packages/logger/src/adapters/console.d.ts": {
-      "language": "typescript",
-      "parsed": true,
-      "imports": [
-        "../logger.js"
-      ],
-      "functions": {
-        "createConsoleLogger": "(options?: LoggerOptions): Logger\n//# sourceMappingURL=console.d.ts.map"
-      },
-      "classes": {
-        "ConsoleLogger": {
-          "methods": {},
-          "extends": "BaseLogger",
-          "doc": "Console logger implementation using console methods."
-        }
-      },
-      "call_graph": {}
-    },
-    "packages/logger/src/adapters/memory.d.ts": {
-      "language": "typescript",
-      "parsed": true,
-      "functions": {
-        "createMemoryLogger": "(context?: LogFields): MemoryLogger\n//# sourceMappingURL=memory.d.ts.map"
-      },
-      "classes": {
-        "MemoryLogger": {
-          "methods": {},
-          "doc": "Memory logger adapter for testing"
-        }
-      },
-      "interfaces": {
-        "MemoryLogEntry": {
-          "doc": "Memory logger adapter for testing"
-        }
-      },
-      "call_graph": {}
-    },
-    "packages/logger/src/adapters/pino.d.ts": {
-      "language": "typescript",
-      "parsed": true,
-      "functions": {
-        "createPinoOptions": {
-          "signature": "(options?: LoggerOptions): PinoOptions\n/**\n * Create a Pino logger instance\n * @throws",
-          "called_by": [
-            "createPinoLogger",
-            "createPinoLogger"
-          ]
-        },
-        "createPinoLogger": "(options?: LoggerOptions,): Promise<Logger>\n/**\n * Check if Pino is available\n */\nexport declare function isPinoAvailable(): Promise<boolean>\nexport"
-      },
-      "classes": {
-        "PinoAdapter": {
-          "methods": {},
-          "doc": "Type definitions for Pino (when available as peer dependency)"
-        }
-      },
-      "interfaces": {
-        "PinoLogger": {
-          "doc": "Type definitions for Pino (when available as peer dependency)"
-        },
-        "PinoOptions": {
-          "doc": "Type definitions for Pino (when available as peer dependency)"
-        }
-      },
-      "call_graph": {}
-    },
     "packages/logger/src/adapters/noop.ts": {
       "language": "typescript",
       "parsed": true,
@@ -5370,143 +4056,14 @@
         "NoopLogger": {
           "methods": {
             "constructor": "(_options?: LoggerOptions, bindings: LogFields = {})",
-            "child": {
-              "signature": "(bindings: LogFields): Logger",
-              "called_by": [
-                "PinoAdapter.__init__",
-                "PinoAdapter.constructor"
-              ]
-            },
-            "trace": {
-              "signature": "(_msg: string, _fields?: LogFields): void",
-              "called_by": [
-                "PinoAdapter.trace",
-                "PinoAdapter.child"
-              ]
-            },
-            "debug": {
-              "signature": "(_msg: string, _fields?: LogFields): void",
-              "called_by": [
-                "PinoAdapter.debug"
-              ]
-            },
-            "info": {
-              "signature": "(_msg: string, _fields?: LogFields): void",
-              "called_by": [
-                "PinoAdapter.info"
-              ]
-            },
-            "warn": {
-              "signature": "(_msg: string, _fields?: LogFields): void",
-              "called_by": [
-                "PinoAdapter.warn"
-              ]
-            },
-            "error": {
-              "signature": "(_msg: string, _fields?: LogFields): void",
-              "called_by": [
-                "PinoAdapter.error"
-              ]
-            },
+            "child": "(bindings: LogFields): Logger",
+            "trace": "(_msg: string, _fields?: LogFields): void",
+            "debug": "(_msg: string, _fields?: LogFields): void",
+            "info": "(_msg: string, _fields?: LogFields): void",
+            "warn": "(_msg: string, _fields?: LogFields): void",
+            "error": "(_msg: string, _fields?: LogFields): void",
             "__init__": "(_options?: LoggerOptions, bindings: LogFields = {})"
           },
-          "doc": "No-op logger that discards all log messages."
-        }
-      },
-      "call_graph": {}
-    },
-    "packages/logger/src/adapters/memory.js": {
-      "language": "javascript",
-      "parsed": true,
-      "functions": {
-        "createMemoryLogger": "(context)"
-      },
-      "classes": {
-        "MemoryLogger": {
-          "methods": {
-            "constructor": "(context = {}, sharedEntries)",
-            "log": {
-              "signature": "(level, message, fields)",
-              "called_by": [
-                "MemoryLogger.trace",
-                "MemoryLogger.info",
-                "MemoryLogger.debug",
-                "MemoryLogger.warn"
-              ]
-            },
-            "trace": {
-              "calls": [
-                "log"
-              ],
-              "signature": "(message, fields)",
-              "called_by": [
-                "PinoAdapter.trace",
-                "PinoAdapter.child"
-              ]
-            },
-            "debug": {
-              "calls": [
-                "log"
-              ],
-              "signature": "(message, fields)",
-              "called_by": [
-                "PinoAdapter.debug"
-              ]
-            },
-            "info": {
-              "calls": [
-                "log"
-              ],
-              "signature": "(message, fields)",
-              "called_by": [
-                "PinoAdapter.info"
-              ]
-            },
-            "warn": {
-              "calls": [
-                "log"
-              ],
-              "signature": "(message, fields)",
-              "called_by": [
-                "PinoAdapter.warn"
-              ]
-            },
-            "error": {
-              "signature": "(message, fields)",
-              "called_by": [
-                "PinoAdapter.error"
-              ]
-            },
-            "child": {
-              "signature": "(bindings)",
-              "called_by": [
-                "PinoAdapter.__init__",
-                "PinoAdapter.constructor"
-              ]
-            },
-            "getEntries": "()",
-            "getEntriesByLevel": "(level)",
-            "clear": "()",
-            "count": "()",
-            "__init__": "(context = {}, sharedEntries)"
-          },
-          "doc": "Memory logger adapter for testing"
-        }
-      },
-      "variables": [
-        "entry"
-      ],
-      "call_graph": {}
-    },
-    "packages/logger/src/adapters/noop.d.ts": {
-      "language": "typescript",
-      "parsed": true,
-      "functions": {
-        "createNoopLogger": "(): Logger\n//# sourceMappingURL=noop.d.ts.map"
-      },
-      "classes": {
-        "NoopLogger": {
-          "methods": {},
           "doc": "No-op logger that discards all log messages."
         }
       },
@@ -5572,14 +4129,12 @@
           ],
           "signature": "(options: LoggerOptions = {}): PinoOptions",
           "called_by": [
-            "createPinoLogger",
             "createPinoLogger"
           ]
         },
         "createTruncationSerializers": {
           "signature": "(maxSize: number,): Record<string, (value: unknown) => unknown>",
           "called_by": [
-            "createPinoOptions",
             "createPinoOptions"
           ]
         },
@@ -5596,44 +4151,12 @@
         "PinoAdapter": {
           "methods": {
             "constructor": "(pino: PinoLogger)",
-            "child": {
-              "signature": "(bindings: LogFields): Logger",
-              "called_by": [
-                "PinoAdapter.__init__",
-                "PinoAdapter.constructor"
-              ]
-            },
-            "trace": {
-              "signature": "(msg: string, fields?: LogFields): void",
-              "called_by": [
-                "PinoAdapter.trace",
-                "PinoAdapter.child"
-              ]
-            },
-            "debug": {
-              "signature": "(msg: string, fields?: LogFields): void",
-              "called_by": [
-                "PinoAdapter.debug"
-              ]
-            },
-            "info": {
-              "signature": "(msg: string, fields?: LogFields): void",
-              "called_by": [
-                "PinoAdapter.info"
-              ]
-            },
-            "warn": {
-              "signature": "(msg: string, fields?: LogFields): void",
-              "called_by": [
-                "PinoAdapter.warn"
-              ]
-            },
-            "error": {
-              "signature": "(msg: string, fields?: LogFields): void",
-              "called_by": [
-                "PinoAdapter.error"
-              ]
-            },
+            "child": "(bindings: LogFields): Logger",
+            "trace": "(msg: string, fields?: LogFields): void",
+            "debug": "(msg: string, fields?: LogFields): void",
+            "info": "(msg: string, fields?: LogFields): void",
+            "warn": "(msg: string, fields?: LogFields): void",
+            "error": "(msg: string, fields?: LogFields): void",
             "__init__": "(pino: PinoLogger)"
           },
           "doc": "Type definitions for Pino (when available as peer dependency)"
@@ -5668,44 +4191,12 @@
         "MemoryLogger": {
           "methods": {
             "constructor": "(context: LogFields = {}, sharedEntries?: MemoryLogEntry[])",
-            "trace": {
-              "signature": "(message: string, fields?: LogFields): void",
-              "called_by": [
-                "PinoAdapter.trace",
-                "PinoAdapter.child"
-              ]
-            },
-            "debug": {
-              "signature": "(message: string, fields?: LogFields): void",
-              "called_by": [
-                "PinoAdapter.debug"
-              ]
-            },
-            "info": {
-              "signature": "(message: string, fields?: LogFields): void",
-              "called_by": [
-                "PinoAdapter.info"
-              ]
-            },
-            "warn": {
-              "signature": "(message: string, fields?: LogFields): void",
-              "called_by": [
-                "PinoAdapter.warn"
-              ]
-            },
-            "error": {
-              "signature": "(message: string, fields?: LogFields): void",
-              "called_by": [
-                "PinoAdapter.error"
-              ]
-            },
-            "child": {
-              "signature": "(bindings: LogFields): Logger",
-              "called_by": [
-                "PinoAdapter.__init__",
-                "PinoAdapter.constructor"
-              ]
-            },
+            "trace": "(message: string, fields?: LogFields): void",
+            "debug": "(message: string, fields?: LogFields): void",
+            "info": "(message: string, fields?: LogFields): void",
+            "warn": "(message: string, fields?: LogFields): void",
+            "error": "(message: string, fields?: LogFields): void",
+            "child": "(bindings: LogFields): Logger",
             "getEntries": "(): MemoryLogEntry[]",
             "getEntriesByLevel": "(level: LogLevel): MemoryLogEntry[]",
             "clear": "(): void",
@@ -5748,13 +4239,7 @@
         "ConsoleLogger": {
           "methods": {
             "constructor": "(options: LoggerOptions = {}, bindings: LogFields = {})",
-            "child": {
-              "signature": "(bindings: LogFields): Logger",
-              "called_by": [
-                "PinoAdapter.__init__",
-                "PinoAdapter.constructor"
-              ]
-            },
+            "child": "(bindings: LogFields): Logger",
             "__init__": "(options: LoggerOptions = {}, bindings: LogFields = {})"
           },
           "extends": "BaseLogger",
@@ -5777,61 +4262,6 @@
         "displayValue",
         "color"
       ],
-      "call_graph": {}
-    },
-    "packages/logger/src/adapters/noop.js": {
-      "language": "javascript",
-      "parsed": true,
-      "functions": {
-        "createNoopLogger": "()"
-      },
-      "classes": {
-        "NoopLogger": {
-          "methods": {
-            "constructor": "(_options, bindings = {})",
-            "child": {
-              "signature": "(bindings)",
-              "called_by": [
-                "PinoAdapter.__init__",
-                "PinoAdapter.constructor"
-              ]
-            },
-            "trace": {
-              "signature": "(_msg, _fields)",
-              "called_by": [
-                "PinoAdapter.trace",
-                "PinoAdapter.child"
-              ]
-            },
-            "debug": {
-              "signature": "(_msg, _fields)",
-              "called_by": [
-                "PinoAdapter.debug"
-              ]
-            },
-            "info": {
-              "signature": "(_msg, _fields)",
-              "called_by": [
-                "PinoAdapter.info"
-              ]
-            },
-            "warn": {
-              "signature": "(_msg, _fields)",
-              "called_by": [
-                "PinoAdapter.warn"
-              ]
-            },
-            "error": {
-              "signature": "(_msg, _fields)",
-              "called_by": [
-                "PinoAdapter.error"
-              ]
-            },
-            "__init__": "(_options, bindings = {})"
-          },
-          "doc": "No-op logger that discards all log messages."
-        }
-      },
       "call_graph": {}
     },
     "packages/logger/docs/.obsidian/app.json": {
@@ -6199,8 +4629,11 @@
         "hash",
         "entry",
         "journalJson",
+        "originalLength",
         "keepCount",
+        "removedCount",
         "delay",
+        "stringifiedPayload",
         "maxSize",
         "syncedState",
         "executionEvents",
@@ -6998,10 +5431,6 @@
     "packages/core/src/validate-dual-consumption.test.ts": {
       "language": "typescript",
       "parsed": false,
-      "functions": {},
-      "classes": {},
-      "updated_by_hook": true,
-      "updated_at": "2025-08-23T05:46:31.299216",
       "purpose": "Test file"
     },
     "packages/core/src/event-bus-backpressure.test.ts": {
@@ -7590,61 +6019,16 @@
     "packages/resilience/src/benchmark.ts": [
       "node:perf_hooks"
     ],
-    "packages/schema/src/zod-schemas.js": [
-      "node:crypto",
-      "zod"
-    ],
-    "packages/schema/src/validators.js": [
-      "packages/schema/src/zod-schemas.js"
-    ],
     "packages/schema/src/zod-schemas.ts": [
       "node:crypto",
       "zod"
     ],
-    "packages/schema/src/validators.ts": [
-      "packages/schema/src/zod-schemas.js"
-    ],
-    "packages/schema/src/zod-schemas.d.ts": [
-      "zod"
-    ],
-    "packages/schema/src/validation/workflow-validator.ts": [
-      "packages/schema/src/agent/agent-schema.js",
-      "packages/schema/src/workflow/workflow-schema.js",
-      "packages/schema/src/validation/validator.js"
-    ],
-    "packages/schema/src/validation/workflow-validator.d.ts": [
-      "packages/schema/src/agent/agent-schema.js",
-      "packages/schema/src/workflow/workflow-schema.js",
-      "packages/schema/src/validation/validator.js"
-    ],
-    "packages/schema/src/validation/validator.js": [
-      "packages/schema/src/validation/formatter.js"
-    ],
     "packages/schema/src/validation/simple-benchmark.test.ts": [
       "perf_hooks",
-      "vitest",
-      "packages/schema/src/validation/workflow-validator.js"
-    ],
-    "packages/schema/src/validation/validator.d.ts": [
-      "packages/schema/src/validation/formatter.js"
-    ],
-    "packages/schema/src/validation/workflow-validator.js": [
-      "packages/schema/src/agent/agent-schema.js",
-      "packages/schema/src/workflow/workflow-schema.js",
-      "packages/schema/src/validation/validator.js"
-    ],
-    "packages/schema/src/validation/validator.ts": [
-      "packages/schema/src/validation/formatter.js"
+      "vitest"
     ],
     "packages/schema/src/generation/json-schema.ts": [
-      "zod-to-json-schema",
-      "packages/schema/src/agent/index.js",
-      "packages/schema/src/workflow/index.js"
-    ],
-    "packages/schema/src/generation/json-schema.js": [
-      "zod-to-json-schema",
-      "packages/schema/src/agent/index.js",
-      "packages/schema/src/workflow/index.js"
+      "zod-to-json-schema"
     ],
     "packages/testing/src/mocks/agent-registry.ts": [
       "@orchestr8/schema",
@@ -7701,49 +6085,12 @@
     "packages/logger/src/correlation.ts": [
       "node:crypto"
     ],
-    "packages/logger/src/index.js": [
-      "packages/logger/src/adapters/console.js",
-      "packages/logger/src/adapters/noop.js",
-      "packages/logger/src/adapters/pino.js",
-      "packages/logger/src/logger.js"
-    ],
-    "packages/logger/src/correlation.js": [
-      "node:crypto"
-    ],
-    "packages/logger/src/index.ts": [
-      "packages/logger/src/adapters/console.js",
-      "packages/logger/src/adapters/noop.js",
-      "packages/logger/src/adapters/pino.js",
-      "packages/logger/src/logger.js"
-    ],
-    "packages/logger/src/index.d.ts": [
-      "packages/logger/src/adapters/console.js",
-      "packages/logger/src/adapters/noop.js",
-      "packages/logger/src/adapters/pino.js"
-    ],
     "packages/logger/src/logger.test.ts": [
-      "vitest",
-      "packages/logger/src/logger.js"
-    ],
-    "packages/logger/src/adapters/pino.js": [
-      "packages/logger/src/logger.js"
-    ],
-    "packages/logger/src/adapters/console.js": [
-      "packages/logger/src/logger.js"
-    ],
-    "packages/logger/src/adapters/console.d.ts": [
-      "packages/logger/src/logger.js"
+      "vitest"
     ],
     "packages/logger/src/adapters/console.test.ts": [
       "node:stream",
-      "vitest",
-      "packages/logger/src/adapters/console.js"
-    ],
-    "packages/logger/src/adapters/pino.ts": [
-      "packages/logger/src/logger.js"
-    ],
-    "packages/logger/src/adapters/console.ts": [
-      "packages/logger/src/logger.js"
+      "vitest"
     ],
     "packages/core/src/enhanced-execution-journal.ts": [
       "@orchestr8/schema"
@@ -7837,5 +6184,5 @@
       "@orchestr8/schema"
     ]
   },
-  "staleness_check": 1755286941.200712
+  "staleness_check": 1755292308.841593
 }

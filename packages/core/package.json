@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "engines": {
-    "node": ">=20.0.0"
+    "node": ">=22.0.0"
   },
   "exports": {
     ".": {
@@ -40,7 +40,7 @@
   "devDependencies": {
     "@orchestr8/resilience": "workspace:*",
     "@types/jmespath": "^0.15.2",
-    "@types/node": "^24.0.8",
+    "@types/node": "^22.5.5",
     "fast-check": "^3.23.0",
     "typescript": "^5.8.3",
     "vitest": "^3.2.4"

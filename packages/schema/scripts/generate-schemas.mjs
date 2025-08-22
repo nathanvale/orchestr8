@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* global console, process */
 
 /**
  * Build-time script to generate JSON Schema files from Zod schemas
