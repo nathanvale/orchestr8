@@ -52,7 +52,9 @@
     "lint": "eslint src --max-warnings 0",
     "type-check": "tsc --noEmit",
     "format:check": "prettier --check src",
-    "clean": "rimraf dist *.tsbuildinfo"
+    "clean": "rimraf dist *.tsbuildinfo",
+    "prepublishOnly": "node ../../scripts/prepare-publish.cjs clean",
+    "postpublish": "node ../../scripts/prepare-publish.cjs restore"
   },
   "dependencies": {
     "@orchestr8/logger": "workspace:*",

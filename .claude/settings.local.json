@@ -130,7 +130,9 @@
       "Bash(timeout 60 pnpm test:ci)",
       "Bash(NODE_ENV=test pnpm test src/npm-publishing.test.ts --testTimeout=30000)",
       "Bash(NODE_ENV=test pnpm -F @orchestr8/testing test src/npm-publishing.test.ts -- --testTimeout=30000)",
-      "Bash(timeout 120 pnpm test:ci)"
+      "Bash(timeout 120 pnpm test:ci)",
+      "mcp__sequential-thinking__sequentialthinking",
+      "Bash(npm publish:*)"
     ],
     "deny": [],
     "ask": [],
