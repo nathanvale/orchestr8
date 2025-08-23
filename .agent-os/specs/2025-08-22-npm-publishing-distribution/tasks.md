@@ -50,6 +50,7 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
   - [x] 5.6 Test version graduation workflows
   - [x] 5.7 Verify all versioning tests pass
 
+<<<<<<< HEAD
 - [x] 6. End-to-End Publishing Validation
   - [x] 6.1 Write comprehensive E2E publishing tests
   - [x] 6.2 Create initial changesets for first release
