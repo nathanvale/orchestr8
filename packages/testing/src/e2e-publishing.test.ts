@@ -1,12 +1,16 @@
 import { execSync } from 'child_process'
 import { readFileSync, existsSync, mkdtempSync, writeFileSync } from 'fs'
 import { tmpdir } from 'os'
-import { join } from 'path'
+import { join, dirname } from 'path'
+import { fileURLToPath } from 'url'
 
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 
 describe('End-to-End Publishing Validation', () => {
-  const repoRoot = join(process.cwd(), '../..')
+  // Use file-relative path resolution that works in both Vitest and Wallaby
+  const __filename = fileURLToPath(import.meta.url)
+  const __dirname = dirname(__filename)
+  const repoRoot = join(__dirname, '../../..')  // From packages/testing/src to root
   let tempDir: string
 
   beforeAll(() => {

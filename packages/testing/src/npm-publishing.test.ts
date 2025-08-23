@@ -1,10 +1,16 @@
 import { execSync } from 'child_process'
 import { readFileSync, existsSync } from 'fs'
-import { join } from 'path'
+import { join, dirname } from 'path'
+import { fileURLToPath } from 'url'
 
 import { describe, it, expect } from 'vitest'
 
 describe('NPM Organization and Publishing Validation', () => {
+  // Use file-relative path resolution that works in both Vitest and Wallaby
+  const __filename = fileURLToPath(import.meta.url)
+  const __dirname = dirname(__filename)
+  const repoRoot = join(__dirname, '../../..')  // From packages/testing/src to root
+
   describe('Package Scope Validation', () => {
     it('should validate @orchestr8 scope in all package.json files', () => {
       const packages = [
@@ -18,8 +24,8 @@ describe('NPM Organization and Publishing Validation', () => {
 
       packages.forEach((pkg) => {
         const packageJsonPath = join(
-          process.cwd(),
-          '../../packages',
+          repoRoot,
+          'packages',
           pkg,
           'package.json',
         )
@@ -36,7 +42,7 @@ describe('NPM Organization and Publishing Validation', () => {
     })
 
     it('should validate testing package is marked as private', () => {
-      const testingPackagePath = join(process.cwd(), 'package.json')
+      const testingPackagePath = join(repoRoot, 'packages/testing/package.json')
       const packageJson = JSON.parse(readFileSync(testingPackagePath, 'utf-8'))
 
       expect(
@@ -57,8 +63,8 @@ describe('NPM Organization and Publishing Validation', () => {
 
       publicPackages.forEach((pkg) => {
         const packageJsonPath = join(
-          process.cwd(),
-          '../../packages',
+          repoRoot,
+          'packages',
           pkg,
           'package.json',
         )
@@ -91,7 +97,7 @@ describe('NPM Organization and Publishing Validation', () => {
       ]
 
       packages.forEach((pkg) => {
-        const packageDir = join(process.cwd(), '../../packages', pkg)
+        const packageDir = join(repoRoot, 'packages', pkg)
 
         expect(() => {
           // npm publish --dry-run should not throw for valid packages
@@ -115,7 +121,7 @@ describe('NPM Organization and Publishing Validation', () => {
       ]
 
       packages.forEach((pkg) => {
-        const packageDir = join(process.cwd(), '../../packages', pkg)
+        const packageDir = join(repoRoot, 'packages', pkg)
 
         // Check for dist directory after build
         const distPath = join(packageDir, 'dist')
@@ -277,8 +283,8 @@ describe('NPM Organization and Publishing Validation', () => {
 
       packages.forEach((pkg) => {
         const packageJsonPath = join(
-          process.cwd(),
-          '../../packages',
+          repoRoot,
+          'packages',
           pkg,
           'package.json',
         )
@@ -341,8 +347,8 @@ describe('NPM Organization and Publishing Validation', () => {
       const betaRcPackages = ['schema', 'logger', 'resilience']
       betaRcPackages.forEach((pkg) => {
         const packageJsonPath = join(
-          process.cwd(),
-          '../../packages',
+          repoRoot,
+          'packages',
           pkg,
           'package.json',
         )
@@ -365,8 +371,8 @@ describe('NPM Organization and Publishing Validation', () => {
       const alphaPackages = ['core', 'cli', 'agent-base']
       alphaPackages.forEach((pkg) => {
         const packageJsonPath = join(
-          process.cwd(),
-          '../../packages',
+          repoRoot,
+          'packages',
           pkg,
           'package.json',
         )
@@ -387,8 +393,8 @@ describe('NPM Organization and Publishing Validation', () => {
   describe('Changeset Configuration Validation', () => {
     it('should validate changeset configuration exists', () => {
       const changesetConfigPath = join(
-        process.cwd(),
-        '../../.changeset/config.json',
+        repoRoot,
+        '.changeset/config.json',
       )
       expect(
         existsSync(changesetConfigPath),

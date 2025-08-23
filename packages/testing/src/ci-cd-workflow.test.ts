@@ -1,5 +1,6 @@
 import { readFileSync, existsSync } from 'fs'
-import { join } from 'path'
+import { join, dirname } from 'path'
+import { fileURLToPath } from 'url'
 
 import { describe, it, expect } from 'vitest'
 import YAML from 'yaml'
@@ -14,7 +15,10 @@ interface WorkflowStep {
 }
 
 describe('CI/CD Workflow Validation', () => {
-  const repoRoot = join(process.cwd(), '../..')
+  // Use file-relative path resolution that works in both Vitest and Wallaby
+  const __filename = fileURLToPath(import.meta.url)
+  const __dirname = dirname(__filename)
+  const repoRoot = join(__dirname, '../../..')  // From packages/testing/src to root
   const workflowsDir = join(repoRoot, '.github', 'workflows')
 
   describe('GitHub Actions Workflow Files', () => {
