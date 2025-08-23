@@ -1,10 +1,13 @@
 import { existsSync, readFileSync } from 'fs'
-import { resolve } from 'path'
+import { dirname, resolve } from 'path'
+import { fileURLToPath } from 'url'
 
 import { describe, expect, it } from 'vitest'
 
 describe('TypeScript Configuration', () => {
-  const rootDir = resolve(process.cwd(), '../..')
+  // Get project root directory (3 levels up from packages/schema/src/)
+  const currentFileDir = dirname(fileURLToPath(import.meta.url))
+  const rootDir = resolve(currentFileDir, '../../..')
 
   describe('Root tsconfig.json', () => {
     it('should not have project references', () => {

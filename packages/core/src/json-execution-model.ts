@@ -148,7 +148,7 @@ export class JsonExecutionModel {
     variables?: Record<string, unknown>,
   ): ExecutionState {
     const executionId = this.deterministicIds
-      ? this.generateDeterministicId(workflow.id, Date.now())
+      ? `exec-${this.generateDeterministicId(workflow.id, Date.now())}`
       : randomUUID()
 
     const state: ExecutionState = {
@@ -244,6 +244,68 @@ export class JsonExecutionModel {
       this.addJournalEntry(state.executionId, `step.${result.status}`, {
         stepId: stepState.stepId,
         duration: stepState.duration,
+      })
+    }
+
+    return state
+  }
+
+  /**
+   * Update step execution state in execution state
+   */
+  updateStepExecutionState(
+    state: ExecutionState,
+    stepId: string,
+    status: 'completed' | 'failed' | 'cancelled' | 'skipped',
+    result?: StepResult,
+  ): ExecutionState {
+    // Create a step result if not provided
+    const stepResult: StepResult = result ?? {
+      stepId,
+      status,
+      startTime: new Date().toISOString(),
+      endTime: new Date().toISOString(),
+    }
+
+    // Update step results
+    state.stepResults[stepId] = stepResult
+
+    // Update step lists based on status
+    switch (status) {
+      case 'completed':
+        if (!state.completedSteps.includes(stepId)) {
+          state.completedSteps.push(stepId)
+        }
+        break
+      case 'failed':
+        if (!state.failedSteps.includes(stepId)) {
+          state.failedSteps.push(stepId)
+        }
+        if (stepResult.error) {
+          state.errors = state.errors ?? []
+          state.errors.push(stepResult.error)
+        }
+        break
+      case 'skipped':
+        if (!state.skippedSteps.includes(stepId)) {
+          state.skippedSteps.push(stepId)
+        }
+        break
+      case 'cancelled':
+        if (!state.cancelledSteps.includes(stepId)) {
+          state.cancelledSteps.push(stepId)
+        }
+        break
+    }
+
+    if (this.enableJournal) {
+      // Calculate duration from start and end times
+      const duration =
+        new Date(stepResult.endTime).getTime() -
+        new Date(stepResult.startTime).getTime()
+      this.addJournalEntry(state.executionId, `step.${status}`, {
+        stepId,
+        duration,
       })
     }
 
@@ -453,13 +515,14 @@ export class JsonExecutionModel {
   /**
    * Generate deterministic ID
    */
-  private generateDeterministicId(seed: string, timestamp: number): string {
-    // Simple deterministic ID generation (in production, use proper hashing)
-    const hash = Buffer.from(`${seed}-${timestamp}`)
-      .toString('base64')
-      .replace(/[+/]/g, '')
+  generateDeterministicId(seed: string, timestamp: number): string {
+    // Generate hex hash for deterministic ID
+    const hash = crypto
+      .createHash('sha256')
+      .update(`${seed}-${timestamp}`)
+      .digest('hex')
       .substring(0, 16)
-    return `exec-${hash}`
+    return hash
   }
 
   /**

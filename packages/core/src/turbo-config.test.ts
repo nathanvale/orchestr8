@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs'
-import { join } from 'node:path'
+import { dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 
 import { describe, expect, it } from 'vitest'
 
@@ -24,8 +25,12 @@ interface TurboConfig {
 describe('Turbo Configuration Validation', () => {
   let turboConfig: TurboConfig
 
+  // Get project root directory (3 levels up from packages/core/src/)
+  const currentFileDir = dirname(fileURLToPath(import.meta.url))
+  const projectRoot = join(currentFileDir, '../../..')
+
   it('should load and parse turbo.json successfully', () => {
-    const turboConfigPath = join(process.cwd(), '../../turbo.json')
+    const turboConfigPath = join(projectRoot, 'turbo.json')
     const configContent = readFileSync(turboConfigPath, 'utf-8')
     turboConfig = JSON.parse(configContent)
 
@@ -34,7 +39,7 @@ describe('Turbo Configuration Validation', () => {
   })
 
   it('should have type-check task configured', () => {
-    const turboConfigPath = join(process.cwd(), '../../turbo.json')
+    const turboConfigPath = join(projectRoot, 'turbo.json')
     const configContent = readFileSync(turboConfigPath, 'utf-8')
     turboConfig = JSON.parse(configContent)
 
@@ -42,7 +47,7 @@ describe('Turbo Configuration Validation', () => {
   })
 
   it('should not have type-check depending on build tasks', () => {
-    const turboConfigPath = join(process.cwd(), '../../turbo.json')
+    const turboConfigPath = join(projectRoot, 'turbo.json')
     const configContent = readFileSync(turboConfigPath, 'utf-8')
     turboConfig = JSON.parse(configContent)
 
@@ -59,7 +64,7 @@ describe('Turbo Configuration Validation', () => {
   })
 
   it('should allow type-check to run independently', () => {
-    const turboConfigPath = join(process.cwd(), '../../turbo.json')
+    const turboConfigPath = join(projectRoot, 'turbo.json')
     const configContent = readFileSync(turboConfigPath, 'utf-8')
     turboConfig = JSON.parse(configContent)
 
@@ -75,7 +80,7 @@ describe('Turbo Configuration Validation', () => {
   })
 
   it('should have proper inputs for type-check task', () => {
-    const turboConfigPath = join(process.cwd(), '../../turbo.json')
+    const turboConfigPath = join(projectRoot, 'turbo.json')
     const configContent = readFileSync(turboConfigPath, 'utf-8')
     turboConfig = JSON.parse(configContent)
 
@@ -86,7 +91,7 @@ describe('Turbo Configuration Validation', () => {
   })
 
   it('should have build task dependencies properly configured', () => {
-    const turboConfigPath = join(process.cwd(), '../../turbo.json')
+    const turboConfigPath = join(projectRoot, 'turbo.json')
     const configContent = readFileSync(turboConfigPath, 'utf-8')
     turboConfig = JSON.parse(configContent)
 
@@ -95,7 +100,7 @@ describe('Turbo Configuration Validation', () => {
   })
 
   it('should enable parallel execution of build and type-check', () => {
-    const turboConfigPath = join(process.cwd(), '../../turbo.json')
+    const turboConfigPath = join(projectRoot, 'turbo.json')
     const configContent = readFileSync(turboConfigPath, 'utf-8')
     turboConfig = JSON.parse(configContent)
 
