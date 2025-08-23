@@ -1,5 +1,5 @@
 ---
-"@orchestr8/cli": patch
+'@orchestr8/cli': patch
 ---
 
 Initial CLI package setup for NPM publishing

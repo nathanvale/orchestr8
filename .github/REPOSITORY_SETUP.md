@@ -10,7 +10,7 @@ The automated release workflow requires the following secrets to be configured i
 
 **Purpose**: Allows GitHub Actions to publish packages to the NPM registry  
 **Type**: NPM Automation Token  
-**Scope**: @orchestr8 organization  
+**Scope**: @orchestr8 organization
 
 **Setup Steps**:
 
@@ -28,6 +28,7 @@ The automated release workflow requires the following secrets to be configured i
    - Click "Add secret"
 
 **Security Notes**:
+
 - Automation tokens bypass 2FA requirements
 - Tokens are scoped to the @orchestr8 organization only
 - Tokens can be revoked at any time from npmjs.com
@@ -40,6 +41,7 @@ The automated release workflow requires the following secrets to be configured i
 **Setup**: No manual configuration required
 
 This token is automatically provided by GitHub Actions and has the necessary permissions to:
+
 - Create and update pull requests
 - Read repository contents
 - Write to repository (for commits)
@@ -50,7 +52,7 @@ The release workflow requires the following repository permissions:
 
 ```yaml
 permissions:
-  contents: write      # Create commits and tags
+  contents: write # Create commits and tags
   pull-requests: write # Create and manage release PRs
 ```
 
@@ -82,18 +84,22 @@ To verify the setup is working correctly:
 ### Common Issues
 
 **NPM_TOKEN expired or invalid**:
+
 - Error: `401 Unauthorized` during publish
 - Solution: Generate new automation token and update secret
 
 **GITHUB_TOKEN permissions**:
+
 - Error: `403 Forbidden` when creating PRs
 - Solution: Verify repository permissions in workflow file
 
 **Changeset not found**:
+
 - Error: No changesets found
 - Solution: Ensure changesets exist before running release workflow
 
 **Package publishing fails**:
+
 - Error: Package already exists
 - Solution: Version conflicts, check NPM registry
 
@@ -102,7 +108,7 @@ To verify the setup is working correctly:
 If you encounter issues with the automated publishing:
 
 1. Check workflow run logs in GitHub Actions
-2. Verify all secrets are properly configured  
+2. Verify all secrets are properly configured
 3. Test changeset commands locally
 4. Review NPM organization permissions
 5. Contact repository maintainers

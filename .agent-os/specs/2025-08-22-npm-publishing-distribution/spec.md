@@ -72,3 +72,4 @@ As an early adopter, I want access to beta and alpha versions, so that I can tes
 - CI/CD Specification: @.agent-os/specs/2025-08-22-npm-publishing-distribution/sub-specs/ci-cd-spec.md
 - Publishing Strategy: @.agent-os/specs/2025-08-22-npm-publishing-distribution/sub-specs/publishing-strategy.md
 - Tests Specification: @.agent-os/specs/2025-08-22-npm-publishing-distribution/sub-specs/tests.md
+- Code Quality Fixes: @.agent-os/specs/2025-08-22-npm-publishing-distribution/sub-specs/code-quality-fixes.md

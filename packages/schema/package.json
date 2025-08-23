@@ -1,8 +1,28 @@
 {
   "name": "@orchestr8/schema",
-  "version": "0.1.1",
-  "private": true,
+  "version": "1.0.0-beta.1",
+  "description": "Zod-based schema validation and JSON schema generation for @orchestr8 workflows and agents",
+  "keywords": ["orchestr8", "schema", "validation", "zod", "json-schema", "workflow"],
+  "author": "Nathan Vale <nathanvale@gmail.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nathanvale/orchestr8.git",
+    "directory": "packages/schema"
+  },
+  "homepage": "https://github.com/nathanvale/orchestr8/tree/main/packages/schema",
+  "bugs": {
+    "url": "https://github.com/nathanvale/orchestr8/issues"
+  },
   "type": "module",
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md"
+  ],
   "engines": {
     "node": ">=22.0.0"
   },
@@ -18,6 +38,7 @@
   "main": "./dist/cjs/index.js",
   "module": "./dist/esm/index.js",
   "types": "./dist/types/index.d.ts",
+  "sideEffects": false,
   "scripts": {
     "build": "npm run build:clean && npm run build:esm && npm run build:cjs && npm run build:types && npm run generate:schemas",
     "build:clean": "rimraf dist *.tsbuildinfo",

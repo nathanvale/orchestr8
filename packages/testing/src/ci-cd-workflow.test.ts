@@ -18,7 +18,7 @@ describe('CI/CD Workflow Validation', () => {
   // Use file-relative path resolution that works in both Vitest and Wallaby
   const __filename = fileURLToPath(import.meta.url)
   const __dirname = dirname(__filename)
-  const repoRoot = join(__dirname, '../../..')  // From packages/testing/src to root
+  const repoRoot = join(__dirname, '../../..') // From packages/testing/src to root
   const workflowsDir = join(repoRoot, '.github', 'workflows')
 
   describe('GitHub Actions Workflow Files', () => {

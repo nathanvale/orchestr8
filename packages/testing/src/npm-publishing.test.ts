@@ -9,7 +9,7 @@ describe('NPM Organization and Publishing Validation', () => {
   // Use file-relative path resolution that works in both Vitest and Wallaby
   const __filename = fileURLToPath(import.meta.url)
   const __dirname = dirname(__filename)
-  const repoRoot = join(__dirname, '../../..')  // From packages/testing/src to root
+  const repoRoot = join(__dirname, '../../..') // From packages/testing/src to root
 
   describe('Package Scope Validation', () => {
     it('should validate @orchestr8 scope in all package.json files', () => {
@@ -23,12 +23,7 @@ describe('NPM Organization and Publishing Validation', () => {
       ]
 
       packages.forEach((pkg) => {
-        const packageJsonPath = join(
-          repoRoot,
-          'packages',
-          pkg,
-          'package.json',
-        )
+        const packageJsonPath = join(repoRoot, 'packages', pkg, 'package.json')
         expect(
           existsSync(packageJsonPath),
           `package.json should exist for ${pkg}`,
@@ -62,12 +57,7 @@ describe('NPM Organization and Publishing Validation', () => {
       ]
 
       publicPackages.forEach((pkg) => {
-        const packageJsonPath = join(
-          repoRoot,
-          'packages',
-          pkg,
-          'package.json',
-        )
+        const packageJsonPath = join(repoRoot, 'packages', pkg, 'package.json')
         const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'))
 
         // Should not have private: true for public packages
@@ -282,12 +272,7 @@ describe('NPM Organization and Publishing Validation', () => {
       ]
 
       packages.forEach((pkg) => {
-        const packageJsonPath = join(
-          repoRoot,
-          'packages',
-          pkg,
-          'package.json',
-        )
+        const packageJsonPath = join(repoRoot, 'packages', pkg, 'package.json')
         const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'))
 
         // Required fields for NPM publishing
@@ -346,12 +331,7 @@ describe('NPM Organization and Publishing Validation', () => {
       // Beta RC packages (stable, mature features)
       const betaRcPackages = ['schema', 'logger', 'resilience']
       betaRcPackages.forEach((pkg) => {
-        const packageJsonPath = join(
-          repoRoot,
-          'packages',
-          pkg,
-          'package.json',
-        )
+        const packageJsonPath = join(repoRoot, 'packages', pkg, 'package.json')
         const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'))
 
         // Beta RC should be 1.0.0-beta.x or higher
@@ -370,12 +350,7 @@ describe('NPM Organization and Publishing Validation', () => {
       // Alpha packages (experimental, under development)
       const alphaPackages = ['core', 'cli', 'agent-base']
       alphaPackages.forEach((pkg) => {
-        const packageJsonPath = join(
-          repoRoot,
-          'packages',
-          pkg,
-          'package.json',
-        )
+        const packageJsonPath = join(repoRoot, 'packages', pkg, 'package.json')
         const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'))
 
         // Alpha should be 0.x.x-alpha.x or 0.x.x
@@ -392,10 +367,7 @@ describe('NPM Organization and Publishing Validation', () => {
 
   describe('Changeset Configuration Validation', () => {
     it('should validate changeset configuration exists', () => {
-      const changesetConfigPath = join(
-        repoRoot,
-        '.changeset/config.json',
-      )
+      const changesetConfigPath = join(repoRoot, '.changeset/config.json')
       expect(
         existsSync(changesetConfigPath),
         'changeset config should exist',

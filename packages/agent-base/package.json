@@ -1,8 +1,28 @@
 {
   "name": "@orchestr8/agent-base",
-  "version": "0.1.1",
-  "private": true,
+  "version": "0.2.0-alpha.1",
+  "description": "Base classes and utilities for building @orchestr8 agents",
+  "keywords": ["orchestr8", "agent", "base", "foundation", "automation"],
+  "author": "Nathan Vale <nathanvale@gmail.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nathanvale/orchestr8.git",
+    "directory": "packages/agent-base"
+  },
+  "homepage": "https://github.com/nathanvale/orchestr8/tree/main/packages/agent-base",
+  "bugs": {
+    "url": "https://github.com/nathanvale/orchestr8/issues"
+  },
   "type": "module",
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md"
+  ],
   "engines": {
     "node": ">=22.0.0"
   },
@@ -18,6 +38,7 @@
   "main": "./dist/cjs/index.js",
   "module": "./dist/esm/index.js",
   "types": "./dist/types/index.d.ts",
+  "sideEffects": false,
   "scripts": {
     "build": "npm run build:clean && npm run build:esm && npm run build:cjs && npm run build:types",
     "build:clean": "rimraf dist *.tsbuildinfo",

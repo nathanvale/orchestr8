@@ -2,7 +2,7 @@
 
 /**
  * Test Release Workflow
- * 
+ *
  * This script simulates the GitHub Actions release workflow locally
  * to validate that all steps work correctly before pushing to main.
  */
@@ -17,7 +17,7 @@ const colors = {
   yellow: '\x1b[33m',
   blue: '\x1b[34m',
   reset: '\x1b[0m',
-  bold: '\x1b[1m'
+  bold: '\x1b[1m',
 }
 
 function log(message, color = colors.reset) {
@@ -27,12 +27,12 @@ function log(message, color = colors.reset) {
 function runCommand(command, description) {
   log(`\n${colors.blue}${colors.bold}${description}${colors.reset}`)
   log(`Running: ${colors.yellow}${command}${colors.reset}`)
-  
+
   try {
-    const output = execSync(command, { 
-      encoding: 'utf-8', 
+    const output = execSync(command, {
+      encoding: 'utf-8',
       stdio: 'pipe',
-      cwd: process.cwd()
+      cwd: process.cwd(),
     })
     log(`${colors.green}✓ Success${colors.reset}`)
     if (output.trim()) {
@@ -48,11 +48,13 @@ function runCommand(command, description) {
 
 function checkPrerequisites() {
   log(`${colors.bold}Checking Prerequisites...${colors.reset}`)
-  
+
   // Check if we're in the right directory
   const packageJsonPath = join(process.cwd(), 'package.json')
   if (!existsSync(packageJsonPath)) {
-    log(`${colors.red}Error: package.json not found. Run this from the repository root.${colors.reset}`)
+    log(
+      `${colors.red}Error: package.json not found. Run this from the repository root.${colors.reset}`,
+    )
     process.exit(1)
   }
 
@@ -67,8 +69,10 @@ function checkPrerequisites() {
 }
 
 function simulateWorkflowSteps() {
-  log(`\n${colors.bold}Simulating GitHub Actions Release Workflow...${colors.reset}`)
-  
+  log(
+    `\n${colors.bold}Simulating GitHub Actions Release Workflow...${colors.reset}`,
+  )
+
   const steps = [
     {
       name: 'Install dependencies',
@@ -107,7 +111,7 @@ function simulateWorkflowSteps() {
 
 function testChangesetCommands() {
   log(`\n${colors.bold}Testing Changeset Commands...${colors.reset}`)
-  
+
   const changesetTests = [
     {
       name: 'List changeset files',
@@ -133,14 +137,22 @@ function testChangesetCommands() {
 
 function validatePackageStructure() {
   log(`\n${colors.bold}Validating Package Structure...${colors.reset}`)
-  
-  const packages = ['schema', 'logger', 'resilience', 'core', 'cli', 'agent-base', 'testing']
+
+  const packages = [
+    'schema',
+    'logger',
+    'resilience',
+    'core',
+    'cli',
+    'agent-base',
+    'testing',
+  ]
   let allValid = true
 
   for (const pkg of packages) {
     const packageDir = join(process.cwd(), 'packages', pkg)
     const packageJsonPath = join(packageDir, 'package.json')
-    
+
     if (!existsSync(packageJsonPath)) {
       log(`${colors.red}✗ Package ${pkg} missing package.json${colors.reset}`)
       allValid = false
@@ -154,38 +166,45 @@ function validatePackageStructure() {
 }
 
 async function main() {
-  log(`${colors.bold}${colors.blue}@orchestr8 Release Workflow Test${colors.reset}\n`)
-  
+  log(
+    `${colors.bold}${colors.blue}@orchestr8 Release Workflow Test${colors.reset}\n`,
+  )
+
   try {
     // Step 1: Check prerequisites
     checkPrerequisites()
-    
+
     // Step 2: Validate package structure
     const structureValid = validatePackageStructure()
     if (!structureValid) {
       log(`${colors.red}Package structure validation failed${colors.reset}`)
       process.exit(1)
     }
-    
+
     // Step 3: Test changeset commands
     const changesetTestsPassed = testChangesetCommands()
     if (!changesetTestsPassed) {
       log(`${colors.red}Changeset tests failed${colors.reset}`)
       process.exit(1)
     }
-    
+
     // Step 4: Simulate workflow steps
     const workflowPassed = simulateWorkflowSteps()
-    
+
     if (workflowPassed) {
-      log(`\n${colors.green}${colors.bold}✅ All tests passed! Release workflow is ready.${colors.reset}`)
-      log(`${colors.green}The repository is ready for automated publishing.${colors.reset}`)
+      log(
+        `\n${colors.green}${colors.bold}✅ All tests passed! Release workflow is ready.${colors.reset}`,
+      )
+      log(
+        `${colors.green}The repository is ready for automated publishing.${colors.reset}`,
+      )
     } else {
       log(`\n${colors.red}${colors.bold}❌ Some tests failed.${colors.reset}`)
-      log(`${colors.red}Fix the issues above before enabling automated publishing.${colors.reset}`)
+      log(
+        `${colors.red}Fix the issues above before enabling automated publishing.${colors.reset}`,
+      )
       process.exit(1)
     }
-    
   } catch (error) {
     log(`${colors.red}Unexpected error: ${error.message}${colors.reset}`)
     process.exit(1)
