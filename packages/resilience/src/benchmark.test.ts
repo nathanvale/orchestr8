@@ -1,43 +1,42 @@
+import { SKIP_BENCHMARKS_IF } from '@orchestr8/testing'
 import { describe, it, expect } from 'vitest'
 
-describe.skipIf(!process.env.PERF && process.env.CI !== 'true')(
-  'Performance Benchmarks',
-  () => {
-    // These tests run when PERF=1 environment variable is set
-    // OR when running in CI (CI=true)
-    // to avoid triggering process.exit() during normal test runs
+describe.skipIf(SKIP_BENCHMARKS_IF)('Performance Benchmarks', () => {
+  // These tests run when PERF=1 environment variable is set
+  // OR when running in CI (CI=true)
+  // BUT never in Wallaby.js (too slow, not Wallaby's concern)
+  // to avoid triggering process.exit() during normal test runs
 
-    it('should run benchmark suite without errors', async () => {
-      const { runBenchmarks } = await import('./benchmark.js')
-      await expect(runBenchmarks()).resolves.not.toThrow()
-    }, 30000)
+  it('should run benchmark suite without errors', async () => {
+    const { runBenchmarks } = await import('./benchmark.js')
+    await expect(runBenchmarks()).resolves.not.toThrow()
+  }, 30000)
 
-    it('should validate performance targets', async () => {
-      const { runBenchmarks } = await import('./benchmark.js')
+  it('should validate performance targets', async () => {
+    const { runBenchmarks } = await import('./benchmark.js')
 
-      // Capture console output to verify target validation
-      const logs: string[] = []
-      const originalLog = console.log
-      console.log = (msg: string) => {
-        logs.push(String(msg))
-        originalLog(msg)
-      }
+    // Capture console output to verify target validation
+    const logs: string[] = []
+    const originalLog = console.log
+    console.log = (msg: string) => {
+      logs.push(String(msg))
+      originalLog(msg)
+    }
 
-      await runBenchmarks()
-      console.log = originalLog
+    await runBenchmarks()
+    console.log = originalLog
 
-      // Check that performance validation was performed
-      const hasValidation = logs.some((log) =>
-        log.includes('Performance Target Validation'),
-      )
-      expect(hasValidation).toBe(true)
+    // Check that performance validation was performed
+    const hasValidation = logs.some((log) =>
+      log.includes('Performance Target Validation'),
+    )
+    expect(hasValidation).toBe(true)
 
-      // Check that results were printed
-      const hasResults = logs.some((log) => log.includes('Benchmark Results'))
-      expect(hasResults).toBe(true)
-    }, 30000)
-  },
-)
+    // Check that results were printed
+    const hasResults = logs.some((log) => log.includes('Benchmark Results'))
+    expect(hasResults).toBe(true)
+  }, 30000)
+})
 
 describe('Performance Benchmarks (Compilation)', () => {
   it('should validate benchmark dependencies compile', () => {
