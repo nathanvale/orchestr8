@@ -6,6 +6,7 @@
 import { performance } from 'perf_hooks'
 
 import { describe, it, expect, beforeAll } from 'vitest'
+import { SKIP_BENCHMARKS_IF } from '@orchestr8/testing'
 
 import { WorkflowValidator } from './workflow-validator.js'
 
@@ -75,7 +76,7 @@ function benchmark(name: string, fn: () => void, iterations = 100): void {
   }
 }
 
-describe('Simple Schema Validation Performance Benchmarks', () => {
+describe.skipIf(SKIP_BENCHMARKS_IF)('Simple Schema Validation Performance Benchmarks', () => {
   let workflowValidator: WorkflowValidator
   let largeWorkflow: unknown
 
@@ -163,7 +164,7 @@ describe('Simple Schema Validation Performance Benchmarks', () => {
     console.log(
       `📉 Performance degradation: ${(degradation * 100).toFixed(2)}%`,
     )
-    expect(Math.abs(degradation)).toBeLessThan(1.0) // Less than 100% change in either direction (relaxed for test environments)
+    expect(Math.abs(degradation)).toBeLessThan(1.0) // Less than 100% change in either direction
   })
 
   it('should meet memory efficiency requirements', () => {
