@@ -1,7 +1,11 @@
 {
   "name": "@orchestr8/cli",
   "version": "0.1.1",
-  "private": true,
+  "private": false,
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
   "type": "module",
   "engines": {
     "node": ">=22.0.0"

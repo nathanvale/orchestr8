@@ -30,7 +30,10 @@ describe('create:agent command', () => {
     expect(mockWriteFile).toHaveBeenCalledWith(
       path.join(process.cwd(), 'agents', 'my-agent.json'),
       expect.stringContaining('"id": "my-agent"'),
-      'utf-8',
+      {
+        flag: 'wx',
+        encoding: 'utf-8',
+      },
     )
 
     expect(consoleSpy).toHaveBeenCalledWith(
@@ -59,7 +62,10 @@ describe('create:agent command', () => {
     expect(mockWriteFile).toHaveBeenCalledWith(
       expect.any(String),
       expect.stringContaining('"description": "My custom agent"'),
-      'utf-8',
+      {
+        flag: 'wx',
+        encoding: 'utf-8',
+      },
     )
   })
 
@@ -69,9 +75,6 @@ describe('create:agent command', () => {
 
     const mockMkdir = vi.mocked(fs.mkdir)
     mockMkdir.mockImplementation(() => Promise.resolve(undefined))
-
-    const mockAccess = vi.mocked(fs.access)
-    mockAccess.mockImplementation(() => Promise.reject(new Error('Not found')))
 
     await createAgentCommand.parseAsync([
       'node',
@@ -84,13 +87,21 @@ describe('create:agent command', () => {
     expect(mockWriteFile).toHaveBeenCalledWith(
       expect.any(String),
       expect.stringContaining('"type": "http"'),
-      'utf-8',
+      {
+        flag: 'wx',
+        encoding: 'utf-8',
+      },
     )
   })
 
   it('does not overwrite existing agent without force', async () => {
-    const mockAccess = vi.mocked(fs.access)
-    mockAccess.mockImplementation(() => Promise.resolve())
+    // Mock writeFile to throw EEXIST error to simulate existing file
+    const mockWriteFile = vi.mocked(fs.writeFile)
+    mockWriteFile.mockImplementation(() => {
+      const error = new Error('File exists') as Error & { code?: string }
+      error.code = 'EEXIST'
+      return Promise.reject(error)
+    })
 
     const consoleSpy = vi.spyOn(console, 'log')
     consoleSpy.mockImplementation(() => {})

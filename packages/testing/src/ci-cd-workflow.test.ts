@@ -1,8 +1,17 @@
 import { readFileSync, existsSync } from 'fs'
 import { join } from 'path'
-import YAML from 'yaml'
 
 import { describe, it, expect } from 'vitest'
+import YAML from 'yaml'
+
+// Type for GitHub Actions workflow step
+interface WorkflowStep {
+  name: string
+  uses?: string
+  with?: Record<string, unknown>
+  run?: string
+  env?: Record<string, string>
+}
 
 describe('CI/CD Workflow Validation', () => {
   const repoRoot = join(process.cwd(), '../..')
@@ -37,7 +46,7 @@ describe('CI/CD Workflow Validation', () => {
 
       // Validate required steps
       const steps = workflow.jobs.release.steps
-      const stepNames = steps.map((step: any) => step.name)
+      const stepNames = steps.map((step: WorkflowStep) => step.name)
 
       expect(stepNames).toContain('Checkout')
       expect(stepNames).toContain('Setup Node.js')
@@ -48,7 +57,7 @@ describe('CI/CD Workflow Validation', () => {
       expect(stepNames).toContain('Create Release Pull Request or Publish')
 
       // Validate changeset action
-      const changesetStep = steps.find((step: any) =>
+      const changesetStep = steps.find((step: WorkflowStep) =>
         step.name.includes('Create Release Pull Request or Publish'),
       )
       expect(changesetStep.uses).toBe('changesets/action@v1')
@@ -73,7 +82,7 @@ describe('CI/CD Workflow Validation', () => {
 
       // Validate required steps
       const steps = workflow.jobs.validate.steps
-      const stepNames = steps.map((step: any) => step.name)
+      const stepNames = steps.map((step: WorkflowStep) => step.name)
 
       expect(stepNames).toContain('Checkout')
       expect(stepNames).toContain('Setup Node.js')
@@ -85,7 +94,7 @@ describe('CI/CD Workflow Validation', () => {
       expect(stepNames).toContain('Check for changeset')
 
       // Validate changeset check
-      const changesetStep = steps.find((step: any) =>
+      const changesetStep = steps.find((step: WorkflowStep) =>
         step.name.includes('Check for changeset'),
       )
       expect(changesetStep.run).toContain('changeset status')
