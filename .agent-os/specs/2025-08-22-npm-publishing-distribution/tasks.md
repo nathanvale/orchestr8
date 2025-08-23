@@ -41,21 +41,21 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
   - [x] 4.6 Test workflow execution with dry-run publishing
   - [x] 4.7 Verify all CI/CD tests pass
 
-- [ ] 5. Configure Version Strategy and Pre-releases
-  - [ ] 5.1 Write tests for version progression workflows
-  - [ ] 5.2 Set initial version numbers for Beta RC packages
-  - [ ] 5.3 Set initial version numbers for Alpha packages
-  - [ ] 5.4 Configure pre-release mode settings
-  - [ ] 5.5 Set up NPM dist tags for pre-releases
-  - [ ] 5.6 Test version graduation workflows
-  - [ ] 5.7 Verify all versioning tests pass
+- [x] 5. Configure Version Strategy and Pre-releases
+  - [x] 5.1 Write tests for version progression workflows
+  - [x] 5.2 Set initial version numbers for Beta RC packages
+  - [x] 5.3 Set initial version numbers for Alpha packages
+  - [x] 5.4 Configure pre-release mode settings
+  - [x] 5.5 Set up NPM dist tags for pre-releases
+  - [x] 5.6 Test version graduation workflows
+  - [x] 5.7 Verify all versioning tests pass
 
-- [ ] 6. End-to-End Publishing Validation
-  - [ ] 6.1 Write comprehensive E2E publishing tests
-  - [ ] 6.2 Create initial changesets for first release
-  - [ ] 6.3 Test full changeset → version → publish cycle
-  - [ ] 6.4 Validate package installation in consumer projects
-  - [ ] 6.5 Test dual module consumption in real projects
-  - [ ] 6.6 Monitor package registry and download stats
-  - [ ] 6.7 Document publishing runbook and procedures
-  - [ ] 6.8 Verify all E2E tests pass
+- [x] 6. End-to-End Publishing Validation
+  - [x] 6.1 Write comprehensive E2E publishing tests
+  - [x] 6.2 Create initial changesets for first release
+  - [x] 6.3 Test full changeset → version → publish cycle
+  - [x] 6.4 Validate package installation in consumer projects
+  - [x] 6.5 Test dual module consumption in real projects
+  - [x] 6.6 Monitor package registry and download stats
+  - [x] 6.7 Document publishing runbook and procedures
+  - [x] 6.8 Verify all E2E tests pass

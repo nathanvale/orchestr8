@@ -19,6 +19,9 @@ const packages = [
   'cli',
 ]
 
+// CLI packages are ES modules only and don't need dual module support
+const esModulesOnlyPackages = ['cli']
+
 let hasErrors = false
 
 console.log('🔍 Validating dual consumption setup...\n')
@@ -29,6 +32,7 @@ for (const pkg of packages) {
   try {
     const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8'))
     const issues = []
+    const isEsmOnly = esModulesOnlyPackages.includes(pkg)
 
     if (!packageJson.exports?.['.']?.development) {
       issues.push('❌ Missing "development" condition in exports')
@@ -42,12 +46,16 @@ for (const pkg of packages) {
       issues.push('❌ Missing "import" field in exports')
     }
 
-    if (!packageJson.exports?.['.']?.require) {
+    // Only require CommonJS support for dual module packages
+    if (!isEsmOnly && !packageJson.exports?.['.']?.require) {
       issues.push('❌ Missing "require" field in exports')
     }
 
-    // Check for proper dual module structure
-    if (!packageJson.main || !packageJson.main.includes('dist/cjs/index.js')) {
+    // Check for proper dual module structure (skip for ESM-only packages)
+    if (
+      !isEsmOnly &&
+      (!packageJson.main || !packageJson.main.includes('dist/cjs/index.js'))
+    ) {
       issues.push(
         '❌ Missing or incorrect "main" field (should point to dist/cjs/index.js)',
       )
@@ -82,6 +90,12 @@ for (const pkg of packages) {
       !packageJson.scripts.build.includes('build:esm')
     ) {
       issues.push('❌ Missing dual-build scripts')
+    }
+
+    // For ESM-only packages, we don't require CommonJS builds
+    if (isEsmOnly) {
+      console.log(`✅ ${packageJson.name} (ESM-only)`)
+      continue
     }
 
     if (issues.length > 0) {
