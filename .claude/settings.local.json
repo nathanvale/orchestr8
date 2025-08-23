@@ -107,7 +107,8 @@
       "Bash(else)",
       "Bash(for pkg in agent-base cli logger resilience schema testing)",
       "Bash(pkgpath=\"/Users/nathanvale/code/@orchestr8/packages/$pkg/package.json\")",
-      "Bash(if [ -f \"$pkgpath\" ])"
+      "Bash(if [ -f \"$pkgpath\" ])",
+      "Bash(git merge:*)"
     ],
     "deny": [],
     "ask": [],

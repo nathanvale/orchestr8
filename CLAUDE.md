@@ -1,236 +1,130 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides essential guidance for working with the @orchestr8 TypeScript monorepo - a sophisticated agent orchestration platform.
 
-## Build & Development Commands
+## Essential Commands
 
-```bash
+**Quality Gate (MANDATORY before commits):**
+- `pnpm check` - Complete validation (format, lint, type-check, test 486+ tests)
 
-pnpm check # **Most important** - Quality check (format, lint, type-check, test)
+**Development Loop:**
+- `pnpm format` - Fix formatting issues
+- `pnpm test` - Run all tests (Wallaby preferred)
+- `pnpm build` - Build all 7 packages with Turbo caching
 
-# Install dependencies (uses pnpm)
-pnpm install
+**Package-Specific Work:**
+- `cd packages/core && pnpm test` - Test specific package
+- `cd packages/core && pnpm test src/event-bus.test.ts` - Single test file
+- `pnpm dev` - Watch mode for all packages
 
-# Build all packages
-pnpm build
+**Examples (Ready to Use):**
+- `pnpm example:pr-auto-fix` - GitHub PR automation
+- `pnpm example:multi-llm` - Multi-LLM orchestration
+- `pnpm example:core:quick-start` - Core package demo
 
-# Run tests
-pnpm test          # Watch mode
-pnpm test:ci       # Single run (CI mode)
+## Critical Rules (Zero Tolerance)
 
-# Run a single test file
-cd packages/<package-name>
-pnpm test src/specific.test.ts
+- **TypeScript `any` FORBIDDEN**: Use proper types or `unknown` with type guards
+- **ES Modules**: ALWAYS use `.js` extensions in TypeScript imports
+- **Pre-commit**: `pnpm check` MUST pass before any commit
+- **Testing**: Wallaby.js first, Vitest fallback (never skip Wallaby check)
+- **File Creation**: Prefer editing existing files over creating new ones
+- **Quality Standards**: 0 lint errors, all tests passing, strict TypeScript
 
-# Linting and formatting
-pnpm lint          # Lint all packages
-pnpm format        # Format all files
-pnpm format:check  # Check formatting without changes
+## Development Workflow
 
-# Type checking
-pnpm type-check    # Check TypeScript types
+**Quick Start Loop:**
+1. **Setup**: `pnpm install && pnpm check` (must pass)
+2. **Code**: Make changes in `packages/*/src/`
+3. **Test**: Use Wallaby.js or `pnpm test` 
+4. **Validate**: `pnpm format && pnpm check`
+5. **Commit**: Only when `pnpm check` passes
 
-# Clean builds
-pnpm clean         # Clean build artifacts
-pnpm fresh         # Full reinstall (clean + install)
+## Architecture Context
 
-# Development
-pnpm dev           # Watch mode for all packages
-
-# Validate package export conditions
-pnpm validate:dual-consumption
+**Package Hierarchy:**
+```
+schema (foundation) → logger → core → cli
+                    ↘ resilience ↗
+                    ↘ agent-base ↗
 ```
 
-## Architecture Overview
+**Key Decisions:**
+- **Pure ES Modules**: `"type": "module"` in all packages
+- **Dual Package Consumption**: Development/production exports
+- **Zero `any` Types**: Absolute prohibition enforced by ESLint
+- **Memory-Bounded**: 10MB journal limit, 1000 event queue limit
+- **Resilience**: `retry(circuitBreaker(timeout(operation)))` composition
 
-This is a **TypeScript monorepo** using pnpm workspaces and Turborepo for build
-orchestration. The architecture follows a modular package design for the
-@orchestr8 agent orchestration platform.
+**Current Status**: Phase 1 MVP ~80% complete (486+ tests passing)
 
-### Package Dependencies
+## Testing Protocol
 
-```
-schema (no deps - foundation types)
-    ↓
-logger (no @orchestr8 deps)
-    ↓
-agent-base → schema
-resilience → schema
-    ↓
-core → schema, logger
-    ↓
-testing → schema, agent-base
-    ↓
-cli → core, schema
-```
+**Wallaby.js First (MANDATORY):**
+1. Try `mcp__wallaby__wallaby_failingTests` (5-second timeout)
+2. If no response: "Wallaby.js not running - start in VS Code"
+3. **Never skip to Vitest** without giving user chance to start Wallaby
 
-### Key Architectural Decisions
+**Fallback Commands (When Wallaby Unavailable):**
+- `pnpm test` - All 486+ tests
+- `cd packages/core && pnpm test` - Package-specific
+- `NODE_ENV=test pnpm test src/specific.test.ts` - Single file
 
-1. **Pure ES Modules**: All packages use `"type": "module"` with ES module syntax
-2. **Dual Package Consumption**: Packages export both development (TypeScript) and production (compiled) versions via conditional exports
-3. **TypeScript Project References**: Using composite projects for fast incremental builds
-4. **Strict TypeScript**: All packages use strict mode with `noUncheckedIndexedAccess`
+**Environment**: `NODE_ENV=test` (auto-configured)
 
-### 🚫 TypeScript `any` Type - ABSOLUTELY FORBIDDEN
+## Package Status
 
-**CRITICAL: The use of `any` type is STRICTLY PROHIBITED under ALL circumstances**
+| Package | Status | Tests | Key Purpose |
+|---------|--------|-------|-------------|
+| `@orchestr8/schema` | ✅ Complete | 204 | Zod validation, JSON schemas |
+| `@orchestr8/logger` | ✅ Complete | 126 | Structured logging, correlation IDs |
+| `@orchestr8/resilience` | ✅ Complete | 155 | Retry, circuit breaker, timeout |
+| `@orchestr8/core` | ✅ Complete | 100+ | Orchestration engine, event bus |
+| `@orchestr8/cli` | 🚧 Scaffolded | 1 | Commands need implementation |
+| `@orchestr8/agent-base` | 🚧 Basic | 1 | Agent foundation classes |
+| `@orchestr8/testing` | 🚧 Utilities | 100+ | Test helpers and fixtures |
 
-This codebase maintains a **ZERO TOLERANCE** policy for TypeScript `any` types:
+## Current Development State
 
-- **NO EXCEPTIONS**: Never use `any`, not even temporarily
-- **NO WORKAROUNDS**: Don't use `as any`, `<any>`, or `unknown` as a bypass
-- **NO JUSTIFICATIONS**: There is always a better type-safe solution
-- **ENFORCED BY**: ESLint rule `@typescript-eslint/no-explicit-any: 'error'`
-- **ALTERNATIVES REQUIRED**: Use proper types, generics, or `unknown` with type guards
+**Phase 1 MVP Progress**: 80% Complete ✅
 
-**Why this matters:**
+**Ready for Production:**
+- Core orchestration with resilience patterns
+- Event bus with bounded queues (1000 events max)
+- JSON workflow validation with Zod (204 tests)
+- Structured logging with correlation IDs (126 tests)
+- Memory-bounded execution journal (10MB limit)
 
-- Type safety is non-negotiable for enterprise-grade reliability
-- `any` defeats the entire purpose of using TypeScript
-- Runtime errors from `any` usage are unacceptable in production
+**To Complete Phase 1:**
+- CLI command implementation (`packages/cli/src/commands/`)
+- Built-in agents package (`packages/agents/`)
+- JSON workflow examples (`examples/` directory)
 
-**If you encounter a scenario where `any` seems necessary:**
-
-1. STOP - There's always a type-safe alternative
-2. Use proper generic types or interfaces
-3. Use `unknown` with proper type guards if type is truly unknown
-4. Define specific types for third-party libraries if needed
-
-**Enforcement:**
-
-- ESLint will error on any `any` usage
-- CI/CD pipeline will fail on `any` detection
-- Code reviews will reject PRs containing `any`
-
-### Testing Strategy
-
-### 🧪 Testing Workflow - MANDATORY WALLABY.JS FIRST
-
-**Protocol (NEVER deviate):**
-
-- **ALWAYS** try Wallaby first: `mcp__wallaby__wallaby_failingTests`
-- **5-second timeout** - If no response, Wallaby is OFF
-- **Alert immediately**: "Wallaby.js is not running. Please start it in VS Code"
-- **NEVER skip to Vitest** - Always give user chance to start Wallaby
-- **Framework**: Vitest with v8 coverage
-- **Wallaby.js**: Configured for inline test feedback (wallaby.cjs)
-- **MSW**: Mock Service Worker for API mocking in tests
-- **Test Environment**: Always runs with `NODE_ENV=test`
-- **ALWAYS** import structured logging with @orchestr8/logger
-
-### Code Style
-
-- **TypeScript `any` FORBIDDEN**: Zero tolerance - no `any` types ever
-- **ESLint**: With perfectionist plugin for import/export sorting
-- **Prettier**: For consistent formatting
-- **Import Order**: Enforced alphabetically within groups (type, builtin,
-  external, internal) **FORMAT WITH PRETTIER** to fix
-
-### 📚 Extended Documentation
-
-- **Complete commands**: @docs/commands-reference.md
-- **Testing workflows**: @docs/testing-guide.md
-- **Build troubleshooting**: @docs/turborepo-guide.md
-- **ES modules guide**: @docs/esm-extensions-guide.md
-
-### 🎯 Prompt Engineering & Agent Development
-
-- **Enterprise Prompt Guide**: @docs/enterprise-prompt-engineering-guide.md - XML-structured patterns for agents
-- **Quick Reference**: @docs/xml-prompt-quick-reference.md - Rapid lookup for XML patterns
-- **Agent Examples**: @.claude/agents/ - Production-ready agent configurations
-
-**Key Pattern**: Use XML-structured prompts for enterprise-grade reliability:
-
-```xml
-<ai_meta><parsing_rules>...</parsing_rules></ai_meta>
-<constraints><forbidden_tools>...</forbidden_tools></constraints>
-<process_flow><step>...</step></process_flow>
-```
-
-## 🏗️ Architecture (Core Context)
-
-> **Cache Directive**: Architectural decisions - stable content
-> Cache Control: `{"type": "ephemeral", "ttl": "1h"}`
-
-### ⚠️ ES Modules Architecture (CRITICAL)
-
-**🔴 This is a PURE ES modules monorepo** - all packages use `"type": "module"`
-
-**Non-negotiable rules:**
-
-- **Root enforces**: `"type": "module"` in all package.json files
-- **Import syntax**: ONLY `import`/`export` - NO `require()` or `module.exports`
-- **File extensions**: `.mjs` for configs, `.ts`/`.tsx` for source
-- **Module resolution**: `"moduleResolution": "bundler"` strategy
-- **Troubleshooting**: See @docs/development-guide.md for ES modules patterns
+**Next Priority**: Implement CLI commands (`init`, `create:agent`, `run`, `test`, `inspect`)
 
 ## Agent OS Integration
 
-This project uses Agent OS for structured development. Key files:
+**Use structured development workflow:**
+- `@~/.agent-os/instructions/create-spec.md` - Plan new features
+- `@~/.agent-os/instructions/execute-tasks.md` - Implement tasks
+- Check `.agent-os/product/roadmap.md` for current priorities
 
-- **Product Documentation**: `.agent-os/product/` contains mission, roadmap, tech stack, and decisions
-- **Development Standards**: References global standards in `~/.agent-os/standards/`
-- **Specs**: Feature specifications in `.agent-os/specs/`
+## Common Issues (Quick Fixes)
 
-When implementing features:
+**ES Module Errors**: Ensure `.js` extensions in TypeScript imports
+```typescript
+import { EventBus } from './event-bus.js'  // ✅ Correct
+import { EventBus } from './event-bus.ts'  // ❌ Wrong
+```
 
-1. Check `.agent-os/product/roadmap.md` for current priorities
-2. Use `@~/.agent-os/instructions/create-spec.md` for new features
-3. Use `@~/.agent-os/instructions/execute-tasks.md` for task execution
+**Build Failures**: `pnpm type-check` to verify TypeScript project references
+**Test Issues**: Start Wallaby.js in VS Code, fallback to `pnpm test`
+**Memory Warnings**: Automatic journal truncation at 10MB (expected behavior)
 
-## Current Development Focus
+---
 
-**Phase 1 MVP (Week 1 of 4)**: Building core orchestration engine with resilience patterns
+## Summary
 
-- Core orchestration with sequential/parallel execution
-- Resilience patterns (retry, timeout, circuit breaker)
-- Workflow AST with Zod validation
-- In-process event bus
-- Execution context with cancellation
-
-## Package-Specific Notes
-
-### @orchestr8/schema
-
-- Workflow AST definitions with Zod validation
-- Foundation package with no dependencies
-- Exports should maintain development condition first
-
-### @orchestr8/resilience
-
-- Implements retry (with exponential backoff + jitter), timeout, and circuit breaker patterns
-- Composition order: `retry(circuitBreaker(timeout(operation)))`
-
-### @orchestr8/core
-
-- Main orchestration engine
-- Handles sequential and parallel workflow execution
-- Memory-bounded execution journal (10MB limit per execution)
-
-### @orchestr8/cli
-
-- Developer command-line tool
-- Commands: init, create, run, test, inspect
-- Scaffolding and workflow execution
-
-### @orchestr8/logger
-
-- Structured logging for orchestration events/MCP server etc.
-- Correlation ID support for tracing
-- Integration with external logging systems
-
-## Important Constraints
-
-- **NO `any` TYPES**: Absolute prohibition - TypeScript `any` is never acceptable
-- **Memory Safety**: 10MB journal limit, 1000 event queue limit, auto-truncation
-- **Local Only**: Binds to 127.0.0.1:8088 (no external access in MVP)
-- **Test Coverage Target**: >80% for core packages
-- **Performance**: <100ms orchestration overhead (p95)
-
-- ALWAYS follow best practice of using .js extensions for all TypeScript imports
-- /clear
-
-- Always use pnpm format from the root to format any file it is fast enough
-
-- pnpm check should be part of the standard workflow before any commit to catch formatting, linting, type checking, and test
-  issues early.
+**Architecture**: Enterprise TypeScript monorepo with 486+ tests, pure ES modules, zero `any` types  
+**Status**: Phase 1 MVP nearly complete - solid foundation ready for CLI completion  
+**Workflow**: `pnpm check` before commits, Wallaby.js first, specific over general
