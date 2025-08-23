@@ -96,7 +96,7 @@ describe('TypeScript Configuration', () => {
     })
   })
 
-  describe('Build artifacts validation', () => {
+  describe('Package configuration validation', () => {
     const packages = [
       'agent-base',
       'core',
@@ -109,48 +109,52 @@ describe('TypeScript Configuration', () => {
     packages.forEach((pkg) => {
       describe(`packages/${pkg}`, () => {
         const packagePath = resolve(rootDir, 'packages', pkg)
-        const distPath = resolve(packagePath, 'dist')
+        const packageJsonPath = resolve(packagePath, 'package.json')
 
-        it(`should have dist directory after build`, () => {
-          // This test assumes build has been run
-          if (existsSync(distPath)) {
-            expect(existsSync(distPath)).toBe(true)
-          } else {
-            // Skip if not built yet
-            expect(true).toBe(true)
+        it(`should have valid package.json exports configuration`, () => {
+          expect(existsSync(packageJsonPath)).toBe(true)
+
+          const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'))
+          const exports = packageJson.exports?.['.']
+
+          expect(exports).toBeDefined()
+          expect(exports.development).toMatch(/\.\/src\/.*\.ts$/)
+          expect(exports.types).toMatch(/\.\/dist\/types\/.*\.d\.ts$/)
+          expect(exports.import).toMatch(/\.\/dist\/esm\/.*\.js$/)
+
+          // CLI package doesn't have CJS export
+          if (packageJson.name !== '@orchestr8/cli') {
+            expect(exports.require).toMatch(/\.\/dist\/cjs\/.*\.js$/)
           }
         })
 
-        if (existsSync(distPath)) {
-          it(`should have ESM build artifacts in dist/esm`, () => {
-            const esmPath = resolve(distPath, 'esm')
-            expect(existsSync(esmPath)).toBe(true)
-            expect(existsSync(resolve(esmPath, 'index.js'))).toBe(true)
-          })
+        it(`should have proper TypeScript build configurations`, () => {
+          const esmConfigPath = resolve(packagePath, 'tsconfig.esm.json')
+          const typesConfigPath = resolve(packagePath, 'tsconfig.types.json')
 
-          it(`should have CJS build artifacts in dist/cjs`, () => {
-            const cjsPath = resolve(distPath, 'cjs')
-            const packageJsonPath = resolve(packagePath, 'package.json')
-            const packageJson = JSON.parse(
-              readFileSync(packageJsonPath, 'utf-8'),
-            )
+          expect(existsSync(esmConfigPath)).toBe(true)
+          expect(existsSync(typesConfigPath)).toBe(true)
 
-            // CLI package doesn't build CJS
-            if (packageJson.name === '@orchestr8/cli') {
-              expect(existsSync(cjsPath)).toBe(false)
-            } else {
-              expect(existsSync(cjsPath)).toBe(true)
-              expect(existsSync(resolve(cjsPath, 'index.js'))).toBe(true)
-              expect(existsSync(resolve(cjsPath, 'package.json'))).toBe(true)
-            }
-          })
+          const esmConfig = JSON.parse(readFileSync(esmConfigPath, 'utf-8'))
+          const typesConfig = JSON.parse(readFileSync(typesConfigPath, 'utf-8'))
 
-          it(`should have type declarations in dist/types`, () => {
-            const typesPath = resolve(distPath, 'types')
-            expect(existsSync(typesPath)).toBe(true)
-            expect(existsSync(resolve(typesPath, 'index.d.ts'))).toBe(true)
-          })
-        }
+          expect(esmConfig.compilerOptions?.outDir).toBe('./dist/esm')
+          expect(typesConfig.compilerOptions?.outDir).toBe('./dist/types')
+        })
+
+        it(`should have build scripts defined in package.json`, () => {
+          const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'))
+          const scripts = packageJson.scripts
+
+          expect(scripts.build).toBeDefined()
+          expect(scripts['build:esm']).toBeDefined()
+          expect(scripts['build:types']).toBeDefined()
+
+          // CLI package doesn't build CJS
+          if (packageJson.name !== '@orchestr8/cli') {
+            expect(scripts['build:cjs']).toBeDefined()
+          }
+        })
       })
     })
   })
