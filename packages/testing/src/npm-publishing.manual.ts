@@ -7,11 +7,11 @@ import { describe, it, expect } from 'vitest'
 
 /**
  * MANUAL VERIFICATION TESTS
- * 
+ *
  * These tests validate npm publishing infrastructure but make real network calls
  * to npm registries which are slow and unreliable. They should be run manually
  * by developers when needed, not as part of automated CI.
- * 
+ *
  * To run: pnpm test src/npm-publishing.manual.ts
  */
 describe('NPM Organization and Publishing Validation (Manual)', () => {
