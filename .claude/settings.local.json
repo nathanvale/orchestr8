@@ -110,7 +110,8 @@
       "Bash(if [ -f \"$pkgpath\" ])",
       "Bash(git merge:*)",
       "Bash(git fetch:*)",
-      "Bash(gh pr view:*)"
+      "Bash(gh pr view:*)",
+      "Bash(git pull:*)"
     ],
     "deny": [],
     "ask": [],
