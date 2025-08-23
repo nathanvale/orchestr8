@@ -5,19 +5,23 @@ This file provides essential guidance for working with the @orchestr8 TypeScript
 ## Essential Commands
 
 **Quality Gate (MANDATORY before commits):**
+
 - `pnpm check` - Complete validation (format, lint, type-check, test 486+ tests)
 
 **Development Loop:**
+
 - `pnpm format` - Fix formatting issues
 - `pnpm test` - Run all tests (Wallaby preferred)
 - `pnpm build` - Build all 7 packages with Turbo caching
 
 **Package-Specific Work:**
+
 - `cd packages/core && pnpm test` - Test specific package
 - `cd packages/core && pnpm test src/event-bus.test.ts` - Single test file
 - `pnpm dev` - Watch mode for all packages
 
 **Examples (Ready to Use):**
+
 - `pnpm example:pr-auto-fix` - GitHub PR automation
 - `pnpm example:multi-llm` - Multi-LLM orchestration
 - `pnpm example:core:quick-start` - Core package demo
@@ -34,15 +38,17 @@ This file provides essential guidance for working with the @orchestr8 TypeScript
 ## Development Workflow
 
 **Quick Start Loop:**
+
 1. **Setup**: `pnpm install && pnpm check` (must pass)
 2. **Code**: Make changes in `packages/*/src/`
-3. **Test**: Use Wallaby.js or `pnpm test` 
+3. **Test**: Use Wallaby.js or `pnpm test`
 4. **Validate**: `pnpm format && pnpm check`
 5. **Commit**: Only when `pnpm check` passes
 
 ## Architecture Context
 
 **Package Hierarchy:**
+
 ```
 schema (foundation) → logger → core → cli
                     ↘ resilience ↗
@@ -50,6 +56,7 @@ schema (foundation) → logger → core → cli
 ```
 
 **Key Decisions:**
+
 - **Pure ES Modules**: `"type": "module"` in all packages
 - **Dual Package Consumption**: Development/production exports
 - **Zero `any` Types**: Absolute prohibition enforced by ESLint
@@ -61,11 +68,13 @@ schema (foundation) → logger → core → cli
 ## Testing Protocol
 
 **Wallaby.js First (MANDATORY):**
+
 1. Try `mcp__wallaby__wallaby_failingTests` (5-second timeout)
 2. If no response: "Wallaby.js not running - start in VS Code"
 3. **Never skip to Vitest** without giving user chance to start Wallaby
 
 **Fallback Commands (When Wallaby Unavailable):**
+
 - `pnpm test` - All 486+ tests
 - `cd packages/core && pnpm test` - Package-specific
 - `NODE_ENV=test pnpm test src/specific.test.ts` - Single file
@@ -74,21 +83,22 @@ schema (foundation) → logger → core → cli
 
 ## Package Status
 
-| Package | Status | Tests | Key Purpose |
-|---------|--------|-------|-------------|
-| `@orchestr8/schema` | ✅ Complete | 204 | Zod validation, JSON schemas |
-| `@orchestr8/logger` | ✅ Complete | 126 | Structured logging, correlation IDs |
-| `@orchestr8/resilience` | ✅ Complete | 155 | Retry, circuit breaker, timeout |
-| `@orchestr8/core` | ✅ Complete | 100+ | Orchestration engine, event bus |
-| `@orchestr8/cli` | 🚧 Scaffolded | 1 | Commands need implementation |
-| `@orchestr8/agent-base` | 🚧 Basic | 1 | Agent foundation classes |
-| `@orchestr8/testing` | 🚧 Utilities | 100+ | Test helpers and fixtures |
+| Package                 | Status        | Tests | Key Purpose                         |
+| ----------------------- | ------------- | ----- | ----------------------------------- |
+| `@orchestr8/schema`     | ✅ Complete   | 204   | Zod validation, JSON schemas        |
+| `@orchestr8/logger`     | ✅ Complete   | 126   | Structured logging, correlation IDs |
+| `@orchestr8/resilience` | ✅ Complete   | 155   | Retry, circuit breaker, timeout     |
+| `@orchestr8/core`       | ✅ Complete   | 100+  | Orchestration engine, event bus     |
+| `@orchestr8/cli`        | 🚧 Scaffolded | 1     | Commands need implementation        |
+| `@orchestr8/agent-base` | 🚧 Basic      | 1     | Agent foundation classes            |
+| `@orchestr8/testing`    | 🚧 Utilities  | 100+  | Test helpers and fixtures           |
 
 ## Current Development State
 
 **Phase 1 MVP Progress**: 80% Complete ✅
 
 **Ready for Production:**
+
 - Core orchestration with resilience patterns
 - Event bus with bounded queues (1000 events max)
 - JSON workflow validation with Zod (204 tests)
@@ -96,6 +106,7 @@ schema (foundation) → logger → core → cli
 - Memory-bounded execution journal (10MB limit)
 
 **To Complete Phase 1:**
+
 - CLI command implementation (`packages/cli/src/commands/`)
 - Built-in agents package (`packages/agents/`)
 - JSON workflow examples (`examples/` directory)
@@ -105,6 +116,7 @@ schema (foundation) → logger → core → cli
 ## Agent OS Integration
 
 **Use structured development workflow:**
+
 - `@~/.agent-os/instructions/create-spec.md` - Plan new features
 - `@~/.agent-os/instructions/execute-tasks.md` - Implement tasks
 - Check `.agent-os/product/roadmap.md` for current priorities
@@ -112,9 +124,10 @@ schema (foundation) → logger → core → cli
 ## Common Issues (Quick Fixes)
 
 **ES Module Errors**: Ensure `.js` extensions in TypeScript imports
+
 ```typescript
-import { EventBus } from './event-bus.js'  // ✅ Correct
-import { EventBus } from './event-bus.ts'  // ❌ Wrong
+import { EventBus } from './event-bus.js' // ✅ Correct
+import { EventBus } from './event-bus.ts' // ❌ Wrong
 ```
 
 **Build Failures**: `pnpm type-check` to verify TypeScript project references
