@@ -5,7 +5,16 @@ import { fileURLToPath } from 'url'
 
 import { describe, it, expect } from 'vitest'
 
-describe('NPM Organization and Publishing Validation', () => {
+/**
+ * MANUAL VERIFICATION TESTS
+ * 
+ * These tests validate npm publishing infrastructure but make real network calls
+ * to npm registries which are slow and unreliable. They should be run manually
+ * by developers when needed, not as part of automated CI.
+ * 
+ * To run: pnpm test src/npm-publishing.manual.ts
+ */
+describe('NPM Organization and Publishing Validation (Manual)', () => {
   // Use file-relative path resolution that works in both Vitest and Wallaby
   const __filename = fileURLToPath(import.meta.url)
   const __dirname = dirname(__filename)
