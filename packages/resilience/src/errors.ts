@@ -79,10 +79,90 @@ export function isCircuitBreakerOpenError(
 }
 
 /**
+ * Error thrown when a circuit breaker times out during half-open probe
+ */
+export class CircuitBreakerTimeoutError extends CircuitBreakerOpenError {
+  constructor(
+    message: string,
+    circuitKey: string,
+    retryAfter: Date,
+    consecutiveFailures: number,
+    public readonly timeoutMs: number,
+    public readonly operationName?: string,
+  ) {
+    super(message, circuitKey, retryAfter, consecutiveFailures)
+    Object.setPrototypeOf(this, CircuitBreakerTimeoutError.prototype)
+  }
+}
+
+/**
+ * Error thrown when circuit breaker configuration is invalid
+ */
+export class CircuitBreakerConfigurationError extends Error {
+  readonly name = 'CircuitBreakerConfigurationError'
+  readonly code = 'CIRCUIT_BREAKER_CONFIGURATION'
+
+  constructor(
+    message: string,
+    public readonly field: string,
+    public readonly provided: unknown,
+    public readonly expected: string,
+  ) {
+    super(message)
+    Object.setPrototypeOf(this, CircuitBreakerConfigurationError.prototype)
+  }
+}
+
+/**
+ * Error thrown when circuit breaker threshold is exceeded
+ */
+export class CircuitBreakerThresholdError extends CircuitBreakerOpenError {
+  constructor(
+    message: string,
+    circuitKey: string,
+    retryAfter: Date,
+    consecutiveFailures: number,
+    public readonly failureRate: number,
+    public readonly threshold: number,
+    public readonly sampleSize: number,
+  ) {
+    super(message, circuitKey, retryAfter, consecutiveFailures)
+    Object.setPrototypeOf(this, CircuitBreakerThresholdError.prototype)
+  }
+}
+
+/**
  * Type guard for RetryExhaustedError
  */
 export function isRetryExhaustedError(
   error: unknown,
 ): error is RetryExhaustedError {
   return error instanceof RetryExhaustedError
+}
+
+/**
+ * Type guard for CircuitBreakerTimeoutError
+ */
+export function isCircuitBreakerTimeoutError(
+  error: unknown,
+): error is CircuitBreakerTimeoutError {
+  return error instanceof CircuitBreakerTimeoutError
+}
+
+/**
+ * Type guard for CircuitBreakerConfigurationError
+ */
+export function isCircuitBreakerConfigurationError(
+  error: unknown,
+): error is CircuitBreakerConfigurationError {
+  return error instanceof CircuitBreakerConfigurationError
+}
+
+/**
+ * Type guard for CircuitBreakerThresholdError
+ */
+export function isCircuitBreakerThresholdError(
+  error: unknown,
+): error is CircuitBreakerThresholdError {
+  return error instanceof CircuitBreakerThresholdError
 }
