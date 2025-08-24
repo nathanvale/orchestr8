@@ -852,7 +852,7 @@ describe('CircuitBreaker', () => {
       const operation = vi.fn().mockRejectedValue(new Error('fail'))
 
       // Fill window to trigger threshold
-      for (let i = 0; i < 5; i++) {
+      for (let i = 0; i < 10; i++) {
         await expect(cb.execute('test-key', operation)).rejects.toThrow('fail')
       }
 
@@ -868,10 +868,10 @@ describe('CircuitBreaker', () => {
       expect(thresholdError.name).toBe('CircuitBreakerThresholdError')
       expect(thresholdError.code).toBe('CIRCUIT_BREAKER_THRESHOLD')
       expect(thresholdError.circuitKey).toBe('test-key')
-      expect(thresholdError.consecutiveFailures).toBe(5)
-      expect(thresholdError.failureRate).toBe(1.0) // 5/5 = 100%
+      expect(thresholdError.consecutiveFailures).toBe(10)
+      expect(thresholdError.failureRate).toBe(1.0) // 10/10 = 100%
       expect(thresholdError.threshold).toBe(3) // from defaultConfig
-      expect(thresholdError.sampleSize).toBe(5) // from defaultConfig
+      expect(thresholdError.sampleSize).toBe(10) // from defaultConfig
       expect(isCircuitBreakerThresholdError(thresholdError)).toBe(true)
     })
 
@@ -885,7 +885,7 @@ describe('CircuitBreaker', () => {
       )
 
       // After opening, circuit should throw CircuitBreakerOpenError
-      for (let i = 0; i < 4; i++) {
+      for (let i = 0; i < 9; i++) {
         await expect(cb.execute('test-key', operation)).rejects.toThrow(
           'original error',
         )

@@ -61,14 +61,14 @@ describe('ProductionResilienceAdapter', () => {
         circuitBreaker: {
           key: 'test-service',
           failureThreshold: 3,
-          sampleSize: 5,
+          sampleSize: 10,
           recoveryTime: 100,
           halfOpenPolicy: 'single-probe',
         },
       }
 
       // Fill the sliding window with failures
-      for (let i = 0; i < 5; i++) {
+      for (let i = 0; i < 10; i++) {
         try {
           await adapter.applyNormalizedPolicy(
             operation,
@@ -199,7 +199,7 @@ describe('ProductionResilienceAdapter', () => {
         circuitBreaker: {
           key: 'test-service-2',
           failureThreshold: 3,
-          sampleSize: 5,
+          sampleSize: 10,
           recoveryTime: 1000,
           halfOpenPolicy: 'single-probe',
         },
@@ -317,13 +317,13 @@ describe('ProductionResilienceAdapter', () => {
         circuitBreaker: {
           key: 'service-x',
           failureThreshold: 2,
-          sampleSize: 3,
+          sampleSize: 10,
           recoveryTime: 1000,
         },
       }
 
       // Open the circuit
-      for (let i = 0; i < 3; i++) {
+      for (let i = 0; i < 10; i++) {
         try {
           await adapter2.applyNormalizedPolicy(
             failingOp,
@@ -346,7 +346,7 @@ describe('ProductionResilienceAdapter', () => {
         circuitBreaker: {
           key: 'service-x',
           failureThreshold: 2,
-          sampleSize: 3,
+          sampleSize: 10,
           recoveryTime: 1000,
         },
       }
@@ -423,14 +423,14 @@ describe('ProductionResilienceAdapter', () => {
         circuitBreaker: {
           key: 'recovery-test',
           failureThreshold: 2,
-          sampleSize: 3,
+          sampleSize: 10,
           recoveryTime: 50, // Short recovery for testing
           halfOpenPolicy: 'single-probe',
         },
       }
 
       // Open the circuit
-      for (let i = 0; i < 3; i++) {
+      for (let i = 0; i < 10; i++) {
         try {
           await adapter3.applyNormalizedPolicy(
             operation,

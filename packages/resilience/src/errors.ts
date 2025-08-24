@@ -91,6 +91,10 @@ export class CircuitBreakerTimeoutError extends CircuitBreakerOpenError {
     public readonly operationName?: string,
   ) {
     super(message, circuitKey, retryAfter, consecutiveFailures)
+    Object.defineProperty(this, 'name', {
+      value: 'CircuitBreakerTimeoutError',
+      configurable: true,
+    })
     Object.setPrototypeOf(this, CircuitBreakerTimeoutError.prototype)
   }
 }
@@ -127,6 +131,10 @@ export class CircuitBreakerThresholdError extends CircuitBreakerOpenError {
     public readonly sampleSize: number,
   ) {
     super(message, circuitKey, retryAfter, consecutiveFailures)
+    Object.defineProperty(this, 'name', {
+      value: 'CircuitBreakerThresholdError',
+      configurable: true,
+    })
     Object.setPrototypeOf(this, CircuitBreakerThresholdError.prototype)
   }
 }
