@@ -255,7 +255,7 @@ describe('lint-staged Configuration and Integration', () => {
           'packages/*/src/**/*.{ts,tsx}': [
             'prettier --write',
             'eslint --fix',
-            'bash -c \'cd packages/$(echo "$0" | cut -d/ -f2) && pnpm type-check\'',
+            'bash -c \'PKG=$(echo "$0" | sed "s|.*/packages/\\([^/]*\\)/.*|\\1|") && cd packages/$PKG && pnpm type-check\'',
           ],
           '*.{json,md,yml,yaml}': ['prettier --write'],
         },
