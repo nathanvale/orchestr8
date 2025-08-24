@@ -2,7 +2,14 @@
   "name": "@orchestr8/core",
   "version": "0.2.0-alpha.1",
   "description": "Core orchestration engine for @orchestr8 with workflow execution and event management",
-  "keywords": ["orchestr8", "orchestration", "workflow", "automation", "events", "execution"],
+  "keywords": [
+    "orchestr8",
+    "orchestration",
+    "workflow",
+    "automation",
+    "events",
+    "execution"
+  ],
   "author": "Nathan Vale <nathanvale@gmail.com>",
   "license": "MIT",
   "repository": {
@@ -49,6 +56,7 @@
     "test": "vitest",
     "test:ci": "vitest --run",
     "lint": "eslint src --max-warnings 0",
+    "lint:fix": "eslint src --fix --max-warnings 0",
     "type-check": "tsc --noEmit",
     "format:check": "prettier --check src",
     "clean": "rimraf dist *.tsbuildinfo",

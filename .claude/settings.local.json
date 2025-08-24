@@ -132,13 +132,19 @@
       "Bash(NODE_ENV=test pnpm -F @orchestr8/testing test src/npm-publishing.test.ts -- --testTimeout=30000)",
       "Bash(timeout 120 pnpm test:ci)",
       "mcp__sequential-thinking__sequentialthinking",
-      "Bash(npm publish:*)"
+      "Bash(npm publish:*)",
+      "Bash(timeout 60 pnpm test)",
+      "Bash(PERF=1 timeout 10 pnpm test src/json-execution-model-performance.test.ts)",
+      "Bash(PERF=1 timeout 10 pnpm test packages/core/src/json-execution-model-performance.test.ts)",
+      "Bash(timeout 120 pnpm check)",
+      "Bash(timeout 120 pnpm run check)",
+      "Bash(timeout 120 pnpm -w run check)",
+      "Bash(gh status:*)",
+      "Bash(gh repo view:*)"
     ],
     "deny": [],
     "ask": [],
-    "additionalDirectories": [
-      "/Users/nathanvale"
-    ]
+    "additionalDirectories": ["/Users/nathanvale"]
   },
   "enabledMcpjsonServers": [
     "wallaby",

@@ -2,7 +2,13 @@
   "name": "@orchestr8/agent-base",
   "version": "0.2.0-alpha.1",
   "description": "Base classes and utilities for building @orchestr8 agents",
-  "keywords": ["orchestr8", "agent", "base", "foundation", "automation"],
+  "keywords": [
+    "orchestr8",
+    "agent",
+    "base",
+    "foundation",
+    "automation"
+  ],
   "author": "Nathan Vale <nathanvale@gmail.com>",
   "license": "MIT",
   "repository": {
@@ -53,7 +59,8 @@
     "format:check": "prettier --check src",
     "clean": "rimraf dist *.tsbuildinfo",
     "prepublishOnly": "node ../../scripts/prepare-publish.cjs clean",
-    "postpublish": "node ../../scripts/prepare-publish.cjs restore"
+    "postpublish": "node ../../scripts/prepare-publish.cjs restore",
+    "lint:fix": "eslint src --fix --max-warnings 0"
   },
   "dependencies": {
     "@orchestr8/schema": "workspace:*"

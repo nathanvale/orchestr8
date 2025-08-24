@@ -2,7 +2,14 @@
   "name": "@orchestr8/cli",
   "version": "0.2.0-alpha.1",
   "description": "Command-line interface for @orchestr8 workflow orchestration and automation",
-  "keywords": ["orchestr8", "cli", "workflow", "automation", "orchestration", "command-line"],
+  "keywords": [
+    "orchestr8",
+    "cli",
+    "workflow",
+    "automation",
+    "orchestration",
+    "command-line"
+  ],
   "author": "Nathan Vale <nathanvale@gmail.com>",
   "license": "MIT",
   "repository": {
@@ -57,7 +64,8 @@
     "format:check": "prettier --check src",
     "clean": "rimraf dist *.tsbuildinfo",
     "prepublishOnly": "node ../../scripts/prepare-publish.cjs clean",
-    "postpublish": "node ../../scripts/prepare-publish.cjs restore"
+    "postpublish": "node ../../scripts/prepare-publish.cjs restore",
+    "lint:fix": "eslint src --fix --max-warnings 0"
   },
   "dependencies": {
     "@orchestr8/core": "workspace:*",
