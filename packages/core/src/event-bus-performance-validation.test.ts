@@ -14,6 +14,14 @@ import { BoundedEventBus } from './event-bus.js'
 // Environment flags
 const isPerfMode = process.env.PERF === '1'
 const isCI = process.env.CI === 'true'
+const isWallaby = !!process.env.WALLABY_WORKER
+
+// Only run performance validation in explicit PERF mode, never in CI or Wallaby
+const SKIP_BENCHMARKS_IF = !(
+  !isWallaby &&
+  !isCI &&
+  isPerfMode
+)
 
 interface PerformanceTarget {
   name: string
@@ -63,7 +71,7 @@ const PERFORMANCE_TARGETS: PerformanceTarget[] = [
   },
 ]
 
-describe.skipIf(!isPerfMode && !isCI)(
+describe.skipIf(SKIP_BENCHMARKS_IF)(
   'Event Bus Performance Validation',
   () => {
     const results: PerformanceResult[] = []
