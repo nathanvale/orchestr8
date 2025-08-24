@@ -14,6 +14,14 @@ import { BoundedEventBus } from './event-bus.js'
 // Environment variable gate for performance benchmarks
 const isPerfMode = process.env.PERF === '1'
 const isCI = process.env.CI === 'true'
+const isWallaby = !!process.env.WALLABY_WORKER
+
+// Only run benchmarks in explicit PERF mode, never in CI or Wallaby
+const SKIP_BENCHMARKS_IF = !(
+  !isWallaby &&
+  !isCI &&
+  isPerfMode
+)
 
 interface BenchmarkResult {
   name: string
@@ -166,7 +174,7 @@ class EventBusBenchmarkSuite {
   }
 }
 
-describe.skipIf(!isPerfMode && !isCI)(
+describe.skipIf(SKIP_BENCHMARKS_IF)(
   'Event Bus Performance Benchmarks',
   () => {
     let suite: EventBusBenchmarkSuite

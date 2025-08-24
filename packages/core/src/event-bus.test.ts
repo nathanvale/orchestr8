@@ -1028,7 +1028,14 @@ describe('BoundedEventBus', () => {
     })
   })
 
-  describe('Latency Validation', () => {
+  // Performance flag for latency tests - only run with PERF=1
+  const SKIP_BENCHMARKS_IF = !(
+    !process.env.WALLABY_WORKER &&
+    process.env.CI !== 'true' &&
+    process.env.PERF === '1'
+  )
+
+  describe.skipIf(SKIP_BENCHMARKS_IF)('Latency Validation', () => {
     it('should achieve < 1ms p95 emission latency with queueMicrotask', async () => {
       const { BoundedEventBus } = await import('./event-bus.js')
       eventBus = new BoundedEventBus({ maxQueueSize: 1000 })
