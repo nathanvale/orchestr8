@@ -6,7 +6,9 @@ import { fileURLToPath } from 'url'
 
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 
-describe('End-to-End Publishing Validation', () => {
+import { SKIP_BENCHMARKS_IF } from './benchmark-utils.js'
+
+describe.skipIf(SKIP_BENCHMARKS_IF)('End-to-End Publishing Validation', () => {
   // Use file-relative path resolution that works in both Vitest and Wallaby
   const __filename = fileURLToPath(import.meta.url)
   const __dirname = dirname(__filename)

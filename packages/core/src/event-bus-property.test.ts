@@ -1,10 +1,17 @@
 /**
  * Property-based tests for BoundedEventBus using fast-check
  * These tests verify invariants that should always hold regardless of input
+ * Run with: PERF=1 pnpm test event-bus-property.test.ts
  */
 
 import fc from 'fast-check'
 import { describe, it, expect } from 'vitest'
+
+const SKIP_BENCHMARKS_IF = !(
+  !process.env.WALLABY_WORKER &&
+  process.env.CI !== 'true' &&
+  process.env.PERF === '1'
+)
 
 import type { OrchestrationEvent } from './event-bus.js'
 
@@ -36,7 +43,7 @@ const eventBusConfigArb = fc.record({
   enableMemoryTracking: fc.boolean(),
 })
 
-describe('Event Bus Property Tests', () => {
+describe.skipIf(SKIP_BENCHMARKS_IF)('Event Bus Property Tests', () => {
   describe('Circular Buffer Invariants', () => {
     it(
       'should never exceed configured queue size',

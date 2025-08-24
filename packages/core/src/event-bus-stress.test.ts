@@ -1,15 +1,22 @@
 /**
  * Stress tests for BoundedEventBus queue overflow scenarios
  * These tests validate behavior under extreme load conditions
+ * Run with: PERF=1 pnpm test event-bus-stress.test.ts
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest'
+
+const SKIP_BENCHMARKS_IF = !(
+  !process.env.WALLABY_WORKER &&
+  process.env.CI !== 'true' &&
+  process.env.PERF === '1'
+)
 
 import type { OrchestrationEvent } from './event-bus.js'
 
 import { BoundedEventBus } from './event-bus.js'
 
-describe('Event Bus Stress Tests', () => {
+describe.skipIf(SKIP_BENCHMARKS_IF)('Event Bus Stress Tests', () => {
   let eventBus: BoundedEventBus
 
   beforeEach(() => {

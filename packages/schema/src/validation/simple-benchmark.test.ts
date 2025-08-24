@@ -6,7 +6,15 @@
 import { performance } from 'perf_hooks'
 
 import { describe, it, expect, beforeAll } from 'vitest'
-import { SKIP_BENCHMARKS_IF } from '@orchestr8/testing'
+
+function shouldRunBenchmarks(): boolean {
+  const isWallaby = !!process.env.WALLABY_WORKER
+  const isPerfMode = process.env.PERF === '1'
+  const isCI = process.env.CI === 'true'
+
+  // Never run in Wallaby or CI (flaky), only in explicit PERF mode
+  return !isWallaby && !isCI && isPerfMode
+}
 
 import { WorkflowValidator } from './workflow-validator.js'
 
@@ -76,7 +84,7 @@ function benchmark(name: string, fn: () => void, iterations = 100): void {
   }
 }
 
-describe.skipIf(SKIP_BENCHMARKS_IF)(
+describe.skipIf(!shouldRunBenchmarks())(
   'Simple Schema Validation Performance Benchmarks',
   () => {
     let workflowValidator: WorkflowValidator
