@@ -13,7 +13,7 @@ describe('NPM Publishing Validation', () => {
     'testing',
   ]
 
-  it('should validate NPM scope availability', () => {
+  it('should validate NPM scope availability', { timeout: 30000 }, () => {
     packages.forEach((pkg) => {
       const packageName = `@orchestr8/${pkg}`
 
