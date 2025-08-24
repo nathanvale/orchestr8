@@ -10,7 +10,7 @@
  * - Explicitly requested via PERF=1 environment variable
  *
  * They should NEVER run in:
- * - Wallaby.js (too slow, not its concern)  
+ * - Wallaby.js (too slow, not its concern)
  * - CI environments (flaky due to resource variance)
  * - Normal test runs (to avoid accidental performance testing)
  *
@@ -22,7 +22,7 @@ export function shouldRunBenchmarks(): boolean {
   const isCI = process.env.CI === 'true'
 
   // Never run in Wallaby or CI (flaky), only in explicit PERF mode
-  return !isWallaby && isPerfMode
+  return !isWallaby && !isCI && isPerfMode
 }
 
 /**
