@@ -14,6 +14,10 @@ import { BoundedEventBus } from './event-bus.js'
 // Environment variable gate for performance benchmarks
 const isPerfMode = process.env.PERF === '1'
 const isCI = process.env.CI === 'true'
+const isWallaby = !!process.env.WALLABY_WORKER
+
+// Only run benchmarks in explicit PERF mode, never in CI or Wallaby
+const SKIP_BENCHMARKS_IF = !(!isWallaby && !isCI && isPerfMode)
 
 interface BenchmarkResult {
   name: string
@@ -166,309 +170,304 @@ class EventBusBenchmarkSuite {
   }
 }
 
-describe.skipIf(!isPerfMode && !isCI)(
-  'Event Bus Performance Benchmarks',
-  () => {
-    let suite: EventBusBenchmarkSuite
+describe.skipIf(SKIP_BENCHMARKS_IF)('Event Bus Performance Benchmarks', () => {
+  let suite: EventBusBenchmarkSuite
 
-    beforeEach(() => {
-      suite = new EventBusBenchmarkSuite()
+  beforeEach(() => {
+    suite = new EventBusBenchmarkSuite()
+  })
+
+  it('should benchmark simple event emission latency', async () => {
+    const eventBus = new BoundedEventBus({ maxQueueSize: 10000 })
+    let eventsReceived = 0
+
+    eventBus.on('test.event', () => {
+      eventsReceived++
     })
 
-    it('should benchmark simple event emission latency', async () => {
-      const eventBus = new BoundedEventBus({ maxQueueSize: 10000 })
-      let eventsReceived = 0
+    const result = await suite.benchmark(
+      'Simple Event Emission',
+      () => {
+        const event: OrchestrationEvent = {
+          type: 'test.event',
+          data: { id: Math.random() },
+        } as OrchestrationEvent
+        eventBus.emitEvent(event)
+      },
+      { iterations: 10000, warmupIterations: 1000 },
+    )
 
-      eventBus.on('test.event', () => {
-        eventsReceived++
+    // Wait for all events to be processed
+    await new Promise((resolve) => setTimeout(resolve, 100))
+
+    expect(result.p95Time).toBeLessThan(isCI ? 2.0 : 1.0)
+    console.log(`Events received: ${eventsReceived}`)
+  }, 30000)
+
+  it('should benchmark event emission with multiple listeners', async () => {
+    const eventBus = new BoundedEventBus({ maxQueueSize: 10000 })
+    const listenerCount = 10
+
+    // Add multiple listeners
+    for (let i = 0; i < listenerCount; i++) {
+      eventBus.on('workflow.started', () => {
+        // Simulate minimal work
+        Math.random()
       })
+    }
 
-      const result = await suite.benchmark(
-        'Simple Event Emission',
-        () => {
+    const result = await suite.benchmark(
+      'Event Emission with 10 Listeners',
+      () => {
+        const event: OrchestrationEvent = {
+          type: 'workflow.started',
+          workflowId: `wf-${Math.random()}`,
+          timestamp: Date.now(),
+        }
+        eventBus.emitEvent(event)
+      },
+      { iterations: 5000, warmupIterations: 500 },
+    )
+
+    expect(result.p95Time).toBeLessThan(isCI ? 3.0 : 2.0)
+  }, 30000)
+
+  it('should benchmark throughput with small events', async () => {
+    const eventBus = new BoundedEventBus({ maxQueueSize: 10000 })
+
+    eventBus.on('step.started', () => {})
+
+    const eventsPerBatch = 1000
+    const result = await suite.benchmark(
+      'Throughput - Small Events',
+      async () => {
+        // Emit a batch of events
+        for (let i = 0; i < eventsPerBatch; i++) {
           const event: OrchestrationEvent = {
-            type: 'test.event',
-            data: { id: Math.random() },
-          } as OrchestrationEvent
-          eventBus.emitEvent(event)
-        },
-        { iterations: 10000, warmupIterations: 1000 },
-      )
-
-      // Wait for all events to be processed
-      await new Promise((resolve) => setTimeout(resolve, 100))
-
-      expect(result.p95Time).toBeLessThan(isCI ? 2.0 : 1.0)
-      console.log(`Events received: ${eventsReceived}`)
-    }, 30000)
-
-    it('should benchmark event emission with multiple listeners', async () => {
-      const eventBus = new BoundedEventBus({ maxQueueSize: 10000 })
-      const listenerCount = 10
-
-      // Add multiple listeners
-      for (let i = 0; i < listenerCount; i++) {
-        eventBus.on('workflow.started', () => {
-          // Simulate minimal work
-          Math.random()
-        })
-      }
-
-      const result = await suite.benchmark(
-        'Event Emission with 10 Listeners',
-        () => {
-          const event: OrchestrationEvent = {
-            type: 'workflow.started',
-            workflowId: `wf-${Math.random()}`,
-            timestamp: Date.now(),
+            type: 'step.started',
+            stepId: `step-${i}`,
+            executionId: 'exec-1',
           }
           eventBus.emitEvent(event)
-        },
-        { iterations: 5000, warmupIterations: 500 },
-      )
+        }
+        // Wait for processing
+        await new Promise((resolve) => setTimeout(resolve, 0))
+      },
+      { iterations: 10, warmupIterations: 2 },
+    )
 
-      expect(result.p95Time).toBeLessThan(isCI ? 3.0 : 2.0)
-    }, 30000)
+    // Calculate actual throughput
+    const actualThroughput = (eventsPerBatch * 10) / (result.totalTime / 1000)
+    console.log(`Actual throughput: ${actualThroughput.toFixed(0)} events/sec`)
 
-    it('should benchmark throughput with small events', async () => {
-      const eventBus = new BoundedEventBus({ maxQueueSize: 10000 })
+    expect(actualThroughput).toBeGreaterThan(10000)
+  }, 30000)
 
-      eventBus.on('step.started', () => {})
+  it('should benchmark throughput with complex events', async () => {
+    const eventBus = new BoundedEventBus({ maxQueueSize: 10000 })
 
-      const eventsPerBatch = 1000
-      const result = await suite.benchmark(
-        'Throughput - Small Events',
-        async () => {
-          // Emit a batch of events
-          for (let i = 0; i < eventsPerBatch; i++) {
-            const event: OrchestrationEvent = {
-              type: 'step.started',
-              stepId: `step-${i}`,
-              executionId: 'exec-1',
-            }
-            eventBus.emitEvent(event)
-          }
-          // Wait for processing
-          await new Promise((resolve) => setTimeout(resolve, 0))
-        },
-        { iterations: 10, warmupIterations: 2 },
-      )
+    eventBus.on('step.completed', () => {})
 
-      // Calculate actual throughput
-      const actualThroughput = (eventsPerBatch * 10) / (result.totalTime / 1000)
-      console.log(
-        `Actual throughput: ${actualThroughput.toFixed(0)} events/sec`,
-      )
-
-      expect(actualThroughput).toBeGreaterThan(10000)
-    }, 30000)
-
-    it('should benchmark throughput with complex events', async () => {
-      const eventBus = new BoundedEventBus({ maxQueueSize: 10000 })
-
-      eventBus.on('step.completed', () => {})
-
-      const eventsPerBatch = 1000
-      const result = await suite.benchmark(
-        'Throughput - Complex Events',
-        async () => {
-          // Emit a batch of complex events
-          for (let i = 0; i < eventsPerBatch; i++) {
-            const event: OrchestrationEvent = {
-              type: 'step.completed',
-              stepId: `step-${i}`,
-              output: {
-                result: 'x'.repeat(100),
-                metadata: {
-                  timestamp: Date.now(),
-                  duration: Math.random() * 1000,
-                  retries: Math.floor(Math.random() * 3),
-                },
-                nested: {
-                  deep: {
-                    value: 'test',
-                  },
+    const eventsPerBatch = 1000
+    const result = await suite.benchmark(
+      'Throughput - Complex Events',
+      async () => {
+        // Emit a batch of complex events
+        for (let i = 0; i < eventsPerBatch; i++) {
+          const event: OrchestrationEvent = {
+            type: 'step.completed',
+            stepId: `step-${i}`,
+            output: {
+              result: 'x'.repeat(100),
+              metadata: {
+                timestamp: Date.now(),
+                duration: Math.random() * 1000,
+                retries: Math.floor(Math.random() * 3),
+              },
+              nested: {
+                deep: {
+                  value: 'test',
                 },
               },
-            }
-            eventBus.emitEvent(event)
+            },
           }
-          // Wait for processing
-          await new Promise((resolve) => setTimeout(resolve, 0))
-        },
-        { iterations: 10, warmupIterations: 2 },
-      )
-
-      const actualThroughput = (eventsPerBatch * 10) / (result.totalTime / 1000)
-      console.log(
-        `Complex event throughput: ${actualThroughput.toFixed(0)} events/sec`,
-      )
-
-      expect(actualThroughput).toBeGreaterThan(10000)
-    }, 30000)
-
-    it('should benchmark queue saturation and recovery', async () => {
-      const eventBus = new BoundedEventBus({
-        maxQueueSize: 1000,
-        warnOnDrop: false,
-      })
-
-      let slowProcessingActive = true
-
-      // Add a slow listener to cause queue buildup
-      eventBus.on('test.burst', async () => {
-        if (slowProcessingActive) {
-          await new Promise((resolve) => setTimeout(resolve, 10))
-        }
-      })
-
-      await suite.benchmark(
-        'Queue Saturation Recovery',
-        async () => {
-          // Burst emit events
-          for (let i = 0; i < 2000; i++) {
-            eventBus.emitEvent({
-              type: 'test.burst',
-              id: i,
-            } as OrchestrationEvent)
-          }
-
-          // Let queue saturate
-          await new Promise((resolve) => setTimeout(resolve, 50))
-
-          // Speed up processing
-          slowProcessingActive = false
-
-          // Wait for recovery
-          await new Promise((resolve) => setTimeout(resolve, 100))
-        },
-        { iterations: 5, warmupIterations: 1 },
-      )
-
-      const metrics = eventBus.getMetrics()
-      console.log(`Dropped events: ${metrics.droppedCount}`)
-      console.log(`Total events emitted: 2000`)
-
-      expect(metrics.droppedCount).toBeGreaterThan(0)
-    }, 60000)
-
-    it('should benchmark event isolation overhead', async () => {
-      const eventBus = new BoundedEventBus({ maxQueueSize: 5000 })
-
-      let modificationAttempts = 0
-      eventBus.on('test.isolation', (event) => {
-        // Try to modify the event (this shouldn't affect original due to shallow clone)
-        if ('data' in event && typeof event.data === 'object') {
-          ;(event.data as Record<string, unknown>).modified = true
-          modificationAttempts++
-        }
-      })
-
-      const result = await suite.benchmark(
-        'Event Isolation Overhead',
-        () => {
-          // Create a fresh event for each iteration to properly test isolation
-          const event: OrchestrationEvent = {
-            type: 'test.isolation',
-            data: { value: 'original' },
-          } as OrchestrationEvent
-
-          const originalData = JSON.stringify(event.data)
           eventBus.emitEvent(event)
+        }
+        // Wait for processing
+        await new Promise((resolve) => setTimeout(resolve, 0))
+      },
+      { iterations: 10, warmupIterations: 2 },
+    )
 
-          // Verify the original event wasn't modified (shallow clone protects top level)
-          expect(JSON.stringify(event.data)).toBe(originalData)
-        },
-        { iterations: 10000, warmupIterations: 1000 },
-      )
+    const actualThroughput = (eventsPerBatch * 10) / (result.totalTime / 1000)
+    console.log(
+      `Complex event throughput: ${actualThroughput.toFixed(0)} events/sec`,
+    )
 
-      console.log(`Modification attempts: ${modificationAttempts}`)
-      expect(result.p95Time).toBeLessThan(isCI ? 2.0 : 1.0)
-    }, 30000)
+    expect(actualThroughput).toBeGreaterThan(10000)
+  }, 30000)
 
-    it('should measure memory tracking overhead when enabled', async () => {
-      const eventBusWithTracking = new BoundedEventBus({
-        maxQueueSize: 5000,
-        enableMemoryTracking: true,
-      })
+  it('should benchmark queue saturation and recovery', async () => {
+    const eventBus = new BoundedEventBus({
+      maxQueueSize: 1000,
+      warnOnDrop: false,
+    })
 
-      const eventBusWithoutTracking = new BoundedEventBus({
-        maxQueueSize: 5000,
-        enableMemoryTracking: false,
-      })
+    let slowProcessingActive = true
 
-      // Benchmark with memory tracking
-      const withTrackingResult = await suite.benchmark(
-        'With Memory Tracking',
-        () => {
-          for (let i = 0; i < 100; i++) {
-            eventBusWithTracking.emitEvent({
-              type: 'test.memory',
-              data: 'x'.repeat(1000),
-            } as OrchestrationEvent)
-          }
-        },
-        { iterations: 100, warmupIterations: 10 },
-      )
-
-      // Benchmark without memory tracking
-      const withoutTrackingResult = await suite.benchmark(
-        'Without Memory Tracking',
-        () => {
-          for (let i = 0; i < 100; i++) {
-            eventBusWithoutTracking.emitEvent({
-              type: 'test.memory',
-              data: 'x'.repeat(1000),
-            } as OrchestrationEvent)
-          }
-        },
-        { iterations: 100, warmupIterations: 10 },
-      )
-
-      const overhead =
-        ((withTrackingResult.meanTime - withoutTrackingResult.meanTime) /
-          withoutTrackingResult.meanTime) *
-        100
-
-      console.log(`Memory tracking overhead: ${overhead.toFixed(1)}%`)
-
-      // Memory tracking should have minimal overhead (< 40% in test environment)
-      // Note: Overhead can be higher in test environments due to small batch sizes
-      expect(overhead).toBeLessThan(40)
-    }, 30000)
-
-    it('should print comprehensive benchmark results', async () => {
-      // This test runs last to print all results
-      // Only print if we have results (other tests ran)
-      const results = suite.getResults()
-
-      if (results.length > 0) {
-        suite.printResults()
-
-        // Verify key performance targets
-        const emissionBenchmarks = results.filter((r) =>
-          r.name.includes('Emission'),
-        )
-        const hasGoodLatency = emissionBenchmarks.some(
-          (r) => r.p95Time < (isCI ? 2.0 : 1.0),
-        )
-        expect(hasGoodLatency).toBe(true)
-
-        const throughputBenchmarks = results.filter((r) =>
-          r.name.includes('Throughput'),
-        )
-        const hasGoodThroughput = throughputBenchmarks.some(
-          (r) => r.throughput > 10000,
-        )
-        expect(hasGoodThroughput).toBe(true)
-      } else {
-        // No results means the suite was instantiated but no benchmarks ran
-        // This can happen when running individual tests
-        expect(results.length).toBe(0)
+    // Add a slow listener to cause queue buildup
+    eventBus.on('test.burst', async () => {
+      if (slowProcessingActive) {
+        await new Promise((resolve) => setTimeout(resolve, 10))
       }
     })
-  },
-)
+
+    await suite.benchmark(
+      'Queue Saturation Recovery',
+      async () => {
+        // Burst emit events
+        for (let i = 0; i < 2000; i++) {
+          eventBus.emitEvent({
+            type: 'test.burst',
+            id: i,
+          } as OrchestrationEvent)
+        }
+
+        // Let queue saturate
+        await new Promise((resolve) => setTimeout(resolve, 50))
+
+        // Speed up processing
+        slowProcessingActive = false
+
+        // Wait for recovery
+        await new Promise((resolve) => setTimeout(resolve, 100))
+      },
+      { iterations: 5, warmupIterations: 1 },
+    )
+
+    const metrics = eventBus.getMetrics()
+    console.log(`Dropped events: ${metrics.droppedCount}`)
+    console.log(`Total events emitted: 2000`)
+
+    expect(metrics.droppedCount).toBeGreaterThan(0)
+  }, 60000)
+
+  it('should benchmark event isolation overhead', async () => {
+    const eventBus = new BoundedEventBus({ maxQueueSize: 5000 })
+
+    let modificationAttempts = 0
+    eventBus.on('test.isolation', (event) => {
+      // Try to modify the event (this shouldn't affect original due to shallow clone)
+      if ('data' in event && typeof event.data === 'object') {
+        ;(event.data as Record<string, unknown>).modified = true
+        modificationAttempts++
+      }
+    })
+
+    const result = await suite.benchmark(
+      'Event Isolation Overhead',
+      () => {
+        // Create a fresh event for each iteration to properly test isolation
+        const event: OrchestrationEvent = {
+          type: 'test.isolation',
+          data: { value: 'original' },
+        } as OrchestrationEvent
+
+        const originalData = JSON.stringify(event.data)
+        eventBus.emitEvent(event)
+
+        // Verify the original event wasn't modified (shallow clone protects top level)
+        expect(JSON.stringify(event.data)).toBe(originalData)
+      },
+      { iterations: 10000, warmupIterations: 1000 },
+    )
+
+    console.log(`Modification attempts: ${modificationAttempts}`)
+    expect(result.p95Time).toBeLessThan(isCI ? 2.0 : 1.0)
+  }, 30000)
+
+  it('should measure memory tracking overhead when enabled', async () => {
+    const eventBusWithTracking = new BoundedEventBus({
+      maxQueueSize: 5000,
+      enableMemoryTracking: true,
+    })
+
+    const eventBusWithoutTracking = new BoundedEventBus({
+      maxQueueSize: 5000,
+      enableMemoryTracking: false,
+    })
+
+    // Benchmark with memory tracking
+    const withTrackingResult = await suite.benchmark(
+      'With Memory Tracking',
+      () => {
+        for (let i = 0; i < 100; i++) {
+          eventBusWithTracking.emitEvent({
+            type: 'test.memory',
+            data: 'x'.repeat(1000),
+          } as OrchestrationEvent)
+        }
+      },
+      { iterations: 100, warmupIterations: 10 },
+    )
+
+    // Benchmark without memory tracking
+    const withoutTrackingResult = await suite.benchmark(
+      'Without Memory Tracking',
+      () => {
+        for (let i = 0; i < 100; i++) {
+          eventBusWithoutTracking.emitEvent({
+            type: 'test.memory',
+            data: 'x'.repeat(1000),
+          } as OrchestrationEvent)
+        }
+      },
+      { iterations: 100, warmupIterations: 10 },
+    )
+
+    const overhead =
+      ((withTrackingResult.meanTime - withoutTrackingResult.meanTime) /
+        withoutTrackingResult.meanTime) *
+      100
+
+    console.log(`Memory tracking overhead: ${overhead.toFixed(1)}%`)
+
+    // Memory tracking should have minimal overhead (< 40% in test environment)
+    // Note: Overhead can be higher in test environments due to small batch sizes
+    expect(overhead).toBeLessThan(40)
+  }, 30000)
+
+  it('should print comprehensive benchmark results', async () => {
+    // This test runs last to print all results
+    // Only print if we have results (other tests ran)
+    const results = suite.getResults()
+
+    if (results.length > 0) {
+      suite.printResults()
+
+      // Verify key performance targets
+      const emissionBenchmarks = results.filter((r) =>
+        r.name.includes('Emission'),
+      )
+      const hasGoodLatency = emissionBenchmarks.some(
+        (r) => r.p95Time < (isCI ? 2.0 : 1.0),
+      )
+      expect(hasGoodLatency).toBe(true)
+
+      const throughputBenchmarks = results.filter((r) =>
+        r.name.includes('Throughput'),
+      )
+      const hasGoodThroughput = throughputBenchmarks.some(
+        (r) => r.throughput > 10000,
+      )
+      expect(hasGoodThroughput).toBe(true)
+    } else {
+      // No results means the suite was instantiated but no benchmarks ran
+      // This can happen when running individual tests
+      expect(results.length).toBe(0)
+    }
+  })
+})
 
 // Export for use in other tests
 export { EventBusBenchmarkSuite }

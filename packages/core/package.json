@@ -1,8 +1,28 @@
 {
   "name": "@orchestr8/core",
-  "version": "0.1.1",
-  "private": true,
+  "version": "0.2.0-alpha.1",
+  "description": "Core orchestration engine for @orchestr8 with workflow execution and event management",
+  "keywords": ["orchestr8", "orchestration", "workflow", "automation", "events", "execution"],
+  "author": "Nathan Vale <nathanvale@gmail.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nathanvale/orchestr8.git",
+    "directory": "packages/core"
+  },
+  "homepage": "https://github.com/nathanvale/orchestr8/tree/main/packages/core",
+  "bugs": {
+    "url": "https://github.com/nathanvale/orchestr8/issues"
+  },
   "type": "module",
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md"
+  ],
   "engines": {
     "node": ">=22.0.0"
   },
@@ -18,6 +38,7 @@
   "main": "./dist/cjs/index.js",
   "module": "./dist/esm/index.js",
   "types": "./dist/types/index.d.ts",
+  "sideEffects": false,
   "scripts": {
     "build": "npm run build:clean && npm run build:esm && npm run build:cjs && npm run build:types",
     "build:clean": "rimraf dist *.tsbuildinfo",
@@ -30,7 +51,9 @@
     "lint": "eslint src --max-warnings 0",
     "type-check": "tsc --noEmit",
     "format:check": "prettier --check src",
-    "clean": "rimraf dist *.tsbuildinfo"
+    "clean": "rimraf dist *.tsbuildinfo",
+    "prepublishOnly": "node ../../scripts/prepare-publish.cjs clean",
+    "postpublish": "node ../../scripts/prepare-publish.cjs restore"
   },
   "dependencies": {
     "@orchestr8/logger": "workspace:*",

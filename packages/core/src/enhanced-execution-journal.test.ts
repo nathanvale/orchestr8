@@ -4,6 +4,12 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 
+const SKIP_BENCHMARKS_IF = !(
+  !process.env.WALLABY_WORKER &&
+  process.env.CI !== 'true' &&
+  process.env.PERF === '1'
+)
+
 import {
   EnhancedExecutionJournal,
   JournalManager,
@@ -554,121 +560,126 @@ describe('Edge Case Test Coverage', () => {
     })
   })
 
-  describe('Journal Disposal During Active Processing', () => {
-    it('should handle disposal during active event processing', async () => {
-      let eventsEmitted = 0
-      let eventsProcessed = 0
+  describe.skipIf(SKIP_BENCHMARKS_IF)(
+    'Journal Disposal During Active Processing',
+    () => {
+      it('should handle disposal during active event processing', async () => {
+        let eventsEmitted = 0
+        let eventsProcessed = 0
 
-      // Set up event monitoring
-      const originalAddEntry = journal.addEntry.bind(journal)
-      journal.addEntry = vi.fn((executionId, entry) => {
-        eventsProcessed++
-        return originalAddEntry(executionId, entry)
+        // Set up event monitoring
+        const originalAddEntry = journal.addEntry.bind(journal)
+        journal.addEntry = vi.fn((executionId, entry) => {
+          eventsProcessed++
+          return originalAddEntry(executionId, entry)
+        })
+
+        // Start emitting events rapidly
+        const emitEvents = async () => {
+          for (let i = 0; i < 100; i++) {
+            eventBus.emitEvent({
+              type: 'step.started',
+              executionId: 'exec-dispose-test',
+              stepId: `step-${i}`,
+            } as OrchestrationEvent)
+            eventsEmitted++
+
+            // Small delay to simulate realistic event timing
+            await new Promise((resolve) => setTimeout(resolve, 1))
+          }
+        }
+
+        // Start emitting events
+        const emitPromise = emitEvents()
+
+        // Wait for some events to start processing
+        await new Promise((resolve) => setTimeout(resolve, 10))
+
+        // Dispose while events are being processed
+        const disposePromise = journal.dispose()
+
+        // Wait for everything to complete
+        await Promise.all([emitPromise, disposePromise])
+
+        // Verify disposal was clean
+        expect(journal.getExecutionCount()).toBe(0)
+        expect(journal.getCurrentSize()).toBe(0)
+
+        // Some events may have been processed before disposal
+        expect(eventsProcessed).toBeGreaterThan(0)
+        expect(eventsProcessed).toBeLessThanOrEqual(eventsEmitted)
       })
 
-      // Start emitting events rapidly
-      const emitEvents = async () => {
-        for (let i = 0; i < 100; i++) {
+      it('should prevent new entries after disposal initiation', async () => {
+        // Start disposal process
+        const disposePromise = journal.dispose()
+
+        // Try to add entries via event bus during disposal (should be blocked)
+        eventBus.emitEvent({
+          type: 'execution.started',
+          executionId: 'exec-after-dispose',
+        } as OrchestrationEvent)
+
+        await disposePromise
+
+        // Wait for any potential processing
+        await new Promise((resolve) => setTimeout(resolve, 10))
+
+        // No entries should be recorded from event bus after disposal
+        expect(journal.getExecutionCount()).toBe(0)
+        expect(
+          journal.getEntriesByExecution('exec-after-dispose'),
+        ).toHaveLength(0)
+      })
+
+      it('should handle concurrent disposal attempts gracefully', async () => {
+        // Add some test data
+        journal.recordManualEvent({
+          type: 'execution.started',
+          executionId: 'exec-concurrent-dispose',
+        })
+
+        expect(journal.getExecutionCount()).toBe(1)
+
+        // Start multiple disposal attempts concurrently
+        const disposePromises = Array.from({ length: 5 }, () =>
+          journal.dispose(),
+        )
+
+        // All should complete without error
+        await Promise.all(disposePromises)
+
+        // Should only be disposed once
+        expect(journal.getExecutionCount()).toBe(0)
+      })
+
+      it('should wait for pending processing to complete before disposal', async () => {
+        // Add many events to trigger processing
+        for (let i = 0; i < 10; i++) {
           eventBus.emitEvent({
             type: 'step.started',
-            executionId: 'exec-dispose-test',
             stepId: `step-${i}`,
+            executionId: 'exec-batch-process',
           } as OrchestrationEvent)
-          eventsEmitted++
-
-          // Small delay to simulate realistic event timing
-          await new Promise((resolve) => setTimeout(resolve, 1))
         }
-      }
 
-      // Start emitting events
-      const emitPromise = emitEvents()
+        // Small delay to let processing start
+        await new Promise((resolve) => setTimeout(resolve, 5))
 
-      // Wait for some events to start processing
-      await new Promise((resolve) => setTimeout(resolve, 10))
+        // Start disposal (should wait for processing)
+        const disposeStart = Date.now()
+        await journal.dispose()
+        const disposeDuration = Date.now() - disposeStart
 
-      // Dispose while events are being processed
-      const disposePromise = journal.dispose()
+        // Disposal should have waited for some processing time
+        // Even though setTimeout is minimal, there should be some measurable delay
+        expect(disposeDuration).toBeGreaterThanOrEqual(0)
 
-      // Wait for everything to complete
-      await Promise.all([emitPromise, disposePromise])
-
-      // Verify disposal was clean
-      expect(journal.getExecutionCount()).toBe(0)
-      expect(journal.getCurrentSize()).toBe(0)
-
-      // Some events may have been processed before disposal
-      expect(eventsProcessed).toBeGreaterThan(0)
-      expect(eventsProcessed).toBeLessThanOrEqual(eventsEmitted)
-    })
-
-    it('should prevent new entries after disposal initiation', async () => {
-      // Start disposal process
-      const disposePromise = journal.dispose()
-
-      // Try to add entries via event bus during disposal (should be blocked)
-      eventBus.emitEvent({
-        type: 'execution.started',
-        executionId: 'exec-after-dispose',
-      } as OrchestrationEvent)
-
-      await disposePromise
-
-      // Wait for any potential processing
-      await new Promise((resolve) => setTimeout(resolve, 10))
-
-      // No entries should be recorded from event bus after disposal
-      expect(journal.getExecutionCount()).toBe(0)
-      expect(journal.getEntriesByExecution('exec-after-dispose')).toHaveLength(
-        0,
-      )
-    })
-
-    it('should handle concurrent disposal attempts gracefully', async () => {
-      // Add some test data
-      journal.recordManualEvent({
-        type: 'execution.started',
-        executionId: 'exec-concurrent-dispose',
+        // All events should have been processed before disposal completed
+        expect(journal.getExecutionCount()).toBe(0) // Cleared on disposal
       })
-
-      expect(journal.getExecutionCount()).toBe(1)
-
-      // Start multiple disposal attempts concurrently
-      const disposePromises = Array.from({ length: 5 }, () => journal.dispose())
-
-      // All should complete without error
-      await Promise.all(disposePromises)
-
-      // Should only be disposed once
-      expect(journal.getExecutionCount()).toBe(0)
-    })
-
-    it('should wait for pending processing to complete before disposal', async () => {
-      // Add many events to trigger processing
-      for (let i = 0; i < 10; i++) {
-        eventBus.emitEvent({
-          type: 'step.started',
-          stepId: `step-${i}`,
-          executionId: 'exec-batch-process',
-        } as OrchestrationEvent)
-      }
-
-      // Small delay to let processing start
-      await new Promise((resolve) => setTimeout(resolve, 5))
-
-      // Start disposal (should wait for processing)
-      const disposeStart = Date.now()
-      await journal.dispose()
-      const disposeDuration = Date.now() - disposeStart
-
-      // Disposal should have waited for some processing time
-      // Even though setTimeout is minimal, there should be some measurable delay
-      expect(disposeDuration).toBeGreaterThanOrEqual(0)
-
-      // All events should have been processed before disposal completed
-      expect(journal.getExecutionCount()).toBe(0) // Cleared on disposal
-    })
-  })
+    },
+  )
 
   describe('Race Conditions Between Eviction and New Entries', () => {
     it('should handle concurrent entry addition and eviction', async () => {

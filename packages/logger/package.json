@@ -1,8 +1,11 @@
 {
   "name": "@orchestr8/logger",
-  "version": "0.1.0",
+  "version": "1.0.0-beta.1",
   "description": "Structured logging for @orchestr8 with redaction and correlation support",
   "type": "module",
+  "publishConfig": {
+    "access": "public"
+  },
   "main": "./dist/cjs/index.js",
   "module": "./dist/esm/index.js",
   "types": "./dist/types/index.d.ts",
@@ -17,10 +20,10 @@
   },
   "files": [
     "dist",
-    "src",
-    "!src/**/*.test.ts",
-    "!src/**/*.spec.ts"
+    "README.md",
+    "CHANGELOG.md"
   ],
+  "sideEffects": false,
   "scripts": {
     "build": "npm run build:clean && npm run build:esm && npm run build:cjs && npm run build:types",
     "build:clean": "rm -rf dist tsconfig.tsbuildinfo",
@@ -35,7 +38,9 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "prepublishOnly": "node ../../scripts/prepare-publish.cjs clean",
+    "postpublish": "node ../../scripts/prepare-publish.cjs restore"
   },
   "dependencies": {},
   "devDependencies": {

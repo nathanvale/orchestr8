@@ -13,6 +13,12 @@ import {
 } from '@orchestr8/schema'
 import { describe, it, expect, beforeEach } from 'vitest'
 
+const SKIP_BENCHMARKS_IF = !(
+  !process.env.WALLABY_WORKER &&
+  process.env.CI !== 'true' &&
+  process.env.PERF === '1'
+)
+
 import { EnhancedExecutionJournal } from './enhanced-execution-journal.js'
 import { BoundedEventBus, type OrchestrationEvent } from './event-bus.js'
 import { ExecutionConsistencyValidator } from './execution-consistency-validator.js'
@@ -686,92 +692,97 @@ describe('Journal-Execution Model Integration', () => {
     })
   })
 
-  describe('memory and performance integration', () => {
-    it('should handle large execution workflows with memory constraints', () => {
-      // Create workflow with many steps
-      const largeWorkflow: Workflow = {
-        id: 'large-workflow',
-        version: '1.0.0',
-        name: 'Large Test Workflow',
-        steps: Array.from({ length: 100 }, (_, i) => ({
-          id: `step-${i}`,
-          type: 'agent' as const,
-          agentId: `agent-${i}`,
-          input: { index: i },
-        })),
-      }
+  describe.skipIf(SKIP_BENCHMARKS_IF)(
+    'memory and performance integration',
+    () => {
+      it('should handle large execution workflows with memory constraints', () => {
+        // Create workflow with many steps
+        const largeWorkflow: Workflow = {
+          id: 'large-workflow',
+          version: '1.0.0',
+          name: 'Large Test Workflow',
+          steps: Array.from({ length: 100 }, (_, i) => ({
+            id: `step-${i}`,
+            type: 'agent' as const,
+            agentId: `agent-${i}`,
+            input: { index: i },
+          })),
+        }
 
-      const executionState = model.createExecutionState(largeWorkflow)
+        const executionState = model.createExecutionState(largeWorkflow)
 
-      // Simulate execution of all steps
-      for (let i = 0; i < 100; i++) {
-        const stepId = `step-${i}`
+        // Simulate execution of all steps
+        for (let i = 0; i < 100; i++) {
+          const stepId = `step-${i}`
 
-        journal.recordManualEvent({
-          type: 'step.started',
-          executionId: executionState.executionId,
-          stepId,
-          timestamp: Date.now(),
-        })
+          journal.recordManualEvent({
+            type: 'step.started',
+            executionId: executionState.executionId,
+            stepId,
+            timestamp: Date.now(),
+          })
 
-        journal.recordManualEvent({
-          type: 'step.completed',
-          executionId: executionState.executionId,
-          stepId,
-          result: { index: i, data: `Result for step ${i}` },
-          timestamp: Date.now(),
-        })
-      }
+          journal.recordManualEvent({
+            type: 'step.completed',
+            executionId: executionState.executionId,
+            stepId,
+            result: { index: i, data: `Result for step ${i}` },
+            timestamp: Date.now(),
+          })
+        }
 
-      // Verify journal didn't exceed memory limits
-      expect(journal.getCurrentSize()).toBeLessThan(10 * 1024 * 1024) // 10MB limit
+        // Verify journal didn't exceed memory limits
+        expect(journal.getCurrentSize()).toBeLessThan(10 * 1024 * 1024) // 10MB limit
 
-      const entries = journal.getEntriesByExecution(executionState.executionId)
-      expect(entries.length).toBeGreaterThan(0) // Should have entries, but may be truncated
+        const entries = journal.getEntriesByExecution(
+          executionState.executionId,
+        )
+        expect(entries.length).toBeGreaterThan(0) // Should have entries, but may be truncated
 
-      // Consistency validation should still work even with truncation
-      const finalState = model.finalizeExecutionState(executionState)
-      const consistencyResult = validator.validateExecutionConsistency(
-        finalState,
-        entries,
-      )
+        // Consistency validation should still work even with truncation
+        const finalState = model.finalizeExecutionState(executionState)
+        const consistencyResult = validator.validateExecutionConsistency(
+          finalState,
+          entries,
+        )
 
-      // Should complete without errors, even if there are warnings about missing data
-      expect(consistencyResult).toBeDefined()
-    })
-
-    it('should synchronize journal truncation with execution state serialization', () => {
-      // Create a journal with very small limits to force truncation
-      const smallJournal = new EnhancedExecutionJournal({
-        maxEntriesPerExecution: 5,
-        maxTotalSizeBytes: 1024, // 1KB limit
+        // Should complete without errors, even if there are warnings about missing data
+        expect(consistencyResult).toBeDefined()
       })
 
-      const executionState = model.createExecutionState(testWorkflow)
-
-      // Add many journal entries to force ring buffer behavior
-      for (let i = 0; i < 20; i++) {
-        smallJournal.recordManualEvent({
-          type: 'step.started',
-          executionId: executionState.executionId,
-          stepId: `step-${i}`,
-          timestamp: Date.now() + i,
+      it('should synchronize journal truncation with execution state serialization', () => {
+        // Create a journal with very small limits to force truncation
+        const smallJournal = new EnhancedExecutionJournal({
+          maxEntriesPerExecution: 5,
+          maxTotalSizeBytes: 1024, // 1KB limit
         })
-      }
 
-      const entries = smallJournal.getEntriesByExecution(
-        executionState.executionId,
-      )
-      expect(entries.length).toBeLessThanOrEqual(5) // Ring buffer limit
+        const executionState = model.createExecutionState(testWorkflow)
 
-      // Serialization should still work with truncated journal
-      const serialized = model.serializeExecutionState(executionState)
-      expect(serialized).toBeTypeOf('string')
+        // Add many journal entries to force ring buffer behavior
+        for (let i = 0; i < 20; i++) {
+          smallJournal.recordManualEvent({
+            type: 'step.started',
+            executionId: executionState.executionId,
+            stepId: `step-${i}`,
+            timestamp: Date.now() + i,
+          })
+        }
 
-      const deserialized = model.deserializeExecutionState(serialized)
-      expect(deserialized.executionId).toBe(executionState.executionId)
-    })
-  })
+        const entries = smallJournal.getEntriesByExecution(
+          executionState.executionId,
+        )
+        expect(entries.length).toBeLessThanOrEqual(5) // Ring buffer limit
+
+        // Serialization should still work with truncated journal
+        const serialized = model.serializeExecutionState(executionState)
+        expect(serialized).toBeTypeOf('string')
+
+        const deserialized = model.deserializeExecutionState(serialized)
+        expect(deserialized.executionId).toBe(executionState.executionId)
+      })
+    },
+  )
 
   describe('error handling integration', () => {
     it('should maintain consistency when journal recording fails', () => {

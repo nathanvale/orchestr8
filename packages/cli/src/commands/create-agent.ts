@@ -69,6 +69,29 @@ function validateAgentName(name: string): string {
 
   const trimmedName = name.trim()
 
+  // SECURITY: Prevent path traversal attacks
+  if (trimmedName.includes('..')) {
+    throw new Error(
+      'Agent name cannot contain ".." (directory traversal attempt)',
+    )
+  }
+
+  if (trimmedName.includes('/') || trimmedName.includes('\\')) {
+    throw new Error('Agent name cannot contain path separators')
+  }
+
+  if (path.isAbsolute(trimmedName)) {
+    throw new Error('Agent name cannot be an absolute path')
+  }
+
+  // Additional check: ensure resolved path stays in project
+  const agentsDir = path.join(process.cwd(), 'agents')
+  const resolvedPath = path.resolve(agentsDir, `${trimmedName}.json`)
+
+  if (!resolvedPath.startsWith(path.resolve(agentsDir))) {
+    throw new Error('Agent name would create file outside agents directory')
+  }
+
   // Check length
   if (trimmedName.length < 2 || trimmedName.length > 64) {
     throw new Error('Agent name must be between 2 and 64 characters')
@@ -119,18 +142,7 @@ export const createAgentCommand = new Command('create:agent')
       const agentsDir = path.join(process.cwd(), 'agents')
       const agentPath = path.join(agentsDir, `${validatedName}.json`)
 
-      // Check if agent already exists
-      if (!options.force) {
-        try {
-          await fs.access(agentPath)
-          console.log(
-            `⚠️  Agent ${validatedName} already exists. Use --force to overwrite.`,
-          )
-          return
-        } catch {
-          // File doesn't exist, proceed
-        }
-      }
+      // SECURITY: Atomic file creation to prevent TOCTOU race conditions
 
       // Create agents directory if it doesn't exist
       try {
@@ -167,17 +179,42 @@ export const createAgentCommand = new Command('create:agent')
         capabilities: template.capabilities || [],
       }
 
-      // Write agent file with error handling
-      try {
-        await fs.writeFile(agentPath, JSON.stringify(agent, null, 2), 'utf-8')
-      } catch (error) {
-        const code = (error as { code?: string }).code
-        if (code === 'EACCES') {
-          throw new Error(`Permission denied: Cannot write to ${agentPath}`)
-        } else if (code === 'ENOSPC') {
-          throw new Error('No space left on device')
+      // SECURITY: Atomic file operations to prevent TOCTOU race conditions
+      if (!options.force) {
+        try {
+          // Atomic operation: write only if file doesn't exist
+          await fs.writeFile(agentPath, JSON.stringify(agent, null, 2), {
+            flag: 'wx', // Write, fail if exists
+            encoding: 'utf-8',
+          })
+        } catch (error) {
+          const code = (error as { code?: string }).code
+          if (code === 'EEXIST') {
+            console.log(
+              `⚠️  Agent ${validatedName} already exists. Use --force to overwrite.`,
+            )
+            return
+          }
+          if (code === 'EACCES') {
+            throw new Error(`Permission denied: Cannot write to ${agentPath}`)
+          } else if (code === 'ENOSPC') {
+            throw new Error('No space left on device')
+          }
+          throw error
         }
-        throw error
+      } else {
+        // Force overwrite
+        try {
+          await fs.writeFile(agentPath, JSON.stringify(agent, null, 2), 'utf-8')
+        } catch (error) {
+          const code = (error as { code?: string }).code
+          if (code === 'EACCES') {
+            throw new Error(`Permission denied: Cannot write to ${agentPath}`)
+          } else if (code === 'ENOSPC') {
+            throw new Error('No space left on device')
+          }
+          throw error
+        }
       }
 
       console.log(`✅ Created agent: agents/${validatedName}.json`)

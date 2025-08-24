@@ -1,8 +1,10 @@
 #!/usr/bin/env node
+import { randomUUID } from 'crypto'
 import { readFileSync } from 'fs'
 import { dirname, join } from 'path'
 import { fileURLToPath } from 'url'
 
+import { WorkflowSchema, type WorkflowZod } from '@orchestr8/schema'
 import { Command } from 'commander'
 
 import { createAgentCommand } from './commands/create-agent.js'
@@ -113,69 +115,47 @@ program
         throw error
       }
 
-      // Create workflow definition
-      const workflow = {
-        id: validatedName,
-        name:
-          validatedName.charAt(0).toUpperCase() +
-          validatedName.slice(1).replace(/-/g, ' '),
-        description:
-          options.description || `${validatedName} workflow for orchestr8`,
+      // Generate UUID for workflow
+      const workflowId = randomUUID()
+
+      // Create schema-compliant workflow definition
+      const workflow: WorkflowZod = {
         version: '1.0.0',
+        schemaVersion: '1.0.0',
+        schemaHash: 'a'.repeat(64), // Placeholder hash - would be computed in real implementation
+        metadata: {
+          id: workflowId,
+          name:
+            validatedName.charAt(0).toUpperCase() +
+            validatedName.slice(1).replace(/-/g, ' '),
+          description:
+            options.description || `${validatedName} workflow for orchestr8`,
+          tags: ['generated', 'template'],
+        },
         steps: [
           {
             id: 'step-1',
             name: 'First Step',
-            type: 'action',
-            agentId: 'example-agent',
-            input: {
-              message: 'Hello from step 1',
-            },
-            retryPolicy: {
-              maxAttempts: 3,
-              delay: '1s',
-            },
-          },
-          {
-            id: 'step-2',
-            name: 'Second Step',
-            type: 'parallel',
-            steps: [
-              {
-                id: 'step-2a',
-                name: 'Parallel Step A',
-                type: 'action',
-                agentId: 'example-agent',
-                input: {
-                  message: 'Parallel execution A',
-                },
-              },
-              {
-                id: 'step-2b',
-                name: 'Parallel Step B',
-                type: 'action',
-                agentId: 'example-agent',
-                input: {
-                  message: 'Parallel execution B',
-                },
-              },
-            ],
-          },
-          {
-            id: 'step-3',
-            name: 'Final Step',
-            type: 'action',
-            agentId: 'example-agent',
-            input: {
-              message: 'Workflow complete',
-              previousResults: '${steps.step-1.output}',
+            type: 'agent',
+            onError: 'fail',
+            agent: {
+              id: '@orchestr8/example-agent',
+              version: '1.0.0',
             },
           },
         ],
         context: {
-          environment: 'development',
-          timeout: '5m',
+          environment: {},
+          variables: {},
         },
+      }
+
+      // Validate workflow against schema
+      const validation = WorkflowSchema.safeParse(workflow)
+      if (!validation.success) {
+        throw new Error(
+          `Generated workflow is invalid: ${validation.error.message}`,
+        )
       }
 
       // Write workflow file with error handling
@@ -197,12 +177,12 @@ program
 
       console.log(`✅ Created workflow: workflows/${validatedName}.json`)
       console.log(`\nWorkflow configuration:`)
-      console.log(`  ID: ${workflow.id}`)
-      console.log(`  Name: ${workflow.name}`)
+      console.log(`  ID: ${workflow.metadata.id}`)
+      console.log(`  Name: ${workflow.metadata.name}`)
       console.log(`  Steps: ${workflow.steps.length}`)
 
       if (options.verbose) {
-        console.log(`  Description: ${workflow.description}`)
+        console.log(`  Description: ${workflow.metadata.description}`)
         console.log(`  Version: ${workflow.version}`)
         console.log(`  Context: ${JSON.stringify(workflow.context, null, 2)}`)
       }

@@ -2,8 +2,15 @@
  * @orchestr8/testing - Test utilities and mocks
  */
 
+// Export benchmark utilities
+export {
+  shouldRunBenchmarks,
+  benchmarkEnvironment,
+  SKIP_BENCHMARKS_IF,
+} from './benchmark-utils.js'
 // Export mock implementations
 export { MockAgent, MockAgentRegistry } from './mocks/agent-registry.js'
+
 export { MockResilienceAdapter } from './mocks/resilience-adapter.js'
 
 // Export test helpers

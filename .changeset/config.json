@@ -2,7 +2,7 @@
   "$schema": "https://unpkg.com/@changesets/config@3.1.1/schema.json",
   "changelog": [
     "@changesets/changelog-github",
-    { "repo": "nathanvale/@orchestr8" }
+    { "repo": "nathanvale/orchestr8" }
   ],
   "commit": false,
   "fixed": [],
@@ -10,5 +10,5 @@
   "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
-  "ignore": ["@orchestr8/testing"]
+  "ignore": ["@orchestr8/testing", "@orchestr8/resilience", "@orchestr8/core", "@orchestr8/cli"]
 }
