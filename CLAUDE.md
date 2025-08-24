@@ -95,15 +95,18 @@ schema (foundation) → logger → core → cli
 
 ## Current Development State
 
-**Phase 1 MVP Progress**: 80% Complete ✅
+**Phase 1 MVP Progress**: 85% Complete ✅
 
 **Ready for Production:**
 
 - Core orchestration with resilience patterns
-- Event bus with bounded queues (1000 events max)
+- Event bus with bounded queues (1000 events max)  
 - JSON workflow validation with Zod (204 tests)
 - Structured logging with correlation IDs (126 tests)
 - Memory-bounded execution journal (10MB limit)
+- **CI/CD Pipeline**: GitHub Actions with proper pnpm caching ✅
+- **Git Hooks**: Husky + lint-staged for pre-commit, comprehensive validation for pre-push ✅
+- **NPM Publishing**: Dual consumption (ESM/CJS) with automated publish scripts ✅
 
 **To Complete Phase 1:**
 

@@ -1,8 +1,16 @@
 import { execSync } from 'child_process'
+import { readFileSync } from 'fs'
+import { join, dirname } from 'path'
+import { fileURLToPath } from 'url'
 
 import { describe, it, expect } from 'vitest'
 
 describe('NPM Publishing Validation', () => {
+  // Use file-relative path resolution that works in both Vitest and Wallaby
+  const __filename = fileURLToPath(import.meta.url)
+  const __dirname = dirname(__filename)
+  const repoRoot = join(__dirname, '../../..') // From packages/testing/src to root
+
   const packages = [
     'schema',
     'logger',
@@ -51,10 +59,8 @@ describe('NPM Publishing Validation', () => {
   it('should validate package.json files have correct npm fields', () => {
     packages.forEach((pkg) => {
       try {
-        const packageJsonPath = `packages/${pkg}/package.json`
-        const packageContent = execSync(`cat ${packageJsonPath}`, {
-          encoding: 'utf-8',
-        })
+        const packageJsonPath = join(repoRoot, 'packages', pkg, 'package.json')
+        const packageContent = readFileSync(packageJsonPath, 'utf-8')
         const packageJson = JSON.parse(packageContent)
 
         // Validate required npm fields
