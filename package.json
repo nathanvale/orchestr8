@@ -17,6 +17,7 @@
     "test:ci": "turbo test -- --run",
     "lint": "turbo lint",
     "lint:root": "eslint . --max-warnings 0",
+    "lint:fix": "turbo lint:fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "type-check": "turbo type-check",
@@ -24,6 +25,8 @@
     "clean:all": "pnpm clean && rm -rf node_modules",
     "fresh": "pnpm clean:all && pnpm install",
     "check": "turbo format:check lint type-check && turbo test -- --run",
+    "prepare": "husky",
+    "setup:hooks": "node scripts/setup-git-hooks.mjs",
     "example:pr-auto-fix": "tsx scripts/examples/pr-auto-fix-gh.ts",
     "example:pr-lifecycle": "tsx scripts/examples/pr-lifecycle-gh.ts",
     "example:convex-seed": "tsx scripts/examples/convex-seed-init.ts",
@@ -49,6 +52,8 @@
     "eslint-config-prettier": "^10.1.5",
     "eslint-plugin-perfectionist": "^4.15.0",
     "glob": "^11.0.3",
+    "husky": "^9.1.0",
+    "lint-staged": "^15.2.10",
     "msw": "^2.10.2",
     "prettier": "3.6.2",
     "rimraf": "^6.0.1",
@@ -60,5 +65,19 @@
   },
   "dependencies": {
     "@orchestr8/resilience": "link:packages/resilience"
+  },
+  "lint-staged": {
+    "packages/*/src/**/*.{ts,tsx}": [
+      "prettier --write",
+      "eslint --fix --cache",
+      "bash -c 'cd packages/$(echo \"$0\" | cut -d/ -f2) && pnpm type-check'"
+    ],
+    "*.{ts,tsx,js,jsx}": [
+      "prettier --write",
+      "eslint --fix --cache"
+    ],
+    "*.{json,md,yml,yaml}": [
+      "prettier --write"
+    ]
   }
 }

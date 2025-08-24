@@ -30,7 +30,8 @@
     "lint": "eslint src --max-warnings 0",
     "type-check": "tsc --noEmit",
     "format:check": "prettier --check src",
-    "clean": "rimraf dist *.tsbuildinfo"
+    "clean": "rimraf dist *.tsbuildinfo",
+    "lint:fix": "eslint src --fix --max-warnings 0"
   },
   "dependencies": {
     "@orchestr8/agent-base": "workspace:*",

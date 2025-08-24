@@ -10,5 +10,10 @@
   "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
-  "ignore": ["@orchestr8/testing", "@orchestr8/resilience", "@orchestr8/core", "@orchestr8/cli"]
+  "ignore": [
+    "@orchestr8/testing",
+    "@orchestr8/resilience",
+    "@orchestr8/core",
+    "@orchestr8/cli"
+  ]
 }
