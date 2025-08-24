@@ -25,6 +25,7 @@
     "clean:all": "pnpm clean && rm -rf node_modules",
     "fresh": "pnpm clean:all && pnpm install",
     "check": "turbo format:check lint type-check && turbo test -- --run",
+    "check:no-test": "turbo format:check lint type-check",
     "prepare": "husky",
     "setup:hooks": "node scripts/setup-git-hooks.mjs",
     "example:pr-auto-fix": "tsx scripts/examples/pr-auto-fix-gh.ts",

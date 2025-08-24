@@ -92,7 +92,7 @@ describe('CI/CD Workflow Validation', () => {
       expect(stepNames).toContain('Setup Node.js')
       expect(stepNames).toContain('Install pnpm')
       expect(stepNames).toContain('Install dependencies')
-      expect(stepNames).toContain('Lint & Format')
+      expect(stepNames).toContain('Lint, Format & Type Check')
       expect(stepNames).toContain('Build packages')
       expect(stepNames).toContain('Run tests')
       expect(stepNames).toContain('Check for changeset')
