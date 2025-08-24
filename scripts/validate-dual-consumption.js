@@ -86,8 +86,9 @@ for (const pkg of packages) {
 
     // Check build script configuration
     if (
-      !packageJson.scripts?.build ||
-      !packageJson.scripts.build.includes('build:esm')
+      !isEsmOnly &&
+      (!packageJson.scripts?.build ||
+        !packageJson.scripts.build.includes('build:esm'))
     ) {
       issues.push('❌ Missing dual-build scripts')
     }

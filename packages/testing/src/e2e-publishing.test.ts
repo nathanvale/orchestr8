@@ -432,6 +432,7 @@ console.log('CommonJS test would work with proper installation')`
       const registry = execSync('npm config get registry', {
         encoding: 'utf-8',
         timeout: 5000,
+        cwd: repoRoot, // Run from repo root to avoid workspace issues
       }).trim()
 
       expect(registry).toBe('https://registry.npmjs.org/')
