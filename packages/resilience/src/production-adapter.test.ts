@@ -413,7 +413,8 @@ describe('ProductionResilienceAdapter', () => {
 
       const operation = vi.fn().mockImplementation(async () => {
         callCount++
-        if (callCount <= 3) {
+        if (callCount <= 10) {
+          // Fail for first 10 calls to ensure circuit opens
           throw new Error('Still failing')
         }
         return 'recovered'
@@ -458,7 +459,7 @@ describe('ProductionResilienceAdapter', () => {
       )
 
       expect(result).toBe('recovered')
-      expect(callCount).toBe(4) // 3 failures + 1 success
+      expect(callCount).toBe(11) // 10 failures to open circuit + 1 success on recovery
     })
   })
 })

@@ -173,9 +173,9 @@ describe('CircuitBreaker', () => {
 
   describe('Half-Open State', () => {
     beforeEach(async () => {
-      // Open the circuit
+      // Open the circuit - need to fill entire window first
       const operation = vi.fn().mockRejectedValue(new Error('fail'))
-      for (let i = 0; i < 5; i++) {
+      for (let i = 0; i < 10; i++) {
         await expect(
           circuitBreaker.execute('test-key', operation),
         ).rejects.toThrow('fail')
@@ -272,12 +272,14 @@ describe('CircuitBreaker', () => {
       const successOp = vi.fn().mockResolvedValue('success')
       const failOp = vi.fn().mockRejectedValue(new Error('fail'))
 
-      // Fill window partially with failures and successes
+      // Fill window with pattern: [success, failure, failure, failure, failure, success, success, success, success, success]
+      // This gives us 4 failures and 6 successes
+      await cb.execute('key', successOp) // index 0
       for (let i = 0; i < 4; i++) {
-        await expect(cb.execute('key', failOp)).rejects.toThrow()
+        await expect(cb.execute('key', failOp)).rejects.toThrow() // index 1-4
       }
-      for (let i = 0; i < 6; i++) {
-        await cb.execute('key', successOp)
+      for (let i = 0; i < 5; i++) {
+        await cb.execute('key', successOp) // index 5-9
       }
 
       let state = cb.getCircuitState('key')
@@ -286,7 +288,7 @@ describe('CircuitBreaker', () => {
       expect(state?.status).toBe('closed')
       expect(state?.windowSize).toBe(10)
 
-      // Add one more failure to trigger opening (5 failures >= threshold)
+      // Add one more failure to trigger opening - this will replace the success at index 0
       await expect(cb.execute('key', failOp)).rejects.toThrow()
 
       state = cb.getCircuitState('key')
@@ -540,11 +542,13 @@ describe('CircuitBreaker', () => {
       const successOp = vi.fn().mockResolvedValue('success')
       const failOp = vi.fn().mockRejectedValue(new Error('fail'))
 
-      // Fill window: 2 successes, 2 failures = 50% failure rate
-      await cb.execute('key', successOp)
-      await cb.execute('key', successOp)
-      await expect(cb.execute('key', failOp)).rejects.toThrow('fail')
-      await expect(cb.execute('key', failOp)).rejects.toThrow('fail')
+      // Fill window: 5 successes, 5 failures = 50% failure rate
+      for (let i = 0; i < 5; i++) {
+        await cb.execute('key', successOp)
+      }
+      for (let i = 0; i < 5; i++) {
+        await expect(cb.execute('key', failOp)).rejects.toThrow('fail')
+      }
 
       // Circuit should be open (50% failure rate met)
       await expect(cb.execute('key', successOp)).rejects.toThrow(
@@ -593,10 +597,10 @@ describe('CircuitBreaker', () => {
       const successOp = vi.fn().mockResolvedValue('success')
       const failOp = vi.fn().mockRejectedValue(new Error('fail'))
 
-      // Fill window with all failures
-      await expect(cb.execute('key', failOp)).rejects.toThrow('fail')
-      await expect(cb.execute('key', failOp)).rejects.toThrow('fail')
-      await expect(cb.execute('key', failOp)).rejects.toThrow('fail')
+      // Fill window with all failures (need to fill the entire window)
+      for (let i = 0; i < 10; i++) {
+        await expect(cb.execute('key', failOp)).rejects.toThrow('fail')
+      }
 
       // Circuit should be open (100% failure rate)
       await expect(cb.execute('key', successOp)).rejects.toThrow(
@@ -619,12 +623,13 @@ describe('CircuitBreaker', () => {
       const successOp = vi.fn().mockResolvedValue('success')
       const failOp = vi.fn().mockRejectedValue(new Error('fail'))
 
-      // Fill window: 3 successes, 2 failures
-      await cb.execute('key', successOp)
-      await cb.execute('key', successOp)
-      await cb.execute('key', successOp)
-      await expect(cb.execute('key', failOp)).rejects.toThrow('fail')
-      await expect(cb.execute('key', failOp)).rejects.toThrow('fail')
+      // Fill window: 8 successes, 2 failures (need full window)
+      for (let i = 0; i < 8; i++) {
+        await cb.execute('key', successOp)
+      }
+      for (let i = 0; i < 2; i++) {
+        await expect(cb.execute('key', failOp)).rejects.toThrow('fail')
+      }
 
       // Circuit should be open (2 failures = threshold)
       await expect(cb.execute('key', successOp)).rejects.toThrow(
@@ -903,7 +908,7 @@ describe('CircuitBreaker', () => {
 
     it('enhanced errors provide specific threshold information for rate-based thresholds', async () => {
       const config: CircuitBreakerConfig = {
-        failureThreshold: 0.6, // 60% failure rate
+        failureThreshold: 0.5, // 50% failure rate
         recoveryTime: 1000,
         sampleSize: 10,
         halfOpenPolicy: 'single-probe',
@@ -912,20 +917,26 @@ describe('CircuitBreaker', () => {
       const successOp = vi.fn().mockResolvedValue('success')
       const failOp = vi.fn().mockRejectedValue(new Error('fail'))
 
-      // Create 60% failure rate: 3 failures, 2 successes
-      await expect(cb.execute('key', failOp)).rejects.toThrow('fail')
-      await cb.execute('key', successOp)
-      await expect(cb.execute('key', failOp)).rejects.toThrow('fail')
-      await cb.execute('key', successOp)
-      await expect(cb.execute('key', failOp)).rejects.toThrow('fail')
+      // Fill window: 4 successes, 6 failures = 60% failure rate (exceeds 50% threshold)
+      for (let i = 0; i < 4; i++) {
+        await cb.execute('key', successOp)
+      }
+      for (let i = 0; i < 6; i++) {
+        await expect(cb.execute('key', failOp)).rejects.toThrow('fail')
+      }
+
+      // Circuit should be open (60% failure rate exceeds 50% threshold)
+      await expect(cb.execute('key', successOp)).rejects.toThrow(
+        CircuitBreakerOpenError,
+      )
 
       const state = cb.getCircuitState('key')
       expect(state?.status).toBe('open')
 
       const thresholdError = cb.createThresholdError('key', state!)
-      expect(thresholdError.failureRate).toBe(0.6) // 3/5 = 60%
-      expect(thresholdError.threshold).toBe(0.6)
-      expect(thresholdError.consecutiveFailures).toBe(3)
+      expect(thresholdError.failureRate).toBe(0.6) // 6/10 = 60%
+      expect(thresholdError.threshold).toBe(0.5) // 50%
+      expect(thresholdError.consecutiveFailures).toBe(6)
     })
 
     it('enhanced errors provide specific threshold information for count-based thresholds', async () => {
@@ -939,17 +950,19 @@ describe('CircuitBreaker', () => {
       const successOp = vi.fn().mockResolvedValue('success')
       const failOp = vi.fn().mockRejectedValue(new Error('fail'))
 
-      // Create scenario with 2 failures out of 4 (mixed with successes)
-      await cb.execute('key', successOp)
-      await expect(cb.execute('key', failOp)).rejects.toThrow('fail')
-      await cb.execute('key', successOp)
-      await expect(cb.execute('key', failOp)).rejects.toThrow('fail')
+      // Create scenario with 2 failures out of 10 (need to fill window)
+      for (let i = 0; i < 8; i++) {
+        await cb.execute('key', successOp)
+      }
+      for (let i = 0; i < 2; i++) {
+        await expect(cb.execute('key', failOp)).rejects.toThrow('fail')
+      }
 
       const state = cb.getCircuitState('key')
       expect(state?.status).toBe('open')
 
       const thresholdError = cb.createThresholdError('key', state!)
-      expect(thresholdError.failureRate).toBe(0.5) // 2/4 = 50%
+      expect(thresholdError.failureRate).toBe(0.2) // 2/10 = 20%
       expect(thresholdError.threshold).toBe(2) // absolute count
       expect(thresholdError.consecutiveFailures).toBe(2)
     })
