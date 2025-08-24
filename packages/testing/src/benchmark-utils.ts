@@ -10,7 +10,7 @@
  * - Explicitly requested via PERF=1 environment variable
  *
  * They should NEVER run in:
- * - Wallaby.js (too slow, not its concern)  
+ * - Wallaby.js (too slow, not its concern)
  * - CI environments (flaky due to resource variance)
  * - Normal test runs (to avoid accidental performance testing)
  *
