@@ -255,7 +255,7 @@ describe('lint-staged Configuration and Integration', () => {
           'packages/*/src/**/*.{ts,tsx}': [
             'prettier --write',
             'eslint --fix',
-            'bash -c \'PKG=$(echo "$0" | sed "s|.*/packages/\\([^/]*\\)/.*|\\1|") && cd packages/$PKG && pnpm type-check\'',
+            'bash -c \'set -e; pkgs=$(printf "%s\\n" "$@" | sed -nE "s|.*/packages/([^/]+)/.*|\\1|p" | sort -u); for p in $pkgs; do echo "Type-checking packages/$p..."; pnpm -C "packages/$p" type-check; done\' _',
           ],
           '*.{json,md,yml,yaml}': ['prettier --write'],
         },
