@@ -1,6 +1,6 @@
 {
   "name": "@orchestr8/core",
-  "version": "0.2.0-alpha.1",
+  "version": "0.2.0",
   "description": "Core orchestration engine for @orchestr8 with workflow execution and event management",
   "keywords": [
     "orchestr8",

@@ -2,6 +2,12 @@
 
 ## 1.0.0
 
+### Patch Changes
+
+- Initial NPM publication setup for logger package
+
+## 1.0.0
+
 ### Major Changes
 
 - Initial beta release of @orchestr8 foundational packages

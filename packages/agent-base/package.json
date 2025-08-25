@@ -1,6 +1,6 @@
 {
   "name": "@orchestr8/agent-base",
-  "version": "0.2.0-alpha.1",
+  "version": "0.2.0",
   "description": "Base classes and utilities for building @orchestr8 agents",
   "keywords": [
     "orchestr8",

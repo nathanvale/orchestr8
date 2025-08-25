@@ -1,6 +1,6 @@
 {
   "name": "@orchestr8/logger",
-  "version": "1.0.0-beta.1",
+  "version": "1.0.0",
   "description": "Structured logging for @orchestr8 with redaction and correlation support",
   "type": "module",
   "publishConfig": {

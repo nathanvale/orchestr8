@@ -1,5 +1,15 @@
 # @orchestr8/resilience
 
+## 1.0.0
+
+### Patch Changes
+
+- Initial NPM publication setup for resilience package
+
+- Updated dependencies []:
+  - @orchestr8/logger@1.0.0
+  - @orchestr8/schema@1.0.0
+
 ## 1.0.0-beta.2
 
 ### Major Changes
