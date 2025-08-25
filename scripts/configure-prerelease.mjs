@@ -10,7 +10,7 @@
  */
 
 import { execSync } from 'child_process'
-import { readFileSync, writeFileSync, existsSync } from 'fs'
+import { readFileSync, existsSync } from 'fs'
 import { resolve, dirname } from 'path'
 import { fileURLToPath } from 'url'
 
@@ -41,7 +41,7 @@ function testChangesetPrerelease() {
   // Test changeset status
   try {
     console.log('📋 Testing changeset status:')
-    const status = execCommand('pnpm changeset status', { silent: true })
+    execCommand('pnpm changeset status', { silent: true })
     console.log('  ✅ Changeset status command working')
   } catch (error) {
     console.log('  ❌ Changeset status failed:', error.message)
@@ -170,7 +170,7 @@ function testVersionCommands() {
       try {
         execCommand(command, { silent: true })
         console.log('   ✅ Command executed successfully')
-      } catch (error) {
+      } catch {
         console.log('   ❌ Command failed')
       }
     } else {
@@ -186,7 +186,7 @@ async function main() {
 
   try {
     switch (command) {
-      case 'test':
+      case 'test': {
         console.log('🚀 Testing Pre-release Configuration\n')
 
         const configValid = validatePreReleaseConfig()
@@ -213,6 +213,7 @@ async function main() {
           process.exit(1)
         }
         break
+      }
 
       default:
         console.log('Usage: node configure-prerelease.mjs [test]')

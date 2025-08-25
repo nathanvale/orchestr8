@@ -27,7 +27,7 @@ function cleanPackageForPublish() {
 
   try {
     const pkg = JSON.parse(fs.readFileSync(packagePath, 'utf8'))
-    const originalPkg = JSON.stringify(pkg, null, 2)
+    // originalPkg variable removed - not used
 
     let modified = false
 

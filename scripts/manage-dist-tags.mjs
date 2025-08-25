@@ -9,7 +9,7 @@
  * - Validates tag assignments match version strategy
  */
 
-import { execSync } from 'child_process'
+// execSync import removed - not used in this file
 import { readFileSync } from 'fs'
 import { glob } from 'glob'
 import { resolve, dirname } from 'path'
@@ -40,22 +40,6 @@ const DIST_TAG_STRATEGY = {
   },
 }
 
-function execCommand(command, options = {}) {
-  try {
-    const result = execSync(command, {
-      encoding: 'utf-8',
-      stdio: options.silent ? 'pipe' : 'inherit',
-      ...options,
-    })
-    return result?.trim()
-  } catch (error) {
-    if (!options.silent) {
-      console.error(`Command failed: ${command}`)
-      console.error(error.message)
-    }
-    throw error
-  }
-}
 
 async function validateDistTags(dryRun = true) {
   console.log(`🏷️  ${dryRun ? 'Validating' : 'Setting'} NPM dist tags...\n`)
@@ -80,7 +64,7 @@ async function validateDistTags(dryRun = true) {
 
     // Find which tier this package belongs to
     let strategy = null
-    for (const [tierName, config] of Object.entries(DIST_TAG_STRATEGY)) {
+    for (const [, config] of Object.entries(DIST_TAG_STRATEGY)) {
       if (config.packages.includes(name)) {
         strategy = config
         break
@@ -186,7 +170,7 @@ async function main() {
 
   try {
     switch (command) {
-      case 'validate':
+      case 'validate': {
         displayDistTagStrategy()
         const isValid = await validateDistTags(true)
         testVersionGraduation()
@@ -198,8 +182,9 @@ async function main() {
           process.exit(1)
         }
         break
+      }
 
-      case 'set':
+      case 'set': {
         const success = await validateDistTags(false)
         if (success) {
           console.log('🎉 Dist tags configured successfully')
@@ -208,6 +193,7 @@ async function main() {
           process.exit(1)
         }
         break
+      }
 
       default:
         console.log('Usage: node manage-dist-tags.mjs [validate|set]')
