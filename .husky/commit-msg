@@ -1,4 +1,7 @@
 #!/usr/bin/env sh
 
+# Lint commit message format
+npx --no -- commitlint --edit $1
+
 # Auto-generate changesets from conventional commit messages
 node scripts/auto-changeset.mjs --verbose
