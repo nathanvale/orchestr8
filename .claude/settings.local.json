@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(bun:*)",
+      "mcp__tavily-mcp__tavily-search",
+      "mcp__mcp-server-firecrawl__firecrawl_search",
+      "mcp__mcp-server-firecrawl__firecrawl_scrape",
+      "Read(//Users/nathanvale/.agent-os/instructions/**)",
+      "Read(//Users/nathanvale/.agent-os/standards/**)",
+      "Bash(git config:*)",
+      "Read(//Users/nathanvale/**)",
+      "Bash(~/.claude-code-project-index/scripts/project-index-helper.sh:*)",
+      "Bash(chmod:*)",
+      "Bash(git add:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
