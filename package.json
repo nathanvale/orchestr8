@@ -1,0 +1,48 @@
+{
+  "name": "my-bun-project",
+  "version": "0.1.0",
+  "description": "New project scaffolded with Bun + Changesets + Commitizen template",
+  "main": "src/index.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "bun --watch src/index.ts",
+    "build": "bun build src/index.ts --outdir=dist --target=node --format=esm,cjs",
+    "start": "bun dist/index.js",
+    "test": "bun test",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "lint:check": "eslint . --cache --max-warnings 0",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "tsc --noEmit",
+    "cz": "git-cz",
+    "commit": "git-cz",
+    "release": "bunx changeset",
+    "release:version": "bunx changeset version",
+    "release:publish": "bunx changeset publish",
+    "prepare": "husky"
+  },
+  "config": {
+    "commitizen": {
+      "path": "cz-git"
+    }
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "devDependencies": {
+    "@changesets/changelog-github": "^0.5.1",
+    "@commitlint/config-conventional": "^19.8.1",
+    "changesets": "^1.0.2",
+    "commitizen": "^4.3.1",
+    "commitlint": "^19.8.1",
+    "cz-git": "^1.12.0",
+    "eslint": "^9.17.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.1.5",
+    "prettier": "^3.4.2",
+    "typescript": "^5.7.3"
+  }
+}
