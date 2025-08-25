@@ -43,7 +43,40 @@ This file provides essential guidance for working with the @orchestr8 TypeScript
 2. **Code**: Make changes in `packages/*/src/`
 3. **Test**: Use Wallaby.js or `pnpm test`
 4. **Validate**: `pnpm format && pnpm check`
-5. **Commit**: Only when `pnpm check` passes
+5. **Commit**: Use conventional commit format (enforced by commitlint)
+
+## Commit Format (Enforced by Commitlint)
+
+**Required Format**: `type(scope): description`
+
+**Commit Types**:
+
+- `feat:` → minor version bump, new features
+- `fix:` → patch version bump, bug fixes
+- `perf:` → patch version bump, performance improvements
+- `refactor:` → patch version bump, code refactoring
+- `docs:` → no version bump, documentation only
+- `style:` → no version bump, formatting changes
+- `test:` → no version bump, test changes
+- `chore:` → no version bump, maintenance tasks
+- `ci:` → no version bump, CI/CD changes
+- `build:` → no version bump, build system changes
+
+**Valid Scopes**: `core`, `schema`, `logger`, `resilience`, `cli`, `agent-base`, `testing`, `ci`, `deps`, `release`, `docs`, `examples`, `scripts`
+
+**Examples**:
+
+```bash
+git commit -m "feat(core): add event retry mechanism"        # ✅ Auto-generates minor changeset
+git commit -m "fix(logger): resolve memory leak"            # ✅ Auto-generates patch changeset
+git commit -m "feat(schema)!: redesign validation API"      # ✅ Auto-generates major changeset
+git commit -m "docs: update README installation steps"      # ✅ No changeset (docs only)
+git commit -m "chore(deps): update dependencies"            # ✅ No changeset (maintenance)
+```
+
+**Breaking Changes**: Add `!` after scope or include `BREAKING CHANGE:` in commit body for major version bumps.
+
+**Benefits**: Changesets are auto-generated, releases are automatic, commit history is clean and consistent.
 
 ## Architecture Context
 
@@ -64,6 +97,8 @@ schema (foundation) → logger → core → cli
 - **Resilience**: `retry(circuitBreaker(timeout(operation)))` composition
 
 **Current Status**: Phase 1 MVP ~80% complete (486+ tests passing)
+
+**Package Publishing**: All packages will be republished with patch bumps to ensure clean exports without development fields
 
 ## Testing Protocol
 
