@@ -140,7 +140,9 @@
       "Bash(timeout 120 pnpm run check)",
       "Bash(timeout 120 pnpm -w run check)",
       "Bash(gh status:*)",
-      "Bash(gh repo view:*)"
+      "Bash(gh repo view:*)",
+      "Bash(gh workflow:*)",
+      "Bash(git log:*)"
     ],
     "deny": [],
     "ask": [],

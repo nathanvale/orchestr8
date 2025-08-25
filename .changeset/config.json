@@ -4,16 +4,11 @@
     "@changesets/changelog-github",
     { "repo": "nathanvale/orchestr8" }
   ],
-  "commit": false,
+  "commit": true,
   "fixed": [],
   "linked": [],
   "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
-  "ignore": [
-    "@orchestr8/testing",
-    "@orchestr8/resilience",
-    "@orchestr8/core",
-    "@orchestr8/cli"
-  ]
+  "ignore": []
 }
