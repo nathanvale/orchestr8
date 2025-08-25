@@ -73,8 +73,8 @@ export interface ResilienceContext
 export interface CircuitBreakerState {
   /** Current state of the circuit */
   status: 'closed' | 'open' | 'half-open'
-  /** Sliding window of outcomes (true = success, false = failure) */
-  slidingWindow: Array<boolean>
+  /** Sliding window of outcomes (true = success, false = failure); undefined = uninitialized slot */
+  slidingWindow: Array<boolean | undefined>
   /** Current position in the circular buffer */
   windowIndex: number
   /** Number of valid entries in the window */

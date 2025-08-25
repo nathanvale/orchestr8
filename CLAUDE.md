@@ -100,7 +100,7 @@ schema (foundation) → logger → core → cli
 **Ready for Production:**
 
 - Core orchestration with resilience patterns
-- Event bus with bounded queues (1000 events max)  
+- Event bus with bounded queues (1000 events max)
 - JSON workflow validation with Zod (204 tests)
 - Structured logging with correlation IDs (126 tests)
 - Memory-bounded execution journal (10MB limit)
@@ -122,7 +122,42 @@ schema (foundation) → logger → core → cli
 
 - `@~/.agent-os/instructions/create-spec.md` - Plan new features
 - `@~/.agent-os/instructions/execute-tasks.md` - Implement tasks
+- `@~/.agent-os/instructions/process-review.md` - Process automated review feedback (supports spec parameter)
+- `@~/.agent-os/instructions/conduct-review.md` - Conduct proactive AI code review (uses code-reviewer-pro)
 - Check `.agent-os/product/roadmap.md` for current priorities
+
+## Code Review Tracking System
+
+**Integrated PR review tracking with priority management:**
+
+- **Location**: `.agent-os/reviews/ongoing/` - Active PR reviews with unresolved items
+- **Resolution Path**: `.agent-os/reviews/resolved/` - Completed reviews for reference
+- **Priority Levels**: P0 (critical/blocking), P1 (high/next sprint), P2 (medium/2 sprints), P3 (low/capacity)
+
+**Current Review Status:**
+
+- [PR #8 Resilience Improvements](@.agent-os/reviews/ongoing/2025-08-25-PR-8-resilience-improvements/review.md) - P1: 1, P2: 3
+
+**Dual Review Workflows:**
+
+1. **Reactive Processing** (`process-review.md`):
+   - Processes existing CodeRabbit/automated tool feedback
+   - Input: PR number or GitHub URL
+   - Converts tool findings to P0-P3 priorities
+   - Creates structured tracking documents
+
+2. **Proactive Conducting** (`conduct-review.md`):
+   - Uses code-reviewer-pro agent for comprehensive review
+   - Input: Current branch + optional spec reference
+   - Includes repository health checks (pnpm check, clean git)
+   - Blocks review if health checks fail
+   - Same P0-P3 output format with code snippets
+
+**Common Workflow:**
+
+- P0 issues block merge/PR - must be resolved immediately
+- P1-P3 issues tracked as technical debt for future sprints
+- Reviews move from `ongoing/` to `resolved/` when all items completed
 
 ## Common Issues (Quick Fixes)
 

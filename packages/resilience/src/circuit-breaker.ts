@@ -61,7 +61,7 @@ export class CircuitBreaker {
 
       state = {
         status: 'closed',
-        slidingWindow: new Array(this.config.sampleSize).fill(null),
+        slidingWindow: new Array<boolean | undefined>(this.config.sampleSize),
         windowIndex: 0,
         windowSize: 0,
         probeInProgress: false,

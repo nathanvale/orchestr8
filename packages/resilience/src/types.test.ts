@@ -158,6 +158,7 @@ describe('Resilience Types', () => {
         lastFailureTime: Date.now(),
         nextHalfOpenTime: Date.now() + 30000,
         probeInProgress: false,
+        lastAccessTime: Date.now(),
       }
 
       expect(state.status).toBe('open')
