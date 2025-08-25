@@ -1,5 +1,9 @@
 import { serve } from "bun";
 
+export function hello() {
+  return "Hello world!";
+}
+
 serve({
   port: 3000,
   fetch(req) {
