@@ -1,0 +1,51 @@
+#!/usr/bin/env sh
+
+# Safeguard CI environments
+if [ -n "$CI" ] || [ -n "$GITHUB_ACTIONS" ]; then
+  exit 0
+fi
+
+# Prevent recursion on amended commits
+if [ -n "$SKIP_AUTO_CHANGESET" ]; then
+  exit 0
+fi
+
+# Validate commit message file exists
+if [ ! -f "$1" ]; then
+  echo "[auto-changeset] Warning: Commit message file not found, skipping changeset generation"
+  exit 0
+fi
+
+# Skip merge commits
+if [ -f .git/MERGE_HEAD ]; then
+  exit 0
+fi
+
+# Skip versioning commits (changesets release commits)
+msg="$(sed -n '1p' "$1")"
+case "$msg" in
+  chore\(release\):*) exit 0 ;;
+  Version\ Packages*) exit 0 ;;
+esac
+
+# Lint commit message format
+npx --no -- commitlint --edit $1
+
+# Pass the commit message file path to the script
+# Auto-generate changesets from conventional commit messages
+node scripts/auto-changeset.mjs --verbose --commit-msg-file "$1" 2>/dev/null || {
+  echo "[auto-changeset] Warning: Failed to generate changeset, continuing with commit"
+  exit 0
+}
+
+# Auto-stage any new changeset files and amend commit
+if [ -n "$(git diff --name-only --cached)" ] || [ -n "$(git ls-files --others --exclude-standard .changeset/*.md)" ]; then
+  # Stage any new changeset files
+  git add .changeset/*.md 2>/dev/null || true
+  
+  # Amend the commit to include the changeset (prevent hook recursion)
+  if [ -n "$(git diff --name-only --cached)" ]; then
+    echo "[auto-changeset] Including generated changeset in commit"
+    SKIP_AUTO_CHANGESET=1 git commit --amend --no-edit --no-verify
+  fi
+fi
