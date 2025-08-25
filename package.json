@@ -36,6 +36,9 @@
     "example:core:fallback-retry": "tsx scripts/examples/core-fallback-retry.ts",
     "example:core:conditions-env": "tsx scripts/examples/core-conditions-env.ts",
     "validate:dual-consumption": "node scripts/validate-dual-consumption.js",
+    "changeset:auto": "node scripts/auto-changeset.mjs --verbose",
+    "changeset:manual": "changeset add",
+    "changeset:dry-run": "node scripts/auto-changeset.mjs --dry-run --verbose",
     "release:publish": "changeset publish",
     "test:release-workflow": "node scripts/test-release-workflow.js"
   },

@@ -1,0 +1,4 @@
+#!/usr/bin/env sh
+
+# Auto-generate changesets from conventional commit messages
+node scripts/auto-changeset.mjs --verbose
