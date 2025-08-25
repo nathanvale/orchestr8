@@ -4,14 +4,11 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
-overrides:
-  '@orchestr8/resilience': link:packages/resilience
-
 importers:
   .:
     dependencies:
       '@orchestr8/resilience':
-        specifier: link:packages/resilience
+        specifier: workspace:*
         version: link:packages/resilience
     devDependencies:
       '@changesets/changelog-github':
@@ -135,7 +132,7 @@ importers:
         version: 0.16.0
     devDependencies:
       '@orchestr8/resilience':
-        specifier: link:../resilience
+        specifier: workspace:*
         version: link:../resilience
       '@types/jmespath':
         specifier: ^0.15.2
