@@ -157,12 +157,22 @@ describe('CI/CD Workflow Validation', () => {
       expect(config.changelog[0]).toBe('@changesets/changelog-github')
     })
 
-    it('should validate ignored packages configuration', () => {
+    it('should validate packages configuration for publishing', () => {
       const configPath = join(repoRoot, '.changeset', 'config.json')
       const config = JSON.parse(readFileSync(configPath, 'utf-8'))
 
-      // Testing package should be ignored
-      expect(config.ignore).toContain('@orchestr8/testing')
+      // No packages should be ignored (all packages are versioned)
+      expect(config.ignore).toEqual([])
+
+      // Testing package should be private (not published to npm)
+      const testingPkgPath = join(
+        repoRoot,
+        'packages',
+        'testing',
+        'package.json',
+      )
+      const testingPkg = JSON.parse(readFileSync(testingPkgPath, 'utf-8'))
+      expect(testingPkg.private).toBe(true)
     })
   })
 
