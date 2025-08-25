@@ -61,3 +61,9 @@ temp
 
 # Project metadata
 PROJECT_INDEX.json
+
+# Ignore all Obsidian directories
+**/.obsidian/**
+
+# Claude local settings
+.claude/settings.local.json

@@ -1,6 +1,6 @@
 {
   "name": "@orchestr8/schema",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Zod-based schema validation and JSON schema generation for @orchestr8 workflows and agents",
   "keywords": [
     "orchestr8",

@@ -142,11 +142,15 @@
       "Bash(gh status:*)",
       "Bash(gh repo view:*)",
       "Bash(gh workflow:*)",
-      "Bash(git log:*)"
+      "Bash(git log:*)",
+      "Bash(SKIP_AUTO_CHANGESET=1 git commit -m \"Add changeset for republishing packages with clean exports\")",
+      "Bash(git rev-parse:*)"
     ],
     "deny": [],
     "ask": [],
-    "additionalDirectories": ["/Users/nathanvale"]
+    "additionalDirectories": [
+      "/Users/nathanvale"
+    ]
   },
   "enabledMcpjsonServers": [
     "wallaby",
