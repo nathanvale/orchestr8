@@ -1,0 +1,28 @@
+{
+  "recommendations": [
+    "oven.bun-vscode",
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "streetsidesoftware.code-spell-checker",
+    "usernamehw.errorlens",
+    "eamodio.gitlens",
+    "GitHub.vscode-pull-request-github",
+    "GitHub.copilot",
+    "ms-vscode.vscode-typescript-next",
+    "yoavbls.pretty-ts-errors",
+    "vitest.explorer",
+    "Orta.vscode-jest",
+    "ryanluker.vscode-coverage-gutters",
+    "humao.rest-client",
+    "ms-vscode.live-server",
+    "christian-kohler.path-intellisense",
+    "christian-kohler.npm-intellisense",
+    "mikestead.dotenv",
+    "EditorConfig.EditorConfig",
+    "redhat.vscode-yaml",
+    "DavidAnson.vscode-markdownlint",
+    "bierner.markdown-mermaid",
+    "mhutchie.git-graph",
+    "donjayamanne.githistory"
+  ]
+}
