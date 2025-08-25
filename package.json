@@ -65,7 +65,7 @@
     "vitest": "^3.2.4"
   },
   "dependencies": {
-    "@orchestr8/resilience": "link:packages/resilience"
+    "@orchestr8/resilience": "workspace:*"
   },
   "lint-staged": {
     "packages/*/src/**/*.{ts,tsx}": [
