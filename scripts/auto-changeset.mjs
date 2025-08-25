@@ -21,6 +21,7 @@ class AutoChangeset {
   constructor(options = {}) {
     this.dryRun = options.dryRun || false
     this.verbose = options.verbose || false
+    this.commitMsgFile = options.commitMsgFile || null
     this.skipTypes = new Set(['chore', 'docs', 'style', 'test', 'build', 'ci'])
   }
 
@@ -67,10 +68,11 @@ class AutoChangeset {
   }
 
   /**
-   * Get the commit message from git
+   * Get the commit message from git or specified file
    */
   getCommitMessage() {
-    const commitMsgFile = join(rootDir, '.git', 'COMMIT_EDITMSG')
+    // Use provided commit message file path, or default to git's COMMIT_EDITMSG
+    const commitMsgFile = this.commitMsgFile || join(rootDir, '.git', 'COMMIT_EDITMSG')
     if (existsSync(commitMsgFile)) {
       return readFileSync(commitMsgFile, 'utf-8').trim()
     }
@@ -95,8 +97,16 @@ class AutoChangeset {
 
       const [, type, scope, breakingMarker, subject] = match
       
-      // Get body and footer
+      // Get body and extract footer
       const body = lines.slice(1).join('\n').trim()
+      
+      // Extract footer (everything after blank line, typically contains BREAKING CHANGE details)
+      let footer = null
+      const bodyLines = body.split('\n')
+      const blankLineIndex = bodyLines.findIndex(line => line.trim() === '')
+      if (blankLineIndex !== -1 && blankLineIndex < bodyLines.length - 1) {
+        footer = bodyLines.slice(blankLineIndex + 1).join('\n').trim()
+      }
       
       // Check for breaking changes
       const hasBreakingChange = 
@@ -109,6 +119,7 @@ class AutoChangeset {
         scope: scope || null,
         subject: subject.trim(),
         body: body || null,
+        footer: footer || null,
         breaking: hasBreakingChange,
         raw: message
       }
@@ -296,9 +307,18 @@ ${changesetData.description}
 // CLI execution
 if (import.meta.url === `file://${process.argv[1]}`) {
   const args = process.argv.slice(2)
+  
+  // Parse commit message file argument
+  let commitMsgFile = null
+  const commitMsgFileIndex = args.indexOf('--commit-msg-file')
+  if (commitMsgFileIndex !== -1 && commitMsgFileIndex < args.length - 1) {
+    commitMsgFile = args[commitMsgFileIndex + 1]
+  }
+  
   const options = {
     dryRun: args.includes('--dry-run'),
-    verbose: args.includes('--verbose') || args.includes('-v')
+    verbose: args.includes('--verbose') || args.includes('-v'),
+    commitMsgFile: commitMsgFile
   }
 
   const autoChangeset = new AutoChangeset(options)
