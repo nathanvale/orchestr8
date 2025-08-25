@@ -90,7 +90,7 @@ describe('Resilience Types', () => {
       const config: CircuitBreakerConfig = {
         failureThreshold: 3,
         recoveryTime: 10000,
-        sampleSize: 5,
+        sampleSize: 10,
         halfOpenPolicy: 'gradual',
       }
 

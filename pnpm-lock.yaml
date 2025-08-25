@@ -179,6 +179,9 @@ importers:
       '@orchestr8/schema':
         specifier: workspace:*
         version: link:../schema
+      zod:
+        specifier: ^3.25.76
+        version: 3.25.76
     devDependencies:
       '@orchestr8/testing':
         specifier: workspace:*

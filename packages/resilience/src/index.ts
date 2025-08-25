@@ -7,12 +7,23 @@ export { CircuitBreaker } from './circuit-breaker.js'
 export type { CircuitBreakerObserver } from './circuit-breaker.js'
 // Export composition engine
 export { ResilienceComposer } from './composition.js'
+// Export configuration validation
+export {
+  validateCircuitBreakerConfig,
+  CircuitBreakerConfigSchema,
+} from './config-validation.js'
 // Export error types
 export {
   CircuitBreakerOpenError,
+  CircuitBreakerConfigurationError,
+  CircuitBreakerThresholdError,
+  CircuitBreakerTimeoutError,
   RetryExhaustedError,
   TimeoutError,
   isCircuitBreakerOpenError,
+  isCircuitBreakerConfigurationError,
+  isCircuitBreakerThresholdError,
+  isCircuitBreakerTimeoutError,
   isRetryExhaustedError,
   isTimeoutError,
 } from './errors.js'

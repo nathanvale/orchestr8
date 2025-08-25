@@ -86,7 +86,7 @@ export interface CircuitBreakerState {
   /** Lock to prevent concurrent probes in half-open state */
   probeInProgress: boolean
   /** Last access time for LRU cleanup */
-  lastAccessTime?: number
+  lastAccessTime: number
 }
 
 /**

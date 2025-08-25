@@ -1,6 +1,6 @@
 {
   "name": "@orchestr8/resilience",
-  "version": "1.0.0-beta.1",
+  "version": "1.0.0-beta.2",
   "description": "Resilience patterns (retry, circuit breaker, timeout) with composition support for @orchestr8",
   "keywords": [
     "orchestr8",
@@ -66,7 +66,8 @@
   },
   "dependencies": {
     "@orchestr8/logger": "workspace:*",
-    "@orchestr8/schema": "workspace:*"
+    "@orchestr8/schema": "workspace:*",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@orchestr8/testing": "workspace:*",

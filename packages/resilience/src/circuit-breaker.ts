@@ -2,9 +2,14 @@
  * Circuit breaker implementation with sliding window
  */
 
+import type { ResilienceTelemetry } from './observability.js'
 import type { CircuitBreakerConfig, CircuitBreakerState } from './types.js'
 
-import { CircuitBreakerOpenError } from './errors.js'
+import { validateCircuitBreakerConfig } from './config-validation.js'
+import {
+  CircuitBreakerOpenError,
+  CircuitBreakerThresholdError,
+} from './errors.js'
 
 /**
  * Observer interface for circuit breaker state changes (optional)
@@ -21,28 +26,37 @@ export class CircuitBreaker {
   private readonly maxCircuits = 1000 // Bounded state map
   private lastCleanup = Date.now()
   private readonly cleanupInterval = 60000 // Cleanup every minute
+  private cleanupInProgress = false // Flag to prevent concurrent cleanup
+  private readonly config: CircuitBreakerConfig
+  private readonly telemetry?: ResilienceTelemetry
+  private readonly performanceMetrics = new Map<
+    string,
+    { totalOperations: number; totalDuration: number; failures: number }
+  >()
 
   constructor(
-    private readonly config: CircuitBreakerConfig,
+    config: CircuitBreakerConfig,
     private readonly observer?: CircuitBreakerObserver,
-  ) {}
+    telemetry?: ResilienceTelemetry,
+  ) {
+    // Validate configuration and store validated version
+    this.config = validateCircuitBreakerConfig(config)
+    this.telemetry = telemetry
+  }
 
   /**
    * Get or create circuit state for a given key
    */
   private getState(key: string): CircuitBreakerState {
-    // Perform lazy cleanup if needed
-    this.performLazyCleanup()
+    // Perform lazy cleanup if needed (async, non-blocking)
+    this.scheduleAsyncCleanup()
 
     let state = this.states.get(key)
 
     if (!state) {
-      // Bounded state map - remove oldest if at limit
+      // Bounded state map - remove least recently used if at limit
       if (this.states.size >= this.maxCircuits) {
-        const firstKey = this.states.keys().next().value
-        if (firstKey) {
-          this.states.delete(firstKey)
-        }
+        this.evictLeastRecentlyUsed()
       }
 
       state = {
@@ -63,27 +77,69 @@ export class CircuitBreaker {
   }
 
   /**
-   * Perform lazy cleanup of expired circuits
+   * Evict the least recently used circuit state
    */
-  private performLazyCleanup(): void {
+  private evictLeastRecentlyUsed(): void {
+    if (this.states.size === 0) {
+      return
+    }
+
+    let oldestKey: string | undefined
+    let oldestTime = Infinity
+
+    // Find the state with the oldest lastAccessTime
+    for (const [key, state] of this.states.entries()) {
+      if (state.lastAccessTime < oldestTime) {
+        oldestTime = state.lastAccessTime
+        oldestKey = key
+      }
+    }
+
+    // Delete the least recently used state
+    if (oldestKey) {
+      this.states.delete(oldestKey)
+    }
+  }
+
+  /**
+   * Schedule async cleanup if needed (non-blocking)
+   */
+  private scheduleAsyncCleanup(): void {
     const now = Date.now()
 
-    // Only cleanup periodically
-    if (now - this.lastCleanup < this.cleanupInterval) {
+    // Only cleanup periodically and if not already in progress
+    if (
+      now - this.lastCleanup < this.cleanupInterval ||
+      this.cleanupInProgress
+    ) {
       return
     }
 
     this.lastCleanup = now
+    this.cleanupInProgress = true
+
+    // Schedule async cleanup to prevent blocking
+    globalThis.setImmediate(() => {
+      this.performAsyncCleanup().finally(() => {
+        this.cleanupInProgress = false
+      })
+    })
+  }
+
+  /**
+   * Perform async cleanup of expired circuits in chunks
+   */
+  private async performAsyncCleanup(): Promise<void> {
+    const now = Date.now()
     const expiredThreshold = now - this.config.recoveryTime * 10 // Keep circuits for 10x recovery timeout
 
-    // Remove expired circuits
+    // Collect expired keys
     const keysToDelete: string[] = []
     for (const [key, state] of this.states.entries()) {
       // Remove if:
       // 1. Circuit is closed and hasn't been accessed recently
       // 2. Circuit is open but past its expiry time
-      const isExpired =
-        state.lastAccessTime && state.lastAccessTime < expiredThreshold
+      const isExpired = state.lastAccessTime < expiredThreshold
       const isStaleOpen =
         state.status === 'open' &&
         state.nextHalfOpenTime &&
@@ -94,9 +150,27 @@ export class CircuitBreaker {
       }
     }
 
-    // Delete expired circuits
-    for (const key of keysToDelete) {
-      this.states.delete(key)
+    // Delete expired circuits in chunks to avoid blocking
+    await this.deleteKeysInChunks(keysToDelete)
+  }
+
+  /**
+   * Delete keys in chunks to prevent event loop blocking
+   */
+  private async deleteKeysInChunks(keys: string[]): Promise<void> {
+    const CHUNK_SIZE = 10 // Process 10 deletions per chunk
+
+    for (let i = 0; i < keys.length; i += CHUNK_SIZE) {
+      // Process a chunk
+      const chunk = keys.slice(i, i + CHUNK_SIZE)
+      for (const key of chunk) {
+        this.states.delete(key)
+      }
+
+      // Yield control back to event loop if there are more chunks
+      if (i + CHUNK_SIZE < keys.length) {
+        await new Promise((resolve) => globalThis.setImmediate(resolve))
+      }
     }
   }
 
@@ -181,18 +255,45 @@ export class CircuitBreaker {
    */
   async execute<T>(key: string, operation: () => Promise<T>): Promise<T> {
     const state = this.getState(key)
+    const stopTimer = this.telemetry?.startTimer(`circuit-breaker-${key}`)
 
     // Check for state transitions
     if (state.status === 'open' && this.canTransitionToHalfOpen(state)) {
       state.status = 'half-open'
       this.observer?.onStateChange?.(key, 'half-open')
       state.probeInProgress = false
+
+      // Log state transition with telemetry
+      this.telemetry?.logEvent(
+        'circuit_state_change',
+        {},
+        {
+          circuitKey: key,
+          previousState: 'open',
+          newState: 'half-open',
+          transition: 'recovery_attempt',
+        },
+      )
     }
 
     // Handle circuit states
     switch (state.status) {
       case 'open': {
         // Circuit is open - reject immediately
+        stopTimer?.()
+        this.updateMetrics(key, 0, false)
+
+        this.telemetry?.logEvent(
+          'circuit_probe_attempt',
+          {},
+          {
+            circuitKey: key,
+            circuitStatus: 'open',
+            outcome: 'rejected',
+            failures: this.countFailures(state),
+          },
+        )
+
         const retryAfter =
           state.nextHalfOpenTime || Date.now() + this.config.recoveryTime
         throw new CircuitBreakerOpenError(
@@ -225,6 +326,7 @@ export class CircuitBreaker {
 
         try {
           const result = await operation()
+          const duration = stopTimer?.() ?? 0
 
           // Success - transition to closed
           state.status = 'closed'
@@ -233,11 +335,27 @@ export class CircuitBreaker {
           state.lastFailureTime = undefined
           state.nextHalfOpenTime = undefined
 
-          // Record success
+          // Record success and update metrics
           this.recordOutcome(state, true)
+          this.updateMetrics(key, duration, false)
+
+          // Log successful recovery
+          this.telemetry?.logEvent(
+            'circuit_recovery',
+            {},
+            {
+              circuitKey: key,
+              previousState: 'half-open',
+              newState: 'closed',
+              probeSuccess: true,
+              operationDuration: duration,
+            },
+          )
 
           return result
         } catch (error) {
+          const duration = stopTimer?.() ?? 0
+
           // Failure - return to open for single-probe. In gradual mode, remain half-open
           if (singleProbe) {
             state.status = 'open'
@@ -253,8 +371,23 @@ export class CircuitBreaker {
           state.probeInProgress = false
           state.lastFailureTime = Date.now()
 
-          // Record failure
+          // Record failure and update metrics
           this.recordOutcome(state, false)
+          this.updateMetrics(key, duration, true)
+
+          // Log probe failure
+          this.telemetry?.logEvent(
+            'circuit_probe_attempt',
+            {},
+            {
+              circuitKey: key,
+              circuitStatus: 'half-open',
+              outcome: 'failed',
+              newState: singleProbe ? 'open' : 'half-open',
+              operationDuration: duration,
+              error: error instanceof Error ? error.message : String(error),
+            },
+          )
 
           throw error
         }
@@ -265,21 +398,44 @@ export class CircuitBreaker {
         // Circuit is closed - execute normally
         try {
           const result = await operation()
+          const duration = stopTimer?.() ?? 0
 
-          // Record success
+          // Record success and update metrics
           this.recordOutcome(state, true)
+          this.updateMetrics(key, duration, false)
 
           return result
         } catch (error) {
-          // Record failure
+          const duration = stopTimer?.() ?? 0
+
+          // Record failure and update metrics
           this.recordOutcome(state, false)
+          this.updateMetrics(key, duration, true)
           state.lastFailureTime = Date.now()
 
           // Check if circuit should open
           if (this.shouldOpen(state)) {
+            const previousState = state.status
             state.status = 'open'
             this.observer?.onStateChange?.(key, 'open')
             state.nextHalfOpenTime = Date.now() + this.config.recoveryTime
+
+            // Log circuit opening
+            this.telemetry?.logEvent(
+              'circuit_state_change',
+              {},
+              {
+                circuitKey: key,
+                previousState,
+                newState: 'open',
+                transition: 'threshold_exceeded',
+                failures: this.countFailures(state),
+                threshold: this.config.failureThreshold,
+                sampleSize: this.config.sampleSize,
+                operationDuration: duration,
+                error: error instanceof Error ? error.message : String(error),
+              },
+            )
           }
 
           throw error
@@ -314,6 +470,118 @@ export class CircuitBreaker {
    */
   getDebugInfo(key: string): CircuitBreakerState | undefined {
     return this.states.get(key)
+  }
+
+  /**
+   * Get current state map size (for testing)
+   */
+  getStateMapSize(): number {
+    return this.states.size
+  }
+
+  /**
+   * Update performance metrics for a circuit
+   */
+  private updateMetrics(
+    key: string,
+    duration: number,
+    isFailure: boolean,
+  ): void {
+    if (!this.performanceMetrics.has(key)) {
+      this.performanceMetrics.set(key, {
+        totalOperations: 0,
+        totalDuration: 0,
+        failures: 0,
+      })
+    }
+
+    const metrics = this.performanceMetrics.get(key)!
+    metrics.totalOperations++
+    metrics.totalDuration += duration
+
+    if (isFailure) {
+      metrics.failures++
+    }
+  }
+
+  /**
+   * Get performance metrics for a circuit
+   */
+  getPerformanceMetrics(key: string):
+    | {
+        totalOperations: number
+        totalDuration: number
+        averageDuration: number
+        failures: number
+        successRate: number
+      }
+    | undefined {
+    const metrics = this.performanceMetrics.get(key)
+    if (!metrics) {
+      return undefined
+    }
+
+    return {
+      totalOperations: metrics.totalOperations,
+      totalDuration: metrics.totalDuration,
+      averageDuration:
+        metrics.totalOperations > 0
+          ? metrics.totalDuration / metrics.totalOperations
+          : 0,
+      failures: metrics.failures,
+      successRate:
+        metrics.totalOperations > 0
+          ? (metrics.totalOperations - metrics.failures) /
+            metrics.totalOperations
+          : 0,
+    }
+  }
+
+  /**
+   * Get all performance metrics
+   */
+  getAllPerformanceMetrics(): Map<
+    string,
+    {
+      totalOperations: number
+      totalDuration: number
+      averageDuration: number
+      failures: number
+      successRate: number
+    }
+  > {
+    const result = new Map()
+
+    for (const [key] of this.performanceMetrics) {
+      const metrics = this.getPerformanceMetrics(key)
+      if (metrics) {
+        result.set(key, metrics)
+      }
+    }
+
+    return result
+  }
+
+  /**
+   * Create enhanced threshold error for the given circuit state
+   */
+  createThresholdError(
+    key: string,
+    state: CircuitBreakerState,
+  ): CircuitBreakerThresholdError {
+    const failures = this.countFailures(state)
+    const failureRate = failures / this.config.sampleSize
+    const retryAfter = new Date(Date.now() + this.config.recoveryTime)
+
+    return new CircuitBreakerThresholdError(
+      `Circuit breaker '${key}' opened due to threshold exceeded`,
+      key,
+      retryAfter,
+      failures,
+      failureRate,
+      this.config.failureThreshold,
+      this.config.sampleSize,
+    )
   }
 
   /**

@@ -278,7 +278,7 @@ describe('context propagation', () => {
         circuitBreaker: {
           failureThreshold: 2,
           recoveryTime: 30000,
-          sampleSize: 3,
+          sampleSize: 10,
           halfOpenPolicy: 'single-probe',
         },
       }

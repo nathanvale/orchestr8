@@ -115,6 +115,9 @@ describe('Circuit Breaker Cleanup', () => {
       return 'success'
     })
 
+    // Wait for async cleanup to complete
+    await vi.runAllTimersAsync()
+
     // Stale open circuit should be cleaned up
     const cleanedState = circuitBreaker.getDebugInfo(key)
     expect(cleanedState).toBeUndefined()

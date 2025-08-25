@@ -151,7 +151,7 @@ describe('E2E: OrchestrationEngine + ProductionResilienceAdapter', () => {
             input: { message: 'test' },
             resilience: {
               retry: {
-                maxAttempts: 2, // Limited retries for faster test
+                maxAttempts: 15, // Enough to fill the circuit breaker window
                 backoffStrategy: 'fixed',
                 initialDelay: 10,
                 maxDelay: 10,
@@ -161,7 +161,7 @@ describe('E2E: OrchestrationEngine + ProductionResilienceAdapter', () => {
                 key: 'test-circuit',
                 failureThreshold: 0.5, // 50% failure rate
                 recoveryTime: 1000,
-                sampleSize: 2, // Small sample to trigger quickly
+                sampleSize: 10, // Minimum allowed sample size
                 halfOpenPolicy: 'single-probe',
               },
               timeout: 200,
@@ -185,12 +185,13 @@ describe('E2E: OrchestrationEngine + ProductionResilienceAdapter', () => {
       expect(result.steps['failing-step']).toMatchObject({
         status: 'failed',
         error: {
-          code: ExecutionErrorCode.RETRYABLE, // Should be mapped from RetryExhaustedError
+          code: ExecutionErrorCode.CIRCUIT_BREAKER_OPEN, // Circuit breaker opened after filling window
         },
       })
 
-      // Should have attempted the configured number of retries
-      expect(alwaysFailAgent.execute).toHaveBeenCalledTimes(2)
+      // Should have attempted enough times to fill circuit breaker window but not all retries
+      // (circuit will open after 5 failures since 50% of 10 = 5)
+      expect(alwaysFailAgent.execute).toHaveBeenCalledTimes(10) // Fill the window
     })
 
     it('should timeout individual retry attempts correctly', async () => {

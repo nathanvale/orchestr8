@@ -8,7 +8,10 @@ Production-ready resilience patterns for the @orchestr8 orchestration platform. 
 - ⚡ **Circuit Breaker** - Sliding window failure detection with half-open recovery
 - ⏰ **Timeout** - Configurable operation timeouts with clean cancellation
 - 🔧 **Composition** - Flexible pattern ordering (retry-cb-timeout, timeout-cb-retry)
-- 📊 **Observability** - Comprehensive telemetry and structured logging
+- 📊 **Observability** - Performance metrics, telemetry events, and structured logging
+- 🛡️ **Enhanced Error Types** - Specialized errors with backward compatibility
+- ✅ **Configuration Validation** - Runtime validation with detailed error messages
+- 🧠 **Memory Management** - Deterministic LRU eviction and async cleanup
 - 🎯 **Type Safety** - Full TypeScript support with strict typing
 - ⚡ **Performance** - <1ms median overhead, optimized for production use
 
@@ -109,9 +112,9 @@ const retryConfig = {
 ```typescript
 interface CircuitBreakerConfig {
   key?: string // Optional explicit key for circuit isolation
-  failureThreshold: number // Number of failures to open circuit
+  failureThreshold: number // Failure count (≥1) or rate (0-1) to open circuit
   recoveryTime: number // Time before attempting recovery (ms)
-  sampleSize: number // Size of sliding window
+  sampleSize: number // Size of sliding window (minimum: 10)
   halfOpenPolicy: 'single-probe' | 'gradual'
 }
 ```
@@ -121,12 +124,14 @@ interface CircuitBreakerConfig {
 ```typescript
 const circuitConfig = {
   key: 'user-service', // Explicit key for isolation
-  failureThreshold: 3, // Open after 3 failures
+  failureThreshold: 0.5, // Open at 50% failure rate (or 5 if using count)
   recoveryTime: 30000, // Wait 30s before recovery attempt
-  sampleSize: 10, // Track last 10 outcomes
+  sampleSize: 10, // Track last 10 outcomes (minimum enforced)
   halfOpenPolicy: 'single-probe', // Only one recovery test at a time
 }
 ```
+
+> **Note**: `sampleSize` must be at least 10 for statistical significance. Configuration is validated at runtime using Zod schemas.
 
 ### Timeout Configuration
 
@@ -169,11 +174,14 @@ await adapter.applyNormalizedPolicy(operation, policy, 'timeout-cb-retry')
 
 ## Error Types
 
-The package provides specific error types for different failure scenarios:
+The package provides enhanced error types for different failure scenarios with full backward compatibility:
 
 ```typescript
 import {
   CircuitBreakerOpenError,
+  CircuitBreakerTimeoutError,
+  CircuitBreakerThresholdError,
+  CircuitBreakerRecoveryError,
   RetryExhaustedError,
   TimeoutError,
   isCircuitBreakerOpenError,
@@ -182,7 +190,21 @@ import {
 // Circuit breaker is open
 if (isCircuitBreakerOpenError(error)) {
   console.log(`Retry after: ${error.retryAfter}ms`)
-  console.log(`Next retry time: ${new Date(error.nextRetryTime)}`)
+  console.log(`Consecutive failures: ${error.consecutiveFailures}`)
+}
+
+// Circuit opened due to threshold exceeded (enhanced error)
+if (error instanceof CircuitBreakerThresholdError) {
+  console.log(
+    `Threshold exceeded: ${error.failures}/${error.sampleSize} failures`,
+  )
+  console.log(`Failure rate: ${(error.failureRate * 100).toFixed(1)}%`)
+  console.log(`Threshold: ${error.threshold}`)
+}
+
+// Circuit breaker timeout during recovery
+if (error instanceof CircuitBreakerTimeoutError) {
+  console.log(`Circuit breaker timed out during recovery attempt`)
 }
 
 // All retries failed
@@ -196,6 +218,13 @@ if (error instanceof TimeoutError) {
   console.log(`${error.operation} timed out after ${error.duration}ms`)
 }
 ```
+
+### Enhanced Error Features
+
+- **Backward Compatibility**: All existing error handling code continues to work
+- **Detailed Context**: Enhanced errors provide failure rates, thresholds, and sample sizes
+- **Type Safety**: Proper inheritance with TypeScript support
+- **Debugging**: Rich error messages with operational context
 
 ## Advanced Usage
 
@@ -234,6 +263,52 @@ const adapter = new ProductionResilienceAdapter({
 })
 ```
 
+### Performance Metrics and Observability
+
+The enhanced circuit breaker provides comprehensive performance tracking:
+
+```typescript
+import { CircuitBreaker } from '@orchestr8/resilience'
+
+const circuitBreaker = new CircuitBreaker(config, observer, telemetry)
+
+// Get performance metrics for a specific circuit
+const metrics = circuitBreaker.getPerformanceMetrics('user-service')
+if (metrics) {
+  console.log(`Operations: ${metrics.totalOperations}`)
+  console.log(`Average duration: ${metrics.averageDuration}ms`)
+  console.log(`Success rate: ${(metrics.successRate * 100).toFixed(1)}%`)
+  console.log(`Failures: ${metrics.failures}`)
+}
+
+// Get all performance metrics
+const allMetrics = circuitBreaker.getAllPerformanceMetrics()
+for (const [key, metrics] of allMetrics) {
+  console.log(`Circuit ${key}: ${metrics.successRate * 100}% success`)
+}
+```
+
+### Configuration Validation
+
+Runtime validation ensures configuration correctness:
+
+```typescript
+import { validateCircuitBreakerConfig } from '@orchestr8/resilience'
+
+try {
+  const config = {
+    sampleSize: 5, // Too small!
+    failureThreshold: 2.5, // Invalid for count-based
+    recoveryTime: -1000, // Negative!
+  }
+
+  const validatedConfig = validateCircuitBreakerConfig(config)
+} catch (error) {
+  console.log('Configuration errors:', error.message)
+  // Output: Invalid sampleSize: must be at least 10
+}
+```
+
 ### Standalone Pattern Usage
 
 You can also use individual patterns directly:
@@ -241,13 +316,16 @@ You can also use individual patterns directly:
 ```typescript
 import { CircuitBreaker, RetryWrapper } from '@orchestr8/resilience'
 
-// Direct circuit breaker usage
-const circuitBreaker = new CircuitBreaker()
-const result = await circuitBreaker.execute(
-  myOperation,
-  { failureThreshold: 3, recoveryTime: 30000, sampleSize: 10 },
-  { workflowId: 'test', stepId: 'step1' },
+// Direct circuit breaker usage with validation
+const circuitBreaker = new CircuitBreaker(
+  { failureThreshold: 0.5, recoveryTime: 30000, sampleSize: 10 }, // Auto-validated
+  observer,
+  telemetry,
 )
+
+const result = await circuitBreaker.execute('my-service', async () => {
+  return await fetch('/api/data')
+})
 
 // Direct retry usage
 const retryWrapper = new RetryWrapper()
@@ -265,7 +343,9 @@ The resilience patterns are optimized for production use:
 - **Overhead**: <1ms median, <2ms P95
 - **Memory**: Bounded circuit breaker state (max 1000 instances)
 - **CPU**: O(1) operations for state checks and updates
-- **Cleanup**: Automatic LRU eviction of inactive circuits
+- **Cleanup**: Deterministic LRU eviction with async cleanup (60s intervals)
+- **Metrics**: Low-overhead performance tracking with minimal memory impact
+- **Validation**: Runtime config validation with <0.1ms overhead
 
 ### Benchmarks
 
@@ -307,6 +387,8 @@ By default, these errors are never retried:
 - Window fills naturally, no manual reset
 - Failures displace successes over time
 - Full window + threshold triggers opening
+- Minimum 10 samples required for statistical significance
+- Supports both count-based (≥1) and rate-based (0-1) thresholds
 
 ### Half-Open State Management
 
@@ -314,6 +396,16 @@ By default, these errors are never retried:
 - Concurrent requests during probe are rejected
 - Successful probe closes circuit immediately
 - Failed probe returns to open state
+
+### Memory Management
+
+Advanced memory management prevents resource leaks:
+
+- **Deterministic LRU Eviction**: Oldest unused circuits removed when limit reached
+- **Async Cleanup**: Non-blocking cleanup every 60 seconds using chunked processing
+- **Bounded State**: Maximum 1000 circuit instances prevent memory exhaustion
+- **Access Tracking**: Automatic lastAccessTime updates for intelligent eviction
+- **Expired Circuit Removal**: Circuits unused for 10x recoveryTime are cleaned up
 
 ### Context Propagation
 

@@ -3,14 +3,20 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { CircuitBreakerConfig } from './types.js'
 
 import { CircuitBreaker } from './circuit-breaker.js'
-import { CircuitBreakerOpenError } from './errors.js'
+import {
+  CircuitBreakerOpenError,
+  CircuitBreakerThresholdError,
+  CircuitBreakerConfigurationError,
+  isCircuitBreakerThresholdError,
+  isCircuitBreakerConfigurationError,
+} from './errors.js'
 
 describe('CircuitBreaker', () => {
   let circuitBreaker: CircuitBreaker
   const defaultConfig: CircuitBreakerConfig = {
     failureThreshold: 3,
     recoveryTime: 1000,
-    sampleSize: 5,
+    sampleSize: 10,
     halfOpenPolicy: 'single-probe',
   }
 
@@ -64,8 +70,8 @@ describe('CircuitBreaker', () => {
     it('does not open circuit until window is full', async () => {
       const operation = vi.fn().mockRejectedValue(new Error('fail'))
 
-      // Record 4 failures (window size is 5, threshold is 3)
-      for (let i = 0; i < 4; i++) {
+      // Record 9 failures (window size is 10, threshold is 3)
+      for (let i = 0; i < 9; i++) {
         await expect(
           circuitBreaker.execute('test-key', operation),
         ).rejects.toThrow('fail')
@@ -73,14 +79,14 @@ describe('CircuitBreaker', () => {
 
       const state = circuitBreaker.getCircuitState('test-key')
       expect(state?.status).toBe('closed') // Still closed because window not full
-      expect(state?.windowSize).toBe(4)
+      expect(state?.windowSize).toBe(9)
     })
 
     it('opens circuit when window is full and threshold exceeded', async () => {
       const operation = vi.fn().mockRejectedValue(new Error('fail'))
 
-      // Fill window with 5 failures (threshold is 3)
-      for (let i = 0; i < 5; i++) {
+      // Fill window with 10 failures (threshold is 3)
+      for (let i = 0; i < 10; i++) {
         await expect(
           circuitBreaker.execute('test-key', operation),
         ).rejects.toThrow('fail')
@@ -88,7 +94,7 @@ describe('CircuitBreaker', () => {
 
       const state = circuitBreaker.getCircuitState('test-key')
       expect(state?.status).toBe('open')
-      expect(state?.windowSize).toBe(5)
+      expect(state?.windowSize).toBe(10)
       expect(state?.nextHalfOpenTime).toBeDefined()
     })
 
@@ -96,16 +102,16 @@ describe('CircuitBreaker', () => {
       const successOp = vi.fn().mockResolvedValue('success')
       const failOp = vi.fn().mockRejectedValue(new Error('fail'))
 
-      // Pattern: success, fail, success, fail, success (2 failures, threshold is 3)
-      await circuitBreaker.execute('test-key', successOp)
+      // Fill window with pattern: 8 successes, 2 failures (2 failures < threshold of 3)
+      for (let i = 0; i < 8; i++) {
+        await circuitBreaker.execute('test-key', successOp)
+      }
       await expect(circuitBreaker.execute('test-key', failOp)).rejects.toThrow()
-      await circuitBreaker.execute('test-key', successOp)
       await expect(circuitBreaker.execute('test-key', failOp)).rejects.toThrow()
-      await circuitBreaker.execute('test-key', successOp)
 
       const state = circuitBreaker.getCircuitState('test-key')
       expect(state?.status).toBe('closed')
-      expect(state?.windowSize).toBe(5)
+      expect(state?.windowSize).toBe(10)
     })
   })
 
@@ -113,7 +119,7 @@ describe('CircuitBreaker', () => {
     beforeEach(async () => {
       // Open the circuit by causing failures
       const operation = vi.fn().mockRejectedValue(new Error('fail'))
-      for (let i = 0; i < 5; i++) {
+      for (let i = 0; i < 10; i++) {
         await expect(
           circuitBreaker.execute('test-key', operation),
         ).rejects.toThrow('fail')
@@ -142,7 +148,7 @@ describe('CircuitBreaker', () => {
           expect(error.circuitKey).toBe('test-key')
           expect(error.retryAfter).toBeInstanceOf(Date)
           expect(error.nextRetryTime).toBeGreaterThan(Date.now())
-          expect(error.consecutiveFailures).toBe(5)
+          expect(error.consecutiveFailures).toBe(10)
         }
       }
     })
@@ -167,9 +173,9 @@ describe('CircuitBreaker', () => {
 
   describe('Half-Open State', () => {
     beforeEach(async () => {
-      // Open the circuit
+      // Open the circuit - need to fill entire window first
       const operation = vi.fn().mockRejectedValue(new Error('fail'))
-      for (let i = 0; i < 5; i++) {
+      for (let i = 0; i < 10; i++) {
         await expect(
           circuitBreaker.execute('test-key', operation),
         ).rejects.toThrow('fail')
@@ -256,9 +262,9 @@ describe('CircuitBreaker', () => {
   describe('Sliding Window Behavior', () => {
     it('uses circular buffer correctly', async () => {
       const config: CircuitBreakerConfig = {
-        failureThreshold: 2,
+        failureThreshold: 5,
         recoveryTime: 1000,
-        sampleSize: 3,
+        sampleSize: 10,
         halfOpenPolicy: 'single-probe',
       }
       const cb = new CircuitBreaker(config)
@@ -266,34 +272,28 @@ describe('CircuitBreaker', () => {
       const successOp = vi.fn().mockResolvedValue('success')
       const failOp = vi.fn().mockRejectedValue(new Error('fail'))
 
-      // Fill window: fail, fail
-      await expect(cb.execute('key', failOp)).rejects.toThrow()
-      await expect(cb.execute('key', failOp)).rejects.toThrow()
+      // Fill window with pattern: [success, failure, failure, failure, failure, success, success, success, success, success]
+      // This gives us 4 failures and 6 successes
+      await cb.execute('key', successOp) // index 0
+      for (let i = 0; i < 4; i++) {
+        await expect(cb.execute('key', failOp)).rejects.toThrow() // index 1-4
+      }
+      for (let i = 0; i < 5; i++) {
+        await cb.execute('key', successOp) // index 5-9
+      }
 
       let state = cb.getCircuitState('key')
 
-      // Window not full yet (size 2 < 3), so circuit should still be closed
+      // Window is now full (size 10), but failures (4) < threshold (5)
       expect(state?.status).toBe('closed')
-      expect(state?.windowSize).toBe(2)
+      expect(state?.windowSize).toBe(10)
 
-      // Add success to fill window
-      await cb.execute('key', successOp)
-
-      state = cb.getCircuitState('key')
-
-      // Window is now full with [fail, fail, success]
-      // 2 failures >= threshold but circuit doesn't open on success
-      expect(state?.status).toBe('closed')
-      expect(state?.windowSize).toBe(3)
-
-      // Add another failure - wraps around, window becomes [fail, fail, success]
+      // Add one more failure to trigger opening - this will replace the success at index 0
       await expect(cb.execute('key', failOp)).rejects.toThrow()
 
       state = cb.getCircuitState('key')
       expect(state?.windowIndex).toBe(1) // Wrapped to index 1
-      // Now we have [fail(new at 0), fail, success] - still 2 failures
-      // Circuit should open now because window is full and failures >= threshold
-      expect(state?.status).toBe('open')
+      expect(state?.status).toBe('open') // Circuit opens with 5 failures
 
       // Wait for half-open
       vi.advanceTimersByTime(1001)
@@ -303,15 +303,13 @@ describe('CircuitBreaker', () => {
 
       state = cb.getCircuitState('key')
       expect(state?.status).toBe('closed')
-
-      // Circuit resets and starts fresh after closing from half-open
     })
 
     it('naturally displaces old outcomes', async () => {
       const config: CircuitBreakerConfig = {
         failureThreshold: 3,
         recoveryTime: 1000,
-        sampleSize: 3,
+        sampleSize: 10,
         halfOpenPolicy: 'single-probe',
       }
       const cb = new CircuitBreaker(config)
@@ -319,13 +317,16 @@ describe('CircuitBreaker', () => {
       const successOp = vi.fn().mockResolvedValue('success')
       const failOp = vi.fn().mockRejectedValue(new Error('fail'))
 
-      // Fill with failures
-      await expect(cb.execute('key', failOp)).rejects.toThrow()
-      await expect(cb.execute('key', failOp)).rejects.toThrow()
-      await expect(cb.execute('key', failOp)).rejects.toThrow()
+      // Fill window with enough failures to trigger opening (10 operations, 3+ failures)
+      for (let i = 0; i < 7; i++) {
+        await cb.execute('key', successOp)
+      }
+      for (let i = 0; i < 3; i++) {
+        await expect(cb.execute('key', failOp)).rejects.toThrow()
+      }
 
       let state = cb.getCircuitState('key')
-      expect(state?.status).toBe('open')
+      expect(state?.status).toBe('open') // Opens due to 3 failures in full window
 
       // Wait for half-open
       vi.advanceTimersByTime(1001)
@@ -333,14 +334,15 @@ describe('CircuitBreaker', () => {
       // Successful probe closes circuit
       await cb.execute('key', successOp)
 
-      // Add more successes - they displace failures
-      await cb.execute('key', successOp)
-      await cb.execute('key', successOp)
+      // Add more successes to displace old failures
+      for (let i = 0; i < 10; i++) {
+        await cb.execute('key', successOp)
+      }
 
       state = cb.getCircuitState('key')
       expect(state?.status).toBe('closed')
 
-      // Window now contains only successes
+      // Window now contains only successes (failures have been displaced)
       const failures = state!.slidingWindow
         .slice(0, state!.windowSize)
         .filter((v) => v === false).length
@@ -354,7 +356,7 @@ describe('CircuitBreaker', () => {
       const failOp = vi.fn().mockRejectedValue(new Error('fail'))
 
       // Open circuit for key1
-      for (let i = 0; i < 5; i++) {
+      for (let i = 0; i < 10; i++) {
         await expect(circuitBreaker.execute('key1', failOp)).rejects.toThrow()
       }
 
@@ -369,19 +371,132 @@ describe('CircuitBreaker', () => {
       expect(state2?.status).toBe('closed')
     })
 
-    it('enforces maximum circuit limit', async () => {
+    it('enforces maximum circuit limit with LRU eviction', async () => {
       const cb = new CircuitBreaker(defaultConfig)
       const operation = vi.fn().mockResolvedValue('success')
 
-      // Create circuits up to limit
-      for (let i = 0; i < 1001; i++) {
+      // Create exactly 1000 circuits (at capacity)
+      for (let i = 0; i < 1000; i++) {
+        await cb.execute(`key-${i}`, operation)
+        vi.advanceTimersByTime(1) // Ensure different timestamps
+      }
+
+      // Verify we're at capacity
+      expect(cb.getStateMapSize()).toBe(1000)
+
+      // Access a few keys to make them more recently used
+      vi.advanceTimersByTime(1000) // Large time gap
+      await cb.execute('key-0', operation) // Make key-0 more recent
+      vi.advanceTimersByTime(1)
+      await cb.execute('key-500', operation) // Make key-500 more recent
+      vi.advanceTimersByTime(1)
+      await cb.execute('key-999', operation) // Make key-999 more recent
+      vi.advanceTimersByTime(1)
+
+      // Now add a new circuit - this should evict one of the least recently used
+      await cb.execute('key-new', operation)
+
+      // Verify we're still at capacity
+      expect(cb.getStateMapSize()).toBe(1000)
+
+      // The recently accessed keys should still exist
+      expect(cb.getCircuitState('key-0')).toBeDefined()
+      expect(cb.getCircuitState('key-500')).toBeDefined()
+      expect(cb.getCircuitState('key-999')).toBeDefined()
+      expect(cb.getCircuitState('key-new')).toBeDefined()
+
+      // One of the keys that wasn't recently accessed should be evicted
+      // Find out which one was evicted
+      let evictedKeys = []
+      for (let i = 1; i < 1000; i++) {
+        // Skip the keys we recently accessed
+        if (i === 500 || i === 999) continue
+        if (!cb.getCircuitState(`key-${i}`)) {
+          evictedKeys.push(`key-${i}`)
+        }
+      }
+      expect(evictedKeys.length).toBe(1) // Exactly one key should be evicted
+    })
+
+    it('uses LRU eviction with deterministic ordering', async () => {
+      const cb = new CircuitBreaker(defaultConfig)
+      const operation = vi.fn().mockResolvedValue('success')
+
+      // Fill to capacity
+      for (let i = 0; i < 1000; i++) {
+        await cb.execute(`key-${i}`, operation)
+        vi.advanceTimersByTime(1) // Ensure different timestamps
+      }
+
+      // Access first few keys to make them recently used
+      for (let i = 0; i < 10; i++) {
+        await cb.execute(`key-${i}`, operation)
+        vi.advanceTimersByTime(1)
+      }
+
+      // Add new circuits - should evict the least recently used ones
+      // (keys that weren't accessed in the second loop)
+      for (let i = 0; i < 5; i++) {
+        await cb.execute(`key-new-${i}`, operation)
+        vi.advanceTimersByTime(1)
+      }
+
+      // Recently accessed keys should still exist
+      for (let i = 0; i < 10; i++) {
+        expect(cb.getCircuitState(`key-${i}`)).toBeDefined()
+      }
+
+      // New keys should exist
+      for (let i = 0; i < 5; i++) {
+        expect(cb.getCircuitState(`key-new-${i}`)).toBeDefined()
+      }
+
+      // Some of the middle keys should have been evicted
+      let evictedCount = 0
+      for (let i = 10; i < 1000; i++) {
+        if (!cb.getCircuitState(`key-${i}`)) {
+          evictedCount++
+        }
+      }
+      expect(evictedCount).toBe(5) // Should have evicted 5 to make room for new ones
+    })
+
+    it('prevents race conditions during concurrent state access', async () => {
+      const cb = new CircuitBreaker(defaultConfig)
+      const operation = vi.fn().mockResolvedValue('success')
+
+      // Fill to capacity
+      for (let i = 0; i < 1000; i++) {
         await cb.execute(`key-${i}`, operation)
       }
 
-      // First circuit should be evicted
-      expect(cb.getCircuitState('key-0')).toBeUndefined()
-      // Last circuit should exist
-      expect(cb.getCircuitState('key-1000')).toBeDefined()
+      // Simulate concurrent access that could cause race conditions
+      const promises: Promise<string>[] = []
+      for (let i = 0; i < 100; i++) {
+        // Mix of existing keys and new keys
+        const useExistingKey = i % 2 === 0
+        const key = useExistingKey ? `key-${i % 1000}` : `key-new-${i}`
+        promises.push(cb.execute(key, operation))
+      }
+
+      // All operations should complete without throwing
+      const results = await Promise.all(promises)
+      expect(results).toHaveLength(100)
+      results.forEach((result) => expect(result).toBe('success'))
+
+      // Circuit breaker should maintain its size limit
+      let totalCircuits = 0
+      for (let i = 0; i < 1000; i++) {
+        if (cb.getCircuitState(`key-${i}`)) {
+          totalCircuits++
+        }
+      }
+      for (let i = 0; i < 100; i++) {
+        if (cb.getCircuitState(`key-new-${i}`)) {
+          totalCircuits++
+        }
+      }
+      expect(totalCircuits).toBeLessThanOrEqual(1000)
     })
   })
 
@@ -419,7 +534,7 @@ describe('CircuitBreaker', () => {
       const config: CircuitBreakerConfig = {
         failureThreshold: 0.5, // 50% failure rate
         recoveryTime: 1000,
-        sampleSize: 4,
+        sampleSize: 10,
         halfOpenPolicy: 'single-probe',
       }
       const cb = new CircuitBreaker(config)
@@ -427,11 +542,13 @@ describe('CircuitBreaker', () => {
       const successOp = vi.fn().mockResolvedValue('success')
       const failOp = vi.fn().mockRejectedValue(new Error('fail'))
 
-      // Fill window: 2 successes, 2 failures = 50% failure rate
-      await cb.execute('key', successOp)
-      await cb.execute('key', successOp)
-      await expect(cb.execute('key', failOp)).rejects.toThrow('fail')
-      await expect(cb.execute('key', failOp)).rejects.toThrow('fail')
+      // Fill window: 5 successes, 5 failures = 50% failure rate
+      for (let i = 0; i < 5; i++) {
+        await cb.execute('key', successOp)
+      }
+      for (let i = 0; i < 5; i++) {
+        await expect(cb.execute('key', failOp)).rejects.toThrow('fail')
+      }
 
       // Circuit should be open (50% failure rate met)
       await expect(cb.execute('key', successOp)).rejects.toThrow(
@@ -446,7 +563,7 @@ describe('CircuitBreaker', () => {
       const config: CircuitBreakerConfig = {
         failureThreshold: 0.75, // 75% failure rate
         recoveryTime: 1000,
-        sampleSize: 4,
+        sampleSize: 10,
         halfOpenPolicy: 'single-probe',
       }
       const cb = new CircuitBreaker(config)
@@ -472,7 +589,7 @@ describe('CircuitBreaker', () => {
       const config: CircuitBreakerConfig = {
         failureThreshold: 1.0, // 100% failure rate
         recoveryTime: 1000,
-        sampleSize: 3,
+        sampleSize: 10,
         halfOpenPolicy: 'single-probe',
       }
       const cb = new CircuitBreaker(config)
@@ -480,10 +597,10 @@ describe('CircuitBreaker', () => {
       const successOp = vi.fn().mockResolvedValue('success')
       const failOp = vi.fn().mockRejectedValue(new Error('fail'))
 
-      // Fill window with all failures
-      await expect(cb.execute('key', failOp)).rejects.toThrow('fail')
-      await expect(cb.execute('key', failOp)).rejects.toThrow('fail')
-      await expect(cb.execute('key', failOp)).rejects.toThrow('fail')
+      // Fill window with all failures (need to fill the entire window)
+      for (let i = 0; i < 10; i++) {
+        await expect(cb.execute('key', failOp)).rejects.toThrow('fail')
+      }
 
       // Circuit should be open (100% failure rate)
       await expect(cb.execute('key', successOp)).rejects.toThrow(
@@ -498,7 +615,7 @@ describe('CircuitBreaker', () => {
       const config: CircuitBreakerConfig = {
         failureThreshold: 2, // Absolute count of 2 failures
         recoveryTime: 1000,
-        sampleSize: 5,
+        sampleSize: 10,
         halfOpenPolicy: 'single-probe',
       }
       const cb = new CircuitBreaker(config)
@@ -506,12 +623,13 @@ describe('CircuitBreaker', () => {
       const successOp = vi.fn().mockResolvedValue('success')
       const failOp = vi.fn().mockRejectedValue(new Error('fail'))
 
-      // Fill window: 3 successes, 2 failures
-      await cb.execute('key', successOp)
-      await cb.execute('key', successOp)
-      await cb.execute('key', successOp)
-      await expect(cb.execute('key', failOp)).rejects.toThrow('fail')
-      await expect(cb.execute('key', failOp)).rejects.toThrow('fail')
+      // Fill window: 8 successes, 2 failures (need full window)
+      for (let i = 0; i < 8; i++) {
+        await cb.execute('key', successOp)
+      }
+      for (let i = 0; i < 2; i++) {
+        await expect(cb.execute('key', failOp)).rejects.toThrow('fail')
+      }
 
       // Circuit should be open (2 failures = threshold)
       await expect(cb.execute('key', successOp)).rejects.toThrow(
@@ -523,12 +641,339 @@ describe('CircuitBreaker', () => {
     })
   })
 
+  describe('Async Cleanup Performance', () => {
+    it('performs non-blocking cleanup operations', async () => {
+      const config: CircuitBreakerConfig = {
+        failureThreshold: 3,
+        recoveryTime: 100, // Short recovery time
+        sampleSize: 10,
+        halfOpenPolicy: 'single-probe',
+      }
+      const cb = new CircuitBreaker(config)
+      const operation = vi.fn().mockResolvedValue('success')
+
+      // Create many circuits that will become stale
+      for (let i = 0; i < 200; i++) {
+        await cb.execute(`old-key-${i}`, operation)
+        vi.advanceTimersByTime(1) // Ensure different timestamps
+      }
+
+      // Advance time to make them stale for cleanup
+      vi.advanceTimersByTime(config.recoveryTime * 15) // Way past cleanup threshold
+      // Also advance past cleanup interval to ensure cleanup is triggered
+      vi.advanceTimersByTime(60001)
+
+      // Mock setImmediate to track if async cleanup is used
+      const originalSetImmediate = global.setImmediate
+      const setImmediatespy = vi.fn(originalSetImmediate)
+      global.setImmediate = setImmediatespy
+
+      try {
+        // Trigger cleanup by creating a new circuit (this should schedule async cleanup)
+        await cb.execute('trigger-cleanup', operation)
+
+        // Verify that setImmediate was called for async cleanup
+        expect(setImmediatespy).toHaveBeenCalled()
+      } finally {
+        global.setImmediate = originalSetImmediate
+      }
+    })
+
+    it('chunks cleanup operations to prevent event loop blocking', async () => {
+      const config: CircuitBreakerConfig = {
+        failureThreshold: 3,
+        recoveryTime: 100,
+        sampleSize: 10,
+        halfOpenPolicy: 'single-probe',
+      }
+      const cb = new CircuitBreaker(config)
+      const operation = vi.fn().mockResolvedValue('success')
+
+      // Create a large number of stale circuits that will trigger chunking
+      for (let i = 0; i < 50; i++) {
+        await cb.execute(`stale-key-${i}`, operation)
+        vi.advanceTimersByTime(1)
+      }
+
+      // Make them stale and advance past cleanup interval
+      vi.advanceTimersByTime(config.recoveryTime * 15)
+      vi.advanceTimersByTime(60001) // Past cleanup interval
+
+      // Mock setImmediate to verify chunked processing
+      let setImmediateCalls = 0
+      const originalSetImmediate = global.setImmediate
+      global.setImmediate = vi.fn((callback: () => void) => {
+        setImmediateCalls++
+        return originalSetImmediate(callback)
+      })
+
+      try {
+        // Trigger cleanup
+        await cb.execute('trigger-cleanup', operation)
+
+        // Advance fake timers to allow async operations to complete
+        await vi.runAllTimersAsync()
+
+        // Should have processed cleanup in chunks
+        // At minimum: 1 call to schedule cleanup + potentially more for chunking
+        expect(setImmediateCalls).toBeGreaterThan(0)
+      } finally {
+        global.setImmediate = originalSetImmediate
+      }
+    })
+
+    it('throttles cleanup to prevent excessive operations', async () => {
+      const config: CircuitBreakerConfig = {
+        failureThreshold: 3,
+        recoveryTime: 1000,
+        sampleSize: 10,
+        halfOpenPolicy: 'single-probe',
+      }
+      const cb = new CircuitBreaker(config)
+      const operation = vi.fn().mockResolvedValue('success')
+
+      // Create some circuits
+      for (let i = 0; i < 50; i++) {
+        await cb.execute(`key-${i}`, operation)
+      }
+
+      // Mock setImmediate to track cleanup attempts
+      let cleanupAttempts = 0
+      const originalSetImmediate = global.setImmediate
+      global.setImmediate = vi.fn((callback: () => void) => {
+        cleanupAttempts++
+        return originalSetImmediate(callback)
+      })
+
+      try {
+        // Rapidly execute multiple operations to see if cleanup is throttled
+        for (let i = 0; i < 20; i++) {
+          await cb.execute(`rapid-${i}`, operation)
+          vi.advanceTimersByTime(1) // Small time advance
+        }
+
+        // Cleanup should be throttled - not called for every operation
+        expect(cleanupAttempts).toBeLessThan(20)
+      } finally {
+        global.setImmediate = originalSetImmediate
+      }
+    })
+
+    it('does not affect active circuit operations during cleanup', async () => {
+      const config: CircuitBreakerConfig = {
+        failureThreshold: 3,
+        recoveryTime: 100,
+        sampleSize: 10,
+        halfOpenPolicy: 'single-probe',
+      }
+      const cb = new CircuitBreaker(config)
+      const operation = vi.fn().mockResolvedValue('success')
+
+      // Create active circuits
+      const activeKeys = ['active-1', 'active-2', 'active-3']
+      for (const key of activeKeys) {
+        await cb.execute(key, operation)
+      }
+
+      // Create stale circuits
+      for (let i = 0; i < 100; i++) {
+        await cb.execute(`stale-${i}`, operation)
+      }
+
+      // Make stale circuits eligible for cleanup
+      vi.advanceTimersByTime(config.recoveryTime * 15)
+
+      // Continue using active circuits during cleanup
+      for (const key of activeKeys) {
+        await cb.execute(key, operation)
+      }
+
+      // Trigger cleanup
+      await cb.execute('cleanup-trigger', operation)
+
+      // Active circuits should still exist and be functional
+      for (const key of activeKeys) {
+        expect(cb.getCircuitState(key)).toBeDefined()
+        // Should be able to execute without issues
+        const result = await cb.execute(key, operation)
+        expect(result).toBe('success')
+      }
+    })
+
+    it('cleans up stale circuits over time', async () => {
+      const config: CircuitBreakerConfig = {
+        failureThreshold: 3,
+        recoveryTime: 100,
+        sampleSize: 10,
+        halfOpenPolicy: 'single-probe',
+      }
+      const cb = new CircuitBreaker(config)
+      const operation = vi.fn().mockResolvedValue('success')
+
+      // Create circuits that will become stale
+      const staleKeys = []
+      for (let i = 0; i < 50; i++) {
+        const key = `stale-${i}`
+        staleKeys.push(key)
+        await cb.execute(key, operation)
+        vi.advanceTimersByTime(1) // Ensure different timestamps
+      }
+
+      // Record initial size
+      const initialSize = cb.getStateMapSize()
+
+      // Make them stale (ensure they're old enough for cleanup)
+      vi.advanceTimersByTime(config.recoveryTime * 15)
+
+      // Force cleanup by advancing past cleanup interval and accessing a new circuit
+      vi.advanceTimersByTime(60001) // Past cleanup interval
+
+      // This should trigger cleanup
+      await cb.execute('trigger-cleanup', operation)
+
+      // Advance fake timers to allow async operations to complete
+      await vi.runAllTimersAsync()
+
+      // Final size should account for new circuit too
+      const finalSize = cb.getStateMapSize()
+
+      // Should have cleaned up some stale circuits (initial + 1 new - some cleaned)
+      expect(finalSize).toBeLessThanOrEqual(initialSize + 1)
+
+      // Some stale circuits should be gone
+      let staleCleaned = 0
+      for (const key of staleKeys) {
+        if (!cb.getCircuitState(key)) {
+          staleCleaned++
+        }
+      }
+      expect(staleCleaned).toBeGreaterThan(0)
+    })
+  })
+
+  describe('Enhanced Error Handling', () => {
+    it('creates threshold error with detailed context', async () => {
+      const cb = new CircuitBreaker(defaultConfig)
+      const operation = vi.fn().mockRejectedValue(new Error('fail'))
+
+      // Fill window to trigger threshold
+      for (let i = 0; i < 10; i++) {
+        await expect(cb.execute('test-key', operation)).rejects.toThrow('fail')
+      }
+
+      // Get the state after threshold is exceeded
+      const state = cb.getCircuitState('test-key')
+      expect(state?.status).toBe('open')
+
+      // Create enhanced threshold error
+      const thresholdError = cb.createThresholdError('test-key', state!)
+
+      expect(thresholdError).toBeInstanceOf(CircuitBreakerThresholdError)
+      expect(thresholdError).toBeInstanceOf(CircuitBreakerOpenError)
+      expect(thresholdError.name).toBe('CircuitBreakerThresholdError')
+      expect(thresholdError.code).toBe('CIRCUIT_BREAKER_THRESHOLD')
+      expect(thresholdError.circuitKey).toBe('test-key')
+      expect(thresholdError.consecutiveFailures).toBe(10)
+      expect(thresholdError.failureRate).toBe(1.0) // 10/10 = 100%
+      expect(thresholdError.threshold).toBe(3) // from defaultConfig
+      expect(thresholdError.sampleSize).toBe(10) // from defaultConfig
+      expect(isCircuitBreakerThresholdError(thresholdError)).toBe(true)
+    })
+
+    it('maintains backward compatibility with existing error handling', async () => {
+      const cb = new CircuitBreaker(defaultConfig)
+      const operation = vi.fn().mockRejectedValue(new Error('original error'))
+
+      // Circuit should still throw original errors during normal operations
+      await expect(cb.execute('test-key', operation)).rejects.toThrow(
+        'original error',
+      )
+
+      // After opening, circuit should throw CircuitBreakerOpenError
+      for (let i = 0; i < 9; i++) {
+        await expect(cb.execute('test-key', operation)).rejects.toThrow(
+          'original error',
+        )
+      }
+
+      // Now circuit should be open
+      const state = cb.getCircuitState('test-key')
+      expect(state?.status).toBe('open')
+
+      // Subsequent operations should throw CircuitBreakerOpenError
+      await expect(cb.execute('test-key', operation)).rejects.toThrow(
+        CircuitBreakerOpenError,
+      )
+    })
+
+    it('enhanced errors provide specific threshold information for rate-based thresholds', async () => {
+      const config: CircuitBreakerConfig = {
+        failureThreshold: 0.5, // 50% failure rate
+        recoveryTime: 1000,
+        sampleSize: 10,
+        halfOpenPolicy: 'single-probe',
+      }
+      const cb = new CircuitBreaker(config)
+      const successOp = vi.fn().mockResolvedValue('success')
+      const failOp = vi.fn().mockRejectedValue(new Error('fail'))
+
+      // Fill window: 4 successes, 6 failures = 60% failure rate (exceeds 50% threshold)
+      for (let i = 0; i < 4; i++) {
+        await cb.execute('key', successOp)
+      }
+      for (let i = 0; i < 6; i++) {
+        await expect(cb.execute('key', failOp)).rejects.toThrow('fail')
+      }
+
+      // Circuit should be open (60% failure rate exceeds 50% threshold)
+      await expect(cb.execute('key', successOp)).rejects.toThrow(
+        CircuitBreakerOpenError,
+      )
+
+      const state = cb.getCircuitState('key')
+      expect(state?.status).toBe('open')
+
+      const thresholdError = cb.createThresholdError('key', state!)
+      expect(thresholdError.failureRate).toBe(0.6) // 6/10 = 60%
+      expect(thresholdError.threshold).toBe(0.5) // 50%
+      expect(thresholdError.consecutiveFailures).toBe(6)
+    })
+
+    it('enhanced errors provide specific threshold information for count-based thresholds', async () => {
+      const config: CircuitBreakerConfig = {
+        failureThreshold: 2, // 2 absolute failures
+        recoveryTime: 1000,
+        sampleSize: 10,
+        halfOpenPolicy: 'single-probe',
+      }
+      const cb = new CircuitBreaker(config)
+      const successOp = vi.fn().mockResolvedValue('success')
+      const failOp = vi.fn().mockRejectedValue(new Error('fail'))
+
+      // Create scenario with 2 failures out of 10 (need to fill window)
+      for (let i = 0; i < 8; i++) {
+        await cb.execute('key', successOp)
+      }
+      for (let i = 0; i < 2; i++) {
+        await expect(cb.execute('key', failOp)).rejects.toThrow('fail')
+      }
+
+      const state = cb.getCircuitState('key')
+      expect(state?.status).toBe('open')
+
+      const thresholdError = cb.createThresholdError('key', state!)
+      expect(thresholdError.failureRate).toBe(0.2) // 2/10 = 20%
+      expect(thresholdError.threshold).toBe(2) // absolute count
+      expect(thresholdError.consecutiveFailures).toBe(2)
+    })
+  })
+
   describe('Edge Cases', () => {
     it('handles gradual half-open policy', async () => {
       const config: CircuitBreakerConfig = {
         failureThreshold: 3,
         recoveryTime: 1000,
-        sampleSize: 5,
+        sampleSize: 10,
         halfOpenPolicy: 'gradual', // Not fully implemented yet, but should not break
       }
       const cb = new CircuitBreaker(config)
@@ -555,7 +1000,7 @@ describe('CircuitBreaker', () => {
         key: 'custom-circuit-key',
         failureThreshold: 3,
         recoveryTime: 1000,
-        sampleSize: 5,
+        sampleSize: 10,
         halfOpenPolicy: 'single-probe',
       }
       const cb = new CircuitBreaker(config)
@@ -563,6 +1008,133 @@ describe('CircuitBreaker', () => {
       // Config key is stored but execute still uses provided key
       expect(cb).toBeDefined()
       expect(config.key).toBe('custom-circuit-key')
+    })
+  })
+
+  describe('Configuration Validation', () => {
+    it('throws CircuitBreakerConfigurationError for invalid sampleSize (too small)', () => {
+      const config: CircuitBreakerConfig = {
+        failureThreshold: 3,
+        recoveryTime: 1000,
+        sampleSize: 5, // Less than minimum of 10
+        halfOpenPolicy: 'single-probe',
+      }
+
+      expect(() => new CircuitBreaker(config)).toThrow(
+        CircuitBreakerConfigurationError,
+      )
+      expect(() => new CircuitBreaker(config)).toThrow(
+        'Invalid sampleSize: must be at least 10, got 5',
+      )
+    })
+
+    it('throws CircuitBreakerConfigurationError for invalid failureThreshold (too high for rate-based)', () => {
+      const config: CircuitBreakerConfig = {
+        failureThreshold: 1.5, // Greater than 1.0 for rate-based threshold
+        recoveryTime: 1000,
+        sampleSize: 10,
+        halfOpenPolicy: 'single-probe',
+      }
+
+      expect(() => new CircuitBreaker(config)).toThrow(
+        CircuitBreakerConfigurationError,
+      )
+      expect(() => new CircuitBreaker(config)).toThrow(
+        'Invalid failureThreshold: must be between 0 and 1 for rate-based thresholds, got 1.5',
+      )
+    })
+
+    it('throws CircuitBreakerConfigurationError for zero failureThreshold', () => {
+      const config: CircuitBreakerConfig = {
+        failureThreshold: 0,
+        recoveryTime: 1000,
+        sampleSize: 10,
+        halfOpenPolicy: 'single-probe',
+      }
+
+      expect(() => new CircuitBreaker(config)).toThrow(
+        CircuitBreakerConfigurationError,
+      )
+      expect(() => new CircuitBreaker(config)).toThrow(
+        'Invalid failureThreshold: must be greater than 0, got 0',
+      )
+    })
+
+    it('throws CircuitBreakerConfigurationError for negative recoveryTime', () => {
+      const config: CircuitBreakerConfig = {
+        failureThreshold: 3,
+        recoveryTime: -1000,
+        sampleSize: 10,
+        halfOpenPolicy: 'single-probe',
+      }
+
+      expect(() => new CircuitBreaker(config)).toThrow(
+        CircuitBreakerConfigurationError,
+      )
+      expect(() => new CircuitBreaker(config)).toThrow(
+        'Invalid recoveryTime: must be positive, got -1000',
+      )
+    })
+
+    it('throws CircuitBreakerConfigurationError for invalid halfOpenPolicy', () => {
+      const config = {
+        failureThreshold: 3,
+        recoveryTime: 1000,
+        sampleSize: 10,
+        halfOpenPolicy: 'invalid-policy' as const,
+      }
+
+      expect(() => new CircuitBreaker(config)).toThrow(
+        CircuitBreakerConfigurationError,
+      )
+      expect(() => new CircuitBreaker(config)).toThrow(
+        'Invalid halfOpenPolicy: must be "single-probe" or "gradual", got "invalid-policy"',
+      )
+    })
+
+    it('accepts valid configuration with rate-based threshold', () => {
+      const config: CircuitBreakerConfig = {
+        failureThreshold: 0.5,
+        recoveryTime: 1000,
+        sampleSize: 10,
+        halfOpenPolicy: 'single-probe',
+      }
+
+      expect(() => new CircuitBreaker(config)).not.toThrow()
+    })
+
+    it('accepts valid configuration with count-based threshold', () => {
+      const config: CircuitBreakerConfig = {
+        failureThreshold: 3,
+        recoveryTime: 1000,
+        sampleSize: 10,
+        halfOpenPolicy: 'gradual',
+      }
+
+      expect(() => new CircuitBreaker(config)).not.toThrow()
+    })
+
+    it('provides detailed error information in CircuitBreakerConfigurationError', () => {
+      const config: CircuitBreakerConfig = {
+        failureThreshold: 3,
+        recoveryTime: 1000,
+        sampleSize: 8, // Keep as 8 for validation testing
+        halfOpenPolicy: 'single-probe',
+      }
+
+      let caughtError: CircuitBreakerConfigurationError | null = null
+      try {
+        new CircuitBreaker(config)
+      } catch (error) {
+        if (isCircuitBreakerConfigurationError(error)) {
+          caughtError = error
+        }
+      }
+
+      expect(caughtError).not.toBeNull()
+      expect(caughtError!.field).toBe('sampleSize')
+      expect(caughtError!.provided).toBe(8)
+      expect(caughtError!.expected).toBe('number >= 10')
     })
   })
 })
