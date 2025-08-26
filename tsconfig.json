@@ -63,7 +63,7 @@
       "@config/*": ["./config/*"]
     }
   },
-  "include": ["src/**/*", "types/**/*", "vitest.config.ts"],
+  "include": ["src/**/*", "types/**/*", "tests/**/*", "vitest.config.ts", "vitest.setup.tsx"],
   "exclude": ["node_modules", "dist", "build", "coverage", ".turbo", "**/.bun/**"],
   "ts-node": {
     "esm": true,
