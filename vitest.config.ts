@@ -109,8 +109,6 @@ export default defineConfig({
       '@types': './types',
       '@utils': './src/utils',
       '@config': './config',
-      // Mock the bun module during tests
-      'bun': './tests/mocks/bun.mock.ts',
     },
   },
 

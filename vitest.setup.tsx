@@ -3,6 +3,17 @@ import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
 import { afterAll, afterEach, beforeAll, beforeEach, vi } from 'vitest';
 
+// Mock the 'bun' module for tests that import it
+vi.mock('bun', () => ({
+  serve: vi.fn(() => ({
+    port: 3000,
+    hostname: 'localhost',
+    stop: vi.fn(),
+  })),
+  file: vi.fn(),
+  write: vi.fn(),
+}));
+
 // Mock handlers for common API patterns
 const defaultHandlers: HttpHandler[] = [
   // Example API handlers
