@@ -29,10 +29,7 @@ export default function () {
     // Environment configuration
     env: {
       type: 'node',
-      runner: 'bun', // Use Bun as the runtime
-      params: {
-        runner: '--bun', // Pass Bun flag to test runner
-      },
+      runner: 'node', // Use Node.js as the runtime (Wallaby doesn't support Bun)
     },
 
     // Setup function for MSW and global configuration
@@ -64,7 +61,7 @@ export default function () {
     workers: {
       initial: 1,
       regular: 4,
-      recycle: false, // Better performance with Bun
+      recycle: true, // Standard Node.js worker recycling
     },
 
     // File change detection
@@ -74,14 +71,7 @@ export default function () {
       'tests/utils/**/*.{ts,tsx}',
     ],
 
-    // Preprocessing configuration
-    preprocessors: {
-      // @ts-expect-error - file parameter type not available
-      '**/*.{js,jsx,ts,tsx}': (file) => {
-        // Use Bun's built-in TypeScript transformation
-        return file.content;
-      },
-    },
+    // Let Wallaby handle TypeScript preprocessing automatically
 
     // Report configuration for VS Code integration
     reportConsoleErrorAsError: true,
@@ -94,8 +84,8 @@ export default function () {
       maxConsoleMessagesPerTest: 100,
     },
 
-    // Auto detect changes
-    autoDetect: true,
+    // Disable auto detect to prevent runtime conflicts
+    autoDetect: false,
 
     // Run all tests initially
     runAllTestsInAffectedTestFile: true,
