@@ -114,6 +114,50 @@ describe('ProductionResilienceAdapter', () => {
       ).rejects.toThrow(TimeoutError)
     })
 
+    it('should display correct timeout duration in error message', async () => {
+      const operation = vi.fn().mockImplementation(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 200))
+        return 'too late'
+      })
+
+      const policy: ResiliencePolicy = {
+        timeout: 75,
+      }
+
+      await expect(
+        adapter.applyNormalizedPolicy(operation, policy, 'retry-cb-timeout'),
+      ).rejects.toThrow(new TimeoutError('Operation timed out after 75ms', 75))
+    })
+
+    it('should handle timeout policy object correctly and not display [object Object]ms', async () => {
+      const operation = vi.fn().mockImplementation(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 200))
+        return 'too late'
+      })
+
+      // Simulate the case where timeout is an object instead of just a number
+      const policy: ResiliencePolicy = {
+        timeout: { global: 50, perStep: 30 } as unknown as number,
+      }
+
+      try {
+        await adapter.applyNormalizedPolicy(
+          operation,
+          policy,
+          'retry-cb-timeout',
+        )
+        throw new Error('Expected timeout error')
+      } catch (error) {
+        expect(error).toBeInstanceOf(TimeoutError)
+        if (error instanceof TimeoutError) {
+          // Should NOT contain "[object Object]ms" in the message
+          expect(error.message).not.toContain('[object Object]ms')
+          // Should contain a valid number followed by "ms"
+          expect(error.message).toMatch(/timed out after \d+ms/)
+        }
+      }
+    })
+
     it('should apply all patterns in correct order', async () => {
       const executionOrder: string[] = []
       let attempts = 0
