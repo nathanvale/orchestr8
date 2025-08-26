@@ -242,8 +242,10 @@ loading for `bun run` commands. Keep it minimal and team-friendly.
 - **Wrong CLI package**: The binary is `changeset` (singular) provided by
   `@changesets/cli`. Installing `changesets` (plural) causes “could not
   determine executable” failures.
-- **Publishing blocked by `private: true`**: flip to `false` when you’re ready
-  to publish.
+- **Publishing blocked by `private: true`**: flip to `false` when you're ready
+  to publish. The release workflow is disabled by default for private packages.
+  To enable automatic releases, uncomment the push trigger in
+  `.github/workflows/release.yml`.
 - **Commit hooks aren’t absolute**: web UI commits and squash merges bypass
   local Husky; CI commitlint job is essential.
 - **Exports for libraries**: if you publish a library, build **Node‑targeted**
