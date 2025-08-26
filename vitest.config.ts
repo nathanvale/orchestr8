@@ -105,13 +105,13 @@ export default defineConfig({
   // Vite configuration for better module resolution
   resolve: {
     alias: {
-      '@': new URL('./src', import.meta.url).pathname,
-      '@tests': new URL('./tests', import.meta.url).pathname,
-      '@types': new URL('./types', import.meta.url).pathname,
-      '@utils': new URL('./src/utils', import.meta.url).pathname,
-      '@config': new URL('./config', import.meta.url).pathname,
+      '@': './src',
+      '@tests': './tests',
+      '@types': './types',
+      '@utils': './src/utils',
+      '@config': './config',
       // Mock the bun module during tests
-      'bun': new URL('./tests/mocks/bun.mock.ts', import.meta.url).pathname,
+      'bun': './tests/mocks/bun.mock.ts',
     },
   },
 
