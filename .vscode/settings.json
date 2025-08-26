@@ -76,5 +76,16 @@
   "testing.followRunningTest": true,
   "testing.defaultGutterClickAction": "debug",
   "bun.runtime": "/usr/local/bin/bun",
-  "bun.debugger.enabled": true
+  "bun.debugger.enabled": true,
+  "wallaby.startAutomatically": true,
+  "wallaby.codeLensFeature": {
+    "runTest": true,
+    "debugTest": true,
+    "runTestFile": true
+  },
+  "wallaby.testStats": {
+    "runningTestCountThreshold": 3
+  },
+  "vitest.enable": true,
+  "vitest.commandLine": "bun run vitest"
 }

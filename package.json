@@ -30,12 +30,19 @@
     "release:publish": "bunx changeset publish",
     "release:version": "bunx changeset version",
     "start": "bun dist/index.js",
-    "test": "bun test",
-    "test:coverage": "bun test --coverage",
-    "test:watch": "bun test --watch",
+    "test": "vitest run",
+    "test:watch": "vitest watch",
+    "test:ui": "vitest ui",
+    "test:coverage": "vitest run --coverage",
+    "test:coverage:watch": "vitest watch --coverage",
+    "test:coverage:open": "vitest run --coverage && open coverage/index.html",
+    "test:changed": "vitest run --changed",
+    "test:related": "vitest run --changed HEAD~1",
+    "test:debug": "vitest run --reporter=verbose --no-coverage --run",
+    "test:ci": "vitest run --coverage --reporter=verbose --reporter=junit --outputFile=junit.xml",
     "typecheck": "tsc --noEmit",
     "typecheck:watch": "tsc --noEmit --watch",
-    "validate": "bun run lint:check && bun run format:check && bun run typecheck && bun run test"
+    "validate": "bun run lint:check && bun run format:check && bun run typecheck && bun run test:ci"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [
@@ -60,9 +67,17 @@
     "@commitlint/cli": "19.8.1",
     "@commitlint/config-conventional": "^19.8.1",
     "@eslint/js": "9.34.0",
+    "@rollup/rollup-darwin-arm64": "4.48.1",
     "@size-limit/preset-app": "11.2.0",
+    "@testing-library/jest-dom": "6.8.0",
+    "@testing-library/react": "16.3.0",
+    "@testing-library/user-event": "14.6.1",
     "@types/bun": "1.2.20",
     "@types/node": "24.3.0",
+    "@types/react": "19.1.11",
+    "@types/react-dom": "19.1.8",
+    "@vitest/coverage-v8": "3.2.4",
+    "@vitest/ui": "3.2.4",
     "bun-types": "1.2.21",
     "commitizen": "^4.3.1",
     "commitlint": "^19.8.1",
@@ -73,8 +88,11 @@
     "eslint-plugin-security": "3.0.1",
     "eslint-plugin-sonarjs": "3.0.5",
     "eslint-plugin-unicorn": "60.0.0",
+    "eslint-plugin-vitest": "0.5.4",
+    "happy-dom": "18.0.1",
     "husky": "^9.1.7",
     "lint-staged": "^16.1.5",
+    "msw": "2.10.5",
     "npm-check-updates": "18.0.2",
     "prettier": "^3.4.2",
     "prettier-plugin-organize-imports": "4.2.0",
@@ -82,10 +100,16 @@
     "size-limit": "11.2.0",
     "typedoc": "0.28.11",
     "typescript": "^5.7.3",
-    "typescript-eslint": "8.41.0"
+    "typescript-eslint": "8.41.0",
+    "vite-tsconfig-paths": "5.1.4",
+    "vitest": "3.2.4"
   },
   "publishConfig": {
     "access": "public",
     "provenance": true
+  },
+  "dependencies": {
+    "react": "19.1.1",
+    "react-dom": "19.1.1"
   }
 }
