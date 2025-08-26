@@ -202,7 +202,7 @@ jobs:
 
       - name: Build and Analyze
         run: |
-          bun run build:analyze
+          bun run build:analyze > bundle-analysis.txt 2>&1
           bun run bundle:size
 
       - name: Comment Bundle Size
