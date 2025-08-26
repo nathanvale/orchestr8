@@ -1,6 +1,6 @@
 {
   "name": "my-bun-project",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "New project scaffolded with Bun + Changesets + Commitizen template",
   "type": "module",
