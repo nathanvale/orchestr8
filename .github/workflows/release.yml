@@ -1,36 +1,119 @@
 name: Release
+
 on:
   push:
     branches: [main]
+  workflow_dispatch:
+
 permissions:
   contents: write
   pull-requests: write
-  id-token: write
+  issues: write
+  id-token: write # Required for npm provenance
   packages: write
+
+env:
+  BUN_VERSION: "1.1.38"
+  NPM_CONFIG_PROVENANCE: true
+  FORCE_COLOR: 3
+
 jobs:
   release:
+    name: Release
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+    outputs:
+      published: ${{ steps.changesets.outputs.published }}
+      publishedPackages: ${{ steps.changesets.outputs.publishedPackages }}
     steps:
-      - uses: actions/checkout@v4
-        with: { fetch-depth: 0 }
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
-      - name: Install
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - name: Setup Node.js (for npm publishing)
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Cache Dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.bun/cache
+            node_modules
+          key: ${{ runner.os }}-bun-release-${{ hashFiles('bun.lockb') }}
+
+      - name: Install Dependencies
         run: bun install --frozen-lockfile
+
       - name: Build
+        run: bun run build
+
+      - name: Run Tests
+        run: bun test --coverage
+
+      - name: Generate SBOM
         run: |
-          echo "Add project-specific build here, e.g.:"
-          echo "bun build --target=node --format=esm,cjs src/index.ts --outdir=dist || true"
+          bunx @cyclonedx/cdxgen@latest -o sbom.json -t js .
+          echo "SBOM generated with $(jq '.components | length' sbom.json) components"
+
       - name: Create Release PR or Publish
+        id: changesets
         uses: changesets/action@v1
         with:
           version: bun run release:version
           publish: bun run release:publish
-          commit: "chore(release): version packages"
-          title: "chore(release): version packages"
+          commit: "chore(release): version packages 🚀 [skip ci]"
+          title: "chore(release): version packages 🚀"
+          createGithubReleases: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-          NPM_CONFIG_PROVENANCE: "true"
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Upload SBOM
+        if: steps.changesets.outputs.published == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-${{ github.sha }}
+          path: sbom.json
+          retention-days: 90
+
+      - name: Create GitHub Release Assets
+        if: steps.changesets.outputs.published == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const packages = JSON.parse('${{ steps.changesets.outputs.publishedPackages }}');
+
+            for (const pkg of packages) {
+              const tagName = `${pkg.name}@${pkg.version}`;
+              
+              try {
+                const release = await github.rest.repos.getReleaseByTag({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  tag: tagName
+                });
+                
+                // Upload SBOM to release
+                await github.rest.repos.uploadReleaseAsset({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  release_id: release.data.id,
+                  name: 'sbom.json',
+                  data: fs.readFileSync('sbom.json')
+                });
+              } catch (error) {
+                console.error(`Failed to upload assets for ${tagName}:`, error);
+              }
+            }

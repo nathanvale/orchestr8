@@ -1,0 +1,87 @@
+# Bun Configuration - Enterprise Grade with ADHD Optimizations
+# Version: 1.1.38+
+
+[install]
+# Lockfile Configuration
+frozenLockfile = false         # Allow lockfile updates during development
+exact = true                   # Always save exact versions
+dedupe = true                  # Deduplicate packages aggressively
+autoInstall = false           # Prevent accidental installs
+optional = false              # Don't skip optional dependencies
+peer = true                   # Install peer dependencies
+
+# Registry Configuration
+registry = "https://registry.npmjs.org"
+timeout = 60000               # 60 second timeout for slow connections
+
+[install.cache]
+dir = "~/.bun/cache"
+disable = false
+disableManifest = false
+
+[install.lockfile]
+save = true
+print = "yarn"                # Print lockfile in yarn format for readability
+
+[test]
+# Testing Configuration
+coverage = false
+coverageReporter = ["text", "lcov"]
+coverageDirectory = "./coverage"
+coverageThreshold = {
+  lines = 30,
+  functions = 50,
+  branches = 0,
+  statements = 30
+}
+clearConsole = true           # Clear console before each test run
+printConsole = true           # Print console output during tests
+bail = false                  # Don't stop on first failure
+timeout = 5000               # 5 second default timeout
+# preload = ["./tests/setup.ts"]
+# root = "./tests"
+
+[run]
+# Runtime Configuration
+shell = "system"              # Shell for scripts
+env = { NODE_ENV = "development" }
+silent = false
+cwd = "."
+bun = true                    # Use bun for all scripts
+
+[bundle]
+# Bundle Configuration
+format = "esm"
+target = "bun"
+minify = false               # Don't minify in development
+sourcemap = "external"
+splitting = true
+publicPath = "/"
+externals = ["node:*"]
+
+[macro]
+# Macro Configuration
+react = { runtime = "automatic" }
+
+[debug]
+# Debug Configuration
+htmx = false
+quiet = false
+inspect = {
+  wait = false,
+  break = false
+}
+
+[telemetry]
+# Telemetry Configuration
+enabled = false              # Respect user privacy
+
+# ADHD-Specific Optimizations
+[dev]
+# Development Server Configuration
+port = 3000
+hostname = "localhost"
+hmr = true                   # Hot Module Replacement
+liveReload = true           # Live reload on file changes
+open = true                 # Auto-open browser
+clearScreen = true          # Clear screen on restart
