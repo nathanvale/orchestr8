@@ -5,7 +5,11 @@ import { fileURLToPath } from 'url'
 
 import { describe, it, expect } from 'vitest'
 
-describe('NPM Publishing Validation', () => {
+// Skip these tests in CI as they make external network calls to npm registry
+// Run locally with: pnpm test src/npm-publishing.test.ts
+const isCI = process.env.CI === 'true'
+
+describe.skipIf(isCI)('NPM Publishing Validation (local only)', () => {
   // Use file-relative path resolution that works in both Vitest and Wallaby
   const __filename = fileURLToPath(import.meta.url)
   const __dirname = dirname(__filename)
