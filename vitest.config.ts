@@ -77,9 +77,6 @@ export default defineConfig({
       skipFull: false,
     },
 
-    // Watch mode optimizations
-    watchExclude: ['node_modules/**', 'dist/**', 'build/**', 'coverage/**', '**/.bun/**'],
-
     // Timeout configurations
     testTimeout: 10000, // 10 seconds for individual tests
     hookTimeout: 10000, // 10 seconds for hooks

@@ -61,8 +61,10 @@ describe('Vitest Migration Dependency Validation', () => {
 
     it('should import @testing-library/jest-dom', async () => {
       try {
-        const jestDOM = await import('@testing-library/jest-dom');
-        expect(jestDOM).toBeDefined();
+        // Import from the vitest entry point
+        await import('@testing-library/jest-dom/vitest');
+        // If import succeeds, the package is available
+        expect(true).toBe(true);
       } catch (error) {
         expect.fail(`Failed to import @testing-library/jest-dom: ${error}`);
       }
