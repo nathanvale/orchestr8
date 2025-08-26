@@ -148,11 +148,11 @@ afterAll(async () => {
   vi.useRealTimers();
 
   // Restore console methods
-  if (console.warn && typeof console.warn.mockRestore === 'function') {
-    console.warn.mockRestore();
+  if (console.warn && typeof (console.warn as any).mockRestore === 'function') {
+    (console.warn as any).mockRestore();
   }
-  if (console.error && typeof console.error.mockRestore === 'function') {
-    console.error.mockRestore();
+  if (console.error && typeof (console.error as any).mockRestore === 'function') {
+    (console.error as any).mockRestore();
   }
 });
 
