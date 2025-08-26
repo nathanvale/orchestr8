@@ -1,13 +1,14 @@
 # Technical Specification - Vitest Migration
 
-This is the technical specification for the spec detailed in @.agent-os/specs/2025-08-26-vitest-migration/spec.md
+This is the technical specification for the spec detailed in
+@.agent-os/specs/2025-08-26-vitest-migration/spec.md
 
-> Created: 2025-08-26
-> Version: 1.0.0
+> Created: 2025-08-26 Version: 1.0.0
 
 ## Technical Requirements
 
-- Maintain Bun runtime for optimal performance while using Vitest as the test framework
+- Maintain Bun runtime for optimal performance while using Vitest as the test
+  framework
 - Achieve sub-50ms test feedback loops through optimized configuration
 - Full Wallaby.js integration with inline VS Code feedback
 - Complete MSW integration for API mocking with proper module resolution
@@ -22,13 +23,13 @@ This is the technical specification for the spec detailed in @.agent-os/specs/20
 
 ```typescript
 /// <reference types="vitest" />
-import { defineConfig } from 'vitest/config'
+import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   test: {
     // Environment configuration
     environment: 'happy-dom', // Faster than jsdom for DOM testing
-    
+
     // Performance optimizations for 2025
     pool: 'forks', // Use forks instead of threads for better Bun compatibility
     poolOptions: {
@@ -36,14 +37,14 @@ export default defineConfig({
         singleFork: false,
         isolate: false, // Better performance with Bun
         minForks: 1,
-        maxForks: process.env.CI ? 4 : undefined // Limit in CI, unlimited locally
-      }
+        maxForks: process.env.CI ? 4 : undefined, // Limit in CI, unlimited locally
+      },
     },
-    
+
     // File patterns
     include: [
       'src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
-      'tests/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'
+      'tests/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
     ],
     exclude: [
       'node_modules',
@@ -51,37 +52,31 @@ export default defineConfig({
       'build',
       'coverage',
       '.turbo',
-      '**/.bun/**'
+      '**/.bun/**',
     ],
-    
+
     // Module resolution fixes for MSW and ES modules
     deps: {
       moduleDirectories: ['node_modules'],
       external: [
         // Exclude Bun-specific modules from transformation
-        /^bun:/
-      ]
+        /^bun:/,
+      ],
     },
-    
+
     // Setup files
     setupFiles: ['./vitest.setup.ts'],
-    
+
     // Global configuration
     globals: true, // Enable global test functions (describe, it, expect)
     clearMocks: true, // Auto-clear mocks between tests
     mockReset: true, // Reset mock state between tests
     restoreMocks: true, // Restore original implementation after tests
-    
+
     // Coverage configuration with 2025 optimizations
     coverage: {
       provider: 'v8', // Faster than istanbul, better Bun compatibility
-      reporter: [
-        'text',
-        'text-summary',
-        'html',
-        'lcov',
-        'json-summary'
-      ],
+      reporter: ['text', 'text-summary', 'html', 'lcov', 'json-summary'],
       reportsDirectory: './coverage',
       exclude: [
         'coverage/**',
@@ -92,59 +87,57 @@ export default defineConfig({
         '**/*.config.{js,ts,mjs}',
         '**/.{eslint,prettier}rc.{js,cjs,yml,yaml,json}',
         'vitest.setup.ts',
-        'wallaby.js'
+        'wallaby.js',
       ],
-      include: [
-        'src/**/*.{js,ts,jsx,tsx}'
-      ],
+      include: ['src/**/*.{js,ts,jsx,tsx}'],
       // Configurable thresholds
       thresholds: {
         global: {
           branches: 80,
           functions: 80,
           lines: 80,
-          statements: 80
-        }
+          statements: 80,
+        },
       },
       // Skip coverage collection in watch mode for performance
       enabled: !process.env.VITEST_WATCH,
-      skipFull: false
+      skipFull: false,
     },
-    
+
     // Watch mode optimizations
     watchExclude: [
       'node_modules/**',
       'dist/**',
       'build/**',
       'coverage/**',
-      '**/.bun/**'
+      '**/.bun/**',
     ],
-    
+
     // Timeout configurations
     testTimeout: 10000, // 10 seconds for individual tests
     hookTimeout: 10000, // 10 seconds for hooks
     teardownTimeout: 5000, // 5 seconds for teardown
-    
+
     // Reporter configuration
     reporter: process.env.CI ? ['verbose', 'junit'] : ['verbose'],
     outputFile: {
-      junit: './coverage/junit.xml'
+      junit: './coverage/junit.xml',
     },
-    
+
     // Snapshot configuration
     snapshotFormat: {
-      printBasicPrototype: false
+      printBasicPrototype: false,
     },
-    
+
     // Advanced options for ADHD-optimized feedback
     passWithNoTests: true,
     logHeapUsage: process.env.NODE_ENV === 'development',
-    
+
     // UI mode configuration (for development)
     ui: process.env.VITEST_UI === 'true',
-    open: false // Don't auto-open browser
+    open: false, // Don't auto-open browser
   },
-  
+
   // Vite configuration for better module resolution
   resolve: {
     alias: {
@@ -152,25 +145,28 @@ export default defineConfig({
       '@tests': new URL('./tests', import.meta.url).pathname,
       '@types': new URL('./types', import.meta.url).pathname,
       '@utils': new URL('./src/utils', import.meta.url).pathname,
-      '@config': new URL('./config', import.meta.url).pathname
-    }
+      '@config': new URL('./config', import.meta.url).pathname,
+    },
   },
-  
+
   // ESBuild configuration for TypeScript processing
   esbuild: {
     target: 'esnext',
-    keepNames: true
-  }
-})
+    keepNames: true,
+  },
+});
 ```
 
 ### Thread Pool Performance Configuration
 
 The 2025 optimized configuration uses:
+
 - **Fork pool**: Better isolation and Bun compatibility than threads
-- **Dynamic fork allocation**: Unlimited locally for development speed, limited in CI for resource management
+- **Dynamic fork allocation**: Unlimited locally for development speed, limited
+  in CI for resource management
 - **Isolation disabled**: Better performance with Bun runtime
-- **V8 coverage provider**: Native performance advantage with Bun's JavaScriptCore engine
+- **V8 coverage provider**: Native performance advantage with Bun's
+  JavaScriptCore engine
 
 ## 2. Wallaby.js Configuration
 
@@ -184,18 +180,18 @@ module.exports = function () {
       kind: 'bun-test',
       config: {
         // Use vitest command instead of bun test
-        testCommand: 'bun run vitest run --reporter=verbose --no-coverage'
-      }
+        testCommand: 'bun run vitest run --reporter=verbose --no-coverage',
+      },
     },
-    
+
     // Alternative: Use Vitest directly (recommended for 2025)
     testFramework: {
       type: 'vitest',
       config: {
-        configFile: './vitest.config.ts'
-      }
+        configFile: './vitest.config.ts',
+      },
     },
-    
+
     // File patterns
     files: [
       'src/**/*.{js,ts,jsx,tsx}',
@@ -204,84 +200,81 @@ module.exports = function () {
       'tsconfig.json',
       'package.json',
       // Include MSW handlers
-      'src/mocks/**/*.ts'
+      'src/mocks/**/*.ts',
     ],
-    
+
     tests: [
       'src/**/*.{test,spec}.{js,ts,jsx,tsx}',
-      'tests/**/*.{test,spec}.{js,ts,jsx,tsx}'
+      'tests/**/*.{test,spec}.{js,ts,jsx,tsx}',
     ],
-    
+
     // Environment configuration
     env: {
       type: 'node',
       runner: 'bun', // Use Bun as the runtime
       params: {
-        runner: '--bun' // Pass Bun flag to test runner
-      }
+        runner: '--bun', // Pass Bun flag to test runner
+      },
     },
-    
+
     // Setup function for MSW and global configuration
     setup: function (wallaby) {
       // Set environment variables for optimal performance
-      process.env.NODE_ENV = 'test'
-      process.env.VITEST_WALLABY = 'true'
-      
+      process.env.NODE_ENV = 'test';
+      process.env.VITEST_WALLABY = 'true';
+
       // Configure module resolution for MSW
-      const path = require('path')
-      const { pathsToModuleNameMapper } = require('ts-jest')
-      const { compilerOptions } = require('./tsconfig.json')
-      
+      const path = require('path');
+      const { pathsToModuleNameMapper } = require('ts-jest');
+      const { compilerOptions } = require('./tsconfig.json');
+
       // Setup module aliases to match vitest.config.ts
       const moduleNameMapper = pathsToModuleNameMapper(
         compilerOptions.paths || {},
-        { prefix: path.join(wallaby.projectCacheDir, '/') }
-      )
-      
+        { prefix: path.join(wallaby.projectCacheDir, '/') },
+      );
+
       return {
-        moduleNameMapper
-      }
+        moduleNameMapper,
+      };
     },
-    
+
     // Debugging and logging
     debug: false,
     trace: true, // Enable for debugging module resolution
-    
+
     // Performance optimizations
     workers: {
       initial: 1,
       regular: 4,
-      recycle: false // Better performance with Bun
+      recycle: false, // Better performance with Bun
     },
-    
+
     // File change detection
-    filesWithNoCoverageCalculated: [
-      'vitest.setup.ts',
-      'src/mocks/**/*.ts'
-    ],
-    
+    filesWithNoCoverageCalculated: ['vitest.setup.ts', 'src/mocks/**/*.ts'],
+
     // Preprocessing configuration
     preprocessors: {
-      '**/*.{js,jsx,ts,tsx}': file => {
+      '**/*.{js,jsx,ts,tsx}': (file) => {
         // Use Bun's built-in TypeScript transformation
-        return file.content
-      }
+        return file.content;
+      },
     },
-    
+
     // Report configuration for VS Code integration
     reports: {
       textCoverage: true,
-      htmlCoverage: true
+      htmlCoverage: true,
     },
-    
+
     // Hints for better VS Code integration
     hints: {
       allowIgnoringCoverageInTests: true,
       ignoreCoverageForFile: /\.test\.|\.spec\./,
-      maxConsoleMessagesPerTest: 100
-    }
-  }
-}
+      maxConsoleMessagesPerTest: 100,
+    },
+  };
+};
 ```
 
 ### VS Code Integration Settings
@@ -322,7 +315,7 @@ const defaultHandlers: RestHandler[] = [
   rest.get('/api/health', (req, res, ctx) => {
     return res(ctx.status(200), ctx.json({ status: 'ok' }))
   }),
-  
+
   rest.get('/api/user/:id', (req, res, ctx) => {
     const { id } = req.params
     return res(
@@ -334,7 +327,7 @@ const defaultHandlers: RestHandler[] = [
       })
     )
   }),
-  
+
   rest.post('/api/auth/login', (req, res, ctx) => {
     return res(
       ctx.status(200),
@@ -355,7 +348,7 @@ beforeAll(() => {
   server.listen({
     onUnhandledRequest: 'warn' // Log unhandled requests in development
   })
-  
+
   // Mock common browser APIs
   Object.defineProperty(window, 'matchMedia', {
     writable: true,
@@ -370,21 +363,21 @@ beforeAll(() => {
       dispatchEvent: vi.fn(),
     })),
   })
-  
+
   // Mock ResizeObserver
   global.ResizeObserver = vi.fn().mockImplementation(() => ({
     observe: vi.fn(),
     unobserve: vi.fn(),
     disconnect: vi.fn(),
   }))
-  
+
   // Mock IntersectionObserver
   global.IntersectionObserver = vi.fn().mockImplementation(() => ({
     observe: vi.fn(),
     unobserve: vi.fn(),
     disconnect: vi.fn(),
   }))
-  
+
   // Mock localStorage
   const localStorageMock = {
     getItem: vi.fn(),
@@ -397,15 +390,15 @@ beforeAll(() => {
   Object.defineProperty(window, 'localStorage', {
     value: localStorageMock
   })
-  
+
   // Mock sessionStorage
   Object.defineProperty(window, 'sessionStorage', {
     value: localStorageMock
   })
-  
+
   // Mock fetch (fallback if MSW doesn't handle it)
   global.fetch = vi.fn()
-  
+
   // Setup console mocking for cleaner test output
   vi.spyOn(console, 'warn').mockImplementation(() => {})
   vi.spyOn(console, 'error').mockImplementation(() => {})
@@ -425,7 +418,7 @@ afterEach(() => {
 afterAll(() => {
   // Clean up MSW server
   server.close()
-  
+
   // Restore all mocks
   vi.restoreAllMocks()
 })
@@ -475,7 +468,7 @@ export { userEvent } from '@testing-library/user-event'
 Create `src/mocks/handlers.ts`:
 
 ```typescript
-import { rest } from 'msw'
+import { rest } from 'msw';
 
 export const handlers = [
   // User management
@@ -484,42 +477,42 @@ export const handlers = [
       ctx.status(200),
       ctx.json([
         { id: 1, name: 'John Doe', email: 'john@example.com' },
-        { id: 2, name: 'Jane Smith', email: 'jane@example.com' }
-      ])
-    )
+        { id: 2, name: 'Jane Smith', email: 'jane@example.com' },
+      ]),
+    );
   }),
-  
+
   rest.post('/api/users', async (req, res, ctx) => {
-    const newUser = await req.json()
+    const newUser = await req.json();
     return res(
       ctx.status(201),
       ctx.json({
         id: Date.now(),
-        ...newUser
-      })
-    )
+        ...newUser,
+      }),
+    );
   }),
-  
+
   rest.put('/api/users/:id', async (req, res, ctx) => {
-    const { id } = req.params
-    const updates = await req.json()
+    const { id } = req.params;
+    const updates = await req.json();
     return res(
       ctx.status(200),
       ctx.json({
         id: Number(id),
-        ...updates
-      })
-    )
+        ...updates,
+      }),
+    );
   }),
-  
+
   rest.delete('/api/users/:id', (req, res, ctx) => {
-    return res(ctx.status(204))
+    return res(ctx.status(204));
   }),
-  
+
   // Authentication
   rest.post('/api/auth/login', async (req, res, ctx) => {
-    const { email, password } = await req.json()
-    
+    const { email, password } = await req.json();
+
     if (email === 'admin@example.com' && password === 'password') {
       return res(
         ctx.status(200),
@@ -529,43 +522,40 @@ export const handlers = [
             id: 1,
             name: 'Admin User',
             email: 'admin@example.com',
-            role: 'admin'
-          }
-        })
-      )
+            role: 'admin',
+          },
+        }),
+      );
     }
-    
-    return res(
-      ctx.status(401),
-      ctx.json({ error: 'Invalid credentials' })
-    )
+
+    return res(ctx.status(401), ctx.json({ error: 'Invalid credentials' }));
   }),
-  
+
   // File upload
   rest.post('/api/upload', (req, res, ctx) => {
     return res(
       ctx.status(200),
       ctx.json({
         url: 'https://example.com/uploaded-file.jpg',
-        id: 'file-123'
-      })
-    )
+        id: 'file-123',
+      }),
+    );
   }),
-  
+
   // Paginated data
   rest.get('/api/posts', (req, res, ctx) => {
-    const page = Number(req.url.searchParams.get('page') || 1)
-    const limit = Number(req.url.searchParams.get('limit') || 10)
-    
+    const page = Number(req.url.searchParams.get('page') || 1);
+    const limit = Number(req.url.searchParams.get('limit') || 10);
+
     const posts = Array.from({ length: 100 }, (_, i) => ({
       id: i + 1,
       title: `Post ${i + 1}`,
-      content: `Content for post ${i + 1}`
-    }))
-    
-    const start = (page - 1) * limit
-    const end = start + limit
-    
+      content: `Content for post ${i + 1}`,
+    }));
+
+    const start = (page - 1) * limit;
+    const end = start + limit;
+
     return res(
       ctx.status(200),
       ctx.json({
@@ -574,109 +564,110 @@ export const handlers = [
           page,
           limit,
           total: posts.length,
-          totalPages: Math.ceil(posts.length / limit)
-        }
-      })
-    )
-  })
-]
+          totalPages: Math.ceil(posts.length / limit),
+        },
+      }),
+    );
+  }),
+];
 ```
 
-### Vi.* Utilities Usage Examples
+### Vi.\* Utilities Usage Examples
 
 ```typescript
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 describe('Mock utilities examples', () => {
   describe('Function mocking', () => {
     it('should mock a function', () => {
-      const mockFn = vi.fn()
-      mockFn('test')
-      
-      expect(mockFn).toHaveBeenCalledWith('test')
-      expect(mockFn).toHaveBeenCalledTimes(1)
-    })
-    
+      const mockFn = vi.fn();
+      mockFn('test');
+
+      expect(mockFn).toHaveBeenCalledWith('test');
+      expect(mockFn).toHaveBeenCalledTimes(1);
+    });
+
     it('should mock with implementation', () => {
-      const mockFn = vi.fn().mockImplementation((x: number) => x * 2)
-      const result = mockFn(5)
-      
-      expect(result).toBe(10)
-    })
-    
+      const mockFn = vi.fn().mockImplementation((x: number) => x * 2);
+      const result = mockFn(5);
+
+      expect(result).toBe(10);
+    });
+
     it('should mock return values', () => {
-      const mockFn = vi.fn()
+      const mockFn = vi
+        .fn()
         .mockReturnValueOnce('first')
         .mockReturnValueOnce('second')
-        .mockReturnValue('default')
-      
-      expect(mockFn()).toBe('first')
-      expect(mockFn()).toBe('second')
-      expect(mockFn()).toBe('default')
-    })
-  })
-  
+        .mockReturnValue('default');
+
+      expect(mockFn()).toBe('first');
+      expect(mockFn()).toBe('second');
+      expect(mockFn()).toBe('default');
+    });
+  });
+
   describe('Module mocking', () => {
     it('should mock an entire module', () => {
       vi.mock('lodash', () => ({
         debounce: vi.fn().mockImplementation((fn) => fn),
-        throttle: vi.fn().mockImplementation((fn) => fn)
-      }))
-    })
-    
+        throttle: vi.fn().mockImplementation((fn) => fn),
+      }));
+    });
+
     it('should partially mock a module', () => {
       vi.mock('../utils/api', async () => {
-        const actual = await vi.importActual('../utils/api')
+        const actual = await vi.importActual('../utils/api');
         return {
           ...actual,
-          fetchUser: vi.fn().mockResolvedValue({ id: 1, name: 'Test User' })
-        }
-      })
-    })
-  })
-  
+          fetchUser: vi.fn().mockResolvedValue({ id: 1, name: 'Test User' }),
+        };
+      });
+    });
+  });
+
   describe('Timer mocking', () => {
     beforeEach(() => {
-      vi.useFakeTimers()
-    })
-    
+      vi.useFakeTimers();
+    });
+
     it('should mock setTimeout', async () => {
-      const callback = vi.fn()
-      setTimeout(callback, 1000)
-      
-      await vi.advanceTimersByTime(1000)
-      
-      expect(callback).toHaveBeenCalled()
-    })
-    
+      const callback = vi.fn();
+      setTimeout(callback, 1000);
+
+      await vi.advanceTimersByTime(1000);
+
+      expect(callback).toHaveBeenCalled();
+    });
+
     it('should mock Date', () => {
-      const mockDate = new Date('2025-01-01T00:00:00.000Z')
-      vi.setSystemTime(mockDate)
-      
-      expect(new Date().toISOString()).toBe('2025-01-01T00:00:00.000Z')
-    })
-  })
-  
+      const mockDate = new Date('2025-01-01T00:00:00.000Z');
+      vi.setSystemTime(mockDate);
+
+      expect(new Date().toISOString()).toBe('2025-01-01T00:00:00.000Z');
+    });
+  });
+
   describe('Spy utilities', () => {
     it('should spy on object methods', () => {
       const obj = {
-        method: (x: number) => x + 1
-      }
-      
-      const spy = vi.spyOn(obj, 'method')
-      obj.method(5)
-      
-      expect(spy).toHaveBeenCalledWith(5)
-    })
-    
+        method: (x: number) => x + 1,
+      };
+
+      const spy = vi.spyOn(obj, 'method');
+      obj.method(5);
+
+      expect(spy).toHaveBeenCalledWith(5);
+    });
+
     it('should spy on console methods', () => {
-      const consoleSpy = vi.spyOn(console, 'log')
-      console.log('test message')
-      
-      expect(consoleSpy).toHaveBeenCalledWith('test message')
-    })
-  })
-})
+      const consoleSpy = vi.spyOn(console, 'log');
+      console.log('test message');
+
+      expect(consoleSpy).toHaveBeenCalledWith('test message');
+    });
+  });
+});
 ```
 
 ## 4. Package.json Scripts
@@ -717,10 +708,14 @@ describe('Mock utilities examples', () => {
 
 ### Command Structure Best Practices
 
-- **Use `bun run` prefix**: Ensures consistent execution through Bun's package manager
-- **Avoid `bun x` for tests**: Direct script execution is faster for frequently run commands
-- **Separate CI and development scripts**: Different reporting needs and performance optimizations
-- **Include performance testing**: Benchmark test execution speed for ADHD-optimized feedback
+- **Use `bun run` prefix**: Ensures consistent execution through Bun's package
+  manager
+- **Avoid `bun x` for tests**: Direct script execution is faster for frequently
+  run commands
+- **Separate CI and development scripts**: Different reporting needs and
+  performance optimizations
+- **Include performance testing**: Benchmark test execution speed for
+  ADHD-optimized feedback
 
 ## 5. Performance Optimizations
 
@@ -728,8 +723,8 @@ describe('Mock utilities examples', () => {
 
 ```typescript
 // vitest.config.performance.ts
-import { defineConfig } from 'vitest/config'
-import baseConfig from './vitest.config'
+import { defineConfig } from 'vitest/config';
+import baseConfig from './vitest.config';
 
 export default defineConfig({
   ...baseConfig,
@@ -742,26 +737,26 @@ export default defineConfig({
         singleFork: false,
         isolate: true, // Better isolation in CI
         minForks: 2,
-        maxForks: process.env.CI ? 8 : 4 // More aggressive parallelization in CI
-      }
+        maxForks: process.env.CI ? 8 : 4, // More aggressive parallelization in CI
+      },
     },
-    
+
     // Memory optimization
     maxMemoryLimit: '1GB',
-    
+
     // Timeout optimizations for CI
     testTimeout: 15000, // Longer timeout in CI
     hookTimeout: 15000,
-    
+
     // Disable UI and coverage in CI for speed
     ui: false,
     coverage: {
       ...baseConfig.test?.coverage,
       enabled: true,
-      skipFull: true // Skip full coverage collection for speed
-    }
-  }
-})
+      skipFull: true, // Skip full coverage collection for speed
+    },
+  },
+});
 ```
 
 ### Memory Optimization Settings
@@ -775,24 +770,24 @@ export const memoryOptimizedConfig = {
       forks: {
         maxForks: 2, // Reduce for memory-constrained environments
         singleFork: false,
-        isolate: true
-      }
+        isolate: true,
+      },
     },
-    
+
     // Clear mocks more aggressively
     clearMocks: true,
     mockReset: true,
     restoreMocks: true,
-    
+
     // Garbage collection hints
     pool: 'forks', // Better memory isolation
-    
+
     // Disable features that consume memory
     coverage: {
-      enabled: false // Disable in development for memory savings
-    }
-  }
-}
+      enabled: false, // Disable in development for memory savings
+    },
+  },
+};
 ```
 
 ### Caching Strategies
@@ -803,9 +798,9 @@ export const cacheConfig = {
   test: {
     // Cache test results for faster re-runs
     cache: {
-      dir: 'node_modules/.vitest'
+      dir: 'node_modules/.vitest',
     },
-    
+
     // File watching optimizations
     watchExclude: [
       '**/node_modules/**',
@@ -813,20 +808,17 @@ export const cacheConfig = {
       '**/build/**',
       '**/coverage/**',
       '**/.git/**',
-      '**/.bun/**'
+      '**/.bun/**',
     ],
-    
+
     // Dependency handling for better caching
     deps: {
-      external: [
-        /^bun:/,
-        /^node:/
-      ],
+      external: [/^bun:/, /^node:/],
       // Cache external dependencies
-      fallbackCJS: true
-    }
-  }
-}
+      fallbackCJS: true,
+    },
+  },
+};
 ```
 
 ## 6. Migration Patterns
@@ -834,132 +826,142 @@ export const cacheConfig = {
 ### Bun Test to Vitest API Migration
 
 #### Before (Bun Test)
+
 ```typescript
-import { expect, test, describe, beforeAll, afterAll } from 'bun:test'
-import { mock } from 'bun:test'
+import { expect, test, describe, beforeAll, afterAll } from 'bun:test';
+import { mock } from 'bun:test';
 
 describe('User service', () => {
-  const mockFetch = mock()
-  
+  const mockFetch = mock();
+
   beforeAll(() => {
-    global.fetch = mockFetch
-  })
-  
+    global.fetch = mockFetch;
+  });
+
   test('should fetch user data', async () => {
-    mockFetch.mockReturnValue(Promise.resolve({
-      json: () => Promise.resolve({ id: 1, name: 'Test User' })
-    }))
-    
-    const user = await fetchUser(1)
-    expect(user.name).toBe('Test User')
-  })
-})
+    mockFetch.mockReturnValue(
+      Promise.resolve({
+        json: () => Promise.resolve({ id: 1, name: 'Test User' }),
+      }),
+    );
+
+    const user = await fetchUser(1);
+    expect(user.name).toBe('Test User');
+  });
+});
 ```
 
 #### After (Vitest)
+
 ```typescript
-import { expect, test, describe, beforeAll, afterAll, vi } from 'vitest'
+import { expect, test, describe, beforeAll, afterAll, vi } from 'vitest';
 
 describe('User service', () => {
-  const mockFetch = vi.fn()
-  
+  const mockFetch = vi.fn();
+
   beforeAll(() => {
-    global.fetch = mockFetch
-  })
-  
+    global.fetch = mockFetch;
+  });
+
   test('should fetch user data', async () => {
     mockFetch.mockResolvedValue({
-      json: () => Promise.resolve({ id: 1, name: 'Test User' })
-    })
-    
-    const user = await fetchUser(1)
-    expect(user.name).toBe('Test User')
-  })
-})
+      json: () => Promise.resolve({ id: 1, name: 'Test User' }),
+    });
+
+    const user = await fetchUser(1);
+    expect(user.name).toBe('Test User');
+  });
+});
 ```
 
 ### Mock System Conversion
 
 #### Before (Bun Mocking)
+
 ```typescript
-import { mock } from 'bun:test'
+import { mock } from 'bun:test';
 
 // Bun-style mocking
-const mockLogger = mock()
-mockLogger.mockReturnValue(undefined)
+const mockLogger = mock();
+mockLogger.mockReturnValue(undefined);
 
 // Module mocking in Bun
 mock.module('./logger', () => ({
-  log: mockLogger
-}))
+  log: mockLogger,
+}));
 ```
 
 #### After (Vitest Mocking)
+
 ```typescript
-import { vi } from 'vitest'
+import { vi } from 'vitest';
 
 // Vitest-style mocking
-const mockLogger = vi.fn()
-mockLogger.mockReturnValue(undefined)
+const mockLogger = vi.fn();
+mockLogger.mockReturnValue(undefined);
 
 // Module mocking in Vitest
 vi.mock('./logger', () => ({
-  log: mockLogger
-}))
+  log: mockLogger,
+}));
 ```
 
 ### Timer Mock Updates
 
 #### Before (Bun Timers)
+
 ```typescript
-import { setSystemTime, mock } from 'bun:test'
+import { setSystemTime, mock } from 'bun:test';
 
 test('timer test', async () => {
-  const originalDate = Date
-  setSystemTime(new Date('2025-01-01'))
-  
+  const originalDate = Date;
+  setSystemTime(new Date('2025-01-01'));
+
   // Test code with mocked time
-  
-  setSystemTime(originalDate) // Reset
-})
+
+  setSystemTime(originalDate); // Reset
+});
 ```
 
 #### After (Vitest Timers)
+
 ```typescript
-import { vi } from 'vitest'
+import { vi } from 'vitest';
 
 test('timer test', async () => {
-  vi.useFakeTimers()
-  vi.setSystemTime(new Date('2025-01-01'))
-  
+  vi.useFakeTimers();
+  vi.setSystemTime(new Date('2025-01-01'));
+
   // Test code with mocked time
-  
-  vi.useRealTimers() // Reset
-})
+
+  vi.useRealTimers(); // Reset
+});
 ```
 
 ### Assertion Updates
 
 #### Before (Bun Assertions)
+
 ```typescript
-import { expect } from 'bun:test'
+import { expect } from 'bun:test';
 
 // Bun's expect API
-expect(result).toEqual(expected)
-expect(mockFn).toHaveBeenCalledWith(args)
+expect(result).toEqual(expected);
+expect(mockFn).toHaveBeenCalledWith(args);
 ```
 
 #### After (Vitest Assertions)
+
 ```typescript
-import { expect } from 'vitest'
+import { expect } from 'vitest';
 
 // Vitest's expect API (compatible with Jest)
-expect(result).toEqual(expected)
-expect(mockFn).toHaveBeenCalledWith(args)
+expect(result).toEqual(expected);
+expect(mockFn).toHaveBeenCalledWith(args);
 
 // Additional Vitest-specific matchers
-expect(result).toMatchSnapshot()
-expect(mockFn).toHaveBeenCalledOnce()
+expect(result).toMatchSnapshot();
+expect(mockFn).toHaveBeenCalledOnce();
 ```
 
 ## 7. Troubleshooting Guide
@@ -967,29 +969,31 @@ expect(mockFn).toHaveBeenCalledOnce()
 ### Common MSW Module Resolution Errors
 
 #### Error: MSW handlers not working
-**Symptoms**: API calls not being intercepted by MSW handlers
-**Solution**: 
+
+**Symptoms**: API calls not being intercepted by MSW handlers **Solution**:
+
 ```typescript
 // Ensure proper module resolution in vitest.config.ts
 export default defineConfig({
   test: {
     deps: {
       external: [/^node:/, /^bun:/],
-      inline: ['msw']
+      inline: ['msw'],
     },
-    setupFiles: ['./vitest.setup.ts']
-  }
-})
+    setupFiles: ['./vitest.setup.ts'],
+  },
+});
 
 // In vitest.setup.ts, ensure server is started before all tests
 beforeAll(() => {
-  server.listen({ onUnhandledRequest: 'error' })
-})
+  server.listen({ onUnhandledRequest: 'error' });
+});
 ```
 
 #### Error: "Cannot resolve module" for MSW
-**Symptoms**: Import errors when importing MSW modules
-**Solution**:
+
+**Symptoms**: Import errors when importing MSW modules **Solution**:
+
 ```bash
 # Install MSW with proper peer dependencies
 bun add -d msw @types/node
@@ -1004,7 +1008,9 @@ bun add -d msw @types/node
 ### Wallaby Debugging Tips
 
 #### Issue: Wallaby not showing test results
+
 **Diagnosis**:
+
 ```javascript
 // Add to wallaby.js for debugging
 module.exports = function () {
@@ -1012,22 +1018,24 @@ module.exports = function () {
     // ... other config
     debug: true,
     trace: true,
-    
+
     // Enable detailed logging
     reportConsoleErrorAsError: true,
     reportUnhandledPromises: false,
-    
+
     // Check file patterns
     files: [
       { pattern: 'src/**/*.{js,ts,jsx,tsx}', load: true },
-      { pattern: 'vitest.config.ts', load: true }
-    ]
-  }
-}
+      { pattern: 'vitest.config.ts', load: true },
+    ],
+  };
+};
 ```
 
 #### Issue: Module resolution problems in Wallaby
+
 **Solution**:
+
 ```javascript
 // Enhanced wallaby.js with better module resolution
 module.exports = function (wallaby) {
@@ -1036,27 +1044,29 @@ module.exports = function (wallaby) {
       type: 'node',
       runner: 'bun',
       params: {
-        env: 'NODE_OPTIONS=--loader=tsx/esm'
-      }
+        env: 'NODE_OPTIONS=--loader=tsx/esm',
+      },
     },
-    
+
     // Better file processing
     preprocessors: {
-      '**/*.{ts,tsx}': file => {
+      '**/*.{ts,tsx}': (file) => {
         // Use Bun's built-in TypeScript processing
         return require('bun').transpiler.transformSync(file.content, {
-          loader: file.path.endsWith('.tsx') ? 'tsx' : 'ts'
-        })
-      }
-    }
-  }
-}
+          loader: file.path.endsWith('.tsx') ? 'tsx' : 'ts',
+        });
+      },
+    },
+  };
+};
 ```
 
 ### Performance Tuning
 
 #### Slow test execution
+
 **Diagnosis**:
+
 ```bash
 # Profile test execution
 bun run vitest run --reporter=verbose --logHeapUsage
@@ -1066,37 +1076,36 @@ bun run vitest run --coverage --maxWorkers=1
 ```
 
 **Solutions**:
+
 ```typescript
 // Optimize vitest.config.ts for performance
 export default defineConfig({
   test: {
     // Reduce parallelization if memory-constrained
     maxWorkers: process.env.CI ? 4 : 2,
-    
+
     // Disable expensive features during development
     coverage: {
-      enabled: process.env.CI === 'true'
+      enabled: process.env.CI === 'true',
     },
-    
+
     // Optimize file watching
-    watchExclude: [
-      '**/node_modules/**',
-      '**/coverage/**'
-    ]
-  }
-})
+    watchExclude: ['**/node_modules/**', '**/coverage/**'],
+  },
+});
 ```
 
 ### Bun Compatibility Issues
 
 #### Issue: ESM import problems
-**Symptoms**: "Cannot use import statement outside a module"
-**Solution**:
+
+**Symptoms**: "Cannot use import statement outside a module" **Solution**:
+
 ```json
 // Ensure package.json has:
 {
   "type": "module",
-  
+
   // And tsconfig.json has:
   "compilerOptions": {
     "module": "ESNext",
@@ -1106,25 +1115,26 @@ export default defineConfig({
 ```
 
 #### Issue: Bun runtime conflicts with Vitest
-**Symptoms**: Tests fail with runtime errors
-**Solution**:
+
+**Symptoms**: Tests fail with runtime errors **Solution**:
+
 ```typescript
 // Create separate configs for different environments
 // vitest.config.bun.ts
 export default defineConfig({
   test: {
     environment: 'bun', // Use Bun environment
-    pool: 'forks'
-  }
-})
+    pool: 'forks',
+  },
+});
 
 // vitest.config.node.ts
 export default defineConfig({
   test: {
     environment: 'node', // Use Node.js environment for compatibility
-    pool: 'threads'
-  }
-})
+    pool: 'threads',
+  },
+});
 ```
 
 ## 8. Integration Points
@@ -1137,25 +1147,25 @@ export default defineConfig({
   "vitest.enable": true,
   "vitest.commandLine": "bun run vitest",
   "vitest.rootConfig": "./vitest.config.ts",
-  
+
   // Wallaby integration
   "wallaby.startAutomatically": true,
   "wallaby.codeLensFeature": {
     "runTest": true,
     "debugTest": true
   },
-  
+
   // Testing integration
   "testing.openTesting": "neverOpen",
   "testing.followRunningTest": false,
-  
+
   // Performance settings
   "editor.quickSuggestions": {
     "other": true,
     "comments": false,
     "strings": false
   },
-  
+
   // File associations
   "files.associations": {
     "*.test.ts": "typescript",
@@ -1168,28 +1178,28 @@ export default defineConfig({
 
 ```javascript
 // eslint.config.js updates
-import vitest from 'eslint-plugin-vitest'
+import vitest from 'eslint-plugin-vitest';
 
 export default [
   // ... existing config
   {
     files: ['**/*.test.{js,ts,jsx,tsx}', '**/*.spec.{js,ts,jsx,tsx}'],
     plugins: {
-      vitest
+      vitest,
     },
     rules: {
       ...vitest.configs.recommended.rules,
-      
+
       // Vitest-specific rules
       'vitest/no-disabled-tests': 'warn',
       'vitest/no-focused-tests': 'error',
       'vitest/prefer-to-be': 'error',
       'vitest/prefer-to-have-length': 'error',
       'vitest/valid-expect': 'error',
-      
+
       // Allow test-specific patterns
       '@typescript-eslint/no-explicit-any': 'off',
-      'sonarjs/no-duplicate-string': 'off'
+      'sonarjs/no-duplicate-string': 'off',
     },
     languageOptions: {
       globals: {
@@ -1201,11 +1211,11 @@ export default [
         afterAll: 'readonly',
         beforeEach: 'readonly',
         afterEach: 'readonly',
-        vi: 'readonly'
-      }
-    }
-  }
-]
+        vi: 'readonly',
+      },
+    },
+  },
+];
 ```
 
 ### TypeScript Types Configuration
@@ -1220,12 +1230,7 @@ export default [
       "node"
     ]
   },
-  "include": [
-    "src/**/*",
-    "tests/**/*",
-    "vitest.config.ts",
-    "vitest.setup.ts"
-  ]
+  "include": ["src/**/*", "tests/**/*", "vitest.config.ts", "vitest.setup.ts"]
 }
 ```
 
@@ -1265,4 +1270,6 @@ bun run format:check
 - [ ] Performance benchmark compared to Bun test
 - [ ] Documentation updates for team members
 
-This comprehensive technical specification provides all the necessary code and configuration for migrating from Bun's native test runner to Vitest while maintaining optimal performance and developer experience.
+This comprehensive technical specification provides all the necessary code and
+configuration for migrating from Bun's native test runner to Vitest while
+maintaining optimal performance and developer experience.

@@ -1,46 +1,46 @@
-import { beforeAll, beforeEach, afterEach, afterAll, vi } from 'vitest'
-import { setupServer } from 'msw/node'
-import { http, HttpResponse } from 'msw'
-import type { HttpHandler } from 'msw'
+import type { HttpHandler } from 'msw';
+import { http, HttpResponse } from 'msw';
+import { setupServer } from 'msw/node';
+import { afterAll, afterEach, beforeAll, beforeEach, vi } from 'vitest';
 
 // Mock handlers for common API patterns
 const defaultHandlers: HttpHandler[] = [
   // Example API handlers
   http.get('/api/health', () => {
-    return HttpResponse.json({ status: 'ok' })
+    return HttpResponse.json({ status: 'ok' });
   }),
-  
+
   http.get('/api/user/:id', ({ params }) => {
-    const { id } = params
+    const { id } = params;
     return HttpResponse.json({
       id,
-      name: `Test User ${id}`,
-      email: `test${id}@example.com`
-    })
+      name: `Test User ${String(id)}`,
+      email: `test${String(id)}@example.com`,
+    });
   }),
-  
+
   http.post('/api/auth/login', () => {
     return HttpResponse.json({
       token: 'mock-jwt-token',
-      user: { id: '1', name: 'Test User' }
-    })
-  })
-]
+      user: { id: '1', name: 'Test User' },
+    });
+  }),
+];
 
 // Setup MSW server
-export const server = setupServer(...defaultHandlers)
+export const server = setupServer(...defaultHandlers);
 
 // Global setup and teardown
 beforeAll(() => {
   // Start MSW server
   server.listen({
-    onUnhandledRequest: 'warn' // Log unhandled requests in development
-  })
-  
+    onUnhandledRequest: 'warn', // Log unhandled requests in development
+  });
+
   // Mock common browser APIs
   Object.defineProperty(window, 'matchMedia', {
     writable: true,
-    value: vi.fn().mockImplementation(query => ({
+    value: vi.fn().mockImplementation((query: string) => ({
       matches: false,
       media: query,
       onchange: null,
@@ -50,22 +50,22 @@ beforeAll(() => {
       removeEventListener: vi.fn(),
       dispatchEvent: vi.fn(),
     })),
-  })
-  
+  });
+
   // Mock ResizeObserver
   global.ResizeObserver = vi.fn().mockImplementation(() => ({
     observe: vi.fn(),
     unobserve: vi.fn(),
     disconnect: vi.fn(),
-  }))
-  
+  }));
+
   // Mock IntersectionObserver
   global.IntersectionObserver = vi.fn().mockImplementation(() => ({
     observe: vi.fn(),
     unobserve: vi.fn(),
     disconnect: vi.fn(),
-  }))
-  
+  }));
+
   // Mock localStorage
   const localStorageMock = {
     getItem: vi.fn(),
@@ -74,79 +74,81 @@ beforeAll(() => {
     clear: vi.fn(),
     length: 0,
     key: vi.fn(),
-  }
+  };
   Object.defineProperty(window, 'localStorage', {
-    value: localStorageMock
-  })
-  
+    value: localStorageMock,
+  });
+
   // Mock sessionStorage
   Object.defineProperty(window, 'sessionStorage', {
-    value: localStorageMock
-  })
-  
+    value: localStorageMock,
+  });
+
   // Mock fetch (fallback if MSW doesn't handle it)
-  global.fetch = vi.fn()
-  
+  // @ts-expect-error - simplified mock for testing
+  global.fetch = vi.fn();
+
   // Setup console mocking for cleaner test output
-  vi.spyOn(console, 'warn').mockImplementation(() => {})
-  vi.spyOn(console, 'error').mockImplementation(() => {})
-})
+  vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+  vi.spyOn(console, 'error').mockImplementation(() => undefined);
+});
 
 beforeEach(() => {
   // Reset all mocks before each test
-  vi.clearAllMocks()
-  vi.clearAllTimers()
-})
+  vi.clearAllMocks();
+  vi.clearAllTimers();
+});
 
 afterEach(() => {
   // Reset any request handlers that may have been added during tests
-  server.resetHandlers()
-})
+  server.resetHandlers();
+});
 
 afterAll(() => {
   // Clean up MSW server
-  server.close()
-  
+  server.close();
+
   // Restore all mocks
-  vi.restoreAllMocks()
-})
+  vi.restoreAllMocks();
+});
 
 // Utility functions for test setup
-export const mockApiResponse = (url: string, response: any, status = 200) => {
+export const mockApiResponse = (url: string, response: unknown, status = 200): void => {
   server.use(
     http.get(url, () => {
-      return HttpResponse.json(response, { status })
-    })
-  )
-}
+      // @ts-expect-error - response can be any type for testing
+      return HttpResponse.json(response, { status });
+    }),
+  );
+};
 
-export const mockApiError = (url: string, status = 500, message = 'Server Error') => {
+export const mockApiError = (url: string, status = 500, message = 'Server Error'): void => {
   server.use(
     http.get(url, () => {
-      return HttpResponse.json({ error: message }, { status })
-    })
-  )
-}
+      return HttpResponse.json({ error: message }, { status });
+    }),
+  );
+};
 
 // React Testing Library configuration
-import '@testing-library/jest-dom/vitest' // Add jest-dom matchers
+import '@testing-library/jest-dom/vitest'; // Add jest-dom matchers
 
-// Custom render function for React components  
-import { render as rtlRender, type RenderOptions } from '@testing-library/react'
-import type { ReactElement } from 'react'
-import React from 'react'
+// Custom render function for React components
+import { render as rtlRender, type RenderOptions } from '@testing-library/react';
+import type { ReactElement } from 'react';
+import React from 'react';
 
 // Wrapper component for providers (customize as needed)
-const AllTheProviders = ({ children }: { children: React.ReactNode }) => {
+const AllTheProviders = ({ children }: { children: React.ReactNode }): React.ReactElement => {
   // Add your providers here (Router, Theme, Context, etc.)
-  return <>{children}</>
-}
+  return <>{children}</>;
+};
 
 export const render = (
   ui: ReactElement,
-  options?: Omit<RenderOptions, 'wrapper'>
-) => rtlRender(ui, { wrapper: AllTheProviders, ...options })
+  options?: Omit<RenderOptions, 'wrapper'>,
+): ReturnType<typeof rtlRender> => rtlRender(ui, { wrapper: AllTheProviders, ...options });
 
 // Export all testing utilities
-export * from '@testing-library/react'
-export { userEvent } from '@testing-library/user-event'
+export * from '@testing-library/react';
+export { userEvent } from '@testing-library/user-event';

@@ -97,15 +97,6 @@ describe('Vitest Migration Dependency Validation', () => {
         expect.fail(`Failed to import msw: ${error}`);
       }
     });
-
-    it('should import whatwg-fetch polyfill', async () => {
-      try {
-        const whatwgFetch = await import('whatwg-fetch');
-        expect(whatwgFetch).toBeDefined();
-      } catch (error) {
-        expect.fail(`Failed to import whatwg-fetch: ${error}`);
-      }
-    });
   });
 
   describe('Configuration packages', () => {

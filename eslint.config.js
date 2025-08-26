@@ -18,10 +18,8 @@ export default tseslint.config(
       '~/**',
       '.bun/**',
       '*.config.js',
-      '*.config.mjs',
       '.size-limit.js',
-      '**/*.test.ts',
-      '**/*.spec.ts',
+      'commitlint.config.mjs',
     ],
   },
 
@@ -137,9 +135,43 @@ export default tseslint.config(
     },
   },
 
+  // Relaxed rules for test files
+  {
+    files: ['**/*.{test,spec}.{js,ts,jsx,tsx}', 'tests/**/*', 'vitest.setup.tsx', 'wallaby.mjs'],
+    rules: {
+      // Relax strict rules for tests
+      '@typescript-eslint/no-explicit-any': 'off', // Tests often mock with any
+      '@typescript-eslint/no-unsafe-assignment': 'off', // Mock assignments
+      '@typescript-eslint/no-unsafe-call': 'off', // Mock function calls
+      '@typescript-eslint/no-unsafe-member-access': 'off', // Mock property access
+      '@typescript-eslint/no-unsafe-return': 'off', // Mock returns
+      '@typescript-eslint/no-unsafe-argument': 'off', // Mock arguments
+      '@typescript-eslint/restrict-template-expressions': 'off', // Test descriptions
+      '@typescript-eslint/no-unnecessary-condition': 'off', // Test assertions
+      '@typescript-eslint/strict-boolean-expressions': 'off', // Test conditions
+      '@typescript-eslint/no-empty-function': 'off', // Mock functions
+      '@typescript-eslint/no-confusing-void-expression': 'off', // Test shortcuts
+      '@typescript-eslint/ban-ts-comment': [
+        'error',
+        {
+          'ts-expect-error': 'allow-with-description',
+          'ts-ignore': false,
+          'ts-nocheck': false,
+          'ts-check': false,
+        },
+      ],
+      '@typescript-eslint/explicit-function-return-type': 'off', // Test functions
+      'max-lines-per-function': ['error', { max: 200 }], // Tests can be longer
+      'max-nested-callbacks': ['error', 5], // Tests have more nesting
+      'max-statements': ['error', 50], // Tests have more statements
+      'sonarjs/cognitive-complexity': ['error', 30], // Tests can be complex
+      'no-console': 'off', // Allow console.log in tests for debugging
+    },
+  },
+
   // Separate config for configuration files (no type checking)
   {
-    files: ['**/*.config.js', '**/*.config.mjs', 'eslint.config.js'],
+    files: ['**/*.config.js', '**/*.config.mjs', 'eslint.config.js', 'commitlint.config.mjs'],
     languageOptions: {
       parser: tseslint.parser,
       parserOptions: {
