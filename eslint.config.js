@@ -135,9 +135,15 @@ export default tseslint.config(
     },
   },
 
-  // Relaxed rules for test files
+  // Relaxed rules for test files and config
   {
-    files: ['**/*.{test,spec}.{js,ts,jsx,tsx}', 'tests/**/*', 'vitest.setup.tsx', 'wallaby.mjs'],
+    files: [
+      '**/*.{test,spec}.{js,ts,jsx,tsx}',
+      'tests/**/*',
+      'vitest.setup.tsx',
+      'vitest.config.ts',
+      'wallaby.mjs',
+    ],
     rules: {
       // Relax strict rules for tests
       '@typescript-eslint/no-explicit-any': 'off', // Tests often mock with any
