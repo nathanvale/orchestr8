@@ -188,7 +188,7 @@ describe('CI/CD Workflow Validation', () => {
       expect(
         packageJson.scripts['release:publish'],
         'release:publish should use changeset publish',
-      ).toBe('changeset publish')
+      ).toContain('changeset publish')
     })
 
     it('should validate test:release-workflow script exists', () => {

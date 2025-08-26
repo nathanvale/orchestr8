@@ -59,6 +59,12 @@ export interface LoggerOptions {
   pretty?: boolean
 
   /**
+   * Format nested objects with indented JSON (requires pretty: true)
+   * @default false
+   */
+  prettyJson?: boolean
+
+  /**
    * Additional fields to redact from logs
    * @default []
    */

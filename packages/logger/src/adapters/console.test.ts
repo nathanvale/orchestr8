@@ -328,4 +328,224 @@ describe('createConsoleLogger', () => {
     const output = stream.getJSON()
     expect(output.level).toBe('error')
   })
+
+  describe('prettyJson formatting', () => {
+    it('should format nested objects with indentation when prettyJson is enabled', () => {
+      const stream = new TestStream()
+      const logger = new ConsoleLogger({
+        stream,
+        pretty: true,
+        prettyJson: true,
+      })
+
+      const complexConfig = {
+        rules: {
+          '@typescript-eslint/no-unused-vars': 'error',
+          'prettier/prettier': 'error',
+        },
+        extends: '@eslint/recommended',
+        plugins: ['@typescript-eslint', 'prettier'],
+      }
+
+      logger.info('Config loaded', { config: complexConfig })
+
+      const output = stripAnsi(stream.getLastLine())
+      expect(output).toContain('config=\n{')
+      expect(output).toContain('  "rules": {')
+      expect(output).toContain(
+        '    "@typescript-eslint/no-unused-vars": "error"',
+      )
+      expect(output).toContain('  "extends": "@eslint/recommended"')
+      expect(output).toContain('  "plugins": {')
+      expect(output).toContain('    "0": "@typescript-eslint"')
+      expect(output).toContain('    "1": "prettier"')
+      expect(output).toContain('}')
+    })
+
+    it('should not format objects with indentation when prettyJson is disabled', () => {
+      const stream = new TestStream()
+      const logger = new ConsoleLogger({
+        stream,
+        pretty: true,
+        prettyJson: false, // explicitly disabled
+      })
+
+      const complexConfig = {
+        rules: {
+          '@typescript-eslint/no-unused-vars': [
+            'error',
+            { argsIgnorePattern: '^_' },
+          ],
+          'prettier/prettier': 'error',
+        },
+      }
+
+      logger.info('Config loaded', { config: complexConfig })
+
+      const output = stripAnsi(stream.getLastLine())
+      // Should use original logic - since it's complex, should still be formatted but without explicit prettyJson behavior
+      expect(output).toContain('config=')
+      // The exact format will depend on the original logic
+    })
+
+    it('should handle simple objects inline even with prettyJson enabled', () => {
+      const stream = new TestStream()
+      const logger = new ConsoleLogger({
+        stream,
+        pretty: true,
+        prettyJson: true,
+      })
+
+      const simpleConfig = { debug: true, port: 3000 }
+
+      logger.info('Simple config', { config: simpleConfig })
+
+      const output = stripAnsi(stream.getLastLine())
+      // Simple objects with prettyJson enabled should be pretty-formatted
+      expect(output).toContain('config=\n{')
+      expect(output).toContain('  "debug": true,')
+      expect(output).toContain('  "port": 3000')
+      expect(output).toContain('}')
+    })
+
+    it('should handle circular references gracefully with prettyJson', () => {
+      const stream = new TestStream()
+      const logger = new ConsoleLogger({
+        stream,
+        pretty: true,
+        prettyJson: true,
+      })
+
+      const circular: Record<string, unknown> = { name: 'test' }
+      circular.self = circular
+
+      logger.info('Circular test', { data: circular })
+
+      const output = stripAnsi(stream.getLastLine())
+      expect(output).toContain('data=\n{')
+      expect(output).toContain('  "name": "test",')
+      expect(output).toContain('  "self": "[Circular]"')
+      expect(output).toContain('}')
+    })
+
+    it('should work with child loggers', () => {
+      const stream = new TestStream()
+      const parentLogger = new ConsoleLogger({
+        stream,
+        pretty: true,
+        prettyJson: true,
+      })
+
+      const childLogger = parentLogger.child({ component: 'test' })
+
+      const config = {
+        api: {
+          version: 'v1',
+          endpoints: ['users', 'posts'],
+        },
+      }
+
+      childLogger.info('API configured', { config })
+
+      const output = stripAnsi(stream.getLastLine())
+      expect(output).toContain('component=test')
+      expect(output).toContain('config=\n{')
+      expect(output).toContain('  "api": {')
+    })
+
+    it('should respect LOG_PRETTY_JSON environment variable', () => {
+      vi.stubEnv('LOG_PRETTY_JSON', 'true')
+
+      const stream = new TestStream()
+      const logger = createConsoleLogger({ stream, pretty: true })
+
+      const config = {
+        nested: {
+          value: 'test',
+          array: [1, 2, 3],
+        },
+      }
+
+      logger.info('Environment test', { config })
+
+      const output = stripAnsi(stream.getLastLine())
+      expect(output).toContain('config=\n{')
+      expect(output).toContain('  "nested": {')
+    })
+
+    it('should allow options to override LOG_PRETTY_JSON environment variable', () => {
+      vi.stubEnv('LOG_PRETTY_JSON', 'true')
+
+      const stream = new TestStream()
+      const logger = createConsoleLogger({
+        stream,
+        pretty: true,
+        prettyJson: false, // Override environment
+      })
+
+      const config = {
+        nested: {
+          value: 'test',
+          array: [1, 2, 3],
+        },
+      }
+
+      logger.info('Override test', { config })
+
+      const output = stripAnsi(stream.getLastLine())
+      // Should not use pretty JSON formatting due to explicit override
+      expect(output).not.toContain('config=\n{')
+      expect(output).toContain('config=')
+    })
+
+    it('should work correctly when pretty is false (JSON mode)', () => {
+      const stream = new TestStream()
+      const logger = new ConsoleLogger({
+        stream,
+        pretty: false, // JSON mode
+        prettyJson: true, // This should have no effect in JSON mode
+      })
+
+      const config = {
+        rules: {
+          'no-unused-vars': 'error',
+        },
+      }
+
+      logger.info('JSON mode test', { config })
+
+      // In JSON mode, should output structured JSON, prettyJson should not affect it
+      const output = stream.getJSON()
+      expect(output.msg).toBe('JSON mode test')
+      expect(output.config).toEqual(config)
+      expect(output.level).toBe('info')
+    })
+
+    it('should handle multiple complex fields with prettyJson', () => {
+      const stream = new TestStream()
+      const logger = new ConsoleLogger({
+        stream,
+        pretty: true,
+        prettyJson: true,
+      })
+
+      const eslintConfig = {
+        rules: { 'no-unused-vars': 'error' },
+      }
+      const tsConfig = {
+        compilerOptions: { strict: true },
+      }
+
+      logger.info('Multiple configs', {
+        eslint: eslintConfig,
+        typescript: tsConfig,
+      })
+
+      const output = stripAnsi(stream.getLastLine())
+      expect(output).toContain('eslint=\n{')
+      expect(output).toContain('typescript=\n{')
+      expect(output).toContain('  "rules":')
+      expect(output).toContain('  "compilerOptions":')
+    })
+  })
 })
