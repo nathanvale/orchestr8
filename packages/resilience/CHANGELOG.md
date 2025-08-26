@@ -1,5 +1,20 @@
 # @orchestr8/resilience
 
+## 1.0.2
+
+### Patch Changes
+
+- [#15](https://github.com/nathanvale/orchestr8/pull/15) [`b76f513`](https://github.com/nathanvale/orchestr8/commit/b76f513b11dd73cc3e6937441f221415a01420f1) Thanks [@nathanvale](https://github.com/nathanvale)! - fix(resilience): handle object timeout policies correctly
+
+  Fixes TimeoutError displaying '[object Object]ms' when timeout policy
+  is an object with global/perStep properties. Now properly extracts
+  the numeric duration value from the object with defensive type handling.
+
+  The fix adds proper type guards to safely handle both number and object
+  formats for timeout policies, preventing confusing error messages.
+
+  Resolves first reported support ticket about error message clarity.
+
 ## 1.0.1
 
 ### Patch Changes
