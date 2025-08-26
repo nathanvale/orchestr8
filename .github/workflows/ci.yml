@@ -269,10 +269,12 @@ jobs:
           echo "## ⚡ Performance Benchmarks" > perf-results.md
           echo "" >> perf-results.md
           echo "### Build Performance" >> perf-results.md
-          bun run perf:build --export-markdown >> perf-results.md
+          bun run perf:build:markdown
+          cat perf-build.md >> perf-results.md
           echo "" >> perf-results.md
           echo "### Startup Performance" >> perf-results.md
-          bun run perf:startup --export-markdown >> perf-results.md
+          bun run perf:startup:markdown
+          cat perf-startup.md >> perf-results.md
 
       - name: Comment Performance Results
         uses: actions/github-script@v7
