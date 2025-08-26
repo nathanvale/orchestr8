@@ -214,6 +214,15 @@ export const mockApiError = (url: string, status = 500, message = 'Server Error'
 // React Testing Library configuration
 import '@testing-library/jest-dom/vitest'; // Add jest-dom matchers
 
+// Add type references for global test utilities
+declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
+  namespace Vi {
+    // eslint-disable-next-line @typescript-eslint/no-empty-object-type
+    interface JestAssertion<T = any> extends jest.Matchers<void, T> {}
+  }
+}
+
 // Custom render function for React components
 import { render as rtlRender, type RenderOptions } from '@testing-library/react';
 import type { ReactElement } from 'react';
