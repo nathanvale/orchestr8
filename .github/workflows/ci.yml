@@ -38,6 +38,11 @@ jobs:
         with:
           bun-version: ${{ env.BUN_VERSION }}
 
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
       - name: Cache Dependencies
         uses: actions/cache@v4
         id: cache
@@ -47,13 +52,15 @@ jobs:
             node_modules
             .eslintcache
             .prettiercache
-          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lockb') }}
+          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
           restore-keys: |
             ${{ runner.os }}-bun-
 
       - name: Install Dependencies
         if: steps.cache.outputs.cache-hit != 'true'
         run: bun install --frozen-lockfile
+        env:
+          NODE_ENV: development
 
       - name: Lint
         run: bun run lint:check
@@ -62,7 +69,7 @@ jobs:
         run: bun run format:check
 
       - name: Type Check
-        run: bun run typecheck
+        run: npx tsc --noEmit -p tsconfig.build.json
 
       - name: Build
         run: bun run build
@@ -95,19 +102,28 @@ jobs:
         with:
           bun-version: ${{ matrix.bun-version }}
 
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
       - name: Cache Dependencies
         uses: actions/cache@v4
         with:
           path: |
             ~/.bun/cache
             node_modules
-          key: ${{ runner.os }}-bun-test-${{ matrix.bun-version }}-${{ hashFiles('bun.lockb') }}
+          key: ${{ runner.os }}-bun-test-${{ matrix.bun-version }}-${{ hashFiles('bun.lock') }}
 
       - name: Install Dependencies
         run: bun install --frozen-lockfile
+        env:
+          NODE_ENV: development
 
       - name: Run Tests
-        run: bun run test:ci
+        run: npx vitest run --reporter=dot
+        env:
+          NODE_ENV: development
 
       - name: Upload Coverage
         if: matrix.os == 'ubuntu-latest' && matrix.bun-version == '1.1.38'
@@ -135,6 +151,8 @@ jobs:
 
       - name: Install Dependencies
         run: bun install --frozen-lockfile
+        env:
+          NODE_ENV: development
 
       - name: Audit Dependencies
         run: |
@@ -199,6 +217,8 @@ jobs:
 
       - name: Install Dependencies
         run: bun install --frozen-lockfile
+        env:
+          NODE_ENV: development
 
       - name: Build and Analyze
         run: |
@@ -258,6 +278,8 @@ jobs:
 
       - name: Install Dependencies
         run: bun install --frozen-lockfile
+        env:
+          NODE_ENV: development
 
       - name: Install Hyperfine
         run: |

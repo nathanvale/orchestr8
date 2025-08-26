@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "moduleResolution": "bundler",
+    "module": "ESNext",
+    "types": ["bun-types", "vitest/globals"]
+  },
+  "include": ["src/**/*", "tests/**/*", "types/**/*", "vitest.config.ts", "vitest.setup.tsx", "wallaby.mjs"],
+  "exclude": ["node_modules", "dist", "build", "coverage", ".turbo", "**/.bun/**"]
+}
