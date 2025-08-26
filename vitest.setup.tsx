@@ -102,14 +102,58 @@ beforeEach(() => {
 afterEach(() => {
   // Reset any request handlers that may have been added during tests
   server.resetHandlers();
+
+  // Clear all timers and mocks (only if timers are mocked)
+  if (vi.isFakeTimers?.()) {
+    vi.runOnlyPendingTimers();
+  }
+  vi.clearAllTimers();
+  vi.unstubAllEnvs();
+  vi.unstubAllGlobals();
+
+  // Clean up DOM if using happy-dom
+  if (typeof document !== 'undefined') {
+    document.body.innerHTML = '';
+    document.head.innerHTML = '';
+  }
+
+  // Force garbage collection if available
+  if (global.gc) {
+    global.gc();
+  }
 });
 
-afterAll(() => {
-  // Clean up MSW server
-  server.close();
+afterAll(async () => {
+  // Clean up MSW server with proper async handling
+  await new Promise<void>((resolve) => {
+    const cleanup = () => {
+      try {
+        server.close();
+        resolve();
+      } catch {
+        // Server might already be closed, continue cleanup
+        resolve();
+      }
+    };
+
+    // Give active requests time to complete
+    setTimeout(cleanup, 100);
+  });
 
   // Restore all mocks
   vi.restoreAllMocks();
+
+  // Clear all timers one final time
+  vi.clearAllTimers();
+  vi.useRealTimers();
+
+  // Restore console methods
+  if (console.warn && typeof console.warn.mockRestore === 'function') {
+    console.warn.mockRestore();
+  }
+  if (console.error && typeof console.error.mockRestore === 'function') {
+    console.error.mockRestore();
+  }
 });
 
 // Utility functions for test setup

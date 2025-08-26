@@ -32,7 +32,7 @@
     "start": "bun dist/index.js",
     "test": "vitest run",
     "test:changed": "vitest run --changed",
-    "test:ci": "vitest run --coverage --reporter=verbose --reporter=junit --outputFile=junit.xml",
+    "test:ci": "vitest run --coverage --reporter=verbose && vitest run --reporter=junit --outputFile=./coverage/junit.xml --run",
     "test:coverage": "vitest run --coverage",
     "test:coverage:open": "vitest run --coverage && open coverage/index.html",
     "test:coverage:watch": "vitest watch --coverage",

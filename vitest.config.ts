@@ -11,9 +11,9 @@ export default defineConfig({
     poolOptions: {
       forks: {
         singleFork: false,
-        isolate: false, // Better performance with Bun
+        isolate: true, // Enable isolation to prevent shared state cleanup issues
         minForks: 1,
-        maxForks: process.env['CI'] === 'true' ? 4 : 8, // Limit in CI, use 8 cores locally
+        maxForks: process.env['CI'] === 'true' ? 2 : 4, // Reduce forks in CI for stability
       },
     },
 
@@ -80,7 +80,7 @@ export default defineConfig({
     // Timeout configurations
     testTimeout: 10000, // 10 seconds for individual tests
     hookTimeout: 10000, // 10 seconds for hooks
-    teardownTimeout: 5000, // 5 seconds for teardown
+    teardownTimeout: 15000, // 15 seconds for teardown to allow proper cleanup
 
     // Reporter configuration
     reporters: process.env['CI'] === 'true' ? ['verbose', 'junit'] : ['verbose'],
