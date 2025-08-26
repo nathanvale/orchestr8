@@ -113,6 +113,28 @@ export default defineConfig({
     },
   },
 
+  // Define externals to prevent Vite from trying to bundle Bun-specific modules
+  define: {
+    'import.meta.vitest': 'undefined',
+  },
+
+  // External dependencies that should not be bundled
+  build: {
+    rollupOptions: {
+      external: ['bun'],
+    },
+  },
+
+  // Optimizations to prevent Vite from trying to bundle certain modules
+  optimizeDeps: {
+    exclude: ['bun'],
+  },
+
+  // SSR configuration to treat Bun as external
+  ssr: {
+    external: ['bun'],
+  },
+
   // ESBuild configuration for TypeScript processing
   esbuild: {
     target: 'esnext',

@@ -4,15 +4,41 @@ import { setupServer } from 'msw/node';
 import { afterAll, afterEach, beforeAll, beforeEach, vi } from 'vitest';
 
 // Mock the 'bun' module for tests that import it
-vi.mock('bun', () => ({
-  serve: vi.fn(() => ({
+// This must be done before any other imports to prevent Vite resolution issues
+// eslint-disable-next-line @typescript-eslint/require-await
+vi.mock('bun', async () => {
+  const mockServer = {
     port: 3000,
     hostname: 'localhost',
     stop: vi.fn(),
-  })),
-  file: vi.fn(),
-  write: vi.fn(),
-}));
+    reload: vi.fn(),
+    ref: vi.fn(),
+    unref: vi.fn(),
+  };
+
+  return {
+    serve: vi.fn(() => mockServer),
+    file: vi.fn((path: string) => ({
+      exists: vi.fn(() => Promise.resolve(true)),
+      text: vi.fn(() => Promise.resolve('mock file content')),
+      json: vi.fn(() => Promise.resolve({})),
+      arrayBuffer: vi.fn(() => Promise.resolve(new ArrayBuffer(0))),
+      stream: vi.fn(() => Promise.resolve(new ReadableStream())),
+      size: 0,
+      type: 'text/plain',
+      name: path,
+    })),
+    write: vi.fn(() => Promise.resolve(0)),
+    env: process.env,
+    argv: ['bun', 'test'],
+    version: '1.1.38',
+    revision: 'mock-revision',
+    which: vi.fn(() => '/usr/local/bin/bun'),
+    build: vi.fn(() => Promise.resolve({ success: true, outputs: [] })),
+    plugin: vi.fn(),
+    default: {},
+  };
+});
 
 // Mock handlers for common API patterns
 const defaultHandlers: HttpHandler[] = [
