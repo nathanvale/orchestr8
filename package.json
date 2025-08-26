@@ -7,8 +7,8 @@
   "main": "src/index.ts",
   "scripts": {
     "build": "bun build src/index.ts --outdir=dist --target=bun",
-    "build:analyze": "bun build src/index.ts --outdir=dist --analyze",
-    "build:watch": "bun build src/index.ts --outdir=dist --watch",
+    "build:analyze": "bun build src/index.ts --outdir=dist --target=bun --analyze",
+    "build:watch": "bun build src/index.ts --outdir=dist --target=bun --watch",
     "bundle:size": "bunx size-limit",
     "commit": "git-cz",
     "cz": "git-cz",
