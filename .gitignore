@@ -48,6 +48,9 @@ playwright/.cache/
 .fleet/
 .history/
 
+# Claude Code
+.claude/settings.local.json
+
 # System files
 .DS_Store
 .DS_Store?
