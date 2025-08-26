@@ -1,26 +1,30 @@
 # Spec Tasks
 
-These are the tasks to be completed for the spec detailed in @.agent-os/specs/2025-08-26-vitest-migration/spec.md
+These are the tasks to be completed for the spec detailed in
+@.agent-os/specs/2025-08-26-vitest-migration/spec.md
 
-> Created: 2025-08-26
-> Status: Ready for Implementation
+> Created: 2025-08-26 Status: Ready for Implementation
 
 ## Tasks
 
-- [ ] 1. Install and Configure Vitest Dependencies
-  - [ ] 1.1 Write tests for dependency installation validation
-  - [ ] 1.2 Install Vitest and related packages (vitest, @vitest/ui, @vitest/coverage-v8)
-  - [ ] 1.3 Install testing utilities (happy-dom, @testing-library/react, msw, whatwg-fetch)
-  - [ ] 1.4 Install configuration packages (vite-tsconfig-paths)
-  - [ ] 1.5 Verify all dependencies installed correctly with no peer dependency warnings
-  - [ ] 1.6 Verify all tests pass
+- [x] 1. Install and Configure Vitest Dependencies
+  - [x] 1.1 Write tests for dependency installation validation
+  - [x] 1.2 Install Vitest and related packages (vitest, @vitest/ui,
+        @vitest/coverage-v8)
+  - [x] 1.3 Install testing utilities (happy-dom, @testing-library/react, msw,
+        whatwg-fetch)
+  - [x] 1.4 Install configuration packages (vite-tsconfig-paths)
+  - [x] 1.5 Verify all dependencies installed correctly with no peer dependency
+        warnings
+  - [x] 1.6 Verify all tests pass
 
 - [ ] 2. Create Vitest Configuration and Setup Files
   - [ ] 2.1 Write tests for configuration validation
   - [ ] 2.2 Create vitest.config.ts with optimized settings for Bun runtime
   - [ ] 2.3 Create tests/vitest.setup.ts with MSW server configuration
   - [ ] 2.4 Create tests/mocks/handlers.ts with example MSW handlers
-  - [ ] 2.5 Create tests/utils/test-utils.ts with React Testing Library custom render
+  - [ ] 2.5 Create tests/utils/test-utils.ts with React Testing Library custom
+        render
   - [ ] 2.6 Configure module resolution for MSW compatibility
   - [ ] 2.7 Verify all tests pass
 

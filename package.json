@@ -31,15 +31,15 @@
     "release:version": "bunx changeset version",
     "start": "bun dist/index.js",
     "test": "vitest run",
-    "test:watch": "vitest watch",
-    "test:ui": "vitest ui",
-    "test:coverage": "vitest run --coverage",
-    "test:coverage:watch": "vitest watch --coverage",
-    "test:coverage:open": "vitest run --coverage && open coverage/index.html",
     "test:changed": "vitest run --changed",
-    "test:related": "vitest run --changed HEAD~1",
-    "test:debug": "vitest run --reporter=verbose --no-coverage --run",
     "test:ci": "vitest run --coverage --reporter=verbose --reporter=junit --outputFile=junit.xml",
+    "test:coverage": "vitest run --coverage",
+    "test:coverage:open": "vitest run --coverage && open coverage/index.html",
+    "test:coverage:watch": "vitest watch --coverage",
+    "test:debug": "vitest run --reporter=verbose --no-coverage --run",
+    "test:related": "vitest run --changed HEAD~1",
+    "test:ui": "vitest ui",
+    "test:watch": "vitest watch",
     "typecheck": "tsc --noEmit",
     "typecheck:watch": "tsc --noEmit --watch",
     "validate": "bun run lint:check && bun run format:check && bun run typecheck && bun run test:ci"
@@ -60,6 +60,10 @@
     "commitizen": {
       "path": "cz-git"
     }
+  },
+  "dependencies": {
+    "react": "19.1.1",
+    "react-dom": "19.1.1"
   },
   "devDependencies": {
     "@changesets/changelog-github": "^0.5.1",
@@ -102,14 +106,11 @@
     "typescript": "^5.7.3",
     "typescript-eslint": "8.41.0",
     "vite-tsconfig-paths": "5.1.4",
-    "vitest": "3.2.4"
+    "vitest": "3.2.4",
+    "whatwg-fetch": "^3.6.20"
   },
   "publishConfig": {
     "access": "public",
     "provenance": true
-  },
-  "dependencies": {
-    "react": "19.1.1",
-    "react-dom": "19.1.1"
   }
 }
