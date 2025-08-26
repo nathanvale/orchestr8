@@ -52,7 +52,7 @@
     "incremental": true,
     "tsBuildInfoFile": ".tsbuildinfo",
 
-    "types": ["bun-types", "vitest/globals", "@testing-library/jest-dom"],
+    "types": ["bun-types"],
 
     "baseUrl": ".",
     "paths": {
