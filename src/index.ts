@@ -1,6 +1,6 @@
 import { serve } from 'bun';
 
-export function hello() {
+export function hello(): string {
   return 'Hello world!';
 }
 

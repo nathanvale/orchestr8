@@ -9,24 +9,39 @@
       "runtimeExecutable": "bun",
       "runtimeArgs": ["--inspect"],
       "console": "integratedTerminal",
-      "cwd": "${workspaceFolder}",
+      "internalConsoleOptions": "neverOpen",
+      "skipFiles": ["<node_internals>/**"],
+      "outFiles": ["${workspaceFolder}/dist/**/*.js"],
       "env": {
         "NODE_ENV": "development"
-      },
-      "sourceMaps": true,
-      "outFiles": ["${workspaceFolder}/dist/**/*.js"]
+      }
     },
     {
       "name": "Debug Bun Tests",
       "type": "node",
       "request": "launch",
-      "program": "${workspaceFolder}/test",
+      "program": "${workspaceFolder}/src/index.test.ts",
       "runtimeExecutable": "bun",
       "runtimeArgs": ["test", "--inspect"],
       "console": "integratedTerminal",
-      "cwd": "${workspaceFolder}",
+      "internalConsoleOptions": "neverOpen",
+      "skipFiles": ["<node_internals>/**"],
       "env": {
         "NODE_ENV": "test"
+      }
+    },
+    {
+      "name": "Debug Current File",
+      "type": "node",
+      "request": "launch",
+      "program": "${file}",
+      "runtimeExecutable": "bun",
+      "runtimeArgs": ["--inspect"],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "skipFiles": ["<node_internals>/**"],
+      "env": {
+        "NODE_ENV": "development"
       }
     }
   ]

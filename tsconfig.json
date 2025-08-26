@@ -63,8 +63,8 @@
       "@config/*": ["./config/*"]
     }
   },
-  "include": ["src/**/*", "tests/**/*", "types/**/*", "*.config.ts", "*.config.js"],
-  "exclude": ["node_modules", "dist", "build", "coverage", ".turbo", "**/*.spec.ts", "**/*.test.ts"],
+  "include": ["src/**/*", "tests/**/*", "types/**/*"],
+  "exclude": ["node_modules", "dist", "build", "coverage", ".turbo", "**/.bun/**", "**/*.test.ts", "**/*.spec.ts"],
   "ts-node": {
     "esm": true,
     "experimentalSpecifierResolution": "node",
