@@ -43,6 +43,7 @@ jobs:
         run: pnpm test:ci
 
       - name: Create Release Pull Request or Publish
+        id: changesets
         uses: changesets/action@v1
         with:
           publish: pnpm release:publish
@@ -51,3 +52,45 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Verify Publishing Success
+        if: steps.changesets.outputs.published == 'true'
+        run: |
+          echo "✅ Packages were published successfully!"
+          echo "Published packages: ${{ steps.changesets.outputs.publishedPackages }}"
+
+      - name: Verify Packages on NPM Registry
+        if: steps.changesets.outputs.published == 'true'
+        run: |
+          echo "🔍 Verifying published packages are available on npm registry..."
+          sleep 10  # Wait for npm registry propagation
+
+          # Parse published packages JSON and verify each one
+          echo '${{ steps.changesets.outputs.publishedPackages }}' | jq -r '.[] | "\(.name)@\(.version)"' | while read package; do
+            echo "Checking $package..."
+            if npm view "$package" > /dev/null 2>&1; then
+              echo "✅ $package is available on npm registry"
+            else
+              echo "❌ $package is NOT available on npm registry"
+              exit 1
+            fi
+          done
+
+      - name: Check NPM Token (Debug)
+        if: failure()
+        run: |
+          echo "❌ Release step failed. Checking NPM token configuration..."
+          if [ -z "$NPM_TOKEN" ]; then
+            echo "❌ NPM_TOKEN is not set!"
+          else
+            echo "✅ NPM_TOKEN is configured"
+          fi
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Notify on Publishing Failure
+        if: failure()
+        run: |
+          echo "🚨 PUBLISHING FAILED - Manual intervention required!"
+          echo "Check the logs above for specific error details."
+          echo "You may need to manually publish using: pnpm release:publish"
