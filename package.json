@@ -41,7 +41,7 @@
     "changeset:dry-run": "node scripts/auto-changeset.mjs --dry-run --verbose",
     "commit:lint": "commitlint --edit",
     "commit:help": "echo 'Format: type(scope): description\nTypes: feat, fix, docs, style, refactor, perf, test, build, ci, chore\nScopes: core, schema, logger, resilience, cli, agent-base, testing, ci, deps, release, docs, examples, scripts'",
-    "release:publish": "changeset publish",
+    "release:publish": "changeset publish && echo '✅ Successfully published packages!' || (echo '❌ Publishing failed!' && exit 1)",
     "test:release-workflow": "node scripts/test-release-workflow.js"
   },
   "devDependencies": {
