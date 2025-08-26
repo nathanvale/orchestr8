@@ -463,8 +463,28 @@ export class ProductionResilienceAdapter implements ResilienceAdapter {
     }
 
     if (policy.timeout) {
-      normalized.timeout = {
-        duration: policy.timeout,
+      // Handle both number and object formats (defensive against incorrect types)
+      if (typeof policy.timeout === 'number') {
+        normalized.timeout = {
+          duration: policy.timeout,
+        }
+      } else if (
+        typeof policy.timeout === 'object' &&
+        policy.timeout !== null
+      ) {
+        // Handle legacy object format with type assertion
+        const timeoutObj = policy.timeout as unknown as {
+          perStep?: number
+          global?: number
+        }
+        normalized.timeout = {
+          duration: timeoutObj.perStep || timeoutObj.global || 30000,
+        }
+      } else {
+        // Fallback for any other unexpected format
+        normalized.timeout = {
+          duration: 30000,
+        }
       }
     }
 
