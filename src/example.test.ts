@@ -22,7 +22,7 @@ describe('Vitest Setup Verification', () => {
     vi.useFakeTimers();
 
     const callback = vi.fn();
-    setTimeout(callback, 1000);
+    setTimeout(() => callback(), 1000);
 
     vi.advanceTimersByTime(1000);
 

@@ -116,7 +116,7 @@ describe('Vitest Migration Dependency Validation', () => {
       try {
         const eslintPluginVitest = await import('eslint-plugin-vitest');
         expect(eslintPluginVitest).toBeDefined();
-        expect(eslintPluginVitest.default || eslintPluginVitest).toBeDefined();
+        expect(eslintPluginVitest.default ?? eslintPluginVitest).toBeDefined();
       } catch (error) {
         expect.fail(`Failed to import eslint-plugin-vitest: ${error}`);
       }

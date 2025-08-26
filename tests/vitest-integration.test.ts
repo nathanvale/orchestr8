@@ -84,7 +84,7 @@ describe('Vitest Integration Test', () => {
     vi.useFakeTimers();
 
     const callback = vi.fn();
-    setTimeout(callback, 1000);
+    setTimeout(() => callback(), 1000);
 
     expect(callback).not.toHaveBeenCalled();
 

@@ -107,7 +107,7 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Run Tests
-        run: bun test --coverage --bail
+        run: bun run test:ci
 
       - name: Upload Coverage
         if: matrix.os == 'ubuntu-latest' && matrix.bun-version == '1.1.38'
@@ -273,7 +273,7 @@ jobs:
           cat perf-build.md >> perf-results.md
           echo "" >> perf-results.md
           echo "### Test Performance" >> perf-results.md
-          hyperfine --warmup 2 'bun test' --export-markdown perf-test.md
+          hyperfine --warmup 2 'bun run test' --export-markdown perf-test.md
           cat perf-test.md >> perf-results.md
 
       - name: Comment Performance Results
