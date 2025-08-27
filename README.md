@@ -1,10 +1,10 @@
 # Bun + Changesets + Commitizen Template
 
-> A GitHub‑ready template that uses **Bun for everything** (dev, build, test),
-> **Commitizen + Conventional Commits** for clean history, **Commitlint +
-> Husky** for local enforcement, and **Changesets** for versioning and automated
-> release PRs. Comes with **GitHub Actions** for CI & publishing with npm
-> provenance.
+> A GitHub‑ready template that uses **Bun for dev & build** and **Vitest (not
+> Bun test) for testing**, **Commitizen + Conventional Commits** for clean
+> history, **Commitlint + Husky** for local enforcement, and **Changesets** for
+> versioning and automated release PRs. Comes with **GitHub Actions** for CI &
+> publishing with npm provenance.
 
 [![Use this template](https://img.shields.io/badge/Use%20this%20template-2ea44f?style=for-the-badge)](https://github.com/<USER_OR_ORG>/<REPO_NAME>/generate)
 
@@ -47,7 +47,8 @@
 
 ## Features
 
-- **Bun‑native** scripts for dev/build/test.
+- **Bun for dev & build, Vitest for testing** (fast feedback, rich matcher &
+  mocking APIs).
 - **Husky** hooks: `pre-commit` (lint/format/typecheck) & `commit-msg`
   (commitlint).
 - **Commitizen** (`git cz`) with **cz-git** prompts.
@@ -114,17 +115,24 @@ package.json       # starter (Bun-first), private by default
 {
   "scripts": {
     "dev": "bun --watch src/index.ts",
-    "build": "bun build src/index.ts --outdir=dist --target=node --format=esm,cjs",
+    "build": "bun build src/index.ts --outdir=dist --target=bun",
     "start": "bun dist/index.js",
-    "test": "bun test",
+    "test": "vitest",
+    "test:watch": "vitest watch",
+    "test:ci": "vitest run --coverage --reporter=dot --reporter=junit",
+    "test:coverage": "vitest run --coverage",
+    "test:coverage:watch": "vitest watch --coverage",
+    "test:debug": "vitest run --reporter=verbose --no-coverage --run",
+    "test:ui": "vitest ui",
+    "test:changed": "vitest --changed --run",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "lint:check": "eslint . --cache --max-warnings 0",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "typecheck": "tsc --noEmit",
-    "cz": "git-cz",
+    "typecheck": "tsc --noEmit -p tsconfig.build.json",
     "commit": "git-cz",
+    "cz": "git-cz",
     "release": "bunx changeset",
     "release:version": "bunx changeset version",
     "release:publish": "bunx changeset publish",
@@ -132,8 +140,9 @@ package.json       # starter (Bun-first), private by default
 }
 ```
 
-- Use **`bun run commit`** to open the Commitizen wizard.
+- Use **`bun run commit`** for the Commitizen wizard.
 - Use **`bun run release`** to create a changeset (choose patch/minor/major).
+- Use **`bun run test:changed`** for ultra-fast changed-file feedback.
 
 ---
 
@@ -219,7 +228,8 @@ loading for `bun run` commands. Keep it minimal and team-friendly.
 
 ### ✅ Pros
 
-- **One toolchain** (Bun) for dev/build/test → less config drift, faster CI.
+- **Focused toolchain**: Bun for dev/build + Vitest for testing → fast
+  iterations & minimal config drift.
 - **Commit hygiene** via Commitizen + commitlint → clean history &
   auto‑generated changelogs read better.
 - **Automated release**: Changesets PR → reviewable version bumps & changelog →
@@ -347,9 +357,9 @@ A: The template uses `@changesets/changelog-github`, which writes entries into
 A: For most cases no, but if your code must be executed under Node by consumers
 (libraries), add a Node job in CI to validate.
 
-**Q: Can I add Playwright or Vitest instead of Bun test?**  
-A: Yes. You can run `bun x vitest` or `bun x playwright test` alongside
-`bun test` if specific features are needed.
+**Q: Can I add Playwright for browser E2E?**  
+A: Yes. Add `bunx playwright test` (keep unit tests in Vitest). They coexist;
+consider a separate `e2e` folder & workflow.
 
 ---
 

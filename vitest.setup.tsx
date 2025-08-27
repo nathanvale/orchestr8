@@ -1,6 +1,11 @@
+import '@testing-library/jest-dom/vitest';
+import { render as rtlRender, type RenderOptions } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import type { HttpHandler } from 'msw';
 import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
+import type { ReactElement } from 'react';
+import React from 'react';
 import { afterAll, afterEach, beforeAll, beforeEach, vi } from 'vitest';
 
 // Mock the 'bun' module for tests that import it
@@ -224,22 +229,7 @@ export const mockApiError = (url: string, status = 500, message = 'Server Error'
   );
 };
 
-// React Testing Library configuration
-import '@testing-library/jest-dom/vitest'; // Add jest-dom matchers
-
-// Add type references for global test utilities
-declare global {
-  // eslint-disable-next-line @typescript-eslint/no-namespace
-  namespace Vi {
-    // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-    interface JestAssertion<T = any> extends jest.Matchers<void, T> {}
-  }
-}
-
-// Custom render function for React components
-import { render as rtlRender, type RenderOptions } from '@testing-library/react';
-import type { ReactElement } from 'react';
-import React from 'react';
+// React Testing Library configuration already imported above
 
 // Wrapper component for providers (customize as needed)
 const AllTheProviders = ({ children }: { children: React.ReactNode }): React.ReactElement => {
@@ -252,6 +242,29 @@ export const render = (
   options?: Omit<RenderOptions, 'wrapper'>,
 ): ReturnType<typeof rtlRender> => rtlRender(ui, { wrapper: AllTheProviders, ...options });
 
-// Export all testing utilities
+// Export all testing utilities (no re-export of userEvent; import directly where needed)
 export * from '@testing-library/react';
-export { userEvent } from '@testing-library/user-event';
+// User event convenience instance (idempotent; local to each test run)
+export const user = (userEvent as any)?.setup ? (userEvent as any).setup() : userEvent;
+
+// Async wait helper (microtask-ish flush)
+export const waitForAsync = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+// Custom matchers (example matcher retained; extend here as needed)
+export const customMatchers = {
+  toBeWithinRange(received: number, floor: number, ceiling: number) {
+    const pass = received >= floor && received <= ceiling;
+    return {
+      pass,
+      message: () =>
+        pass
+          ? `expected ${String(received)} not to be within range ${String(floor)} - ${String(ceiling)}`
+          : `expected ${String(received)} to be within range ${String(floor)} - ${String(ceiling)}`,
+    };
+  },
+};
+
+// Register matchers once (expect is global in Vitest)
+if (typeof (globalThis as any).expect?.extend === 'function') {
+  (globalThis as any).expect.extend(customMatchers);
+}

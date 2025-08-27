@@ -52,15 +52,19 @@
     "incremental": true,
     "tsBuildInfoFile": ".tsbuildinfo",
 
-    "types": ["bun-types"],
+    // Limit ambient type inclusions explicitly; include test/runtime globals needed outside build output.
+    "types": [
+      "bun-types",
+      "node", // provides process, global, fs, etc.
+      "vitest/globals", // describe/it/expect globals for test setup files
+      "react" // JSX runtime/types so fragments in setup compile
+    ],
 
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
-      "@tests/*": ["./tests/*"],
-      "@types/*": ["./types/*"],
-      "@utils/*": ["./src/utils/*"],
-      "@config/*": ["./config/*"]
+      "@tests/*": ["./tests/*"]
+      // Removed unused @types, @utils and @config paths (can reintroduce when directories exist)
     }
   },
   "include": ["src/**/*", "types/**/*", "tests/**/*", "vitest.config.ts", "vitest.setup.tsx"],

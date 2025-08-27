@@ -23,21 +23,17 @@ disableManifest = false
 save = true
 print = "yarn"                # Print lockfile in yarn format for readability
 
-[test]
-# Testing Configuration
-coverage = false
-coverageReporter = ["text", "lcov"]
-coverageDirectory = "./coverage"
-coverageThreshold = {
-  lines = 30,
-  functions = 50,
-  branches = 0,
-  statements = 30
-}
-clearConsole = true           # Clear console before each test run
-printConsole = true           # Print console output during tests
-bail = false                  # Don't stop on first failure
-timeout = 5000               # 5 second default timeout
+# NOTE: Using Vitest for all testing now; Bun's native [test] section kept for historical reference
+#       Remove in a future major revision once migration is fully settled.
+# [test]
+# coverage = false
+# coverageReporter = ["text", "lcov"]
+# coverageDirectory = "./coverage"
+# coverageThreshold = { lines = 30, functions = 50, branches = 0, statements = 30 }
+# clearConsole = true
+# printConsole = true
+# bail = false
+# timeout = 5000
 # preload = ["./tests/setup.ts"]
 # root = "./tests"
 
@@ -72,9 +68,8 @@ inspect = {
   break = false
 }
 
-[telemetry]
 # Telemetry Configuration
-enabled = false              # Respect user privacy
+telemetry = false              # Respect user privacy
 
 # ADHD-Specific Optimizations
 [dev]

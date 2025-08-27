@@ -2,26 +2,47 @@ export function hello(): string {
   return 'Hello world!';
 }
 
-// Only start server if this is the main module (not being imported for tests)
-if (import.meta.main) {
-  // Conditionally import Bun only in production to avoid test environment conflicts
-  if (typeof process === 'undefined' || process.env.NODE_ENV !== 'test') {
-    // Use string-based import to prevent Vite's static analysis from failing
-    // This avoids "Failed to resolve import 'bun'" errors during testing
-    const bunModule = 'bun';
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    const { serve } = await import(bunModule);
+/**
+ * Internal server creation logic (factored for testability).
+ * Returns the mock server object when Bun is mocked in tests.
+ */
+interface BunLikeServer {
+  port: number;
+  hostname?: string;
+  stop?: () => void;
+}
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-    serve({
-      port: 3000,
-      fetch(_req: Request) {
-        return new Response('👋 Hello from Bun + Changesets + Commitizen template!', {
-          headers: { 'Content-Type': 'text/plain' },
-        });
-      },
-    });
+type ServeFn = (options: { port: number; fetch: (req: Request) => Response }) => BunLikeServer;
 
-    console.info('🚀 Server running at http://localhost:3000');
-  }
+export async function startServer(options: { port?: number } = {}): Promise<BunLikeServer> {
+  const bunModule = 'bun';
+  const imported: { serve: ServeFn } = (await import(bunModule)) as unknown as { serve: ServeFn };
+  const server = imported.serve({
+    port: options.port ?? 3000,
+    fetch(_req: Request) {
+      return new Response('👋 Hello from Bun + Changesets + Commitizen template!', {
+        headers: { 'Content-Type': 'text/plain' },
+      });
+    },
+  });
+  console.info('🚀 Server running at http://localhost:3000');
+  return server;
+}
+
+/** Decide whether we should auto-start the server (avoids doing so under test). */
+export function shouldAutoStart(nodeEnv: string | undefined, isMain: boolean): boolean {
+  if (!isMain) return false;
+  // Don't auto start during tests
+  if (nodeEnv === 'test') return false;
+  return true;
+}
+
+// Only start automatically when this is the entrypoint and not in test env
+if (
+  shouldAutoStart(
+    typeof process !== 'undefined' ? process.env.NODE_ENV : undefined,
+    import.meta.main,
+  )
+) {
+  await startServer();
 }

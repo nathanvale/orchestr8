@@ -65,10 +65,12 @@
 
 ### Testing Framework
 
-- **Test Runner:** Bun native test runner
-- **Coverage:** Built-in coverage reporting
-- **E2E Testing:** Template supports Playwright integration
-- **Mocking:** Bun native mocking capabilities
+- **Test Runner:** Vitest (chosen over Bun test runner for richer ecosystem &
+  tooling)
+- **Environment:** happy-dom by default (opt-in jsdom via DOM_ENV=jsdom)
+- **Coverage:** V8 coverage via @vitest/coverage-v8
+- **E2E Testing:** Template supports adding Playwright separately
+- **Mocking:** Vitest `vi` APIs + MSW for network; selective Bun module mocking
 
 ### Release Management
 

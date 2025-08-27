@@ -2,14 +2,40 @@
   "name": "my-bun-project",
   "version": "0.1.0",
   "private": true,
-  "description": "New project scaffolded with Bun + Changesets + Commitizen template",
+  "description": "Bun-first TypeScript template with Changesets, Commitizen, Vitest (explicitly, not Bun test), MSW, strict lint & ADHD-optimized DX",
+  "homepage": "https://github.com/nathanvale/bun-changesets-template#readme",
+  "bugs": {
+    "url": "https://github.com/nathanvale/bun-changesets-template/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nathanvale/bun-changesets-template.git"
+  },
+  "sideEffects": false,
   "type": "module",
-  "main": "src/index.ts",
+  "exports": {
+    ".": {
+      "bun": "./dist/index.js",
+      "import": "./dist-node/index.js",
+      "types": "./dist-node/index.d.ts"
+    }
+  },
+  "main": "dist-node/index.js",
+  "types": "dist-node/index.d.ts",
+  "files": [
+    "dist/",
+    "dist-node/",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "bun build src/index.ts --outdir=dist --target=bun",
+    "build:all": "bun run build && bun run build:node",
     "build:analyze": "bun build src/index.ts --outdir=dist --target=bun --analyze",
+    "build:node": "tsc -p tsconfig.build.json --outDir dist-node",
     "build:watch": "bun build src/index.ts --outdir=dist --target=bun --watch",
     "bundle:size": "bunx size-limit",
+    "check": "bun run validate",
     "commit": "git-cz",
     "cz": "git-cz",
     "dev": "bun --watch src/index.ts",
@@ -26,18 +52,24 @@
     "perf:startup": "hyperfine --warmup 3 'bun run src/index.ts'",
     "perf:startup:markdown": "hyperfine --warmup 3 'bun run src/index.ts' --export-markdown perf-startup.md",
     "prepare": "husky",
+    "prepublishOnly": "bun run build:all && bun run test:ci",
     "release": "bunx changeset",
     "release:publish": "bunx changeset publish",
     "release:version": "bunx changeset version",
+    "security:audit": "bun audit || true",
+    "security:check": "bun run security:audit",
+    "security:fix": "bun audit fix",
+    "security:sbom": "bunx @cyclonedx/cdxgen -o sbom.json -t js .",
     "start": "bun dist/index.js",
-    "test": "npx vitest",
-    "test:ci": "npx vitest run --coverage --reporter=dot --reporter=junit",
-    "test:coverage": "npx vitest run --coverage",
-    "test:coverage:open": "npx vitest run --coverage && open coverage/index.html",
-    "test:coverage:watch": "npx vitest watch --coverage",
-    "test:debug": "npx vitest run --reporter=verbose --no-coverage --run",
-    "test:ui": "npx vitest ui",
-    "test:watch": "npx vitest watch",
+    "test": "vitest",
+    "test:changed": "vitest --changed --run",
+    "test:ci": "vitest run --coverage --reporter=dot --reporter=junit",
+    "test:coverage": "vitest run --coverage",
+    "test:coverage:open": "vitest run --coverage && open coverage/index.html",
+    "test:coverage:watch": "vitest watch --coverage",
+    "test:debug": "vitest run --reporter=verbose --no-coverage --run",
+    "test:ui": "vitest ui",
+    "test:watch": "vitest watch",
     "typecheck": "tsc --noEmit -p tsconfig.build.json",
     "typecheck:watch": "tsc --noEmit -p tsconfig.build.json --watch",
     "validate": "bun run lint:check && bun run format:check && bun run typecheck && bun run test:ci"
@@ -69,10 +101,6 @@
     "@commitlint/cli": "19.8.1",
     "@commitlint/config-conventional": "^19.8.1",
     "@eslint/js": "9.34.0",
-    "@rollup/rollup-darwin-arm64": "4.48.1",
-    "@rollup/rollup-darwin-x64": "4.48.1",
-    "@rollup/rollup-linux-x64-gnu": "4.48.1",
-    "@rollup/rollup-win32-x64-msvc": "4.48.1",
     "@size-limit/preset-app": "11.2.0",
     "@testing-library/jest-dom": "6.8.0",
     "@testing-library/react": "16.3.0",
@@ -102,12 +130,16 @@
     "prettier": "^3.4.2",
     "prettier-plugin-organize-imports": "4.2.0",
     "prettier-plugin-packagejson": "2.5.19",
+    "rollup": "4.48.1",
     "size-limit": "11.2.0",
     "typedoc": "0.28.11",
     "typescript": "^5.7.3",
     "typescript-eslint": "8.41.0",
     "vite-tsconfig-paths": "5.1.4",
     "vitest": "3.2.4"
+  },
+  "engines": {
+    "bun": ">=1.1.38"
   },
   "publishConfig": {
     "access": "public",

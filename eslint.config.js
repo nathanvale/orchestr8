@@ -20,7 +20,6 @@ export default tseslint.config(
       '.bun/**',
       '*.config.js',
       '.size-limit.js',
-      'commitlint.config.mjs',
     ],
   },
 

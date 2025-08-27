@@ -63,8 +63,12 @@ export const handlers = [
   // Paginated data
   http.get('/api/posts', ({ request }) => {
     const url = new URL(request.url);
-    const page = Number(url.searchParams.get('page') ?? 1);
-    const limit = Number(url.searchParams.get('limit') ?? 10);
+    const pageParam = Number(url.searchParams.get('page') ?? 1);
+    const limitParam = Number(url.searchParams.get('limit') ?? 10);
+
+    // Guard against invalid pagination parameters
+    const page = Number.isNaN(pageParam) || pageParam < 1 ? 1 : Math.floor(pageParam);
+    const limit = Number.isNaN(limitParam) || limitParam <= 0 ? 10 : Math.floor(limitParam);
 
     const posts = Array.from({ length: 100 }, (_, i) => ({
       id: i + 1,

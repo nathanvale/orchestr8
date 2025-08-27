@@ -23,7 +23,7 @@ describe('Vitest Migration Dependency Validation', () => {
         const vitestUI = await import('@vitest/ui');
         expect(vitestUI).toBeDefined();
       } catch (error) {
-        expect.fail(`Failed to import @vitest/ui: ${error}`);
+        throw new Error(`Failed to import @vitest/ui: ${String(error)}`);
       }
     });
 
@@ -32,7 +32,7 @@ describe('Vitest Migration Dependency Validation', () => {
         const coverageV8 = await import('@vitest/coverage-v8');
         expect(coverageV8).toBeDefined();
       } catch (error) {
-        expect.fail(`Failed to import @vitest/coverage-v8: ${error}`);
+        throw new Error(`Failed to import @vitest/coverage-v8: ${String(error)}`);
       }
     });
   });
@@ -44,7 +44,7 @@ describe('Vitest Migration Dependency Validation', () => {
         expect(happyDOM).toBeDefined();
         expect(happyDOM.Window).toBeDefined();
       } catch (error) {
-        expect.fail(`Failed to import happy-dom: ${error}`);
+        throw new Error(`Failed to import happy-dom: ${String(error)}`);
       }
     });
 
@@ -55,7 +55,7 @@ describe('Vitest Migration Dependency Validation', () => {
         expect(rtl.render).toBeDefined();
         expect(rtl.screen).toBeDefined();
       } catch (error) {
-        expect.fail(`Failed to import @testing-library/react: ${error}`);
+        throw new Error(`Failed to import @testing-library/react: ${String(error)}`);
       }
     });
 
@@ -66,7 +66,7 @@ describe('Vitest Migration Dependency Validation', () => {
         // If import succeeds, the package is available
         expect(true).toBe(true);
       } catch (error) {
-        expect.fail(`Failed to import @testing-library/jest-dom: ${error}`);
+        throw new Error(`Failed to import @testing-library/jest-dom: ${String(error)}`);
       }
     });
 
@@ -76,7 +76,7 @@ describe('Vitest Migration Dependency Validation', () => {
         expect(userEvent).toBeDefined();
         expect(userEvent.default).toBeDefined();
       } catch (error) {
-        expect.fail(`Failed to import @testing-library/user-event: ${error}`);
+        throw new Error(`Failed to import @testing-library/user-event: ${String(error)}`);
       }
     });
   });
@@ -96,7 +96,7 @@ describe('Vitest Migration Dependency Validation', () => {
         const { setupServer } = await import('msw/node');
         expect(setupServer).toBeDefined();
       } catch (error) {
-        expect.fail(`Failed to import msw: ${error}`);
+        throw new Error(`Failed to import msw: ${String(error)}`);
       }
     });
   });
@@ -108,7 +108,7 @@ describe('Vitest Migration Dependency Validation', () => {
         expect(viteTsconfigPaths).toBeDefined();
         expect(viteTsconfigPaths.default).toBeDefined();
       } catch (error) {
-        expect.fail(`Failed to import vite-tsconfig-paths: ${error}`);
+        throw new Error(`Failed to import vite-tsconfig-paths: ${String(error)}`);
       }
     });
 
@@ -118,7 +118,7 @@ describe('Vitest Migration Dependency Validation', () => {
         expect(eslintPluginVitest).toBeDefined();
         expect(eslintPluginVitest.default ?? eslintPluginVitest).toBeDefined();
       } catch (error) {
-        expect.fail(`Failed to import eslint-plugin-vitest: ${error}`);
+        throw new Error(`Failed to import eslint-plugin-vitest: ${String(error)}`);
       }
     });
   });

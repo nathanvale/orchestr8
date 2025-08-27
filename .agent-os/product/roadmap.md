@@ -1,172 +1,160 @@
 # Product Roadmap
 
-> Last Updated: 2025-01-17 Version: 1.0.0 Status: Planning
+> Last Updated: 2025-01-27 Version: 2.0.0 Status: Active Development
 
-## Phase 1: Core Template Foundation (2 weeks)
+## Phase 0: Already Completed (Foundation Established)
 
-**Goal:** Create a reliable, working template with essential configuration files
-**Success Criteria:** Template can be cloned, installed, and used to create a
-functional TypeScript project with basic tooling
+### Core Infrastructure
 
-### Must-Have Features
+- [x] Bun runtime configuration
+- [x] ESLint setup with strict type rules
+- [x] Changesets configuration
+- [x] Vitest testing infrastructure
+- [x] Basic CI/CD pipeline
+- [x] Security scanning baseline (Trivy)
+- [x] Multi-OS GitHub Actions matrix
+- [x] Comprehensive git hooks
+- [x] ADHD-friendly script consolidation
 
-- [ ] Complete configuration files (ESLint, Prettier, TypeScript, Bun) - `M`
-- [ ] Fixed dependency issues (correct @changesets/cli installation) - `S`
-- [ ] Working Husky git hooks with proper pre-commit and commit-msg validation -
-      `M`
-- [ ] Basic CI/CD pipeline with quality gates (lint, typecheck, test, build) -
-      `L`
-- [ ] Comprehensive .gitignore and security configurations - `S`
+## Phase 1: Critical Configuration & Stabilization (1 week)
 
-### Should-Have Features
+**Goal:** Address critical technical debt and configuration inconsistencies
+**Success Criteria:** Resolve configuration mismatches, improve build and test
+reliability
 
-- [ ] VSCode workspace configuration with recommended extensions - `S`
-- [ ] Bundle size analysis and performance monitoring scripts - `M`
-- [ ] Security scanning integration (Trivy, audit) - `M`
+### Must-Have Configuration Fixes
 
-### Dependencies
+- [x] Unify commitlint configuration (remove duplicate config files) - `S`
+- [x] Fix release workflow test execution (switch to `bun run test:ci`) - `S`
+- [x] Correct CI build steps to run `bun run build:all` - `S`
+- [x] Update Vitest config coverage exclusions to match actual setup files -
+      `XS`
+- [x] Guard MSW pagination handler against limit=0 / NaN scenarios - `S`
 
-- Bun 1.1.38+ installed and working
-- GitHub repository with proper permissions
-- NPM account with publishing rights
+### Dependency & Type Resolution
 
-## Phase 2: ADHD-Optimized Developer Experience (1 week)
+- [ ] Ensure complete type generation for all build targets - `M`
+- [ ] Verify Node compatibility or explicitly document Bun-only scope - `M`
+- [ ] Add prepublish guard script for potential library publishing - `S`
+- [ ] Strengthen `bun audit` step with JSON parsing - `M`
 
-**Goal:** Implement fast feedback loops and developer-friendly tooling **Success
-Criteria:** Sub-50ms hot reload, comprehensive development scripts, clear visual
-feedback
+### Test & Build Improvements
 
-### Must-Have Features
+- [ ] Implement Node compatibility test job (optional) - `M`
+- [ ] Add Node dist generation validation - `S`
 
-- [ ] Fast feedback scripts (hot reload, watch modes, instant feedback) - `M`
-- [ ] Performance monitoring (startup time, memory usage, build time) - `M`
-- [ ] Comprehensive npm scripts (200+ covering all scenarios) - `L`
-- [ ] Clear error messaging and debugging support - `M`
+## Phase 2: Testing & Quality Enhancement (1 week)
 
-### Should-Have Features
+**Goal:** Improve testing infrastructure and developer experience **Success
+Criteria:** More robust, consistent, and informative testing approach
 
-- [ ] Terminal UI enhancements and progress indicators - `S`
-- [ ] Automated performance benchmarking - `S`
-- [ ] Development server with auto-open browser - `XS`
+### Testing Enhancements
 
-### Dependencies
+- [ ] Standardize React Testing Library cleanup approach - `S`
+- [ ] Add contract tests for critical behaviors:
+  - Test `shouldAutoStart` contract - `XS`
+  - Add MSW unmatched request logging test - `S`
+  - Create dynamic Bun import failure path test - `S`
+- [ ] Consider per-file coverage gates for critical modules - `M`
 
-- Phase 1 completion
-- Hyperfine or similar benchmarking tool
-- Terminal UI libraries
+### Developer Experience
 
-## Phase 3: Enterprise Security & Compliance (1 week)
+- [ ] Create "First 15 Minutes" onboarding documentation - `M`
+- [ ] Add `dev:test` script for low-noise watch mode - `XS`
+- [ ] Add emoji anchors to spec sections for faster scanning - `XS`
+- [ ] Add short comments in config files to prevent over-optimization - `XS`
 
-**Goal:** Achieve enterprise-grade security and compliance readiness **Success
-Criteria:** Supply chain protection, vulnerability scanning, audit trails,
-compliance documentation
+### Utility Improvements
 
-### Must-Have Features
+- [ ] Consolidate duplicated React Testing Library utilities - `S`
+- [ ] Remove broad console warning/error spies - `M`
+- [ ] Implement minimal cross-platform path handling - `S`
 
-- [ ] npm provenance and OIDC token configuration - `M`
-- [ ] SBOM (Software Bill of Materials) generation - `M`
-- [ ] Multi-OS CI/CD testing matrix (Linux, macOS, Windows) - `L`
-- [ ] Comprehensive security scanning in CI/CD pipeline - `M`
-- [ ] Audit trails and compliance documentation - `M`
+## Phase 3: Security & Supply Chain Hardening (1 week)
 
-### Should-Have Features
+**Goal:** Enhance supply chain security and compliance **Success Criteria:**
+Comprehensive security monitoring and transparent practices
 
-- [ ] License compatibility checking - `S`
-- [ ] Secret scanning and prevention - `S`
-- [ ] Dependency update automation - `M`
+### Security Enhancements
 
-### Dependencies
+- [ ] Add weekly `bun audit` workflow with diff severity tracking - `M`
+- [ ] Enable CodeQL JavaScript scanning - `S`
+- [ ] Optionally sign or attach hash to SBOM artifacts - `S`
+- [ ] Add SECURITY.md with disclosure process - `XS`
+- [ ] Update README with supply chain security references - `XS`
 
-- Phase 2 completion
-- GitHub OIDC configuration
-- Security scanning tools (Trivy, etc.)
+### Compliance & Documentation
 
-## Phase 4: Advanced Features & Scaling (2 weeks)
+- [ ] Add CODEOWNERS file to reinforce review gates - `XS`
+- [ ] Create `docs/testing-strategy.md` for new contributors - `S`
+- [ ] Prepare npm provenance documentation - `S`
 
-**Goal:** Add advanced development features and prepare for monorepo evolution
-**Success Criteria:** Advanced debugging, comprehensive testing, monorepo-ready
-architecture
+## Phase 4: Developer Experience & Performance (2 weeks)
 
-### Must-Have Features
+**Goal:** Optimize performance monitoring and developer workflows **Success
+Criteria:** Enhanced performance tracking, reduced cognitive load
 
-- [ ] Comprehensive testing infrastructure (unit, integration, E2E setup) - `L`
-- [ ] Advanced debugging and profiling tools - `M`
-- [ ] Bundle analysis and optimization tools - `M`
-- [ ] Monorepo evolution documentation and scripts - `L`
+### Performance Monitoring
 
-### Should-Have Features
+- [ ] Add nightly performance workflow with artifact diffing - `M`
+- [ ] Implement performance baseline regression detection - `L`
+- [ ] Add benchmarking script using Vitest bench - `S`
 
-- [ ] Playwright E2E testing integration - `M`
-- [ ] Docker configuration for containerized development - `M`
-- [ ] Advanced Git workflow automation - `S`
-- [ ] Documentation generation (TypeDoc) - `S`
+### Tooling & Configuration
 
-### Dependencies
+- [ ] Add .editorconfig for consistent formatting - `XS`
+- [ ] Explore conditional exports mapping (future-proofing) - `M`
+- [ ] Verify tree-shake friendly patterns - `S`
+- [ ] Add "sideEffects": false verification - `XS`
 
-- Phase 3 completion
-- Testing framework decisions
-- Containerization strategy
+### Optimization Opportunities
 
-## Phase 5: Community & Documentation (1 week)
+- [ ] Gradually raise test coverage thresholds - `M`
+- [ ] Trim defensive guards in utility modules - `S`
 
-**Goal:** Create comprehensive documentation and enable community adoption
-**Success Criteria:** Complete documentation, migration guides, troubleshooting
-resources, community feedback integration
+## Phase 5: Documentation & Community (1 week)
 
-### Must-Have Features
+**Goal:** Improve project documentation and community engagement **Success
+Criteria:** Clear, accessible documentation and onboarding experience
 
-- [ ] Comprehensive README with badges and usage instructions - `M`
-- [ ] Migration guides (Node.js to Bun, single package to monorepo) - `L`
-- [ ] Troubleshooting guide with common issues and solutions - `M`
-- [ ] CONTRIBUTING.md with development guidelines - `S`
+### Documentation Enhancements
 
-### Should-Have Features
+- [ ] Create comprehensive README with badges - `M`
+- [ ] Develop migration guides (Node.js to Bun) - `L`
+- [ ] Write troubleshooting guide - `M`
+- [ ] Update CONTRIBUTING.md with detailed guidelines - `S`
 
-- [ ] Video tutorials and screencasts - `L`
-- [ ] Community templates and examples - `XL`
-- [ ] Integration with popular frameworks (React, Vue, Svelte) examples - `XL`
-- [ ] Performance benchmark comparisons with other templates - `M`
+### Community Engagement
 
-### Dependencies
+- [ ] Prepare video tutorials and screencasts - `L`
+- [ ] Create community template examples - `XL`
+- [ ] Develop framework integration examples - `XL`
 
-- Phase 4 completion
-- Community feedback collection
-- Documentation hosting platform
+## Long-Term Evolution (Post-MVP)
 
-## Future Enhancements (Post-MVP)
+### Architectural Scaling
 
-### Template Ecosystem
-
-- [ ] Framework-specific variants (React, Vue, Svelte, Express, Fastify)
-- [ ] Database integration examples (PostgreSQL, SQLite, Redis)
-- [ ] Deployment target examples (Vercel, Railway, Fly.io, AWS)
+- [ ] Introduce monorepo package boundaries (packages/core, packages/runtime) -
+      `XL`
+- [ ] Explore advanced monorepo tooling integration - `L`
 
 ### Advanced Tooling
 
-- [ ] Biome integration as ESLint alternative
-- [ ] Advanced monorepo tooling (Nx, Turborepo integration)
-- [ ] AI-powered code review and suggestions
-- [ ] Automated dependency vulnerability patching
-
-### Enterprise Features
-
-- [ ] Enterprise license management
-- [ ] Advanced compliance reporting
-- [ ] Integration with enterprise security tools
-- [ ] Multi-tenant configuration management
+- [ ] Investigate AI-powered code review suggestions - `XL`
+- [ ] Implement automated dependency vulnerability patching - `L`
 
 ### Performance & Monitoring
 
-- [ ] Real-time performance monitoring
-- [ ] Advanced bundle optimization
-- [ ] Memory leak detection
-- [ ] Production performance analytics
+- [ ] Develop real-time performance monitoring - `XL`
+- [ ] Create advanced bundle optimization strategies - `L`
+- [ ] Implement memory leak detection - `L`
 
 ## Success Metrics
 
-- **Adoption**: 100+ GitHub stars in first month
+- **Adoption**: 200+ GitHub stars
 - **Performance**: Sub-100ms cold start, sub-50ms hot reload
 - **Quality**: 90%+ test coverage, zero critical security vulnerabilities
-- **Developer Experience**: <5 minute setup time, positive community feedback
-- **Enterprise Readiness**: Compliance with security standards, audit trail
-  completeness
+- **Developer Experience**: <3 minute setup time
+- **Community Engagement**: Active discussions, contributions
+- **Enterprise Readiness**: Comprehensive security documentation, clear
+  compliance path
