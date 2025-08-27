@@ -137,13 +137,7 @@ beforeAll(() => {
     }
   }
 
-  // Add fetch polyfill only when needed (Node.js environments without fetch)
-  if (typeof globalThis.fetch === 'undefined') {
-    // Dynamic import without await - the polyfill will be available for subsequent tests
-    import('whatwg-fetch').catch(() => {
-      // Fallback: if whatwg-fetch is not available, tests might still work in modern environments
-    });
-  }
+  // Native Bun fetch is available, no polyfill needed
 
   // Setup console mocking for cleaner test output
   vi.spyOn(console, 'warn').mockImplementation(() => undefined);

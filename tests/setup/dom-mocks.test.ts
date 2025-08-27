@@ -67,7 +67,7 @@ describe('DOM Mock Environment Checks', () => {
       value: vi.fn().mockReturnValue({ matches: true }),
     });
 
-    expect(window.matchMedia()).toEqual({ matches: true });
+    expect(window.matchMedia('(min-width: 768px)')).toEqual({ matches: true });
 
     // Restore original
     Object.defineProperty(window, 'matchMedia', {
