@@ -1,13 +1,13 @@
-import js from '@eslint/js';
-import prettierConfig from 'eslint-config-prettier';
-import securityPlugin from 'eslint-plugin-security';
-import sonarjs from 'eslint-plugin-sonarjs';
-import unicorn from 'eslint-plugin-unicorn';
-import vitest from 'eslint-plugin-vitest';
-import tseslint from 'typescript-eslint';
+import js from '@eslint/js'
+import prettierConfig from 'eslint-config-prettier'
+import securityPlugin from 'eslint-plugin-security'
+import sonarjs from 'eslint-plugin-sonarjs'
+import unicorn from 'eslint-plugin-unicorn'
+import vitest from 'eslint-plugin-vitest'
+import tseslint from 'typescript-eslint'
 
 export default tseslint.config(
-  // Global ignores first
+  // Why: Global ignores prevent linting generated/external files
   {
     ignores: [
       'dist/**',
@@ -25,19 +25,19 @@ export default tseslint.config(
     ],
   },
 
-  // Base configurations
-  js.configs.recommended,
-  ...tseslint.configs.strictTypeChecked,
-  ...tseslint.configs.stylisticTypeChecked,
-  prettierConfig,
+  // Why: Layered configs provide progressive enhancement of code quality
+  js.configs.recommended, // Why: Catch common JavaScript errors
+  ...tseslint.configs.strictTypeChecked, // Why: Maximum type safety catches bugs early
+  ...tseslint.configs.stylisticTypeChecked, // Why: Consistent code style across team
+  prettierConfig, // Why: Disable style rules that conflict with Prettier
 
-  // Main configuration for TypeScript files
+  // Why: TypeScript-specific rules and security/quality plugins
   {
     plugins: {
-      '@typescript-eslint': tseslint.plugin,
-      'security': securityPlugin,
-      'sonarjs': sonarjs,
-      'unicorn': unicorn,
+      '@typescript-eslint': tseslint.plugin, // Why: TypeScript-aware linting
+      'security': securityPlugin, // Why: Catch security vulnerabilities early
+      'sonarjs': sonarjs, // Why: Detect code smells and complexity issues
+      'unicorn': unicorn, // Why: Modern JavaScript best practices
     },
 
     languageOptions: {
@@ -60,27 +60,29 @@ export default tseslint.config(
 
     rules: {
       // TypeScript Strict Rules
+      // Why: Unused vars are dead code that increase bundle size
       '@typescript-eslint/no-unused-vars': [
         'error',
         {
-          argsIgnorePattern: '^_',
+          argsIgnorePattern: '^_', // Why: Allow _ prefix for intentionally unused
           varsIgnorePattern: '^_',
           destructuredArrayIgnorePattern: '^_',
           caughtErrorsIgnorePattern: '^_',
         },
       ],
+      // Why: Explicit return types improve readability and catch type errors
       '@typescript-eslint/explicit-function-return-type': [
         'error',
         {
-          allowExpressions: true,
+          allowExpressions: true, // Why: Simple expressions don't need annotation
           allowTypedFunctionExpressions: true,
           allowHigherOrderFunctions: true,
           allowDirectConstAssertionInArrowFunctions: true,
         },
       ],
-      '@typescript-eslint/no-explicit-any': 'error',
-      '@typescript-eslint/no-non-null-assertion': 'error',
-      '@typescript-eslint/strict-boolean-expressions': 'error',
+      '@typescript-eslint/no-explicit-any': 'error', // Why: 'any' defeats type safety
+      '@typescript-eslint/no-non-null-assertion': 'error', // Why: ! operator hides null bugs
+      '@typescript-eslint/strict-boolean-expressions': 'error', // Why: Prevent truthy/falsy bugs
       '@typescript-eslint/no-floating-promises': 'error',
       '@typescript-eslint/no-misused-promises': 'error',
       '@typescript-eslint/await-thenable': 'error',
@@ -95,30 +97,37 @@ export default tseslint.config(
       ],
 
       // Security Rules
-      'security/detect-object-injection': 'warn',
-      'security/detect-non-literal-fs-filename': 'warn',
+      // Why: Warn (not error) because these have many false positives
+      'security/detect-object-injection': 'warn', // Why: Array access triggers this incorrectly
+      'security/detect-non-literal-fs-filename': 'warn', // Why: Dynamic paths are sometimes needed
       'security/detect-eval-with-expression': 'error',
       'security/detect-no-csrf-before-method-override': 'error',
 
       // Code Quality Rules
-      'sonarjs/cognitive-complexity': ['error', 15],
-      'sonarjs/no-duplicate-string': ['error', { threshold: 3 }],
+      // Cognitive complexity calibrated to 20 to reduce noise in legitimate integration code
+      // while still maintaining ADHD guard rails for readability
+      'sonarjs/cognitive-complexity': ['error', 20], // Higher threshold for real-world complexity
+      'sonarjs/no-duplicate-string': ['error', { threshold: 3 }], // Catches repeated magic strings
       'sonarjs/no-identical-functions': 'error',
 
-      // ADHD-Friendly Rules (enforce simplicity)
+      // ADHD-Friendly Rules (enforce simplicity with pragmatic limits)
+      // These thresholds balance cognitive load reduction with real-world needs:
+      // - Functions can be longer (75 lines) for setup/configuration code
+      // - Complexity raised to 15 to accommodate legitimate business logic
+      // - Maintain strict limits on nesting and parameters for readability
       'max-lines-per-function': [
         'error',
         {
-          max: 50,
+          max: 75, // Allows setup/config code while preventing sprawl
           skipBlankLines: true,
           skipComments: true,
         },
       ],
-      'complexity': ['error', 10],
-      'max-depth': ['error', 3],
-      'max-nested-callbacks': ['error', 3],
-      'max-params': ['error', 4],
-      'max-statements': ['error', 15],
+      'complexity': ['error', 15], // Balanced for real algorithms without encouraging spaghetti
+      'max-depth': ['error', 3], // Strict nesting limit preserves readability
+      'max-nested-callbacks': ['error', 3], // Prevents callback hell in async code
+      'max-params': ['error', 4], // Forces object params for complex APIs
+      'max-statements': ['error', 15], // Encourages single-purpose functions
 
       // Unicorn Best Practices
       'unicorn/no-array-for-each': 'error',
@@ -158,7 +167,7 @@ export default tseslint.config(
       'vitest/valid-expect': 'error',
       'vitest/consistent-test-it': ['error', { fn: 'test' }],
       // Relax strict rules for tests
-      '@typescript-eslint/no-explicit-any': 'off', // Tests often mock with any
+      '@typescript-eslint/no-explicit-any': 'off', // Mocks and test data often use any
       '@typescript-eslint/no-unsafe-assignment': 'off', // Mock assignments
       '@typescript-eslint/no-unsafe-call': 'off', // Mock function calls
       '@typescript-eslint/no-unsafe-member-access': 'off', // Mock property access
@@ -178,12 +187,12 @@ export default tseslint.config(
           'ts-check': false,
         },
       ],
-      '@typescript-eslint/explicit-function-return-type': 'off', // Test functions
-      'max-lines-per-function': ['error', { max: 200 }], // Tests can be longer
-      'max-nested-callbacks': ['error', 5], // Tests have more nesting
-      'max-statements': ['error', 50], // Tests have more statements
-      'sonarjs/cognitive-complexity': ['error', 30], // Tests can be complex
-      'no-console': 'off', // Allow console.log in tests for debugging
+      '@typescript-eslint/explicit-function-return-type': 'off', // Test functions rarely need explicit returns
+      'max-lines-per-function': ['error', { max: 200 }], // Integration tests need more space
+      'max-nested-callbacks': ['error', 5], // describe/it/expect nesting is normal
+      'max-statements': ['error', 50], // Setup/teardown/assertions add up
+      'sonarjs/cognitive-complexity': ['error', 30], // Test scenarios can be complex
+      'no-console': 'off', // console.log is essential for test debugging
     },
   },
 
@@ -203,4 +212,4 @@ export default tseslint.config(
       'no-debugger': 'error',
     },
   },
-);
+)

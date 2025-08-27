@@ -1,6 +1,6 @@
 # Technical Stack
 
-> Last Updated: 2025-01-17 Version: 1.0.0
+> Last Updated: 2025-01-27 Version: 1.1.1
 
 ## Core Technologies
 
@@ -9,6 +9,8 @@
 - **Framework:** Bun Runtime + TypeScript
 - **Version:** Bun 1.1.38+, TypeScript 5.7+
 - **Language:** TypeScript with strict configuration
+- **Monorepo Support:** Built-in workspace architecture with seamless evolution
+  capability
 
 ### Database
 
@@ -27,8 +29,10 @@
 ### Import Strategy
 
 - **Strategy:** Node.js ES Modules
-- **Package Manager:** Bun
+- **Package Manager:** Bun with workspace support
 - **Node Version:** Not applicable (Bun runtime)
+- **Monorepo Promotion:** Single-package to workspace migration via
+  `bun run promote:monorepo` script
 
 ### CSS Framework
 
@@ -54,6 +58,24 @@
 - **Library:** Template agnostic
 - **Implementation:** Configurable per framework choice
 
+## Monorepo Orchestration
+
+### Build Orchestration
+
+- **Tool:** Turborepo (integrated via `bun run promote:monorepo` script)
+- **Caching:** Local and remote caching with Bun compatibility
+- **Remote Cache:** Remote cache is optional; builds never fail if unset
+  (warn-only)
+- **Dependency Management:** Workspace-aware builds and testing
+- **Architecture:** Packages/core, packages/utilities, packages/server structure
+
+### Configuration Management
+
+- **TypeScript:** Shared configurations under tooling/tsconfig/
+- **ESLint/Prettier:** Workspace-aware configuration inheritance
+- **Changesets:** Multi-package versioning and release coordination
+- **Philosophy:** Opt-in complexity only when you need >1 package
+
 ## Development Tools
 
 ### Code Quality
@@ -74,10 +96,13 @@
 
 ### Release Management
 
-- **Versioning:** Changesets CLI 2.29+
-- **Changelog:** GitHub-integrated changelog generation
-- **Publishing:** NPM with provenance support
+- **Versioning:** Changesets CLI 2.29+ with monorepo support
+- **Changelog:** GitHub-integrated changelog generation (single-package and
+  multi-package)
+- **Publishing:** NPM with provenance support (workspace-aware)
 - **Git Hooks:** Conventional commits with Commitizen
+- **Monorepo Integration:** Automatic workspace detection and coordinated
+  releases
 
 ## Infrastructure
 
@@ -107,6 +132,8 @@
 - **Trigger:** Push to main/staging, PR creation
 - **Tests:** Multi-OS matrix testing (Linux, macOS, Windows)
 - **Security:** Trivy scanning, dependency audit, SBOM generation
+- **Monorepo Support:** Workspace-aware builds with Turborepo caching
+  integration
 
 ### Package Registry
 
@@ -114,6 +141,7 @@
 - **Authentication:** NPM tokens with OIDC support
 - **Provenance:** npm provenance enabled for supply chain security
 - **Distribution:** Public or private packages (configurable)
+- **Workspace Publishing:** Coordinated multi-package releases with Changesets
 
 ### Environments
 
@@ -130,6 +158,7 @@
 - **Hot Reload:** <50ms reload times
 - **Cold Start:** <100ms startup
 - **Memory Usage:** 50% lower than Node.js equivalents
+- **Monorepo Scaling:** Turborepo caching for incremental builds across packages
 
 ### Runtime Performance
 
@@ -169,3 +198,13 @@
 - **Code Quality:** SonarJS complexity analysis
 - **Type Safety:** Strict TypeScript with 100% coverage
 - **Security Score:** Automated security scanning results
+- **Coverage Requirements:** New packages must meet base thresholds immediately;
+  no grace period for coverage requirements
+
+### Usage Analytics (Optional)
+
+- **Telemetry:** Opt-in usage analytics for promotion success tracking
+- **Privacy:** Anonymous usage patterns only, no code/data collection
+- **Purpose:** Measure monorepo promotion adoption rates and success metrics
+- **Observability Hook:** Promotion script emits JSON report for analytics
+  (future enhancement)

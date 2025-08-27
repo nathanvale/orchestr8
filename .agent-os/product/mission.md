@@ -1,13 +1,12 @@
 # Product Mission
 
-> Last Updated: 2025-01-17 Version: 1.0.0
+> Last Updated: 2025-01-27 Version: 1.1.0
 
 ## Pitch
 
-Bun Changesets Template is a production-grade, enterprise-ready development
-template that helps developers create high-performance TypeScript projects by
-providing a comprehensive, ADHD-optimized development environment with sub-50ms
-feedback loops and enterprise-grade security.
+Production-grade Bun + TypeScript template that evolves from single package to
+Turborepo monorepo in one command—optimized for ADHD-grade feedback and
+enterprise security.
 
 ## Users
 
@@ -87,10 +86,14 @@ and comprehensive compliance documentation.
 ### Poor Monorepo Evolution Path
 
 Starting with single-package templates that can't easily evolve into monorepos
-creates technical debt and forces complete rewrites as projects grow.
+creates technical debt and forces complete rewrites as projects grow. Typical
+manual restructuring costs 0.5–1.5 engineer days (config merge, CI fixes,
+dependency scopes).
 
-**Our Solution:** Architecture designed for seamless monorepo evolution with
-workspace support and build orchestration ready from the start.
+**Our Solution:** One-command monorepo promotion with `bun run promote:monorepo`
+script that seamlessly transforms single packages into Turborepo + Bun +
+Changesets workspaces following "opt-in complexity only when you need >1
+package" philosophy. See Roadmap Phase 1.
 
 ## Differentiators
 
@@ -108,6 +111,14 @@ chain protection, compliance documentation, and audit trails out-of-the-box.
 This results in immediate enterprise adoption capability without additional
 security work.
 
+### Seamless Monorepo Promotion
+
+Unlike traditional templates that trap you in single-package architectures, we
+provide automated monorepo transformation through our `bun run promote:monorepo`
+script. This results in structural promotion without replatforming from simple
+projects to complex workspaces with Turborepo orchestration, preserving all
+existing tooling and configurations.
+
 ### Bun-First Performance Architecture
 
 Unlike Node.js-based templates that retrofit performance, we're built from the
@@ -124,6 +135,8 @@ times and 50% lower memory usage compared to equivalent Node.js setups.
   error checking
 - **Zero-Config Quality Gates:** Pre-configured ESLint, Prettier, and commit
   hooks that enforce code standards
+- **Seamless Monorepo Promotion:** One-command transformation from
+  single-package to full monorepo with Turborepo + Bun + Changesets
 - **Integrated Release Management:** Changesets-powered versioning and
   publishing with automated changelog generation
 - **Comprehensive Testing:** Unit, integration, and E2E testing infrastructure
@@ -149,7 +162,16 @@ times and 50% lower memory usage compared to equivalent Node.js setups.
 - **Multi-OS Compatibility:** Tested across Linux, macOS, and Windows
   environments
 - **Compliance Documentation:** Complete audit trails and security documentation
-- **Monorepo Evolution:** Built-in workspace support and build orchestration
-  readiness
+- **Monorepo Promotion:** Automated `bun run promote:monorepo` script with
+  Turborepo integration and workspace orchestration
 - **Performance Monitoring:** Bundle size tracking, startup profiling, and
   resource usage analytics
+
+## Non-Goals
+
+- **Not a full-stack framework:** We provide the foundation but don't dictate UI
+  frameworks, databases, or backend architectures
+- **Not an opinionated deployment platform:** We support all major deployment
+  targets but don't lock you into specific hosting providers
+- **Not enforcing fixed versioning:** While we include Changesets, teams can
+  adopt any versioning strategy that fits their workflow

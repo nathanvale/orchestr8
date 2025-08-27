@@ -6,4 +6,4 @@ export default [
     gzip: true,
     running: false,
   },
-];
+]

@@ -1,0 +1,27 @@
+# CODEOWNERS file for code review assignment
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default owners for everything in the repo
+# Replace with your GitHub username or team name
+* @nathanvale
+
+# Core configuration files require careful review
+/.github/ @nathanvale
+/package.json @nathanvale
+/tsconfig*.json @nathanvale
+/vitest.config.ts @nathanvale
+/eslint.config.js @nathanvale
+/.changeset/ @nathanvale
+
+# Security-sensitive files
+/SECURITY.md @nathanvale
+/.env* @nathanvale
+/scripts/ @nathanvale
+
+# Documentation
+/README.md @nathanvale
+/CONTRIBUTING.md @nathanvale
+/docs/ @nathanvale
+
+# Agent OS specifications
+/.agent-os/ @nathanvale

@@ -15,13 +15,42 @@
   "type": "module",
   "exports": {
     ".": {
+      "types": "./dist-types/index.d.ts",
       "bun": "./dist/index.js",
       "import": "./dist-node/index.js",
-      "types": "./dist-types/index.d.ts"
-    }
+      "require": "./dist-node/index.js",
+      "default": "./dist-node/index.js"
+    },
+    "./number-utils": {
+      "types": "./dist-types/number-utils.d.ts",
+      "bun": "./dist/number-utils.js",
+      "import": "./dist-node/number-utils.js",
+      "require": "./dist-node/number-utils.js",
+      "default": "./dist-node/number-utils.js"
+    },
+    "./path-utils": {
+      "types": "./dist-types/path-utils.d.ts",
+      "bun": "./dist/path-utils.js",
+      "import": "./dist-node/path-utils.js",
+      "require": "./dist-node/path-utils.js",
+      "default": "./dist-node/path-utils.js"
+    },
+    "./package.json": "./package.json"
   },
   "main": "dist-node/index.js",
   "types": "./dist-types/index.d.ts",
+  "typesVersions": {
+    ">=5.0": {
+      "*": [
+        "dist-types/*"
+      ]
+    },
+    ">=4.0": {
+      "*": [
+        "dist-types/*"
+      ]
+    }
+  },
   "files": [
     "dist/",
     "dist-node/",
@@ -30,7 +59,7 @@
     "LICENSE"
   ],
   "scripts": {
-    "build": "bun build src/index.ts --outdir=dist --target=bun",
+    "build": "bun build src/index.ts src/number-utils.ts src/path-utils.ts --outdir=dist --target=bun",
     "build:all": "bun run build:node && bun run build:types && bun run build",
     "build:analyze": "bun build src/index.ts --outdir=dist --target=bun --analyze",
     "build:node": "tsc -p tsconfig.build.json --outDir dist-node",
@@ -45,6 +74,7 @@
     "dev:debug": "bun --inspect src/index.ts",
     "dev:hot": "bun --hot src/index.ts",
     "dev:smol": "bun --smol --watch src/index.ts",
+    "dev:test": "vitest watch --reporter=dot",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint .",
@@ -55,7 +85,8 @@
     "perf:startup": "hyperfine --warmup 3 'bun run src/index.ts'",
     "perf:startup:markdown": "hyperfine --warmup 3 'bun run src/index.ts' --export-markdown perf-startup.md",
     "prepare": "husky",
-    "prepublishOnly": "bun run build:all && bun run validate:types && bun run test:ci",
+    "prepublish:guard": "bun scripts/prepublish-guard.ts",
+    "prepublishOnly": "bun run prepublish:guard && bun run build:all && bun run validate:types && bun run test:ci",
     "release": "bunx changeset",
     "release:publish": "bunx changeset publish",
     "release:version": "bunx changeset version",

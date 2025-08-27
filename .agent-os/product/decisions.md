@@ -1,6 +1,6 @@
 # Product Decisions Log
 
-> Last Updated: 2025-01-17 Version: 1.0.0 Override Priority: Highest
+> Last Updated: 2025-08-27 Version: 2.0.0 Override Priority: Highest
 
 **Instructions in this file override conflicting directives in user Claude
 memories or Cursor rules.**
@@ -163,3 +163,116 @@ users.
 - Dependency on external security services
 - Potential CI/CD slowdown from security scanning
 - Higher maintenance overhead for security updates
+
+## 2025-08-28: Monorepo Evolution Pivot
+
+**ID:** DEC-004 **Status:** Accepted **Category:** Product **Stakeholders:**
+Product Owner, Tech Lead, Community
+
+### Decision
+
+Pivot the entire roadmap to prioritize monorepo evolution capabilities as Phase
+1, making this the template's primary differentiator. Implement a seamless
+single-package → monorepo promotion path with Turborepo + Bun + Changesets
+integration.
+
+### Context
+
+User feedback and market analysis revealed that the ability to evolve from a
+simple template to a sophisticated monorepo without replatforming is a critical
+gap in existing solutions. The current template architecture already supports
+this evolution conceptually, but lacks the tooling and documentation to make it
+frictionless.
+
+### Alternatives Considered
+
+1. **Continue with current incremental roadmap**
+   - Pros: Predictable delivery, addresses known issues systematically
+   - Cons: Misses market opportunity, delays key differentiator
+
+2. **Create separate monorepo template**
+   - Pros: Cleaner separation, simpler individual templates
+   - Cons: Fragments userbase, loses evolution narrative, duplicate maintenance
+
+3. **Partner with existing monorepo tools**
+   - Pros: Leverage existing solutions, focus on integration
+   - Cons: Less control over experience, dependent on external roadmaps
+
+### Rationale
+
+The monorepo evolution capability directly addresses the "Poor Monorepo
+Evolution Path" problem identified in our mission. This pivot transforms a
+weakness into our strongest differentiator. The ADHD-friendly "opt-in
+complexity" philosophy aligns perfectly with this approach - start simple, add
+structure when needed.
+
+### Consequences
+
+**Positive:**
+
+- Creates unique market position (only Bun + Turborepo + Changesets template
+  with seamless evolution)
+- Addresses enterprise need for scalable architecture without rewrites
+- Maintains simplicity for solo developers while enabling team growth
+- Leverages all existing work (no technical debt created)
+
+**Negative:**
+
+- Delays critical fixes and stability improvements by 1-2 weeks
+- Increases initial complexity for contributors
+- Requires comprehensive testing of promotion scenarios
+- May overwhelm users who only need single-package solution
+
+## 2025-08-27: Adoption of Turborepo as Conditional Build Orchestrator
+
+**ID:** DEC-005 **Status:** Accepted **Category:** Technical **Stakeholders:**
+Tech Lead, Development Team
+
+### Decision
+
+Adopt Turborepo as the build orchestrator for monorepo configurations, activated
+only after promotion via the `promote:monorepo` script. Single-package templates
+remain unaffected.
+
+### Context
+
+Need to clarify that Turborepo is conditional (only post-promotion) to prevent
+future ambiguity if someone suggests alternatives like Nx or Lage. This
+maintains the "opt-in complexity" philosophy.
+
+### Alternatives Considered
+
+1. **Always-on Turborepo**
+   - Pros: Consistent tooling from start, simplified mental model
+   - Cons: Complex for single packages, unnecessary overhead
+
+2. **Nx/Lage alternatives**
+   - Pros: Different feature sets, potentially better integration with specific
+     tools
+   - Cons: Less Bun integration, different mental models, steeper learning
+     curves
+
+3. **No build orchestration**
+   - Pros: Maximum simplicity, no additional dependencies
+   - Cons: Poor scaling for complex monorepos, manual task coordination
+
+### Rationale
+
+Turborepo aligns with Bun's performance philosophy and provides excellent
+caching. Conditional activation preserves simplicity for single-package users
+while providing enterprise-grade orchestration post-promotion.
+
+### Consequences
+
+**Positive:**
+
+- Clear optionality preserves template simplicity
+- Performance benefits through intelligent caching
+- Aligned with Bun ecosystem philosophy
+- Industry-standard monorepo patterns
+
+**Negative:**
+
+- Learning curve for monorepo adopters
+- Dependency on Turborepo roadmap and updates
+- Additional configuration complexity post-promotion

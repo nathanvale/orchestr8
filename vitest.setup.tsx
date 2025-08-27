@@ -1,12 +1,8 @@
-import '@testing-library/jest-dom/vitest';
-import { render as rtlRender, type RenderOptions } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import type { HttpHandler } from 'msw';
-import { http, HttpResponse } from 'msw';
-import { setupServer } from 'msw/node';
-import type { ReactElement } from 'react';
-import React from 'react';
-import { afterAll, afterEach, beforeAll, beforeEach, vi } from 'vitest';
+import '@testing-library/jest-dom/vitest'
+import type { HttpHandler } from 'msw'
+import { http, HttpResponse } from 'msw'
+import { setupServer } from 'msw/node'
+import { afterAll, afterEach, beforeAll, beforeEach, vi } from 'vitest'
 
 // Mock the 'bun' module for tests that import it
 // This must be done before any other imports to prevent Vite resolution issues
@@ -19,7 +15,7 @@ vi.mock('bun', async () => {
     reload: vi.fn(),
     ref: vi.fn(),
     unref: vi.fn(),
-  };
+  }
 
   return {
     serve: vi.fn(() => mockServer),
@@ -42,42 +38,97 @@ vi.mock('bun', async () => {
     build: vi.fn(() => Promise.resolve({ success: true, outputs: [] })),
     plugin: vi.fn(),
     default: {},
-  };
-});
+  }
+})
 
 // Mock handlers for common API patterns
 const defaultHandlers: HttpHandler[] = [
   // Example API handlers
   http.get('/api/health', () => {
-    return HttpResponse.json({ status: 'ok' });
+    return HttpResponse.json({ status: 'ok' })
   }),
 
   http.get('/api/user/:id', ({ params }) => {
-    const { id } = params;
+    const { id } = params
     return HttpResponse.json({
       id,
       name: `Test User ${String(id)}`,
       email: `test${String(id)}@example.com`,
-    });
+    })
   }),
 
   http.post('/api/auth/login', () => {
     return HttpResponse.json({
       token: 'mock-jwt-token',
       user: { id: '1', name: 'Test User' },
-    });
+    })
   }),
-];
+
+  // Pagination endpoint with edge case handling
+  http.get('/api/items', ({ request }) => {
+    const url = new URL(request.url)
+    const limitParam = url.searchParams.get('limit')
+    const pageParam = url.searchParams.get('page')
+
+    // Handle limit edge cases
+    let limit = 10 // default
+    if (limitParam !== null) {
+      const parsedLimit = parseInt(limitParam, 10)
+      if (limitParam === 'NaN' || isNaN(parsedLimit)) {
+        // NaN should use default
+        limit = 10
+      } else if (parsedLimit < 0) {
+        // Negative limits treated as 0
+        limit = 0
+      } else if (parsedLimit === 0) {
+        // limit=0 returns empty
+        limit = 0
+      } else if (parsedLimit > 1000) {
+        // Cap at maximum
+        limit = 100
+      } else {
+        limit = parsedLimit
+      }
+    }
+
+    // Handle page edge cases
+    let page = 1 // default (1-indexed)
+    if (pageParam !== null) {
+      const parsedPage = parseInt(pageParam, 10)
+      if (pageParam === 'NaN' || isNaN(parsedPage)) {
+        page = 1
+      } else if (parsedPage < 1) {
+        // Pages less than 1 default to 1
+        page = 1
+      } else {
+        page = parsedPage
+      }
+    }
+
+    // Generate mock items based on limit
+    const items = Array.from({ length: limit }, (_, i) => ({
+      id: `item-${(page - 1) * limit + i + 1}`,
+      name: `Item ${(page - 1) * limit + i + 1}`,
+    }))
+
+    return HttpResponse.json({
+      items,
+      page,
+      limit,
+      total: 1000, // Mock total count
+    })
+  }),
+]
 
 // Setup MSW server
-export const server = setupServer(...defaultHandlers);
+export const server = setupServer(...defaultHandlers)
 
 // Global setup and teardown
 beforeAll(() => {
   // Start MSW server
   server.listen({
     onUnhandledRequest: 'warn', // Log unhandled requests in development
-  });
+  })
 
   // Mock common browser APIs only in test environment
   if (process.env['VITEST'] === 'true' || process.env.NODE_ENV === 'test') {
@@ -96,7 +147,7 @@ beforeAll(() => {
           removeEventListener: vi.fn(),
           dispatchEvent: vi.fn(),
         })),
-      });
+      })
     }
 
     // Mock ResizeObserver only if it doesn't exist
@@ -105,7 +156,7 @@ beforeAll(() => {
         observe: vi.fn(),
         unobserve: vi.fn(),
         disconnect: vi.fn(),
-      }));
+      }))
     }
 
     // Mock IntersectionObserver only if it doesn't exist
@@ -114,7 +165,7 @@ beforeAll(() => {
         observe: vi.fn(),
         unobserve: vi.fn(),
         disconnect: vi.fn(),
-      }));
+      }))
     }
 
     // Mock localStorage only if it doesn't exist
@@ -126,145 +177,116 @@ beforeAll(() => {
         clear: vi.fn(),
         length: 0,
         key: vi.fn(),
-      };
+      }
       Object.defineProperty(window, 'localStorage', {
         writable: true,
         configurable: true,
         value: localStorageMock,
-      });
+      })
 
       // Mock sessionStorage with the same implementation
       Object.defineProperty(window, 'sessionStorage', {
         writable: true,
         configurable: true,
         value: { ...localStorageMock },
-      });
+      })
     }
   }
 
   // Native Bun fetch is available, no polyfill needed
-
-  // Setup console mocking for cleaner test output
-  vi.spyOn(console, 'warn').mockImplementation(() => undefined);
-  vi.spyOn(console, 'error').mockImplementation(() => undefined);
-});
+})
 
 beforeEach(() => {
   // Clear all timers (clearMocks is handled by vitest config)
-  vi.clearAllTimers();
-});
+  vi.clearAllTimers()
+})
 
 afterEach(() => {
   // Reset any request handlers that may have been added during tests
-  server.resetHandlers();
+  server.resetHandlers()
 
   // Clear all timers and mocks (only if timers are mocked)
   if (vi.isFakeTimers?.()) {
-    vi.runOnlyPendingTimers();
+    vi.runOnlyPendingTimers()
   }
-  vi.clearAllTimers();
-  vi.unstubAllEnvs();
-  vi.unstubAllGlobals();
+  vi.clearAllTimers()
+  vi.unstubAllEnvs()
+  vi.unstubAllGlobals()
 
   // Clean up DOM if using happy-dom
   if (typeof document !== 'undefined') {
-    document.body.innerHTML = '';
-    document.head.innerHTML = '';
+    document.body.innerHTML = ''
+    document.head.innerHTML = ''
   }
 
   // Force garbage collection if available
   if (global.gc) {
-    global.gc();
+    global.gc()
   }
-});
+})
 
 afterAll(async () => {
   // Clean up MSW server with proper async handling
   await new Promise<void>((resolve) => {
     const cleanup = () => {
       try {
-        server.close();
-        resolve();
+        server.close()
+        resolve()
       } catch {
         // Server might already be closed, continue cleanup
-        resolve();
+        resolve()
       }
-    };
+    }
 
     // Give active requests time to complete
-    setTimeout(cleanup, 100);
-  });
+    setTimeout(cleanup, 100)
+  })
 
   // Restore all mocks
-  vi.restoreAllMocks();
+  vi.restoreAllMocks()
 
   // Clear all timers one final time
-  vi.clearAllTimers();
-  vi.useRealTimers();
-
-  // Restore console methods
-  if (console.warn && typeof (console.warn as any).mockRestore === 'function') {
-    (console.warn as any).mockRestore();
-  }
-  if (console.error && typeof (console.error as any).mockRestore === 'function') {
-    (console.error as any).mockRestore();
-  }
-});
+  vi.clearAllTimers()
+  vi.useRealTimers()
+})
 
 // Utility functions for test setup
 export const mockApiResponse = (url: string, response: unknown, status = 200): void => {
   server.use(
     http.get(url, () => {
       // @ts-expect-error - response can be any type for testing
-      return HttpResponse.json(response, { status });
+      return HttpResponse.json(response, { status })
     }),
-  );
-};
+  )
+}
 
 export const mockApiError = (url: string, status = 500, message = 'Server Error'): void => {
   server.use(
     http.get(url, () => {
-      return HttpResponse.json({ error: message }, { status });
+      return HttpResponse.json({ error: message }, { status })
     }),
-  );
-};
+  )
+}
 
-// React Testing Library configuration already imported above
-
-// Wrapper component for providers (customize as needed)
-const AllTheProviders = ({ children }: { children: React.ReactNode }): React.ReactElement => {
-  // Add your providers here (Router, Theme, Context, etc.)
-  return <>{children}</>;
-};
-
-export const render = (
-  ui: ReactElement,
-  options?: Omit<RenderOptions, 'wrapper'>,
-): ReturnType<typeof rtlRender> => rtlRender(ui, { wrapper: AllTheProviders, ...options });
-
-// Export all testing utilities (no re-export of userEvent; import directly where needed)
-export * from '@testing-library/react';
-// User event convenience instance (idempotent; local to each test run)
-export const user = (userEvent as any)?.setup ? (userEvent as any).setup() : userEvent;
-
-// Async wait helper (microtask-ish flush)
-export const waitForAsync = () => new Promise((resolve) => setTimeout(resolve, 0));
+// Test utilities are exported from src/test-utils.ts for better organization
+// Import testing utilities from there in your tests:
+// import { render, setupUser, waitForAsync } from '@/test-utils';
 
 // Custom matchers (example matcher retained; extend here as needed)
 export const customMatchers = {
   toBeWithinRange(received: number, floor: number, ceiling: number) {
-    const pass = received >= floor && received <= ceiling;
+    const pass = received >= floor && received <= ceiling
     return {
       pass,
       message: () =>
         pass
           ? `expected ${String(received)} not to be within range ${String(floor)} - ${String(ceiling)}`
           : `expected ${String(received)} to be within range ${String(floor)} - ${String(ceiling)}`,
-    };
+    }
   },
-};
+}
 
 // Register matchers once (expect is global in Vitest)
 if (typeof (globalThis as any).expect?.extend === 'function') {
-  (globalThis as any).expect.extend(customMatchers);
+  ;(globalThis as any).expect.extend(customMatchers)
 }

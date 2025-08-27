@@ -2,6 +2,8 @@
   "$schema": "https://json.schemastore.org/tsconfig",
   "extends": "./tsconfig.json",
   "compilerOptions": {
+    // Override to NodeNext for Node.js compatibility when building dist-node output
+    // This ensures proper ESM resolution for Node.js consumers while base config uses "bundler" for Bun
     "moduleResolution": "NodeNext",
     "module": "NodeNext",
     "rootDir": "./src",
