@@ -35,7 +35,7 @@ reliability
 
 - [x] Ensure complete type generation for all build targets - `M`
 - [ ] Verify Node compatibility or explicitly document Bun-only scope - `M`
-- [ ] Add prepublish guard script for potential library publishing - `S`
+- [x] Add prepublish guard script for potential library publishing - `S`
 - [ ] Strengthen `bun audit` step with JSON parsing - `M`
 
 ### Test & Build Improvements

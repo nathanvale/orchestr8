@@ -1,12 +1,12 @@
 #!/usr/bin/env bun
 /**
  * Type declaration validator.
- * Ensures each export exposes runtime + matching type artefacts and maps.
+ * Ensures each export exposes runtime + matching type artifacts and maps.
  * Lint‑friendly: shallow nesting, no implicit any, explicit return types.
  */
 
 import { existsSync } from 'node:fs';
-import { join, normalize } from 'node:path';
+import { isAbsolute, relative as relativePath, resolve as resolvePath } from 'node:path';
 import packageJson from '../package.json';
 
 interface PackageJsonExportsEntry {
@@ -25,13 +25,28 @@ interface ValidationResult {
 
 const cwd = process.cwd();
 
-/** Basic path sanitiser to reduce security rule noise & guard traversal */
-function resolveProjectPath(relativePath: string): string {
-  // Reject attempts to traverse outside project root
-  if (relativePath.includes('..')) {
-    throw new Error(`Refusing path containing traversal: ${relativePath}`);
+/** Basic path sanitizer to reduce security rule noise & guard traversal */
+function resolveProjectPath(projectRelativePath: string): string {
+  if (projectRelativePath === '') throw new Error('Empty path not allowed');
+  // Reject absolute input early
+  if (isAbsolute(projectRelativePath)) {
+    throw new Error(`Absolute path not allowed: ${projectRelativePath}`);
   }
-  return join(cwd, normalize(relativePath));
+  const fullPath = resolvePath(cwd, projectRelativePath);
+  const rel = relativePath(cwd, fullPath);
+  // If the relative path starts with '..' or is absolute (defensive), it's outside
+  if (rel.startsWith('..') || isAbsolute(rel)) {
+    throw new Error(
+      `Path traversal detected: ${projectRelativePath} resolves outside project root`,
+    );
+  }
+  return fullPath;
+}
+
+/** Safe file existence check with path validation */
+function fileExists(relativePath: string): boolean {
+  // eslint-disable-next-line security/detect-non-literal-fs-filename
+  return existsSync(resolveProjectPath(relativePath));
 }
 
 function checkBuildDirs(): ValidationResult {
@@ -42,12 +57,10 @@ function checkBuildDirs(): ValidationResult {
     { path: 'dist-node', err: 'dist-node directory missing - run "bun run build:node" first' },
   ] as const;
   for (const item of required) {
-    // eslint-disable-next-line security/detect-non-literal-fs-filename
-    if (!existsSync(resolveProjectPath(item.path))) errors.push(item.err);
+    if (!fileExists(item.path)) errors.push(item.err);
   }
   // Optional Bun target
-  // eslint-disable-next-line security/detect-non-literal-fs-filename
-  if (!existsSync(resolveProjectPath('dist'))) {
+  if (!fileExists('dist')) {
     warnings.push('dist directory missing - run "bun run build" for Bun target');
   }
   return { errors, warnings };
@@ -57,14 +70,11 @@ function checkMainTypes(): ValidationResult {
   const errors: string[] = [];
   const warnings: string[] = [];
   const mainTypes = packageJson.types;
-  const mainTypesPath = resolveProjectPath(mainTypes);
-  // eslint-disable-next-line security/detect-non-literal-fs-filename
-  if (!existsSync(mainTypesPath)) {
+  if (!fileExists(mainTypes)) {
     errors.push(`Main types file missing: ${mainTypes}`);
     return { errors, warnings };
   }
-  // eslint-disable-next-line security/detect-non-literal-fs-filename
-  if (!existsSync(`${mainTypesPath}.map`)) {
+  if (!fileExists(`${mainTypes}.map`)) {
     warnings.push(`Type declaration map missing: ${mainTypes}.map`);
   }
   const exportsRoot = (packageJson.exports as PackageJsonExports | undefined)?.['.'];
@@ -91,14 +101,11 @@ function validateExportTypes(
     warnings.push(`Export "${key}" missing "types" field`);
     return;
   }
-  const typesPath = resolveProjectPath(entry.types);
-  // eslint-disable-next-line security/detect-non-literal-fs-filename
-  if (!existsSync(typesPath)) {
+  if (!fileExists(entry.types)) {
     errors.push(`Export "${key}" types missing: ${entry.types}`);
     return;
   }
-  // eslint-disable-next-line security/detect-non-literal-fs-filename
-  if (!existsSync(`${typesPath}.map`)) {
+  if (!fileExists(`${entry.types}.map`)) {
     warnings.push(`Export "${key}" types map missing: ${entry.types}.map`);
   }
 }
@@ -110,14 +117,12 @@ function validateExportRuntime(
   warnings: string[],
 ): void {
   if (entry.import !== undefined && entry.import !== '') {
-    // eslint-disable-next-line security/detect-non-literal-fs-filename
-    if (!existsSync(resolveProjectPath(entry.import))) {
+    if (!fileExists(entry.import)) {
       errors.push(`Export "${key}" import file missing: ${entry.import}`);
     }
   }
   if (entry.bun !== undefined && entry.bun !== '') {
-    // eslint-disable-next-line security/detect-non-literal-fs-filename
-    if (!existsSync(resolveProjectPath(entry.bun))) {
+    if (!fileExists(entry.bun)) {
       warnings.push(`Export "${key}" bun file missing: ${entry.bun}`);
     }
   }
@@ -129,7 +134,12 @@ function checkExports(): ValidationResult {
   const exportsField = packageJson.exports as PackageJsonExports | undefined;
   if (exportsField === undefined) return { errors, warnings };
   for (const [key, raw] of Object.entries(exportsField)) {
-    if (typeof raw === 'string') continue;
+    if (typeof raw === 'string') {
+      warnings.push(
+        `Export "${key}" uses string format - consider using object format with "types" field`,
+      );
+      continue;
+    }
     validateExportTypes(key, raw, errors, warnings);
     validateExportRuntime(key, raw, errors, warnings);
   }
@@ -157,13 +167,15 @@ function report(result: ValidationResult): void {
     for (const msg of warnings) console.warn(`  • ${msg}`);
   }
   if (errors.length > 0) {
-    console.error('\n💡 Tip: Run "bun run build:all" to generate all build artefacts');
-    process.exit(1);
+    console.error('\n💡 Tip: Run "bun run build:all" to generate all build artifacts');
+    // Avoid direct process.exit per eslint unicorn/no-process-exit
+    process.exitCode = 1;
+    return;
   }
   if (warnings.length > 0) {
     console.info('\n✅ Passed with warnings (see above)');
   } else {
-    console.info('✅ Type validation passed – all artefacts present');
+    console.info('✅ Type validation passed – all artifacts present');
   }
 }
 
