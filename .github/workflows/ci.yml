@@ -115,7 +115,7 @@ jobs:
       - name: Run Tests
         run: npx vitest run --reporter=dot --coverage
         env:
-          NODE_ENV: development
+          NODE_ENV: test
 
       - name: Upload Coverage
         if: matrix.os == 'ubuntu-latest' && matrix.bun-version == '1.1.38'
