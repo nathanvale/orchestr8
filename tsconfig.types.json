@@ -2,10 +2,14 @@
   "$schema": "https://json.schemastore.org/tsconfig",
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "moduleResolution": "NodeNext",
-    "module": "NodeNext",
+    "emitDeclarationOnly": true,
+    "declaration": true,
+    "declarationMap": true,
+    "outDir": "./dist-types",
     "rootDir": "./src",
-    "types": ["bun-types"]
+    "composite": false,
+    "noEmit": false,
+    "removeComments": false
   },
   "include": ["src/**/*"],
   "exclude": [

@@ -11,6 +11,8 @@ bunfig.toml.local
 
 # Build outputs
 dist/
+dist-node/
+dist-types/
 dist-ssr/
 build/
 out/

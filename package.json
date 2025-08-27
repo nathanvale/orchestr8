@@ -17,22 +17,24 @@
     ".": {
       "bun": "./dist/index.js",
       "import": "./dist-node/index.js",
-      "types": "./dist-node/index.d.ts"
+      "types": "./dist-types/index.d.ts"
     }
   },
   "main": "dist-node/index.js",
-  "types": "dist-node/index.d.ts",
+  "types": "dist-types/index.d.ts",
   "files": [
     "dist/",
     "dist-node/",
+    "dist-types/",
     "README.md",
     "LICENSE"
   ],
   "scripts": {
     "build": "bun build src/index.ts --outdir=dist --target=bun",
-    "build:all": "bun run build && bun run build:node",
+    "build:all": "bun run build:node && bun run build:types && bun run build",
     "build:analyze": "bun build src/index.ts --outdir=dist --target=bun --analyze",
     "build:node": "tsc -p tsconfig.build.json --outDir dist-node",
+    "build:types": "tsc -p tsconfig.types.json",
     "build:watch": "bun build src/index.ts --outdir=dist --target=bun --watch",
     "bundle:size": "bunx size-limit",
     "check": "bun run validate",
@@ -72,7 +74,8 @@
     "test:watch": "vitest watch",
     "typecheck": "tsc --noEmit -p tsconfig.build.json",
     "typecheck:watch": "tsc --noEmit -p tsconfig.build.json --watch",
-    "validate": "bun run lint:check && bun run format:check && bun run typecheck && bun run test:ci"
+    "validate": "bun run lint:check && bun run format:check && bun run typecheck && bun run validate:types && bun run test:ci",
+    "validate:types": "bun run build:types && bun scripts/validate-types.ts"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [
