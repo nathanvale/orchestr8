@@ -1,19 +1,33 @@
 /// <reference types="vitest/globals" />
+import { mkdirSync } from 'node:fs';
 import { defineConfig } from 'vite';
 
+// Ensure coverage directory exists for JUnit reporter
+if (process.env['CI'] === 'true') {
+  try {
+    mkdirSync('./coverage', { recursive: true });
+  } catch {
+    // Directory might already exist, ignore error
+  }
+}
+
+// Removed unused CPU and runtime detection variables - using single-threaded mode
+// to avoid worker thread termination issues
+
 export default defineConfig({
+  // Cache configuration (applies to Vite caching)
+  cacheDir: '.vitest',
+
   test: {
     // Environment configuration
     environment: 'happy-dom', // Faster than jsdom for DOM testing
 
     // Performance optimizations for 2025
-    pool: 'forks', // Use forks instead of threads for better Bun compatibility
+    // Use single-threaded mode to avoid worker termination issues with Bun/Node hybrid
+    pool: 'threads',
     poolOptions: {
-      forks: {
-        singleFork: false,
-        isolate: true, // Enable isolation to prevent shared state cleanup issues
-        minForks: 1,
-        maxForks: process.env['CI'] === 'true' ? 2 : 4, // Reduce forks in CI for stability
+      threads: {
+        singleThread: true, // Force single-threaded to avoid worker termination
       },
     },
 
@@ -43,8 +57,6 @@ export default defineConfig({
     // Global configuration
     globals: true, // Enable global test functions (describe, it, expect)
     clearMocks: true, // Auto-clear mocks between tests
-    mockReset: true, // Reset mock state between tests
-    restoreMocks: true, // Restore original implementation after tests
 
     // Coverage configuration with 2025 optimizations
     coverage: {
@@ -82,8 +94,13 @@ export default defineConfig({
     hookTimeout: 10000, // 10 seconds for hooks
     teardownTimeout: 15000, // 15 seconds for teardown to allow proper cleanup
 
-    // Reporter configuration
-    reporters: process.env['CI'] === 'true' ? ['verbose', 'junit'] : ['verbose'],
+    // Reporter configuration with balanced output
+    reporters:
+      process.env['CI'] === 'true'
+        ? ['dot', 'junit']
+        : process.env['VERBOSE'] === 'true'
+          ? ['verbose']
+          : ['default'],
     outputFile: {
       junit: './coverage/junit.xml',
     },

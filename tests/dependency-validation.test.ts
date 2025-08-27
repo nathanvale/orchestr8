@@ -1,8 +1,8 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, test } from 'vitest';
 
 describe('Vitest Migration Dependency Validation', () => {
   describe('Core Vitest packages', () => {
-    it('should import vitest core functions', async () => {
+    test('should import vitest core functions', async () => {
       const {
         describe: vitestDescribe,
         it: vitestIt,
@@ -16,7 +16,7 @@ describe('Vitest Migration Dependency Validation', () => {
       expect(vi).toBeDefined();
     });
 
-    it('should import @vitest/ui package', async () => {
+    test('should import @vitest/ui package', async () => {
       // Note: This will only work if @vitest/ui is properly installed
       // We're testing the import resolution, not running the actual UI
       try {
@@ -27,7 +27,7 @@ describe('Vitest Migration Dependency Validation', () => {
       }
     });
 
-    it('should import @vitest/coverage-v8 package', async () => {
+    test('should import @vitest/coverage-v8 package', async () => {
       try {
         const coverageV8 = await import('@vitest/coverage-v8');
         expect(coverageV8).toBeDefined();
@@ -38,7 +38,7 @@ describe('Vitest Migration Dependency Validation', () => {
   });
 
   describe('Testing utilities', () => {
-    it('should import happy-dom for DOM environment', async () => {
+    test('should import happy-dom for DOM environment', async () => {
       try {
         const happyDOM = await import('happy-dom');
         expect(happyDOM).toBeDefined();
@@ -48,7 +48,7 @@ describe('Vitest Migration Dependency Validation', () => {
       }
     });
 
-    it('should import @testing-library/react', async () => {
+    test('should import @testing-library/react', async () => {
       try {
         const rtl = await import('@testing-library/react');
         expect(rtl).toBeDefined();
@@ -59,7 +59,7 @@ describe('Vitest Migration Dependency Validation', () => {
       }
     });
 
-    it('should import @testing-library/jest-dom', async () => {
+    test('should import @testing-library/jest-dom', async () => {
       try {
         // Import from the vitest entry point
         await import('@testing-library/jest-dom/vitest');
@@ -70,7 +70,7 @@ describe('Vitest Migration Dependency Validation', () => {
       }
     });
 
-    it('should import @testing-library/user-event', async () => {
+    test('should import @testing-library/user-event', async () => {
       try {
         const userEvent = await import('@testing-library/user-event');
         expect(userEvent).toBeDefined();
@@ -82,7 +82,7 @@ describe('Vitest Migration Dependency Validation', () => {
   });
 
   describe('MSW and fetch utilities', () => {
-    it('should import MSW for API mocking', async () => {
+    test('should import MSW for API mocking', async () => {
       try {
         const msw = await import('msw');
         expect(msw).toBeDefined();
@@ -102,7 +102,7 @@ describe('Vitest Migration Dependency Validation', () => {
   });
 
   describe('Configuration packages', () => {
-    it('should import vite-tsconfig-paths', async () => {
+    test('should import vite-tsconfig-paths', async () => {
       try {
         const viteTsconfigPaths = await import('vite-tsconfig-paths');
         expect(viteTsconfigPaths).toBeDefined();
@@ -112,7 +112,7 @@ describe('Vitest Migration Dependency Validation', () => {
       }
     });
 
-    it('should import eslint-plugin-vitest', async () => {
+    test('should import eslint-plugin-vitest', async () => {
       try {
         const eslintPluginVitest = await import('eslint-plugin-vitest');
         expect(eslintPluginVitest).toBeDefined();
@@ -124,7 +124,7 @@ describe('Vitest Migration Dependency Validation', () => {
   });
 
   describe('Package version compatibility', () => {
-    it('should have compatible vitest version', async () => {
+    test('should have compatible vitest version', async () => {
       const pkg = await import('../package.json', { assert: { type: 'json' } });
       const vitestVersion = pkg.default.devDependencies?.vitest;
 
@@ -132,7 +132,7 @@ describe('Vitest Migration Dependency Validation', () => {
       expect(vitestVersion).toMatch(/^\d+\.\d+\.\d+$|^\^\d+\.\d+\.\d+$/);
     });
 
-    it('should verify MSW can create a basic handler', async () => {
+    test('should verify MSW can create a basic handler', async () => {
       const { http } = await import('msw');
 
       const handler = http.get('/api/test', () => {

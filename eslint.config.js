@@ -3,6 +3,7 @@ import prettierConfig from 'eslint-config-prettier';
 import securityPlugin from 'eslint-plugin-security';
 import sonarjs from 'eslint-plugin-sonarjs';
 import unicorn from 'eslint-plugin-unicorn';
+import vitest from 'eslint-plugin-vitest';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
@@ -144,7 +145,17 @@ export default tseslint.config(
       'vitest.config.ts',
       'wallaby.mjs',
     ],
+    plugins: {
+      vitest,
+    },
     rules: {
+      // Vitest specific rules
+      'vitest/no-disabled-tests': 'warn',
+      'vitest/no-focused-tests': 'error',
+      'vitest/no-identical-title': 'error',
+      'vitest/prefer-to-have-length': 'warn',
+      'vitest/valid-expect': 'error',
+      'vitest/consistent-test-it': ['error', { fn: 'test' }],
       // Relax strict rules for tests
       '@typescript-eslint/no-explicit-any': 'off', // Tests often mock with any
       '@typescript-eslint/no-unsafe-assignment': 'off', // Mock assignments

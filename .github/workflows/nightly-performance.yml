@@ -1,0 +1,77 @@
+name: Nightly Performance Benchmarks
+
+on:
+  schedule:
+    # Run at 2 AM UTC daily
+    - cron: "0 2 * * *"
+  workflow_dispatch: # Allow manual trigger
+
+env:
+  BUN_VERSION: 1.1.38
+
+jobs:
+  performance:
+    name: Performance Benchmarks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - name: Install Dependencies
+        run: bun install --frozen-lockfile
+        env:
+          NODE_ENV: development
+
+      - name: Install Hyperfine
+        run: |
+          wget https://github.com/sharkdp/hyperfine/releases/download/v1.18.0/hyperfine_1.18.0_amd64.deb
+          sudo dpkg -i hyperfine_1.18.0_amd64.deb
+
+      - name: Run Performance Benchmarks
+        run: |
+          echo "## ⚡ Nightly Performance Benchmarks - $(date)" > perf-results.md
+          echo "" >> perf-results.md
+          echo "### Build Performance" >> perf-results.md
+          hyperfine --warmup 1 'bun run build' --export-markdown perf-build.md
+          cat perf-build.md >> perf-results.md
+          echo "" >> perf-results.md
+          echo "### Test Performance" >> perf-results.md
+          hyperfine --warmup 2 'bun run test' --export-markdown perf-test.md
+          cat perf-test.md >> perf-results.md
+          echo "" >> perf-results.md
+          echo "### Startup Performance" >> perf-results.md
+          hyperfine --warmup 3 'bun run src/index.ts' --export-markdown perf-startup.md
+          cat perf-startup.md >> perf-results.md
+
+      - name: Create Issue on Performance Regression
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const results = fs.readFileSync('perf-results.md', 'utf8');
+
+            // Create an issue with the performance results
+            // This could be enhanced with threshold checks for regression detection
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `Nightly Performance Report - ${new Date().toISOString().split('T')[0]}`,
+              body: results,
+              labels: ['performance', 'automated']
+            });
+
+      - name: Upload Performance Results
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-results-${{ github.run_number }}
+          path: |
+            perf-results.md
+            perf-build.md
+            perf-test.md
+            perf-startup.md
+          retention-days: 30

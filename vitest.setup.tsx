@@ -74,56 +74,76 @@ beforeAll(() => {
     onUnhandledRequest: 'warn', // Log unhandled requests in development
   });
 
-  // Mock common browser APIs
-  Object.defineProperty(window, 'matchMedia', {
-    writable: true,
-    value: vi.fn().mockImplementation((query: string) => ({
-      matches: false,
-      media: query,
-      onchange: null,
-      addListener: vi.fn(),
-      removeListener: vi.fn(),
-      addEventListener: vi.fn(),
-      removeEventListener: vi.fn(),
-      dispatchEvent: vi.fn(),
-    })),
-  });
+  // Mock common browser APIs only in test environment
+  if (process.env['VITEST'] === 'true' || process.env.NODE_ENV === 'test') {
+    // Mock matchMedia only if it doesn't exist
+    if (!window.matchMedia) {
+      Object.defineProperty(window, 'matchMedia', {
+        writable: true,
+        configurable: true,
+        value: vi.fn().mockImplementation((query: string) => ({
+          matches: false,
+          media: query,
+          onchange: null,
+          addListener: vi.fn(),
+          removeListener: vi.fn(),
+          addEventListener: vi.fn(),
+          removeEventListener: vi.fn(),
+          dispatchEvent: vi.fn(),
+        })),
+      });
+    }
 
-  // Mock ResizeObserver
-  global.ResizeObserver = vi.fn().mockImplementation(() => ({
-    observe: vi.fn(),
-    unobserve: vi.fn(),
-    disconnect: vi.fn(),
-  }));
+    // Mock ResizeObserver only if it doesn't exist
+    if (!global.ResizeObserver) {
+      global.ResizeObserver = vi.fn().mockImplementation(() => ({
+        observe: vi.fn(),
+        unobserve: vi.fn(),
+        disconnect: vi.fn(),
+      }));
+    }
 
-  // Mock IntersectionObserver
-  global.IntersectionObserver = vi.fn().mockImplementation(() => ({
-    observe: vi.fn(),
-    unobserve: vi.fn(),
-    disconnect: vi.fn(),
-  }));
+    // Mock IntersectionObserver only if it doesn't exist
+    if (!global.IntersectionObserver) {
+      global.IntersectionObserver = vi.fn().mockImplementation(() => ({
+        observe: vi.fn(),
+        unobserve: vi.fn(),
+        disconnect: vi.fn(),
+      }));
+    }
 
-  // Mock localStorage
-  const localStorageMock = {
-    getItem: vi.fn(),
-    setItem: vi.fn(),
-    removeItem: vi.fn(),
-    clear: vi.fn(),
-    length: 0,
-    key: vi.fn(),
-  };
-  Object.defineProperty(window, 'localStorage', {
-    value: localStorageMock,
-  });
+    // Mock localStorage only if it doesn't exist
+    if (!window.localStorage) {
+      const localStorageMock = {
+        getItem: vi.fn(),
+        setItem: vi.fn(),
+        removeItem: vi.fn(),
+        clear: vi.fn(),
+        length: 0,
+        key: vi.fn(),
+      };
+      Object.defineProperty(window, 'localStorage', {
+        writable: true,
+        configurable: true,
+        value: localStorageMock,
+      });
 
-  // Mock sessionStorage
-  Object.defineProperty(window, 'sessionStorage', {
-    value: localStorageMock,
-  });
+      // Mock sessionStorage with the same implementation
+      Object.defineProperty(window, 'sessionStorage', {
+        writable: true,
+        configurable: true,
+        value: { ...localStorageMock },
+      });
+    }
+  }
 
-  // Mock fetch (fallback if MSW doesn't handle it)
-  // @ts-expect-error - simplified mock for testing
-  global.fetch = vi.fn();
+  // Add fetch polyfill only when needed (Node.js environments without fetch)
+  if (typeof globalThis.fetch === 'undefined') {
+    // Dynamic import without await - the polyfill will be available for subsequent tests
+    import('whatwg-fetch').catch(() => {
+      // Fallback: if whatwg-fetch is not available, tests might still work in modern environments
+    });
+  }
 
   // Setup console mocking for cleaner test output
   vi.spyOn(console, 'warn').mockImplementation(() => undefined);
@@ -131,8 +151,7 @@ beforeAll(() => {
 });
 
 beforeEach(() => {
-  // Reset all mocks before each test
-  vi.clearAllMocks();
+  // Clear all timers (clearMocks is handled by vitest config)
   vi.clearAllTimers();
 });
 

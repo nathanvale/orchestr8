@@ -1,11 +1,11 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, test, vi } from 'vitest';
 
 describe('Vitest Setup Verification', () => {
-  it('should run a basic test', () => {
+  test('should run a basic test', () => {
     expect(1 + 1).toBe(2);
   });
 
-  it('should support mocking with vi', () => {
+  test('should support mocking with vi', () => {
     const mockFn = vi.fn();
     mockFn('test');
 
@@ -13,12 +13,12 @@ describe('Vitest Setup Verification', () => {
     expect(mockFn).toHaveBeenCalledTimes(1);
   });
 
-  it('should support async tests', async () => {
+  test('should support async tests', async () => {
     const promise = Promise.resolve('success');
     await expect(promise).resolves.toBe('success');
   });
 
-  it('should support timers', () => {
+  test('should support timers', () => {
     vi.useFakeTimers();
 
     const callback = vi.fn();

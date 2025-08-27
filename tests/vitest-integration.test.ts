@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
 import React from 'react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 // Simple React component to test
 function TestComponent() {
@@ -32,14 +32,14 @@ describe('Vitest Integration Test', () => {
     document.body.innerHTML = '';
   });
 
-  it('should render React components using @testing-library/react', () => {
+  test('should render React components using @testing-library/react', () => {
     render(React.createElement(TestComponent));
 
     expect(screen.getByText('Hello Vitest!')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Click me' })).toBeInTheDocument();
   });
 
-  it('should support user interactions with @testing-library/user-event', async () => {
+  test('should support user interactions with @testing-library/user-event', async () => {
     const user = userEvent.setup();
     const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
@@ -53,7 +53,7 @@ describe('Vitest Integration Test', () => {
     consoleSpy.mockRestore();
   });
 
-  it('should work with MSW for API mocking', () => {
+  test('should work with MSW for API mocking', () => {
     // Test that we can create handlers and setup server
     expect(server).toBeDefined();
 
@@ -66,7 +66,7 @@ describe('Vitest Integration Test', () => {
     expect(handlers[0]).toBeDefined();
   });
 
-  it('should support vi.* mocking utilities', () => {
+  test('should support vi.* mocking utilities', () => {
     const mockFn = vi.fn();
     const mockObj = {
       method: vi.fn().mockReturnValue('mocked value'),
@@ -80,7 +80,7 @@ describe('Vitest Integration Test', () => {
     expect(mockObj.method).toHaveBeenCalledTimes(1);
   });
 
-  it('should support fake timers', () => {
+  test('should support fake timers', () => {
     vi.useFakeTimers();
 
     const callback = vi.fn();
@@ -95,7 +95,7 @@ describe('Vitest Integration Test', () => {
     vi.useRealTimers();
   });
 
-  it('should have DOM environment from happy-dom', () => {
+  test('should have DOM environment from happy-dom', () => {
     // Test that we have DOM globals
     expect(window).toBeDefined();
     expect(document).toBeDefined();
