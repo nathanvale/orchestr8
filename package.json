@@ -21,7 +21,7 @@
     }
   },
   "main": "dist-node/index.js",
-  "types": "dist-types/index.d.ts",
+  "types": "./dist-types/index.d.ts",
   "files": [
     "dist/",
     "dist-node/",
@@ -38,6 +38,7 @@
     "build:watch": "bun build src/index.ts --outdir=dist --target=bun --watch",
     "bundle:size": "bunx size-limit",
     "check": "bun run validate",
+    "clean:build": "rm -rf dist dist-node dist-types",
     "commit": "git-cz",
     "cz": "git-cz",
     "dev": "bun --watch src/index.ts",
@@ -54,7 +55,7 @@
     "perf:startup": "hyperfine --warmup 3 'bun run src/index.ts'",
     "perf:startup:markdown": "hyperfine --warmup 3 'bun run src/index.ts' --export-markdown perf-startup.md",
     "prepare": "husky",
-    "prepublishOnly": "bun run build:all && bun run test:ci",
+    "prepublishOnly": "bun run build:all && bun run validate:types && bun run test:ci",
     "release": "bunx changeset",
     "release:publish": "bunx changeset publish",
     "release:version": "bunx changeset version",
@@ -75,7 +76,7 @@
     "typecheck": "tsc --noEmit -p tsconfig.build.json",
     "typecheck:watch": "tsc --noEmit -p tsconfig.build.json --watch",
     "validate": "bun run lint:check && bun run format:check && bun run typecheck && bun run validate:types && bun run test:ci",
-    "validate:types": "bun run build:types && bun scripts/validate-types.ts"
+    "validate:types": "bun run build:all && bun scripts/validate-types.ts"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [
