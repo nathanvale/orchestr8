@@ -50,8 +50,8 @@ Criteria:** More robust, consistent, and informative testing approach
 
 ### Testing Enhancements
 
-- [ ] Standardize React Testing Library cleanup approach - `S`
-- [ ] Add contract tests for critical behaviors:
+- [x] Standardize React Testing Library cleanup approach - `S`
+- [x] Add contract tests for critical behaviors:
   - Test `shouldAutoStart` contract - `XS`
   - Add MSW unmatched request logging test - `S`
   - Create dynamic Bun import failure path test - `S`
@@ -59,16 +59,16 @@ Criteria:** More robust, consistent, and informative testing approach
 
 ### Developer Experience
 
-- [ ] Create "First 15 Minutes" onboarding documentation - `M`
-- [ ] Add `dev:test` script for low-noise watch mode - `XS`
-- [ ] Add emoji anchors to spec sections for faster scanning - `XS`
-- [ ] Add short comments in config files to prevent over-optimization - `XS`
+- [x] Create "First 15 Minutes" onboarding documentation - `M`
+- [x] Add `dev:test` script for low-noise watch mode - `XS`
+- [x] Add emoji anchors to spec sections for faster scanning - `XS`
+- [x] Add short comments in config files to prevent over-optimization - `XS`
 
 ### Utility Improvements
 
-- [ ] Consolidate duplicated React Testing Library utilities - `S`
-- [ ] Remove broad console warning/error spies - `M`
-- [ ] Implement minimal cross-platform path handling - `S`
+- [x] Consolidate duplicated React Testing Library utilities - `S`
+- [x] Remove broad console warning/error spies - `M`
+- [x] Implement minimal cross-platform path handling - `S`
 
 ## Phase 3: Security & Supply Chain Hardening (1 week)
 
@@ -80,12 +80,12 @@ Comprehensive security monitoring and transparent practices
 - [ ] Add weekly `bun audit` workflow with diff severity tracking - `M`
 - [ ] Enable CodeQL JavaScript scanning - `S`
 - [ ] Optionally sign or attach hash to SBOM artifacts - `S`
-- [ ] Add SECURITY.md with disclosure process - `XS`
+- [x] Add SECURITY.md with disclosure process - `XS`
 - [ ] Update README with supply chain security references - `XS`
 
 ### Compliance & Documentation
 
-- [ ] Add CODEOWNERS file to reinforce review gates - `XS`
+- [x] Add CODEOWNERS file to reinforce review gates - `XS`
 - [ ] Create `docs/testing-strategy.md` for new contributors - `S`
 - [ ] Prepare npm provenance documentation - `S`
 
@@ -102,7 +102,7 @@ Criteria:** Enhanced performance tracking, reduced cognitive load
 
 ### Tooling & Configuration
 
-- [ ] Add .editorconfig for consistent formatting - `XS`
+- [x] Add .editorconfig for consistent formatting - `XS`
 - [ ] Explore conditional exports mapping (future-proofing) - `M`
 - [ ] Verify tree-shake friendly patterns - `S`
 - [ ] Add "sideEffects": false verification - `XS`
@@ -122,7 +122,7 @@ Criteria:** Clear, accessible documentation and onboarding experience
 - [ ] Create comprehensive README with badges - `M`
 - [ ] Develop migration guides (Node.js to Bun) - `L`
 - [ ] Write troubleshooting guide - `M`
-- [ ] Update CONTRIBUTING.md with detailed guidelines - `S`
+- [x] Update CONTRIBUTING.md with detailed guidelines - `S`
 
 ### Community Engagement
 
