@@ -1,13 +1,14 @@
 /// <reference types="vitest/globals" />
-import { mkdirSync } from 'node:fs';
-import { defineConfig } from 'vite';
+import { mkdirSync } from 'node:fs'
+import path from 'node:path'
+import { defineConfig } from 'vite'
 
 // Ensure coverage directory exists for JUnit reporter.
 // NOTE: Some CI providers set CI="true" (string) while others set CI=1 or any non-empty value.
 // Using a truthy check avoids brittle equality against a specific string variant.
 if (process.env['CI']) {
   try {
-    mkdirSync('./coverage', { recursive: true });
+    mkdirSync('./coverage', { recursive: true })
   } catch {
     // Directory might already exist, ignore error
   }
@@ -24,14 +25,13 @@ export default defineConfig({
     // Environment configuration (toggle with DOM_ENV=jsdom for fuller API parity)
     environment: process.env['DOM_ENV'] === 'jsdom' ? 'jsdom' : 'happy-dom',
 
-    // Performance optimizations for 2025
-    // Use single-threaded mode to avoid worker termination issues with Bun/Node hybrid
-    pool: 'threads',
-    poolOptions: {
-      threads: {
-        singleThread: true, // TODO: Flip to false / remove once Bun+Vitest worker termination issue resolved & benchmarked
-      },
-    },
+    // Why: Forks pool prevents worker termination issues in Bun/Vitest hybrid
+    // Trade-off: Slightly slower than threads but more stable for Bun runtime
+    // Context: Official Vitest/Bun workaround for worker stability issues
+    pool: 'forks',
+
+    // Why: Ensure test isolation to prevent state bleed between tests
+    isolate: true,
 
     // File patterns
     include: [
@@ -56,14 +56,18 @@ export default defineConfig({
     // Setup files
     setupFiles: ['./vitest.setup.tsx'],
 
-    // Global configuration
-    globals: true, // Enable global test functions (describe, it, expect)
-    clearMocks: true, // Auto-clear mocks between tests
+    // Why: Globals (describe, it, expect) match Jest patterns most devs know
+    globals: true,
+    // Why: Clear mocks prevents test pollution and flaky failures
+    clearMocks: true,
 
-    // Coverage configuration with 2025 optimizations
+    // Why: Coverage ensures code quality and catches untested paths
     coverage: {
-      provider: 'v8', // Faster than istanbul, better Bun compatibility
-      reporter: ['text', 'text-summary', 'html', 'lcov', 'json-summary'],
+      // Why: V8 provider is 2-3x faster than Istanbul and works better with Bun
+      provider: 'v8',
+      reporter: process.env['CI']
+        ? ['text', 'text-summary', 'html', 'lcov', 'json-summary']
+        : ['text-summary'], // Reduce reporter noise in local development
       reportsDirectory: './coverage',
       exclude: [
         'coverage/**',
@@ -80,25 +84,43 @@ export default defineConfig({
         'tests/utils/**',
       ],
       include: ['src/**/*.{js,ts,jsx,tsx}'],
-      // Configurable thresholds
+      // Coverage threshold strategy:
+      // - Global thresholds apply to all files by default
+      // - Critical modules can have stricter per-file thresholds
+      // - Uncomment and adjust perFile config below for critical utilities
       thresholds: {
         global: {
-          // Emphasize overall line/statement quality; branch threshold relaxed for starter template
-          branches: 50,
-          functions: 70,
-          lines: 80,
-          statements: 80,
+          // Why: Start with achievable thresholds to avoid blocking initial development
+          branches: 50, // Why: Complex conditionals are harder to test - start lower
+          functions: 70, // Why: Balance between coverage and development velocity
+          lines: 80, // Why: Industry standard minimum for production code
+          statements: 80, // Why: Match line coverage for consistency
         },
+        // Per-file coverage overrides for critical modules
+        // Uncomment and customize for your critical paths:
+        // perFile: true,
+        // '@/utils/auth.ts': {
+        //   branches: 90,
+        //   functions: 90,
+        //   lines: 90,
+        //   statements: 90,
+        // },
+        // '@/utils/crypto.ts': {
+        //   branches: 95,
+        //   functions: 95,
+        //   lines: 95,
+        //   statements: 95,
+        // },
       },
       // Skip coverage collection in watch mode for performance
       enabled: process.env['VITEST_WATCH'] !== 'true',
       skipFull: false,
     },
 
-    // Timeout configurations
-    testTimeout: 10000, // 10 seconds for individual tests
-    hookTimeout: 10000, // 10 seconds for hooks
-    teardownTimeout: 15000, // 15 seconds for teardown to allow proper cleanup
+    // Why: Generous timeouts prevent flaky failures in CI/slow environments
+    testTimeout: 10000, // Why: API calls and DB operations need more than default 5s
+    hookTimeout: 10000, // Why: Setup/teardown may involve complex initialization
+    teardownTimeout: 15000, // Why: MSW cleanup and worker termination need extra time
 
     // Reporter configuration with balanced output
     reporters: process.env['CI']
@@ -116,8 +138,8 @@ export default defineConfig({
     },
 
     // Advanced options for ADHD-optimized feedback
-    passWithNoTests: true,
-    logHeapUsage: process.env.NODE_ENV === 'development',
+    passWithNoTests: true, // Template project may have no tests initially
+    logHeapUsage: process.env.NODE_ENV === 'development', // Memory debugging in dev only
 
     // UI mode configuration (for development)
     ui: process.env['VITEST_UI'] === 'true',
@@ -127,8 +149,11 @@ export default defineConfig({
   // Vite configuration for better module resolution
   resolve: {
     alias: {
-      '@': './src',
-      '@tests': './tests',
+      // Why: Absolute paths prevent SSR/Vite module resolution issues with relative paths
+      '@': path.resolve(process.cwd(), 'src'),
+      '@tests': path.resolve(process.cwd(), 'tests'),
+      // Force rollup resolution to WASM fallback to avoid native optional binary install issues under certain package managers
+      'rollup': '@rollup/wasm-node',
       // Removed unused @types, @utils and @config aliases to reduce cognitive load until directories exist
     },
   },
@@ -141,7 +166,7 @@ export default defineConfig({
   // External dependencies that should not be bundled
   build: {
     rollupOptions: {
-      external: ['bun'],
+      external: ['bun', '@rollup/rollup-linux-x64-gnu', '@rollup/rollup-darwin-arm64'],
     },
   },
 
@@ -161,4 +186,4 @@ export default defineConfig({
     keepNames: true,
     jsx: 'automatic', // Use React 17+ automatic JSX transform
   },
-});
+})

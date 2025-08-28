@@ -20,6 +20,9 @@ permissions:
 env:
   BUN_VERSION: "1.1.38"
   FORCE_COLOR: 3
+  # Vercel Remote Cache (free since Dec 2024) - set in repository secrets
+  # TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+  # TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
 
 jobs:
   quality:
@@ -69,7 +72,11 @@ jobs:
         run: bunx tsc --noEmit -p tsconfig.json
 
       - name: Build
-        run: bun run build:all
+        run: bun run build:all --continue=dependencies-successful
+
+      - name: Governance & Safety Checks
+        run: bun run governance
+        continue-on-error: false
 
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4

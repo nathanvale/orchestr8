@@ -1,7 +1,22 @@
-﻿# Contributing (Ultra‑Short Version)
+# Contributing (Ultra‑Short Version)
 
 Focus rules: keep it fast, simple, and consistent. This template is tuned for an
 ADHD‑friendly flow.
+
+## 🧠 Core Mental Anchors
+
+Before diving in, remember these three fundamental concepts:
+
+1. **Runtime**: **Bun** (not Node.js) - We use Bun for its 3-5x performance
+   advantage
+2. **Test Runner**: **Vitest** (not Jest or Bun test) - Chosen for rich
+   ecosystem & tooling
+3. **Build Separation**: Three distinct outputs:
+   - `dist/` - Bun-optimized build
+   - `dist-node/` - Node.js compatible build
+   - `dist-types/` - TypeScript declarations
+
+Understanding this separation helps avoid confusion when debugging build issues.
 
 ## Core Commands
 

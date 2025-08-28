@@ -1,0 +1,45 @@
+{
+  "name": "@bun-template/utils",
+  "version": "0.1.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nathanvale/bun-changesets-template.git",
+    "directory": "packages/utils"
+  },
+  "sideEffects": false,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./number": {
+      "types": "./dist/number-utils.d.ts",
+      "import": "./dist/number-utils.js"
+    },
+    "./path": {
+      "types": "./dist/path-utils.d.ts",
+      "import": "./dist/path-utils.js"
+    }
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc --build",
+    "clean": "rm -rf dist .tsbuildinfo",
+    "prepublishOnly": "npm run build && test -d dist",
+    "test": "vitest run",
+    "test:dist": "npm run build && vitest run --dir dist",
+    "typecheck": "tsc --noEmit"
+  },
+  "packageManager": "bun@1.1.38",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
+}

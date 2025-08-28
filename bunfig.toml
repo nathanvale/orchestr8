@@ -9,6 +9,7 @@ dedupe = true                  # Deduplicate packages aggressively
 autoInstall = false           # Prevent accidental installs
 optional = false              # Don't skip optional dependencies
 peer = true                   # Install peer dependencies
+linkWorkspacePackages = true  # Enable workspace hoisting
 
 # Registry Configuration
 registry = "https://registry.npmjs.org"
@@ -23,19 +24,6 @@ disableManifest = false
 save = true
 print = "yarn"                # Print lockfile in yarn format for readability
 
-# NOTE: Using Vitest for all testing now; Bun's native [test] section kept for historical reference
-#       Remove in a future major revision once migration is fully settled.
-# [test]
-# coverage = false
-# coverageReporter = ["text", "lcov"]
-# coverageDirectory = "./coverage"
-# coverageThreshold = { lines = 30, functions = 50, branches = 0, statements = 30 }
-# clearConsole = true
-# printConsole = true
-# bail = false
-# timeout = 5000
-# preload = ["./tests/setup.ts"]
-# root = "./tests"
 
 [run]
 # Runtime Configuration
@@ -70,6 +58,9 @@ inspect = {
 
 # Telemetry Configuration
 telemetry = false              # Respect user privacy
+
+# Workspaces are enabled by default in Bun 1.1.38+
+# The workspaces field in package.json is sufficient
 
 # ADHD-Specific Optimizations
 [dev]

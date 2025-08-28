@@ -1,0 +1,139 @@
+{
+  // Turborepo 2.5+ configuration with local schema for cache stability
+  "$schema": "./node_modules/turbo/schema.json",
+
+  "tasks": {
+    // Build task: Compile TypeScript and generate output artifacts
+    "build": {
+      "dependsOn": ["^build"], // Wait for upstream packages to build first
+      "outputs": ["dist/**", "dist-node/**", "dist-types/**", ".tsbuildinfo"], // Cache all build outputs
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "!*.md",
+        "!**/*.md",
+        "!**/*.test.ts",
+        "!**/*.spec.ts",
+        "!tests/**"
+      ],
+      "cache": true,
+    },
+
+    // Test task: Run unit and integration tests
+    "test": {
+      "dependsOn": ["^build"], // Wait for upstream packages to build first
+      "outputs": ["coverage/**"], // Cache test coverage reports
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "!*.md",
+        "!**/*.md",
+        "!docs/**",
+        "!.changeset/**"
+      ],
+      "cache": true,
+      "env": ["NODE_ENV"], // Test behavior may vary by environment
+    },
+
+    // Distribution test: Verify built artifacts work correctly
+    "test:dist": {
+      "dependsOn": ["^build"], // Wait for upstream builds (not just local)
+      "inputs": [
+        "src/**/*.test.ts", // Test files
+        "tests/**/*.ts", // Test utilities
+        "dist/**", // Built Bun artifacts
+        "dist-node/**", // Built Node.js artifacts
+      ],
+      "cache": true,
+    },
+
+    // Lint task: Code quality and style checking
+    "lint": {
+      "outputs": [".eslintcache"], // Cache lint results for faster re-runs
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "!*.md",
+        "!**/*.md",
+        "!dist/**",
+        "!coverage/**"
+      ],
+      "cache": true,
+    },
+
+    // Type checking: Static analysis for TypeScript errors
+    "typecheck": {
+      "dependsOn": ["^typecheck"], // Wait for upstream type definitions
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "!*.md",
+        "!**/*.md",
+        "!**/*.js",
+        "!**/*.jsx"
+      ],
+      "cache": true,
+    },
+
+    // Clean task: Remove generated files (never cached)
+    "clean": {
+      "cache": false,
+    },
+
+    // Development server: Long-running process (never cached)
+    "dev": {
+      "cache": false,
+      "persistent": true, // Indicates this is a long-running service
+      // Sidecar pattern can be enabled later with "with": ["build:watch"]
+      // when a build watcher task is defined
+    },
+
+    // Test watch task: Run tests in watch mode for development
+    "test:watch": {
+      "cache": false,
+      "persistent": true,
+      "dependsOn": ["^build"], // Ensure upstream packages are built first
+    },
+  },
+
+  // Global environment variables that affect all tasks
+  "globalEnv": ["CI"],
+
+  // Environment variables to pass through without hashing
+  "globalPassThroughEnv": [],
+
+  // Root-level files that affect task execution across packages
+  "globalDependencies": [
+    "tsconfig.json", // Root TypeScript config
+    "tooling/tsconfig/base.json", // Shared TS base config
+    "tooling/tsconfig/library.json", // Library-specific TS config
+    ".changeset/config.json", // Changeset configuration
+    "eslint.config.js", // ESLint configuration
+    "vitest.config.ts", // Test configuration
+    "turbo.json*", // This config file (supports .jsonc)
+    ".env*", // Environment files
+  ],
+
+  // Remote caching configuration (Vercel free tier since Dec 2024)
+  // To enable: Set TURBO_TOKEN and TURBO_TEAM in CI/CD environment variables
+  // Get token from: https://vercel.com/account/tokens
+  // Team slug: your-team-name (or personal username for individuals)
+  "remoteCache": {
+    "enabled": true,
+    "signature": false // Enable later with TURBO_REMOTE_CACHE_SIGNATURE_KEY
+  },
+
+  // Future enhancements when monorepo promotion occurs:
+  // - Add "ui" field for task descriptions in Turborepo UI
+  // - Add "with" field for sidecar processes (dev + build watchers)
+
+  // Boundaries validation: prevents cross-package import violations
+  // Activated only in monorepo structure - currently commented for single-package
+  // "boundaries": {
+  //   "@bun-template/core": {
+  //     "allowed": ["@bun-template/utilities"]
+  //   },
+  //   "@bun-template/utilities": {
+  //     "allowed": []  // Pure utilities - no dependencies on other packages
+  //   },
+  //   "@bun-template/server": {
+  //     "allowed": ["@bun-template/core", "@bun-template/utilities"]
+  //   }
+  // }
+}

@@ -1,5 +1,5 @@
 export function hello(): string {
-  return 'Hello world!';
+  return 'Hello world!'
 }
 
 /**
@@ -7,34 +7,46 @@ export function hello(): string {
  * Returns the mock server object when Bun is mocked in tests.
  */
 interface BunLikeServer {
-  port: number;
-  hostname?: string;
-  stop?: () => void;
+  port: number
+  hostname?: string
+  stop?: () => void
 }
 
-type ServeFn = (options: { port: number; fetch: (req: Request) => Response }) => BunLikeServer;
+type ServeFn = (options: { port: number; fetch: (req: Request) => Response }) => BunLikeServer
 
 export async function startServer(options: { port?: number } = {}): Promise<BunLikeServer> {
-  const bunModule = 'bun';
-  const imported: { serve: ServeFn } = (await import(bunModule)) as unknown as { serve: ServeFn };
-  const server = imported.serve({
-    port: options.port ?? 3000,
-    fetch(_req: Request) {
-      return new Response('👋 Hello from Bun + Changesets + Commitizen template!', {
-        headers: { 'Content-Type': 'text/plain' },
-      });
-    },
-  });
-  console.info('🚀 Server running at http://localhost:3000');
-  return server;
+  const bunModule = 'bun'
+  try {
+    const imported: { serve: ServeFn } = (await import(bunModule)) as unknown as { serve: ServeFn }
+    const server = imported.serve({
+      port: options.port ?? 3000,
+      fetch(_req: Request) {
+        return new Response('👋 Hello from Bun + Changesets + Commitizen template!', {
+          headers: { 'Content-Type': 'text/plain' },
+        })
+      },
+    })
+    console.info('🚀 Server running at http://localhost:3000')
+    return server
+  } catch (error) {
+    // Provide clear error message when running under Node.js
+    if (error instanceof Error && error.message.includes('Cannot find module')) {
+      throw new Error(
+        '❌ This project requires the Bun runtime.\n' +
+          '   Please install Bun: https://bun.sh/docs/installation\n' +
+          '   Then run: bun run dev',
+      )
+    }
+    throw error
+  }
 }
 
 /** Decide whether we should auto-start the server (avoids doing so under test). */
 export function shouldAutoStart(nodeEnv: string | undefined, isMain: boolean): boolean {
-  if (!isMain) return false;
+  if (!isMain) return false
   // Don't auto start during tests
-  if (nodeEnv === 'test') return false;
-  return true;
+  if (nodeEnv === 'test') return false
+  return true
 }
 
 // Only start automatically when this is the entrypoint and not in test env
@@ -44,5 +56,5 @@ if (
     import.meta.main,
   )
 ) {
-  await startServer();
+  await startServer()
 }

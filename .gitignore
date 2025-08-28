@@ -123,4 +123,4 @@ typedoc/
 package-lock.json
 yarn.lock
 pnpm-lock.yaml
-.pnpm/
+.pnpm/.claude/settings.json

@@ -1,6 +1,6 @@
 # Technical Stack
 
-> Last Updated: 2025-01-17 Version: 1.0.0
+> Last Updated: 2025-08-28 Version: 1.2.0
 
 ## Core Technologies
 
@@ -9,6 +9,7 @@
 - **Framework:** Bun Runtime + TypeScript
 - **Version:** Bun 1.1.38+, TypeScript 5.7+
 - **Language:** TypeScript with strict configuration
+- **Architecture:** Monorepo-first with three focused packages
 
 ### Database
 
@@ -27,8 +28,9 @@
 ### Import Strategy
 
 - **Strategy:** Node.js ES Modules
-- **Package Manager:** Bun
+- **Package Manager:** Bun with workspace support
 - **Node Version:** Not applicable (Bun runtime)
+- **Package Structure:** Monorepo with packages/_, apps/_ workspaces
 
 ### CSS Framework
 
@@ -54,6 +56,43 @@
 - **Library:** Template agnostic
 - **Implementation:** Configurable per framework choice
 
+## Monorepo Orchestration
+
+### Build Orchestration
+
+- **Tool:** Turborepo 2.5+ (native monorepo configuration)
+- **Version:** Latest 2.5+ with Bun-specific optimizations
+- **Caching:** Local and remote caching with Bun compatibility
+- **Remote Cache:** Free Vercel remote cache (since Dec 2024); builds never fail
+  if unset (warn-only)
+- **Dependency Management:** Workspace-aware builds and testing
+- **Architecture:** Three focused packages:
+  - `packages/utils`: Shared utilities and helpers
+  - `apps/app`: Vitest testing application with MSW
+  - `apps/server`: Bun HTTP service with API endpoints
+
+### Turborepo 2.5 Configuration
+
+- **Schema Strategy:** Local reference (`./node_modules/turbo/schema.json`) for
+  stability
+- **Input Scoping:** Tight globs for package-specific source tracking
+- **Build Resilience:** `--continue=dependencies-successful` for partial build
+  progress
+- **Configuration Format:** turbo.jsonc with inline documentation comments
+- **Container Optimization:** `turbo prune` support for Bun Docker builds
+- **Watch Mode:** Experimental write cache for faster iterative development
+- **Sidecar Tasks:** `"with"` field for coupled long-running processes
+- **Boundaries:** Cross-package import validation and enforcement
+- **Performance Targets:** >90% cache hit rate through optimized inputs
+- **Known Issues:** $TURBO_ROOT$ microsyntax currently broken, needs removal
+
+### Configuration Management
+
+- **TypeScript:** Shared configurations under tooling/tsconfig/
+- **ESLint/Prettier:** Workspace-aware configuration inheritance
+- **Changesets:** Multi-package versioning and release coordination
+- **Philosophy:** Monorepo-first with simple, focused packages for clarity
+
 ## Development Tools
 
 ### Code Quality
@@ -71,13 +110,20 @@
 - **Coverage:** V8 coverage via @vitest/coverage-v8
 - **E2E Testing:** Template supports adding Playwright separately
 - **Mocking:** Vitest `vi` APIs + MSW for network; selective Bun module mocking
+- **Test Structure:**
+  - Unit tests in `packages/utils`
+  - Integration tests in `apps/app` with MSW handlers
+  - Server API tests in `apps/server`
 
 ### Release Management
 
-- **Versioning:** Changesets CLI 2.29+
-- **Changelog:** GitHub-integrated changelog generation
-- **Publishing:** NPM with provenance support
+- **Versioning:** Changesets CLI 2.29+ with monorepo support
+- **Changelog:** GitHub-integrated changelog generation (single-package and
+  multi-package)
+- **Publishing:** NPM with provenance support (workspace-aware)
 - **Git Hooks:** Conventional commits with Commitizen
+- **Monorepo Integration:** Automatic workspace detection and coordinated
+  releases
 
 ## Infrastructure
 
@@ -107,6 +153,8 @@
 - **Trigger:** Push to main/staging, PR creation
 - **Tests:** Multi-OS matrix testing (Linux, macOS, Windows)
 - **Security:** Trivy scanning, dependency audit, SBOM generation
+- **Monorepo Support:** Workspace-aware builds with Turborepo caching
+  integration
 
 ### Package Registry
 
@@ -114,6 +162,7 @@
 - **Authentication:** NPM tokens with OIDC support
 - **Provenance:** npm provenance enabled for supply chain security
 - **Distribution:** Public or private packages (configurable)
+- **Workspace Publishing:** Coordinated multi-package releases with Changesets
 
 ### Environments
 
@@ -130,6 +179,7 @@
 - **Hot Reload:** <50ms reload times
 - **Cold Start:** <100ms startup
 - **Memory Usage:** 50% lower than Node.js equivalents
+- **Monorepo Scaling:** Turborepo caching for incremental builds across packages
 
 ### Runtime Performance
 
@@ -169,3 +219,12 @@
 - **Code Quality:** SonarJS complexity analysis
 - **Type Safety:** Strict TypeScript with 100% coverage
 - **Security Score:** Automated security scanning results
+- **Coverage Requirements:** New packages must meet base thresholds immediately;
+  no grace period for coverage requirements
+
+### Usage Analytics (Optional)
+
+- **Telemetry:** Opt-in usage analytics for template adoption tracking
+- **Privacy:** Anonymous usage patterns only, no code/data collection
+- **Purpose:** Measure template usage patterns and package adoption
+- **Observability:** Development metrics and build performance tracking

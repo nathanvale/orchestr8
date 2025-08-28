@@ -1,0 +1,31 @@
+{
+  "hooks": {
+    "postToolUse": {
+      "commands": [
+        {
+          "events": ["Write", "Edit", "MultiEdit"],
+          "filePatterns": ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx", "**/*.mjs", "**/*.cjs"],
+          "command": "bun run lint:fix --quiet ${filePath}",
+          "description": "Auto-fix ESLint issues in modified files"
+        },
+        {
+          "events": ["Write", "Edit", "MultiEdit"],
+          "filePatterns": [
+            "**/*.ts",
+            "**/*.tsx",
+            "**/*.js",
+            "**/*.jsx",
+            "**/*.mjs",
+            "**/*.cjs",
+            "**/*.json",
+            "**/*.md",
+            "**/*.yml",
+            "**/*.yaml"
+          ],
+          "command": "bun run format --write ${filePath}",
+          "description": "Auto-format files with Prettier"
+        }
+      ]
+    }
+  }
+}

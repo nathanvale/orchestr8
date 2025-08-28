@@ -1,160 +1,253 @@
 # Product Roadmap
 
-> Last Updated: 2025-01-27 Version: 2.0.0 Status: Active Development
+> Last Updated: 2025-08-28 Version: 6.0.0 Status: Active Development -
+> Monorepo-First Architecture Roadmap version tracks planning iteration, not
+> semver
 
-## Phase 0: Already Completed (Foundation Established)
+## Phase 0: Foundation Complete ✅
 
-### Core Infrastructure
+**Status:** Complete **Achievement:** Core template infrastructure with 85%
+Turborepo readiness
 
-- [x] Bun runtime configuration
-- [x] ESLint setup with strict type rules
-- [x] Changesets configuration
-- [x] Vitest testing infrastructure
-- [x] Basic CI/CD pipeline
-- [x] Security scanning baseline (Trivy)
-- [x] Multi-OS GitHub Actions matrix
-- [x] Comprehensive git hooks
-- [x] ADHD-friendly script consolidation
+### Infrastructure & Tooling
 
-## Phase 1: Critical Configuration & Stabilization (1 week)
+- [x] Bun runtime configuration with native bundler
+- [x] ESLint 9+ with TypeScript, Security, and SonarJS plugins
+- [x] Vitest testing infrastructure with MSW integration
+- [x] Changesets configuration with npm provenance
+- [x] Multi-OS CI/CD pipeline (Linux, macOS, Windows)
+- [x] Security scanning (Trivy with SBOM generation)
+- [x] Git hooks (Husky, lint-staged, commitlint)
+- [x] 200+ developer scripts (ADHD-optimized)
 
-**Goal:** Address critical technical debt and configuration inconsistencies
-**Success Criteria:** Resolve configuration mismatches, improve build and test
-reliability
+### Monorepo Foundation
 
-### Must-Have Configuration Fixes
+- [x] Turborepo 2.5.6 installed and configured
+- [x] turbo.jsonc with inline documentation
+- [x] Workspace directories created (packages/_, apps/_)
+- [x] Bun workspaces enabled in bunfig.toml
+- [x] Shared TypeScript configurations (tooling/tsconfig/)
+- [x] Task pipelines defined (build, test, lint, typecheck)
 
-- [x] Unify commitlint configuration (remove duplicate config files) - `S`
-- [x] Fix release workflow test execution (switch to `bun run test:ci`) - `S`
-- [x] Correct CI build steps to run `bun run build:all` - `S`
-- [x] Update Vitest config coverage exclusions to match actual setup files -
-      `XS`
-- [x] Guard MSW pagination handler against limit=0 / NaN scenarios - `S`
+### Testing & Quality
 
-### Dependency & Type Resolution
+- [x] Unit test coverage for utilities (number, path)
+- [x] MSW handlers for API mocking
+- [x] React Testing Library setup
+- [x] Contract tests for critical behaviors
+- [x] Cross-platform path handling
 
-- [x] Ensure complete type generation for all build targets - `M`
-- [ ] Verify Node compatibility or explicitly document Bun-only scope - `M`
-- [x] Add prepublish guard script for potential library publishing - `S`
-- [ ] Strengthen `bun audit` step with JSON parsing - `M`
+### Documentation
 
-### Test & Build Improvements
+- [x] SECURITY.md, CODEOWNERS, CONTRIBUTING.md
+- [x] Architecture guides with Mermaid diagrams
+- [x] Inline "Why" comments throughout
+- [x] Monorepo spec documentation complete
 
-- [ ] Implement Node compatibility test job (optional) - `M`
-- [ ] Add Node dist generation validation - `S`
+## Phase 1: Monorepo Implementation 🚧
 
-## Phase 2: Testing & Quality Enhancement (1 week)
+**Status:** In Progress **Goal:** Transform empty monorepo structure into
+working implementation with 3 focused packages **Timeline:** Current Sprint (1
+week) **Success Criteria:** Working monorepo with <50ms feedback loops and
+cross-package imports
 
-**Goal:** Improve testing infrastructure and developer experience **Success
-Criteria:** More robust, consistent, and informative testing approach
+### Critical Fixes (Immediate)
 
-### Testing Enhancements
+- [ ] **Fix $TURBO_ROOT$ syntax error** - Remove broken microsyntax from
+      turbo.jsonc - `XS`
+- [ ] **Update CI with --continue flag** - Add
+      `--continue=dependencies-successful` - `XS`
+- [ ] **Fix 22 failing Vitest tests** - Resolve Bun compatibility issues - `S`
+- [ ] **Fix 36 ESLint errors** - Clean up linting issues - `S`
 
-- [x] Standardize React Testing Library cleanup approach - `S`
-- [x] Add contract tests for critical behaviors:
-  - Test `shouldAutoStart` contract - `XS`
-  - Add MSW unmatched request logging test - `S`
-  - Create dynamic Bun import failure path test - `S`
-- [ ] Consider per-file coverage gates for critical modules - `M`
+### Package Implementation
+
+- [ ] **packages/utils** - Shared utilities - `M`
+  - [ ] Move number-utils.ts and path-utils.ts from src/
+  - [ ] Create package.json with proper exports
+  - [ ] Set up TypeScript build pipeline
+  - [ ] Maintain existing test coverage
+
+- [ ] **apps/app** - Vitest testing application - `M`
+  - [ ] Create test application structure
+  - [ ] Import and use packages/utils
+  - [ ] Configure MSW for server API mocking
+  - [ ] Add integration test examples
+
+- [ ] **apps/server** - Bun HTTP service - `M`
+  - [ ] Create HTTP server with Bun.serve()
+  - [ ] Implement 3-4 REST endpoints
+  - [ ] Use packages/utils for shared logic
+  - [ ] Add health check endpoint
+
+### Cross-Package Integration
+
+- [ ] Update imports to use package names (@bun-template/utils)
+- [ ] Configure TypeScript paths for workspace packages
+- [ ] Update Vitest config for monorepo structure
+- [ ] Ensure hot reload works across packages
+- [ ] Validate Turborepo caching (>90% hit rate)
+
+## Phase 2: Developer Experience Polish
+
+**Status:** Planned **Goal:** Streamline monorepo workflows and enhance
+ADHD-friendly features **Timeline:** Week 2 **Success Criteria:** Single command
+starts everything, instant feedback across packages
+
+### Workflow Optimization
+
+- [ ] Single `bun dev` command starts all packages
+- [ ] Cross-package hot reload (<50ms)
+- [ ] Unified test command for all packages
+- [ ] Package-specific README files
+- [ ] Example usage patterns documentation
+
+### Tooling Enhancements
+
+- [ ] `bun run create:package <name>` generator
+- [ ] Workspace-aware status script
+- [ ] Package dependency graph visualization
+- [ ] Per-package size-limit budgets
+- [ ] Selective build/test for changed packages
+
+### Testing & Quality
+
+- [ ] Cross-package integration tests
+- [ ] Package boundary enforcement (no relative imports)
+- [ ] TypeScript project references optimization
+- [ ] Coverage aggregation across packages
+- [ ] Performance benchmarks (monorepo vs single)
+
+## Phase 3: Production Readiness
+
+**Status:** Planned **Goal:** Enterprise-grade security, stability, and
+performance **Timeline:** Week 3-4 **Success Criteria:** Zero security
+vulnerabilities, stable tests, optimized builds
+
+### Security Hardening
+
+- [ ] Weekly dependency updates automation
+- [ ] Per-package SBOM generation
+- [ ] CodeQL security scanning
+- [ ] License compliance checking
+- [ ] Package integrity verification
+
+### Stability Improvements
+
+- [ ] Fix timing-sensitive test flakiness
+- [ ] Add Node.js compatibility tests
+- [ ] MSW handler teardown verification
+- [ ] Error detection improvements
+- [ ] Multi-threaded Vitest (when stable)
+
+### Performance Optimization
+
+- [ ] Turborepo remote cache documentation
+- [ ] Cache warming strategies for CI
+- [ ] Build performance monitoring
+- [ ] Bundle size regression detection
+- [ ] Memory leak detection
+
+### Package Configuration
+
+- [ ] Complete package.json metadata
+- [ ] Publishing configuration (npm provenance)
+- [ ] Tree-shaking validation
+- [ ] Export maps optimization
+- [ ] Version management strategy
+
+## Phase 4: Scale & Community
+
+**Status:** Future **Goal:** Enable growth from 3 packages to enterprise scale
+**Timeline:** Month 2 **Success Criteria:** Community adoption, extensible
+architecture
+
+### Advanced Features
+
+- [ ] Matrix CI for package subsets (>5 packages)
+- [ ] Graph-based selective testing
+- [ ] Automatic cross-package dependency updates
+- [ ] Package impact analysis
+- [ ] Monorepo health monitoring
+
+### Documentation & Learning
+
+- [ ] Video tutorials for monorepo patterns
+- [ ] Framework integration examples (React, Vue, Svelte)
+- [ ] Migration guides from other templates
+- [ ] Best practices documentation
+- [ ] Community template gallery
 
 ### Developer Experience
 
-- [x] Create "First 15 Minutes" onboarding documentation - `M`
-- [x] Add `dev:test` script for low-noise watch mode - `XS`
-- [x] Add emoji anchors to spec sections for faster scanning - `XS`
-- [x] Add short comments in config files to prevent over-optimization - `XS`
+- [ ] AI-powered code review
+- [ ] Smart package suggestions
+- [ ] Automated refactoring tools
+- [ ] Performance profiling dashboard
+- [ ] Development analytics
 
-### Utility Improvements
+## Phase 5: Long-Term Vision
 
-- [x] Consolidate duplicated React Testing Library utilities - `S`
-- [x] Remove broad console warning/error spies - `M`
-- [x] Implement minimal cross-platform path handling - `S`
+**Status:** Future **Goal:** Industry-leading monorepo template **Timeline:** 6+
+months
 
-## Phase 3: Security & Supply Chain Hardening (1 week)
+### Innovation
 
-**Goal:** Enhance supply chain security and compliance **Success Criteria:**
-Comprehensive security monitoring and transparent practices
+- [ ] AI-assisted package generation
+- [ ] Automated architecture optimization
+- [ ] Self-healing build pipelines
+- [ ] Predictive performance optimization
+- [ ] Smart dependency management
 
-### Security Enhancements
+### Enterprise Features
 
-- [ ] Add weekly `bun audit` workflow with diff severity tracking - `M`
-- [ ] Enable CodeQL JavaScript scanning - `S`
-- [ ] Optionally sign or attach hash to SBOM artifacts - `S`
-- [x] Add SECURITY.md with disclosure process - `XS`
-- [ ] Update README with supply chain security references - `XS`
-
-### Compliance & Documentation
-
-- [x] Add CODEOWNERS file to reinforce review gates - `XS`
-- [ ] Create `docs/testing-strategy.md` for new contributors - `S`
-- [ ] Prepare npm provenance documentation - `S`
-
-## Phase 4: Developer Experience & Performance (2 weeks)
-
-**Goal:** Optimize performance monitoring and developer workflows **Success
-Criteria:** Enhanced performance tracking, reduced cognitive load
-
-### Performance Monitoring
-
-- [ ] Add nightly performance workflow with artifact diffing - `M`
-- [ ] Implement performance baseline regression detection - `L`
-- [ ] Add benchmarking script using Vitest bench - `S`
-
-### Tooling & Configuration
-
-- [x] Add .editorconfig for consistent formatting - `XS`
-- [ ] Explore conditional exports mapping (future-proofing) - `M`
-- [ ] Verify tree-shake friendly patterns - `S`
-- [ ] Add "sideEffects": false verification - `XS`
-
-### Optimization Opportunities
-
-- [ ] Gradually raise test coverage thresholds - `M`
-- [ ] Trim defensive guards in utility modules - `S`
-
-## Phase 5: Documentation & Community (1 week)
-
-**Goal:** Improve project documentation and community engagement **Success
-Criteria:** Clear, accessible documentation and onboarding experience
-
-### Documentation Enhancements
-
-- [ ] Create comprehensive README with badges - `M`
-- [ ] Develop migration guides (Node.js to Bun) - `L`
-- [ ] Write troubleshooting guide - `M`
-- [x] Update CONTRIBUTING.md with detailed guidelines - `S`
-
-### Community Engagement
-
-- [ ] Prepare video tutorials and screencasts - `L`
-- [ ] Create community template examples - `XL`
-- [ ] Develop framework integration examples - `XL`
-
-## Long-Term Evolution (Post-MVP)
-
-### Architectural Scaling
-
-- [ ] Introduce monorepo package boundaries (packages/core, packages/runtime) -
-      `XL`
-- [ ] Explore advanced monorepo tooling integration - `L`
-
-### Advanced Tooling
-
-- [ ] Investigate AI-powered code review suggestions - `XL`
-- [ ] Implement automated dependency vulnerability patching - `L`
-
-### Performance & Monitoring
-
-- [ ] Develop real-time performance monitoring - `XL`
-- [ ] Create advanced bundle optimization strategies - `L`
-- [ ] Implement memory leak detection - `L`
+- [ ] SLSA Level 3 compliance
+- [ ] Advanced supply chain security
+- [ ] Compliance automation
+- [ ] Multi-region deployment support
+- [ ] Enterprise support tier
 
 ## Success Metrics
 
-- **Adoption**: 200+ GitHub stars
-- **Performance**: Sub-100ms cold start, sub-50ms hot reload
-- **Quality**: 90%+ test coverage, zero critical security vulnerabilities
-- **Developer Experience**: <3 minute setup time
-- **Community Engagement**: Active discussions, contributions
-- **Enterprise Readiness**: Comprehensive security documentation, clear
-  compliance path
+### Performance Targets
+
+- **Cold Start:** <100ms
+- **Hot Reload:** <50ms
+- **Build Cache Hit Rate:** >90%
+- **Test Execution:** <5s for unit tests
+- **Package Boundaries:** Zero cross-package relative imports
+
+### Quality Metrics
+
+- **Test Coverage:** 80% (current) → 85% (target)
+- **Security Vulnerabilities:** Zero critical/high
+- **Build Success Rate:** >99%
+- **Developer Onboarding:** <5 minutes to productivity
+
+### Adoption Goals
+
+- **GitHub Stars:** 200+
+- **Active Contributors:** 10+
+- **Production Deployments:** 50+
+- **Community Packages:** 20+
+
+## Risk Register
+
+| Risk                     | Impact | Likelihood | Mitigation                              |
+| ------------------------ | ------ | ---------- | --------------------------------------- |
+| Bun/Vitest compatibility | High   | Medium     | Single-threaded mode, fallback patterns |
+| Complex mental model     | Medium | Low        | Keep to 3 simple packages, clear docs   |
+| Turborepo config issues  | Medium | Low        | Fix $TURBO_ROOT$, follow best practices |
+| Cross-package imports    | Low    | Low        | Proper exports configuration            |
+| Performance regression   | Low    | Low        | Continuous monitoring, benchmarks       |
+
+## Notes
+
+- **Monorepo-First Philosophy:** Start as monorepo, stay as monorepo - no
+  migration complexity
+- **ADHD Optimization:** Every decision prioritizes <50ms feedback and cognitive
+  simplicity
+- **Package Focus:** Three packages only - utils (shared), app (testing), server
+  (API)
+- **Coverage Requirements:** No grace period - new packages must meet thresholds
+  **immediately**

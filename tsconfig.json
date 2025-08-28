@@ -1,32 +1,37 @@
 {
   "$schema": "https://json.schemastore.org/tsconfig",
   "compilerOptions": {
+    // Why: ESNext for modern JS features without transpilation overhead
     "target": "ESNext",
     "lib": ["ESNext", "DOM", "DOM.Iterable"],
     "module": "ESNext",
+    // Why: "bundler" resolution matches Bun's native behavior
+    // Note: tsconfig.build.json overrides to "NodeNext" for Node.js compatibility
     "moduleResolution": "bundler",
-    "moduleDetection": "force",
-    "jsx": "react-jsx",
+    "moduleDetection": "force", // Why: Treat all files as modules (no global scripts)
+    "jsx": "react-jsx", // Why: React 17+ automatic JSX transform
 
+    // Why: Generate .d.ts files for library consumers
     "declaration": true,
-    "declarationMap": true,
-    "sourceMap": true,
+    "declarationMap": true, // Why: Enable IDE "Go to Definition" for library users
+    "sourceMap": true, // Why: Better debugging experience
     "inlineSourceMap": false,
     "outDir": "./dist",
-    "removeComments": false,
-    "noEmitOnError": true,
+    "removeComments": false, // Why: Keep JSDoc comments for documentation
+    "noEmitOnError": true, // Why: Don't emit broken code
     "preserveConstEnums": true,
-    "preserveWatchOutput": true,
+    "preserveWatchOutput": true, // Why: Less console noise during watch mode
 
+    // Why: Maximum strictness catches bugs at compile time
     "strict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "exactOptionalPropertyTypes": true,
-    "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true,
-    "noUncheckedIndexedAccess": true,
-    "noImplicitOverride": true,
-    "noPropertyAccessFromIndexSignature": true,
+    "noUnusedLocals": true, // Why: Dead code increases bundle size
+    "noUnusedParameters": true, // Why: Unused params indicate incomplete refactoring
+    "exactOptionalPropertyTypes": true, // Why: Prevent undefined being assigned to optional props
+    "noImplicitReturns": true, // Why: All code paths should return explicitly
+    "noFallthroughCasesInSwitch": true, // Why: Prevent common switch/case bugs
+    "noUncheckedIndexedAccess": true, // Why: Force null checks on array/object access
+    "noImplicitOverride": true, // Why: Make inheritance explicit with 'override' keyword
+    "noPropertyAccessFromIndexSignature": true, // Why: Use bracket notation for index signatures
     "allowUnusedLabels": false,
     "allowUnreachableCode": false,
     "noImplicitAny": true,

@@ -36,4 +36,4 @@ export default {
     'footer-leading-blank': [2, 'always'],
     'footer-max-line-length': [2, 'always', 120],
   },
-};
+}

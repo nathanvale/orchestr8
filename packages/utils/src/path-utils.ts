@@ -7,7 +7,8 @@
  * Platform-specific path separator
  * Uses forward slash for Unix-like systems, backslash for Windows
  */
-export const pathSeparator = typeof process !== 'undefined' && process.platform === 'win32' ? '\\' : '/';
+export const pathSeparator =
+  typeof process !== 'undefined' && process.platform === 'win32' ? '\\' : '/'
 
 /**
  * Join path segments with the appropriate separator for the current platform
@@ -16,19 +17,17 @@ export const pathSeparator = typeof process !== 'undefined' && process.platform 
  */
 export function joinPath(...segments: string[]): string {
   // Filter out empty strings and join with the platform separator
-  const filtered = segments.filter(Boolean);
-  if (filtered.length === 0) return '';
-  
+  const filtered = segments.filter(Boolean)
+  if (filtered.length === 0) return ''
+
   // Normalize separators in each segment to the current platform
-  const normalized = filtered.map(segment => 
-    segment.replace(/[/\\]+/g, pathSeparator)
-  );
-  
+  const normalized = filtered.map((segment) => segment.replace(/[/\\]+/g, pathSeparator))
+
   // Join segments and remove duplicate separators
-  const joined = normalized.join(pathSeparator);
-  const cleaned = joined.replace(new RegExp(`\\${pathSeparator}{2,}`, 'g'), pathSeparator);
-  
-  return cleaned;
+  const joined = normalized.join(pathSeparator)
+  const cleaned = joined.replace(new RegExp(`\\${pathSeparator}{2,}`, 'g'), pathSeparator)
+
+  return cleaned
 }
 
 /**
@@ -37,17 +36,17 @@ export function joinPath(...segments: string[]): string {
  * @returns Normalized path string
  */
 export function normalizePath(path: string): string {
-  if (!path) return '';
-  
+  if (!path) return ''
+
   // Replace all separators with the current platform's separator
-  const normalized = path.replace(/[/\\]+/g, pathSeparator);
-  
+  const normalized = path.replace(/[/\\]+/g, pathSeparator)
+
   // Remove trailing separator unless it's the root
   if (normalized.length > 1 && normalized.endsWith(pathSeparator)) {
-    return normalized.slice(0, -1);
+    return normalized.slice(0, -1)
   }
-  
-  return normalized;
+
+  return normalized
 }
 
 /**
@@ -56,19 +55,19 @@ export function normalizePath(path: string): string {
  * @returns Directory portion of the path
  */
 export function dirname(path: string): string {
-  if (!path) return '.';
-  
-  const normalized = normalizePath(path);
-  const lastSepIndex = normalized.lastIndexOf(pathSeparator);
-  
-  if (lastSepIndex === -1) return '.';
+  if (!path) return '.'
+
+  const normalized = normalizePath(path)
+  const lastSepIndex = normalized.lastIndexOf(pathSeparator)
+
+  if (lastSepIndex === -1) return '.'
   if (lastSepIndex === 0) {
     // For root paths like '/' or '/file', return '/'
     // But for just '/', we need special handling
-    return normalized.length === 1 ? '/' : pathSeparator;
+    return normalized.length === 1 ? '/' : pathSeparator
   }
-  
-  return normalized.slice(0, lastSepIndex);
+
+  return normalized.slice(0, lastSepIndex)
 }
 
 /**
@@ -77,13 +76,13 @@ export function dirname(path: string): string {
  * @returns Base name portion of the path
  */
 export function basename(path: string): string {
-  if (!path) return '';
-  
-  const normalized = normalizePath(path);
-  const lastSepIndex = normalized.lastIndexOf(pathSeparator);
-  
-  if (lastSepIndex === -1) return normalized;
-  return normalized.slice(lastSepIndex + 1);
+  if (!path) return ''
+
+  const normalized = normalizePath(path)
+  const lastSepIndex = normalized.lastIndexOf(pathSeparator)
+
+  if (lastSepIndex === -1) return normalized
+  return normalized.slice(lastSepIndex + 1)
 }
 
 /**
@@ -92,20 +91,20 @@ export function basename(path: string): string {
  * @returns True if the path is absolute
  */
 export function isAbsolute(path: string): boolean {
-  if (!path) return false;
-  
+  if (!path) return false
+
   // Unix-like systems: starts with /
-  if (path.startsWith('/')) return true;
-  
+  if (path.startsWith('/')) return true
+
   // Windows: starts with drive letter (C:\) or UNC path (\\)
   if (typeof process !== 'undefined' && process.platform === 'win32') {
     // Check for drive letter (e.g., C:\)
-    if (/^[a-zA-Z]:[\\/]/.test(path)) return true;
+    if (/^[a-zA-Z]:[\\/]/.test(path)) return true
     // Check for UNC path (\\server\share)
-    if (path.startsWith('\\\\')) return true;
+    if (path.startsWith('\\\\')) return true
   }
-  
-  return false;
+
+  return false
 }
 
 /**
@@ -115,8 +114,8 @@ export function isAbsolute(path: string): boolean {
  * @returns Path with forward slashes
  */
 export function toPosixPath(path: string): string {
-  if (!path) return '';
-  return path.replace(/\\/g, '/');
+  if (!path) return ''
+  return path.replace(/\\/g, '/')
 }
 
 /**
@@ -125,5 +124,5 @@ export function toPosixPath(path: string): string {
  * @returns Path with platform-appropriate separators
  */
 export function toPlatformPath(path: string): string {
-  return normalizePath(path);
+  return normalizePath(path)
 }
