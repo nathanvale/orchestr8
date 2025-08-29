@@ -1,5 +1,6 @@
 import { average, median, percentile } from '@bun-template/utils'
 import { createConsoleLogger } from '@orchestr8/logger'
+import { createRuntime } from './runtime'
 import { generateCorrelationId } from './utils/correlation'
 import { createMetricsCollector } from './utils/metrics'
 
@@ -30,9 +31,9 @@ const logStore: {
 }[] = []
 
 // Store logs in memory for the /api/logs endpoint
-function recordLog(level: string, message: string, meta?: Record<string, unknown>) {
+function recordLog(level: string, message: string, meta?: Record<string, unknown>): void {
   const logEntry = {
-    id: `log-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
+    id: `log-${String(Date.now())}-${Math.random().toString(36).substring(2, 11)}`,
     timestamp: new Date().toISOString(),
     level,
     message,
@@ -56,33 +57,34 @@ const originalDebug = logger.debug.bind(logger)
 
 logger.info = (message: string, meta?: Record<string, unknown>) => {
   recordLog('info', message, meta)
-  return originalInfo(message, meta)
+  originalInfo(message, meta)
 }
 
 logger.error = (message: string, meta?: Record<string, unknown>) => {
   recordLog('error', message, meta)
-  return originalError(message, meta)
+  originalError(message, meta)
 }
 
 logger.warn = (message: string, meta?: Record<string, unknown>) => {
   recordLog('warn', message, meta)
-  return originalWarn(message, meta)
+  originalWarn(message, meta)
 }
 
 logger.debug = (message: string, meta?: Record<string, unknown>) => {
   recordLog('debug', message, meta)
-  return originalDebug(message, meta)
+  originalDebug(message, meta)
 }
 
 export interface ServerInstance {
   port: number
   hostname: string
-  stop: () => void
+  stop: () => void | Promise<void>
 }
 
 export function startServer(port: number | string = PORT): ServerInstance {
-  const server = Bun.serve({
-    port: Number(port),
+  const runtime = createRuntime()
+  const server = runtime.serve({
+    port,
     async fetch(request: Request) {
       const url = new URL(request.url)
       const correlationId = generateCorrelationId()
@@ -154,16 +156,15 @@ export function startServer(port: number | string = PORT): ServerInstance {
     },
   })
 
-  const serverPort = server.port.toString()
-  logger.info(`🚀 Server running at http://localhost:${serverPort}`)
+  logger.info(`🚀 Server running at http://localhost:${String(server.port)}`)
   logger.info('Available endpoints:', {
     endpoints: [
-      `http://localhost:${serverPort}/`,
-      `http://localhost:${serverPort}/api/health`,
-      `http://localhost:${serverPort}/api/logs`,
-      `http://localhost:${serverPort}/api/metrics`,
-      `http://localhost:${serverPort}/api/echo`,
-      `http://localhost:${serverPort}/api/calculate`,
+      `http://localhost:${String(server.port)}/`,
+      `http://localhost:${String(server.port)}/api/health`,
+      `http://localhost:${String(server.port)}/api/logs`,
+      `http://localhost:${String(server.port)}/api/metrics`,
+      `http://localhost:${String(server.port)}/api/echo`,
+      `http://localhost:${String(server.port)}/api/calculate`,
     ],
   })
 

@@ -15,13 +15,13 @@ These are the tasks to be completed for the spec detailed in
   - [x] 1.5 Create runtime factory with environment detection
   - [x] 1.6 Verify all tests pass for runtime components
 
-- [ ] 2. Refactor Server to Use Runtime Adapter
-  - [ ] 2.1 Write tests for refactored server startup logic
-  - [ ] 2.2 Modify startServer() to use runtime factory instead of direct
+- [x] 2. Refactor Server to Use Runtime Adapter
+  - [x] 2.1 Write tests for refactored server startup logic
+  - [x] 2.2 Modify startServer() to use runtime factory instead of direct
         Bun.serve
-  - [ ] 2.3 Ensure existing server logic and handlers remain unchanged
-  - [ ] 2.4 Verify server functionality works with Bun adapter in development
-  - [ ] 2.5 Verify all existing server tests still pass
+  - [x] 2.3 Ensure existing server logic and handlers remain unchanged
+  - [x] 2.4 Verify server functionality works with Bun adapter in development
+  - [x] 2.5 Verify all existing server tests still pass
 
 - [ ] 3. Convert Server Tests to Vitest
   - [ ] 3.1 Update test imports from bun:test to vitest globals
@@ -31,7 +31,8 @@ These are the tasks to be completed for the spec detailed in
   - [ ] 3.5 Confirm all test assertions remain identical
 
 - [ ] 4. Integrate Server Tests into Unified Test Suite
-  - [ ] 4.1 Update root Vitest configuration to include apps/server tests
+  - [ ] 4.1 Update root Vitest configuration to include apps/server tests (write
+        a simple unit test in the app package if there isnt one)
   - [ ] 4.2 Verify server tests appear in unified coverage reports
   - [ ] 4.3 Adjust coverage thresholds if needed for additional server code
   - [ ] 4.4 Ensure CI pipeline runs all tests in single Vitest invocation
