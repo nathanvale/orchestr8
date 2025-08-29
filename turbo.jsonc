@@ -19,22 +19,50 @@
       "cache": true,
     },
 
-    // Test task: Run unit and integration tests
+    // Test task: Run unit and integration tests with multi-project support
     "test": {
       "dependsOn": ["^build"], // Wait for upstream packages to build first
-      "outputs": ["coverage/**"], // Cache test coverage reports
-      "inputs": ["$TURBO_DEFAULT$", "!*.md", "!**/*.md", "!docs/**", "!.changeset/**", ".env*"],
+      "outputs": [
+        "coverage/**",
+        "test-results/**",
+        ".vitest/**"
+      ], // Cache test coverage and results
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "!*.md",
+        "!**/*.md",
+        "!docs/**",
+        "!.changeset/**",
+        "vitest.config.ts",
+        "vitest.setup.tsx",
+        "vitest.setup.ts",
+        ".env*"
+      ],
       "cache": true,
-      "env": ["NODE_ENV"], // Test behavior may vary by environment
+      "env": ["NODE_ENV", "VITEST_WATCH"], // Test behavior may vary by environment
     },
 
-    // CI Test task: Run tests with CI-specific settings (timeouts, bail on first failure)
+    // CI Test task: Run tests with CI-specific settings (coverage, bail on first failure)
     "test:ci": {
       "dependsOn": ["^build"], // Wait for upstream packages to build first
-      "outputs": ["coverage/**"], // Cache test coverage reports
-      "inputs": ["$TURBO_DEFAULT$", "!*.md", "!**/*.md", "!docs/**", "!.changeset/**", ".env*"],
+      "outputs": [
+        "coverage/**",
+        "test-results/**",
+        ".vitest/**"
+      ], // Cache test coverage and results
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "!*.md",
+        "!**/*.md",
+        "!docs/**",
+        "!.changeset/**",
+        "vitest.config.ts",
+        "vitest.setup.tsx",
+        "vitest.setup.ts",
+        ".env*"
+      ],
       "cache": true,
-      "env": ["NODE_ENV", "CI"], // CI environment affects test behavior
+      "env": ["NODE_ENV", "CI", "GITHUB_ACTIONS"], // CI environment affects test behavior
     },
 
     // Distribution test: Verify built artifacts work correctly
@@ -82,6 +110,31 @@
       "cache": false,
       "persistent": true,
       "dependsOn": ["^build"], // Ensure upstream packages are built first
+      "env": ["VITEST_WATCH"],
+    },
+
+    // Coverage merge task: Combine coverage from all projects
+    "test:coverage:merge": {
+      "dependsOn": ["test:coverage"],
+      "outputs": ["coverage/**"],
+      "cache": false,
+    },
+
+    // Test coverage task: Run tests with coverage collection
+    "test:coverage": {
+      "dependsOn": ["^build"],
+      "outputs": [
+        "coverage/**",
+        "test-results/**"
+      ],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "!*.md",
+        "!**/*.md",
+        "vitest.config.ts"
+      ],
+      "cache": true,
+      "env": ["NODE_ENV"],
     },
 
     // Transit node: propagates dependency graph changes for tasks that need awareness without full serialization
@@ -104,7 +157,7 @@
     "tooling/tsconfig/library.json", // Library-specific TS config
     ".changeset/config.json", // Changeset configuration
     "eslint.config.js", // ESLint configuration
-    "vitest.config.ts", // Test configuration
+    "vitest.config.ts", // Test configuration with multi-project support
     "turbo.json*", // This config file (supports .jsonc)
     ".env*", // Environment files
   ],
@@ -132,8 +185,8 @@
   // Note: This feature requires Turborepo Enterprise or may not be available in current version
   // Keeping as documentation for future when available
   // "boundaries": {
-  //   "@bun-template/utils": { "allowed": [] }, // Pure shared utilities, no dependencies
-  //   "@bun-template/app": { "allowed": ["@bun-template/utils"] }, // App can import utils
-  //   "@bun-template/server": { "allowed": ["@bun-template/utils"] } // Server can import utils
+  //   "@template/utils": { "allowed": [] }, // Pure shared utilities, no dependencies
+  //   "@template/app": { "allowed": ["@template/utils"] }, // App can import utils
+  //   "@template/server": { "allowed": ["@template/utils"] } // Server can import utils
   // }
 }

@@ -1,34 +1,41 @@
-# 🚀 Bun Changesets Template
+# 🚀 Node.js + pnpm Changesets Template
 
-ADHD-optimized Bun + TypeScript monorepo with three focused packages—instant
-feedback, minimal complexity, production-ready from day one.
+ADHD-optimized Node.js + pnpm monorepo with Next.js, Turborepo orchestration, and standardized package builds—production-ready from day one with sub-5s feedback loops.
 
 ## 🎯 Quick Start
 
 ### Prerequisites
 
-- [Bun](https://bun.sh/) 1.1.38+
-- Node.js 18+ (for some tooling compatibility)
+- [Node.js](https://nodejs.org/) 20 LTS+
+- [pnpm](https://pnpm.io/) 9+
 
 ### Development Setup
 
 1. **Install dependencies**
 
    ```bash
-   bun install
+   pnpm install
    ```
 
 2. **Start the server** (Terminal 1)
 
    ```bash
    cd apps/server
-   bun dev
+   pnpm dev
    ```
 
    Server starts on http://localhost:3333 (or PORT environment variable)
 
-3. **Test the full-stack connection** Open `demo.html` in your browser to see
-   the working API connection and real-time metrics dashboard.
+3. **Start Next.js app** (Terminal 2)
+
+   ```bash
+   cd apps/web
+   pnpm dev
+   ```
+
+   Next.js app starts on http://localhost:3000
+
+4. **Test the full-stack connection** Open http://localhost:3000 to see the working API connection and real-time metrics dashboard.
 
 ## 🏗️ Architecture
 
@@ -38,7 +45,8 @@ This is a **monorepo-first** template with three focused packages:
 ├── packages/
 │   └── utils/          # Shared utilities (number, path, array operations)
 ├── apps/
-│   ├── server/         # Bun HTTP server with telemetry API
+│   ├── server/         # Node.js HTTP server with telemetry API
+│   ├── web/            # Next.js application with App Router
 │   └── app/            # React telemetry dashboard (Vite)
 └── tooling/            # Shared configurations
 ```
@@ -47,6 +55,7 @@ This is a **monorepo-first** template with three focused packages:
 
 ```
 apps/server  ← packages/utils
+apps/web     ← packages/utils
 apps/app     ← packages/utils
 ```
 
@@ -54,24 +63,34 @@ apps/app     ← packages/utils
 
 ### `packages/utils`
 
-Shared utilities used across server and app:
+Shared utilities used across server and apps:
 
 - Mathematical operations (average, median, percentiles)
 - Path utilities and validation
 - Array processing helpers
 - **Test runner**: Vitest
-- **Build target**: Both Bun and Node.js
+- **Build target**: ESM + CJS with tsup
 
 ### `apps/server`
 
-Bun-powered HTTP server with structured logging:
+Node.js HTTP server with structured logging:
 
 - REST API endpoints (`/api/health`, `/api/metrics`, `/api/logs`, etc.)
 - Correlation ID tracking for requests
 - Built-in metrics collection
 - Real-time log storage and retrieval
-- **Test runner**: Bun native (for stability)
-- **Runtime**: Bun.serve()
+- **Test runner**: Vitest
+- **Runtime**: Node.js with Express/Fastify
+
+### `apps/web`
+
+Next.js application with App Router:
+
+- Server-side rendering and React Server Components
+- API route handlers for server endpoints
+- Built-in caching and revalidation
+- **Test runner**: Vitest
+- **Build tool**: Next.js 15+
 
 ### `apps/app`
 
@@ -89,58 +108,77 @@ React telemetry dashboard:
 
 ```bash
 # Install dependencies
-bun install
+pnpm install
 
 # Run all tests across packages
-bunx turbo run test
+pnpm test
 
 # Build all packages
-bunx turbo run build
+pnpm build
 
 # Type check all packages
-bunx turbo run typecheck
+pnpm typecheck
 
 # Lint all packages
-bun run lint
+pnpm lint
+
+# Validate everything (tests, types, lint)
+pnpm validate
 ```
 
 ### Server (`apps/server/`)
 
 ```bash
 # Development server with hot reload
-bun dev
+pnpm dev
 
 # Run server tests
-bun test
+pnpm test
 
 # Build for production
-bun run build
+pnpm build
 
 # Start production server
-bun start
+pnpm start
 ```
 
-### App (`apps/app/`)
+### Next.js App (`apps/web/`)
 
 ```bash
 # Development server
-bun dev          # Note: May hit esbuild issues, see Known Issues
+pnpm dev
 
 # Run app tests
-bun test
+pnpm test
 
 # Build for production
-bun run build
+pnpm build
+
+# Start production server
+pnpm start
+```
+
+### React App (`apps/app/`)
+
+```bash
+# Development server
+pnpm dev
+
+# Run app tests
+pnpm test
+
+# Build for production
+pnpm build
 ```
 
 ### Utils (`packages/utils/`)
 
 ```bash
 # Run tests
-bun test
+pnpm test
 
 # Build package
-bun run build
+pnpm build
 ```
 
 ## 🔌 API Endpoints
@@ -171,132 +209,100 @@ curl -X POST -H "Content-Type: application/json" \
 
 ## 🧪 Testing Strategy
 
-### Mixed Test Runners
+### Unified Vitest Configuration
 
-This template uses a pragmatic **mixed test runner approach**:
+This template uses a **unified Vitest approach** across all packages:
 
-- **`packages/utils`**: Vitest (fast, modern, good for utilities)
-- **`apps/server`**: Bun native test runner (avoids esbuild conflicts)
-- **`apps/app`**: Vitest (standard for React apps)
-
-### Why Mixed Runners?
-
-We encountered persistent `esbuild EPIPE` errors when using Vitest with Bun
-runtime for certain packages. The mixed approach provides:
-
-✅ **Stability**: No exit code 130 crashes  
-✅ **Speed**: <50ms feedback loops maintained  
-✅ **Pragmatism**: "Actually works" over theoretical purity
+- **Root-level config**: `vitest.config.ts` with multi-project support
+- **Package-specific environments**: Node.js for server, jsdom for React apps
+- **Coverage aggregation**: Combined coverage reports across all packages
+- **Fast feedback**: <5s test runs with intelligent caching
 
 ### Running Tests
 
 ```bash
-# All tests via Turborepo
-bunx turbo run test
+# All tests via root command
+pnpm test
+
+# Watch mode for development
+pnpm test:watch
+
+# Coverage reporting
+pnpm test:coverage
 
 # Individual packages
-cd packages/utils && bun test     # Vitest
-cd apps/server && bun test        # Bun native
-cd apps/app && bun test           # Vitest (when working)
+cd packages/utils && pnpm test
+cd apps/server && pnpm test
+cd apps/web && pnpm test
+cd apps/app && pnpm test
 ```
-
-## 🔧 Known Issues & Solutions
-
-### 1. esbuild EPIPE Errors
-
-**Issue**: `Error: The service was stopped: write EPIPE` when running Vitest or
-Vite with Bun.
-
-**Current Status**: Affects Vite dev server and some Vitest runs.
-
-**Workarounds**:
-
-- Server tests use Bun's native test runner
-- Use `demo.html` to test full-stack integration
-- Monitor
-  [Vitest + Bun compatibility](https://github.com/vitest-dev/vitest/issues) for
-  improvements
-
-**Diagnostic**: The template includes esbuild diagnostic tools in
-`vitest.setup.tsx` (enable with `BUN_TEMPLATE_ESBUILD_DIAG=1`).
-
-### 2. Port Conflicts
-
-**Issue**: Multiple services trying to use the same port.
-
-**Solution**:
-
-- Server defaults to port 3333 (configurable via `PORT` env var)
-- App dev server uses port 3000
-- Tests use dynamic port allocation (port 0)
-
-### 3. CORS During Development
-
-**Issue**: Browser blocks API requests from different origins.
-
-**Solution**: Server includes CORS headers for development (configure for
-production).
 
 ## 🚀 Production Deployment
 
-### Server
+### Next.js App (`apps/web`)
+
+Deploy to Vercel, Netlify, or any Next.js-compatible platform:
+
+```bash
+cd apps/web
+pnpm build
+pnpm start
+```
+
+### Server (`apps/server`)
+
+Deploy to any Node.js hosting platform:
 
 ```bash
 cd apps/server
-bun run build
-bun start
-```
-
-### App
-
-```bash
-cd apps/app
-bun run build
-# Serve dist/ with your preferred static host
+pnpm build
+pnpm start
 ```
 
 ### Environment Variables
 
 - `PORT` - Server port (default: 3333)
 - `NODE_ENV` - Environment (development/production)
-- `VITE_API_URL` - API base URL for app (default: http://localhost:3333)
+- `VITE_API_URL` - API base URL for Vite app (default: http://localhost:3333)
+- `NEXT_PUBLIC_API_URL` - API base URL for Next.js (default: http://localhost:3333)
 
 ## 🎨 Features Showcase
 
 ### ADHD-Optimized DX
 
-- **<50ms feedback loops**: Bun's speed + optimized test runners
-- **Instant startup**: No complex configuration, works immediately
-- **Clear structure**: Obvious where code belongs
-- **Working examples**: See patterns in action, not just documentation
+- **Sub-5s feedback loops**: Instant test results with Vitest and Wallaby.js integration
+- **Zero-config scaffolding**: `pnpm gen:package` creates new packages instantly
+- **Status at a glance**: `pnpm dx:status` shows pending changesets, coverage, outdated deps
+- **Flow accelerators**: Clear structure, working examples, minimal configuration
 
-### Enterprise-Ready Security
+### Enterprise-Ready Foundation
 
-- npm provenance with OIDC signing
-- Trivy security scanning in CI
-- Dependency vulnerability monitoring
-- SBOM generation for compliance
+- **Standardized builds**: Shared tsup configuration across all packages
+- **Type safety**: Strict TypeScript with proper export maps
+- **Security**: Dependency scanning, vulnerability alerts, SBOM generation
+- **Performance**: Turborepo caching with >85% hit rates
 
-### Performance Monitoring
+### Modern Development Stack
 
-- Built-in telemetry with correlation IDs
-- Response time tracking and percentiles
-- Memory-efficient log storage
-- Real-time metrics dashboard
+- **Node.js ecosystem**: Mature, stable, battle-tested in production
+- **pnpm workspaces**: Fast, efficient dependency management
+- **Next.js 15**: App Router, React Server Components, built-in optimization
+- **Vitest**: Fast, modern testing with native TypeScript support
 
 ## 📚 Additional Documentation
 
+- **Next.js App**: See `apps/web/` for App Router examples
 - **Server API**: See `apps/server/README.md`
-- **Package decisions**: See `.agent-os/product/decisions.md`
-- **Architecture diagrams**: See `.agent-os/product/mission.md`
+- **Product roadmap**: See `.agent-os/product/roadmap.md`
+- **Architecture decisions**: See `.agent-os/product/decisions.md`
 
 ## 🤝 Contributing
 
 1. Follow existing patterns in each package
 2. Maintain test coverage for new features
-3. Use the established test runners (mixed approach)
+3. Use Vitest for all new tests
 4. Update documentation for user-facing changes
-5. Test locally with `demo.html` for full-stack verification
+5. Test locally across all packages with `pnpm validate`
 
 ## 📜 License
 
@@ -304,4 +310,4 @@ MIT - See LICENSE file for details.
 
 ---
 
-**Built with ❤️ for developers who need fast, working solutions.**
+**Built with ❤️ for developers who need fast, focused, production-ready solutions.**

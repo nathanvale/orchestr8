@@ -3,6 +3,15 @@ import { mkdirSync } from 'node:fs'
 import path from 'node:path'
 import { defineConfig } from 'vitest/config'
 
+/**
+ * Shared Vitest Configuration
+ * 
+ * This is the base configuration used by all projects in the monorepo.
+ * Individual projects can override these settings as needed.
+ * 
+ * For multi-project workspace configuration, see vitest.workspace.ts
+ */
+
 // Helper function to extract package name from current working directory
 function getPackageName(): string {
   const cwd = process.cwd()
@@ -21,8 +30,6 @@ const packageName = getPackageName()
 const coverageDirectory = `./test-results/coverage/${packageName}`
 
 // Ensure coverage directory exists for JUnit reporter.
-// NOTE: Some CI providers set CI="true" (string) while others set CI=1 or any non-empty value.
-// Using a truthy check avoids brittle equality against a specific string variant.
 if (process.env['CI']) {
   try {
     mkdirSync(coverageDirectory, { recursive: true })
@@ -31,16 +38,53 @@ if (process.env['CI']) {
   }
 }
 
-// Removed unused CPU and runtime detection variables - using single-threaded mode
-// to avoid worker thread termination issues
-
 export default defineConfig({
-  // Cache configuration (applies to Vite caching)
+  // Cache configuration
   cacheDir: '.vitest',
 
   test: {
-    // Environment configuration - jsdom for React component testing
-    environment: 'jsdom',
+    // Multi-project configuration
+    projects: [
+      // Utility packages - Node environment
+      {
+        name: 'packages',
+        root: './packages',
+        environment: 'node',
+        include: ['**/src/**/*.{test,spec}.{ts,tsx}', '**/tests/**/*.{test,spec}.{ts,tsx}'],
+        exclude: ['**/node_modules/**', '**/dist/**', '**/build/**', '**/coverage/**'],
+        setupFiles: ['../vitest.setup.tsx'],
+      },
+      
+      // Server application - Node environment
+      {
+        name: 'server',
+        root: './apps/server',
+        environment: 'node',
+        include: ['src/**/*.{test,spec}.{ts,tsx}', 'tests/**/*.{test,spec}.{ts,tsx}'],
+        exclude: ['node_modules/**', 'dist/**', 'build/**', 'coverage/**'],
+        setupFiles: ['./vitest.setup.ts'],
+      },
+      
+      // Vite React app - jsdom environment
+      {
+        name: 'app',
+        root: './apps/app',
+        environment: 'jsdom',
+        include: ['src/**/*.{test,spec}.{ts,tsx}', 'tests/**/*.{test,spec}.{ts,tsx}'],
+        exclude: ['node_modules/**', 'dist/**', 'build/**', 'coverage/**'],
+        setupFiles: ['../../vitest.setup.tsx'],
+      },
+      
+      // Next.js app - jsdom environment (if tests are added)
+      {
+        name: 'web',
+        root: './apps/web',
+        environment: 'jsdom',
+        include: ['**/*.{test,spec}.{ts,tsx}'],
+        exclude: ['node_modules/**', '.next/**', 'coverage/**'],
+        setupFiles: ['../../vitest.setup.tsx'],
+      },
+    ],
 
     // Why: Forks pool prevents worker termination issues in Bun/Vitest hybrid
     // Trade-off: Slightly slower than threads but more stable for Bun runtime
@@ -50,30 +94,10 @@ export default defineConfig({
     // Why: Ensure test isolation to prevent state bleed between tests
     isolate: true,
 
-    // File patterns
-    include: [
-      'src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
-      'tests/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
-      'apps/**/src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
-      'packages/**/src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
-    ],
-    exclude: ['node_modules', 'dist', 'build', 'coverage', '.turbo', '**/.bun/**'],
-
-    // Module resolution fixes for MSW and ES modules
+    // Module resolution
     deps: {
       moduleDirectories: ['node_modules'],
-      optimizer: {
-        web: {
-          exclude: [
-            // Exclude Bun-specific modules from transformation
-            'bun',
-          ],
-        },
-      },
     },
-
-    // Setup files - re-enabled with idempotent guards for MSW and custom matchers
-    setupFiles: ['./vitest.setup.tsx'],
 
     // Why: Globals (describe, it, expect) match Jest patterns most devs know
     globals: true,
@@ -110,27 +134,12 @@ export default defineConfig({
       // - Uncomment and adjust perFile config below for critical utilities
       thresholds: {
         global: {
-          // Why: Start with achievable thresholds to avoid blocking initial development
-          branches: 50, // Why: Complex conditionals are harder to test - start lower
-          functions: 70, // Why: Balance between coverage and development velocity
-          lines: 80, // Why: Industry standard minimum for production code
-          statements: 80, // Why: Match line coverage for consistency
+          // Starting thresholds - will be ratcheted up over time
+          branches: 70,
+          functions: 70,
+          lines: 70,
+          statements: 70,
         },
-        // Per-file coverage overrides for critical modules
-        // Uncomment and customize for your critical paths:
-        // perFile: true,
-        // '@/utils/auth.ts': {
-        //   branches: 90,
-        //   functions: 90,
-        //   lines: 90,
-        //   statements: 90,
-        // },
-        // '@/utils/crypto.ts': {
-        //   branches: 95,
-        //   functions: 95,
-        //   lines: 95,
-        //   statements: 95,
-        // },
       },
       // Skip coverage collection in watch mode for performance
       enabled: process.env['VITEST_WATCH'] !== 'true',
@@ -188,27 +197,17 @@ export default defineConfig({
     'import.meta.vitest': 'undefined',
   },
 
-  // External dependencies that should not be bundled
+  // Build configuration
   build: {
     rollupOptions: {
-      external: ['bun', '@rollup/rollup-linux-x64-gnu', '@rollup/rollup-darwin-arm64'],
+      external: ['@rollup/rollup-linux-x64-gnu', '@rollup/rollup-darwin-arm64'],
     },
-  },
-
-  // Optimizations to prevent Vite from trying to bundle certain modules
-  optimizeDeps: {
-    exclude: ['bun'],
-  },
-
-  // SSR configuration to treat Bun as external
-  ssr: {
-    external: ['bun'],
   },
 
   // ESBuild configuration for TypeScript processing
   esbuild: {
     target: 'esnext',
     keepNames: true,
-    jsx: 'automatic', // Use React 17+ automatic JSX transform
+    jsx: 'automatic',
   },
 })

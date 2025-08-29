@@ -7,7 +7,7 @@ import {
   pathSeparator,
   toPlatformPath,
   toPosixPath,
-} from '@bun-template/utils'
+} from '@template/utils'
 import { describe, expect, test } from 'vitest'
 
 // Common test literals to avoid duplication flags

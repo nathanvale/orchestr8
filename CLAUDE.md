@@ -1,33 +1,82 @@
-## Agent OS Documentation
+## 🧠 ADHD-Engineered Development Template with VSCode Intelligence
+
+**The world's first development template specifically engineered for ADHD brains with integrated VSCode debugging intelligence**
+
+This template transforms development from cognitively exhausting to cognitively supportive through comprehensive cognitive load reduction systems and 26 specialized VSCode debugging features, built on a proven Node.js + pnpm foundation.
 
 ### Product Context
 
 - **Mission & Vision:** @.agent-os/product/mission.md
-- **Technical Architecture:** @.agent-os/product/tech-stack.md
+- **Technical Architecture:** @.agent-os/product/tech-stack.md  
 - **Development Roadmap:** @.agent-os/product/roadmap.md
 - **Decision History:** @.agent-os/product/decisions.md
 
 ### Development Standards
 
-<!-- - **Code Style:** @~/.agent-os/standards/code-style.md
-- **Best Practices:** @~/.agent-os/standards/best-practices.md -->
+- **Code Style:** @~/.agent-os/standards/code-style.md
+- **Best Practices:** @~/.agent-os/standards/best-practices.md
 
 ## ⚡ Quick Start
 
-### 🎯 Top 7 Essential Commands
+### 🧠 ADHD-Optimized Commands
 
-| Command          | Description              | When to Use               |
-| ---------------- | ------------------------ | ------------------------- |
-| `bun test`       | Run tests once           | Before committing changes |
-| `bun test:watch` | Watch mode testing       | During development        |
-| `bun dev`        | Start development server | Begin coding session      |
-| `bun build:all`  | Build everything         | Prepare for production    |
-| `bun lint:fix`   | Auto-fix all issues      | Clean up code             |
-| `bun commit`     | Guided commit wizard     | Ready to commit           |
-| `bun validate`   | Full validation suite    | Final check before push   |
+**Core Development (Muscle Memory)**
+| Command            | Description                    | ADHD Benefit                 |
+| ------------------ | ------------------------------ | ---------------------------- |
+| `pnpm dx:status`   | Instant context recovery       | ≤10s to understand current state |
+| `pnpm test`        | Run tests once                 | Quick validation loop        |
+| `pnpm test:watch`  | Watch mode testing             | Continuous feedback during development |
+| `pnpm dev`         | Start development server       | Begin coding session         |
+| `pnpm build:all`   | Build everything               | Prepare for production       |
 
-> 💡 **ADHD Tip**: These 7 commands cover 90% of daily development. Bookmark
-> this section!
+**ADHD Flow Tools (Cognitive Support)**
+| Command            | Description                    | ADHD Benefit                 |
+| ------------------ | ------------------------------ | ---------------------------- |
+| `pnpm dx:idea`     | Capture idea without context switch | Preserve flow state     |
+| `pnpm dx:snapshot` | Save complete work session     | Interruption recovery       |
+| `pnpm dx:resume`   | Restore work context           | <30s back to productivity    |
+| `pnpm dx:focus`    | Toggle focus mode              | Reduce sensory overload      |
+
+**VSCode ADHD Debug Tools**
+| Command/Feature    | Description                    | ADHD Benefit                 |
+| ------------------ | ------------------------------ | ---------------------------- |
+| Adaptive Debug     | Context-aware debugging        | Zero decision paralysis      |
+| Correlation Trace  | Multi-layer request tracking   | Never lose context           |
+| Breakpoint Packs   | Pre-made debugging templates   | Instant problem-specific setup |
+| Focus Debug Mode   | Distraction-free debugging UI  | Maintain flow during debug   |
+
+> 🧠 **ADHD Design**: Commands optimized for working memory limits, context switching costs, and flow state protection.
+
+## 🧠 ADHD Engineering Principles
+
+### Core Philosophy
+**Cognitive Load as a First-Class Concern:** Every feature decision is filtered through cognitive load impact. We treat attention, energy, and context as finite resources requiring careful management.
+
+### Design Constraints
+- **Context Recovery ≤10s**: Any interruption should be recoverable in under 10 seconds
+- **Decision Paralysis Prevention**: Minimize choice overload through opinionated defaults
+- **Flow State Protection**: Smart noise reduction and interruption handling
+- **Progressive Complexity**: Start simple, add power without overwhelming
+- **Dopamine-Driven Development**: Build motivation loops that work with ADHD brain chemistry
+
+### Current Phase: ADHD Boost Bundle + VSCode Intelligence Foundation
+Priority features for immediate cognitive load reduction + debugging intelligence:
+
+**ADHD Core Features:**
+1. `dx:status` command - instant context recovery
+2. Idea inbox system - capture without context switching  
+3. Session snapshots - save/restore complete work context
+4. Focus mode toggle - smart noise reduction
+5. Micro-success pings - celebrate small wins
+6. Coverage ratchet - quality without overwhelm
+
+**VSCode Debug Intelligence:**
+7. Launch & attach profiles - Next.js, API, Vitest debugging
+8. Adaptive debug command - context-aware debugging
+9. Correlation ID tracing - multi-layer request tracking
+10. Breakpoint packs - routing, hydration, performance templates
+11. VSCode workspace setup - ADHD-optimized configuration
+12. Debug session management - flow-preserving workflows
 
 ### Project Management
 
@@ -39,19 +88,26 @@
 
 When asked to work on this codebase:
 
-1. **First**, check @.agent-os/product/roadmap.md for current priorities
-2. **Then**, follow the appropriate instruction file:
-   - For new features: @.agent-os/instructions/create-spec.md
+1. **First**, check @.agent-os/product/roadmap.md for ADHD Boost Bundle + VSCode Intelligence priorities
+2. **Consider cognitive load impact** of any changes - does it reduce or increase mental overhead?
+3. **Evaluate VSCode integration opportunities** - how can debugging/development workflows be optimized?
+4. **Follow appropriate instruction file**:
+   - For new ADHD features: @.agent-os/instructions/create-spec.md
+   - For VSCode debugging enhancements: @.agent-os/instructions/create-spec.md
    - For tasks execution: @.agent-os/instructions/execute-tasks.md
-3. **Always**, adhere to the standards in the files listed above
+5. **Always** measure success through ADHD-specific metrics (context recovery time, decision paralysis reduction, debug session success rate)
 
 ## Important Notes
 
+- **ADHD-First Design**: Every feature must directly address a specific ADHD challenge with measurable benefit
+- **VSCode Intelligence Integration**: Debugging and development workflows should preserve cognitive context and reduce working memory load
 - Product-specific files in `.agent-os/product/` override any global standards
-- User's specific instructions override (or amend) instructions found in
-  `.agent-os/specs/...`
-- Always adhere to established patterns, code style, and best practices
-  documented above.
+- User's specific instructions override (or amend) instructions found in `.agent-os/specs/...`
+- **Cognitive Load Override**: If code style conflicts with cognitive load reduction, prioritize ADHD accessibility
+- **Flow State Protection**: Avoid changes that increase context switching or decision paralysis
+- **Debug Context Preservation**: VSCode debugging features should enhance, not interrupt, flow state
+- Always adhere to ADHD engineering principles and measure impact on neurodivergent developers
+- VSCode features are enhancement layer - core ADHD functionality works without VSCode dependency
 
 ## AI Agent Coding Rules (STRICT)
 
@@ -331,7 +387,7 @@ export function safeSum(
 }
 
 // tests/math-utils.test.ts
-import { safeSum } from '@bun-template/utilities'
+import { safeSum } from '@template/utilities'
 
 test('clamps above max', () => {
   expect(safeSum(5, 10, { clampMax: 12 })).toBe(12)

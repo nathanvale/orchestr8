@@ -1,5 +1,5 @@
 {
-  "name": "@bun-template/app",
+  "name": "@template/app",
   "version": "0.1.0",
   "private": true,
   "repository": {
@@ -19,7 +19,7 @@
     "lint": "NODE_NO_WARNINGS=1 eslint ."
   },
   "dependencies": {
-    "@bun-template/utils": "workspace:*",
+    "@template/utils": "workspace:*",
     "react": "^19.1.1",
     "react-dom": "^19.1.1"
   },

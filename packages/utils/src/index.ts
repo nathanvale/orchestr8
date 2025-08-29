@@ -1,5 +1,5 @@
 /**
- * @bun-template/utils
+ * @template/utils
  * Shared utility functions for the monorepo
  */
 

@@ -1,5 +1,5 @@
 {
-  "name": "@bun-template/utils",
+  "name": "@template/utils",
   "version": "0.1.0",
   "repository": {
     "type": "git",
@@ -10,35 +10,37 @@
   "type": "module",
   "exports": {
     ".": {
-      "types": "./dist-types/index.d.ts",
-      "import": "./dist/index.js"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
     },
     "./number": {
-      "types": "./dist-types/number-utils.d.ts",
-      "import": "./dist/number-utils.js"
+      "types": "./dist/number-utils.d.ts",
+      "import": "./dist/number-utils.js",
+      "require": "./dist/number-utils.cjs"
     },
     "./path": {
-      "types": "./dist-types/path-utils.d.ts",
-      "import": "./dist/path-utils.js"
+      "types": "./dist/path-utils.d.ts",
+      "import": "./dist/path-utils.js",
+      "require": "./dist/path-utils.cjs"
     },
     "./test": {
-      "types": "./dist-types/test-utils.d.ts",
-      "import": "./dist/test-utils.js"
+      "types": "./dist/test-utils.d.ts",
+      "import": "./dist/test-utils.js",
+      "require": "./dist/test-utils.cjs"
     }
   },
-  "main": "./dist/index.js",
+  "main": "./dist/index.cjs",
   "module": "./dist/index.js",
-  "types": "./dist-types/index.d.ts",
-  "files": ["dist", "dist-types", "README.md"],
+  "types": "./dist/index.d.ts",
+  "files": ["dist", "README.md"],
   "scripts": {
-    "clean": "rm -rf dist dist-types .tsbuildinfo",
-    "build": "pnpm run clean && pnpm run build:code && pnpm run build:types && echo '✅ @bun-template/utils built'",
-    "build:code": "tsup src/index.ts src/number-utils.ts src/path-utils.ts src/test-utils.tsx --format esm --splitting --sourcemap --no-dts --external react --external react-dom --out-dir dist",
-    "build:types": "tsc --declaration --emitDeclarationOnly --project ./tsconfig.json --outDir dist-types",
+    "clean": "rm -rf dist .tsbuildinfo",
+    "build": "tsup",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:ci": "vitest run --bail 1",
-    "prepublishOnly": "pnpm run build && test -d dist && test -d dist-types",
+    "prepublishOnly": "pnpm run build && test -d dist",
     "lint": "NODE_NO_WARNINGS=1 eslint ."
   },
   "devDependencies": {

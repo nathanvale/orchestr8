@@ -4,7 +4,7 @@
 # Reduces Docker layer size by 40-60% for Bun workspaces
 #
 # Usage: ./scripts/docker-prune.sh <app-name>
-# Example: ./scripts/docker-prune.sh @bun-template/server
+# Example: ./scripts/docker-prune.sh @template/server
 #
 
 set -euo pipefail
@@ -14,7 +14,7 @@ PRUNE_DIR="docker-pruned"
 
 if [[ -z "$APP_NAME" ]]; then
   echo "Usage: $0 <app-name>"
-  echo "Example: $0 @bun-template/server"
+  echo "Example: $0 @template/server"
   exit 1
 fi
 
@@ -54,7 +54,7 @@ RUN bun install --frozen-lockfile --production
 FROM base AS build
 COPY docker-pruned/full/ .
 COPY --from=deps /app/node_modules ./node_modules
-RUN bun run build --filter=@bun-template/server...
+RUN bun run build --filter=@template/server...
 
 # Stage 3: Runtime
 FROM base AS runtime

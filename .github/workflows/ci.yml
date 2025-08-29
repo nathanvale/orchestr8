@@ -18,7 +18,8 @@ permissions:
   issues: write
 
 env:
-  BUN_VERSION: "1.1.38"
+  NODE_VERSION: "20.18.1"
+  PNPM_VERSION: "9.15.4"
   FORCE_COLOR: 3
   # Vercel Remote Cache (free since Dec 2024) - set in repository secrets
   # TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
@@ -35,47 +36,53 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          bun-version: ${{ env.BUN_VERSION }}
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
 
       - name: Cache Dependencies
         uses: actions/cache@v4
         id: cache
         with:
           path: |
-            ~/.bun/cache
+            ~/.pnpm-store
             node_modules
             .eslintcache
             .prettiercache
-          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
           restore-keys: |
-            ${{ runner.os }}-bun-
+            ${{ runner.os }}-pnpm-
 
       - name: Install Dependencies
         if: steps.cache.outputs.cache-hit != 'true'
-        run: bun install --frozen-lockfile
+        run: pnpm install --frozen-lockfile
         env:
           NODE_ENV: development
 
       - name: Lint
-        run: bun run lint:check
+        run: pnpm run lint:check
 
       - name: Format Check
-        run: bun run format:check
+        run: pnpm run format:check
 
       - name: Type Check Production
-        run: bunx tsc --noEmit -p tsconfig.build.json
+        run: pnpm exec tsc --noEmit -p tsconfig.build.json
 
       - name: Type Check Tests
-        run: bunx tsc --noEmit -p tsconfig.json
+        run: pnpm exec tsc --noEmit -p tsconfig.json
 
       - name: Build
-        run: bun run build:all --continue=dependencies-successful
+        run: pnpm run build:all --continue=dependencies-successful
 
       - name: Governance & Safety Checks
-        run: bun run governance
+        run: pnpm run governance
         continue-on-error: false
 
       - name: Upload Build Artifacts
@@ -86,46 +93,49 @@ jobs:
           retention-days: 7
 
   test:
-    name: Test (${{ matrix.os }}, Bun ${{ matrix.bun-version }})
+    name: Test (${{ matrix.os }}, Node.js ${{ matrix.node-version }})
     runs-on: ${{ matrix.os }}
     timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        bun-version: ["1.1.38", "1.1.37"]
-        exclude:
-          - os: windows-latest
-            bun-version: "1.1.37"
+        node-version: ["20.18.1"]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          bun-version: ${{ matrix.bun-version }}
+          node-version: ${{ matrix.node-version }}
+          cache: 'pnpm'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
 
       - name: Cache Dependencies
         uses: actions/cache@v4
         with:
           path: |
-            ~/.bun/cache
+            ~/.pnpm-store
             node_modules
-          key: ${{ runner.os }}-bun-test-${{ matrix.bun-version }}-${{ hashFiles('bun.lock') }}
+          key: ${{ runner.os }}-pnpm-test-${{ matrix.node-version }}-${{ hashFiles('pnpm-lock.yaml') }}
 
       - name: Install Dependencies
-        run: bun install --frozen-lockfile
+        run: pnpm install --frozen-lockfile
         env:
           NODE_ENV: development
 
       - name: Run Tests
-        run: bun run test:ci
+        run: pnpm run test:ci
         env:
           NODE_ENV: test
 
       - name: Upload Coverage
-        if: matrix.os == 'ubuntu-latest' && matrix.bun-version == '1.1.38'
+        if: matrix.os == 'ubuntu-latest' && matrix.node-version == '20.18.1'
         uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
@@ -143,20 +153,26 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          bun-version: ${{ env.BUN_VERSION }}
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
 
       - name: Install Dependencies
-        run: bun install --frozen-lockfile
+        run: pnpm install --frozen-lockfile
         env:
           NODE_ENV: development
 
       - name: Audit Dependencies
         run: |
           # JSON output for reliable parsing
-          bun audit --json > audit.json 2>&1 || true
+          pnpm audit --json > audit.json 2>&1 || true
 
           # Parse JSON for accurate vulnerability detection
           node -e "
@@ -228,17 +244,23 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          bun-version: ${{ env.BUN_VERSION }}
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
 
       - name: Install Commitlint
-        run: bun add -d @commitlint/cli @commitlint/config-conventional
+        run: pnpm add -D @commitlint/cli @commitlint/config-conventional
 
       - name: Validate Commits
         run: |
-          bunx commitlint \
+          pnpm exec commitlint \
             --from ${{ github.event.pull_request.base.sha }} \
             --to ${{ github.event.pull_request.head.sha }} \
             --verbose
@@ -251,20 +273,26 @@ jobs:
       - name: Checkout PR
         uses: actions/checkout@v4
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          bun-version: ${{ env.BUN_VERSION }}
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
 
       - name: Install Dependencies
-        run: bun install --frozen-lockfile
+        run: pnpm install --frozen-lockfile
         env:
           NODE_ENV: development
 
       - name: Build and Analyze
         run: |
-          bun run build:analyze > bundle-analysis.txt 2>&1
-          bun run bundle:size
+          pnpm run build:analyze > bundle-analysis.txt 2>&1 || true
+          pnpm run bundle:size
 
       - name: Comment Bundle Size
         uses: actions/github-script@v7
@@ -292,7 +320,7 @@ jobs:
             <summary>View Bundle Analysis</summary>
 
             \`\`\`
-            ${fs.readFileSync('bundle-analysis.txt', 'utf8').slice(0, 1000)}
+            ${fs.existsSync('bundle-analysis.txt') ? fs.readFileSync('bundle-analysis.txt', 'utf8').slice(0, 1000) : 'No bundle analysis available'}
             \`\`\`
 
             </details>`;

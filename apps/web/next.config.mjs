@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  transpilePackages: ['@bun-template/utils'],
+  transpilePackages: ['@template/utils'],
   experimental: {
     // Enable optimizations
     optimizeCss: true,

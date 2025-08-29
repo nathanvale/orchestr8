@@ -1,5 +1,5 @@
 {
-  "name": "@bun-template/web",
+  "name": "@template/web",
   "version": "0.1.0",
   "private": true,
   "repository": {
@@ -18,7 +18,7 @@
     "test:ci": "vitest run --bail 1"
   },
   "dependencies": {
-    "@bun-template/utils": "workspace:*",
+    "@template/utils": "workspace:*",
     "next": "^15.1.2",
     "react": "^19.1.1",
     "react-dom": "^19.1.1"

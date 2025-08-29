@@ -6,7 +6,7 @@ import { customMatchers, mockApiResponse } from '../../vitest.setup'
 describe('vitest sanity check', () => {
   test('alias resolution works for @ paths', async () => {
     // Test that package imports resolve correctly
-    const { sum } = await import('@bun-template/utils')
+    const { sum } = await import('@template/utils')
     expect(sum([1, 2, 3])).toBe(6)
   })
 

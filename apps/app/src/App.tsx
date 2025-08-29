@@ -1,4 +1,4 @@
-import { average, median, percentile } from '@bun-template/utils'
+import { average, median, percentile } from '@template/utils'
 import { useEffect, useState } from 'react'
 import LogDashboard from './components/LogDashboard'
 import MetricsPanel from './components/MetricsPanel'

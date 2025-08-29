@@ -1,4 +1,4 @@
-import { average, isApproximately, median, percentile, sum, summarize } from '@bun-template/utils'
+import { average, isApproximately, median, percentile, sum, summarize } from '@template/utils'
 import { describe, expect, test } from 'vitest'
 
 // Comprehensive test suite with edge cases, extreme values, and regression locks

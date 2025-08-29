@@ -1,4 +1,4 @@
-# @bun-template/server
+# @template/server
 
 A lightweight HTTP server built with Bun, providing REST API endpoints with
 structured logging and metrics collection.
@@ -106,7 +106,7 @@ bun start
 
 ## Dependencies
 
-- `@bun-template/utils` - Shared utilities for calculations
+- `@template/utils` - Shared utilities for calculations
 - `@orchestr8/logger` - Structured logging with console output
 
 ## Environment Variables

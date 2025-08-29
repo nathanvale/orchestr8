@@ -84,6 +84,7 @@
 - **Sidecar Tasks:** `"with"` field for coupled long-running processes
 - **Boundaries:** Cross-package import validation and enforcement
 - **Performance Targets:** >90% cache hit rate through optimized inputs
+- **ADHD Performance Targets:** <10s context recovery, <1s micro-feedback, <5s test execution
 
 ### Configuration Management
 
@@ -91,6 +92,7 @@
 - **ESLint/Prettier:** Workspace-aware configuration inheritance
 - **Changesets:** Multi-package versioning and release coordination
 - **Philosophy:** Monorepo-first with simple, focused packages for clarity
+- **ADHD Integration:** VSCode workspace conventions, .dx/ directory structure, unified JSON schemas
 
 ## Development Tools
 

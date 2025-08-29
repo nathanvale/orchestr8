@@ -1,8 +1,8 @@
 {
-  "name": "my-bun-project",
+  "name": "node-pnpm-changesets-template",
   "version": "0.1.0",
   "private": true,
-  "description": "Bun-first TypeScript template with Changesets, Commitizen, Vitest (explicitly, not Bun test), MSW, strict lint & ADHD-optimized DX",
+  "description": "Node.js + pnpm monorepo template with Next.js, Turborepo, Vitest, Changesets & ADHD-optimized DX",
   "homepage": "https://github.com/nathanvale/bun-changesets-template#readme",
   "bugs": {
     "url": "https://github.com/nathanvale/bun-changesets-template/issues"
@@ -21,14 +21,14 @@
     "build": "turbo run build",
     "build:all": "turbo run build --continue=dependencies-successful",
     "build:libs": "turbo run build --filter=./packages/*",
-    "bundle:size": "bunx size-limit",
+    "bundle:size": "pnpx size-limit",
     "check": "pnpm run validate",
     "check:circular-deps": "tsx scripts/check-circular-deps.ts",
     "clean:build": "rm -rf dist dist-node dist-types",
     "commit": "git-cz",
     "cz": "git-cz",
     "dev": "turbo run dev --parallel",
-    "dev:server": "turbo run dev --filter=@bun-template/server",
+    "dev:server": "turbo run dev --filter=@template/server",
     "dev:test": "vitest watch --reporter=dot",
     "dev:turbo": "turbo run dev --experimental-write-cache",
     "docker:prune": "./scripts/docker-prune.sh",
@@ -52,15 +52,19 @@
     "security:sbom": "pnpx @cyclonedx/cdxgen -o sbom.json -t js .",
     "server": "cd apps/server && pnpm dev",
     "server:start": "cd apps/server && pnpm start",
-    "test": "turbo run test",
+    "test": "vitest run",
     "test:changed": "vitest --changed --run",
-    "test:ci": "turbo run test:ci --continue=dependencies-successful",
+    "test:ci": "vitest run --coverage --bail 1",
     "test:ci:node": "node ./node_modules/.bin/vitest run --coverage",
     "test:coverage": "vitest run --coverage",
+    "test:coverage:merge": "tsx scripts/merge-coverage.ts",
+    "test:coverage:ratchet": "tsx scripts/coverage-ratchet.ts",
     "test:coverage:open": "vitest run --coverage && open coverage/index.html",
     "test:coverage:watch": "vitest watch --coverage",
-    "test:debug": "vitest run --reporter=verbose --no-coverage --run",
-    "test:node": "node ./node_modules/.bin/vitest run",
+    "test:debug": "vitest run --reporter=verbose --no-coverage",
+    "test:packages": "vitest run --project packages",
+    "test:server": "vitest run --project server",
+    "test:web": "vitest run --project app --project web",
     "test:ui": "vitest ui",
     "test:watch": "vitest watch",
     "typecheck": "turbo run typecheck",
@@ -86,7 +90,7 @@
     }
   },
   "dependencies": {
-    "@bun-template/utils": "workspace:*",
+    "@template/utils": "workspace:*",
     "react": "19.1.1",
     "react-dom": "19.1.1"
   },
@@ -105,13 +109,11 @@
     "@testing-library/jest-dom": "6.8.0",
     "@testing-library/react": "16.3.0",
     "@testing-library/user-event": "14.6.1",
-    "@types/bun": "1.2.20",
     "@types/node": "24.3.0",
     "@types/react": "19.1.11",
     "@types/react-dom": "19.1.8",
     "@vitest/coverage-v8": "3.2.4",
     "@vitest/ui": "3.2.4",
-    "bun-types": "1.2.21",
     "commitizen": "^4.3.1",
     "commitlint": "^19.8.1",
     "cz-git": "^1.12.0",
@@ -159,7 +161,7 @@
       "noSkipPattern": "Converted previously skipped async tests to early-return synchronous tests to satisfy require-await & no-disabled-tests rules."
     },
     "stability": {
-      "singleThreadVitest": "Vitest configured with pool.threads.singleThread=true to avoid Bun/Vitest worker termination issue (see Bun issue #14949). Revisit after upstream fix.",
+      "singleThreadVitest": "Vitest configured with pool.threads.singleThread=true to avoid worker termination issues in complex monorepo setups. Can be reconsidered for parallel execution when needed.",
       "mswShutdownDelay": "afterAll introduces a short timeout to allow pending MSW requests to settle, preventing lingering handles and hangs."
     },
     "review": {

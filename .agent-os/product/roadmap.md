@@ -28,29 +28,29 @@
 
 ### 🔥 Runtime Pivot Finalization
 
-- [ ] **Remove all Bun artifacts** `XS` [Quick Win]
-  - [ ] Delete bun.lockb, bunfig.toml, bun-types
-  - [ ] Remove Bun references from README and docs
-  - [ ] Update package.json scripts to pnpm
-  - [ ] Add .nvmrc with Node 20.x LTS
+- [x] **Remove all Bun artifacts** `XS` [Quick Win]
+  - [x] Delete bun.lockb, bunfig.toml, bun-types
+  - [x] Remove Bun references from README and docs
+  - [x] Update package.json scripts to pnpm
+  - [x] Add .nvmrc with Node 20.x LTS
 
-- [ ] **Enforce Node.js standards** `XS`
-  - [ ] Set engines field in package.json
-  - [ ] Update CI matrix to Node 20.x only
-  - [ ] Remove EPIPE-SOLUTION.md
+- [x] **Enforce Node.js standards** `XS`
+  - [x] Set engines field in package.json
+  - [x] Update CI matrix to Node 20.x only
+  - [x] Remove EPIPE-SOLUTION.md
 
 ### 🏗️ Build System Standardization
 
-- [ ] **Create shared tsup configuration** `S`
-  - [ ] Create /tooling/build/tsup.base.ts
-  - [ ] Export base config with CJS + ESM + types
-  - [ ] Configure sideEffects: false, treeshaking
-  - [ ] Each package extends base config
+- [x] **Create shared tsup configuration** `S`
+  - [x] Create /tooling/build/tsup.base.ts
+  - [x] Export base config with CJS + ESM + types
+  - [x] Configure sideEffects: false, treeshaking
+  - [x] Each package extends base config
 
-- [ ] **Normalize export maps** `S`
-  - [ ] Standardize exports field structure
-  - [ ] Add proper types resolution
-  - [ ] Validate with smoke tests
+- [x] **Normalize export maps** `S`
+  - [x] Standardize exports field structure
+  - [x] Add proper types resolution
+  - [x] Validate with smoke tests
 
 ### 🧪 Testing Unification
 
