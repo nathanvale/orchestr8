@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test'
-import { startServer } from './index'
 import type { ServerInstance } from './index'
+import { startServer } from './index'
 
 let server: ServerInstance
 let API_URL: string
@@ -12,8 +12,8 @@ describe('Server API', () => {
     API_URL = `http://localhost:${server.port}`
   })
 
-  afterAll(() => {
-    server.stop()
+  afterAll(async () => {
+    await server.stop()
   })
   test('GET / returns server info', async () => {
     const response = await fetch(API_URL)
@@ -24,6 +24,19 @@ describe('Server API', () => {
     expect(data).toHaveProperty('status', 'running')
     expect(data).toHaveProperty('endpoints')
     expect(Array.isArray(data.endpoints)).toBe(true)
+    expect(data.endpoints).toContain('/demo')
+  })
+
+  test('GET /demo returns HTML page', async () => {
+    const response = await fetch(`${API_URL}/demo`)
+    expect(response.status).toBe(200)
+    expect(response.headers.get('Content-Type')).toBe('text/html; charset=utf-8')
+
+    const html = await response.text()
+    expect(html).toContain('<!DOCTYPE html>')
+    expect(html).toContain('Bun Server API Demo')
+    expect(html).toContain('Check Health')
+    expect(html).toContain('/api/health')
   })
 
   test('GET /api/health returns health status', async () => {
