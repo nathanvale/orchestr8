@@ -1,21 +1,14 @@
-import { bunRuntime } from './bun-adapter'
 import { nodeRuntime } from './node-adapter'
 import type { Runtime } from './types'
 
 /**
  * Creates a runtime adapter based on the current environment
  *
- * - Returns Bun adapter when Bun.serve is available (production)
- * - Returns Node.js adapter otherwise (testing with Vitest)
+ * - Returns Node.js adapter by default (pnpm migration)
+ * - Can still use Bun adapter if explicitly requested
  */
 export function createRuntime(): Runtime {
-  // Check if we're running in Bun environment
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
-  if (typeof (globalThis as any).Bun?.serve === 'function') {
-    return bunRuntime()
-  }
-
-  // Fallback to Node.js adapter for testing
+  // Always use Node.js adapter after pnpm migration
   return nodeRuntime()
 }
 

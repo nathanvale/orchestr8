@@ -1,6 +1,7 @@
 # @bun-template/server
 
-A lightweight HTTP server built with Bun, providing REST API endpoints with structured logging and metrics collection.
+A lightweight HTTP server built with Bun, providing REST API endpoints with
+structured logging and metrics collection.
 
 ## Features
 
@@ -28,7 +29,8 @@ const server = startServer(3333)
 // - server.stop(): Clean shutdown method
 ```
 
-When running directly, the server auto-starts on the configured port. When imported for testing, it requires explicit startup to avoid side effects.
+When running directly, the server auto-starts on the configured port. When
+imported for testing, it requires explicit startup to avoid side effects.
 
 ## API Endpoints
 
@@ -45,7 +47,8 @@ When running directly, the server auto-starts on the configured port. When impor
 
 This package uses Bun's native test runner instead of Vitest due to:
 
-1. **Performance**: Native Bun tests run in <50ms, maintaining ADHD-optimized feedback loops
+1. **Performance**: Native Bun tests run in <50ms, maintaining ADHD-optimized
+   feedback loops
 2. **Stability**: Avoids known Vitest/esbuild EPIPE errors in Bun environments
 3. **Simplicity**: No complex configuration or transformation pipeline needed
 
@@ -59,27 +62,34 @@ bun test
 bun test --watch
 ```
 
-Tests use dynamic port allocation (port 0) to avoid conflicts and include proper lifecycle management with `beforeAll`/`afterAll` hooks.
+Tests use dynamic port allocation (port 0) to avoid conflicts and include proper
+lifecycle management with `beforeAll`/`afterAll` hooks.
 
 ## Known Architectural Decisions
 
 ### Mixed Test Runners (DEC-008)
 
-**Decision**: Use Bun's test runner for server tests while other packages use Vitest
+**Decision**: Use Bun's test runner for server tests while other packages use
+Vitest
 
 **Rationale**:
+
 - Eliminates exit code 130 issues from mixed process lifecycles
-- Avoids esbuild EPIPE errors when Vitest attempts to transform TypeScript configs
+- Avoids esbuild EPIPE errors when Vitest attempts to transform TypeScript
+  configs
 - Maintains fast test execution without complex workarounds
-- Pragmatic solution that prioritizes "actually working" over theoretical consistency
+- Pragmatic solution that prioritizes "actually working" over theoretical
+  consistency
 
 **Trade-offs**:
+
 - Different test output formats between packages
 - Separate coverage reporting for server tests
 - Potential future migration needed if Vitest/Bun compatibility improves
 
-**Alternative Considered**: 
-Unified Vitest testing was attempted but blocked by persistent esbuild subprocess failures. The diagnostic tool in `vitest.setup.tsx` confirms this is a known issue.
+**Alternative Considered**: Unified Vitest testing was attempted but blocked by
+persistent esbuild subprocess failures. The diagnostic tool in
+`vitest.setup.tsx` confirms this is a known issue.
 
 ## Development
 
@@ -106,6 +116,7 @@ bun start
 ## Logging
 
 The server implements structured logging with:
+
 - Correlation IDs for request tracking
 - In-memory log storage for the `/api/logs` endpoint
 - Log levels: debug, info, warn, error
@@ -114,6 +125,7 @@ The server implements structured logging with:
 ## Metrics
 
 Built-in metrics collection includes:
+
 - Total request count
 - Error count and rate
 - Response time tracking (individual and aggregates)
@@ -122,6 +134,7 @@ Built-in metrics collection includes:
 ## CORS
 
 CORS is enabled for all endpoints in development with:
+
 - All origins allowed (`*`)
 - All standard HTTP methods supported
 - Common headers permitted

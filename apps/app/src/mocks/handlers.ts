@@ -1,7 +1,7 @@
 import { http, HttpResponse } from 'msw'
 import type { LogEntry, ServerMetrics } from '../types'
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3001'
 
 // Generate mock log data
 function generateMockLogs(): LogEntry[] {
@@ -24,8 +24,8 @@ function generateMockLogs(): LogEntry[] {
 
   for (let i = 0; i < 20; i++) {
     const timestamp = new Date(now - i * 10000).toISOString()
-    const level = levels[Math.floor(Math.random() * levels.length)]
-    const message = messages[Math.floor(Math.random() * messages.length)]
+    const level = levels[Math.floor(Math.random() * levels.length)] ?? 'info'
+    const message = messages[Math.floor(Math.random() * messages.length)] ?? 'Unknown message'
 
     logs.push({
       id: `log-${i}`,
@@ -33,7 +33,7 @@ function generateMockLogs(): LogEntry[] {
       level,
       message,
       correlationId:
-        Math.random() > 0.5 ? `req-${Math.random().toString(36).substr(2, 9)}` : undefined,
+        Math.random() > 0.5 ? `req-${Math.random().toString(36).slice(2, 11)}` : undefined,
       metadata: Math.random() > 0.7 ? { userId: 'user-123', endpoint: '/api/data' } : undefined,
     })
   }

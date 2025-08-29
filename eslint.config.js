@@ -24,6 +24,7 @@ export default tseslint.config(
       '.bun/**',
       '*.config.js',
       '.size-limit.js',
+      'runtime.test.ts', // Old orphaned test file - not part of monorepo structure
     ],
   },
 
@@ -45,7 +46,7 @@ export default tseslint.config(
     languageOptions: {
       parser: tseslint.parser,
       parserOptions: {
-        project: true,
+        project: ['./tsconfig.json', './apps/*/tsconfig.json', './packages/*/tsconfig.json'],
         tsconfigRootDir: import.meta.dirname,
         ecmaVersion: 2024,
         sourceType: 'module',
@@ -95,6 +96,16 @@ export default tseslint.config(
         {
           prefer: 'type-imports',
           fixStyle: 'inline-type-imports',
+        },
+      ],
+      '@typescript-eslint/restrict-template-expressions': [
+        'error',
+        {
+          allowNumber: true, // Why: Numbers are safe and common in templates
+          allowBoolean: false,
+          allowAny: false,
+          allowNullish: false,
+          allowRegExp: false,
         },
       ],
 
@@ -157,17 +168,28 @@ export default tseslint.config(
       'vitest.config.ts',
       'wallaby.mjs',
     ],
+    languageOptions: {
+      parser: tseslint.parser,
+      parserOptions: {
+        project: './tsconfig.vitest.json',
+        tsconfigRootDir: import.meta.dirname,
+        ecmaVersion: 2024,
+        sourceType: 'module',
+      },
+    },
     plugins: {
       vitest,
     },
     rules: {
       // Vitest specific rules
-      'vitest/no-disabled-tests': 'warn',
-      'vitest/no-focused-tests': 'error',
+      'vitest/no-disabled-tests': 'error', // Enforce: no .skip or .todo tests in CI
+      'vitest/no-focused-tests': 'error', // Enforce: no .only tests in CI
       'vitest/no-identical-title': 'error',
       'vitest/prefer-to-have-length': 'warn',
       'vitest/valid-expect': 'error',
-      'vitest/consistent-test-it': ['error', { fn: 'test' }],
+      'vitest/consistent-test-it': ['error', { fn: 'test' }], // Enforce: use 'test' not 'it'
+      // Test ergonomics: allow referencing vi.fn mocks directly in expectations
+      '@typescript-eslint/unbound-method': 'off',
       // Relax strict rules for tests
       '@typescript-eslint/no-explicit-any': 'off', // Mocks and test data often use any
       '@typescript-eslint/no-unsafe-assignment': 'off', // Mock assignments

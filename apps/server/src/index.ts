@@ -700,6 +700,7 @@ function handle404(correlationId: string, path: string): Response {
 }
 
 // Start server only when running directly (not when imported for testing)
-if (import.meta.main) {
+// For Node.js, check if this file is the main module
+if (import.meta.url === `file://${process.argv[1]}`) {
   startServer()
 }

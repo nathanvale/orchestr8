@@ -1,15 +1,15 @@
 # Technical Stack
 
-> Last Updated: 2025-08-28 Version: 1.2.0
+> Last Updated: 2025-01-23 Version: 2.0.0
 
 ## Core Technologies
 
 ### Application Framework
 
-- **Framework:** Bun Runtime + TypeScript
-- **Version:** Bun 1.1.38+, TypeScript 5.7+
+- **Framework:** Node.js + TypeScript
+- **Version:** Node.js 20 LTS+, TypeScript 5.7+
 - **Language:** TypeScript with strict configuration
-- **Architecture:** Monorepo-first with three focused packages
+- **Architecture:** Monorepo with Turborepo orchestration
 
 ### Database
 
@@ -21,55 +21,55 @@
 
 ### JavaScript Framework
 
-- **Framework:** Template supports any framework (React/Vue/Svelte)
-- **Version:** Latest stable versions
-- **Build Tool:** Bun (native bundler)
+- **Framework:** Next.js with React
+- **Version:** Next.js 15+, React 19+
+- **Build Tool:** Next.js built-in (Turbopack/Webpack)
 
 ### Import Strategy
 
 - **Strategy:** Node.js ES Modules
-- **Package Manager:** Bun with workspace support
-- **Node Version:** Not applicable (Bun runtime)
-- **Package Structure:** Monorepo with packages/_, apps/_ workspaces
+- **Package Manager:** pnpm with workspace support
+- **Node Version:** 20 LTS (Iron)
+- **Package Structure:** Monorepo with packages/*, apps/* workspaces
 
 ### CSS Framework
 
-- **Framework:** Template agnostic (configurable)
+- **Framework:** Template agnostic (Tailwind CSS recommended)
 - **Version:** Latest stable
-- **PostCSS:** Supported via configuration
+- **PostCSS:** Supported via Next.js configuration
 
 ### UI Components
 
 - **Library:** Template agnostic
 - **Version:** Latest
-- **Installation:** Via Bun package manager
+- **Installation:** Via pnpm package manager
 
 ## Assets & Media
 
 ### Fonts
 
-- **Provider:** Template agnostic
-- **Loading Strategy:** Configurable per implementation
+- **Provider:** Next.js Font Optimization
+- **Loading Strategy:** Automatic optimization with next/font
 
 ### Icons
 
-- **Library:** Template agnostic
-- **Implementation:** Configurable per framework choice
+- **Library:** Template agnostic (Lucide recommended)
+- **Implementation:** React components
 
 ## Monorepo Orchestration
 
 ### Build Orchestration
 
 - **Tool:** Turborepo 2.5+ (native monorepo configuration)
-- **Version:** Latest 2.5+ with Bun-specific optimizations
-- **Caching:** Local and remote caching with Bun compatibility
+- **Version:** Latest 2.5+ with pnpm optimization
+- **Caching:** Local and remote caching with pnpm compatibility
 - **Remote Cache:** Free Vercel remote cache (since Dec 2024); builds never fail
   if unset (warn-only)
 - **Dependency Management:** Workspace-aware builds and testing
 - **Architecture:** Three focused packages:
-  - `packages/utils`: Shared utilities and helpers
-  - `apps/app`: Vitest testing application with MSW
-  - `apps/server`: Bun HTTP service with API endpoints
+  - `packages/utils`: Shared utilities with tsup builds
+  - `apps/web`: Next.js application with App Router
+  - `apps/server`: Node.js API service (Express/Fastify)
 
 ### Turborepo 2.5 Configuration
 
@@ -79,12 +79,11 @@
 - **Build Resilience:** `--continue=dependencies-successful` for partial build
   progress
 - **Configuration Format:** turbo.jsonc with inline documentation comments
-- **Container Optimization:** `turbo prune` support for Bun Docker builds
+- **Container Optimization:** `turbo prune` support for pnpm Docker builds
 - **Watch Mode:** Experimental write cache for faster iterative development
 - **Sidecar Tasks:** `"with"` field for coupled long-running processes
 - **Boundaries:** Cross-package import validation and enforcement
 - **Performance Targets:** >90% cache hit rate through optimized inputs
-- **Known Issues:** $TURBO_ROOT$ microsyntax currently broken, needs removal
 
 ### Configuration Management
 
@@ -104,22 +103,28 @@
 
 ### Testing Framework
 
-- **Test Runner:** Vitest (chosen over Bun test runner for richer ecosystem &
-  tooling)
-- **Environment:** happy-dom by default (opt-in jsdom via DOM_ENV=jsdom)
+- **Test Runner:** Vitest with Node.js
+- **Environment:** jsdom for React component testing
 - **Coverage:** V8 coverage via @vitest/coverage-v8
 - **E2E Testing:** Template supports adding Playwright separately
-- **Mocking:** Vitest `vi` APIs + MSW for network; selective Bun module mocking
+- **Mocking:** Vitest `vi` APIs + MSW for network mocking
 - **Test Structure:**
   - Unit tests in `packages/utils`
-  - Integration tests in `apps/app` with MSW handlers
+  - Integration tests in `apps/web` with MSW handlers
   - Server API tests in `apps/server`
+
+### Package Build System
+
+- **Build Tool:** tsup for all packages
+- **Configuration:** Standardized across all packages
+- **Output:** ESM format with source maps
+- **Type Generation:** Separate TypeScript compilation for .d.ts files
+- **Entry Points:** Multiple entry points with code splitting
 
 ### Release Management
 
 - **Versioning:** Changesets CLI 2.29+ with monorepo support
-- **Changelog:** GitHub-integrated changelog generation (single-package and
-  multi-package)
+- **Changelog:** GitHub-integrated changelog generation
 - **Publishing:** NPM with provenance support (workspace-aware)
 - **Git Hooks:** Conventional commits with Commitizen
 - **Monorepo Integration:** Automatic workspace detection and coordinated
@@ -129,9 +134,9 @@
 
 ### Application Hosting
 
-- **Platform:** Template agnostic (supports all major platforms)
-- **Service:** Configurable deployment targets
-- **Region:** User-defined
+- **Platform:** Vercel (optimized for Next.js)
+- **Service:** Edge Functions and Serverless
+- **Region:** Global edge network
 
 ### Database Hosting
 
@@ -141,20 +146,19 @@
 
 ### Asset Storage
 
-- **Provider:** Template agnostic
-- **CDN:** Configurable per implementation
-- **Access:** User-defined security model
+- **Provider:** Vercel CDN for Next.js
+- **CDN:** Built-in with Next.js deployment
+- **Access:** Automatic optimization
 
 ## Deployment
 
 ### CI/CD Pipeline
 
-- **Platform:** GitHub Actions (with multi-platform support)
+- **Platform:** GitHub Actions with pnpm caching
 - **Trigger:** Push to main/staging, PR creation
 - **Tests:** Multi-OS matrix testing (Linux, macOS, Windows)
-- **Security:** Trivy scanning, dependency audit, SBOM generation
-- **Monorepo Support:** Workspace-aware builds with Turborepo caching
-  integration
+- **Security:** npm audit, dependency updates, SBOM generation
+- **Monorepo Support:** Workspace-aware builds with Turborepo and pnpm cache
 
 ### Package Registry
 
@@ -166,35 +170,34 @@
 
 ### Environments
 
-- **Development:** Local Bun runtime with hot reload
-- **CI/CD:** GitHub Actions with Bun 1.1.38
+- **Development:** Local Node.js with Next.js Fast Refresh
+- **CI/CD:** GitHub Actions with Node.js 20 LTS
 - **Testing:** Multi-OS compatibility testing
-- **Production:** User-defined deployment targets
+- **Production:** Vercel deployment with edge optimization
 
 ## Performance Optimization
 
 ### Build Performance
 
-- **Bundler:** Bun native bundler (3-5x faster than Webpack/Vite)
-- **Hot Reload:** <50ms reload times
-- **Cold Start:** <100ms startup
-- **Memory Usage:** 50% lower than Node.js equivalents
-- **Monorepo Scaling:** Turborepo caching for incremental builds across packages
+- **Bundler:** tsup for packages, Next.js bundler for app
+- **Hot Reload:** Next.js Fast Refresh
+- **Package Builds:** Parallel builds via Turborepo
+- **Caching:** Aggressive pnpm and Turborepo caching
 
 ### Runtime Performance
 
-- **JavaScript Engine:** JavaScriptCore (Safari's V8 alternative)
-- **Package Resolution:** Bun's optimized resolver
-- **Module Loading:** Native ES Module support
-- **Caching:** Aggressive caching with .bun directory
+- **JavaScript Engine:** V8 (Node.js)
+- **Package Resolution:** pnpm's efficient linking
+- **Module Loading:** ES Module support
+- **Caching:** pnpm store and Turborepo cache
 
 ## Security & Compliance
 
 ### Supply Chain Security
 
 - **Package Integrity:** npm provenance with OIDC signing
-- **Vulnerability Scanning:** Trivy security scanner in CI
-- **Dependency Auditing:** Bun audit + automated dependency updates
+- **Vulnerability Scanning:** npm audit in CI
+- **Dependency Auditing:** pnpm audit + automated dependency updates
 - **SBOM Generation:** CycloneDX SBOM for compliance
 
 ### Code Security
@@ -208,10 +211,10 @@
 
 ### Development Metrics
 
-- **Bundle Size:** Size-limit monitoring with PR comments
-- **Performance:** Hyperfine benchmarking
-- **Memory Usage:** Built-in memory profiling
+- **Bundle Size:** Next.js bundle analyzer
+- **Performance:** Core Web Vitals monitoring
 - **Build Times:** CI/CD performance tracking
+- **Cache Hit Rate:** Turborepo analytics
 
 ### Quality Metrics
 
@@ -219,12 +222,10 @@
 - **Code Quality:** SonarJS complexity analysis
 - **Type Safety:** Strict TypeScript with 100% coverage
 - **Security Score:** Automated security scanning results
-- **Coverage Requirements:** New packages must meet base thresholds immediately;
-  no grace period for coverage requirements
 
 ### Usage Analytics (Optional)
 
-- **Telemetry:** Opt-in usage analytics for template adoption tracking
-- **Privacy:** Anonymous usage patterns only, no code/data collection
-- **Purpose:** Measure template usage patterns and package adoption
-- **Observability:** Development metrics and build performance tracking
+- **Telemetry:** Next.js telemetry (opt-in)
+- **Privacy:** Anonymous usage patterns only
+- **Purpose:** Measure performance and adoption
+- **Observability:** Vercel Analytics integration

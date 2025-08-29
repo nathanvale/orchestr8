@@ -1,14 +1,31 @@
 /// <reference types="vitest/globals" />
 import { mkdirSync } from 'node:fs'
 import path from 'node:path'
-import { defineConfig } from 'vite'
+import { defineConfig } from 'vitest/config'
+
+// Helper function to extract package name from current working directory
+function getPackageName(): string {
+  const cwd = process.cwd()
+  if (cwd.includes('/packages/')) {
+    const match = cwd.match(/\/packages\/([^/]+)/)
+    return match?.[1] ?? 'root'
+  }
+  if (cwd.includes('/apps/')) {
+    const match = cwd.match(/\/apps\/([^/]+)/)
+    return match?.[1] ?? 'root'
+  }
+  return 'root'
+}
+
+const packageName = getPackageName()
+const coverageDirectory = `./test-results/coverage/${packageName}`
 
 // Ensure coverage directory exists for JUnit reporter.
 // NOTE: Some CI providers set CI="true" (string) while others set CI=1 or any non-empty value.
 // Using a truthy check avoids brittle equality against a specific string variant.
 if (process.env['CI']) {
   try {
-    mkdirSync('./coverage', { recursive: true })
+    mkdirSync(coverageDirectory, { recursive: true })
   } catch {
     // Directory might already exist, ignore error
   }
@@ -22,8 +39,8 @@ export default defineConfig({
   cacheDir: '.vitest',
 
   test: {
-    // Environment configuration (toggle with DOM_ENV=jsdom for fuller API parity)
-    environment: process.env['DOM_ENV'] === 'jsdom' ? 'jsdom' : 'happy-dom',
+    // Environment configuration - jsdom for React component testing
+    environment: 'jsdom',
 
     // Why: Forks pool prevents worker termination issues in Bun/Vitest hybrid
     // Trade-off: Slightly slower than threads but more stable for Bun runtime
@@ -37,6 +54,8 @@ export default defineConfig({
     include: [
       'src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
       'tests/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
+      'apps/**/src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
+      'packages/**/src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
     ],
     exclude: ['node_modules', 'dist', 'build', 'coverage', '.turbo', '**/.bun/**'],
 
@@ -53,7 +72,7 @@ export default defineConfig({
       },
     },
 
-    // Setup files
+    // Setup files - re-enabled with idempotent guards for MSW and custom matchers
     setupFiles: ['./vitest.setup.tsx'],
 
     // Why: Globals (describe, it, expect) match Jest patterns most devs know
@@ -68,7 +87,7 @@ export default defineConfig({
       reporter: process.env['CI']
         ? ['text', 'text-summary', 'html', 'lcov', 'json-summary']
         : ['text-summary'], // Reduce reporter noise in local development
-      reportsDirectory: './coverage',
+      reportsDirectory: coverageDirectory,
       reportOnFailure: true,
       exclude: [
         'coverage/**',
@@ -132,7 +151,7 @@ export default defineConfig({
           ? ['verbose']
           : ['default'],
     outputFile: {
-      junit: './coverage/junit.xml',
+      junit: `${coverageDirectory}/junit.xml`,
     },
 
     // Snapshot configuration
@@ -159,7 +178,7 @@ export default defineConfig({
       '@': path.resolve(process.cwd(), 'src'),
       '@tests': path.resolve(process.cwd(), 'tests'),
       // Force rollup resolution to WASM fallback to avoid native optional binary install issues under certain package managers
-      'rollup': '@rollup/wasm-node',
+      // 'rollup': '@rollup/wasm-node', // Temporarily disabled to debug EPIPE issue
       // Removed unused @types, @utils and @config aliases to reduce cognitive load until directories exist
     },
   },

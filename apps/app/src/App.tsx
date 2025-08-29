@@ -1,27 +1,22 @@
 import { average, median, percentile } from '@bun-template/utils'
-import { createConsoleLogger } from '@orchestr8/logger'
 import { useEffect, useState } from 'react'
 import LogDashboard from './components/LogDashboard'
 import MetricsPanel from './components/MetricsPanel'
 import { fetchServerLogs, fetchServerMetrics } from './services/api'
 import type { LogEntry, ServerMetrics } from './types'
 
-const logger = createConsoleLogger({
-  name: 'TelemetryDashboard',
-  level: 'debug',
-})
 
-function App() {
+function App(): React.JSX.Element {
   const [logs, setLogs] = useState<LogEntry[]>([])
   const [metrics, setMetrics] = useState<ServerMetrics | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchData = async (): Promise<void> => {
       try {
         setIsLoading(true)
-        logger.info('Fetching telemetry data')
+        console.log('[TelemetryDashboard] Fetching telemetry data')
 
         const [logsData, metricsData] = await Promise.all([fetchServerLogs(), fetchServerMetrics()])
 
@@ -40,22 +35,26 @@ function App() {
         }
 
         setMetrics(processedMetrics)
-        logger.info('Telemetry data loaded successfully')
+        console.log('[TelemetryDashboard] Telemetry data loaded successfully')
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Failed to fetch data'
-        logger.error('Failed to fetch telemetry data', { error: message })
+        console.error('[TelemetryDashboard] Failed to fetch telemetry data:', message)
         setError(message)
       } finally {
         setIsLoading(false)
       }
     }
 
-    fetchData()
+    void fetchData()
 
     // Refresh data every 5 seconds
-    const interval = setInterval(fetchData, 5000)
+    const interval = setInterval(() => {
+      void fetchData()
+    }, 5000)
 
-    return () => clearInterval(interval)
+    return (): void => {
+      clearInterval(interval)
+    }
   }, [])
 
   if (isLoading && !logs.length) {
@@ -66,7 +65,7 @@ function App() {
     )
   }
 
-  if (error) {
+  if (error != null) {
     return (
       <div className="error">
         <h2>Error loading telemetry</h2>

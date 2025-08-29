@@ -4,20 +4,26 @@ import App from './App'
 import './index.css'
 
 // Start MSW in development
-async function prepare() {
-  if (import.meta.env.DEV) {
+async function prepare(): Promise<void> {
+  if (import.meta.env.DEV === 'true') {
     const { worker } = await import('./mocks/browser')
-    return worker.start({
+    await worker.start({
       onUnhandledRequest: 'bypass',
     })
+    return
   }
   return Promise.resolve()
 }
 
-prepare().then(() => {
-  ReactDOM.createRoot(document.getElementById('root')!).render(
-    <React.StrictMode>
-      <App />
-    </React.StrictMode>,
-  )
-})
+await prepare()
+
+const rootElement = document.getElementById('root')
+if (!rootElement) {
+  throw new Error('Root element not found')
+}
+
+ReactDOM.createRoot(rootElement).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>,
+)

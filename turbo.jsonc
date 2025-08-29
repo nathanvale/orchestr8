@@ -6,7 +6,7 @@
     // Build task: Compile TypeScript and generate output artifacts
     "build": {
       "dependsOn": ["^build"], // Wait for upstream packages to build first
-      "outputs": ["dist/**", "dist-node/**", "dist-types/**", ".tsbuildinfo"], // Cache all build outputs
+      "outputs": ["dist/**", "dist-node/**", "dist-types/**", ".tsbuildinfo", ".next/**"], // Cache all build outputs
       "inputs": [
         "$TURBO_DEFAULT$",
         "!*.md",

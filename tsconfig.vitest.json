@@ -6,6 +6,16 @@
     "module": "ESNext",
     "types": ["bun-types", "vitest/globals"]
   },
-  "include": ["src/**/*", "tests/**/*", "types/**/*", "vitest.config.ts", "vitest.setup.tsx", "wallaby.mjs"],
+  "include": [
+    "src/**/*",
+    "tests/**/*",
+    "types/**/*",
+    "vitest.config.ts",
+    "vitest.setup.tsx",
+    "wallaby.mjs",
+    "packages/*/src/**/*.test.*",
+    "packages/*/tests/**/*",
+    "apps/*/src/**/*.test.*"
+  ],
   "exclude": ["node_modules", "dist", "build", "coverage", ".turbo", "**/.bun/**"]
 }

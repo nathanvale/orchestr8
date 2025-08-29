@@ -72,7 +72,7 @@
       // Removed unused @types, @utils and @config paths (can reintroduce when directories exist)
     }
   },
-  "include": ["src/**/*", "types/**/*", "tests/**/*", "scripts/**/*", "vitest.config.ts", "vitest.setup.tsx", "packages/utils/src/number-utils.test.ts", "packages/utils/src/path-utils.test.ts"],
+  "include": ["src/**/*", "types/**/*", "scripts/**/*", "vitest.config.ts", "vitest.setup.tsx"],
   "exclude": ["node_modules", "dist", "build", "coverage", ".turbo", "**/.bun/**"],
   "ts-node": {
     "esm": true,

@@ -1,33 +1,31 @@
 {
-  "name": "@bun-template/app",
+  "name": "@bun-template/web",
   "version": "0.1.0",
   "private": true,
   "repository": {
     "type": "git",
     "url": "https://github.com/nathanvale/bun-changesets-template.git",
-    "directory": "apps/app"
+    "directory": "apps/web"
   },
   "type": "module",
   "scripts": {
-    "build": "vite build",
-    "clean": "rm -rf dist .tsbuildinfo",
-    "dev": "vite",
-    "preview": "vite preview",
-    "test": "vitest run",
-    "test:ci": "vitest run --bail 1",
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "NODE_NO_WARNINGS=1 eslint .",
     "typecheck": "tsc --noEmit",
-    "lint": "NODE_NO_WARNINGS=1 eslint ."
+    "test": "vitest run",
+    "test:ci": "vitest run --bail 1"
   },
   "dependencies": {
     "@bun-template/utils": "workspace:*",
+    "next": "^15.1.2",
     "react": "^19.1.1",
     "react-dom": "^19.1.1"
   },
   "devDependencies": {
+    "@types/node": "^20.14.0",
     "@types/react": "^19.1.11",
-    "@types/react-dom": "^19.1.8",
-    "@vitejs/plugin-react": "^4.3.4",
-    "msw": "^2.8.4",
-    "vite": "^6.0.7"
+    "@types/react-dom": "^19.1.8"
   }
 }

@@ -2,14 +2,14 @@
   "$schema": "https://json.schemastore.org/tsconfig",
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    // Override to NodeNext for Node.js compatibility when building dist-node output
-    // This ensures proper ESM resolution for Node.js consumers while base config uses "bundler" for Bun
-    "moduleResolution": "NodeNext",
-    "module": "NodeNext",
-    "rootDir": "./src",
+    // Use bundler resolution for monorepo compatibility - Bun handles Node.js compatibility
+    // This avoids requiring explicit file extensions which are not needed in our Bun-first architecture
+    "moduleResolution": "bundler",
+    "module": "ESNext",
+    // rootDir removed for monorepo structure
     "types": ["bun-types"]
   },
-  "include": ["src/**/*"],
+  "include": ["packages/*/src/**/*", "apps/*/src/**/*"],
   "exclude": [
     "node_modules",
     "dist",

@@ -1,100 +1,100 @@
 # Product Mission
 
-> Last Updated: 2025-08-28 Version: 2.0.0
+> Last Updated: 2025-08-29 Version: 4.0.0
 
 ## Pitch
 
-ADHD-optimized Bun + TypeScript monorepo with three focused packages (utils,
-app, server)—instant feedback, minimal complexity, production-ready from day
-one.
+Production-ready Node.js + pnpm monorepo template with Next.js, Turborepo, and unified build system—eliminating cognitive dissonance through standardization, flow acceleration, and ADHD-optimized developer experience.  
+
+**Built for focus and flow:** Single mental model, sub-5s feedback loops, zero-config scaffolding, and "status at a glance" dashboards that restore context instantly after interruptions.
 
 ## Users
 
 ### Primary Customers
 
-- **ADHD Developers**: Developers who need fast feedback loops and minimal
-  cognitive overhead
-- **Small Teams**: Teams who want a simple, working monorepo without complexity
-- **Learning Developers**: Those learning monorepo patterns who need clear
-  examples
+- **Enterprise Teams**: Teams requiring stable, proven tooling with extensive ecosystem support  
+- **Next.js Developers**: Developers building modern web applications with React  
+- **Monorepo Teams**: Teams managing multiple packages with shared dependencies  
+- **ADHD & Neurodiverse Developers**: Engineers who need a frictionless, supportive workflow with minimal decision fatigue  
 
 ### User Personas
 
-**ADHD Developer** (Any age)
+**Enterprise Developer** (25–45 years old)  
+- **Role:** Senior Engineer, Tech Lead  
+- **Context:** Building scalable applications with proven patterns  
+- **Pain Points:** Tooling instability, ecosystem fragmentation, migration complexity  
+- **Goals:** Stable development environment, predictable builds, enterprise support  
 
-- **Role:** Any development role
-- **Context:** Needs instant feedback and clear structure to maintain focus
-- **Pain Points:** Complex setups, slow feedback, too many decisions
-- **Goals:** Get coding fast, see results immediately, minimal configuration
+**ADHD-Friendly Developer** (20–40 years old)  
+- **Role:** Full Stack Engineer, Indie Hacker, Team Contributor  
+- **Context:** Easily distracted by tooling friction, thrives with instant feedback and clear workflows  
+- **Pain Points:** Overwhelm from configuration, slow or inconsistent feedback, tool fatigue  
+- **Goals:** Single mental model, real-time feedback, minimal configuration, defaults that “just work”  
 
 ## The Problem
 
-### Overcomplicated Monorepo Templates
+### Ecosystem Fragmentation
+Teams struggle with incompatible tooling combinations, unstable new runtimes, and constant migration between build systems. The JavaScript ecosystem changes too rapidly.  
 
-Most monorepo templates are overwhelming with dozens of packages, complex
-dependency graphs, and enterprise features that small teams don't need. The
-"promotion" pattern adds unnecessary complexity.
+**Our Solution:** Proven Node.js runtime with pnpm workspaces, stable for years with extensive ecosystem support. ADHD developers can rely on it without worrying about sudden tool churn.
 
-**Our Solution:** Start with a working monorepo of just 3 packages that does one
-thing well.
+### Inconsistent Package Builds
+Each package in a monorepo often has different build configurations, making maintenance and debugging difficult across teams.  
 
-### Slow Feedback Loops Break Focus
+**Our Solution:** Standardized tsup builds with consistent TypeScript compilation across all packages, reducing cognitive overhead.
 
-Developers with ADHD lose focus when builds take >100ms or tests take seconds to
-start. Traditional Node.js tools are too slow.
+### Complex Next.js Integration
+Setting up Next.js in a monorepo with proper package imports and type safety requires extensive configuration and trial-and-error.  
 
-**Our Solution:** Bun-powered instant feedback with <50ms hot reload and
-immediate test runs.
+**Our Solution:** Pre-configured Next.js app with working internal package imports and full TypeScript support, so you don’t waste time debugging wiring.  
 
-### Too Many Decisions
+### ADHD Workflow Gaps
+Traditional templates assume infinite focus and context-switch capacity. Developers with ADHD often lose flow if feedback is delayed, tooling is noisy, or setup requires too many micro-decisions.  
 
-Setting up a monorepo requires hundreds of decisions about structure, tooling,
-and configuration. This paralysis prevents starting.
-
-**Our Solution:** Opinionated, working setup with utils, app (Vitest), and
-server (Bun) packages pre-configured.
+**Our Solution:** Sub-5s test feedback, unified Vitest multi-project config, single "dx:status" command for instant context recovery, zero-config package scaffolding, and flow accelerators that eliminate blank-page paralysis.
 
 ## Differentiators
 
-### Simplicity First
+### Proven Stability
+Built on Node.js and pnpm—stable tools with millions of production deployments, not experimental runtimes.  
 
-Just three packages that work together. No promotion scripts, no complex
-migrations, no decision fatigue.
+### Standardized Builds
+Every package uses the same tsup + TypeScript build pipeline, easy to understand and maintain across teams.  
 
-### ADHD-Optimized
+### Next.js Ready
+Includes a working Next.js application out of the box with App Router, React Server Components, and internal package imports configured.  
 
-Every design decision prioritizes instant feedback and reduced cognitive load.
-If it takes more than 50ms, we fix it.
-
-### Actually Works
-
-Not a "starter" that needs setup - it's a working monorepo with a server serving
-an API, tests using MSW, and shared utilities.
+### ADHD-Optimized Developer Experience
+- **Instant Context Recovery:** Single "dx:status" command shows everything (pending changesets, coverage, outdated deps)
+- **Flow Accelerators:** Zero-config package scaffolding, project generators, onboarding scripts
+- **Unified Mental Model:** Consistent tsup builds, single Vitest config, no runtime confusion
+- **Visual Feedback:** Wallaby.js integration, colored validation output, health dashboards  
 
 ## Key Features
 
 ### Core Structure
-
-- **packages/utils:** Shared utilities used by both app and server
-- **apps/app:** Vitest testing app with MSW for API mocking
-- **apps/server:** Bun server providing simple API service
+- **packages/utils:** Shared utilities with standardized tsup builds  
+- **apps/web:** Next.js application with App Router and React Server Components  
+- **apps/server:** Node.js API server (optional Express/Fastify)  
 
 ### Developer Experience
-
-- **Instant Feedback:** <50ms for all operations
-- **Single Command:** `bun dev` starts everything
-- **Clear Structure:** Obvious where code belongs
-- **Working Examples:** See patterns in action, not documentation
+- **pnpm Workspaces:** Fast, efficient dependency management with workspace protocol
+- **Turborepo Orchestration:** Remote caching, >85% hit rates, pruned Docker builds
+- **Unified Testing:** Vitest multi-project config with coverage ratcheting
+- **Standardized Builds:** Shared tsup base configuration, consistent export maps
+- **Flow State Tools:** Status commands, scaffolders, profiling hooks, onboarding scripts  
 
 ### Production Ready
-
-- **TypeScript:** Strict types across all packages
-- **Testing:** Vitest + MSW configured and working
-- **Linting:** ESLint pre-configured for monorepo
-- **CI/CD:** GitHub Actions ready to go
+- **TypeScript:** Strict types with proper export maps  
+- **Testing:** Vitest with jsdom/happy-dom environment and coverage reporting  
+- **Next.js:** Production-optimized with ISR and edge runtime support  
+- **CI/CD:** GitHub Actions with pnpm caching and Vitest in pipelines  
+- **Security:** Linting, type checks, and dependency audit baked in  
 
 ## Non-Goals
+- **Not exploring experimental runtimes:** Stability over cutting-edge performance  
+- **Not a micro-frontend architecture:** Focus on traditional monorepo patterns  
+- **Not a full-stack framework:** Flexibility to choose your backend approach  
+- **Not config-heavy:** Defaults first, options later—prevent decision fatigue  
 
-- **Not trying to scale to 100 packages:** This is for small teams
-- **Not a promotion/migration tool:** Start as monorepo, stay as monorepo
-- **Not enterprise-focused:** Simplicity over compliance features
+---
