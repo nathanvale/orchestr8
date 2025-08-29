@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bun Changesets Template Demo</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .status { padding: 10px; margin: 10px 0; border-radius: 4px; }
+        .success { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+        .error { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+        .loading { background: #d1ecf1; border: 1px solid #bee5eb; color: #0c5460; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 4px; overflow-x: auto; }
+        button { padding: 8px 16px; margin: 5px; border: none; border-radius: 4px; cursor: pointer; }
+        .primary { background: #007bff; color: white; }
+        .secondary { background: #6c757d; color: white; }
+    </style>
+</head>
+<body>
+    <h1>🚀 Bun Changesets Template Demo</h1>
+    <p>Testing the full-stack connection between the React app and Bun server.</p>
+    
+    <div id="connection-status" class="status loading">
+        Testing server connection...
+    </div>
+    
+    <h2>Server Endpoints</h2>
+    <button class="primary" onclick="testEndpoint('/api/health')">Health Check</button>
+    <button class="primary" onclick="testEndpoint('/api/metrics')">Get Metrics</button>
+    <button class="primary" onclick="testEndpoint('/api/logs')">Get Logs</button>
+    <button class="secondary" onclick="testCalculation()">Test Calculate</button>
+    
+    <h2>Response</h2>
+    <pre id="response">Click a button to test an endpoint...</pre>
+    
+    <h2>Live Metrics Dashboard</h2>
+    <div id="metrics-dashboard">
+        <div id="metrics-content">Loading metrics...</div>
+        <button class="secondary" onclick="toggleAutoRefresh()">Toggle Auto-Refresh</button>
+    </div>
+    
+    <script>
+        const API_BASE = 'http://localhost:3333';
+        let autoRefresh = false;
+        let refreshInterval;
+        
+        async function testEndpoint(path) {
+            const responseEl = document.getElementById('response');
+            try {
+                responseEl.textContent = 'Loading...';
+                const response = await fetch(`${API_BASE}${path}`);
+                const data = await response.json();
+                responseEl.textContent = JSON.stringify(data, null, 2);
+                
+                updateConnectionStatus('success', 'Connected to server successfully!');
+            } catch (error) {
+                responseEl.textContent = `Error: ${error.message}`;
+                updateConnectionStatus('error', `Connection failed: ${error.message}`);
+            }
+        }
+        
+        async function testCalculation() {
+            const responseEl = document.getElementById('response');
+            try {
+                responseEl.textContent = 'Calculating...';
+                const response = await fetch(`${API_BASE}/api/calculate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ numbers: [1, 2, 3, 4, 5, 10, 20, 30] })
+                });
+                const data = await response.json();
+                responseEl.textContent = JSON.stringify(data, null, 2);
+                
+                updateConnectionStatus('success', 'Connected to server successfully!');
+            } catch (error) {
+                responseEl.textContent = `Error: ${error.message}`;
+                updateConnectionStatus('error', `Connection failed: ${error.message}`);
+            }
+        }
+        
+        function updateConnectionStatus(type, message) {
+            const statusEl = document.getElementById('connection-status');
+            statusEl.className = `status ${type}`;
+            statusEl.textContent = message;
+        }
+        
+        async function updateMetrics() {
+            const metricsEl = document.getElementById('metrics-content');
+            try {
+                const response = await fetch(`${API_BASE}/api/metrics`);
+                const metrics = await response.json();
+                
+                metricsEl.innerHTML = `
+                    <h3>📊 Real-time Server Metrics</h3>
+                    <p><strong>Total Requests:</strong> ${metrics.totalRequests}</p>
+                    <p><strong>Error Count:</strong> ${metrics.errorCount}</p>
+                    <p><strong>Uptime:</strong> ${metrics.uptime} seconds</p>
+                    <p><strong>Average Response Time:</strong> ${metrics.stats?.averageResponseTime?.toFixed(2) || 'N/A'} ms</p>
+                    <p><strong>P95 Response Time:</strong> ${metrics.stats?.p95ResponseTime?.toFixed(2) || 'N/A'} ms</p>
+                `;
+            } catch (error) {
+                metricsEl.innerHTML = `<p class="error">Failed to load metrics: ${error.message}</p>`;
+            }
+        }
+        
+        function toggleAutoRefresh() {
+            autoRefresh = !autoRefresh;
+            if (autoRefresh) {
+                refreshInterval = setInterval(updateMetrics, 2000);
+                updateMetrics();
+            } else {
+                clearInterval(refreshInterval);
+            }
+            document.querySelector('#metrics-dashboard button').textContent = 
+                autoRefresh ? 'Stop Auto-Refresh' : 'Start Auto-Refresh';
+        }
+        
+        // Test connection on load
+        window.addEventListener('load', () => {
+            testEndpoint('/api/health');
+            updateMetrics();
+        });
+    </script>
+</body>
+</html>

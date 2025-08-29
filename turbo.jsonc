@@ -13,7 +13,8 @@
         "!**/*.md",
         "!**/*.test.ts",
         "!**/*.spec.ts",
-        "!tests/**"
+        "!tests/**",
+        ".env*",
       ],
       "cache": true,
     },
@@ -22,13 +23,7 @@
     "test": {
       "dependsOn": ["^build"], // Wait for upstream packages to build first
       "outputs": ["coverage/**"], // Cache test coverage reports
-      "inputs": [
-        "$TURBO_DEFAULT$",
-        "!*.md",
-        "!**/*.md",
-        "!docs/**",
-        "!.changeset/**"
-      ],
+      "inputs": ["$TURBO_DEFAULT$", "!*.md", "!**/*.md", "!docs/**", "!.changeset/**", ".env*"],
       "cache": true,
       "env": ["NODE_ENV"], // Test behavior may vary by environment
     },
@@ -48,26 +43,15 @@
     // Lint task: Code quality and style checking
     "lint": {
       "outputs": [".eslintcache"], // Cache lint results for faster re-runs
-      "inputs": [
-        "$TURBO_DEFAULT$",
-        "!*.md",
-        "!**/*.md",
-        "!dist/**",
-        "!coverage/**"
-      ],
+      "inputs": ["$TURBO_DEFAULT$", "!*.md", "!**/*.md", "!dist/**", "!coverage/**"],
       "cache": true,
     },
 
     // Type checking: Static analysis for TypeScript errors
     "typecheck": {
-      "dependsOn": ["^typecheck"], // Wait for upstream type definitions
-      "inputs": [
-        "$TURBO_DEFAULT$",
-        "!*.md",
-        "!**/*.md",
-        "!**/*.js",
-        "!**/*.jsx"
-      ],
+      // Use transit graph so downstream typechecks see upstream changes without fully serializing
+      "dependsOn": ["transit"],
+      "inputs": ["$TURBO_DEFAULT$", "!*.md", "!**/*.md", "!**/*.js", "!**/*.jsx"],
       "cache": true,
     },
 
@@ -89,6 +73,12 @@
       "cache": false,
       "persistent": true,
       "dependsOn": ["^build"], // Ensure upstream packages are built first
+    },
+
+    // Transit node: propagates dependency graph changes for tasks that need awareness without full serialization
+    "transit": {
+      "dependsOn": ["^transit"],
+      "cache": true,
     },
   },
 
@@ -114,26 +104,27 @@
   // To enable: Set TURBO_TOKEN and TURBO_TEAM in CI/CD environment variables
   // Get token from: https://vercel.com/account/tokens
   // Team slug: your-team-name (or personal username for individuals)
+  //
+  // For cache signature (optional security enhancement):
+  // 1. Generate a secret key: openssl rand -base64 32
+  // 2. Set TURBO_REMOTE_CACHE_SIGNATURE_KEY in CI/CD secrets
+  // 3. Change signature to true below
+  // This prevents cache poisoning attacks but is optional for most teams
   "remoteCache": {
     "enabled": true,
-    "signature": false // Enable later with TURBO_REMOTE_CACHE_SIGNATURE_KEY
+    "signature": false, // Set to true after configuring TURBO_REMOTE_CACHE_SIGNATURE_KEY
   },
 
-  // Future enhancements when monorepo promotion occurs:
+  // Future enhancements:
   // - Add "ui" field for task descriptions in Turborepo UI
   // - Add "with" field for sidecar processes (dev + build watchers)
 
-  // Boundaries validation: prevents cross-package import violations
-  // Activated only in monorepo structure - currently commented for single-package
+  // Boundaries validation: Enforce package dependency rules
+  // Note: This feature requires Turborepo Enterprise or may not be available in current version
+  // Keeping as documentation for future when available
   // "boundaries": {
-  //   "@bun-template/core": {
-  //     "allowed": ["@bun-template/utilities"]
-  //   },
-  //   "@bun-template/utilities": {
-  //     "allowed": []  // Pure utilities - no dependencies on other packages
-  //   },
-  //   "@bun-template/server": {
-  //     "allowed": ["@bun-template/core", "@bun-template/utilities"]
-  //   }
+  //   "@bun-template/utils": { "allowed": [] }, // Pure shared utilities, no dependencies
+  //   "@bun-template/app": { "allowed": ["@bun-template/utils"] }, // App can import utils
+  //   "@bun-template/server": { "allowed": ["@bun-template/utils"] } // Server can import utils
   // }
 }

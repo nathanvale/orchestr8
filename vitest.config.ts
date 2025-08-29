@@ -69,6 +69,7 @@ export default defineConfig({
         ? ['text', 'text-summary', 'html', 'lcov', 'json-summary']
         : ['text-summary'], // Reduce reporter noise in local development
       reportsDirectory: './coverage',
+      reportOnFailure: true,
       exclude: [
         'coverage/**',
         'dist/**',
@@ -123,11 +124,13 @@ export default defineConfig({
     teardownTimeout: 15000, // Why: MSW cleanup and worker termination need extra time
 
     // Reporter configuration with balanced output
-    reporters: process.env['CI']
-      ? ['dot', 'junit']
-      : process.env['VERBOSE'] === 'true'
-        ? ['verbose']
-        : ['default'],
+    reporters: process.env['GITHUB_ACTIONS']
+      ? ['dot', 'github-actions', 'junit']
+      : process.env['CI']
+        ? ['dot', 'junit']
+        : process.env['VERBOSE'] === 'true'
+          ? ['verbose']
+          : ['default'],
     outputFile: {
       junit: './coverage/junit.xml',
     },
@@ -140,6 +143,9 @@ export default defineConfig({
     // Advanced options for ADHD-optimized feedback
     passWithNoTests: true, // Template project may have no tests initially
     logHeapUsage: process.env.NODE_ENV === 'development', // Memory debugging in dev only
+    // Use built-in unstub support instead of manual teardown calls
+    unstubEnvs: true,
+    unstubGlobals: true,
 
     // UI mode configuration (for development)
     ui: process.env['VITEST_UI'] === 'true',

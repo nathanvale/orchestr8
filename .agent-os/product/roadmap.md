@@ -51,14 +51,23 @@ working implementation with 3 focused packages **Timeline:** Current Sprint (1
 week) **Success Criteria:** Working monorepo with <50ms feedback loops and
 cross-package imports
 
-### Critical Fixes (Immediate)
+### Critical Fixes (Immediate) ✅
 
-- [ ] **Fix $TURBO_ROOT$ syntax error** - Remove broken microsyntax from
+- [x] **Fix $TURBO_ROOT$ syntax error** - Remove broken microsyntax from
       turbo.jsonc - `XS`
-- [ ] **Update CI with --continue flag** - Add
+- [x] **Update CI with --continue flag** - Add
       `--continue=dependencies-successful` - `XS`
-- [ ] **Fix 22 failing Vitest tests** - Resolve Bun compatibility issues - `S`
-- [ ] **Fix 36 ESLint errors** - Clean up linting issues - `S`
+- [x] **Fix 22 failing Vitest tests** - Resolve Bun compatibility issues - `S`
+- [x] **Fix 36 ESLint errors** - Clean up linting issues - `S`
+
+### Build Optimization ✅
+
+- [x] **Remove unsupported --analyze flag** - Clean up build scripts - `XS`
+- [x] **Add multi-entry build** - Enable code splitting with proper entry
+      points - `XS`
+- [x] **Add production build** - Minification and source maps for deployment -
+      `XS`
+- [x] **Document remote cache** - Turborepo remote cache setup in README - `XS`
 
 ### Package Implementation
 
@@ -68,7 +77,8 @@ cross-package imports
   - [ ] Set up TypeScript build pipeline
   - [ ] Maintain existing test coverage
 
-- [ ] **apps/app** - Vitest testing application - `M`
+- [ ] **apps/app** - Trivial Vite application to have simple telemetry dashboard
+      of logs using the "@orchestr8/logger": "^2.0.0" - `M`
   - [ ] Create test application structure
   - [ ] Import and use packages/utils
   - [ ] Configure MSW for server API mocking
@@ -77,6 +87,7 @@ cross-package imports
 - [ ] **apps/server** - Bun HTTP service - `M`
   - [ ] Create HTTP server with Bun.serve()
   - [ ] Implement 3-4 REST endpoints
+  - [ ] IMplements structure logging examples with correlationId
   - [ ] Use packages/utils for shared logic
   - [ ] Add health check endpoint
 

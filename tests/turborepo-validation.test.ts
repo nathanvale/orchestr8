@@ -12,11 +12,12 @@ function parseJsonc(content: string): any {
 // Constant for Turborepo default macro
 const TURBO_DEFAULT = '$TURBO_DEFAULT$'
 
+// Common test constants
+const rootDir = process.cwd()
+const turboConfigPath = join(rootDir, 'turbo.jsonc')
+
 // Tests for Turborepo 2.5 configuration best practices
 describe('Turborepo Pipeline Configuration', () => {
-  const rootDir = process.cwd()
-  const turboConfigPath = join(rootDir, 'turbo.jsonc')
-
   describe('Configuration File', () => {
     test('should have a valid turbo.jsonc file', () => {
       expect(existsSync(turboConfigPath)).toBe(true)
@@ -304,11 +305,11 @@ describe('Turborepo Pipeline Configuration', () => {
 })
 
 describe('Turborepo Safety Guards', () => {
-  const turboConfigPath = join(rootDir, 'turbo.jsonc')
-
   describe('Dependency Safety Guards', () => {
     test('should fail if test:dist dependency reverts to plain build', () => {
+      // eslint-disable-next-line security/detect-non-literal-fs-filename
       if (existsSync(turboConfigPath)) {
+        // eslint-disable-next-line security/detect-non-literal-fs-filename
         const config = parseJsonc(readFileSync(turboConfigPath, 'utf8'))
         const testDistDeps = config.tasks['test:dist']?.dependsOn ?? []
         // Ensure test:dist uses ^build (upstream) not plain build (local)
@@ -320,7 +321,9 @@ describe('Turborepo Safety Guards', () => {
 
   describe('JSONC Validation', () => {
     test('should parse turbo.jsonc without trailing comma issues', () => {
+      // eslint-disable-next-line security/detect-non-literal-fs-filename
       if (existsSync(turboConfigPath)) {
+        // eslint-disable-next-line security/detect-non-literal-fs-filename
         const content = readFileSync(turboConfigPath, 'utf8')
         // This should not throw - validates JSON5 can handle the format
         expect(() => parseJsonc(content)).not.toThrow()

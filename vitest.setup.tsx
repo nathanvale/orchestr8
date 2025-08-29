@@ -199,8 +199,6 @@ afterEach(() => {
     vi.runOnlyPendingTimers()
   }
   vi.clearAllTimers()
-  vi.unstubAllEnvs()
-  vi.unstubAllGlobals()
 
   // Clean up DOM if using happy-dom
   if (typeof document !== 'undefined') {
@@ -264,4 +262,51 @@ export const customMatchers = {
 // Register matchers once (expect is global in Vitest)
 if (typeof (globalThis as any).expect?.extend === 'function') {
   ;(globalThis as any).expect.extend(customMatchers)
+}
+
+// --- Fail-fast esbuild / vite subprocess diagnostics (opt-in) ---
+// Activate by running with env BUN_TEMPLATE_ESBUILD_DIAG=1 (or using diag scripts).
+// Captures stderr patterns (EPIPE/Broken pipe / abnormal esbuild exits) and forces a non-zero exit
+// code (111) if anomalies occurred but tests otherwise passed, surfacing hidden tooling instability.
+if (process.env['BUN_TEMPLATE_ESBUILD_DIAG'] === '1') {
+  const suspicious: { msg: string; time: number }[] = []
+  const origWrite = process.stderr.write.bind(process.stderr)
+  ;(process.stderr.write as unknown as (
+    chunk: string | Uint8Array,
+    encoding?: BufferEncoding | ((err?: Error | null) => void),
+    cb?: (err?: Error | null) => void,
+  ) => boolean) = (
+    chunk: string | Uint8Array,
+    encoding?: BufferEncoding | ((err?: Error | null) => void),
+    cb?: (err?: Error | null) => void,
+  ) => {
+    try {
+      const text = typeof chunk === 'string' ? chunk : ((chunk as any)?.toString?.() ?? '')
+      if (/EPIPE|Broken pipe|esbuild|vite.*(exit|error)/i.test(text)) {
+        suspicious.push({ msg: text.trim(), time: Date.now() })
+      }
+    } catch {
+      // swallow diagnostics parsing errors
+    }
+    return origWrite(chunk, encoding as any, cb as any)
+  }
+  process.on('beforeExit', (code) => {
+    if (!suspicious.length) return
+    const seen = new Set<string>()
+    const lines = suspicious
+      .map((s) => s.msg)
+      .filter((m) => (seen.has(m) ? false : (seen.add(m), true)))
+    console.error('\n[fail-fast][esbuild-diag] Detected potential toolchain instability:')
+    let i = 0
+    for (const line of lines) {
+      i += 1
+      console.error(`${i}. ${line}`)
+    }
+    if (code === 0) {
+      process.exitCode = 111
+      console.error(
+        '[fail-fast][esbuild-diag] Forcing exitCode=111 (tests passed but tooling anomalies detected).',
+      )
+    }
+  })
 }

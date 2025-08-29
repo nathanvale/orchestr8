@@ -5,3 +5,4 @@
 
 export * from './number-utils'
 export * from './path-utils'
+export * from './test-utils'

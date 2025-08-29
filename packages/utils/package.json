@@ -10,31 +10,39 @@
   "type": "module",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
+      "types": "./dist-types/index.d.ts",
       "import": "./dist/index.js"
     },
     "./number": {
-      "types": "./dist/number-utils.d.ts",
+      "types": "./dist-types/number-utils.d.ts",
       "import": "./dist/number-utils.js"
     },
     "./path": {
-      "types": "./dist/path-utils.d.ts",
+      "types": "./dist-types/path-utils.d.ts",
       "import": "./dist/path-utils.js"
+    },
+    "./test": {
+      "types": "./dist-types/test-utils.d.ts",
+      "import": "./dist/test-utils.js"
     }
   },
   "main": "./dist/index.js",
   "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "types": "./dist-types/index.d.ts",
   "files": [
     "dist",
+    "dist-types",
     "README.md"
   ],
   "scripts": {
-    "build": "tsc --build",
-    "clean": "rm -rf dist .tsbuildinfo",
-    "prepublishOnly": "npm run build && test -d dist",
+    "build": "bun run clean && bun run build:code && bun run build:types && echo '✅ @bun-template/utils built'",
+    "build:code": "bun build src/index.ts --outdir=dist --target=bun --format=esm --splitting --sourcemap --external react --external react-dom",
+    "build:types": "tsc --declaration --emitDeclarationOnly --project ./tsconfig.json --outDir dist-types",
+    "clean": "rm -rf dist dist-types .tsbuildinfo",
+    "diag:test": "BUN_TEMPLATE_ESBUILD_DIAG=1 vitest run --reporter=dot",
+    "prepublishOnly": "bun run build && test -d dist && test -d dist-types",
     "test": "vitest run",
-    "test:dist": "npm run build && vitest run --dir dist",
+    "test:dist": "bun run build && vitest run --dir dist",
     "typecheck": "tsc --noEmit"
   },
   "packageManager": "bun@1.1.38",

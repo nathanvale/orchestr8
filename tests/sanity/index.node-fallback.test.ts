@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { expectRuntimeImportToFail } from '../tests/test-helpers'
+import { expectRuntimeImportToFail } from '../test-helpers'
 
 const CANNOT_FIND_MODULE_LITERAL = 'Cannot find module'
 
