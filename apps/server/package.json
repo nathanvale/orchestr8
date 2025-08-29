@@ -12,6 +12,7 @@
     "build": "bun build src/index.ts --outdir dist --target node",
     "clean": "rm -rf dist coverage",
     "dev": "bun --watch src/index.ts",
+    "dev:hot": "bun --hot src/index.ts",
     "start": "bun src/index.ts",
     "test": "bun test",
     "test:watch": "bun test --watch",
