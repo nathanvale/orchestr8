@@ -1,30 +1,34 @@
 # Product Roadmap
 
-> Last Updated: 2025-08-29 Version: 8.0.0 Status: Active Development - DX Unification Sprint
-> Roadmap version tracks planning iteration, not semver
+> Last Updated: 2025-08-29 Version: 8.0.0 Status: Active Development - DX
+> Unification Sprint Roadmap version tracks planning iteration, not semver
 
 ## Executive Summary
 
-**Current State:** Migration to Node.js + pnpm in progress with partial Bun artifacts creating cognitive dissonance. Strong foundation (Turborepo, Vitest, Changesets) but missing critical DX unification.
+**Current State:** Migration to Node.js + pnpm in progress with partial Bun
+artifacts creating cognitive dissonance. Strong foundation (Turborepo, Vitest,
+Changesets) but missing critical DX unification.
 
-**Immediate Focus:** P0 priorities to eliminate dual mental models, standardize builds, and add ADHD-optimized flow accelerators. Target: <5s feedback loops, single-command status recovery, zero-config scaffolding.
+**Immediate Focus:** P0 priorities to eliminate dual mental models, standardize
+builds, and add ADHD-optimized flow accelerators. Target: <5s feedback loops,
+single-command status recovery, zero-config scaffolding.
 
 ## Success Metrics Dashboard
 
-| Metric | Current | Target | Priority |
-|--------|---------|--------|----------|
-| First meaningful commit | ~15 min | <5 min | P0 |
-| Full test run (warm) | ~10s | ≤5s | P0 |
-| Build all packages (warm) | ~5s | ≤2s | P0 |
-| Test coverage (lines) | ~60% | 85% | P1 |
-| Turbo cache hit (CI) | ~50% | ≥85% | P0 |
-| Context recovery time | N/A | ≤10s | P0 |
+| Metric                    | Current | Target | Priority |
+| ------------------------- | ------- | ------ | -------- |
+| First meaningful commit   | ~15 min | <5 min | P0       |
+| Full test run (warm)      | ~10s    | ≤5s    | P0       |
+| Build all packages (warm) | ~5s     | ≤2s    | P0       |
+| Test coverage (lines)     | ~60%    | 85%    | P1       |
+| Turbo cache hit (CI)      | ~50%    | ≥85%   | P0       |
+| Context recovery time     | N/A     | ≤10s   | P0       |
 
 ## P0: Critical Path (Must Fix Now)
 
-**Timeline:** 1-2 days
-**Goal:** Eliminate cognitive dissonance, establish unified mental model
-**Success:** Clean pnpm-only install, consistent builds, single status command
+**Timeline:** 1-2 days **Goal:** Eliminate cognitive dissonance, establish
+unified mental model **Success:** Clean pnpm-only install, consistent builds,
+single status command
 
 ### 🔥 Runtime Pivot Finalization
 
@@ -74,12 +78,12 @@
 
 ### 🎯 ADHD Flow Accelerators
 
-- [ ] **Create dx:status command** `XS` [Quick Win]
-  - [ ] Show pending changesets count
-  - [ ] Display coverage percentage
-  - [ ] List outdated dependencies
-  - [ ] Report last test timestamp
-  - [ ] Show Turbo cache status
+- [x] **Create dx:status command** `XS` [Quick Win]
+  - [x] Show pending changesets count
+  - [x] Display coverage percentage
+  - [x] List outdated dependencies
+  - [x] Report last test timestamp
+  - [x] Show Turbo cache status
 
 - [ ] **Add pre-release guardrails** `S`
   - [ ] Changeset validation script
@@ -97,9 +101,8 @@
 
 ## P1: High-Leverage DX (Flow State)
 
-**Timeline:** Days 3-5
-**Goal:** Accelerate development velocity, reduce context switches
-**Success:** <20s package creation, visual feedback, onboarding <5min
+**Timeline:** Days 3-5 **Goal:** Accelerate development velocity, reduce context
+switches **Success:** <20s package creation, visual feedback, onboarding <5min
 
 ### 🚀 Scaffolding & Generators
 
@@ -175,9 +178,9 @@
 
 ## P2: Quality & Performance
 
-**Timeline:** Week 2
-**Goal:** Production hardening, performance baselines, observability
-**Success:** Benchmarks tracked, multi-env testing, API docs stable
+**Timeline:** Week 2 **Goal:** Production hardening, performance baselines,
+observability **Success:** Benchmarks tracked, multi-env testing, API docs
+stable
 
 ### 🏃 Performance Testing
 
@@ -237,9 +240,9 @@
 
 ## P3: Future Innovations
 
-**Timeline:** Month 2+
-**Goal:** Advanced capabilities, AI assistance, enterprise features
-**Success:** Graph-based testing, feature generators, telemetry
+**Timeline:** Month 2+ **Goal:** Advanced capabilities, AI assistance,
+enterprise features **Success:** Graph-based testing, feature generators,
+telemetry
 
 ### 🧠 Intelligence Layer
 
@@ -314,17 +317,18 @@ Execute these in order for maximum impact:
 
 ## Risk Mitigation
 
-| Risk | Impact | Mitigation |
-|------|--------|------------|
-| Incomplete pivot creates confusion | High | P0 focus on removing all Bun artifacts |
-| Slow feedback kills ADHD flow | High | Target <5s for all operations |
-| Complex config overwhelms users | Medium | Zero-config scaffolding, clear defaults |
-| Coverage regression | Medium | Ratchet mechanism prevents backsliding |
-| Cache misses slow CI | Medium | Remote cache + input optimization |
+| Risk                               | Impact | Mitigation                              |
+| ---------------------------------- | ------ | --------------------------------------- |
+| Incomplete pivot creates confusion | High   | P0 focus on removing all Bun artifacts  |
+| Slow feedback kills ADHD flow      | High   | Target <5s for all operations           |
+| Complex config overwhelms users    | Medium | Zero-config scaffolding, clear defaults |
+| Coverage regression                | Medium | Ratchet mechanism prevents backsliding  |
+| Cache misses slow CI               | Medium | Remote cache + input optimization       |
 
 ## Definition of Done
 
 Each phase is complete when:
+
 - All tasks marked complete
 - Tests passing at target coverage
 - Performance metrics met
@@ -334,6 +338,9 @@ Each phase is complete when:
 ## Notes
 
 - **Philosophy:** Eliminate friction, accelerate flow, maintain focus
-- **Priorities:** P0 fixes cognitive dissonance, P1 adds velocity, P2 ensures quality
-- **ADHD Focus:** Every feature designed to reduce context switches and maintain momentum
-- **Migration:** Clean break from Bun, full commitment to Node.js + pnpm ecosystem
+- **Priorities:** P0 fixes cognitive dissonance, P1 adds velocity, P2 ensures
+  quality
+- **ADHD Focus:** Every feature designed to reduce context switches and maintain
+  momentum
+- **Migration:** Clean break from Bun, full commitment to Node.js + pnpm
+  ecosystem
