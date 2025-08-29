@@ -32,6 +32,7 @@ export default function Home(): React.JSX.Element {
           <li>✅ Turborepo Orchestration</li>
           <li>✅ TypeScript Strict Mode</li>
           <li>✅ Vitest Testing</li>
+          <li>✅ Next.js ESLint Rules</li>
         </ul>
       </section>
     </main>

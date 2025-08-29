@@ -54,23 +54,23 @@
 
 ### 🧪 Testing Unification
 
-- [ ] **Unified Vitest multi-project config** `S`
-  - [ ] Root vitest.config.ts with test.projects
-  - [ ] Configure jsdom vs node environments
-  - [ ] Add coverage.include for uncovered files
-  - [ ] Set baseline thresholds (70% → 85% ratchet)
+- [x] **Unified Vitest multi-project config** `S`
+  - [x] Root vitest.config.ts with test.projects
+  - [x] Configure jsdom vs node environments
+  - [x] Add coverage.include for uncovered files
+  - [x] Set baseline thresholds (70% → 85% ratchet)
 
-- [ ] **Consolidate test utilities** `XS`
-  - [ ] Remove duplicate test-utils files
-  - [ ] Create canonical test helpers location
+- [x] **Consolidate test utilities** `XS`
+  - [x] Remove duplicate test-utils files
+  - [x] Create canonical test helpers location
 
 ### ⚡ Performance & Caching
 
-- [ ] **Configure Turborepo remote cache** `XS` [Quick Win]
-  - [ ] Setup Vercel remote cache (free tier)
-  - [ ] Add TURBO_TOKEN to CI
-  - [ ] Add --continue=dependencies-successful flags
-  - [ ] Verify >85% cache hit rates
+- [x] **Configure Turborepo remote cache** `XS` [Quick Win]
+  - [x] Setup Vercel remote cache (free tier)
+  - [x] Add TURBO_TOKEN to CI
+  - [x] Add --continue=dependencies-successful flags
+  - [x] Verify >85% cache hit rates
 
 ### 🎯 ADHD Flow Accelerators
 
@@ -301,14 +301,14 @@
 
 Execute these in order for maximum impact:
 
-1. [ ] Remove all Bun artifacts (~15 min)
-2. [ ] Create dx:status command (~15 min)
-3. [ ] Setup remote Turbo cache (~5 min)
-4. [ ] Add shared tsup config (~30 min)
-5. [ ] Unify Vitest config (~30 min)
-6. [ ] Consolidate test utils (~10 min)
-7. [ ] Fix export maps (~20 min)
-8. [ ] Create coverage baseline (~10 min)
+1. [ x] Remove all Bun artifacts (~15 min)
+2. [x] Create dx:status command (~15 min)
+3. [x] Setup remote Turbo cache (~5 min)
+4. [x] Add shared tsup config (~30 min)
+5. [x] Unify Vitest config (~30 min)
+6. [x] Consolidate test utils (~10 min)
+7. [x] Fix export maps (~20 min)
+8. [x] Create coverage baseline (~10 min)
 
 **Total: ~2.5 hours for massive DX improvement**
 

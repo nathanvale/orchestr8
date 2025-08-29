@@ -172,9 +172,18 @@
   // 2. Set TURBO_REMOTE_CACHE_SIGNATURE_KEY in CI/CD secrets
   // 3. Change signature to true below
   // This prevents cache poisoning attacks but is optional for most teams
+  //
+  // Performance tips for >85% cache hit rates:
+  // - Use tight input globs (already configured)
+  // - Include all relevant config files in globalDependencies
+  // - Use --continue=dependencies-successful for resilient builds
+  // - Monitor with turbo run <task> --summarize for cache analysis
   "remoteCache": {
     "enabled": true,
     "signature": false, // Set to true after configuring TURBO_REMOTE_CACHE_SIGNATURE_KEY
+    "preflight": true, // Validate cache availability before operations
+    "timeout": 60, // 60-second artifact retrieval timeout
+    "uploadTimeout": 120 // 2-minute upload timeout for large artifacts
   },
 
   // Future enhancements:

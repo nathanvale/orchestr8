@@ -22,8 +22,10 @@ env:
   PNPM_VERSION: "9.15.4"
   FORCE_COLOR: 3
   # Vercel Remote Cache (free since Dec 2024) - set in repository secrets
-  # TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
-  # TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
+  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+  TURBO_TEAM: ${{ vars.TURBO_TEAM }}
+  # Optional: Enable cache signature verification for enhanced security
+  # TURBO_REMOTE_CACHE_SIGNATURE_KEY: ${{ secrets.TURBO_REMOTE_CACHE_SIGNATURE_KEY }}
 
 jobs:
   quality:

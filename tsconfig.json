@@ -59,7 +59,6 @@
 
     // Limit ambient type inclusions explicitly; include test/runtime globals needed outside build output.
     "types": [
-      "bun-types",
       "node", // provides process, global, fs, etc.
       "vitest/globals", // describe/it/expect globals for test setup files
       "react" // JSX runtime/types so fragments in setup compile

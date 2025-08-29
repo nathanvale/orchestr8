@@ -15,15 +15,16 @@ async function prepare(): Promise<void> {
   return Promise.resolve()
 }
 
-await prepare()
+// Use promise-based initialization to avoid top-level await
+void prepare().then(() => {
+  const rootElement = document.getElementById('root')
+  if (!rootElement) {
+    throw new Error('Root element not found')
+  }
 
-const rootElement = document.getElementById('root')
-if (!rootElement) {
-  throw new Error('Root element not found')
-}
-
-ReactDOM.createRoot(rootElement).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>,
-)
+  ReactDOM.createRoot(rootElement).render(
+    <React.StrictMode>
+      <App />
+    </React.StrictMode>,
+  )
+})

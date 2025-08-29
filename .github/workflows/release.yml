@@ -19,9 +19,13 @@ permissions:
   packages: write
 
 env:
-  BUN_VERSION: "1.1.38"
+  NODE_VERSION: "20.18.1"
+  PNPM_VERSION: "9.15.4"
   NPM_CONFIG_PROVENANCE: true
   FORCE_COLOR: 3
+  # Vercel Remote Cache for faster builds during release
+  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+  TURBO_TEAM: ${{ vars.TURBO_TEAM }}
 
 jobs:
   release:
@@ -38,45 +42,46 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: ${{ env.BUN_VERSION }}
-
-      - name: Setup Node.js (for npm publishing)
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: ${{ env.NODE_VERSION }}
           registry-url: "https://registry.npmjs.org"
+          cache: 'pnpm'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
 
       - name: Cache Dependencies
         uses: actions/cache@v4
         with:
           path: |
-            ~/.bun/cache
+            ~/.pnpm-store
             node_modules
-          key: ${{ runner.os }}-bun-release-${{ hashFiles('bun.lockb') }}
+          key: ${{ runner.os }}-pnpm-release-${{ hashFiles('pnpm-lock.yaml') }}
 
       - name: Install Dependencies
-        run: bun install --frozen-lockfile
+        run: pnpm install --frozen-lockfile
 
       - name: Build
-        run: bun run build:all
+        run: pnpm run build:all
 
       - name: Run Tests
-        run: bun run test:ci
+        run: pnpm run test:ci
 
       - name: Generate SBOM
         run: |
-          bunx @cyclonedx/cdxgen@latest -o sbom.json -t js .
+          pnpx @cyclonedx/cdxgen@latest -o sbom.json -t js .
           echo "SBOM generated with $(jq '.components | length' sbom.json) components"
 
       - name: Create Release PR or Publish
         id: changesets
         uses: changesets/action@v1
         with:
-          version: bun run release:version
-          publish: bun run release:publish
+          version: pnpm run release:version
+          publish: pnpm run release:publish
           commit: "chore(release): version packages 🚀 [skip ci]"
           title: "chore(release): version packages 🚀"
           createGithubReleases: true
