@@ -114,7 +114,7 @@
     "start": "bun dist/index.js",
     "test": "vitest",
     "test:changed": "vitest --changed --run",
-    "test:ci": "turbo run test --continue=dependencies-successful",
+    "test:ci": "turbo run test:ci --continue=dependencies-successful",
     "test:ci:node": "node ./node_modules/.bin/vitest run --coverage",
     "test:coverage": "vitest run --coverage",
     "test:coverage:open": "vitest run --coverage && open coverage/index.html",

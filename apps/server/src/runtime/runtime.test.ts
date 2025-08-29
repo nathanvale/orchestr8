@@ -1,6 +1,14 @@
-import { describe, expect, test } from 'bun:test'
+import { afterEach, describe, expect, test } from 'bun:test'
+import type { RuntimeServer } from './types'
 
 describe('Runtime Adapters', () => {
+  const activeServers: RuntimeServer[] = []
+
+  afterEach(async () => {
+    // Clean up any active servers
+    await Promise.all(activeServers.map((server) => server.stop()))
+    activeServers.length = 0
+  })
   describe('createRuntime factory', () => {
     test('returns correct runtime based on environment', async () => {
       const { createRuntime } = await import('./index')

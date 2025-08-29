@@ -28,6 +28,15 @@
       "env": ["NODE_ENV"], // Test behavior may vary by environment
     },
 
+    // CI Test task: Run tests with CI-specific settings (timeouts, bail on first failure)
+    "test:ci": {
+      "dependsOn": ["^build"], // Wait for upstream packages to build first
+      "outputs": ["coverage/**"], // Cache test coverage reports
+      "inputs": ["$TURBO_DEFAULT$", "!*.md", "!**/*.md", "!docs/**", "!.changeset/**", ".env*"],
+      "cache": true,
+      "env": ["NODE_ENV", "CI"], // CI environment affects test behavior
+    },
+
     // Distribution test: Verify built artifacts work correctly
     "test:dist": {
       "dependsOn": ["^build"], // Wait for upstream builds (not just local)

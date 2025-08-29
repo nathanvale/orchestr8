@@ -14,7 +14,8 @@
     "dev": "bun --watch src/index.ts",
     "dev:hot": "bun --hot src/index.ts",
     "start": "bun src/index.ts",
-    "test": "bun test",
+    "test": "bun test --timeout 5000",
+    "test:ci": "bun test --timeout 5000 --bail",
     "test:watch": "bun test --watch",
     "typecheck": "tsc --noEmit"
   },
