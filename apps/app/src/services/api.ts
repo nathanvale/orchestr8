@@ -1,6 +1,14 @@
 import type { LogEntry, ServerMetrics } from '../types'
 
-const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3333'
+const API_BASE_URL = (import.meta.env.VITE_API_URL as string | undefined) ?? 'http://localhost:3333'
+
+export async function fetchHealth(): Promise<{ status: string; uptime: number }> {
+  const response = await fetch(`${API_BASE_URL}/api/health`)
+  if (!response.ok) {
+    throw new Error(`Failed to fetch health: ${response.statusText}`)
+  }
+  return response.json() as Promise<{ status: string; uptime: number }>
+}
 
 export async function fetchServerLogs(): Promise<LogEntry[]> {
   const response = await fetch(`${API_BASE_URL}/api/logs`)

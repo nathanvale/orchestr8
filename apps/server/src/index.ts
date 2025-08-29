@@ -357,9 +357,9 @@ export function startServer(port: number | string = PORT): ServerInstance {
 
     // Handle CORS preflight
     if (req.method === 'OPTIONS') {
-      Object.entries(corsHeaders).forEach(([key, value]) => {
+      for (const [key, value] of Object.entries(corsHeaders)) {
         res.setHeader(key, value)
-      })
+      }
       res.writeHead(204)
       res.end()
       return
@@ -370,7 +370,7 @@ export function startServer(port: number | string = PORT): ServerInstance {
     if (req.method === 'POST') {
       await new Promise<void>((resolve) => {
         req.on('data', chunk => { body += chunk.toString() })
-        req.on('end', () => resolve())
+        req.on('end', () => { resolve(); })
       })
     }
 
@@ -408,14 +408,14 @@ export function startServer(port: number | string = PORT): ServerInstance {
     metrics.recordRequest(responseTime, response.status >= 400)
 
     // Set CORS headers
-    Object.entries(corsHeaders).forEach(([key, value]) => {
+    for (const [key, value] of Object.entries(corsHeaders)) {
       res.setHeader(key, value)
-    })
+    }
 
     // Set response headers
-    Object.entries(response.headers).forEach(([key, value]) => {
+    for (const [key, value] of Object.entries(response.headers)) {
       res.setHeader(key, value)
-    })
+    }
 
     logger.info(`Request completed in ${responseTime.toFixed(2)}ms`, {
       correlationId,

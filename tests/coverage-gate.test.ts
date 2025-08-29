@@ -13,11 +13,11 @@ interface FileCoverage {
 interface CoverageGateResult {
   passed: boolean
   threshold: number
-  files: Array<{
+  files: {
     path: string
     coverage: number
     passed: boolean
-  }>
+  }[]
   overall: {
     total: number
     covered: number
@@ -260,7 +260,7 @@ function parseGitDiff(diff: string): string[] {
     .filter(line => line.length > 0)
     .map(line => {
       // Handle renamed files
-      const renameMatch = line.match(/\{.+? => (.+?)\}/)
+      const renameMatch = /\{.+? => (.+?)\}/.exec(line)
       if (renameMatch) {
         const newName = renameMatch[1]
         return line.replace(/\{.+?\}/, newName ?? '')

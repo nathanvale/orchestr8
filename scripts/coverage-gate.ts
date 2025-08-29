@@ -164,7 +164,7 @@ function checkCoverage(): void {
   }
   
   // Check each changed file
-  const results: Array<{ file: string; coverage: number; passed: boolean }> = []
+  const results: { file: string; coverage: number; passed: boolean }[] = []
   let totalLines = 0
   let coveredLines = 0
   

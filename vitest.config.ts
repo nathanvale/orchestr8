@@ -16,11 +16,11 @@ import { defineConfig } from 'vitest/config'
 function getPackageName(): string {
   const cwd = process.cwd()
   if (cwd.includes('/packages/')) {
-    const match = cwd.match(/\/packages\/([^/]+)/)
+    const match = /\/packages\/([^/]+)/.exec(cwd)
     return match?.[1] ?? 'root'
   }
   if (cwd.includes('/apps/')) {
-    const match = cwd.match(/\/apps\/([^/]+)/)
+    const match = /\/apps\/([^/]+)/.exec(cwd)
     return match?.[1] ?? 'root'
   }
   return 'root'

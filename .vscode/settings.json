@@ -42,12 +42,6 @@
   },
   "terminal.integrated.defaultProfile.osx": "zsh",
   "terminal.integrated.defaultProfile.linux": "bash",
-  "terminal.integrated.env.osx": {
-    "BUN_INSTALL": "/usr/local/bin"
-  },
-  "terminal.integrated.env.linux": {
-    "BUN_INSTALL": "/usr/local/bin"
-  },
   "git.autofetch": true,
   "git.confirmSync": false,
   "git.enableSmartCommit": true,
@@ -70,14 +64,12 @@
     "comments": false,
     "strings": true
   },
-  "debug.javascript.autoAttachFilter": "smart",
+  "debug.javascript.autoAttachFilter": "disabled",
   "debug.javascript.debugByLinkOptions": "on",
   "testing.automaticallyOpenPeekView": "failureInVisibleDocument",
   "testing.followRunningTest": true,
   "testing.defaultGutterClickAction": "debug",
-  "bun.runtime": "/usr/local/bin/bun",
-  "bun.debugger.enabled": true,
-  "wallaby.startAutomatically": true,
+  "wallaby.startAutomatically": false,
   "wallaby.codeLensFeature": {
     "runTest": true,
     "debugTest": true,
@@ -87,5 +79,5 @@
     "runningTestCountThreshold": 3
   },
   "vitest.enable": true,
-  "vitest.commandLine": "bun run vitest"
+  "vitest.commandLine": "npx vitest"
 }

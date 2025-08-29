@@ -2,27 +2,26 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Debug Bun Application",
+      "name": "Debug Node.js Application",
       "type": "node",
       "request": "launch",
-      "program": "${workspaceFolder}/src/index.ts",
-      "runtimeExecutable": "bun",
-      "runtimeArgs": ["--inspect"],
+      "program": "${workspaceFolder}/apps/server/src/index.ts",
+      "runtimeExecutable": "tsx",
+      "runtimeArgs": [],
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen",
       "skipFiles": ["<node_internals>/**"],
-      "outFiles": ["${workspaceFolder}/dist/**/*.js"],
+      "outFiles": ["${workspaceFolder}/apps/server/dist/**/*.js"],
       "env": {
         "NODE_ENV": "development"
       }
     },
     {
-      "name": "Debug Bun Tests",
+      "name": "Debug Vitest Tests",
       "type": "node",
       "request": "launch",
-      "program": "${workspaceFolder}/src/index.test.ts",
-      "runtimeExecutable": "bun",
-      "runtimeArgs": ["test", "--inspect"],
+      "program": "${workspaceFolder}/node_modules/.bin/vitest",
+      "args": ["run", "--no-coverage"],
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen",
       "skipFiles": ["<node_internals>/**"],
@@ -31,12 +30,12 @@
       }
     },
     {
-      "name": "Debug Current File",
+      "name": "Debug Current TypeScript File",
       "type": "node",
       "request": "launch",
       "program": "${file}",
-      "runtimeExecutable": "bun",
-      "runtimeArgs": ["--inspect"],
+      "runtimeExecutable": "tsx",
+      "runtimeArgs": [],
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen",
       "skipFiles": ["<node_internals>/**"],
