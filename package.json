@@ -133,6 +133,7 @@
     "@rollup/rollup-linux-x64-gnu": "4.48.1",
     "@rollup/wasm-node": "4.49.0",
     "@size-limit/preset-app": "11.2.0",
+    "@template/eslint-config": "workspace:*",
     "@testing-library/jest-dom": "6.8.0",
     "@testing-library/react": "16.3.0",
     "@testing-library/user-event": "14.6.1",

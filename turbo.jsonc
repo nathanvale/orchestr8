@@ -110,6 +110,7 @@
         "!test-results/**",
         "!.vitest/**",
         "eslint.config.js",
+        "packages/eslint-config/**", // Config changes re-lint dependents
         "tsconfig*.json",
       ],
       "cache": true,
@@ -127,6 +128,7 @@
         "!test-results/**",
         "!.vitest/**",
         "eslint.config.js",
+        "packages/eslint-config/**", // Config changes re-lint dependents
         "tsconfig*.json",
       ],
       "cache": false, // Don't cache fix operations since they modify source files
@@ -164,6 +166,7 @@
     "dev": {
       "cache": false,
       "persistent": true, // Indicates this is a long-running service
+      "env": ["NODE_ENV", "PORT"], // Server runtime environment variables
       // Sidecar pattern can be enabled later with "with": ["build:watch"]
       // when a build watcher task is defined
     },

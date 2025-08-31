@@ -1,0 +1,29 @@
+{
+  "name": "@template/eslint-config",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Shared ESLint configuration for the template monorepo",
+  "type": "module",
+  "exports": {
+    "./base": "./base.js",
+    "./ts-strict": "./ts-strict.js",
+    "./react": "./react.js",
+    "./next": "./next.js",
+    "./tests": "./tests.js",
+    "./ci-deep": "./ci-deep.js"
+  },
+  "dependencies": {
+    "@eslint/eslintrc": "^3.2.0",
+    "@eslint/js": "9.34.0",
+    "eslint-config-prettier": "10.1.8",
+    "eslint-plugin-security": "3.0.1",
+    "eslint-plugin-sonarjs": "3.0.5",
+    "eslint-plugin-turbo": "^2.5.6",
+    "eslint-plugin-unicorn": "60.0.0",
+    "eslint-plugin-vitest": "0.5.4",
+    "typescript-eslint": "8.41.0"
+  },
+  "peerDependencies": {
+    "eslint": "^9.0.0"
+  }
+}

@@ -49,6 +49,12 @@ interface StatusData {
     passRate?: number
     duration?: number
   }
+  lint: {
+    lastRun: string | null
+    success: boolean | null
+    duration?: number
+    fileCount?: number
+  }
   turbo: {
     status: 'connected' | 'disconnected' | 'unknown'
     cacheHitRate: number | null
@@ -173,6 +179,34 @@ async function getDependencyStatus(progress?: ProgressIndicator): Promise<{
     return { outdated: updates.length, updates }
   } catch {
     return { outdated: 0, updates: [] }
+  }
+}
+
+/**
+ * Get lint metrics from .lint-metrics.json
+ */
+function getLintInfo(): {
+  lastRun: string | null
+  success: boolean | null
+  duration?: number
+  fileCount?: number
+} {
+  const metricsPath = '.lint-metrics.json'
+
+  if (!existsSync(metricsPath)) {
+    return { lastRun: null, success: null }
+  }
+
+  try {
+    const metrics = JSON.parse(readFileSync(metricsPath, 'utf-8'))
+    return {
+      lastRun: metrics.timestamp || null,
+      success: metrics.success ?? null,
+      duration: metrics.durationMs || 0,
+      fileCount: metrics.fileCount || 0,
+    }
+  } catch {
+    return { lastRun: null, success: null }
   }
 }
 
@@ -386,6 +420,42 @@ function formatStatusText(data: StatusData, options: OutputOptions): string {
     lines.push(`   ${colors.dim}Duration: ${formatDuration(data.tests.duration)}${colors.reset}`)
   }
 
+  // Lint
+  const lintIcon = data.lint.success === true ? '✓' : data.lint.success === false ? '❌' : '🔍'
+  const lintStatusText =
+    data.lint.success === true
+      ? 'Passing'
+      : data.lint.success === false
+        ? 'Failed'
+        : 'No recent run'
+  const lintColor =
+    data.lint.success === true
+      ? colors.green
+      : data.lint.success === false
+        ? colors.red
+        : colors.yellow
+
+  lines.push(
+    `${lintIcon} ${colors.bold}Lint:${colors.reset} ${lintColor}${lintStatusText}${colors.reset}`,
+  )
+
+  if (data.lint.duration !== undefined && data.lint.duration > 0) {
+    const duration =
+      data.lint.duration < 1000
+        ? `${data.lint.duration}ms`
+        : `${(data.lint.duration / 1000).toFixed(1)}s`
+    lines.push(`   ${colors.dim}Duration: ${duration}${colors.reset}`)
+  }
+
+  if (data.lint.fileCount && data.lint.fileCount > 0) {
+    lines.push(`   ${colors.dim}Files checked: ${data.lint.fileCount}${colors.reset}`)
+  }
+
+  if (data.lint.lastRun) {
+    const age = Date.now() - new Date(data.lint.lastRun).getTime()
+    lines.push(`   ${colors.dim}Last run: ${formatDuration(age)} ago${colors.reset}`)
+  }
+
   // Turbo Cache
   const turboIcon = data.turbo.status === 'connected' ? '🚀' : '⚠'
   const turboColor = data.turbo.status === 'connected' ? colors.green : colors.yellow
@@ -472,11 +542,12 @@ async function main(): Promise<void> {
     progress?.start('Gathering status information')
 
     // Gather all status data
-    const [changesets, coverage, dependencies, tests, turbo, workspace] = await Promise.all([
+    const [changesets, coverage, dependencies, tests, lint, turbo, workspace] = await Promise.all([
       getChangesetStatus(config),
       getCoverageInfo(),
       getDependencyStatus(progress),
       getTestInfo(),
+      getLintInfo(),
       getTurboStatus(),
       getWorkspaceInfo(progress),
     ])
@@ -489,6 +560,7 @@ async function main(): Promise<void> {
       coverage,
       dependencies,
       tests,
+      lint,
       turbo,
       workspace,
     }

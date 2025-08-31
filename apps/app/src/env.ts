@@ -2,7 +2,6 @@
 function getEnvVar(key: string, fallback?: string): string {
   try {
     const env = import.meta.env as Record<string, string | undefined>
-    // eslint-disable-next-line security/detect-object-injection
     const value = env[key]
     return value ?? fallback ?? ''
   } catch {

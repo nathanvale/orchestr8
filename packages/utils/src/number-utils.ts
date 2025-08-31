@@ -16,7 +16,6 @@ export function median(numbers: number[]): number {
   const sorted = [...numbers].sort((a, b) => a - b)
   const mid = Math.floor(sorted.length / 2)
   // Numeric index access is safe after explicit bounds validation.
-  /* eslint-disable security/detect-object-injection */
   if (sorted.length % 2 === 0) {
     const leftIndex = mid - 1
     // Defensive guard - unreachable with current logic (leftIndex always >=0 and mid < length for even arrays)
@@ -30,7 +29,6 @@ export function median(numbers: number[]): number {
     return (left + right) / 2
   }
   return sorted[mid] ?? 0
-  /* eslint-enable security/detect-object-injection */
 }
 
 export function percentile(numbers: number[], p: number): number {
@@ -41,7 +39,6 @@ export function percentile(numbers: number[], p: number): number {
   const rank = (p / 100) * (sorted.length - 1)
   const low = Math.floor(rank)
   const high = Math.ceil(rank)
-  /* eslint-disable security/detect-object-injection */
   if (low === high) {
     return sorted[low] ?? 0
   }
@@ -49,18 +46,15 @@ export function percentile(numbers: number[], p: number): number {
   // c8 ignore next
   if (low < 0 || high >= sorted.length) return 0
   return interpolateSorted(sorted, low, high, rank - low)
-  /* eslint-enable security/detect-object-injection */
 }
 
 function interpolateSorted(sorted: number[], low: number, high: number, weight: number): number {
-  /* eslint-disable security/detect-object-injection */
   const lowVal = sorted[low]
   const highVal = sorted[high]
   // Defensive type guard - sorted array elements are numbers
   // c8 ignore next
   if (typeof lowVal !== 'number' || typeof highVal !== 'number') return 0
   return lowVal * (1 - weight) + highVal * weight
-  /* eslint-enable security/detect-object-injection */
 }
 
 export interface NumberSummary {
