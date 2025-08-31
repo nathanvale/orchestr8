@@ -99,7 +99,7 @@
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [
-      "turbo run lint:fix --filter=...[HEAD]",
+      "turbo run lint:fix --filter=...[HEAD] --continue=dependencies-successful",
       "prettier --write"
     ],
     "*.{json,md,yml,yaml}": [
@@ -107,6 +107,9 @@
     ],
     "package.json": [
       "prettier --write"
+    ],
+    "*.{ts,tsx}": [
+      "vitest related --run"
     ]
   },
   "config": {

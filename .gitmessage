@@ -1,0 +1,36 @@
+# <type>(<scope>): <subject>
+#
+# <body>
+#
+# <footer>
+#
+# 🎯 ADHD-Friendly Commit Guide:
+# 
+# Types (pick one):
+#   feat: ✨ New feature
+#   fix: 🐛 Bug fix  
+#   docs: 📝 Documentation
+#   style: 💄 Code style/format
+#   refactor: ♻️ Code refactoring
+#   perf: ⚡ Performance improvement
+#   test: 🧪 Add/update tests
+#   build: 🏗️ Build system
+#   ci: 👷 CI/CD changes
+#   chore: 🧹 Maintenance
+#   revert: ⏪ Revert commit
+#   wip: 🚧 Work in progress
+#
+# Scope (optional): api, web, utils, server, etc.
+# Subject: Brief description (50 chars max, no period)
+# Body: Detailed explanation (wrap at 72 chars)
+# Footer: Breaking changes, closes issues
+#
+# Examples:
+#   feat(api): add user authentication endpoint
+#   fix(web): resolve navigation mobile bug
+#   docs: update installation instructions
+#   wip: experimenting with new layout
+#
+# 💡 Quick commits: Use `pnpm commit` for interactive prompts
+# 🚀 Bypass hooks: Use `HUSKY=0 git commit` in emergencies
+# 📦 Changesets: Run `pnpm changeset` for version changes

@@ -1,1 +1,33 @@
-bun run validate
+#!/usr/bin/env sh
+. "$(dirname "$0")/_/husky.sh"
+
+echo "🔍 Running pre-push validation..."
+echo "⏱️ This includes linting, typechecking, testing, and changeset validation"
+echo "💡 Tip: Use 'git push --no-verify' to bypass in emergencies"
+
+BRANCH=$(git branch --show-current)
+echo "📝 Validating branch: $BRANCH"
+
+# Branch-aware changeset validation
+if [[ "$BRANCH" != "main" && "$BRANCH" != "develop" ]]; then
+  CHANGESET_COUNT=$(find .changeset -name "*.md" -not -name "README.md" | wc -l)
+  if [ "$CHANGESET_COUNT" -eq 0 ]; then
+    echo "⚠️  No changeset found on feature branch '$BRANCH'"
+    echo "💡 Generate one with: pnpm changeset"
+    echo "🚀 Or bypass with: git push --no-verify"
+    exit 1
+  else
+    echo "✅ Changeset found ($CHANGESET_COUNT files)"
+  fi
+fi
+
+echo "🧪 Running full validation suite..."
+pnpm run validate
+
+if [ $? -eq 0 ]; then
+  echo "🎉 All validations passed! Ready to push."
+else
+  echo "❌ Validation failed"
+  echo "🔧 Fix issues above or bypass with: git push --no-verify"
+  exit 1
+fi
