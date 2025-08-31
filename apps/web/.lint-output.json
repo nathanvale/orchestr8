@@ -1,0 +1,58 @@
+[
+  {
+    "filePath": "/Users/nathanvale/code/bun-changesets-template/apps/web/app/layout.tsx",
+    "messages": [],
+    "suppressedMessages": [],
+    "errorCount": 0,
+    "fatalErrorCount": 0,
+    "warningCount": 0,
+    "fixableErrorCount": 0,
+    "fixableWarningCount": 0,
+    "usedDeprecatedRules": []
+  },
+  {
+    "filePath": "/Users/nathanvale/code/bun-changesets-template/apps/web/app/page.tsx",
+    "messages": [],
+    "suppressedMessages": [],
+    "errorCount": 0,
+    "fatalErrorCount": 0,
+    "warningCount": 0,
+    "fixableErrorCount": 0,
+    "fixableWarningCount": 0,
+    "usedDeprecatedRules": []
+  },
+  {
+    "filePath": "/Users/nathanvale/code/bun-changesets-template/apps/web/eslint.config.js",
+    "messages": [
+      {
+        "ruleId": "import/no-anonymous-default-export",
+        "severity": 1,
+        "message": "Assign array to a variable before exporting as module default",
+        "line": 4,
+        "column": 1,
+        "nodeType": "ExportDefaultDeclaration",
+        "endLine": 23,
+        "endColumn": 2
+      }
+    ],
+    "suppressedMessages": [],
+    "errorCount": 0,
+    "fatalErrorCount": 0,
+    "warningCount": 1,
+    "fixableErrorCount": 0,
+    "fixableWarningCount": 0,
+    "source": "import { nextConfig } from '@template/eslint-config/next'\nimport { testsConfig } from '@template/eslint-config/tests'\n\nexport default [\n  // Global ignores for Next.js generated files\n  {\n    ignores: [\n      '.next/**',\n      'out/**',\n      'build/**',\n      'next-env.d.ts',\n      'node_modules/**',\n      'coverage/**',\n      '.turbo/**',\n    ],\n  },\n\n  // Next.js configuration with React and TypeScript\n  ...nextConfig,\n\n  // Test configuration\n  ...testsConfig,\n]\n",
+    "usedDeprecatedRules": []
+  },
+  {
+    "filePath": "/Users/nathanvale/code/bun-changesets-template/apps/web/next.config.mjs",
+    "messages": [],
+    "suppressedMessages": [],
+    "errorCount": 0,
+    "fatalErrorCount": 0,
+    "warningCount": 0,
+    "fixableErrorCount": 0,
+    "fixableWarningCount": 0,
+    "usedDeprecatedRules": []
+  }
+]

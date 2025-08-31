@@ -4,7 +4,7 @@
   "compilerOptions": {
     "moduleResolution": "node16",
     "module": "node16",
-    "types": ["node", "vitest/globals"] // Removed bun-types, added node types
+    "types": ["node", "vitest/globals", "@testing-library/jest-dom"] // Added jest-dom types for DOM testing
   },
   "include": [
     "src/**/*",
@@ -12,6 +12,8 @@
     "types/**/*",
     "vitest.config.ts",
     "vitest.setup.tsx",
+    "vitest.setup.node.tsx",
+    "vitest.setup.dom.tsx",
     "wallaby.mjs",
     "packages/*/src/**/*.test.*",
     "packages/*/tests/**/*",

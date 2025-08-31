@@ -49,6 +49,105 @@ interface LicenseInfo {
   repository?: string
 }
 
+// P2.2 Type Safety: Comprehensive interfaces to replace 'any' usage
+interface PnpmAuditVulnerability {
+  severity: 'critical' | 'high' | 'moderate' | 'low' | 'info'
+  title: string
+  url?: string
+  id: number
+  range?: string
+  via?: string | Array<string | number>
+  fixAvailable?: boolean | { name: string; version: string; isSemVerMajor?: boolean }
+}
+
+interface PnpmAuditAdvisory {
+  severity: 'critical' | 'high' | 'moderate' | 'low' | 'info'
+  title: string
+  url?: string
+  id: number
+  module_name?: string
+  vulnerable_versions?: string
+  patched_versions?: string
+  recommendation?: string
+}
+
+interface PnpmAuditResult {
+  vulnerabilities?: Record<string, PnpmAuditVulnerability>
+  advisories?: Record<string, PnpmAuditAdvisory> | PnpmAuditAdvisory[]
+  metadata?: {
+    vulnerabilities: VulnerabilityData
+    dependencies: number
+    devDependencies: number
+    optionalDependencies: number
+    totalDependencies: number
+  }
+}
+
+interface PackageDependency {
+  version: string
+  license?: string | string[] | { type?: string; name?: string; url?: string }
+  licenses?: Array<{ type?: string; name?: string; url?: string }>
+  repository?: string | { type?: string; url?: string }
+  dependencies?: Record<string, PackageDependency>
+}
+
+interface PnpmListResult {
+  name?: string
+  version?: string
+  dependencies?: Record<string, PackageDependency>
+}
+
+interface OSVPackageInfo {
+  name: string
+  ecosystem: string
+}
+
+interface OSVVulnerability {
+  id: string
+  summary?: string
+  details?: string
+  package?: OSVPackageInfo
+  database_specific?: {
+    severity?: string
+    [key: string]: unknown
+  }
+  ecosystem_specific?: {
+    severity?: string
+    [key: string]: unknown
+  }
+}
+
+interface OSVQueryResult {
+  vulns?: OSVVulnerability[]
+  results?: OSVVulnerability[]
+}
+
+interface SBOMComponent {
+  type: string
+  name: string
+  version?: string
+  purl?: string
+  scope?: string
+}
+
+interface SBOMMetadata {
+  timestamp?: string
+  tools?: Array<{ name: string; version?: string }>
+  component?: {
+    name: string
+    version?: string
+  }
+}
+
+interface SBOMDocument {
+  bomFormat: string
+  specVersion: string
+  serialNumber?: string
+  version?: number
+  metadata?: SBOMMetadata
+  components?: SBOMComponent[]
+}
+
 /**
  * Load vulnerability baseline
  * P1 Fix: Add baseline diff tracking to reduce noise from known vulnerabilities
@@ -128,7 +227,7 @@ async function runDependencyAudit(options?: SecurityOptions): Promise<SecurityRe
         timeout: 30000, // 30 second timeout per attempt
       })
       break // Success, exit retry loop
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Check if this is a transient error that's worth retrying
       const isTransientError =
         error.message?.includes('ENOTFOUND') ||
@@ -239,7 +338,7 @@ async function runDependencyAudit(options?: SecurityOptions): Promise<SecurityRe
   }
 
   try {
-    let audit: any
+    let audit: PnpmAuditResult
     try {
       // P0 Fix: Safer JSON extraction that handles edge cases
       // First, try to parse the entire output as JSON
@@ -311,11 +410,11 @@ async function runDependencyAudit(options?: SecurityOptions): Promise<SecurityRe
       // Newer format: vulnerabilities as an object
       const vulns = audit.vulnerabilities
       vulnerabilityData = {
-        critical: Object.values(vulns).filter((v: any) => v.severity === 'critical').length,
-        high: Object.values(vulns).filter((v: any) => v.severity === 'high').length,
-        moderate: Object.values(vulns).filter((v: any) => v.severity === 'moderate').length,
-        low: Object.values(vulns).filter((v: any) => v.severity === 'low').length,
-        info: Object.values(vulns).filter((v: any) => v.severity === 'info').length,
+        critical: Object.values(vulns).filter((v) => v.severity === 'critical').length,
+        high: Object.values(vulns).filter((v) => v.severity === 'high').length,
+        moderate: Object.values(vulns).filter((v) => v.severity === 'moderate').length,
+        low: Object.values(vulns).filter((v) => v.severity === 'low').length,
+        info: Object.values(vulns).filter((v) => v.severity === 'info').length,
       }
     } else if (audit.advisories) {
       // Older format: advisories array
@@ -323,11 +422,11 @@ async function runDependencyAudit(options?: SecurityOptions): Promise<SecurityRe
         ? audit.advisories
         : Object.values(audit.advisories || {})
       vulnerabilityData = {
-        critical: advisories.filter((a: any) => a.severity === 'critical').length,
-        high: advisories.filter((a: any) => a.severity === 'high').length,
-        moderate: advisories.filter((a: any) => a.severity === 'moderate').length,
-        low: advisories.filter((a: any) => a.severity === 'low').length,
-        info: advisories.filter((a: any) => a.severity === 'info').length,
+        critical: advisories.filter((a) => a.severity === 'critical').length,
+        high: advisories.filter((a) => a.severity === 'high').length,
+        moderate: advisories.filter((a) => a.severity === 'moderate').length,
+        low: advisories.filter((a) => a.severity === 'low').length,
+        info: advisories.filter((a) => a.severity === 'info').length,
       }
     } else if (audit.metadata && typeof audit.metadata.vulnerabilities === 'object') {
       // Alternative format: metadata.vulnerabilities with counts
@@ -520,11 +619,15 @@ async function runDependencyAudit(options?: SecurityOptions): Promise<SecurityRe
  * Helper function to extract license information from dependencies
  * Moved outside try block to avoid strict mode function declaration issue
  */
-function extractLicenses(licenses: LicenseInfo[], dependencies: any, path = ''): void {
+function extractLicenses(
+  licenses: LicenseInfo[],
+  dependencies: Record<string, PackageDependency> | undefined,
+  path = '',
+): void {
   if (!dependencies) return
 
   for (const [name, info] of Object.entries(dependencies)) {
-    const pkg = info as any
+    const pkg = info
     if (pkg.version) {
       // Handle license as string, array, or SPDX expression
       let licenseStr = ''
@@ -535,10 +638,10 @@ function extractLicenses(licenses: LicenseInfo[], dependencies: any, path = ''):
         licenseStr = pkg.license.join(' OR ')
       } else if (pkg.license && typeof pkg.license === 'object') {
         // License object (e.g., { type: 'MIT', url: '...' })
-        licenseStr = pkg.license.type || pkg.license.name || 'Unknown'
+        licenseStr = pkg.license.type ?? pkg.license.name ?? 'Unknown'
       } else if (pkg.licenses && Array.isArray(pkg.licenses)) {
         // Legacy 'licenses' array
-        licenseStr = pkg.licenses.map((l: any) => l.type || l.name || 'Unknown').join(' OR ')
+        licenseStr = pkg.licenses.map((l) => l.type ?? l.name ?? 'Unknown').join(' OR ')
       } else {
         licenseStr = 'Unknown'
       }
@@ -591,7 +694,7 @@ function checkLicenses(): SecurityResult {
       timeout: 30000, // P1 Fix: 30 second timeout for pnpm list
     })
 
-    let packageInfo = JSON.parse(listOutput)
+    let packageInfo: PnpmListResult | PnpmListResult[] = JSON.parse(listOutput)
     const licenses: LicenseInfo[] = []
 
     // Handle both single object and array formats from different pnpm versions
@@ -735,7 +838,7 @@ function generateSBOM(options: SecurityOptions): SecurityResult {
 
     // Validate SBOM content
     const sbomContent = readFileSync(sbomPath, 'utf-8')
-    let sbom: any
+    let sbom: SBOMDocument
     try {
       sbom = JSON.parse(sbomContent)
     } catch (parseError) {
@@ -815,15 +918,15 @@ function checkOutdatedDependencies(): SecurityResult {
       }
     }
 
-    const outdated = JSON.parse(outdatedOutput)
+    const outdated: Record<string, { current: string; latest: string }> = JSON.parse(outdatedOutput)
     const outdatedCount = Object.keys(outdated).length
 
     // Check if any outdated packages have major version differences (potential security updates)
-    const majorUpdates = Object.entries(outdated).filter(([, info]: [string, any]) => {
+    const majorUpdates = Object.entries(outdated).filter(([, info]) => {
       const current = info.current
       const latest = info.latest
-      const currentMajor = parseInt(current.split('.')[0])
-      const latestMajor = parseInt(latest.split('.')[0])
+      const currentMajor = parseInt(current.split('.')[0], 10)
+      const latestMajor = parseInt(latest.split('.')[0], 10)
       return latestMajor > currentMajor
     })
 
@@ -832,9 +935,7 @@ function checkOutdatedDependencies(): SecurityResult {
         scan: 'outdated-check',
         status: 'warn',
         message: `Found ${majorUpdates.length} packages with major version updates available`,
-        details: majorUpdates.map(
-          ([name, info]: [string, any]) => `${name}: ${info.current} → ${info.latest}`,
-        ),
+        details: majorUpdates.map(([name, info]) => `${name}: ${info.current} → ${info.latest}`),
       }
     } else if (outdatedCount > 10) {
       return {
@@ -970,7 +1071,7 @@ function checkSensitiveFiles(): SecurityResult {
 
         foundFiles.push(...actualSensitiveFiles)
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       // If find fails, try using ripgrep as fallback (much faster)
       try {
         const rgPatterns = sensitivePatterns
@@ -1148,7 +1249,7 @@ function runOSVAudit(): SecurityResult {
 
     const osvOutput = osvResult.stdout || '{}'
 
-    let osvResults: any
+    let osvResults: OSVQueryResult
     try {
       osvResults = JSON.parse(osvOutput)
     } catch {
@@ -1161,12 +1262,12 @@ function runOSVAudit(): SecurityResult {
     }
 
     // Parse OSV results
-    const vulnCount = osvResults.results?.length || 0
-    const criticalVulns = (osvResults.results || []).filter(
-      (v: any) =>
+    const vulnCount = osvResults.results?.length ?? 0
+    const criticalVulns = (osvResults.results ?? []).filter(
+      (v) =>
         v.summary?.toLowerCase().includes('critical') ||
         (v.database_specific?.severity &&
-          ['CRITICAL', 'HIGH'].includes(v.database_specific.severity.toUpperCase())),
+          ['CRITICAL', 'HIGH'].includes(String(v.database_specific.severity).toUpperCase())),
     )
 
     if (criticalVulns.length > 0) {
@@ -1176,7 +1277,7 @@ function runOSVAudit(): SecurityResult {
         message: `OSV scanner found ${criticalVulns.length} critical vulnerabilities`,
         details: criticalVulns
           .slice(0, 5)
-          .map((v: any) => `${v.package?.name || 'unknown'}: ${v.summary || v.id}`),
+          .map((v) => `${v.package?.name ?? 'unknown'}: ${v.summary ?? v.id}`),
       }
     } else if (vulnCount > 0) {
       return {

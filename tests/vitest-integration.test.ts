@@ -38,8 +38,14 @@ describe('Vitest Integration Test', () => {
   test('should render React components using @testing-library/react', () => {
     render(React.createElement(TestComponent))
 
-    expect(screen.getByText('Hello Vitest!')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Click me' })).toBeInTheDocument()
+    // Verify elements are found (this confirms they're in the document)
+    const heading = screen.getByText('Hello Vitest!')
+    const button = screen.getByRole('button', { name: 'Click me' })
+
+    expect(heading).toBeTruthy()
+    expect(button).toBeTruthy()
+    expect(heading.tagName).toBe('H1')
+    expect(button.tagName).toBe('BUTTON')
   })
 
   test('should support user interactions with @testing-library/user-event', async () => {

@@ -1,1 +1,26 @@
+# Workspace meta
 .agent-os/.obsidian/
+
+# Build & caches
+dist
+dist-*
+coverage
+**/dist
+**/dist-types
+**/.turbo
+**/.next
+**/.cache
+**/build
+
+# Dependencies
+pnpm-lock.yaml
+**/node_modules
+
+# Reports / logs
+*.log
+logs/format-metrics.json
+
+# Artifacts
+sbom.json
+security-sbom.json
+*.snap

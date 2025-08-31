@@ -1,7 +1,7 @@
 import { nextConfig } from '@template/eslint-config/next'
 import { testsConfig } from '@template/eslint-config/tests'
 
-export default [
+const eslintConfig = [
   // Global ignores for Next.js generated files
   {
     ignores: [
@@ -21,3 +21,5 @@ export default [
   // Test configuration
   ...testsConfig,
 ]
+
+export default eslintConfig

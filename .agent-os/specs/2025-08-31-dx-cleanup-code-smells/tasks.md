@@ -1,93 +1,108 @@
-# Spec Tasks
+# DX Cleanup Task Board (Lean)
 
-These are the tasks to be completed for the spec detailed in
-@.agent-os/specs/2025-08-31-dx-cleanup-code-smells/spec.md
+Spec: `specs/2025-08-31-dx-cleanup-code-smells/spec.md` (lean revision)
 
-> Created: 2025-08-31 Status: Ready for Implementation
+Intent: Ship core gates fast. Only track MUST work here. Deferred ideas live in
+sub-specs.
 
-## Tasks
+Legend: ✅ Done · ⬜ Pending · 🟡 Soft/Optional · 🚫 Dropped
 
-- [ ] 1. Fix Critical Security Issues
-  - [ ] 1.1 Write tests for SBOM generation fix
-  - [ ] 1.2 Implement direct cdxgen execution without eval (lines 707-717 of
-        security-scan.ts)
-  - [ ] 1.3 Add fallback methods for cdxgen execution
-  - [ ] 1.4 Validate SBOM output has >300 components
-  - [ ] 1.5 Create command sanitization utilities in
-        scripts/lib/command-utils.ts
-  - [ ] 1.6 Implement path traversal prevention in scripts/lib/path-utils.ts
-  - [ ] 1.7 Add vulnerability scanning with OSV.dev API
-  - [ ] 1.8 Verify all security tests pass
+## P0 (Days 1–2) Core Enablement
 
-- [ ] 2. Implement Type Safety Improvements
-  - [ ] 2.1 Write tests for type guards and validators
-  - [ ] 2.2 Replace all `any` types in turborepo-validation.test.ts
-  - [ ] 2.3 Fix test-utils.tsx generic types in packages/utils
-  - [ ] 2.4 Add explicit return types to all functions
-  - [ ] 2.5 Implement strict boolean expressions
-  - [ ] 2.6 Create type guard utilities in scripts/lib/type-guards.ts
-  - [ ] 2.7 Add Result<T, E> discriminated union pattern
-  - [ ] 2.8 Fix floating promises with proper handling
-  - [ ] 2.9 Verify TypeScript strict mode passes
+- [ ] Capture baseline: create `.quality-baseline.json` (build_warm_ms,
+      test_warm_ms, typeCoverage, lineCoverage, cacheHitRate)
+- [ ] Add type coverage tool & CI gate (≥95%)
+- [ ] Remove / justify all unsafe `any` (0 remaining or annotated // @intent)
+- [ ] Prune root scripts to ≤30 & apply category prefixes (dev:, test:, build:,
+      dx:, sec:, release:)
+- [ ] Implement minimal `pnpm dx:status` showing: type %, coverage %, build/test
+      warm ms, turbo hit %, vuln high count, script count
+- [ ] Fix SBOM generation (valid CycloneDX, >300 components) & add validation
+      step
+- [ ] Add vuln scan gate (fail on High/Critical unless whitelisted)
+- [ ] Add turbo inputs pruning in `turbo.jsonc` (remove `**/*` wildcards)
+- [ ] Add performance guard scripts (warm build/test regression < +10%)
 
-- [ ] 3. Create Error Handling Infrastructure
-  - [ ] 3.1 Write tests for custom error classes
-  - [ ] 3.2 Create base error hierarchy in scripts/lib/errors.ts
-  - [ ] 3.3 Implement structured logger in scripts/lib/logger.ts
-  - [ ] 3.4 Add retry utility with exponential backoff in scripts/lib/retry.ts
-  - [ ] 3.5 Create global error handlers in scripts/lib/process-handler.ts
-  - [ ] 3.6 Add React error boundaries in
-        apps/app/src/components/ErrorBoundary.tsx
-  - [ ] 3.7 Update all scripts to use new error handling patterns
-  - [ ] 3.8 Verify error handling tests pass
+Exit P0 = All hard gates measurable + passing locally (type, coverage,
+build/test time, vuln, SBOM, script count).
 
-- [ ] 4. Refactor and Organize Scripts
-  - [ ] 4.1 Write tests for script organization system
-  - [ ] 4.2 Create script categories in package.json (dev, test, build, dx,
-        security)
-  - [ ] 4.3 Implement interactive help system using inquirer
-  - [ ] 4.4 Build dx:help command for script discovery
-  - [ ] 4.5 Refactor security-scan.ts into modular components
-  - [ ] 4.6 Create unified validation pipeline
-  - [ ] 4.7 Add command aliases for common workflows
-  - [ ] 4.8 Verify all scripts work after reorganization
+## P1 (Days 3–4) Runtime Hygiene
 
-- [ ] 5. Optimize CI/CD Pipeline
-  - [ ] 5.1 Write tests for CI optimization
-  - [ ] 5.2 Update turbo.jsonc with precise input patterns
-  - [ ] 5.3 Configure Turbo remote caching with Vercel
-  - [ ] 5.4 Implement GitHub Actions matrix parallelization
-  - [ ] 5.5 Create reusable workflow actions in .github/actions/
-  - [ ] 5.6 Optimize Docker builds with multi-stage Dockerfile
-  - [ ] 5.7 Add test sharding for parallel execution
-  - [ ] 5.8 Implement affected package detection
-  - [ ] 5.9 Verify CI runs complete in <10 minutes
+- [ ] Add `scripts/lib/errors.ts` (AppError + Validation/Script/File/Network)
+- [ ] Add `scripts/lib/logger.ts` (JSON line logger)
+- [ ] Add `scripts/lib/retry.ts` (exponential backoff helper)
+- [ ] Add `scripts/lib/process-handlers.ts` (unhandled rejection / exception)
+- [ ] Refactor `security-scan.ts` into orchestrator + modules (sbom,
+      vulnerabilities, baseline, report)
+- [ ] Refactor `pre-release-guard.ts` (shrink; single exit)
+- [ ] Refactor `dx-status.ts` (split collection vs formatting)
+- [ ] Replace stray `console.*` in touched scripts with logger
+- [ ] Introduce coverage merge + threshold gate (≥85% lines; ratchet saved)
 
-## Validation
+Exit P1 = Shared infra adopted by top 3 scripts; coverage gate active.
 
-After completing all tasks:
+## P2 (Days 5–6) CI Acceleration
 
-- [ ] Run full validation checklist from sub-specs/validation-checklist.md
-- [ ] Ensure all tests pass with ≥85% coverage
-- [ ] Verify no TypeScript errors remain
-- [ ] Confirm SBOM generation works correctly
-- [ ] Check CI/CD runs in <10 minutes
-- [ ] Validate all performance targets met
+- [ ] Add validate job in `ci.yml` (typecheck, lint, security, gates) with early
+      fail
+- [ ] Implement Vitest sharding (≥4 fixed shards) command
+- [ ] Add affected detection script producing `affected.json`
+- [ ] Integrate shard + affected logic into CI (skip unaffected builds/tests)
+- [ ] Merge coverage artifacts & enforce gate in CI
+- [ ] Parse turbo dry-run → compute hit ratio ≥85% (warn if <70%, fail <60%)
+- [ ] Upload `metrics.json` (build/test ms, turbo hit, coverage) as artifact
 
-## Success Criteria
+Exit P2 = CI wall time reduced; early-fail works; cache hit trending upward.
 
-- **Type Safety**: 0 `any` types remaining, all functions have return types
-- **Error Handling**: Comprehensive error classes, structured logging, retry
-  logic
-- **Script Organization**: <30 top-level scripts, interactive help system
-- **Security**: SBOM generation fixed, >300 components, vulnerability scanning
-- **Performance**: <5s test execution, <2s builds, <10min CI runs
-- **Coverage**: ≥85% test coverage with ratcheting enabled
+## P3 (Post-Core / Deferred)
 
-## Notes
+- [ ] Enable remote turbo cache (TURBO_TOKEN/TEAM secrets) (slice 6)
+- [ ] Docker multi-stage build (web) 🟡
+- [ ] Flaky test detection (historical failure scan) 🟡
+- [ ] License compliance check (optional if policy needed) 🟡
+- [ ] Metrics trend badge publishing 🟡
+- [ ] Affected-based build skip for purely docs changes (fine-tune) 🟡
 
-- Follow TDD approach: write tests first for each component
-- Use the detailed guides in sub-specs/ for implementation patterns
-- Ensure all changes are backward compatible
-- Document any breaking changes if absolutely necessary
-- Run validation checklist after each major task completion
+## Hard Gate Summary (Must Stay Green)
+
+| Gate          | Threshold                | Source                | Fail Action            |
+| ------------- | ------------------------ | --------------------- | ---------------------- |
+| Type coverage | ≥95%                     | type-coverage         | Block merge            |
+| Line coverage | ≥85% (ratchet)           | coverage merge        | Block merge            |
+| Unsafe any    | 0                        | ESLint rule           | Block merge            |
+| Warm build    | <2s                      | perf script (2nd run) | Block (after baseline) |
+| Warm tests    | <5s                      | perf script           | Block (after baseline) |
+| Turbo hit     | ≥85% (warn <70%)         | dry-run parse         | Block <60%             |
+| High vulns    | 0 (or whitelisted)       | security scan         | Block merge            |
+| SBOM          | Exists + >300 components | sbom validate         | Block merge            |
+| Script count  | ≤30                      | script lint           | Block merge            |
+
+## Definition of Done (Project Core)
+
+All P0–P2 tasks ✅ + Hard gates green in 2 consecutive CI runs + top target
+scripts refactored + baseline updated intentionally (guard script used) + no new
+deps outside allowlist.
+
+## Quick Validation Flow
+
+1. `pnpm dx:status` (local) → all hard gates green
+2. Push branch → CI validate job passes (no early fail)
+3. Sharded tests + coverage merge succeed
+4. Metrics artifact uploaded & parsed (turbo hit visible)
+5. Merge only if unchanged gates remain green post-rebase
+
+## Guardrails
+
+- Defer anything not improving a failing gate
+- Reject new error types unless ≥2 examples lacking fit
+- Reject new dependencies unless they collapse ≥3 duplicates
+- No interactive CLI polish until core stability proven (post P2)
+
+## Tracking Notes
+
+Add context / blockers inline under task list (do not expand with new sections).
+Remove completed lines instead of striking to keep surface minimal.
+
+---
+
+If a task feels like “nice to have”, move it to Deferred or delete.

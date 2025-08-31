@@ -20,7 +20,7 @@
     "build",
     "coverage",
     ".turbo",
-    "**/.bun/**",
+    "**/.cache/**",
     "**/*.test.ts",
     "**/*.test.tsx",
     "**/*.spec.ts",

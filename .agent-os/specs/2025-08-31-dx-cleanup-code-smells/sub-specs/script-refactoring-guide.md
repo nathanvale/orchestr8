@@ -1,707 +1,208 @@
-# Script Refactoring Guide
+# Script Refactoring Guide (Lean)
 
-> Step-by-step guide for refactoring complex scripts into maintainable code
-> Version: 1.0.0 Created: 2025-08-31
+> Purpose: Shrink monolithic scripts fast. Focus on clarity + testability. Avoid
+> premature abstraction. Only refactor what blocks reliability or speed.
 
-## Overview
+## Use This When
 
-This guide provides detailed refactoring patterns for the most complex scripts
-in the codebase, showing how to break them down into smaller, testable, and
-maintainable functions.
+You touch a script that is either:
 
-## Scripts Requiring Refactoring
+| Trigger                | Threshold (Ship Blocker) | Action                            |
+| ---------------------- | ------------------------ | --------------------------------- |
+| File length            | > 300 LOC                | Slice into orchestrator + modules |
+| Mixed responsibilities | ≥ 3 distinct concerns    | Separate per concern              |
+| Hard to test           | No pure units exported   | Extract pure functions            |
+| Deep nesting           | > 3 levels               | Flatten via early returns         |
+| Repeated patterns      | 3+ similar blocks        | Create small helper (local)       |
 
-### Complexity Analysis
+If none of these triggers apply: STOP. Do not refactor.
 
-1. `/scripts/security-scan.ts` - 700+ lines, multiple responsibilities
-2. `/scripts/record-baselines.ts` - Complex logic, poor separation
-3. `/scripts/export-map-linter.ts` - Nested conditions, hard to test
-4. `/scripts/dx-status.ts` - Multiple concerns mixed together
-5. `/scripts/validate-pre-release.ts` - Monolithic validation logic
+## Target Scripts (Current Cycle)
 
-## Script 1: Security Scan Refactoring
+1. `security-scan.ts` (oversized, mixed concerns)
+1. `record-baselines.ts` (state + IO tangled)
+1. `export-map-linter.ts` (nested condition chains)
+1. `dx-status.ts` (formatting + data collection tightly coupled)
+1. `pre-release-guard.ts` (validation monolith)
 
-### Current Issues in `/scripts/security-scan.ts`
+## Refactor Definition of Done
 
-- Single file with 700+ lines
-- Mixed concerns (SBOM, vulnerabilities, licenses)
-- Deeply nested try-catch blocks
-- Hard to test individual components
+| Dimension    | Requirement                                      |
+| ------------ | ------------------------------------------------ |
+| Size         | Orchestrator ≤ 120 LOC                           |
+| Structure    | `orchestrator` + focused modules (≤ ~150 LOC ea) |
+| Testability  | Each module has at least 1 unit test             |
+| Logging      | Uses shared `logger` (no ad-hoc `console.*`)     |
+| Errors       | Throws typed errors from shared `errors` module  |
+| Coupling     | No direct shell calls in pure logic              |
+| Side Effects | Isolated behind tiny adapter functions           |
+| Parallelism  | Independent IO tasks batched via `Promise.all`   |
+| Exit Codes   | Single exit point decides process code           |
 
-### Refactored Structure
+## Minimal Module Layout Template
 
-```
+```text
 scripts/
-├── security-scan.ts (main orchestrator - 100 lines)
-└── lib/
-    └── security/
-        ├── sbom-generator.ts
-        ├── vulnerability-scanner.ts
-        ├── license-checker.ts
-        ├── baseline-manager.ts
-        ├── report-generator.ts
-        └── types.ts
+  security-scan.ts          # Orchestrator (deps wiring + sequencing only)
+  lib/security/
+    sbom.ts                 # Pure generation + validation
+    vulnerabilities.ts      # Wrapper around scanner tool
+    licenses.ts             # License allow/deny logic
+    baseline.ts             # Load/update baseline JSON
+    report.ts               # Shape final result (pure)
+    types.ts                # Narrow domain types only
 ```
 
-### Refactored Main File
+Rules:
 
-**File:** `/scripts/security-scan.ts` (refactored)
+1. Keep each module single-purpose (name matches exported intent).
+1. Export only functions + types (avoid classes unless stateful strategy).
+1. Orchestrator performs: parse args → schedule tasks → aggregate → print /
+   exit.
 
-```typescript
-import { Command } from 'commander'
-import { SbomGenerator } from './lib/security/sbom-generator'
-import { VulnerabilityScanner } from './lib/security/vulnerability-scanner'
-import { LicenseChecker } from './lib/security/license-checker'
-import { BaselineManager } from './lib/security/baseline-manager'
-import { ReportGenerator } from './lib/security/report-generator'
-import { logger } from './lib/logger'
-import type {
-  SecurityScanOptions,
-  SecurityScanResult,
-} from './lib/security/types'
+## Fast Refactor Playbook (30–60 min)
 
-class SecurityScanner {
-  private sbomGenerator: SbomGenerator
-  private vulnScanner: VulnerabilityScanner
-  private licenseChecker: LicenseChecker
-  private baselineManager: BaselineManager
-  private reportGenerator: ReportGenerator
+1. Snapshot: copy original file → `.bak` (temporary, deleted before commit).
+1. Identify concerns (scan comments / sections) – list them.
+1. Inline mark segments with `// EXTRACT: <concern>`.
+1. Create modules matching concerns; move code verbatim first (no polishing).
+1. Replace moved blocks with slim function calls.
+1. Run tests / add minimal new ones for extracted pure functions.
+1. Introduce early returns to cut nesting.
+1. Replace repeated literals (paths, flags) with local `const` (not global
+   config).
+1. Delete `.bak`. Commit.
 
-  constructor() {
-    this.sbomGenerator = new SbomGenerator()
-    this.vulnScanner = new VulnerabilityScanner()
-    this.licenseChecker = new LicenseChecker()
-    this.baselineManager = new BaselineManager()
-    this.reportGenerator = new ReportGenerator()
-  }
+## Allowed Refactor Types (Scope Guard)
 
-  async scan(options: SecurityScanOptions): Promise<SecurityScanResult> {
-    logger.info('Starting security scan', { options })
+| Refactor Type        | Allowed? | Notes                                 |
+| -------------------- | -------- | ------------------------------------- |
+| Logic extraction     | ✅       | Prefer pure functions first           |
+| Rename for clarity   | ✅       | If improves intent (no churn)         |
+| Convert to class     | ❌       | Unless real polymorphism/state needed |
+| Add new dependency   | ❌       | Use existing libs only                |
+| Introduce framework  | ❌       | No heavy orchestration libs           |
+| Add color/spinner UX | Deferred | Optional – not part of core refactor  |
 
-    const tasks = [
-      { name: 'SBOM Generation', fn: () => this.sbomGenerator.generate() },
-      { name: 'Vulnerability Scan', fn: () => this.vulnScanner.scan() },
-      { name: 'License Check', fn: () => this.licenseChecker.check() },
-    ]
+## Anti-Patterns To Remove
 
-    const results = await this.runTasks(tasks)
+| Pattern                           | Replace With                           |
+| --------------------------------- | -------------------------------------- |
+| Nested try/catch chains           | Single try around task loop            |
+| Long `switch` with 30+ lines      | Command map object                     |
+| Re-building JSON output piecewise | Collect → pure formatter function      |
+| Inline shell + parse + logic      | `runCommand()` adapter + pure parse    |
+| Silent failures                   | Throw typed error + single top handler |
 
-    if (options.updateBaseline) {
-      await this.baselineManager.update(results)
-    }
+## Core Snippets (Reference Only)
 
-    const report = await this.reportGenerator.generate(results, options)
+Task batching:
 
-    return report
-  }
-
-  private async runTasks(
-    tasks: Array<{ name: string; fn: () => Promise<any> }>,
-  ) {
-    const results: Record<string, any> = {}
-
-    for (const task of tasks) {
-      try {
-        logger.info(`Running: ${task.name}`)
-        results[task.name] = await task.fn()
-        logger.success(`Completed: ${task.name}`)
-      } catch (error) {
-        logger.error(`Failed: ${task.name}`, error)
-        results[task.name] = { error: error.message }
-      }
-    }
-
-    return results
-  }
-}
-
-// CLI setup
-const program = new Command()
-program
-  .option('--update-baseline', 'Update security baseline')
-  .option('--verbose', 'Verbose output')
-  .option('--format <type>', 'Output format', 'json')
-  .action(async (options) => {
-    const scanner = new SecurityScanner()
-    const result = await scanner.scan(options)
-    console.log(JSON.stringify(result, null, 2))
-  })
-
-program.parse()
+```ts
+const tasks = [genSbom, scanVulns, checkLicenses]
+const results = await Promise.all(tasks.map((t) => t()))
 ```
 
-### SBOM Generator Module
+Early return flattening:
 
-**File:** `/scripts/lib/security/sbom-generator.ts`
+```ts
+if (!config.enabled) return { skipped: true }
+```
 
-```typescript
-import { execSync } from 'child_process'
-import { promises as fs } from 'fs'
-import { logger } from '../logger'
-import { NetworkError, FileSystemError } from '../errors'
-import type { SbomResult } from './types'
+Adapter isolation:
 
-export class SbomGenerator {
-  private readonly sbomPath = 'security-sbom.json'
-  private readonly timeout = 120000 // 2 minutes
-
-  async generate(): Promise<SbomResult> {
-    try {
-      await this.runCdxgen()
-      const sbom = await this.validateSbom()
-      return {
-        success: true,
-        componentCount: sbom.components?.length ?? 0,
-        path: this.sbomPath,
-        timestamp: new Date().toISOString(),
-      }
-    } catch (error) {
-      logger.error('SBOM generation failed', error)
-      return {
-        success: false,
-        error: error.message,
-        timestamp: new Date().toISOString(),
-      }
-    }
-  }
-
-  private async runCdxgen(): Promise<void> {
-    const command = `npx @cyclonedx/cdxgen -o ${this.sbomPath} -t js .`
-
-    try {
-      execSync(command, {
-        encoding: 'utf-8',
-        timeout: this.timeout,
-        stdio: 'pipe',
-      })
-    } catch (error) {
-      throw new Error(`SBOM generation command failed: ${error.message}`)
-    }
-  }
-
-  private async validateSbom(): Promise<any> {
-    const content = await fs.readFile(this.sbomPath, 'utf-8')
-    const sbom = JSON.parse(content)
-
-    if (!sbom.bomFormat || sbom.bomFormat !== 'CycloneDX') {
-      throw new Error('Invalid SBOM format')
-    }
-
-    if (!sbom.components || !Array.isArray(sbom.components)) {
-      throw new Error('SBOM missing components array')
-    }
-
-    return sbom
-  }
+```ts
+export async function runCommand(cmd: string, args: string[]): Promise<string> {
+  // wraps child_process / safe exec; throws TypedError on non‑zero
 }
 ```
 
-## Script 2: Package.json Script Organization
+Pure formatting:
 
-### Current Issue
-
-94+ scripts in flat structure making discovery difficult
-
-### Refactored Approach
-
-**File:** `/scripts/lib/script-manager.ts`
-
-```typescript
-interface ScriptCategory {
-  name: string
-  description: string
-  emoji: string
-  scripts: ScriptDefinition[]
-}
-
-interface ScriptDefinition {
-  name: string
-  command: string
-  description: string
-  aliases?: string[]
-}
-
-export class ScriptManager {
-  private categories: ScriptCategory[] = [
-    {
-      name: 'Core Development',
-      description: 'Essential development commands',
-      emoji: '🚀',
-      scripts: [
-        {
-          name: 'dev',
-          command: 'turbo dev',
-          description: 'Start development server',
-          aliases: ['start', 'd'],
-        },
-        {
-          name: 'dev:all',
-          command: 'node scripts/dev-orchestrator.js',
-          description: 'Start all services',
-          aliases: ['da'],
-        },
-        {
-          name: 'build',
-          command: 'turbo build',
-          description: 'Build all packages',
-          aliases: ['b'],
-        },
-        {
-          name: 'test',
-          command: 'vitest',
-          description: 'Run tests',
-          aliases: ['t'],
-        },
-      ],
-    },
-    {
-      name: 'DX Tools',
-      description: 'Developer experience utilities',
-      emoji: '🛠️',
-      scripts: [
-        {
-          name: 'dx:status',
-          command: 'node scripts/dx-status.js',
-          description: 'Show project status',
-          aliases: ['status', 's'],
-        },
-        {
-          name: 'dx:help',
-          command: 'node scripts/interactive-help.js',
-          description: 'Interactive command explorer',
-          aliases: ['help', 'h', '?'],
-        },
-      ],
-    },
-    {
-      name: 'Testing & Quality',
-      description: 'Testing and code quality commands',
-      emoji: '✅',
-      scripts: [
-        {
-          name: 'test:watch',
-          command: 'vitest watch',
-          description: 'Run tests in watch mode',
-        },
-        {
-          name: 'test:coverage',
-          command: 'vitest run --coverage',
-          description: 'Run tests with coverage',
-        },
-        {
-          name: 'lint',
-          command: 'eslint . --cache',
-          description: 'Lint code',
-        },
-        {
-          name: 'typecheck',
-          command: 'tsc --noEmit',
-          description: 'Type check code',
-        },
-      ],
-    },
-    {
-      name: 'Release Management',
-      description: 'Version and release commands',
-      emoji: '📦',
-      scripts: [
-        {
-          name: 'changeset',
-          command: 'changeset',
-          description: 'Create a changeset',
-        },
-        {
-          name: 'version',
-          command: 'changeset version',
-          description: 'Version packages',
-        },
-        {
-          name: 'release',
-          command: 'pnpm build && changeset publish',
-          description: 'Build and publish packages',
-        },
-      ],
-    },
-    {
-      name: 'Security',
-      description: 'Security scanning and auditing',
-      emoji: '🔒',
-      scripts: [
-        {
-          name: 'security:scan',
-          command: 'node scripts/security-scan.js',
-          description: 'Run security scan',
-        },
-        {
-          name: 'audit',
-          command: 'pnpm audit',
-          description: 'Audit dependencies',
-        },
-      ],
-    },
-  ]
-
-  findScript(query: string): ScriptDefinition | undefined {
-    for (const category of this.categories) {
-      for (const script of category.scripts) {
-        if (script.name === query || script.aliases?.includes(query)) {
-          return script
-        }
-      }
-    }
-    return undefined
-  }
-
-  getAllScripts(): Record<string, string> {
-    const scripts: Record<string, string> = {}
-
-    for (const category of this.categories) {
-      for (const script of category.scripts) {
-        scripts[script.name] = script.command
-        // Also add aliases
-        if (script.aliases) {
-          for (const alias of script.aliases) {
-            scripts[alias] = script.command
-          }
-        }
-      }
-    }
-
-    return scripts
-  }
-
-  getCategories(): ScriptCategory[] {
-    return this.categories
-  }
+```ts
+export function formatReport(sections: Section[]): string {
+  /* no IO */
 }
 ```
 
-### Interactive Script Explorer
+Guarded error use:
 
-**File:** `/scripts/interactive-help.js`
-
-```typescript
-import inquirer from 'inquirer'
-import chalk from 'chalk'
-import { execSync } from 'child_process'
-import { ScriptManager } from './lib/script-manager'
-
-async function main() {
-  const manager = new ScriptManager()
-  const categories = manager.getCategories()
-
-  console.log(chalk.cyan('\n🚀 Interactive Script Explorer\n'))
-
-  const { category } = await inquirer.prompt([
-    {
-      type: 'list',
-      name: 'category',
-      message: 'Select a category:',
-      choices: categories.map((cat) => ({
-        name: `${cat.emoji} ${cat.name} - ${cat.description}`,
-        value: cat,
-      })),
-    },
-  ])
-
-  const { script } = await inquirer.prompt([
-    {
-      type: 'list',
-      name: 'script',
-      message: 'Select a script to run:',
-      choices: category.scripts.map((s) => ({
-        name: `${s.name} - ${s.description}`,
-        value: s,
-      })),
-    },
-  ])
-
-  const { confirm } = await inquirer.prompt([
-    {
-      type: 'confirm',
-      name: 'confirm',
-      message: `Run "${script.command}"?`,
-      default: true,
-    },
-  ])
-
-  if (confirm) {
-    console.log(chalk.green(`\n▶ Running: ${script.command}\n`))
-    execSync(script.command, { stdio: 'inherit' })
-  }
-}
-
-main().catch(console.error)
-```
-
-## Script 3: DX Status Refactoring
-
-### Refactored DX Status
-
-**File:** `/scripts/dx-status.ts` (refactored)
-
-```typescript
-import chalk from 'chalk'
-import ora from 'ora'
-import { StatusChecker } from './lib/dx/status-checker'
-import { StatusFormatter } from './lib/dx/status-formatter'
-
-async function main() {
-  const spinner = ora('Gathering project status...').start()
-
-  try {
-    const checker = new StatusChecker()
-    const formatter = new StatusFormatter()
-
-    // Run all checks in parallel
-    const [changesets, coverage, outdated, turboCache, gitStatus] =
-      await Promise.all([
-        checker.checkChangesets(),
-        checker.checkCoverage(),
-        checker.checkOutdated(),
-        checker.checkTurboCache(),
-        checker.checkGitStatus(),
-      ])
-
-    spinner.succeed('Status gathered successfully')
-
-    // Format and display results
-    console.log(formatter.formatHeader())
-    console.log(formatter.formatChangesets(changesets))
-    console.log(formatter.formatCoverage(coverage))
-    console.log(formatter.formatOutdated(outdated))
-    console.log(formatter.formatTurboCache(turboCache))
-    console.log(formatter.formatGitStatus(gitStatus))
-    console.log(formatter.formatFooter())
-  } catch (error) {
-    spinner.fail('Failed to gather status')
-    console.error(error)
-    process.exit(1)
-  }
-}
-
-main()
-```
-
-**File:** `/scripts/lib/dx/status-checker.ts`
-
-```typescript
-import { execSync } from 'child_process'
-import { promises as fs } from 'fs'
-import path from 'path'
-
-export class StatusChecker {
-  async checkChangesets(): Promise<ChangesetStatus> {
-    try {
-      const changesetDir = '.changeset'
-      const files = await fs.readdir(changesetDir)
-      const changesets = files.filter(
-        (f) => f.endsWith('.md') && f !== 'README.md',
-      )
-
-      return {
-        count: changesets.length,
-        files: changesets,
-      }
-    } catch {
-      return { count: 0, files: [] }
-    }
-  }
-
-  async checkCoverage(): Promise<CoverageStatus> {
-    try {
-      const coveragePath = 'coverage/coverage-summary.json'
-      const content = await fs.readFile(coveragePath, 'utf-8')
-      const summary = JSON.parse(content)
-
-      return {
-        lines: summary.total.lines.pct,
-        branches: summary.total.branches.pct,
-        functions: summary.total.functions.pct,
-        statements: summary.total.statements.pct,
-      }
-    } catch {
-      return null
-    }
-  }
-
-  async checkOutdated(): Promise<OutdatedStatus> {
-    try {
-      const result = execSync('pnpm outdated --json', {
-        encoding: 'utf-8',
-        stdio: ['pipe', 'pipe', 'ignore'],
-      })
-
-      const outdated = JSON.parse(result || '{}')
-      const packages = Object.entries(outdated).map(
-        ([name, info]: [string, any]) => ({
-          name,
-          current: info.current,
-          wanted: info.wanted,
-          latest: info.latest,
-        }),
-      )
-
-      return {
-        count: packages.length,
-        packages: packages.slice(0, 5), // Top 5
-      }
-    } catch {
-      return { count: 0, packages: [] }
-    }
-  }
-
-  async checkTurboCache(): Promise<TurboCacheStatus> {
-    try {
-      const turboCacheDir = 'node_modules/.cache/turbo'
-      const stats = await fs.stat(turboCacheDir)
-      const files = await this.countFiles(turboCacheDir)
-
-      return {
-        exists: true,
-        size: await this.getDirectorySize(turboCacheDir),
-        entries: files,
-      }
-    } catch {
-      return { exists: false, size: 0, entries: 0 }
-    }
-  }
-
-  async checkGitStatus(): Promise<GitStatus> {
-    try {
-      const status = execSync('git status --porcelain', { encoding: 'utf-8' })
-      const lines = status.trim().split('\n').filter(Boolean)
-
-      return {
-        modified: lines.filter((l) => l.startsWith(' M')).length,
-        untracked: lines.filter((l) => l.startsWith('??')).length,
-        staged: lines.filter((l) => l.startsWith('M ') || l.startsWith('A '))
-          .length,
-      }
-    } catch {
-      return { modified: 0, untracked: 0, staged: 0 }
-    }
-  }
-
-  private async countFiles(dir: string): Promise<number> {
-    let count = 0
-    const files = await fs.readdir(dir)
-
-    for (const file of files) {
-      const filePath = path.join(dir, file)
-      const stats = await fs.stat(filePath)
-
-      if (stats.isDirectory()) {
-        count += await this.countFiles(filePath)
-      } else {
-        count++
-      }
-    }
-
-    return count
-  }
-
-  private async getDirectorySize(dir: string): Promise<number> {
-    // Implementation for directory size calculation
-    return 0 // Simplified for example
-  }
+```ts
+try {
+  await step()
+} catch (err) {
+  logger.error('step_failed', { step, err })
 }
 ```
 
-## Common Refactoring Patterns
+## When NOT To Refactor
 
-### Pattern 1: Extract Complex Conditions
+| Situation                   | Action                        |
+| --------------------------- | ----------------------------- |
+| Feature flag experiment     | Wait until flag stabilizes    |
+| Script < 150 LOC & readable | Leave as-is                   |
+| Imminent deprecation        | Do minimal patch only         |
+| Perf issue unproven         | Add metric first, then decide |
 
-```typescript
-// ❌ BEFORE - Complex nested conditions
-if (
-  options.verbose &&
-  !options.quiet &&
-  (options.format === 'json' || options.format === 'yaml')
-) {
-  if (results.length > 0 && results.some((r) => r.severity === 'high')) {
-    // ... complex logic
-  }
-}
+## DX Status Split (Planned)
 
-// ✅ AFTER - Extracted predicates
-const shouldLog = options.verbose && !options.quiet
-const hasStructuredFormat = ['json', 'yaml'].includes(options.format)
-const hasHighSeverityResults =
-  results.length > 0 && results.some((r) => r.severity === 'high')
+| Concern      | Module                 | Status   |
+| ------------ | ---------------------- | -------- |
+| Checks       | `status-checker.ts`    | Planned  |
+| Formatting   | `status-format.ts`     | Planned  |
+| Output style | (deferred)             | Deferred |
+| Spinner/UX   | (remove unless needed) | Deferred |
 
-if (shouldLog && hasStructuredFormat && hasHighSeverityResults) {
-  handleHighSeverityResults(results, options)
-}
-```
+## Security Scan Refactor (Essentials Only)
 
-### Pattern 2: Extract Data Transformation
+| Concern         | Module               | Notes                       |
+| --------------- | -------------------- | --------------------------- |
+| SBOM            | `sbom.ts`            | Generation + validation     |
+| Vulns           | `vulnerabilities.ts` | Scanner wrapper             |
+| Licenses        | `licenses.ts`        | Allow/deny + summary        |
+| Baseline mgmt   | `baseline.ts`        | Load + diff + update gating |
+| Report assembly | `report.ts`          | Pure; returns JSON object   |
 
-```typescript
-// ❌ BEFORE - Inline transformation
-const output = results
-  .map((r) => ({
-    ...r,
-    timestamp: new Date(r.timestamp).toISOString(),
-    severity: r.severity.toUpperCase(),
-    message: r.message.trim().replace(/\n/g, ' '),
-  }))
-  .filter((r) => r.severity !== 'LOW')
+Baseline update must be explicit via flag (e.g. `--update-baseline`) to avoid
+accidental drift.
 
-// ✅ AFTER - Named transformation functions
-const normalizeResult = (result: RawResult): NormalizedResult => ({
-  ...result,
-  timestamp: new Date(result.timestamp).toISOString(),
-  severity: result.severity.toUpperCase(),
-  message: result.message.trim().replace(/\n/g, ' '),
-})
+## Refactor Review Checklist
 
-const isSignificant = (result: NormalizedResult): boolean =>
-  result.severity !== 'LOW'
+| Check                        | ✅  |
+| ---------------------------- | --- |
+| Orchestrator shrunk          |     |
+| Modules single-purpose       |     |
+| No new deps introduced       |     |
+| Pure functions unit tested   |     |
+| Shared logger used           |     |
+| Typed errors thrown/caught   |     |
+| Parallelizable tasks batched |     |
+| No dead code / leftovers     |     |
 
-const output = results.map(normalizeResult).filter(isSignificant)
-```
+## Deferred / Nice-to-Have (Track Separately)
 
-### Pattern 3: Command Pattern for Actions
+| Idea                  | Reason Deferred             |
+| --------------------- | --------------------------- |
+| Interactive help TUI  | Cosmetic; zero gating value |
+| Animated spinners     | Adds dependency weight      |
+| Rich color gradients  | Noise vs signal             |
+| Generic plugin system | Overkill at current scale   |
 
-```typescript
-// ❌ BEFORE - Switch statement with inline logic
-switch (action) {
-  case 'scan':
-    // 50 lines of scan logic
-    break
-  case 'report':
-    // 40 lines of report logic
-    break
-  case 'update':
-    // 30 lines of update logic
-    break
-}
+## Success Signals
 
-// ✅ AFTER - Command pattern
-interface Command {
-  execute(): Promise<void>
-}
+| Signal              | Measurement                             |
+| ------------------- | --------------------------------------- |
+| Cognitive load drop | Time-to-understand file < 2 min         |
+| Test granularity    | ≥ 1 pure unit test per extracted module |
+| Change locality     | PR diff touches ≤ 2 modules on tweaks   |
+| Failure clarity     | Errors show domain + context fields     |
 
-class ScanCommand implements Command {
-  async execute(): Promise<void> {
-    // Scan logic in dedicated class
-  }
-}
+## Appendix (Optional Deep Dives)
 
-const commands: Record<string, Command> = {
-  scan: new ScanCommand(),
-  report: new ReportCommand(),
-  update: new UpdateCommand(),
-}
+Removed verbose before/after blocks. If specific examples required, add them to
+a dedicated `docs/refactor-examples.md` rather than bloating this lean guide.
 
-await commands[action]?.execute()
-```
+---
 
-## Benefits of Refactoring
-
-1. **Testability** - Each module can be tested independently
-2. **Maintainability** - Changes are localized to specific modules
-3. **Reusability** - Extracted utilities can be shared
-4. **Readability** - Smaller, focused functions are easier to understand
-5. **Performance** - Parallel execution where possible
+If you feel compelled to add more patterns ask: Will this help ship faster next
+week? If not, defer.

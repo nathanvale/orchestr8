@@ -10,7 +10,9 @@
     "./react": "./react.js",
     "./next": "./next.js",
     "./tests": "./tests.js",
-    "./ci-deep": "./ci-deep.js"
+    "./ci-deep": "./ci-deep.js",
+    "./declaration-files": "./declaration-files.js",
+    "./calibrated": "./calibrated.js"
   },
   "dependencies": {
     "@eslint/eslintrc": "^3.2.0",

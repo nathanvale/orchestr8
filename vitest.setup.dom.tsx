@@ -1,10 +1,14 @@
-// Load jest-dom matchers conditionally for DOM environments
-// We'll import this in beforeAll to handle async loading properly
+// DOM-specific setup for Vitest projects using happy-dom environment
+// Includes jest-dom matchers and DOM polyfills
 
+// Import jest-dom matchers directly
+import '@testing-library/jest-dom'
 import type { HttpHandler } from 'msw'
 import { http, HttpResponse } from 'msw'
 import { setupServer } from 'msw/node'
-import { afterAll, afterEach, beforeAll, beforeEach, vi } from 'vitest'
+import { afterAll, afterEach, beforeAll, beforeEach, expect, vi } from 'vitest'
+
+console.log('[VITEST-SETUP-DOM] Loading DOM setup with jest-dom matchers')
 
 // Mock handlers for common API patterns
 const defaultHandlers: HttpHandler[] = [
@@ -88,21 +92,24 @@ const defaultHandlers: HttpHandler[] = [
 // Setup MSW server
 export const server = setupServer(...defaultHandlers)
 
-// Global setup and teardown
+// Global setup and teardown for DOM environments
 beforeAll(() => {
+  console.log('[VITEST-SETUP-DOM] Running beforeAll setup')
+
   // Start MSW server
   server.listen({
     onUnhandledRequest: 'warn', // Log unhandled requests in development
   })
 
-  // Mock common browser APIs only in test environment and when window exists
+  // Setup DOM polyfills - these should always be available in happy-dom environment
   // Use sentinel to prevent double polyfill setup
   if (
     (process.env['VITEST'] === 'true' || process.env['NODE_ENV'] === 'test') &&
-    !(globalThis as any).__TEST_POLYFILLS_SETUP__ &&
-    typeof window !== 'undefined'
+    !(globalThis as any).__DOM_POLYFILLS_SETUP__
   ) {
-    ;(globalThis as any).__TEST_POLYFILLS_SETUP__ = true
+    ;(globalThis as any).__DOM_POLYFILLS_SETUP__ = true
+
+    console.log('[VITEST-SETUP-DOM] Setting up DOM polyfills')
 
     // Mock matchMedia only if it doesn't exist
     if (!window.matchMedia) {
@@ -163,7 +170,8 @@ beforeAll(() => {
     })
   }
 
-  // Native Bun fetch is available, no polyfill needed
+  // jest-dom matchers should be loaded automatically via side-effect import
+  console.log('[VITEST-SETUP-DOM] jest-dom matchers should be available')
 })
 
 beforeEach(() => {
@@ -181,7 +189,7 @@ afterEach(() => {
   }
   vi.clearAllTimers()
 
-  // Clean up DOM if using happy-dom
+  // Clean up DOM after each test
   if (typeof document !== 'undefined') {
     document.body.innerHTML = ''
     document.head.innerHTML = ''
@@ -189,7 +197,7 @@ afterEach(() => {
 })
 
 afterAll(() => {
-  // Clean up MSW server - simplified without arbitrary timeout
+  // Clean up MSW server
   try {
     server.close()
   } catch {
@@ -222,10 +230,6 @@ export const mockApiError = (url: string, status = 500, message = 'Server Error'
   )
 }
 
-// Test utilities are exported from src/test-utils.ts for better organization
-// Import testing utilities from there in your tests:
-// import { render, setupUser, waitForAsync } from '@/test-utils';
-
 // Custom matchers (example matcher retained; extend here as needed)
 export const customMatchers = {
   toBeWithinRange(received: number, floor: number, ceiling: number) {
@@ -241,13 +245,9 @@ export const customMatchers = {
 }
 
 // Register custom matchers with Vitest
-import { expect } from 'vitest'
 expect.extend(customMatchers)
 
 // --- Fail-fast esbuild / vite subprocess diagnostics (opt-in) ---
-// Activate by running with env BUN_TEMPLATE_ESBUILD_DIAG=1 (or using diag scripts).
-// Captures stderr patterns (EPIPE/Broken pipe / abnormal esbuild exits) and forces a non-zero exit
-// code (111) if anomalies occurred but tests otherwise passed, surfacing hidden tooling instability.
 if (process.env['BUN_TEMPLATE_ESBUILD_DIAG'] === '1') {
   const suspicious: { msg: string; time: number }[] = []
   const origWrite = process.stderr.write.bind(process.stderr)

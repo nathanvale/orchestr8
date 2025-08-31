@@ -7,14 +7,17 @@ import { startServer } from './index'
 
 describe('Server', () => {
   let server: ServerInstance
-  const API_URL = 'http://localhost:8081'
+  let API_URL: string
 
   beforeAll(async () => {
     // Configure MSW to not intercept our server requests
     const originalFetch = globalThis.fetch
     globalThis.fetch = originalFetch
 
-    server = startServer(8081)
+    // Use dynamic port allocation to avoid conflicts
+    const port = Math.floor(Math.random() * 10000) + 30000 // Random port between 30000-40000
+    API_URL = `http://localhost:${port}`
+    server = startServer(port)
     // Give server time to start
     await new Promise((resolve) => setTimeout(resolve, 1000))
   })

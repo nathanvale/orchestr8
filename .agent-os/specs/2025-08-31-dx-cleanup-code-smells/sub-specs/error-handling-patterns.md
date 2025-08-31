@@ -1,671 +1,285 @@
-# Error Handling Patterns
+# Error Handling Patterns (Lean)
 
-> Standardized error handling patterns for consistent debugging and recovery
-> Version: 1.0.0 Created: 2025-08-31
+> Purpose: Consistent, low-friction error + log hygiene. No over-engineering.
+> Keep surface area minimal; only build what enforcement gates use.
 
-## Overview
+## Scope (Must / Defer)
 
-This guide establishes consistent error handling patterns across the codebase,
-focusing on the scripts that currently have inconsistent or missing error
-handling.
+| Item                         | Status | Notes                                       |
+| ---------------------------- | ------ | ------------------------------------------- |
+| Minimal typed error base     | Must   | Single file `scripts/lib/errors.ts`         |
+| Structured logger            | Must   | JSON-friendly output (no heavy styling)     |
+| Retry helper                 | Must   | Exponential backoff + cap                   |
+| Global process handlers      | Must   | Uncaught + unhandled rejection              |
+| Script exit code unification | Must   | Single exit path per script                 |
+| React ErrorBoundary          | Defer  | Implement only if UI starts handling errors |
+| Fancy color/spinner          | Defer  | Not needed for correctness                  |
+| External error SaaS          | Defer  | Add only with real incident volume          |
 
-## Files Requiring Error Handling Improvements
+## Fast Model
 
-### Critical Scripts
+| Dimension | Standard                                       |
+| --------- | ---------------------------------------------- |
+| Throw     | Throw typed error (not raw Error)              |
+| Log       | logger.level(message, { context })             |
+| Context   | Only fields aiding triage (< 8 keys)           |
+| Code      | Upper snake (e.g. `FILE_NOT_FOUND`)            |
+| Recovery  | Use `retry()` for transient IO/network         |
+| Exit      | Exactly one place decides `process.exit(code)` |
 
-1. `/scripts/validate-pre-release.ts` - Missing structured error handling
-2. `/scripts/security-scan.ts` - Inconsistent error propagation
-3. `/scripts/pre-release-guardrails.ts` - Silent failures possible
-4. `/scripts/coverage-gate.ts` - Basic error handling only
-5. `/scripts/test-guardrails.ts` - Needs error context
+## Minimal Error Module Template
 
-## Pattern 1: Custom Error Classes
-
-### Base Error Classes
-
-**File:** `/scripts/lib/errors.ts` (to be created)
-
-```typescript
-/**
- * Base error class for all custom errors in the application
- */
-export class BaseError extends Error {
-  public readonly timestamp: Date
-  public readonly context?: Record<string, unknown>
-
+```ts
+// scripts/lib/errors.ts
+export class AppError extends Error {
   constructor(
     message: string,
-    public readonly code: string,
-    options?: ErrorOptions & { context?: Record<string, unknown> },
+    public code: string,
+    public context?: Record<string, unknown>,
+    options?: ErrorOptions,
   ) {
     super(message, options)
-    this.name = this.constructor.name
-    this.timestamp = new Date()
-    this.context = options?.context
-
-    // Maintains proper stack trace for where error was thrown
-    if (Error.captureStackTrace) {
-      Error.captureStackTrace(this, this.constructor)
-    }
-  }
-
-  toJSON(): Record<string, unknown> {
-    return {
-      name: this.name,
-      message: this.message,
-      code: this.code,
-      timestamp: this.timestamp,
-      context: this.context,
-      stack: this.stack,
-    }
+    this.name = code
   }
 }
 
-/**
- * Error class for validation failures
- */
-export class ValidationError extends BaseError {
-  constructor(
-    message: string,
-    public readonly field?: string,
-    options?: ErrorOptions & { context?: Record<string, unknown> },
-  ) {
-    super(message, 'VALIDATION_ERROR', options)
+export class ValidationError extends AppError {
+  constructor(msg: string, field?: string, ctx: Record<string, unknown> = {}) {
+    super(msg, 'VALIDATION_ERROR', { field, ...ctx })
   }
 }
 
-/**
- * Error class for script execution failures
- */
-export class ScriptExecutionError extends BaseError {
+export class ScriptError extends AppError {
   constructor(
-    message: string,
-    public readonly script: string,
-    public readonly exitCode?: number,
-    options?: ErrorOptions & { context?: Record<string, unknown> },
+    msg: string,
+    script: string,
+    exit?: number,
+    ctx: Record<string, unknown> = {},
   ) {
-    super(message, 'SCRIPT_EXECUTION_ERROR', options)
+    super(msg, 'SCRIPT_ERROR', { script, exit, ...ctx })
   }
 }
 
-/**
- * Error class for file system operations
- */
-export class FileSystemError extends BaseError {
+export class FileError extends AppError {
   constructor(
-    message: string,
-    public readonly path: string,
-    public readonly operation: 'read' | 'write' | 'delete' | 'create',
-    options?: ErrorOptions & { context?: Record<string, unknown> },
+    msg: string,
+    path: string,
+    op: string,
+    ctx: Record<string, unknown> = {},
   ) {
-    super(message, 'FILE_SYSTEM_ERROR', options)
+    super(msg, 'FILE_ERROR', { path, op, ...ctx })
   }
 }
 
-/**
- * Error class for network/API failures
- */
-export class NetworkError extends BaseError {
+export class NetworkError extends AppError {
   constructor(
-    message: string,
-    public readonly url: string,
-    public readonly statusCode?: number,
-    options?: ErrorOptions & { context?: Record<string, unknown> },
+    msg: string,
+    url: string,
+    status?: number,
+    ctx: Record<string, unknown> = {},
   ) {
-    super(message, 'NETWORK_ERROR', options)
-  }
-}
-
-/**
- * Error class for configuration issues
- */
-export class ConfigurationError extends BaseError {
-  constructor(
-    message: string,
-    public readonly configFile?: string,
-    options?: ErrorOptions & { context?: Record<string, unknown> },
-  ) {
-    super(message, 'CONFIGURATION_ERROR', options)
+    super(msg, 'NETWORK_ERROR', { url, status, ...ctx })
   }
 }
 ```
 
-## Pattern 2: Error Handling in Scripts
+Anything beyond these 5: justify with >2 real occurrences.
 
-### Example 1: Script Execution with Proper Error Handling
+## Logger (Slim)
 
-**File:** `/scripts/validate-pre-release.ts` (to be updated)
+```ts
+// scripts/lib/logger.ts
+export interface LogMeta {
+  [k: string]: unknown
+}
+type Level = 'error' | 'warn' | 'info' | 'debug'
 
-```typescript
-// ❌ BEFORE - Basic error handling
-try {
-  execSync('pnpm test')
-} catch (error) {
-  console.error('Tests failed')
-  process.exit(1)
+const current: Level = (process.env.LOG_LEVEL as Level) ?? 'info'
+const order: Record<Level, number> = { error: 0, warn: 1, info: 2, debug: 3 }
+
+function emit(level: Level, msg: string, meta?: LogMeta, err?: unknown) {
+  if (order[level] > order[current]) return
+  const base: any = { t: new Date().toISOString(), level, msg }
+  if (meta) base.meta = meta
+  if (err instanceof Error)
+    base.error = { name: err.name, message: err.message }
+  // single line JSON for grepability
+  process.stderr.write(JSON.stringify(base) + '\n')
 }
 
-// ✅ AFTER - Comprehensive error handling
-import { ScriptExecutionError } from './lib/errors'
-import { logger } from './lib/logger'
-
-async function runTests(): Promise<void> {
-  try {
-    const result = execSync('pnpm test', {
-      encoding: 'utf-8',
-      stdio: 'pipe',
-      timeout: 300000, // 5 minutes
-    })
-
-    logger.info('Tests passed successfully', {
-      output: result.substring(0, 500), // Log first 500 chars
-    })
-  } catch (error) {
-    if (isExecError(error)) {
-      throw new ScriptExecutionError(
-        `Test execution failed with exit code ${error.status}`,
-        'pnpm test',
-        error.status ?? undefined,
-        {
-          cause: error,
-          context: {
-            stdout: error.stdout?.toString().substring(0, 1000),
-            stderr: error.stderr?.toString().substring(0, 1000),
-            signal: error.signal,
-          },
-        },
-      )
-    }
-    throw error
-  }
-}
-
-// Type guard for exec errors
-function isExecError(error: unknown): error is ExecException {
-  return error instanceof Error && 'status' in error
+export const logger = {
+  error: (m: string, e?: unknown, meta?: LogMeta) => emit('error', m, meta, e),
+  warn: (m: string, meta?: LogMeta) => emit('warn', m, meta),
+  info: (m: string, meta?: LogMeta) => emit('info', m, meta),
+  debug: (m: string, meta?: LogMeta) => emit('debug', m, meta),
 }
 ```
 
-### Example 2: File Operations with Error Context
+No colors; CI-safe.
 
-**File:** `/scripts/coverage-gate.ts` (to be updated)
+## Retry Helper
 
-```typescript
-// ❌ BEFORE - Basic file reading
-const coverage = JSON.parse(
-  fs.readFileSync('coverage/coverage-summary.json', 'utf-8'),
-)
-
-// ✅ AFTER - Robust file handling with context
-import { FileSystemError, ValidationError } from './lib/errors'
-
-interface CoverageSummary {
-  total: {
-    lines: { pct: number }
-    branches: { pct: number }
-    functions: { pct: number }
-    statements: { pct: number }
-  }
-}
-
-async function readCoverageSummary(path: string): Promise<CoverageSummary> {
-  try {
-    // Check file exists first
-    await fs.promises.access(path, fs.constants.R_OK)
-
-    const content = await fs.promises.readFile(path, 'utf-8')
-
-    if (!content.trim()) {
-      throw new ValidationError('Coverage file is empty', path, {
-        context: { path },
-      })
-    }
-
-    const data = JSON.parse(content) as unknown
-
-    // Validate structure
-    if (!isCoverageSummary(data)) {
-      throw new ValidationError('Invalid coverage summary format', path, {
-        context: { actualKeys: Object.keys(data as object) },
-      })
-    }
-
-    return data
-  } catch (error) {
-    if (error instanceof ValidationError) {
-      throw error
-    }
-
-    if (isNodeError(error)) {
-      if (error.code === 'ENOENT') {
-        throw new FileSystemError(
-          'Coverage file not found. Run tests with coverage first.',
-          path,
-          'read',
-          { cause: error },
-        )
-      }
-      if (error.code === 'EACCES') {
-        throw new FileSystemError(
-          'Permission denied reading coverage file',
-          path,
-          'read',
-          { cause: error },
-        )
-      }
-    }
-
-    if (error instanceof SyntaxError) {
-      throw new ValidationError('Coverage file contains invalid JSON', path, {
-        cause: error,
-      })
-    }
-
-    throw error
-  }
-}
-
-function isCoverageSummary(value: unknown): value is CoverageSummary {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    'total' in value &&
-    typeof (value as any).total === 'object'
-  )
-}
-```
-
-## Pattern 3: Structured Logging
-
-### Logger Implementation
-
-**File:** `/scripts/lib/logger.ts` (to be created)
-
-```typescript
-import chalk from 'chalk'
-
-export enum LogLevel {
-  ERROR = 0,
-  WARN = 1,
-  INFO = 2,
-  DEBUG = 3,
-  TRACE = 4,
-}
-
-interface LogContext {
-  [key: string]: unknown
-}
-
-class Logger {
-  private level: LogLevel = LogLevel.INFO
-
-  constructor(level?: LogLevel) {
-    if (level !== undefined) {
-      this.level = level
-    } else if (process.env.LOG_LEVEL) {
-      this.level =
-        LogLevel[process.env.LOG_LEVEL as keyof typeof LogLevel] ??
-        LogLevel.INFO
-    }
-  }
-
-  private formatMessage(
-    level: string,
-    message: string,
-    context?: LogContext,
-  ): string {
-    const timestamp = new Date().toISOString()
-    const contextStr = context ? ` ${JSON.stringify(context)}` : ''
-    return `[${timestamp}] [${level}] ${message}${contextStr}`
-  }
-
-  error(message: string, error?: Error | unknown, context?: LogContext): void {
-    if (this.level >= LogLevel.ERROR) {
-      const errorContext =
-        error instanceof Error
-          ? {
-              ...context,
-              error: {
-                name: error.name,
-                message: error.message,
-                stack: error.stack,
-              },
-            }
-          : context
-
-      console.error(
-        chalk.red(this.formatMessage('ERROR', message, errorContext)),
-      )
-    }
-  }
-
-  warn(message: string, context?: LogContext): void {
-    if (this.level >= LogLevel.WARN) {
-      console.warn(chalk.yellow(this.formatMessage('WARN', message, context)))
-    }
-  }
-
-  info(message: string, context?: LogContext): void {
-    if (this.level >= LogLevel.INFO) {
-      console.info(chalk.cyan(this.formatMessage('INFO', message, context)))
-    }
-  }
-
-  debug(message: string, context?: LogContext): void {
-    if (this.level >= LogLevel.DEBUG) {
-      console.debug(chalk.gray(this.formatMessage('DEBUG', message, context)))
-    }
-  }
-
-  trace(message: string, context?: LogContext): void {
-    if (this.level >= LogLevel.TRACE) {
-      console.debug(chalk.gray(this.formatMessage('TRACE', message, context)))
-    }
-  }
-
-  success(message: string, context?: LogContext): void {
-    console.log(
-      chalk.green(`✅ ${message}`),
-      context ? chalk.gray(JSON.stringify(context)) : '',
-    )
-  }
-
-  failure(message: string, context?: LogContext): void {
-    console.log(
-      chalk.red(`❌ ${message}`),
-      context ? chalk.gray(JSON.stringify(context)) : '',
-    )
-  }
-}
-
-export const logger = new Logger()
-```
-
-## Pattern 4: Error Recovery Strategies
-
-### Retry with Exponential Backoff
-
-**File:** `/scripts/lib/retry.ts` (to be created)
-
-```typescript
+```ts
+// scripts/lib/retry.ts
 import { logger } from './logger'
-
-interface RetryOptions {
-  maxAttempts?: number
-  initialDelay?: number
-  maxDelay?: number
-  factor?: number
-  onRetry?: (error: Error, attempt: number) => void
-}
 
 export async function retry<T>(
   fn: () => Promise<T>,
-  options: RetryOptions = {},
+  opts?: {
+    attempts?: number
+    delayMs?: number
+    factor?: number
+    maxDelay?: number
+  },
 ): Promise<T> {
-  const {
-    maxAttempts = 3,
-    initialDelay = 1000,
-    maxDelay = 30000,
-    factor = 2,
-    onRetry,
-  } = options
-
-  let lastError: Error | undefined
-
-  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+  const attempts = opts?.attempts ?? 3
+  const factor = opts?.factor ?? 2
+  const maxDelay = opts?.maxDelay ?? 30_000
+  let delay = opts?.delayMs ?? 300
+  let last: unknown
+  for (let i = 1; i <= attempts; i++) {
     try {
-      logger.debug(`Attempt ${attempt}/${maxAttempts}`)
       return await fn()
-    } catch (error) {
-      lastError = error instanceof Error ? error : new Error(String(error))
-
-      if (attempt === maxAttempts) {
-        logger.error(`All ${maxAttempts} attempts failed`, lastError, {
-          finalAttempt: attempt,
-        })
-        break
-      }
-
-      const delay = Math.min(
-        initialDelay * Math.pow(factor, attempt - 1),
-        maxDelay,
-      )
-
-      logger.warn(`Attempt ${attempt} failed, retrying in ${delay}ms`, {
-        error: lastError.message,
-        nextAttempt: attempt + 1,
-        delay,
+    } catch (e) {
+      last = e
+      if (i === attempts) break
+      logger.warn('retry_attempt_failed', {
+        attempt: i,
+        error: e instanceof Error ? e.message : String(e),
       })
-
-      if (onRetry) {
-        onRetry(lastError, attempt)
-      }
-
-      await new Promise((resolve) => setTimeout(resolve, delay))
+      await new Promise((r) => setTimeout(r, delay))
+      delay = Math.min(delay * factor, maxDelay)
     }
   }
-
-  throw lastError ?? new Error('Retry failed')
+  throw last
 }
 ```
 
-### Network Request with Retry
+## Script Wrapper Pattern
 
-**File:** `/scripts/security-scan.ts` (to be updated)
+```ts
+// pattern
+import { logger } from './lib/logger'
+import { ScriptError } from './lib/errors'
 
-```typescript
-// ❌ BEFORE - No retry logic
-const response = await fetch(url)
-if (!response.ok) {
-  throw new Error(`Failed to fetch: ${response.status}`)
+async function main() {
+  // ...logic that may throw
 }
 
-// ✅ AFTER - Retry with proper error handling
-import { retry } from './lib/retry'
-import { NetworkError } from './lib/errors'
-
-async function fetchWithRetry(url: string): Promise<Response> {
-  return retry(
-    async () => {
-      const response = await fetch(url, {
-        signal: AbortSignal.timeout(30000), // 30s timeout
-      })
-
-      if (!response.ok) {
-        throw new NetworkError(
-          `HTTP ${response.status}: ${response.statusText}`,
-          url,
-          response.status,
-          {
-            context: {
-              headers: Object.fromEntries(response.headers.entries()),
-            },
-          },
-        )
-      }
-
-      return response
-    },
-    {
-      maxAttempts: 3,
-      onRetry: (error, attempt) => {
-        logger.warn(`Network request failed, attempt ${attempt}`, {
-          url,
-          error: error.message,
-        })
-      },
-    },
-  )
-}
-```
-
-## Pattern 5: Error Boundaries for React
-
-### React Error Boundary
-
-**File:** `/apps/app/src/components/ErrorBoundary.tsx` (to be created)
-
-```typescript
-import React, { Component, ErrorInfo, ReactNode } from 'react'
-import { logger } from '../lib/logger'
-
-interface Props {
-  children: ReactNode
-  fallback?: (error: Error, errorInfo: ErrorInfo) => ReactNode
-}
-
-interface State {
-  hasError: boolean
-  error: Error | null
-  errorInfo: ErrorInfo | null
-}
-
-export class ErrorBoundary extends Component<Props, State> {
-  constructor(props: Props) {
-    super(props)
-    this.state = { hasError: false, error: null, errorInfo: null }
+main().catch((err) => {
+  if (!(err instanceof ScriptError)) {
+    logger.error('unhandled_error', err)
+  } else {
+    logger.error(err.code, err, err.context)
   }
-
-  static getDerivedStateFromError(error: Error): Partial<State> {
-    return { hasError: true, error }
-  }
-
-  componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
-    logger.error('React Error Boundary caught error', error, {
-      componentStack: errorInfo.componentStack,
-      errorBoundary: true
-    })
-
-    this.setState({ errorInfo })
-  }
-
-  render(): ReactNode {
-    if (this.state.hasError && this.state.error) {
-      if (this.props.fallback) {
-        return this.props.fallback(this.state.error, this.state.errorInfo!)
-      }
-
-      return (
-        <div className="error-boundary-fallback">
-          <h2>Something went wrong</h2>
-          <details style={{ whiteSpace: 'pre-wrap' }}>
-            {this.state.error.toString()}
-            <br />
-            {this.state.errorInfo?.componentStack}
-          </details>
-        </div>
-      )
-    }
-
-    return this.props.children
-  }
-}
-```
-
-## Pattern 6: Global Error Handler
-
-### Process Error Handler
-
-**File:** `/scripts/lib/process-handler.ts` (to be created)
-
-```typescript
-import { logger } from './logger'
-
-export function setupGlobalErrorHandlers(): void {
-  // Handle uncaught exceptions
-  process.on('uncaughtException', (error: Error) => {
-    logger.error('Uncaught Exception', error, {
-      type: 'uncaughtException',
-      fatal: true,
-    })
-    process.exit(1)
-  })
-
-  // Handle unhandled promise rejections
-  process.on(
-    'unhandledRejection',
-    (reason: unknown, promise: Promise<unknown>) => {
-      logger.error('Unhandled Promise Rejection', reason, {
-        type: 'unhandledRejection',
-        promise: String(promise),
-      })
-      process.exit(1)
-    },
-  )
-
-  // Handle SIGINT (Ctrl+C)
-  process.on('SIGINT', () => {
-    logger.info('Received SIGINT, shutting down gracefully')
-    process.exit(0)
-  })
-
-  // Handle SIGTERM
-  process.on('SIGTERM', () => {
-    logger.info('Received SIGTERM, shutting down gracefully')
-    process.exit(0)
-  })
-}
-```
-
-## Implementation Checklist
-
-### Phase 1: Infrastructure
-
-- [ ] Create error class hierarchy
-- [ ] Implement structured logger
-- [ ] Add retry utilities
-- [ ] Setup global handlers
-
-### Phase 2: Script Updates
-
-- [ ] Update validate-pre-release.ts
-- [ ] Update security-scan.ts
-- [ ] Update coverage-gate.ts
-- [ ] Update all other scripts
-
-### Phase 3: Application Updates
-
-- [ ] Add React error boundaries
-- [ ] Update API error handling
-- [ ] Add error tracking
-
-## Testing Error Handling
-
-```typescript
-// Test custom errors
-describe('Error Handling', () => {
-  test('should capture context in custom errors', () => {
-    const error = new ValidationError('Invalid input', 'email', {
-      context: { value: 'not-an-email' },
-    })
-
-    expect(error.code).toBe('VALIDATION_ERROR')
-    expect(error.field).toBe('email')
-    expect(error.context).toEqual({ value: 'not-an-email' })
-  })
-
-  test('should retry on failure', async () => {
-    let attempts = 0
-    const fn = vi.fn().mockImplementation(async () => {
-      attempts++
-      if (attempts < 3) {
-        throw new Error('Temporary failure')
-      }
-      return 'success'
-    })
-
-    const result = await retry(fn, { maxAttempts: 3 })
-
-    expect(result).toBe('success')
-    expect(fn).toHaveBeenCalledTimes(3)
-  })
+  process.exit(1)
 })
 ```
 
-## Benefits
+## Global Handlers
 
-1. **Consistent Error Messages** - All errors follow the same format
-2. **Better Debugging** - Context and stack traces preserved
-3. **Graceful Recovery** - Retry logic for transient failures
-4. **Actionable Errors** - Clear messages with suggested fixes
-5. **Comprehensive Logging** - Structured logs for analysis
+```ts
+// scripts/lib/process-handlers.ts
+import { logger } from './logger'
+export function setupGlobal() {
+  process.on('unhandledRejection', (r) =>
+    logger.error('unhandled_rejection', r),
+  )
+  process.on('uncaughtException', (e) => {
+    logger.error('uncaught_exception', e)
+    process.exit(1)
+  })
+}
+```
+
+Call once per CLI entry before work starts.
+
+## Placement Rules
+
+| Concern     | Where Lives                       | Notes                   |
+| ----------- | --------------------------------- | ----------------------- |
+| Error types | `scripts/lib/errors.ts`           | Single file             |
+| Logger      | `scripts/lib/logger.ts`           | No transitive deps      |
+| Retry       | `scripts/lib/retry.ts`            | Pure + side-effect free |
+| Handlers    | `scripts/lib/process-handlers.ts` | Init early              |
+
+## Anti-Patterns (Remove On Touch)
+
+| Smell                        | Replacement                      |
+| ---------------------------- | -------------------------------- |
+| `console.log` for errors     | `logger.error(...)`              |
+| Swallow `catch {}`           | Log + rethrow or map to AppError |
+| Multiple `process.exit()`    | Single tail handler only         |
+| Giant custom hierarchy       | Keep to the 5 canonical errors   |
+| Retry without backoff        | Use central `retry()`            |
+| Inline JSON.parse inside try | Extract + validate separately    |
+
+## Lightweight Validation Pattern
+
+```ts
+function ensure(condition: any, msg: string, ctx?: Record<string, unknown>) {
+  if (!condition) throw new ValidationError(msg, undefined, ctx)
+}
+```
+
+## Minimal Coverage Gate Example
+
+```ts
+import { promises as fs } from 'fs'
+import { ValidationError, FileError } from './lib/errors'
+
+export async function loadCoverage(path = 'coverage/summary.json') {
+  try {
+    const raw = await fs.readFile(path, 'utf8')
+    const data = JSON.parse(raw)
+    if (!data?.total?.lines?.pct)
+      throw new ValidationError('bad_coverage_shape')
+    return data
+  } catch (e: any) {
+    if (e.code === 'ENOENT')
+      throw new FileError('coverage_missing', path, 'read')
+    throw e
+  }
+}
+```
+
+## Rollout Order (Fast)
+
+1. Add shared modules (errors, logger, retry, handlers)
+1. Update top 3 critical scripts to use wrapper pattern
+1. Remove stray `console.*` in touched scripts
+1. Add 1 test: custom error context + retry success
+1. Wire global handlers into any long-running dev entry if present
+
+## Refactor Checklist
+
+| Check                      | ✅  |
+| -------------------------- | --- |
+| Uses canonical error types |     |
+| No raw `console.error`     |     |
+| Single exit path           |     |
+| Retry used where transient |     |
+| Logger JSON lines only     |     |
+| Error context ≤ 8 keys     |     |
+
+## Success Signals
+
+| Signal             | Evidence                              |
+| ------------------ | ------------------------------------- |
+| Faster triage      | Log lines copy/paste into issues      |
+| Fewer silent fails | No empty catch blocks in grep         |
+| Stable scripts     | Reduced flakes post retry integration |
+| Small surface      | Error module < 120 LOC                |
+
+## Deferred (Create Issue If Needed)
+
+| Idea                           | Reason Deferred                |
+| ------------------------------ | ------------------------------ |
+| React boundary                 | Not core to script reliability |
+| Full stack traces in prod logs | Noise vs signal                |
+| Rich color logger              | CI noise + parsing complexity  |
+
+---
+
+If adding new error type: show ≥2 real-world examples + why existing types fail.
+Otherwise reject.

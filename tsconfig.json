@@ -72,7 +72,15 @@
       // Removed unused @types, @utils and @config paths (can reintroduce when directories exist)
     }
   },
-  "include": ["src/**/*", "types/**/*", "scripts/**/*", "vitest.config.ts", "vitest.setup.tsx"],
+  "include": [
+    "src/**/*",
+    "types/**/*",
+    "scripts/**/*",
+    "vitest.config.ts",
+    "vitest.setup.tsx",
+    "vitest.setup.node.tsx",
+    "vitest.setup.dom.tsx"
+  ],
   "exclude": ["node_modules", "dist", "build", "coverage", ".turbo", "**/.bun/**"],
   // Removed TypeScript project references to rely on Turborepo task graph instead
   "ts-node": {

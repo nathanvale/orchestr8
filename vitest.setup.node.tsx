@@ -1,6 +1,5 @@
-// Load jest-dom matchers conditionally for DOM environments
-// We'll import this in beforeAll to handle async loading properly
-
+// Node.js-specific setup for Vitest projects using Node.js environment
+// No DOM-related imports or jest-dom matchers
 import type { HttpHandler } from 'msw'
 import { http, HttpResponse } from 'msw'
 import { setupServer } from 'msw/node'
@@ -94,76 +93,6 @@ beforeAll(() => {
   server.listen({
     onUnhandledRequest: 'warn', // Log unhandled requests in development
   })
-
-  // Mock common browser APIs only in test environment and when window exists
-  // Use sentinel to prevent double polyfill setup
-  if (
-    (process.env['VITEST'] === 'true' || process.env['NODE_ENV'] === 'test') &&
-    !(globalThis as any).__TEST_POLYFILLS_SETUP__ &&
-    typeof window !== 'undefined'
-  ) {
-    ;(globalThis as any).__TEST_POLYFILLS_SETUP__ = true
-
-    // Mock matchMedia only if it doesn't exist
-    if (!window.matchMedia) {
-      Object.defineProperty(window, 'matchMedia', {
-        writable: true,
-        configurable: true,
-        value: vi.fn().mockImplementation((query: string) => ({
-          matches: false,
-          media: query,
-          onchange: null,
-          addListener: vi.fn(),
-          removeListener: vi.fn(),
-          addEventListener: vi.fn(),
-          removeEventListener: vi.fn(),
-          dispatchEvent: vi.fn(),
-        })),
-      })
-    }
-
-    // Mock ResizeObserver only if it doesn't exist
-    if (!global.ResizeObserver) {
-      global.ResizeObserver = vi.fn().mockImplementation(() => ({
-        observe: vi.fn(),
-        unobserve: vi.fn(),
-        disconnect: vi.fn(),
-      }))
-    }
-
-    // Mock IntersectionObserver only if it doesn't exist
-    if (!global.IntersectionObserver) {
-      global.IntersectionObserver = vi.fn().mockImplementation(() => ({
-        observe: vi.fn(),
-        unobserve: vi.fn(),
-        disconnect: vi.fn(),
-      }))
-    }
-
-    // Always mock localStorage with Vitest spies for testing
-    const localStorageMock = {
-      getItem: vi.fn(),
-      setItem: vi.fn(),
-      removeItem: vi.fn(),
-      clear: vi.fn(),
-      length: 0,
-      key: vi.fn(),
-    }
-    Object.defineProperty(window, 'localStorage', {
-      writable: true,
-      configurable: true,
-      value: localStorageMock,
-    })
-
-    // Mock sessionStorage with the same implementation
-    Object.defineProperty(window, 'sessionStorage', {
-      writable: true,
-      configurable: true,
-      value: { ...localStorageMock },
-    })
-  }
-
-  // Native Bun fetch is available, no polyfill needed
 })
 
 beforeEach(() => {
@@ -180,16 +109,10 @@ afterEach(() => {
     vi.runOnlyPendingTimers()
   }
   vi.clearAllTimers()
-
-  // Clean up DOM if using happy-dom
-  if (typeof document !== 'undefined') {
-    document.body.innerHTML = ''
-    document.head.innerHTML = ''
-  }
 })
 
 afterAll(() => {
-  // Clean up MSW server - simplified without arbitrary timeout
+  // Clean up MSW server
   try {
     server.close()
   } catch {
@@ -222,10 +145,6 @@ export const mockApiError = (url: string, status = 500, message = 'Server Error'
   )
 }
 
-// Test utilities are exported from src/test-utils.ts for better organization
-// Import testing utilities from there in your tests:
-// import { render, setupUser, waitForAsync } from '@/test-utils';
-
 // Custom matchers (example matcher retained; extend here as needed)
 export const customMatchers = {
   toBeWithinRange(received: number, floor: number, ceiling: number) {
@@ -245,9 +164,6 @@ import { expect } from 'vitest'
 expect.extend(customMatchers)
 
 // --- Fail-fast esbuild / vite subprocess diagnostics (opt-in) ---
-// Activate by running with env BUN_TEMPLATE_ESBUILD_DIAG=1 (or using diag scripts).
-// Captures stderr patterns (EPIPE/Broken pipe / abnormal esbuild exits) and forces a non-zero exit
-// code (111) if anomalies occurred but tests otherwise passed, surfacing hidden tooling instability.
 if (process.env['BUN_TEMPLATE_ESBUILD_DIAG'] === '1') {
   const suspicious: { msg: string; time: number }[] = []
   const origWrite = process.stderr.write.bind(process.stderr)
