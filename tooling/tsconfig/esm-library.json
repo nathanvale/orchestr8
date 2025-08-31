@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "jsx": "react-jsx",
+
+    // Pure ESM output
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "outDir": "./dist",
+    "tsBuildInfoFile": "./.tsbuildinfo",
+
+    // Strict compilation for better tree-shaking
+    "strict": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "allowSyntheticDefaultImports": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "noEmitOnError": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitOverride": true,
+
+    // Optimize for tree-shaking and bundlers
+    "preserveWatchOutput": true,
+    "pretty": true,
+    "composite": true
+  },
+  "include": ["src/**/*"],
+  "exclude": ["**/*.test.*", "**/*.spec.*", "tests/**/*", "dist/**/*", "build-esm.js"]
+}

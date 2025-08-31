@@ -1,13 +1,12 @@
 #!/usr/bin/env tsx
 /**
  * Coverage Ratcheting System
- * 
+ *
  * Automatically tracks and increases coverage thresholds to prevent regression.
  * Only allows threshold increases, never decreases.
  */
 
 import { existsSync, readFileSync, writeFileSync } from 'node:fs'
-import { join } from 'node:path'
 
 const BASELINE_FILE = 'coverage-baseline.json'
 const COVERAGE_SUMMARY = 'coverage/coverage-summary.json'
@@ -39,7 +38,7 @@ function loadBaseline(): BaselineData | null {
   if (!existsSync(BASELINE_FILE)) {
     return null
   }
-  
+
   try {
     const content = readFileSync(BASELINE_FILE, 'utf-8')
     return JSON.parse(content)
@@ -59,11 +58,11 @@ function loadCurrentCoverage(): CoverageMetrics | null {
     console.log('   Run tests with coverage first: pnpm test:coverage')
     return null
   }
-  
+
   try {
     const content = readFileSync(COVERAGE_SUMMARY, 'utf-8')
     const summary: CoverageSummary = JSON.parse(content)
-    
+
     return {
       lines: Math.floor(summary.total.lines.pct),
       statements: Math.floor(summary.total.statements.pct),
@@ -81,28 +80,16 @@ function updateVitestConfig(thresholds: CoverageMetrics): boolean {
     console.error(`❌ Vitest config not found at ${VITEST_CONFIG}`)
     return false
   }
-  
+
   try {
     let content = readFileSync(VITEST_CONFIG, 'utf-8')
-    
+
     // Update threshold values in the config
-    content = content.replace(
-      /branches:\s*\d+/g,
-      `branches: ${thresholds.branches}`
-    )
-    content = content.replace(
-      /functions:\s*\d+/g,
-      `functions: ${thresholds.functions}`
-    )
-    content = content.replace(
-      /lines:\s*\d+/g,
-      `lines: ${thresholds.lines}`
-    )
-    content = content.replace(
-      /statements:\s*\d+/g,
-      `statements: ${thresholds.statements}`
-    )
-    
+    content = content.replace(/branches:\s*\d+/g, `branches: ${thresholds.branches}`)
+    content = content.replace(/functions:\s*\d+/g, `functions: ${thresholds.functions}`)
+    content = content.replace(/lines:\s*\d+/g, `lines: ${thresholds.lines}`)
+    content = content.replace(/statements:\s*\d+/g, `statements: ${thresholds.statements}`)
+
     writeFileSync(VITEST_CONFIG, content)
     return true
   } catch (error) {
@@ -113,74 +100,78 @@ function updateVitestConfig(thresholds: CoverageMetrics): boolean {
 
 function main(): void {
   console.log('📈 Coverage Ratcheting System\n')
-  
+
   // Load current coverage
   const currentCoverage = loadCurrentCoverage()
   if (!currentCoverage) {
     process.exit(1)
   }
-  
+
   console.log('📊 Current Coverage:')
   console.log(`   Lines:      ${currentCoverage.lines}%`)
   console.log(`   Statements: ${currentCoverage.statements}%`)
   console.log(`   Functions:  ${currentCoverage.functions}%`)
   console.log(`   Branches:   ${currentCoverage.branches}%`)
   console.log()
-  
+
   // Load baseline
   const baseline = loadBaseline()
-  
+
   if (!baseline) {
     // First run - create baseline
     console.log('🆕 Creating initial baseline...')
-    
+
     const newBaseline: BaselineData = {
       timestamp: new Date().toISOString(),
       thresholds: currentCoverage,
       lastUpdate: new Date().toISOString(),
     }
-    
+
     saveBaseline(newBaseline)
     updateVitestConfig(currentCoverage)
-    
+
     console.log('✅ Baseline created successfully!')
     console.log(`   Thresholds set to current coverage levels`)
     return
   }
-  
+
   console.log('📈 Baseline Thresholds:')
   console.log(`   Lines:      ${baseline.thresholds.lines}%`)
   console.log(`   Statements: ${baseline.thresholds.statements}%`)
   console.log(`   Functions:  ${baseline.thresholds.functions}%`)
   console.log(`   Branches:   ${baseline.thresholds.branches}%`)
   console.log()
-  
+
   // Check for improvements
   let improved = false
   const newThresholds: CoverageMetrics = { ...baseline.thresholds }
-  
+
   for (const metric of ['lines', 'statements', 'functions', 'branches'] as const) {
     if (currentCoverage[metric] > baseline.thresholds[metric]) {
-      console.log(`🎉 ${metric} coverage improved: ${baseline.thresholds[metric]}% → ${currentCoverage[metric]}%`)
+      console.log(
+        `🎉 ${metric} coverage improved: ${baseline.thresholds[metric]}% → ${currentCoverage[metric]}%`,
+      )
       newThresholds[metric] = currentCoverage[metric]
       improved = true
     } else if (currentCoverage[metric] < baseline.thresholds[metric]) {
-      console.log(`⚠️  ${metric} coverage decreased: ${baseline.thresholds[metric]}% → ${currentCoverage[metric]}%`)
+      console.log(
+        `⚠️  ${metric} coverage decreased: ${baseline.thresholds[metric]}% → ${currentCoverage[metric]}%`,
+      )
       console.log(`   (Threshold remains at ${baseline.thresholds[metric]}%)`)
     }
   }
-  
+
   if (improved) {
     console.log('\n🔄 Updating thresholds...')
-    
+
     const updatedBaseline: BaselineData = {
       timestamp: baseline.timestamp,
       thresholds: newThresholds,
       lastUpdate: new Date().toISOString(),
     }
-    
+
     saveBaseline(updatedBaseline)
-    
+
     if (updateVitestConfig(newThresholds)) {
       console.log('✅ Coverage thresholds ratcheted up successfully!')
       console.log('   Coverage will never go below these new levels')
@@ -190,16 +181,18 @@ function main(): void {
   } else {
     console.log('\n✅ Coverage is at or below baseline - no changes made')
   }
-  
+
   // Check if current coverage meets thresholds
   let failed = false
   for (const metric of ['lines', 'statements', 'functions', 'branches'] as const) {
     if (currentCoverage[metric] < newThresholds[metric]) {
-      console.error(`\n❌ ${metric} coverage (${currentCoverage[metric]}%) is below threshold (${newThresholds[metric]}%)`)
+      console.error(
+        `\n❌ ${metric} coverage (${currentCoverage[metric]}%) is below threshold (${newThresholds[metric]}%)`,
+      )
       failed = true
     }
   }
-  
+
   if (failed) {
     console.log('\n💡 Tip: Improve test coverage to meet thresholds')
     process.exit(1)

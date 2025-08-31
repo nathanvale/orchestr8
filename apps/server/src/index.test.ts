@@ -1,26 +1,33 @@
-import { describe, test, expect, beforeAll, afterAll } from 'vitest'
-import { startServer } from './index'
+/**
+ * @vitest-environment node
+ */
+import { afterAll, beforeAll, describe, expect, test } from 'vitest'
 import type { ServerInstance } from './index'
+import { startServer } from './index'
 
 describe('Server', () => {
   let server: ServerInstance
   const API_URL = 'http://localhost:8081'
 
   beforeAll(async () => {
+    // Configure MSW to not intercept our server requests
+    const originalFetch = globalThis.fetch
+    globalThis.fetch = originalFetch
+
     server = startServer(8081)
     // Give server time to start
-    await new Promise(resolve => setTimeout(resolve, 100))
+    await new Promise((resolve) => setTimeout(resolve, 1000))
   })
 
   afterAll(async () => {
     await server.stop()
   })
-  
+
   test('GET / returns server info', async () => {
-    const response = await fetch(API_URL)
+    const response = await fetch(API_URL, { method: 'GET' })
     expect(response.status).toBe(200)
 
-    const data = await response.json()
+    const data = (await response.json()) as { name: string; status: string; endpoints: string[] }
     expect(data).toHaveProperty('name', '@template/server')
     expect(data).toHaveProperty('status', 'running')
     expect(data).toHaveProperty('endpoints')
@@ -32,7 +39,7 @@ describe('Server', () => {
     const response = await fetch(`${API_URL}/demo`)
     expect(response.status).toBe(200)
     expect(response.headers.get('content-type')).toContain('text/html')
-    
+
     const html = await response.text()
     expect(html).toContain('Node.js Server Demo')
   })
@@ -41,7 +48,12 @@ describe('Server', () => {
     const response = await fetch(`${API_URL}/api/health`)
     expect(response.status).toBe(200)
 
-    const data = await response.json()
+    const data = (await response.json()) as {
+      status: string
+      uptime: number
+      timestamp: string
+      correlationId: string
+    }
     expect(data).toHaveProperty('status', 'healthy')
     expect(data).toHaveProperty('uptime')
     expect(data).toHaveProperty('timestamp')
@@ -52,7 +64,12 @@ describe('Server', () => {
     const response = await fetch(`${API_URL}/api/metrics`)
     expect(response.status).toBe(200)
 
-    const data = await response.json()
+    const data = (await response.json()) as {
+      totalRequests: number
+      errorCount: number
+      responseTimes: number[]
+      stats: { averageResponseTime: number }
+    }
     expect(data).toHaveProperty('totalRequests')
     expect(data).toHaveProperty('errorCount')
     expect(data).toHaveProperty('responseTimes')
@@ -69,7 +86,11 @@ describe('Server', () => {
     })
     expect(response.status).toBe(200)
 
-    const data = await response.json()
+    const data = (await response.json()) as {
+      echo: string
+      timestamp: string
+      correlationId: string
+    }
     expect(data).toHaveProperty('echo', testMessage)
     expect(data).toHaveProperty('timestamp')
     expect(data).toHaveProperty('correlationId')
@@ -84,7 +105,13 @@ describe('Server', () => {
     })
     expect(response.status).toBe(200)
 
-    const data = await response.json()
+    const data = (await response.json()) as {
+      sum: number
+      average: number
+      median: number
+      p95: number
+      correlationId: string
+    }
     expect(data).toHaveProperty('sum', 15)
     expect(data).toHaveProperty('average', 3)
     expect(data).toHaveProperty('median', 3)
@@ -96,7 +123,12 @@ describe('Server', () => {
     const response = await fetch(`${API_URL}/api/logs`)
     expect(response.status).toBe(200)
 
-    const data = await response.json()
+    const data = (await response.json()) as {
+      id: string
+      timestamp: string
+      level: string
+      message: string
+    }[]
     expect(Array.isArray(data)).toBe(true)
     if (data.length > 0) {
       expect(data[0]).toHaveProperty('id')
@@ -110,7 +142,7 @@ describe('Server', () => {
     const response = await fetch(`${API_URL}/nonexistent`)
     expect(response.status).toBe(404)
 
-    const data = await response.json()
+    const data = (await response.json()) as { error: string; path: string }
     expect(data).toHaveProperty('error', 'Not found')
     expect(data).toHaveProperty('path', '/nonexistent')
   })

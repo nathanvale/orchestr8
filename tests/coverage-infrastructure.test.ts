@@ -35,12 +35,12 @@ describe('Coverage Infrastructure', (): void => {
       // Create initial directory
       const coverageDir = path.join(testCoverageRoot, 'utils')
       mkdirSync(coverageDir, { recursive: true })
-      
+
       // Try to create again - should not throw
       expect((): void => {
         mkdirSync(coverageDir, { recursive: true })
       }).not.toThrow()
-      
+
       expect(existsSync(coverageDir)).toBe(true)
     })
 
@@ -58,11 +58,7 @@ describe('Coverage Infrastructure', (): void => {
     })
 
     test('handles monorepo root files correctly', (): void => {
-      const rootFiles = [
-        'src/index.ts',
-        'tests/example.test.ts',
-        'vitest.config.ts',
-      ]
+      const rootFiles = ['src/index.ts', 'tests/example.test.ts', 'vitest.config.ts']
 
       for (const file of rootFiles) {
         const packageName = extractPackageName(file)
@@ -89,17 +85,17 @@ describe('Coverage Infrastructure', (): void => {
     test('creates coverage directory structure for CI', (): void => {
       const mockEnv = { ...process.env }
       process.env.CI = 'true'
-      
+
       const packageName = 'utils'
       const coveragePath = path.join(testCoverageRoot, packageName)
-      
+
       // Simulate CI directory creation
       if (process.env.CI) {
         mkdirSync(coveragePath, { recursive: true })
       }
-      
+
       expect(existsSync(coveragePath)).toBe(true)
-      
+
       // Restore original env
       process.env = mockEnv
     })
@@ -132,9 +128,9 @@ describe('Coverage Infrastructure', (): void => {
 
     test('handles missing coverage summary gracefully', (): void => {
       const summaryPath = path.join(testCoverageRoot, 'nonexistent', 'coverage-summary.json')
-      
+
       expect(existsSync(summaryPath)).toBe(false)
-      
+
       // Function should handle missing file
       const summary = readCoverageSummary(summaryPath)
       expect(summary).toBeNull()

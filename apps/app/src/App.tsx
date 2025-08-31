@@ -5,7 +5,6 @@ import MetricsPanel from './components/MetricsPanel'
 import { fetchServerLogs, fetchServerMetrics } from './services/api'
 import type { LogEntry, ServerMetrics } from './types'
 
-
 function App(): React.JSX.Element {
   const [logs, setLogs] = useState<LogEntry[]>([])
   const [metrics, setMetrics] = useState<ServerMetrics | null>(null)
@@ -16,7 +15,7 @@ function App(): React.JSX.Element {
     const fetchData = async (): Promise<void> => {
       try {
         setIsLoading(true)
-        console.log('[TelemetryDashboard] Fetching telemetry data')
+        console.info('[TelemetryDashboard] Fetching telemetry data')
 
         const [logsData, metricsData] = await Promise.all([fetchServerLogs(), fetchServerMetrics()])
 
@@ -35,7 +34,7 @@ function App(): React.JSX.Element {
         }
 
         setMetrics(processedMetrics)
-        console.log('[TelemetryDashboard] Telemetry data loaded successfully')
+        console.info('[TelemetryDashboard] Telemetry data loaded successfully')
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Failed to fetch data'
         console.error('[TelemetryDashboard] Failed to fetch telemetry data:', message)

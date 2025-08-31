@@ -57,7 +57,12 @@ interface LogHeaderProps {
   setLevelFilter: (value: string) => void
 }
 
-function LogHeader({ filter, setFilter, levelFilter, setLevelFilter }: LogHeaderProps): React.JSX.Element {
+function LogHeader({
+  filter,
+  setFilter,
+  levelFilter,
+  setLevelFilter,
+}: LogHeaderProps): React.JSX.Element {
   return (
     <div className="log-header">
       <h2>📝 Server Logs</h2>

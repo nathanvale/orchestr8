@@ -1,28 +1,12 @@
-import '@testing-library/jest-dom/vitest'
+// Only import testing-library in browser-like environments
+if (typeof window !== 'undefined') {
+  import('@testing-library/jest-dom/vitest')
+}
+
 import type { HttpHandler } from 'msw'
 import { http, HttpResponse } from 'msw'
 import { setupServer } from 'msw/node'
 import { afterAll, afterEach, beforeAll, beforeEach, vi } from 'vitest'
-
-// Mock the 'bun' module for tests that import it
-// Simplified synchronous mock to prevent module graph reordering issues
-// Gate behind BUN_VERSION check to only mock when not in actual Bun runtime
-if (!process.env['BUN_VERSION']) {
-  vi.mock('bun', () => {
-    const mockServer = {
-      port: 3000,
-      hostname: 'localhost',
-      stop: vi.fn(),
-      reload: vi.fn(),
-    }
-
-    return {
-      serve: vi.fn(() => mockServer),
-      env: process.env,
-      version: '1.1.38',
-    }
-  })
-}
 
 // Mock handlers for common API patterns
 const defaultHandlers: HttpHandler[] = [
@@ -113,13 +97,14 @@ beforeAll(() => {
     onUnhandledRequest: 'warn', // Log unhandled requests in development
   })
 
-  // Mock common browser APIs only in test environment
+  // Mock common browser APIs only in test environment and when window exists
   // Use sentinel to prevent double polyfill setup
   if (
-    (process.env['VITEST'] === 'true' || process.env.NODE_ENV === 'test') &&
-    !globalThis.__TEST_POLYFILLS_SETUP__
+    (process.env['VITEST'] === 'true' || process.env['NODE_ENV'] === 'test') &&
+    !(globalThis as any).__TEST_POLYFILLS_SETUP__ &&
+    typeof window !== 'undefined'
   ) {
-    globalThis.__TEST_POLYFILLS_SETUP__ = true
+    ;(globalThis as any).__TEST_POLYFILLS_SETUP__ = true
 
     // Mock matchMedia only if it doesn't exist
     if (!window.matchMedia) {
@@ -157,29 +142,27 @@ beforeAll(() => {
       }))
     }
 
-    // Mock localStorage only if it doesn't exist
-    if (!window.localStorage) {
-      const localStorageMock = {
-        getItem: vi.fn(),
-        setItem: vi.fn(),
-        removeItem: vi.fn(),
-        clear: vi.fn(),
-        length: 0,
-        key: vi.fn(),
-      }
-      Object.defineProperty(window, 'localStorage', {
-        writable: true,
-        configurable: true,
-        value: localStorageMock,
-      })
-
-      // Mock sessionStorage with the same implementation
-      Object.defineProperty(window, 'sessionStorage', {
-        writable: true,
-        configurable: true,
-        value: { ...localStorageMock },
-      })
+    // Always mock localStorage with Vitest spies for testing
+    const localStorageMock = {
+      getItem: vi.fn(),
+      setItem: vi.fn(),
+      removeItem: vi.fn(),
+      clear: vi.fn(),
+      length: 0,
+      key: vi.fn(),
     }
+    Object.defineProperty(window, 'localStorage', {
+      writable: true,
+      configurable: true,
+      value: localStorageMock,
+    })
+
+    // Mock sessionStorage with the same implementation
+    Object.defineProperty(window, 'sessionStorage', {
+      writable: true,
+      configurable: true,
+      value: { ...localStorageMock },
+    })
   }
 
   // Native Bun fetch is available, no polyfill needed

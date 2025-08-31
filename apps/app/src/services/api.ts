@@ -1,6 +1,5 @@
+import { API_BASE_URL } from '../env'
 import type { LogEntry, ServerMetrics } from '../types'
-
-const API_BASE_URL = (import.meta.env.VITE_API_URL as string | undefined) ?? 'http://localhost:3333'
 
 export async function fetchHealth(): Promise<{ status: string; uptime: number }> {
   const response = await fetch(`${API_BASE_URL}/api/health`)

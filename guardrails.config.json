@@ -1,0 +1,92 @@
+{
+  "$schema": "./scripts/lib/guardrails-schema.json",
+  "version": "1.0.0",
+  "description": "Guardrails configuration for pre-release validation",
+
+  "thresholds": {
+    "staleChangeset": {
+      "warningDays": 30,
+      "errorDays": 60,
+      "description": "Days before a changeset is considered stale"
+    },
+    "vulnerabilities": {
+      "critical": 0,
+      "high": 0,
+      "medium": 5,
+      "low": 10,
+      "description": "Maximum allowed vulnerabilities by severity"
+    },
+    "coverage": {
+      "lines": 70,
+      "branches": 70,
+      "functions": 70,
+      "statements": 70,
+      "description": "Minimum coverage percentages"
+    },
+    "bundleSize": {
+      "maxSizeKB": 500,
+      "warningThresholdPercent": 10,
+      "description": "Maximum bundle size and warning threshold"
+    }
+  },
+
+  "validation": {
+    "changesetSimilarity": {
+      "threshold": 0.85,
+      "algorithm": "levenshtein",
+      "description": "Similarity threshold for duplicate changeset detection"
+    },
+    "packageNameValidation": {
+      "pattern": "^@template/[a-z-]+$",
+      "reservedNames": ["core", "internal", "private"],
+      "description": "Package naming requirements"
+    },
+    "commitMessage": {
+      "pattern": "^(feat|fix|docs|style|refactor|test|chore|perf)\\(.+\\): .+",
+      "maxLength": 100,
+      "description": "Conventional commit format"
+    }
+  },
+
+  "ignoredPaths": {
+    "vulnerabilityScanning": ["**/test/**", "**/tests/**", "**/__tests__/**", "**/examples/**"],
+    "changesetValidation": ["**/CHANGELOG.md", "**/README.md", "**/docs/**"]
+  },
+
+  "features": {
+    "autoFix": {
+      "enabled": false,
+      "description": "Automatically fix issues when possible"
+    },
+    "strictMode": {
+      "enabled": false,
+      "description": "Fail on any warning (treat warnings as errors)"
+    },
+    "parallelExecution": {
+      "enabled": true,
+      "maxWorkers": 4,
+      "description": "Run checks in parallel for faster execution"
+    },
+    "caching": {
+      "enabled": true,
+      "ttlMinutes": 15,
+      "description": "Cache results to speed up repeated runs"
+    }
+  },
+
+  "output": {
+    "format": "auto",
+    "verbose": false,
+    "showProgress": true,
+    "colorize": "auto",
+    "summaryOnly": false,
+    "githubAnnotations": true
+  },
+
+  "hooks": {
+    "preValidation": [],
+    "postValidation": [],
+    "onError": [],
+    "onSuccess": []
+  }
+}

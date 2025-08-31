@@ -2,12 +2,12 @@
   "$schema": "https://json.schemastore.org/tsconfig",
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    // Use bundler resolution for monorepo compatibility - Bun handles Node.js compatibility
-    // This avoids requiring explicit file extensions which are not needed in our Bun-first architecture
-    "moduleResolution": "bundler",
-    "module": "ESNext",
+    // Use node16 resolution for monorepo compatibility - Node.js handles Node.js compatibility
+    // This avoids requiring explicit file extensions which are not needed in our Node.js + pnpm architecture
+    "moduleResolution": "node16",
+    "module": "node16",
     // rootDir removed for monorepo structure
-    "types": ["bun-types"]
+    "types": ["node", "vitest/globals"] // Removed bun-types, added node types
   },
   "include": ["packages/*/src/**/*", "apps/*/src/**/*"],
   "exclude": [
@@ -29,4 +29,5 @@
     "vitest.setup.tsx",
     "wallaby.mjs"
   ]
+  // Removed project references to avoid global composite build; Turborepo orchestrates builds
 }

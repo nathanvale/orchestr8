@@ -85,11 +85,11 @@ single status command
   - [x] Report last test timestamp
   - [x] Show Turbo cache status
 
-- [ ] **Add pre-release guardrails** `S`
-  - [ ] Changeset validation script
-  - [ ] Security scan automation
-  - [ ] Export map linting
-  - [ ] Stale changeset alerts
+- [x] **Add pre-release guardrails** `S`
+  - [x] Changeset validation script
+  - [x] Security scan automation
+  - [x] Export map linting
+  - [x] Stale changeset alerts
 
 ### 🔒 Security Baseline
 

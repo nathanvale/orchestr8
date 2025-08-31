@@ -1,6 +1,6 @@
 // Minimal setup for server tests
 // No DOM-related imports or mocks needed for Node.js server testing
-import { afterAll, afterEach, beforeAll } from 'vitest'
+import { afterAll, afterEach } from 'vitest'
 
 // Clean up any resources after tests
 afterEach(() => {

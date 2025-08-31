@@ -46,13 +46,13 @@ export default tseslint.config(
     languageOptions: {
       parser: tseslint.parser,
       parserOptions: {
-        project: ['./tsconfig.json', './apps/*/tsconfig.json', './packages/*/tsconfig.json'],
+        // Use explicit project array for monorepo with targeted include patterns for performance
+        project: true, // Auto-detect tsconfig files
         tsconfigRootDir: import.meta.dirname,
         ecmaVersion: 2024,
         sourceType: 'module',
       },
       globals: {
-        Bun: 'readonly',
         console: 'readonly',
         process: 'readonly',
         Buffer: 'readonly',
@@ -171,6 +171,7 @@ export default tseslint.config(
     languageOptions: {
       parser: tseslint.parser,
       parserOptions: {
+        // Use Vitest tsconfig for test files
         project: './tsconfig.vitest.json',
         tsconfigRootDir: import.meta.dirname,
         ecmaVersion: 2024,

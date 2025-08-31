@@ -1,7 +1,7 @@
 import { http, HttpResponse } from 'msw'
 import type { LogEntry, ServerMetrics } from '../types'
 
-const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3001'
+const API_BASE_URL = 'http://localhost:3001' // Use fixed URL for mocks
 
 // Generate mock log data
 function generateMockLogs(): LogEntry[] {

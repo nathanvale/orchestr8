@@ -6,13 +6,12 @@
     "declarationMap": true,
     "sourceMap": true,
     "outDir": "./dist",
-    "rootDir": "./src",
     "types": ["@types/node"],
     "lib": ["ES2022"],
     "target": "ES2022",
     "module": "ESNext"
   },
-  "include": ["src/**/*", "vitest.config.ts"],
-  "exclude": ["dist", "coverage", "node_modules"],
-  "references": [{ "path": "../../packages/utils" }]
+  "include": ["src/**/*", "vitest.setup.ts"],
+  "exclude": ["dist", "coverage", "node_modules", "vitest.config.ts", "tsup.config.ts"]
+  // Removed project references; Turborepo handles build ordering
 }

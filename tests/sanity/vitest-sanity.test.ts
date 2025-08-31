@@ -1,3 +1,6 @@
+/**
+ * @vitest-environment happy-dom
+ */
 import { describe, expect, test } from 'vitest'
 import { customMatchers, mockApiResponse } from '../../vitest.setup'
 
@@ -12,9 +15,9 @@ describe('vitest sanity check', () => {
 
   test('MSW handlers function correctly', async () => {
     // Test that MSW server responds to API calls
-    mockApiResponse('/api/test', { message: 'success' }, 200)
+    mockApiResponse('http://localhost/api/test', { message: 'success' }, 200)
 
-    const response = await fetch('/api/test')
+    const response = await fetch('http://localhost/api/test')
     const data = await response.json()
 
     expect(response.status).toBe(200)

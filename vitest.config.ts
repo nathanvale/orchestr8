@@ -5,10 +5,10 @@ import { defineConfig } from 'vitest/config'
 
 /**
  * Shared Vitest Configuration
- * 
+ *
  * This is the base configuration used by all projects in the monorepo.
  * Individual projects can override these settings as needed.
- * 
+ *
  * For multi-project workspace configuration, see vitest.workspace.ts
  */
 
@@ -43,48 +43,23 @@ export default defineConfig({
   cacheDir: '.vitest',
 
   test: {
-    // Multi-project configuration
-    projects: [
-      // Utility packages - Node environment
-      {
-        name: 'packages',
-        root: './packages',
-        environment: 'node',
-        include: ['**/src/**/*.{test,spec}.{ts,tsx}', '**/tests/**/*.{test,spec}.{ts,tsx}'],
-        exclude: ['**/node_modules/**', '**/dist/**', '**/build/**', '**/coverage/**'],
-        setupFiles: ['../vitest.setup.tsx'],
-      },
-      
-      // Server application - Node environment
-      {
-        name: 'server',
-        root: './apps/server',
-        environment: 'node',
-        include: ['src/**/*.{test,spec}.{ts,tsx}', 'tests/**/*.{test,spec}.{ts,tsx}'],
-        exclude: ['node_modules/**', 'dist/**', 'build/**', 'coverage/**'],
-        setupFiles: ['./vitest.setup.ts'],
-      },
-      
-      // Vite React app - jsdom environment
-      {
-        name: 'app',
-        root: './apps/app',
-        environment: 'jsdom',
-        include: ['src/**/*.{test,spec}.{ts,tsx}', 'tests/**/*.{test,spec}.{ts,tsx}'],
-        exclude: ['node_modules/**', 'dist/**', 'build/**', 'coverage/**'],
-        setupFiles: ['../../vitest.setup.tsx'],
-      },
-      
-      // Next.js app - jsdom environment (if tests are added)
-      {
-        name: 'web',
-        root: './apps/web',
-        environment: 'jsdom',
-        include: ['**/*.{test,spec}.{ts,tsx}'],
-        exclude: ['node_modules/**', '.next/**', 'coverage/**'],
-        setupFiles: ['../../vitest.setup.tsx'],
-      },
+    // Default environment (can be overridden per project)
+    environment: 'node',
+
+    // Include all test files across the monorepo
+    include: [
+      'tests/**/*.{test,spec}.{ts,tsx}',
+      'packages/**/src/**/*.{test,spec}.{ts,tsx}',
+      'packages/**/tests/**/*.{test,spec}.{ts,tsx}',
+      'apps/*/src/**/*.{test,spec}.{ts,tsx}',
+      'apps/*/tests/**/*.{test,spec}.{ts,tsx}',
     ],
+
+    // Global excludes
+    exclude: ['**/node_modules/**', '**/dist/**', '**/build/**', '**/coverage/**', '**/.next/**'],
+
+    // Setup files
+    setupFiles: ['./vitest.setup.tsx'],
 
     // Why: Forks pool prevents worker termination issues in Bun/Vitest hybrid
     // Trade-off: Slightly slower than threads but more stable for Bun runtime
@@ -121,13 +96,16 @@ export default defineConfig({
         '**/*.d.ts',
         '**/*.config.{js,ts,mjs}',
         '**/.{eslint,prettier}rc.{js,cjs,yml,yaml,json}',
+        '**/*.test.{js,ts,jsx,tsx}',
+        '**/*.spec.{js,ts,jsx,tsx}',
         'vitest.setup.tsx',
+        'vitest.server.setup.ts',
         'wallaby.js',
-        'tests/mocks/**',
-        'tests/setup/**',
-        'tests/utils/**',
+        'tests/**',
+        '**/test-utils.tsx',
+        '**/mocks/**',
       ],
-      include: ['src/**/*.{js,ts,jsx,tsx}'],
+      include: ['packages/*/src/**/*.{js,ts,jsx,tsx}', 'apps/*/src/**/*.{js,ts,jsx,tsx}'],
       // Coverage threshold strategy:
       // - Global thresholds apply to all files by default
       // - Critical modules can have stricter per-file thresholds

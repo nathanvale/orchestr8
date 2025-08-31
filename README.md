@@ -1,6 +1,8 @@
 # 🚀 Node.js + pnpm Changesets Template
 
-ADHD-optimized Node.js + pnpm monorepo with Next.js, Turborepo orchestration, and standardized package builds—production-ready from day one with sub-5s feedback loops.
+ADHD-optimized Node.js + pnpm monorepo with Next.js, Turborepo orchestration,
+and standardized package builds—production-ready from day one with sub-5s
+feedback loops.
 
 ## 🎯 Quick Start
 
@@ -35,7 +37,8 @@ ADHD-optimized Node.js + pnpm monorepo with Next.js, Turborepo orchestration, an
 
    Next.js app starts on http://localhost:3000
 
-4. **Test the full-stack connection** Open http://localhost:3000 to see the working API connection and real-time metrics dashboard.
+4. **Test the full-stack connection** Open http://localhost:3000 to see the
+   working API connection and real-time metrics dashboard.
 
 ## 🏗️ Architecture
 
@@ -113,7 +116,7 @@ pnpm install
 # Run all tests across packages
 pnpm test
 
-# Build all packages
+# Build all packages (Pure ESM with TypeScript)
 pnpm build
 
 # Type check all packages
@@ -124,6 +127,25 @@ pnpm lint
 
 # Validate everything (tests, types, lint)
 pnpm validate
+
+# Troubleshoot build issues
+pnpm dx:status
+```
+
+### Build System Commands
+
+```bash
+# Validate module imports
+node -e "import('@template/utils')"
+
+# Check type declarations
+test -f dist-types/index.d.ts
+
+# Build performance profiling
+time pnpm build
+
+# Turborepo cache status
+turbo run build --dry-run
 ```
 
 ### Server (`apps/server/`)
@@ -264,16 +286,20 @@ pnpm start
 - `PORT` - Server port (default: 3333)
 - `NODE_ENV` - Environment (development/production)
 - `VITE_API_URL` - API base URL for Vite app (default: http://localhost:3333)
-- `NEXT_PUBLIC_API_URL` - API base URL for Next.js (default: http://localhost:3333)
+- `NEXT_PUBLIC_API_URL` - API base URL for Next.js (default:
+  http://localhost:3333)
 
 ## 🎨 Features Showcase
 
 ### ADHD-Optimized DX
 
-- **Sub-5s feedback loops**: Instant test results with Vitest and Wallaby.js integration
+- **Sub-5s feedback loops**: Instant test results with Vitest and Wallaby.js
+  integration
 - **Zero-config scaffolding**: `pnpm gen:package` creates new packages instantly
-- **Status at a glance**: `pnpm dx:status` shows pending changesets, coverage, outdated deps
-- **Flow accelerators**: Clear structure, working examples, minimal configuration
+- **Status at a glance**: `pnpm dx:status` shows pending changesets, coverage,
+  outdated deps
+- **Flow accelerators**: Clear structure, working examples, minimal
+  configuration
 
 ### Enterprise-Ready Foundation
 
@@ -303,6 +329,28 @@ pnpm start
 3. Use Vitest for all new tests
 4. Update documentation for user-facing changes
 5. Test locally across all packages with `pnpm validate`
+6. Refer to `MIGRATION-NOTES.md` for build system details
+7. Check `TROUBLESHOOTING.md` if you encounter build issues
+
+### Build System
+
+- Pure ESM build using TypeScript compiler
+- <2s build times with Turborepo caching
+- Type declarations generated separately
+- Optimized for tree-shaking and modern tooling
+
+### Recommended Workflow
+
+```bash
+# Validate everything before committing
+pnpm validate
+
+# Build all packages
+pnpm build
+
+# Troubleshoot build issues
+pnpm dx:status
+```
 
 ## 📜 License
 
@@ -310,4 +358,5 @@ MIT - See LICENSE file for details.
 
 ---
 
-**Built with ❤️ for developers who need fast, focused, production-ready solutions.**
+**Built with ❤️ for developers who need fast, focused, production-ready
+solutions.**

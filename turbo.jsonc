@@ -6,7 +6,7 @@
     // Build task: Compile TypeScript and generate output artifacts
     "build": {
       "dependsOn": ["^build"], // Wait for upstream packages to build first
-      "outputs": ["dist/**", "dist-node/**", "dist-types/**", ".tsbuildinfo", ".next/**"], // Cache all build outputs
+      "outputs": ["dist/**", ".tsbuildinfo"], // Cache actual build outputs only
       "inputs": [
         "$TURBO_DEFAULT$",
         "!*.md",
@@ -22,11 +22,7 @@
     // Test task: Run unit and integration tests with multi-project support
     "test": {
       "dependsOn": ["^build"], // Wait for upstream packages to build first
-      "outputs": [
-        "coverage/**",
-        "test-results/**",
-        ".vitest/**"
-      ], // Cache test coverage and results
+      "outputs": ["coverage/**"], // Cache test coverage
       "inputs": [
         "$TURBO_DEFAULT$",
         "!*.md",
@@ -36,7 +32,7 @@
         "vitest.config.ts",
         "vitest.setup.tsx",
         "vitest.setup.ts",
-        ".env*"
+        ".env*",
       ],
       "cache": true,
       "env": ["NODE_ENV", "VITEST_WATCH"], // Test behavior may vary by environment
@@ -45,11 +41,7 @@
     // CI Test task: Run tests with CI-specific settings (coverage, bail on first failure)
     "test:ci": {
       "dependsOn": ["^build"], // Wait for upstream packages to build first
-      "outputs": [
-        "coverage/**",
-        "test-results/**",
-        ".vitest/**"
-      ], // Cache test coverage and results
+      "outputs": ["coverage/**", "test-results/**", ".vitest/**"], // Cache test coverage and results
       "inputs": [
         "$TURBO_DEFAULT$",
         "!*.md",
@@ -59,7 +51,7 @@
         "vitest.config.ts",
         "vitest.setup.tsx",
         "vitest.setup.ts",
-        ".env*"
+        ".env*",
       ],
       "cache": true,
       "env": ["NODE_ENV", "CI", "GITHUB_ACTIONS"], // CI environment affects test behavior
@@ -71,23 +63,48 @@
       "inputs": [
         "src/**/*.test.ts", // Test files
         "tests/**/*.ts", // Test utilities
-        "dist/**", // Built Bun artifacts
-        "dist-node/**", // Built Node.js artifacts
+        "dist/**", // Built artifacts
       ],
       "cache": true,
     },
 
-    // Lint task: Code quality and style checking
+    // Lint task: Code quality and style checking (read-only)
     "lint": {
       "outputs": [".eslintcache"], // Cache lint results for faster re-runs
-      "inputs": ["$TURBO_DEFAULT$", "!*.md", "!**/*.md", "!dist/**", "!coverage/**"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "!*.md",
+        "!**/*.md",
+        "!dist/**",
+        "!coverage/**",
+        "!test-results/**",
+        "!.vitest/**",
+        "eslint.config.js",
+        "tsconfig*.json",
+      ],
       "cache": true,
+    },
+
+    // Lint fix task: Auto-fix code quality and style issues (write operation)
+    "lint:fix": {
+      "outputs": [".eslintcache"], // Cache lint results for faster re-runs
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "!*.md",
+        "!**/*.md",
+        "!dist/**",
+        "!coverage/**",
+        "!test-results/**",
+        "!.vitest/**",
+        "eslint.config.js",
+        "tsconfig*.json",
+      ],
+      "cache": false, // Don't cache fix operations since they modify source files
     },
 
     // Type checking: Static analysis for TypeScript errors
     "typecheck": {
-      // Use transit graph so downstream typechecks see upstream changes without fully serializing
-      "dependsOn": ["transit"],
+      "dependsOn": ["^typecheck"], // Wait for upstream typechecks to complete first
       "inputs": ["$TURBO_DEFAULT$", "!*.md", "!**/*.md", "!**/*.js", "!**/*.jsx"],
       "cache": true,
     },
@@ -123,16 +140,8 @@
     // Test coverage task: Run tests with coverage collection
     "test:coverage": {
       "dependsOn": ["^build"],
-      "outputs": [
-        "coverage/**",
-        "test-results/**"
-      ],
-      "inputs": [
-        "$TURBO_DEFAULT$",
-        "!*.md",
-        "!**/*.md",
-        "vitest.config.ts"
-      ],
+      "outputs": ["coverage/**", "test-results/**"],
+      "inputs": ["$TURBO_DEFAULT$", "!*.md", "!**/*.md", "vitest.config.ts"],
       "cache": true,
       "env": ["NODE_ENV"],
     },
@@ -183,7 +192,7 @@
     "signature": false, // Set to true after configuring TURBO_REMOTE_CACHE_SIGNATURE_KEY
     "preflight": true, // Validate cache availability before operations
     "timeout": 60, // 60-second artifact retrieval timeout
-    "uploadTimeout": 120 // 2-minute upload timeout for large artifacts
+    "uploadTimeout": 120, // 2-minute upload timeout for large artifacts
   },
 
   // Future enhancements:

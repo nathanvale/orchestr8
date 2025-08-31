@@ -139,7 +139,7 @@ function measureBundleSize(): number {
     if (existsSync(distIndexPath)) {
       const stats = execSync(`ls -la ${distIndexPath}`, { encoding: 'utf8' })
       const sizeMatch = /\s+(\d+)\s+/.exec(stats)
-      const size = sizeMatch ? parseInt(sizeMatch[1], 10) : 0
+      const size = sizeMatch ? parseInt(sizeMatch[1]!, 10) : 0
 
       console.log(`   Bundle size: ${size.toString()} bytes (${(size / 1024).toFixed(1)} KB)`)
       return size
@@ -257,11 +257,11 @@ function checkRegressions(metrics: PerformanceMetrics, allMetrics: PerformanceMe
   console.log('')
   console.log('🔍 Change Detection:')
 
-  const cacheRateChange = (metrics.cacheHitRate - previous.cacheHitRate) * 100
+  const cacheRateChange = (metrics.cacheHitRate - previous!.cacheHitRate) * 100
   const buildTimeChange =
-    ((metrics.buildTimeMs - previous.buildTimeMs) / previous.buildTimeMs) * 100
+    ((metrics.buildTimeMs - previous!.buildTimeMs) / previous!.buildTimeMs) * 100
   const bundleSizeChange =
-    ((metrics.bundleSizeBytes - previous.bundleSizeBytes) / previous.bundleSizeBytes) * 100
+    ((metrics.bundleSizeBytes - previous!.bundleSizeBytes) / previous!.bundleSizeBytes) * 100
 
   if (Math.abs(cacheRateChange) > 5) {
     console.log(`   Cache Rate: ${cacheRateChange > 0 ? '+' : ''}${cacheRateChange.toFixed(1)}%`)

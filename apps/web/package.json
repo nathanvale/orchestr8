@@ -9,13 +9,14 @@
   },
   "type": "module",
   "scripts": {
-    "dev": "next dev",
     "build": "next build",
-    "start": "next start",
+    "dev": "next dev",
     "lint": "NODE_NO_WARNINGS=1 eslint .",
-    "typecheck": "tsc --noEmit",
+    "lint:fix": "NODE_NO_WARNINGS=1 eslint . --fix",
+    "start": "next start",
     "test": "vitest run",
-    "test:ci": "vitest run --bail 1"
+    "test:ci": "vitest run --bail 1",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@template/utils": "workspace:*",

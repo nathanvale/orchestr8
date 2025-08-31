@@ -10,38 +10,43 @@
   "type": "module",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
+      "types": "./dist-types/index.d.ts",
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
     },
     "./number": {
-      "types": "./dist/number-utils.d.ts",
+      "types": "./dist-types/number-utils.d.ts",
       "import": "./dist/number-utils.js",
       "require": "./dist/number-utils.cjs"
     },
     "./path": {
-      "types": "./dist/path-utils.d.ts",
+      "types": "./dist-types/path-utils.d.ts",
       "import": "./dist/path-utils.js",
       "require": "./dist/path-utils.cjs"
     },
     "./test": {
-      "types": "./dist/test-utils.d.ts",
+      "types": "./dist-types/test-utils.d.ts",
       "import": "./dist/test-utils.js",
       "require": "./dist/test-utils.cjs"
     }
   },
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "files": ["dist", "README.md"],
+  "types": "./dist-types/index.d.ts",
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "scripts": {
+    "build": "tsup && pnpm run build:types",
+    "build:types": "tsc --project tsconfig.types.json",
     "clean": "rm -rf dist .tsbuildinfo",
-    "build": "tsup",
-    "typecheck": "tsc --noEmit",
+    "lint": "NODE_NO_WARNINGS=1 eslint .",
+    "lint:fix": "NODE_NO_WARNINGS=1 eslint . --fix",
+    "prepublishOnly": "pnpm run build && test -d dist",
     "test": "vitest run",
     "test:ci": "vitest run --bail 1",
-    "prepublishOnly": "pnpm run build && test -d dist",
-    "lint": "NODE_NO_WARNINGS=1 eslint ."
+    "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
     "tsup": "^8.3.0"

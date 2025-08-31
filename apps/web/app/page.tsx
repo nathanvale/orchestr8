@@ -1,4 +1,4 @@
-import { sum, average, normalizePath } from '@template/utils'
+import { average, normalizePath, sum } from '@template/utils'
 import React from 'react'
 
 export default function Home(): React.JSX.Element {
@@ -10,7 +10,7 @@ export default function Home(): React.JSX.Element {
     <main style={{ padding: '2rem', fontFamily: 'system-ui' }}>
       <h1>Next.js + pnpm Monorepo</h1>
       <p>Welcome to your modern monorepo template!</p>
-      
+
       <section style={{ marginTop: '2rem' }}>
         <h2>Utils Package Demo</h2>
         <p>

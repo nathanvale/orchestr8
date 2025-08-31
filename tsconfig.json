@@ -1,13 +1,13 @@
 {
   "$schema": "https://json.schemastore.org/tsconfig",
   "compilerOptions": {
-    // Why: ESNext for modern JS features without transpilation overhead
+    // Why: ESNext for modern JS features with import.meta support
     "target": "ESNext",
     "lib": ["ESNext", "DOM", "DOM.Iterable"],
-    "module": "ESNext",
-    // Why: "bundler" resolution matches Bun's native behavior
+    "module": "node16",
+    // Why: "node16" resolution and module for better Node.js compatibility with pnpm and import.meta support
     // Note: tsconfig.build.json overrides to "NodeNext" for Node.js compatibility
-    "moduleResolution": "bundler",
+    "moduleResolution": "node16",
     "moduleDetection": "force", // Why: Treat all files as modules (no global scripts)
     "jsx": "react-jsx", // Why: React 17+ automatic JSX transform
 
@@ -51,6 +51,7 @@
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
+    "downlevelIteration": true, // Why: Support for-of loops with Set/Map
 
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
@@ -73,6 +74,7 @@
   },
   "include": ["src/**/*", "types/**/*", "scripts/**/*", "vitest.config.ts", "vitest.setup.tsx"],
   "exclude": ["node_modules", "dist", "build", "coverage", ".turbo", "**/.bun/**"],
+  // Removed TypeScript project references to rely on Turborepo task graph instead
   "ts-node": {
     "esm": true,
     "experimentalSpecifierResolution": "node",

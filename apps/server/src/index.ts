@@ -1,8 +1,8 @@
-import { average, median, percentile } from '@template/utils'
 import { createConsoleLogger } from '@orchestr8/logger'
+import { average, median, percentile } from '@template/utils'
 import http from 'node:http'
-import { fileURLToPath } from 'node:url'
 import { argv } from 'node:process'
+import { fileURLToPath } from 'node:url'
 
 const logger = createConsoleLogger({
   name: 'Server',
@@ -22,7 +22,7 @@ class MetricsCollector {
     this.responseTimes.push(responseTime)
     this.totalRequests++
     if (isError) this.errorCount++
-    
+
     // Keep only last 1000 response times
     if (this.responseTimes.length > 1000) {
       this.responseTimes.shift()
@@ -118,7 +118,11 @@ export interface ServerInstance {
 }
 
 // Route handlers
-function handleRoot(correlationId: string): { status: number; body: string; headers: Record<string, string> } {
+function handleRoot(correlationId: string): {
+  status: number
+  body: string
+  headers: Record<string, string>
+} {
   logger.debug('Serving root endpoint', { correlationId })
   return {
     status: 200,
@@ -139,7 +143,11 @@ function handleRoot(correlationId: string): { status: number; body: string; head
   }
 }
 
-function handleHealth(correlationId: string): { status: number; body: string; headers: Record<string, string> } {
+function handleHealth(correlationId: string): {
+  status: number
+  body: string
+  headers: Record<string, string>
+} {
   const uptime = Math.floor((Date.now() - startTime) / 1000)
   logger.debug('Health check requested', { correlationId, uptime })
 
@@ -155,7 +163,11 @@ function handleHealth(correlationId: string): { status: number; body: string; he
   }
 }
 
-function handleLogs(correlationId: string): { status: number; body: string; headers: Record<string, string> } {
+function handleLogs(correlationId: string): {
+  status: number
+  body: string
+  headers: Record<string, string>
+} {
   logger.debug('Logs requested', { correlationId, count: logStore.length })
 
   return {
@@ -165,7 +177,11 @@ function handleLogs(correlationId: string): { status: number; body: string; head
   }
 }
 
-function handleMetrics(correlationId: string): { status: number; body: string; headers: Record<string, string> } {
+function handleMetrics(correlationId: string): {
+  status: number
+  body: string
+  headers: Record<string, string>
+} {
   const metricsData = metrics.getMetrics()
   const uptime = Math.floor((Date.now() - startTime) / 1000)
 
@@ -190,7 +206,10 @@ function handleMetrics(correlationId: string): { status: number; body: string; h
   }
 }
 
-async function handleEcho(body: string, correlationId: string): Promise<{ status: number; body: string; headers: Record<string, string> }> {
+function handleEcho(
+  body: string,
+  correlationId: string,
+): { status: number; body: string; headers: Record<string, string> } {
   logger.info('Echo request received', { correlationId, bodyLength: body.length })
 
   return {
@@ -204,7 +223,10 @@ async function handleEcho(body: string, correlationId: string): Promise<{ status
   }
 }
 
-async function handleCalculate(body: string, correlationId: string): Promise<{ status: number; body: string; headers: Record<string, string> }> {
+function handleCalculate(
+  body: string,
+  correlationId: string,
+): { status: number; body: string; headers: Record<string, string> } {
   try {
     const data = JSON.parse(body) as { numbers: number[] }
 
@@ -243,16 +265,8 @@ async function handleCalculate(body: string, correlationId: string): Promise<{ s
   }
 }
 
-function handleDemo(correlationId: string): { status: number; body: string; headers: Record<string, string> } {
-  logger.debug('Serving demo page', { correlationId })
-  
-  const html = `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Node.js Server API Demo</title>
-    <style>
+function generateDemoCSS(): string {
+  return `
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -303,9 +317,11 @@ function handleDemo(correlationId: string): { status: number; body: string; head
             white-space: pre-wrap;
             word-break: break-all;
         }
-    </style>
-</head>
-<body>
+    `
+}
+
+function generateDemoBody(): string {
+  return `
     <div class="container">
         <h1>🚀 Node.js Server Demo</h1>
         <div class="grid">
@@ -321,17 +337,40 @@ function handleDemo(correlationId: string): { status: number; body: string; head
             </div>
         </div>
     </div>
-</body>
+  `
+}
+
+function generateDemoHTML(): string {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Node.js Server API Demo</title>
+    <style>${generateDemoCSS()}</style>
+</head>
+<body>${generateDemoBody()}</body>
 </html>`
+}
+
+function handleDemo(correlationId: string): {
+  status: number
+  body: string
+  headers: Record<string, string>
+} {
+  logger.debug('Serving demo page', { correlationId })
 
   return {
     status: 200,
     headers: { 'Content-Type': 'text/html; charset=utf-8' },
-    body: html,
+    body: generateDemoHTML(),
   }
 }
 
-function handle404(correlationId: string, path: string): { status: number; body: string; headers: Record<string, string> } {
+function handle404(
+  correlationId: string,
+  path: string,
+): { status: number; body: string; headers: Record<string, string> } {
   logger.warn('404 - Route not found', { correlationId, path })
 
   return {
@@ -345,86 +384,113 @@ function handle404(correlationId: string, path: string): { status: number; body:
   }
 }
 
+async function collectRequestBody(req: http.IncomingMessage): Promise<string> {
+  let body = ''
+  if (req.method === 'POST') {
+    await new Promise<void>((resolve) => {
+      req.on('data', (chunk) => {
+        body += String(chunk)
+      })
+      req.on('end', () => {
+        resolve()
+      })
+    })
+  }
+  return body
+}
+
+function routeRequest(
+  pathname: string,
+  body: string,
+  correlationId: string,
+): { status: number; body: string; headers: Record<string, string> } {
+  switch (pathname) {
+    case '/':
+      return handleRoot(correlationId)
+    case '/demo':
+      return handleDemo(correlationId)
+    case '/api/health':
+      return handleHealth(correlationId)
+    case '/api/logs':
+      return handleLogs(correlationId)
+    case '/api/metrics':
+      return handleMetrics(correlationId)
+    case '/api/echo':
+      return handleEcho(body, correlationId)
+    case '/api/calculate':
+      return handleCalculate(body, correlationId)
+    default:
+      return handle404(correlationId, pathname)
+  }
+}
+
+function handleCorsResponse(res: http.ServerResponse): void {
+  for (const [key, value] of Object.entries(corsHeaders)) {
+    res.setHeader(key, value)
+  }
+  res.writeHead(204)
+  res.end()
+}
+
+function sendResponse(
+  res: http.ServerResponse,
+  response: { status: number; body: string; headers: Record<string, string> },
+): void {
+  // Set CORS headers
+  for (const [key, value] of Object.entries(corsHeaders)) {
+    res.setHeader(key, value)
+  }
+
+  // Set response headers
+  for (const [key, value] of Object.entries(response.headers)) {
+    res.setHeader(key, value)
+  }
+
+  res.writeHead(response.status)
+  res.end(response.body)
+}
+
+async function handleRequest(
+  req: http.IncomingMessage,
+  res: http.ServerResponse,
+  numericPort: number,
+): Promise<void> {
+  const url = new URL(req.url ?? '/', `http://localhost:${numericPort}`)
+  const correlationId = generateCorrelationId()
+  const requestStartTime = performance.now()
+
+  logger.info(`Incoming ${String(req.method)} request to ${url.pathname}`, { correlationId })
+
+  // Handle CORS preflight
+  if (req.method === 'OPTIONS') {
+    handleCorsResponse(res)
+    return
+  }
+
+  // Collect body for POST requests
+  const body = await collectRequestBody(req)
+
+  // Route handling
+  const response = routeRequest(url.pathname, body, correlationId)
+
+  // Track metrics
+  const responseTime = performance.now() - requestStartTime
+  metrics.recordRequest(responseTime, response.status >= 400)
+
+  logger.info(`Request completed in ${responseTime.toFixed(2)}ms`, {
+    correlationId,
+    status: response.status,
+    responseTime,
+  })
+
+  sendResponse(res, response)
+}
+
 export function startServer(port: number | string = PORT): ServerInstance {
   const numericPort = typeof port === 'string' ? parseInt(port, 10) : port
-  
-  const server = http.createServer(async (req, res) => {
-    const url = new URL(req.url ?? '/', `http://localhost:${numericPort}`)
-    const correlationId = generateCorrelationId()
-    const requestStartTime = performance.now()
 
-    logger.info(`Incoming ${req.method} request to ${url.pathname}`, { correlationId })
-
-    // Handle CORS preflight
-    if (req.method === 'OPTIONS') {
-      for (const [key, value] of Object.entries(corsHeaders)) {
-        res.setHeader(key, value)
-      }
-      res.writeHead(204)
-      res.end()
-      return
-    }
-
-    // Collect body for POST requests
-    let body = ''
-    if (req.method === 'POST') {
-      await new Promise<void>((resolve) => {
-        req.on('data', chunk => { body += chunk.toString() })
-        req.on('end', () => { resolve(); })
-      })
-    }
-
-    // Route handling
-    let response: { status: number; body: string; headers: Record<string, string> }
-
-    switch (url.pathname) {
-      case '/':
-        response = handleRoot(correlationId)
-        break
-      case '/demo':
-        response = handleDemo(correlationId)
-        break
-      case '/api/health':
-        response = handleHealth(correlationId)
-        break
-      case '/api/logs':
-        response = handleLogs(correlationId)
-        break
-      case '/api/metrics':
-        response = handleMetrics(correlationId)
-        break
-      case '/api/echo':
-        response = await handleEcho(body, correlationId)
-        break
-      case '/api/calculate':
-        response = await handleCalculate(body, correlationId)
-        break
-      default:
-        response = handle404(correlationId, url.pathname)
-    }
-
-    // Track metrics
-    const responseTime = performance.now() - requestStartTime
-    metrics.recordRequest(responseTime, response.status >= 400)
-
-    // Set CORS headers
-    for (const [key, value] of Object.entries(corsHeaders)) {
-      res.setHeader(key, value)
-    }
-
-    // Set response headers
-    for (const [key, value] of Object.entries(response.headers)) {
-      res.setHeader(key, value)
-    }
-
-    logger.info(`Request completed in ${responseTime.toFixed(2)}ms`, {
-      correlationId,
-      status: response.status,
-      responseTime,
-    })
-
-    res.writeHead(response.status)
-    res.end(response.body)
+  const server = http.createServer((req, res) => {
+    void handleRequest(req, res, numericPort)
   })
 
   server.listen(numericPort, () => {
@@ -445,12 +511,13 @@ export function startServer(port: number | string = PORT): ServerInstance {
   return {
     port: numericPort,
     hostname: 'localhost',
-    stop: () => new Promise<void>((resolve) => {
-      server.close(() => {
-        logger.info('Server stopped')
-        resolve()
-      })
-    }),
+    stop: () =>
+      new Promise<void>((resolve) => {
+        server.close(() => {
+          logger.info('Server stopped')
+          resolve()
+        })
+      }),
   }
 }
 

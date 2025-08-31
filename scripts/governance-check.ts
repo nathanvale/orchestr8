@@ -1,4 +1,4 @@
-#!/usr/bin/env bun
+#!/usr/bin/env tsx
 /**
  * Governance & Safety Validation for Turborepo
  *
@@ -23,7 +23,7 @@ function checkBoundaries(): boolean {
   }
 
   try {
-    execSync('bunx turbo boundaries', { stdio: 'pipe' })
+    execSync('pnpm turbo boundaries', { stdio: 'pipe' })
     console.log('✅ Package boundaries are valid')
     return true
   } catch {
@@ -39,7 +39,7 @@ function checkCircularDependencies(): boolean {
   console.log('🔄 Checking for circular dependencies...')
 
   try {
-    execSync('bun scripts/check-circular-deps.ts', { stdio: 'inherit' })
+    execSync('tsx scripts/check-circular-deps.ts', { stdio: 'inherit' })
     return true
   } catch {
     return false

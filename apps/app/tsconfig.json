@@ -6,10 +6,9 @@
     "declarationMap": true,
     "sourceMap": true,
     "outDir": "./dist",
-    "rootDir": "./src",
     "tsBuildInfoFile": "./.tsbuildinfo"
   },
   "include": ["src/**/*"],
-  "exclude": ["**/*.test.*", "**/*.spec.*"],
-  "references": []
+  "exclude": ["**/*.test.*", "**/*.spec.*"]
+  // Removed project references; rely on Turborepo graph
 }

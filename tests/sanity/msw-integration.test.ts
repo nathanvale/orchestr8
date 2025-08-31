@@ -1,3 +1,6 @@
+/**
+ * @vitest-environment happy-dom
+ */
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { mockApiError, mockApiResponse, server } from '../../vitest.setup'
 

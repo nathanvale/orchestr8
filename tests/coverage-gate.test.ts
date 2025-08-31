@@ -1,4 +1,4 @@
-import { describe, expect, test, vi } from 'vitest'
+import { describe, expect, test } from 'vitest'
 
 // Mock functions for the coverage gate implementation
 interface FileCoverage {
@@ -33,9 +33,9 @@ describe('Coverage Gate Script', (): void => {
         src/components/Button.tsx
         tests/example.test.ts
       `.trim()
-      
+
       const changedFiles = parseGitDiff(mockGitDiff)
-      
+
       expect(changedFiles).toEqual([
         'src/utils/math.ts',
         'src/components/Button.tsx',
@@ -51,20 +51,17 @@ describe('Coverage Gate Script', (): void => {
         src/components/Button.tsx
         .gitignore
       `.trim()
-      
+
       const changedFiles = parseGitDiff(mockGitDiff)
       const sourceFiles = filterSourceFiles(changedFiles)
-      
-      expect(sourceFiles).toEqual([
-        'src/utils/math.ts',
-        'src/components/Button.tsx',
-      ])
+
+      expect(sourceFiles).toEqual(['src/utils/math.ts', 'src/components/Button.tsx'])
     })
 
     test('handles no changed files', (): void => {
       const mockGitDiff = ''
       const changedFiles = parseGitDiff(mockGitDiff)
-      
+
       expect(changedFiles).toEqual([])
     })
 
@@ -73,9 +70,9 @@ describe('Coverage Gate Script', (): void => {
         src/utils/{old-name.ts => new-name.ts}
         src/components/Button.tsx
       `.trim()
-      
+
       const changedFiles = parseGitDiff(mockGitDiff)
-      
+
       expect(changedFiles).toContain('src/utils/new-name.ts')
       expect(changedFiles).not.toContain('src/utils/old-name.ts')
     })
@@ -83,11 +80,8 @@ describe('Coverage Gate Script', (): void => {
 
   describe('Coverage Mapping', (): void => {
     test('maps changed files to coverage data', (): void => {
-      const changedFiles = [
-        'src/utils/math.ts',
-        'src/components/Button.tsx',
-      ]
-      
+      const changedFiles = ['src/utils/math.ts', 'src/components/Button.tsx']
+
       const coverageData: FileCoverage[] = [
         {
           path: 'src/utils/math.ts',
@@ -102,9 +96,9 @@ describe('Coverage Gate Script', (): void => {
           lines: { total: 30, covered: 25, pct: 83.33 },
         },
       ]
-      
+
       const mapped = mapFilesToCoverage(changedFiles, coverageData)
-      
+
       expect(mapped).toHaveLength(2)
       expect(mapped[0]?.path).toBe('src/utils/math.ts')
       expect(mapped[0]?.lines.pct).toBe(45)
@@ -115,9 +109,9 @@ describe('Coverage Gate Script', (): void => {
     test('handles files with no coverage data', (): void => {
       const changedFiles = ['src/utils/new-file.ts']
       const coverageData: FileCoverage[] = []
-      
+
       const mapped = mapFilesToCoverage(changedFiles, coverageData)
-      
+
       expect(mapped).toHaveLength(1)
       expect(mapped[0]?.path).toBe('src/utils/new-file.ts')
       expect(mapped[0]?.lines.pct).toBe(0)
@@ -132,13 +126,13 @@ describe('Coverage Gate Script', (): void => {
         { path: 'src/a.ts', lines: { total: 100, covered: 80, pct: 80 } },
         { path: 'src/b.ts', lines: { total: 50, covered: 40, pct: 80 } },
       ]
-      
+
       const result = checkCoverageThreshold(files, 50)
-      
+
       expect(result.passed).toBe(true)
       expect(result.threshold).toBe(50)
       expect(result.files).toHaveLength(2)
-      expect(result.files.every(f => f.passed)).toBe(true)
+      expect(result.files.every((f) => f.passed)).toBe(true)
     })
 
     test('fails when any file is below threshold', (): void => {
@@ -146,9 +140,9 @@ describe('Coverage Gate Script', (): void => {
         { path: 'src/a.ts', lines: { total: 100, covered: 80, pct: 80 } },
         { path: 'src/b.ts', lines: { total: 50, covered: 20, pct: 40 } },
       ]
-      
+
       const result = checkCoverageThreshold(files, 50)
-      
+
       expect(result.passed).toBe(false)
       expect(result.files[0]?.passed).toBe(true)
       expect(result.files[1]?.passed).toBe(false)
@@ -161,9 +155,9 @@ describe('Coverage Gate Script', (): void => {
         { path: 'src/b.ts', lines: { total: 50, covered: 20, pct: 40 } },
         { path: 'src/c.ts', lines: { total: 50, covered: 30, pct: 60 } },
       ]
-      
+
       const result = checkCoverageThreshold(files, 50)
-      
+
       expect(result.overall.total).toBe(200)
       expect(result.overall.covered).toBe(130)
       expect(result.overall.pct).toBe(65)
@@ -172,7 +166,7 @@ describe('Coverage Gate Script', (): void => {
     test('handles empty file list', (): void => {
       const files: FileCoverage[] = []
       const result = checkCoverageThreshold(files, 50)
-      
+
       expect(result.passed).toBe(true)
       expect(result.files).toHaveLength(0)
       expect(result.overall.total).toBe(0)
@@ -186,12 +180,10 @@ describe('Coverage Gate Script', (): void => {
       const result: CoverageGateResult = {
         passed: true,
         threshold: 50,
-        files: [
-          { path: 'src/a.ts', coverage: 80, passed: true },
-        ],
+        files: [{ path: 'src/a.ts', coverage: 80, passed: true }],
         overall: { total: 100, covered: 80, pct: 80 },
       }
-      
+
       const exitCode = getExitCode(result)
       expect(exitCode).toBe(0)
     })
@@ -200,12 +192,10 @@ describe('Coverage Gate Script', (): void => {
       const result: CoverageGateResult = {
         passed: false,
         threshold: 50,
-        files: [
-          { path: 'src/a.ts', coverage: 40, passed: false },
-        ],
+        files: [{ path: 'src/a.ts', coverage: 40, passed: false }],
         overall: { total: 100, covered: 40, pct: 40 },
       }
-      
+
       const exitCode = getExitCode(result)
       expect(exitCode).toBe(1)
     })
@@ -214,18 +204,18 @@ describe('Coverage Gate Script', (): void => {
   describe('CI Integration', (): void => {
     test('detects CI environment correctly', (): void => {
       const originalEnv = process.env.CI
-      
+
       // Test various CI environment values
       const ciValues = ['true', '1', 'yes', 'TRUE']
       for (const value of ciValues) {
         process.env.CI = value
         expect(isCI()).toBe(true)
       }
-      
+
       // Test non-CI environment
       delete process.env.CI
       expect(isCI()).toBe(false)
-      
+
       // Restore original
       process.env.CI = originalEnv
     })
@@ -240,9 +230,9 @@ describe('Coverage Gate Script', (): void => {
         ],
         overall: { total: 200, covered: 100, pct: 50 },
       }
-      
+
       const output = formatCIOutput(result)
-      
+
       expect(output).toContain('Coverage Gate Failed')
       expect(output).toContain('src/a.ts')
       expect(output).toContain('40%')
@@ -256,9 +246,9 @@ describe('Coverage Gate Script', (): void => {
 function parseGitDiff(diff: string): string[] {
   return diff
     .split('\n')
-    .map(line => line.trim())
-    .filter(line => line.length > 0)
-    .map(line => {
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0)
+    .map((line) => {
       // Handle renamed files
       const renameMatch = /\{.+? => (.+?)\}/.exec(line)
       if (renameMatch) {
@@ -271,27 +261,18 @@ function parseGitDiff(diff: string): string[] {
 
 function filterSourceFiles(files: string[]): string[] {
   const sourceExtensions = ['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs']
-  const excludePatterns = [
-    /node_modules/,
-    /\.test\./,
-    /\.spec\./,
-    /\.d\.ts$/,
-    /\.config\./,
-  ]
-  
-  return files.filter(file => {
-    const hasSourceExt = sourceExtensions.some(ext => file.endsWith(ext))
-    const isExcluded = excludePatterns.some(pattern => pattern.test(file))
+  const excludePatterns = [/node_modules/, /\.test\./, /\.spec\./, /\.d\.ts$/, /\.config\./]
+
+  return files.filter((file) => {
+    const hasSourceExt = sourceExtensions.some((ext) => file.endsWith(ext))
+    const isExcluded = excludePatterns.some((pattern) => pattern.test(file))
     return hasSourceExt && !isExcluded
   })
 }
 
-function mapFilesToCoverage(
-  changedFiles: string[],
-  coverageData: FileCoverage[]
-): FileCoverage[] {
-  return changedFiles.map(file => {
-    const coverage = coverageData.find(c => c.path === file)
+function mapFilesToCoverage(changedFiles: string[], coverageData: FileCoverage[]): FileCoverage[] {
+  return changedFiles.map((file) => {
+    const coverage = coverageData.find((c) => c.path === file)
     if (coverage) {
       return coverage
     }
@@ -303,22 +284,19 @@ function mapFilesToCoverage(
   })
 }
 
-function checkCoverageThreshold(
-  files: FileCoverage[],
-  threshold: number
-): CoverageGateResult {
-  const fileResults = files.map(file => ({
+function checkCoverageThreshold(files: FileCoverage[], threshold: number): CoverageGateResult {
+  const fileResults = files.map((file) => ({
     path: file.path,
     coverage: file.lines.pct,
     passed: file.lines.pct >= threshold,
   }))
-  
+
   const totalLines = files.reduce((sum, f) => sum + f.lines.total, 0)
   const coveredLines = files.reduce((sum, f) => sum + f.lines.covered, 0)
   const overallPct = totalLines > 0 ? (coveredLines / totalLines) * 100 : 0
-  
+
   return {
-    passed: files.length === 0 || fileResults.every(f => f.passed),
+    passed: files.length === 0 || fileResults.every((f) => f.passed),
     threshold,
     files: fileResults,
     overall: {
@@ -339,24 +317,26 @@ function isCI(): boolean {
 
 function formatCIOutput(result: CoverageGateResult): string {
   const lines: string[] = []
-  
+
   if (result.passed) {
     lines.push('✅ Coverage Gate Passed')
   } else {
     lines.push('❌ Coverage Gate Failed')
   }
-  
+
   lines.push(`Threshold: ${result.threshold}%`)
   lines.push('')
-  
+
   for (const file of result.files) {
     const icon = file.passed ? '✅' : '❌'
     const status = file.passed ? 'passed' : 'below threshold'
     lines.push(`${icon} ${file.path}: ${file.coverage}% (${status})`)
   }
-  
+
   lines.push('')
-  lines.push(`Overall: ${result.overall.pct}% (${result.overall.covered}/${result.overall.total} lines)`)
-  
+  lines.push(
+    `Overall: ${result.overall.pct}% (${result.overall.covered}/${result.overall.total} lines)`,
+  )
+
   return lines.join('\n')
 }

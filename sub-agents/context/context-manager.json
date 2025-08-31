@@ -1,0 +1,143 @@
+{
+  "project": {
+    "name": "ADHD-Engineered Development Template",
+    "version": "4.0.0",
+    "description": "Production-ready Node.js + pnpm monorepo template with Next.js, Turborepo, and unified build system, engineered for ADHD brains",
+    "type": "Development Template / Monorepo Starter"
+  },
+  "development": {
+    "current_branch": "vitest-migration",
+    "branch_state": "Active transition from Bun to Node.js + pnpm",
+    "primary_focus": "DX Unification Sprint"
+  },
+  "architecture": {
+    "type": "Monorepo",
+    "package_structure": {
+      "packages": [
+        {
+          "name": "utils",
+          "path": "packages/utils",
+          "description": "Shared utilities with standardized tsup builds"
+        },
+        {
+          "name": "web",
+          "path": "apps/web",
+          "description": "Next.js application with App Router and React Server Components"
+        },
+        {
+          "name": "server",
+          "path": "apps/server",
+          "description": "Node.js API server (optional Express/Fastify)"
+        }
+      ]
+    },
+    "monorepo_tools": {
+      "package_manager": "pnpm",
+      "build_orchestration": "Turborepo 2.5+",
+      "workspace_support": true
+    }
+  },
+  "technology_stack": {
+    "core": {
+      "language": "TypeScript",
+      "version": "5.7+",
+      "runtime": "Node.js 20 LTS"
+    },
+    "frontend": {
+      "framework": "Next.js",
+      "version": "15+",
+      "react_version": "19+"
+    },
+    "testing": {
+      "runner": "Vitest",
+      "coverage": "@vitest/coverage-v8",
+      "environment": "jsdom",
+      "current_coverage": "~60%",
+      "target_coverage": "85%"
+    },
+    "build_system": {
+      "tool": "tsup",
+      "configuration": "Standardized across packages",
+      "output": "ESM with source maps"
+    }
+  },
+  "key_features": [
+    "ADHD-optimized developer experience",
+    "Single mental model for development",
+    "Sub-5s feedback loops",
+    "Zero-config scaffolding",
+    "Instant context recovery",
+    "VSCode debugging intelligence"
+  ],
+  "adhd_optimizations": {
+    "context_recovery": {
+      "command": "pnpm dx:status",
+      "target_time": "≤10s"
+    },
+    "flow_accelerators": [
+      "Instant context recovery command",
+      "Idea inbox system",
+      "Session snapshots",
+      "Focus mode toggle"
+    ]
+  },
+  "development_priorities": {
+    "current_phase": "P0: Critical Path",
+    "primary_goals": [
+      "Eliminate cognitive dissonance",
+      "Establish unified mental model",
+      "Standardize builds",
+      "Add ADHD-optimized flow accelerators"
+    ],
+    "completed_tasks": [
+      "Remove Bun artifacts",
+      "Create dx:status command",
+      "Setup Turborepo remote cache",
+      "Create shared tsup configuration",
+      "Unify Vitest configuration"
+    ],
+    "pending_tasks": [
+      "Update supply chain security",
+      "Create package creation scaffolder",
+      "Implement fast onboarding script",
+      "Enhance Next.js API route handlers"
+    ]
+  },
+  "build_performance_targets": {
+    "first_meaningful_commit": {
+      "current": "~15 min",
+      "target": "<5 min"
+    },
+    "full_test_run": {
+      "current": "~10s",
+      "target": "≤5s"
+    },
+    "build_all_packages": {
+      "current": "~5s",
+      "target": "≤2s"
+    },
+    "turbo_cache_hit_rate": {
+      "current": "~50%",
+      "target": "≥85%"
+    }
+  },
+  "risk_mitigation": {
+    "high_risks": ["Incomplete pivot creates confusion", "Slow feedback disrupts ADHD flow"],
+    "mitigation_strategies": [
+      "Focus on removing Bun artifacts",
+      "Target <5s for all operations",
+      "Zero-config scaffolding",
+      "Clear default configurations"
+    ]
+  },
+  "migration_notes": {
+    "from": "Bun runtime",
+    "to": "Node.js + pnpm ecosystem",
+    "status": "Ongoing",
+    "philosophy": "Clean break, full commitment to stable ecosystem"
+  },
+  "metadata": {
+    "last_updated": "2025-08-29",
+    "generated_by": "Claude Code Context Manager"
+  }
+}

@@ -1,4 +1,4 @@
-#!/usr/bin/env bun
+#!/usr/bin/env tsx
 /**
  * Prepublish guard to prevent accidental publishing
  * Ensures all build artifacts exist and tests pass before publishing
@@ -7,8 +7,8 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 
-const REQUIRED_DIRS = ['dist', 'dist-node', 'dist-types']
-const REQUIRED_FILES = ['dist/index.js', 'dist-node/index.js', 'dist-types/index.d.ts']
+const REQUIRED_DIRS = ['dist']
+const REQUIRED_FILES = ['dist/index.js', 'dist/index.cjs', 'dist/index.d.ts']
 
 function checkBuildArtifacts(): boolean {
   console.info('🔍 Checking build artifacts...')
@@ -19,7 +19,7 @@ function checkBuildArtifacts(): boolean {
     // eslint-disable-next-line security/detect-non-literal-fs-filename
     if (!existsSync(dirPath)) {
       console.error(`❌ Missing required directory: ${dir}`)
-      console.error(`   Run: bun run build:all`)
+      console.error(`   Run: pnpm run build:all`)
       return false
     }
   }
@@ -30,7 +30,7 @@ function checkBuildArtifacts(): boolean {
     // eslint-disable-next-line security/detect-non-literal-fs-filename
     if (!existsSync(filePath)) {
       console.error(`❌ Missing required file: ${file}`)
-      console.error(`   Run: bun run build:all`)
+      console.error(`   Run: pnpm run build:all`)
       return false
     }
   }

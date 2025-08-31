@@ -42,7 +42,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'pnpm'
+          cache: "pnpm"
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -87,6 +87,16 @@ jobs:
         run: pnpm run governance
         continue-on-error: false
 
+      - name: Pre-Release Guardrails (Quick)
+        if: github.event_name == 'pull_request'
+        run: pnpm run guardrails:quick
+        continue-on-error: false
+
+      - name: Pre-Release Guardrails (Full)
+        if: github.ref == 'refs/heads/main'
+        run: pnpm run guardrails
+        continue-on-error: false
+
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -111,7 +121,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-          cache: 'pnpm'
+          cache: "pnpm"
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -159,7 +169,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'pnpm'
+          cache: "pnpm"
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -250,7 +260,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'pnpm'
+          cache: "pnpm"
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -279,7 +289,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'pnpm'
+          cache: "pnpm"
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4

@@ -30,7 +30,7 @@
 - **Strategy:** Node.js ES Modules
 - **Package Manager:** pnpm with workspace support
 - **Node Version:** 20 LTS (Iron)
-- **Package Structure:** Monorepo with packages/*, apps/* workspaces
+- **Package Structure:** Monorepo with packages/_, apps/_ workspaces
 
 ### CSS Framework
 
@@ -84,7 +84,8 @@
 - **Sidecar Tasks:** `"with"` field for coupled long-running processes
 - **Boundaries:** Cross-package import validation and enforcement
 - **Performance Targets:** >90% cache hit rate through optimized inputs
-- **ADHD Performance Targets:** <10s context recovery, <1s micro-feedback, <5s test execution
+- **ADHD Performance Targets:** <10s context recovery, <1s micro-feedback, <5s
+  test execution
 
 ### Configuration Management
 
@@ -92,7 +93,8 @@
 - **ESLint/Prettier:** Workspace-aware configuration inheritance
 - **Changesets:** Multi-package versioning and release coordination
 - **Philosophy:** Monorepo-first with simple, focused packages for clarity
-- **ADHD Integration:** VSCode workspace conventions, .dx/ directory structure, unified JSON schemas
+- **ADHD Integration:** VSCode workspace conventions, .dx/ directory structure,
+  unified JSON schemas
 
 ## Development Tools
 
