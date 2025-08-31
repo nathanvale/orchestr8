@@ -70,11 +70,24 @@ jobs:
         env:
           NODE_ENV: development
 
-      - name: Lint
-        run: pnpm run lint:check
+      - name: Lint (Comprehensive Security Analysis)
+        run: pnpm run lint:deep
 
-      - name: Format Check
-        run: pnpm run format:check
+      - name: Conditional Format Check
+        run: |
+          CHANGED=$(git diff --name-only --diff-filter=ACMR origin/main... 2>/dev/null | wc -l | tr -d ' ')
+          echo "Changed files count: $CHANGED"
+          # Fallback to full check if git diff fails or returns 0
+          if [ "$CHANGED" -gt 0 ] && [ "$CHANGED" -lt 600 ]; then
+            echo "Using format:changed for PR with $CHANGED changed files"
+            pnpm run format:changed || {
+              echo "format:changed failed, falling back to format:check"
+              pnpm run format:check
+            }
+          else
+            echo "Using full format:check for large PR or fallback (changed files: $CHANGED)"
+            pnpm run format:check
+          fi
 
       - name: Type Check Production
         run: pnpm exec tsc --noEmit -p tsconfig.build.json
