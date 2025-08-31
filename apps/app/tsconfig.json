@@ -8,7 +8,7 @@
     "outDir": "./dist",
     "tsBuildInfoFile": "./.tsbuildinfo"
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "vite.config.ts"],
   "exclude": ["**/*.test.*", "**/*.spec.*"]
   // Removed project references; rely on Turborepo graph
 }

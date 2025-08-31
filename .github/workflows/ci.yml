@@ -58,9 +58,11 @@ jobs:
             node_modules
             .eslintcache
             .prettiercache
-          key: ${{ runner.os }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
+            .turbo
+          key: deps-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}-turbo-${{ hashFiles('turbo.json*', 'tsconfig*.json') }}
           restore-keys: |
-            ${{ runner.os }}-pnpm-
+            deps-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}-
+            deps-${{ runner.os }}-
 
       - name: Install Dependencies
         if: steps.cache.outputs.cache-hit != 'true'
@@ -79,6 +81,9 @@ jobs:
 
       - name: Type Check Tests
         run: pnpm exec tsc --noEmit -p tsconfig.json
+
+      - name: Build Performance Check
+        run: pnpm run build:perf:guard
 
       - name: Build
         run: pnpm run build:all --continue=dependencies-successful

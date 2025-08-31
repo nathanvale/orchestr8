@@ -6,55 +6,85 @@
     // Build task: Compile TypeScript and generate output artifacts
     "build": {
       "dependsOn": ["^build"], // Wait for upstream packages to build first
-      "outputs": ["dist/**", ".tsbuildinfo"], // Cache actual build outputs only
+      "outputs": [
+        "dist/**", // Standard build output directory
+        "dist-node/**", // Node.js specific build output
+        "dist-types/**", // TypeScript declaration files
+        ".tsbuildinfo", // TypeScript incremental build cache (critical for performance)
+      ],
       "inputs": [
-        "$TURBO_DEFAULT$",
-        "!*.md",
+        "$TURBO_DEFAULT$", // Default Turborepo inputs (src files, package.json, etc.)
+        "!*.md", // Exclude markdown files
         "!**/*.md",
-        "!**/*.test.ts",
+        "!**/*.test.ts", // Exclude test files
+        "!**/*.test.tsx",
         "!**/*.spec.ts",
-        "!tests/**",
-        ".env*",
+        "!**/*.spec.tsx",
+        "!tests/**", // Exclude test directories
+        "!**/cov/**", // Exclude coverage reports
+        "!test-results/**", // Exclude test result files
+        "!**/__tests__/**", // Exclude Jest test directories
+        "tsconfig*.json", // Include all TypeScript configs (affects compilation)
+        "vite.config.*", // Include Vite config files
+        "next.config.*", // Include Next.js config files
+        "tailwind.config.*", // Include Tailwind config files
+        "postcss.config.*", // Include PostCSS config files
+        ".env*", // Include environment files that affect builds
       ],
       "cache": true,
+      "env": ["NODE_ENV", "VERCEL_ENV"], // Environment variables that affect build output
     },
 
     // Test task: Run unit and integration tests with multi-project support
     "test": {
       "dependsOn": ["^build"], // Wait for upstream packages to build first
-      "outputs": ["coverage/**"], // Cache test coverage
+      "outputs": [
+        "coverage/**", // Test coverage reports
+      ],
       "inputs": [
-        "$TURBO_DEFAULT$",
-        "!*.md",
+        "$TURBO_DEFAULT$", // Source files and package.json
+        "!*.md", // Exclude markdown files
         "!**/*.md",
-        "!docs/**",
-        "!.changeset/**",
-        "vitest.config.ts",
-        "vitest.setup.tsx",
-        "vitest.setup.ts",
-        ".env*",
+        "!docs/**", // Exclude documentation
+        "!.changeset/**", // Exclude changeset files
+        "vitest.config.*", // Vitest configuration files
+        "vitest.setup.*", // Vitest setup files
+        "vitest.server.setup.*", // Server-specific test setup
+        "tsconfig*.json", // TypeScript configs affect test compilation
+        ".env*", // Environment files for tests
+        "**/__tests__/**", // Test directories
+        "**/*.test.*", // Test files
+        "**/*.spec.*", // Spec files
       ],
       "cache": true,
-      "env": ["NODE_ENV", "VITEST_WATCH"], // Test behavior may vary by environment
+      "env": ["NODE_ENV", "VITEST_WATCH", "CI"], // Test environment variables
     },
 
     // CI Test task: Run tests with CI-specific settings (coverage, bail on first failure)
     "test:ci": {
       "dependsOn": ["^build"], // Wait for upstream packages to build first
-      "outputs": ["coverage/**", "test-results/**", ".vitest/**"], // Cache test coverage and results
+      "outputs": [
+        "coverage/**", // Coverage reports
+        "test-results/**", // JUnit XML and other test results
+        "**/.vitest/**", // Vitest cache (shared with test task)
+      ],
       "inputs": [
-        "$TURBO_DEFAULT$",
-        "!*.md",
+        "$TURBO_DEFAULT$", // Source files and package.json
+        "!*.md", // Exclude markdown
         "!**/*.md",
-        "!docs/**",
-        "!.changeset/**",
-        "vitest.config.ts",
-        "vitest.setup.tsx",
-        "vitest.setup.ts",
-        ".env*",
+        "!docs/**", // Exclude docs
+        "!.changeset/**", // Exclude changesets
+        "vitest.config.*", // Test configuration
+        "vitest.setup.*", // Test setup files
+        "vitest.server.setup.*", // Server test setup
+        "tsconfig*.json", // TypeScript configuration
+        ".env*", // Environment files
+        "**/__tests__/**", // Test directories
+        "**/*.test.*", // Test files
+        "**/*.spec.*", // Spec files
       ],
       "cache": true,
-      "env": ["NODE_ENV", "CI", "GITHUB_ACTIONS"], // CI environment affects test behavior
+      "env": ["NODE_ENV", "CI", "GITHUB_ACTIONS", "GITHUB_TOKEN"], // CI-specific environment
     },
 
     // Distribution test: Verify built artifacts work correctly
@@ -105,8 +135,24 @@
     // Type checking: Static analysis for TypeScript errors
     "typecheck": {
       "dependsOn": ["^typecheck"], // Wait for upstream typechecks to complete first
-      "inputs": ["$TURBO_DEFAULT$", "!*.md", "!**/*.md", "!**/*.js", "!**/*.jsx"],
+      "outputs": [
+        "**/.tsbuildinfo", // TypeScript incremental build info for typechecking
+      ],
+      "inputs": [
+        "$TURBO_DEFAULT$", // TypeScript source files
+        "!*.md", // Exclude markdown
+        "!**/*.md",
+        "!**/*.js", // Exclude plain JavaScript (unless needed for types)
+        "!**/*.jsx",
+        "!**/*.test.*", // Exclude test files for pure type checking
+        "!**/*.spec.*",
+        "!tests/**",
+        "!coverage/**",
+        "tsconfig*.json", // TypeScript configuration files
+        "**/*.d.ts", // Type definition files
+      ],
       "cache": true,
+      "env": [], // Type checking typically doesn't depend on environment variables
     },
 
     // Clean task: Remove generated files (never cached)
@@ -140,10 +186,27 @@
     // Test coverage task: Run tests with coverage collection
     "test:coverage": {
       "dependsOn": ["^build"],
-      "outputs": ["coverage/**", "test-results/**"],
-      "inputs": ["$TURBO_DEFAULT$", "!*.md", "!**/*.md", "vitest.config.ts"],
+      "outputs": [
+        "coverage/**", // Coverage reports and HTML output
+        "test-results/**", // Test result files
+        "**/.vitest/**", // Vitest cache directories
+      ],
+      "inputs": [
+        "$TURBO_DEFAULT$", // Source and test files
+        "!*.md", // Exclude markdown
+        "!**/*.md",
+        "!docs/**", // Exclude documentation
+        "vitest.config.*", // Vitest configuration
+        "vitest.setup.*", // Setup files
+        "vitest.server.setup.*", // Server setup
+        "tsconfig*.json", // TypeScript config affects compilation
+        "**/__tests__/**", // Test directories
+        "**/*.test.*", // Test files
+        "**/*.spec.*", // Spec files
+        ".env*", // Environment files
+      ],
       "cache": true,
-      "env": ["NODE_ENV"],
+      "env": ["NODE_ENV", "CI"], // Coverage behavior may vary by environment
     },
 
     // Transit node: propagates dependency graph changes for tasks that need awareness without full serialization
@@ -187,12 +250,17 @@
   // - Include all relevant config files in globalDependencies
   // - Use --continue=dependencies-successful for resilient builds
   // - Monitor with turbo run <task> --summarize for cache analysis
+  //
+  // ADHD Flow State Optimization:
+  // - Target <2s incremental builds to maintain focus
+  // - Enable experimental write cache for faster watch mode
+  // - Use parallel execution where dependencies allow
   "remoteCache": {
     "enabled": true,
     "signature": false, // Set to true after configuring TURBO_REMOTE_CACHE_SIGNATURE_KEY
     "preflight": true, // Validate cache availability before operations
-    "timeout": 60, // 60-second artifact retrieval timeout
-    "uploadTimeout": 120, // 2-minute upload timeout for large artifacts
+    "timeout": 30, // Reduced from 60s for faster feedback loops
+    "uploadTimeout": 60, // Reduced from 120s for faster CI/CD
   },
 
   // Future enhancements:

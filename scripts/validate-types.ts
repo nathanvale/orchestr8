@@ -55,22 +55,28 @@ const DIST_NODE_DIR = 'dist-node'
 function checkBuildDirs(): ValidationResult {
   const errors: string[] = []
   const warnings: string[] = []
+
+  // Skip validation for monorepo root package
+  if (packageJson.private === true && packageJson.workspaces) {
+    return { errors, warnings }
+  }
+
   const required = [
     {
       path: DIST_TYPES_DIR,
-      err: `${DIST_TYPES_DIR} directory missing - run "bun run build:types" first`,
+      err: `${DIST_TYPES_DIR} directory missing - run "pnpm run build:types" first`,
     },
     {
       path: DIST_NODE_DIR,
-      err: `${DIST_NODE_DIR} directory missing - run "bun run build:node" first`,
+      err: `${DIST_NODE_DIR} directory missing - run "pnpm run build:node" first`,
     },
   ] as const
   for (const item of required) {
     if (!fileExists(item.path)) errors.push(item.err)
   }
-  // Optional Bun target
+  // Optional dist target
   if (!fileExists(DIST_DIR)) {
-    warnings.push(`${DIST_DIR} directory missing - run "bun run build" for Bun target`)
+    warnings.push(`${DIST_DIR} directory missing - run "pnpm run build" for dist target`)
   }
   return { errors, warnings }
 }
@@ -78,7 +84,21 @@ function checkBuildDirs(): ValidationResult {
 function checkMainTypes(): ValidationResult {
   const errors: string[] = []
   const warnings: string[] = []
+
+  // Skip validation for monorepo root package
+  if (packageJson.private === true && packageJson.workspaces) {
+    return { errors, warnings }
+  }
+
   const mainTypes = packageJson.types
+  if (!mainTypes) {
+    // Only error if this is a published package (not private)
+    if (!packageJson.private) {
+      errors.push(`Main types field missing in package.json`)
+    }
+    return { errors, warnings }
+  }
+
   if (!fileExists(mainTypes)) {
     errors.push(`Main types file missing: ${mainTypes}`)
     return { errors, warnings }
@@ -209,6 +229,11 @@ function validateParity(distFiles: string[], typeFiles: string[], warnings: stri
  */
 function checkRuntimeTypeParity(): ValidationResult {
   const warnings: string[] = []
+
+  // Skip validation for monorepo root package
+  if (packageJson.private === true && packageJson.workspaces) {
+    return { errors: [], warnings }
+  }
 
   // Check if dist directories exist
   if (!fileExists(DIST_DIR) || !fileExists(DIST_TYPES_DIR)) {

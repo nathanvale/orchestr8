@@ -10,36 +10,29 @@
   "type": "module",
   "exports": {
     ".": {
-      "types": "./dist-types/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
     },
     "./number": {
-      "types": "./dist-types/number-utils.d.ts",
-      "import": "./dist/number-utils.js",
-      "require": "./dist/number-utils.cjs"
+      "types": "./dist/number-utils.d.ts",
+      "import": "./dist/number-utils.js"
     },
     "./path": {
-      "types": "./dist-types/path-utils.d.ts",
-      "import": "./dist/path-utils.js",
-      "require": "./dist/path-utils.cjs"
+      "types": "./dist/path-utils.d.ts",
+      "import": "./dist/path-utils.js"
     },
     "./test": {
-      "types": "./dist-types/test-utils.d.ts",
-      "import": "./dist/test-utils.js",
-      "require": "./dist/test-utils.cjs"
+      "types": "./dist/test-utils.d.ts",
+      "import": "./dist/test-utils.js"
     }
   },
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.js",
-  "types": "./dist-types/index.d.ts",
+  "types": "./dist/index.d.ts",
   "files": [
     "dist",
     "README.md"
   ],
   "scripts": {
-    "build": "tsup && pnpm run build:types",
-    "build:types": "tsc --project tsconfig.types.json",
+    "build": "tsc -p tsconfig.json",
     "clean": "rm -rf dist .tsbuildinfo",
     "lint": "NODE_NO_WARNINGS=1 eslint .",
     "lint:fix": "NODE_NO_WARNINGS=1 eslint . --fix",
@@ -48,9 +41,7 @@
     "test:ci": "vitest run --bail 1",
     "typecheck": "tsc --noEmit"
   },
-  "devDependencies": {
-    "tsup": "^8.3.0"
-  },
+  "devDependencies": {},
   "publishConfig": {
     "access": "public",
     "provenance": true
