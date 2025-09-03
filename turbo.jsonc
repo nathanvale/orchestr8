@@ -32,7 +32,15 @@
         ".env*", // Include environment files that affect builds
       ],
       "cache": true,
-      "env": ["NODE_ENV", "VERCEL_ENV"], // Environment variables that affect build output
+      "env": [
+        "NODE_ENV",
+        "VERCEL_ENV",
+        "LOG_LEVEL",
+        "VOICE_VAULT_LOG_DIR",
+        "LOG_PRETTY",
+        "OPENAI_API_KEY",
+        "ELEVENLABS_API_KEY",
+      ], // Environment variables that affect build output
     },
 
     // Test task: Run unit and integration tests with multi-project support
@@ -114,6 +122,14 @@
         "tsconfig*.json",
       ],
       "cache": true,
+      "env": [
+        "LOG_LEVEL",
+        "VOICE_VAULT_LOG_DIR",
+        "LOG_PRETTY",
+        "NODE_ENV",
+        "OPENAI_API_KEY",
+        "ELEVENLABS_API_KEY",
+      ],
     },
 
     // Lint fix task: Auto-fix code quality and style issues (write operation)
@@ -132,6 +148,14 @@
         "tsconfig*.json",
       ],
       "cache": false, // Don't cache fix operations since they modify source files
+      "env": [
+        "LOG_LEVEL",
+        "VOICE_VAULT_LOG_DIR",
+        "LOG_PRETTY",
+        "NODE_ENV",
+        "OPENAI_API_KEY",
+        "ELEVENLABS_API_KEY",
+      ],
     },
 
     // Type checking: Static analysis for TypeScript errors
@@ -220,7 +244,17 @@
   },
 
   // Global environment variables that affect all tasks
-  "globalEnv": ["CI"],
+  "globalEnv": [
+    "CI",
+    "CLAUDE_HOOKS_LOG_DIR",
+    "CLAUDE_HOOKS_USE_LOCAL_DIR",
+    "CLAUDE_HOOKS_DEBUG",
+    "OPENAI_API_KEY",
+    "ELEVENLABS_API_KEY",
+    "VITEST_WORKER_ID",
+    "JEST_WORKER_ID",
+    "WALLABY_WORKER_ID",
+  ],
 
   // Environment variables to pass through without hashing
   "globalPassThroughEnv": [],

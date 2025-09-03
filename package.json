@@ -159,6 +159,7 @@
     "eslint-plugin-sonarjs": "3.0.5",
     "eslint-plugin-unicorn": "60.0.0",
     "eslint-plugin-vitest": "0.5.4",
+    "glob": "^11.0.3",
     "gray-matter": "^4.0.3",
     "happy-dom": "18.0.1",
     "husky": "^9.1.7",

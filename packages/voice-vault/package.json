@@ -1,0 +1,73 @@
+{
+  "name": "@template/voice-vault",
+  "version": "0.1.0",
+  "description": "TTS package with intelligent caching to maximize free tier usage",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nathanvale/bun-changesets-template.git",
+    "directory": "packages/voice-vault"
+  },
+  "sideEffects": false,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./cache": {
+      "types": "./dist/cache/index.d.ts",
+      "import": "./dist/cache/index.js"
+    },
+    "./providers": {
+      "types": "./dist/providers/index.d.ts",
+      "import": "./dist/providers/index.js"
+    },
+    "./logging": {
+      "types": "./dist/logging/index.d.ts",
+      "import": "./dist/logging/index.js"
+    },
+    "./audio": {
+      "types": "./dist/audio/index.d.ts",
+      "import": "./dist/audio/index.js"
+    }
+  },
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "clean": "rm -rf dist .tsbuildinfo logs/voice-vault",
+    "lint": "NODE_NO_WARNINGS=1 eslint . --cache --cache-location .eslintcache",
+    "lint:fix": "NODE_NO_WARNINGS=1 eslint . --fix --cache --cache-location .eslintcache",
+    "prepublishOnly": "pnpm run build && test -d dist",
+    "test": "vitest run",
+    "test:all": "npm run test:cache && npm run test:fallback && npm run test:errors && npm run test:concurrent",
+    "test:cache": "tsx src/test-cache-validation.ts",
+    "test:ci": "vitest run --bail 1",
+    "test:concurrent": "tsx src/test-concurrent.ts",
+    "test:elevenlabs": "tsx src/test-elevenlabs.ts",
+    "test:errors": "tsx src/test-error-handling.ts",
+    "test:fallback": "tsx src/test-provider-fallback.ts",
+    "test:openai": "tsx src/test-openai.ts",
+    "test:openai:simple": "tsx src/test-openai-simple.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@elevenlabs/elevenlabs-js": "^2.8.0",
+    "@orchestr8/logger": "^2.0.0",
+    "openai": "^5.12.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.5.4",
+    "dotenv": "^17.2.1",
+    "tsx": "^4.20.5",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
+}

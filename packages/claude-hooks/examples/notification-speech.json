@@ -1,0 +1,10 @@
+{
+  "settings": {
+    "soundEnabled": false,
+    "speechEnabled": true,
+    "volume": "high",
+    "speechMessage": "Claude needs your attention",
+    "speechRate": 200,
+    "speechVoice": "Alex"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "settings": {
+    "soundEnabled": true,
+    "speechEnabled": false,
+    "transcriptEnabled": false,
+    "volume": "medium",
+    "cooldownMs": 2000
+  }
+}

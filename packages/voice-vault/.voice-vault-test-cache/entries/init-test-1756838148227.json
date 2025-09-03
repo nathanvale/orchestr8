@@ -1,0 +1,13 @@
+{
+  "timestamp": 1756838148230,
+  "metadata": {
+    "provider": "test",
+    "model": "test",
+    "voice": "test",
+    "createdAt": 1756838148230,
+    "sizeBytes": 4,
+    "correlationId": "vv-talq67-mf2w2m"
+  },
+  "audioFile": "init-test-1756838148227.mp3",
+  "key": "init-test-1756838148227"
+}

@@ -1,0 +1,8 @@
+{
+  "settings": {
+    "soundEnabled": true,
+    "volume": "low",
+    "loggingEnabled": true,
+    "cooldownMs": 1000
+  }
+}

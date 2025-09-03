@@ -1,0 +1,13 @@
+{
+  "timestamp": 1756840385935,
+  "metadata": {
+    "provider": "test",
+    "model": "test",
+    "voice": "test",
+    "createdAt": 1756840385935,
+    "sizeBytes": 4,
+    "correlationId": "vv-6p1j8w-mf2xel"
+  },
+  "audioFile": "init-test-1756840385930.mp3",
+  "key": "init-test-1756840385930"
+}

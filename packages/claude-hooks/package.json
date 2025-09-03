@@ -1,0 +1,137 @@
+{
+  "name": "@template/claude-hooks",
+  "version": "0.1.0",
+  "private": false,
+  "description": "Claude Code hooks for task completion notifications, quality checks, and TTS integration",
+  "keywords": [
+    "claude",
+    "claude-code",
+    "hooks",
+    "tts",
+    "notifications",
+    "quality-check",
+    "ai",
+    "development"
+  ],
+  "homepage": "https://github.com/nathanvale/bun-changesets-template/tree/main/packages/claude-hooks",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nathanvale/bun-changesets-template.git",
+    "directory": "packages/claude-hooks"
+  },
+  "license": "MIT",
+  "author": "Nathan Vale",
+  "sideEffects": false,
+  "type": "module",
+  "exports": {
+    ".": {
+      "development": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./types": {
+      "development": "./src/types/index.ts",
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/types/index.js",
+      "default": "./dist/types/index.js"
+    },
+    "./config": {
+      "development": "./src/config/config-schema.ts",
+      "types": "./dist/config/config-schema.d.ts",
+      "import": "./dist/config/config-schema.js",
+      "default": "./dist/config/config-schema.js"
+    },
+    "./speech": {
+      "development": "./src/speech/index.ts",
+      "types": "./dist/speech/index.d.ts",
+      "import": "./dist/speech/index.js",
+      "default": "./dist/speech/index.js"
+    },
+    "./audio": {
+      "development": "./src/audio/index.ts",
+      "types": "./dist/audio/index.d.ts",
+      "import": "./dist/audio/index.js",
+      "default": "./dist/audio/index.js"
+    },
+    "./utils": {
+      "development": "./src/utils/auto-config.ts",
+      "types": "./dist/utils/auto-config.d.ts",
+      "import": "./dist/utils/auto-config.js",
+      "default": "./dist/utils/auto-config.js"
+    },
+    "./quality-check": {
+      "development": "./src/quality-check/index.ts",
+      "types": "./dist/quality-check/index.d.ts",
+      "import": "./dist/quality-check/index.js",
+      "default": "./dist/quality-check/index.js"
+    }
+  },
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "claude-hooks-cache-explorer": "./dist/bin/claude-hooks-cache-explorer.js",
+    "claude-hooks-cache-stats": "./dist/bin/claude-hooks-cache-stats.js",
+    "claude-hooks-list-voices": "./dist/bin/claude-hooks-list-voices.js",
+    "claude-hooks-notification": "./dist/bin/claude-hooks-notification.js",
+    "claude-hooks-quality": "./dist/bin/claude-hooks-quality.js",
+    "claude-hooks-stop": "./dist/bin/claude-hooks-stop.js",
+    "claude-hooks-subagent": "./dist/bin/claude-hooks-subagent.js"
+  },
+  "files": [
+    "dist/**/*",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "cache:clear": "tsx src/bin/claude-hooks-cache-explorer.ts --clear",
+    "cache:explorer": "tsx src/bin/claude-hooks-cache-explorer.ts",
+    "cache:stats": "tsx src/bin/claude-hooks-cache-stats.ts",
+    "clean": "rm -rf dist *.tsbuildinfo",
+    "dev": "tsc --watch",
+    "format": "prettier --write src",
+    "format:check": "prettier --check src",
+    "lint": "NODE_NO_WARNINGS=1 eslint . --cache --cache-location .eslintcache",
+    "prepublishOnly": "pnpm build",
+    "test": "vitest",
+    "test:build": "./scripts/test-build.sh",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@elevenlabs/elevenlabs-js": "^2.8.0",
+    "@orchestr8/logger": "^2.0.0",
+    "dotenv": "^17.2.1",
+    "micromatch": "^4.0.8",
+    "openai": "^5.12.0",
+    "zod": "^3.25.74"
+  },
+  "devDependencies": {
+    "@template/eslint-config": "workspace:*",
+    "@types/micromatch": "^4.0.9",
+    "@types/node": "^22.5.4",
+    "eslint": "^9.30.0",
+    "prettier": "^3.4.2",
+    "tsx": "^4.20.3",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
+  },
+  "peerDependencies": {
+    "eslint": "^9.0.0",
+    "prettier": "^3.0.0",
+    "typescript": "^5.0.0"
+  },
+  "peerDependenciesMeta": {
+    "eslint": {
+      "optional": true
+    },
+    "prettier": {
+      "optional": true
+    },
+    "typescript": {
+      "optional": true
+    }
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

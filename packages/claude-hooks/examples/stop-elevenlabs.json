@@ -1,0 +1,42 @@
+{
+  "type": "stop",
+  "format": "speech",
+  "tts": {
+    "provider": "elevenlabs",
+    "elevenlabs": {
+      "voiceId": "21m00Tcm4TlvDq8ikWAM",
+      "modelId": "eleven_multilingual_v2",
+      "outputFormat": "mp3_44100_128",
+      "stability": 0.5,
+      "similarityBoost": 0.75,
+      "speed": 1.0,
+      "enableLogging": true
+    },
+    "fallbackProvider": "macos"
+  },
+  "messages": {
+    "success": "Task completed successfully!",
+    "error": "Task failed with errors.",
+    "test": "Test execution finished.",
+    "build": "Build process complete.",
+    "lint": "Linting finished.",
+    "typecheck": "Type checking done.",
+    "git": "Git operation complete.",
+    "general": "Operation complete.",
+    "timeout": "This is taking longer than expected. Please check if everything is okay."
+  },
+  "timeout": {
+    "warningAfterMs": 5000,
+    "message": "Still working on the task..."
+  },
+  "cooldown": {
+    "enabled": true,
+    "duration": 30000
+  },
+  "quietHours": {
+    "enabled": false,
+    "start": "22:00",
+    "end": "08:00"
+  },
+  "debug": false
+}

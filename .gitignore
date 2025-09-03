@@ -4,7 +4,10 @@ node_modules/
 .pnp.js
 .yarn/install-state.gz
 
-
+# Bun
+.bun/
+bun.lockb.txt
+bunfig.toml.local
 
 # Build outputs
 dist/
@@ -87,7 +90,6 @@ lerna-debug.log*
 tmp/
 temp/
 .tmp/
-.tmp-test-*
 *.tmp
 *.bak
 *.backup
@@ -122,4 +124,3 @@ package-lock.json
 yarn.lock
 pnpm-lock.yaml
 .pnpm/.claude/settings.json
-~/.bun

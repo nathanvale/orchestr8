@@ -43,82 +43,28 @@ export default defineConfig({
   cacheDir: '.vitest',
 
   test: {
-    // Global exclusion patterns to prevent third-party tests from being discovered
-    globalSetup: undefined,
+    // Default environment (can be overridden per project)
+    environment: 'node',
 
-    // Multi-project setup - each project has its own config
-    projects: [
-      // Root tests (governance, utilities, etc.) - Node.js environment
-      {
-        name: 'root',
-        environment: 'node',
-        include: [
-          'tests/**/*.{test,spec}.{ts,tsx}',
-          'packages/**/src/**/*.{test,spec}.{ts,tsx}',
-          'packages/**/tests/**/*.{test,spec}.{ts,tsx}',
-        ],
-        exclude: [
-          '**/node_modules/**',
-          '**/dist/**',
-          '**/build/**',
-          '**/coverage/**',
-          '**/.next/**',
-          '**/.bun/**',
-          '**/~/**',
-          '**/.pnpm/**',
-          '**/.yarn/**',
-          '**/cache/**',
-          'apps/server/**', // Exclude server tests - they have their own config
-          'tests/vitest-integration.test.ts', // DOM test handled by app project
-        ],
-        setupFiles: ['./vitest.setup.node.tsx'],
-      },
-      // App tests (web/Next.js) - DOM environment with happy-dom
-      {
-        name: 'app',
-        environment: 'happy-dom',
-        include: [
-          'apps/app/src/**/*.{test,spec}.{ts,tsx}',
-          'apps/web/src/**/*.{test,spec}.{ts,tsx}',
-          'tests/vitest-integration.test.ts', // DOM integration test
-        ],
-        exclude: [
-          '**/node_modules/**',
-          '**/dist/**',
-          '**/build/**',
-          '**/coverage/**',
-          '**/.next/**',
-          '**/.bun/**',
-          '**/~/**',
-          '**/.pnpm/**',
-          '**/.yarn/**',
-          '**/cache/**',
-        ],
-        setupFiles: ['./vitest.setup.dom.tsx'],
-      },
-      // Server tests (Node.js API) - Node.js environment
-      {
-        name: 'server',
-        environment: 'node',
-        root: './apps/server',
-        include: ['src/**/*.{test,spec}.{ts,tsx}'],
-        exclude: [
-          '**/node_modules/**',
-          '**/dist/**',
-          '**/build/**',
-          '**/coverage/**',
-          '**/.bun/**',
-          '**/~/**',
-          '**/.pnpm/**',
-          '**/.yarn/**',
-          '**/cache/**',
-        ],
-        setupFiles: ['./vitest.setup.ts'],
-      },
+    // Include all test files across the monorepo
+    include: [
+      'tests/**/*.{test,spec}.{ts,tsx}',
+      'packages/**/src/**/*.{test,spec}.{ts,tsx}',
+      'packages/**/tests/**/*.{test,spec}.{ts,tsx}',
+      'apps/*/src/**/*.{test,spec}.{ts,tsx}',
+      'apps/*/tests/**/*.{test,spec}.{ts,tsx}',
     ],
 
-    // Why: Threads pool provides optimal performance for Node.js/Vitest setup
-    pool: 'threads',
+    // Global excludes
+    exclude: ['**/node_modules/**', '**/dist/**', '**/build/**', '**/coverage/**', '**/.next/**'],
+
+    // Setup files
+    setupFiles: ['./vitest.setup.tsx'],
+
+    // Why: Forks pool prevents worker termination issues in Bun/Vitest hybrid
+    // Trade-off: Slightly slower than threads but more stable for Bun runtime
+    // Context: Official Vitest/Bun workaround for worker stability issues
+    pool: 'forks',
 
     // Why: Ensure test isolation to prevent state bleed between tests
     isolate: true,
@@ -135,7 +81,7 @@ export default defineConfig({
 
     // Why: Coverage ensures code quality and catches untested paths
     coverage: {
-      // Why: V8 provider is fast and reliable for Node.js/Vitest setup
+      // Why: V8 provider is 2-3x faster than Istanbul and works better with Bun
       provider: 'v8',
       reporter: process.env['CI']
         ? ['text', 'text-summary', 'html', 'lcov', 'json-summary']
@@ -224,7 +170,7 @@ export default defineConfig({
     },
   },
 
-  // Define externals for proper Vite bundling
+  // Define externals to prevent Vite from trying to bundle Bun-specific modules
   define: {
     'import.meta.vitest': 'undefined',
   },

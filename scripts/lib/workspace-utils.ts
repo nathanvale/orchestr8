@@ -4,7 +4,7 @@
  * Provides consistent workspace operations across all scripts
  */
 
-import glob from 'glob'
+import { glob } from 'glob'
 import { existsSync, readFileSync } from 'node:fs'
 import { join, relative, resolve } from 'node:path'
 

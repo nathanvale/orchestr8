@@ -1,0 +1,10 @@
+{
+  "settings": {
+    "playOnSuccess": true,
+    "playOnWarning": false,
+    "playOnError": true,
+    "volume": "medium",
+    "cooldown": 2000,
+    "customSoundPath": "/path/to/custom/sound.wav"
+  }
+}

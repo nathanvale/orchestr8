@@ -318,11 +318,11 @@ try {
 
 ### P1 Checklist
 
-- [x] Convert `apps/server` & `packages/utils` configs
-- [x] Remove obsolete rules duplicated between layers
-- [x] Add `lint:changed` (git diff) script
-- [x] Export README section in config package describing layering
-- [x] Update `dx-status` aggregator to include `.lint-metrics.json`
+- [ ] Convert `apps/server` & `packages/utils` configs
+- [ ] Remove obsolete rules duplicated between layers
+- [ ] Add `lint:changed` (git diff) script
+- [ ] Export README section in config package describing layering
+- [ ] Update `dx-status` aggregator to include `.lint-metrics.json`
 
 #### Example `lint:changed` Script (package.json excerpt)
 

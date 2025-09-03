@@ -1,5 +1,7 @@
-// Load jest-dom matchers conditionally for DOM environments
-// We'll import this in beforeAll to handle async loading properly
+// Only import testing-library in browser-like environments
+if (typeof window !== 'undefined') {
+  import('@testing-library/jest-dom/vitest')
+}
 
 import type { HttpHandler } from 'msw'
 import { http, HttpResponse } from 'msw'
@@ -240,9 +242,10 @@ export const customMatchers = {
   },
 }
 
-// Register custom matchers with Vitest
-import { expect } from 'vitest'
-expect.extend(customMatchers)
+// Register matchers once (expect is global in Vitest)
+if (typeof (globalThis as any).expect?.extend === 'function') {
+  ;(globalThis as any).expect.extend(customMatchers)
+}
 
 // --- Fail-fast esbuild / vite subprocess diagnostics (opt-in) ---
 // Activate by running with env BUN_TEMPLATE_ESBUILD_DIAG=1 (or using diag scripts).

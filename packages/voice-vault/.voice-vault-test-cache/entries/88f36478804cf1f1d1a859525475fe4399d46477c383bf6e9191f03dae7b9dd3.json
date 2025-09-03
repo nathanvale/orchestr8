@@ -1,0 +1,16 @@
+{
+  "timestamp": 1756843724279,
+  "metadata": {
+    "provider": "elevenlabs",
+    "voice": "21m00Tcm4TlvDq8ikWAM",
+    "model": "eleven_multilingual_v2",
+    "format": "mp3_44100_128",
+    "speed": 1,
+    "text": "Testing cache key generation across providers",
+    "correlationId": "vv-oq5nmo-mf2ze4",
+    "createdAt": 1756843724279,
+    "sizeBytes": 43094
+  },
+  "audioFile": "88f36478804cf1f1d1a859525475fe4399d46477c383bf6e9191f03dae7b9dd3.mp3",
+  "key": "88f36478804cf1f1d1a859525475fe4399d46477c383bf6e9191f03dae7b9dd3"
+}

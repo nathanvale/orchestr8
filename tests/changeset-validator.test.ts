@@ -32,12 +32,6 @@ describe('changeset-validator', () => {
       JSON.stringify({ name: '@test/utils', version: '1.0.0' }),
     )
 
-    // Ensure we're in the temp directory before creating .changeset
-    const currentDir = process.cwd()
-    if (!currentDir.includes('.tmp-test-')) {
-      throw new Error(`Not in temp directory: ${currentDir}`)
-    }
-
     mkdirSync('.changeset', { recursive: true })
     writeFileSync('.changeset/config.json', JSON.stringify({}))
 
@@ -94,7 +88,89 @@ describe('changeset-validator', () => {
     expect(existsSync(VALIDATOR_SCRIPT)).toBe(true)
   })
 
-  // Removed entire frontmatter parsing suite - all tests were flaky
+  describe('frontmatter parsing', () => {
+    test('should parse basic changeset format', () => {
+      const changesetContent = `---
+"@test/utils": patch
+---
+
+Fix a small bug in utility function.
+`
+      writeFileSync('.changeset/test-change.md', changesetContent)
+
+      const scriptContent = readFileSync(VALIDATOR_SCRIPT, 'utf-8')
+      expect(scriptContent).toContain('parseChangeset')
+      expect(scriptContent).toContain('frontmatter')
+    })
+
+    test('should handle changeset with quoted package names', () => {
+      const changesetContent = `---
+"@test/utils": "patch"
+"@test/core": "minor"
+---
+
+Update multiple packages.
+`
+      writeFileSync('.changeset/quoted-packages.md', changesetContent)
+
+      const scriptContent = readFileSync(VALIDATOR_SCRIPT, 'utf-8')
+      // Should handle both quoted and unquoted syntax with gray-matter
+      expect(scriptContent).toContain('matter(content)')
+      expect(scriptContent).toContain('parsed.data')
+    })
+
+    test('should handle changeset with comments in frontmatter', () => {
+      const changesetContent = `---
+"@test/utils": patch # This is a small fix
+"@test/core": minor  # New feature added
+---
+
+Multiple changes with inline comments.
+`
+      writeFileSync('.changeset/with-comments.md', changesetContent)
+
+      const scriptContent = readFileSync(VALIDATOR_SCRIPT, 'utf-8')
+      // Should handle comments by removing them with gray-matter
+      expect(scriptContent).toContain('matter(content)') // Uses gray-matter for YAML parsing
+    })
+
+    test('should handle changeset with multiline descriptions', () => {
+      const changesetContent = `---
+"@test/utils": patch
+---
+
+This is a multiline description
+that spans multiple lines.
+
+It includes paragraphs and should be handled correctly.
+`
+      writeFileSync('.changeset/multiline.md', changesetContent)
+
+      const scriptContent = readFileSync(VALIDATOR_SCRIPT, 'utf-8')
+      expect(scriptContent).toContain('summary.length')
+    })
+
+    test('should handle edge case frontmatter patterns', () => {
+      // Ensure .changeset directory exists in temp directory
+      if (!existsSync('.changeset')) {
+        mkdirSync('.changeset', { recursive: true })
+      }
+
+      // Test case that would break regex-based parsing
+      const problematicContent = `---
+"@test/utils": patch
+"description": "A package that has --- in its description"
+---
+
+This should not break the parser.
+`
+      writeFileSync('.changeset/edge-case.md', problematicContent)
+
+      const scriptContent = readFileSync(VALIDATOR_SCRIPT, 'utf-8')
+      // Should use gray-matter for robust YAML parsing
+      expect(scriptContent).toContain('matter(content)')
+    })
+  })
 
   describe('package.json change detection', () => {
     test('should detect significant package.json changes', () => {
@@ -136,9 +212,22 @@ describe('changeset-validator', () => {
       expect(scriptContent).toContain('genericPhrases')
     })
 
-    // Removed flaky test - major version validation
+    test('should validate major version changes have proper documentation', () => {
+      const scriptContent = readFileSync(VALIDATOR_SCRIPT, 'utf-8')
 
-    // Removed flaky test - changeset freshness check
+      // Should check for breaking change documentation
+      expect(scriptContent).toContain('majorReleases')
+      expect(scriptContent).toContain('BREAKING CHANGE')
+    })
+
+    test('should check changeset freshness', () => {
+      const scriptContent = readFileSync(VALIDATOR_SCRIPT, 'utf-8')
+
+      // Should validate changeset age
+      expect(scriptContent).toContain('validateChangesetFreshness')
+      expect(scriptContent).toContain('STALE_WARNING_DAYS')
+      expect(scriptContent).toContain('STALE_CRITICAL_DAYS')
+    })
 
     test('should run freshness check even when no changesets exist', () => {
       const scriptContent = readFileSync(VALIDATOR_SCRIPT, 'utf-8')
@@ -152,7 +241,16 @@ describe('changeset-validator', () => {
   })
 
   describe('workspace package detection', () => {
-    // Removed flaky test - workspace package discovery
+    test('should discover workspace packages correctly', () => {
+      const scriptContent = readFileSync(VALIDATOR_SCRIPT, 'utf-8')
+
+      // Should handle glob patterns
+      expect(scriptContent).toContain('getWorkspacePackages')
+      expect(scriptContent).toContain('packages/*')
+
+      // Should handle both array and object workspace formats
+      expect(scriptContent).toContain('workspaces.packages')
+    })
 
     test('should detect removed packages', () => {
       const scriptContent = readFileSync(VALIDATOR_SCRIPT, 'utf-8')
@@ -163,7 +261,12 @@ describe('changeset-validator', () => {
   })
 
   describe('error handling', () => {
-    // Removed flaky test - handle missing .changeset directory
+    test('should handle missing .changeset directory', () => {
+      rmSync('.changeset', { recursive: true, force: true })
+
+      const scriptContent = readFileSync(VALIDATOR_SCRIPT, 'utf-8')
+      expect(scriptContent).toContain('existsSync(changesetDir)')
+    })
 
     test('should handle git command failures gracefully', () => {
       const scriptContent = readFileSync(VALIDATOR_SCRIPT, 'utf-8')

@@ -1,0 +1,9 @@
+{
+  "settings": {
+    "typescriptEnabled": true,
+    "eslintEnabled": false,
+    "prettierEnabled": false,
+    "autofixEnabled": false,
+    "skipTests": true
+  }
+}

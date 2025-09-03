@@ -1,218 +1,17 @@
-# Spec Requirements Document (Lean Revision)
+# Spec Requirements Document
 
-> Spec: DX Cleanup & Code Smell Elimination  
-> Created: 2025-08-31  
-> Status: Planning (Lean v2)  
-> Intent: Ruthlessly reduce cognitive load + eliminate high‑leverage smells
-> without over‑engineering.
+> Spec: Comprehensive DX Cleanup & Code Smell Elimination Created: 2025-08-31
+> Status: Planning
 
-## Purpose (Why This Exists)
+## Overview
 
-We remove the small set of blockers that erode focus (untyped surfaces, noisy
-scripts, inconsistent errors, broken security baseline) so the template delivers
-on its mission: fast, predictable, ADHD‑friendly flow with a single mental
-model.
+Implement a comprehensive developer experience cleanup to eliminate code smells,
+reduce cognitive load, and establish robust coding standards across the
+monorepo. This initiative will transform the codebase from having scattered
+technical debt to a pristine, maintainable, and ADHD-optimized development
+environment with zero tolerance for code smells.
 
-## Guiding Principles
-
-1. Flow > Features (opt for fewer, clearer tools).
-2. Enforceability > Aspiration (every promise has a gate).
-3. Defaults First (opt‑in for advanced layers).
-4. Minimize Surface Area (no new deps unless they collapse multiple problems).
-5. Fast Feedback Always (<5s tests warm, <2s warm builds—measured, not hoped).
-
-## In Scope (Trimmed)
-
-Core (must land):
-
-- Critical type safety (remove unsafe / implicit any + add return types on
-  exported/public functions only)
-- Script consolidation + discoverability (reduce noise; interactive help is
-  optional, not required P0)
-- Consistent error & logging contract (lightweight, pluggable, no framework
-  lock‑in)
-- SBOM + vuln scan fixed (valid CycloneDX + actionable vulnerability diff)
-- Baseline + gates (coverage, type coverage, build/test time snapshot + CI
-  enforcement)
-
-Deferred / Optional (do NOT block Core):
-
-- Advanced discriminated unions refactors
-- Full interactive script explorer UI polish
-- Retry orchestration beyond simple exponential backoff helper
-- Port orchestration heuristics (basic collision guard only for now)
-
-Out of Scope (explicit): new product features, architectural rewrites, perf
-micro‑optimizations beyond hitting gates, aesthetic CLI theming, telemetry
-storage backend.
-
-## Deliverables (Concrete + Testable)
-
-1. Zero unsafe `any` (explicit `any` allowed ONLY behind // @intent any
-   comment + eslint rule ignoring count = 0).
-2. Type coverage ≥95% (using type-coverage) enforced in CI.
-3. Line coverage ≥85% + no per-file regression (ratchet).
-4. Valid SBOM (CycloneDX) generated in CI; schema validation passes; vuln scan
-   produces zero High/Critical unapproved.
-5. Script count reduced: root `package.json` top-level runnable scripts ≤30;
-   categorized with prefix buckets (dev:, test:, build:, release:, dx:, sec:).
-6. Logging + error contract file (`scripts/lib/logging.ts`,
-   `scripts/lib/errors.ts`) with documented shape + redaction rules.
-7. Baseline performance snapshot committed (`.quality-baseline.json`) capturing:
-   warm build time, warm test time, cache hit rate, coverage, type coverage.
-8. CI gates fail on: coverage drop, type coverage drop, added unapproved high
-   vuln, >10% build or test time regression vs baseline (with env override
-   escape hatch `ALLOW_TEMP_REGRESSION=1`).
-
-## User Stories (Condensed)
-
-Enterprise Dev: I need predictable typed surfaces & enforced quality gates so I
-trust changes.  
-ADHD Dev: I need one obvious start command + short script list so I enter flow
-fast.  
-Security Dev: I need a reproducible SBOM + vuln diff so I can act, not triage
-noise.
-
-## Phased Execution (Realistic)
-
-P0 (Day 1–2): Baselines, unsafe any removal, gating scaffolding, SBOM fix,
-script audit + prune draft.  
-P1 (Day 3–4): Logging/error contract + implementation, finalize script
-categories + lightweight dx:help (optional).  
-P2 (Day 5): Coverage ratchet + per-file thresholds, simple retry helper, port
-collision guard.  
-P3 (Post-Core, optional): Interactive explorer enhancements, advanced union
-modeling, richer retry / circuit breaker, telemetry opt‑in.
-
-## Ownership Map
-
-| Domain           | Owner (Alias) | Artifact                                | CI Gate                      |
-| ---------------- | ------------- | --------------------------------------- | ---------------------------- |
-| Types & Coverage | @types        | type-coverage config, coverage-baseline | type & coverage thresholds   |
-| Scripts Hygiene  | @dx           | script inventory report                 | script count + category lint |
-| Security         | @sec          | sbom, vuln-report.json                  | high/critical block          |
-| Build Perf       | @build        | .quality-baseline.json                  | regression threshold         |
-| Error/Logging    | @platform     | logging.ts/errors.ts                    | contract lint (shape)        |
-
-## Enforcement (CI Gate Matrix)
-
-| Gate                  | Tool                               | Threshold                          | Action on Fail      |
-| --------------------- | ---------------------------------- | ---------------------------------- | ------------------- |
-| Type Coverage         | type-coverage                      | ≥95%                               | Fail job            |
-| Unsafe Any            | ESLint custom rule                 | 0 occurrences                      | Fail job            |
-| Test Coverage (lines) | Vitest + coverage gate script      | ≥85% & no drop                     | Fail job            |
-| Build Time Regression | custom performance guard           | <+10% vs baseline                  | Warn → Fail if >10% |
-| Test Time Regression  | performance guard                  | <+10%                              | Same as build       |
-| Vulnerabilities       | osv-scanner (or cdxgen integrated) | 0 High/Critical unless whitelisted | Fail job            |
-| Script Count          | lint script                        | ≤30 root scripts                   | Fail job            |
-| SBOM Validity         | schema validate                    | pass                               | Fail job            |
-
-## Minimal Tooling Policy
-
-Add dependency ONLY if it:
-
-1. Eliminates ≥3 duplicated patterns, OR
-2. Replaces ≥2 heavier deps, OR
-
-Planned additions (current justification):
-
-- type-coverage (measurement)
-- osv-scanner or cdxgen (security)  
-  Potential (defer unless clear win): inquirer / chalk / ora (only if dx:help
-  adoption blocked by plain text).
-
-## Error & Logging Contract (Summary)
-
-Structure (JSON line capable):
-
-```ts
-{
-   level: 'info' | 'warn' | 'error' | 'debug',
-   ts: ISO8601,
-   msg: string,
-   context?: Record<string, unknown>,
-   err?: { name: string; message: string; stack?: string; code?: string },
-   corr?: string  // correlation id
-}
-```
-
-Redaction: never log secrets, tokens, PII; introduce `redact(keys:string[])`
-helper.  
-Error taxonomy: OperationalError (retryable flag), ValidationError,
-ConfigurationError, SecurityError.
-
-## Script Hygiene Strategy
-
-1. Inventory (auto-generate JSON: name, category guess, keep/drop).
-2. Apply naming prefixes.
-3. Add `pnpm dx:help` (plain text first).
-4. Mark deprecated scripts (warn) for 1 minor version then remove.
-
-## Metrics & Baselines
-
-File: `.quality-baseline.json`:
-
-```json
-{
-  "buildTimeMs": 0,
-  "testTimeMs": 0,
-  "typeCoverage": 0,
-  "lineCoverage": 0,
-  "cacheHitRate": 0
-}
-```
-
-Updated only via explicit `pnpm quality:record` command (guard prevents
-accidental regression commit).
-
-## Success Criteria Recap
-
-| Goal           | Target            | Measured By             |
-| -------------- | ----------------- | ----------------------- |
-| Flow Start     | Single `pnpm dev` | manual + script check   |
-| Warm Build     | <2s               | guard script timing     |
-| Warm Tests     | <5s               | timing guard            |
-| Type Coverage  | ≥95%              | type-coverage           |
-| Line Coverage  | ≥85% (ratchet)    | coverage-ratchet script |
-| Cache Hit (CI) | ≥85%              | turbo summary           |
-| Script Count   | ≤30               | script lint             |
-| Unsafe Any     | 0                 | ESLint rule             |
-| High Vulns     | 0                 | scan report             |
-
-## Risk Mitigation (Top 5)
-
-| Risk                | Mitigation                                  |
-| ------------------- | ------------------------------------------- |
-| Timeline Slip       | Phased scope w/ Core vs Deferred list       |
-| Over-engineering    | Dependency gate + minimal contract patterns |
-| Perf Regression     | Baseline + guard thresholds                 |
-| Security Noise      | Whitelist file for known acceptable CVEs    |
-| Drift After Cleanup | CI gates + ownership map                    |
-
-## Rollback Strategy (Granular)
-
-Feature flags / toggles: `DX_LOGGING=off`, `DX_SCRIPT_HELP=off`.  
-If regression: revert specific feature commit; baseline file unchanged until
-healing commit passes gates.
-
-## Next Concrete Actions (Execution Kickoff)
-
-1. Capture baselines + write `.quality-baseline.json`.
-2. Add type-coverage + eslint rule for unsafe any.
-3. Implement SBOM + vuln scan (failing gate).
-4. Generate script inventory + prune.
-5. Add logging & error contract files + simple util usage in 1–2 scripts
-   (pilot).
-6. Add guard scripts (coverage, performance, vuln).
-
----
-
-This lean revision intentionally trims abstraction and focuses on enforceable,
-high-leverage changes that protect ADHD flow and template clarity.
-
-<!-- Legacy detailed spec content below intentionally removed to keep lean revision authoritative. -->
-
-<!-- START: Removed Legacy Section -->
+## User Stories
 
 ### Enterprise Developer Story
 
@@ -253,4 +52,72 @@ This blocks our ability to track vulnerabilities in our dependency tree. After
 remediation, we'll have complete visibility into our supply chain security
 posture with automated scanning and baseline tracking.
 
-<!-- END: Removed Legacy Section -->
+## Spec Scope
+
+1. **Type Safety Overhaul** - Eliminate all `any` types, add explicit return
+   types to every function, implement strict boolean expressions, and establish
+   type guard patterns throughout the codebase.
+
+2. **Script Organization & Discovery** - Reorganize 94+ package.json scripts
+   into logical categories, create an interactive script explorer, implement
+   unified development commands, and add comprehensive script documentation.
+
+3. **Error Handling Standardization** - Create centralized error handling
+   utilities, implement custom error classes, standardize logging patterns, and
+   ensure consistent error recovery strategies across all scripts and
+   applications.
+
+4. **Security Remediation** - Fix critical SBOM generation failure, enhance
+   supply chain security scanning, implement input sanitization patterns, and
+   establish security baseline tracking.
+
+5. **Build & Configuration Cleanup** - Consolidate duplicated configurations,
+   optimize Turborepo and CI/CD pipelines, standardize build processes, and
+   implement intelligent caching strategies.
+
+## Out of Scope
+
+- Adding new features or functionality beyond DX improvements
+- Major architectural changes or framework migrations
+- Database schema modifications or API redesigns
+- Third-party service integrations
+- UI/UX redesigns or component library changes
+
+## Expected Deliverable
+
+1. **Zero `any` types remaining in the codebase** - Every instance replaced with
+   proper TypeScript types, with type coverage reports showing 100% type safety.
+
+2. **Functional SBOM generation producing valid CycloneDX output** - Security
+   scans passing in CI/CD with component count >300 and vulnerability tracking
+   operational.
+
+3. **Single-command development startup with <10s total initialization** - All
+   services orchestrated through `pnpm dev:all` with automatic port conflict
+   resolution and health checks.
+
+4. **Organized script discovery system with categorized commands** - Interactive
+   help system, logical groupings, and clear documentation for all 94+ scripts.
+
+5. **85% minimum test coverage maintained** - All cleanup changes covered by
+   tests, with coverage ratcheting preventing regression.
+
+## Spec Documentation
+
+- Tasks: @.agent-os/specs/2025-08-31-dx-cleanup-code-smells/tasks.md
+- Technical Specification:
+  @.agent-os/specs/2025-08-31-dx-cleanup-code-smells/sub-specs/technical-spec.md
+- Type Safety Guide:
+  @.agent-os/specs/2025-08-31-dx-cleanup-code-smells/sub-specs/type-safety-guide.md
+- Error Handling Patterns:
+  @.agent-os/specs/2025-08-31-dx-cleanup-code-smells/sub-specs/error-handling-patterns.md
+- Script Refactoring Guide:
+  @.agent-os/specs/2025-08-31-dx-cleanup-code-smells/sub-specs/script-refactoring-guide.md
+- Security Remediation:
+  @.agent-os/specs/2025-08-31-dx-cleanup-code-smells/sub-specs/security-remediation.md
+- CI Optimization Guide:
+  @.agent-os/specs/2025-08-31-dx-cleanup-code-smells/sub-specs/ci-optimization-guide.md
+- Validation Checklist:
+  @.agent-os/specs/2025-08-31-dx-cleanup-code-smells/sub-specs/validation-checklist.md
+- Tests Specification:
+  @.agent-os/specs/2025-08-31-dx-cleanup-code-smells/sub-specs/tests.md

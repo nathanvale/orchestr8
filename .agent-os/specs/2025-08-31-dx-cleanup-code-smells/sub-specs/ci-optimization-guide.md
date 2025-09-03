@@ -1,121 +1,49 @@
-# CI Optimization (Lean)
+# CI/CD Optimization Guide
 
-Purpose: Fast, deterministic feedback. Make the green path (changed code only)
-cheap; fail early on structural breaks; surface performance regressions before
-they ossify.
+> Comprehensive CI/CD improvements for faster builds and better developer
+> feedback Version: 1.0.0 Created: 2025-08-31
 
-Version: 2025-08-31-lean
+## Overview
 
-## Scope Table
+This guide provides detailed patterns and implementations for optimizing CI/CD
+pipelines, reducing build times from ~15 minutes to <10 minutes, and improving
+developer feedback loops.
 
-| Category   | MUST (immediately)                                                | SOFT (helpful)                | DEFER (after core stable)                      | DROP (out of scope)                         |
-| ---------- | ----------------------------------------------------------------- | ----------------------------- | ---------------------------------------------- | ------------------------------------------- |
-| Pipelines  | Single consolidated `ci.yml` with validate→(tests+build) parallel | Nightly perf workflow         | Multi-cloud runners                            | Multi-branch bespoke workflows              |
-| Caching    | Precise Turbo inputs; remote cache enabled; pnpm store cache      | Layered Docker build cache    | Self-hosted cache proxy                        | Exotic multi-layer caching scripts          |
-| Test Exec  | Sharded Vitest (≥4 shards) + affected-only fast path              | Flaky detector flagging       | Automatic shard rebalancing                    | Dynamic infra spin-up per test              |
-| Build      | Per-package parallel builds (matrix)                              | Docker multi-stage (web)      | Multi-arch images                              | Full Bazel migration                        |
-| Metrics    | Collect: warm build ms, warm test ms, turbo hit %, coverage %     | Publish trend badge           | SLA alerts                                     | Real-time streaming dashboards              |
-| Governance | Concurrency cancel in-progress; required gates enforced           | Code owners on workflow edits | Signed workflow provenance                     | Full supply‑chain SBOM attestation pipeline |
-| Security   | Principle: frozen lockfile & immutable base images                | Image CVE scan (scheduled)    | Reproducible builds (deterministic timestamps) | On-cluster admission controllers            |
+## Current CI/CD Pain Points
 
-## Hard Gates (enforced by central validation)
+### Identified Issues
 
-| Gate                    | Target           | Source                              | Enforcement Moment     |
-| ----------------------- | ---------------- | ----------------------------------- | ---------------------- |
-| Warm build (single pkg) | <2s              | `dx:status` script timing           | Post validate job      |
-| Warm test (core shard)  | <5s              | Vitest timing aggregated            | Test matrix completion |
-| Turbo cache hit         | ≥85%             | `turbo run ... --dry-run=json`      | Validate job           |
-| Coverage (lines)        | ≥85%             | Merged lcov                         | After coverage merge   |
-| Type safety             | ≥95%             | `tsc --noEmit` + type coverage tool | Validate job           |
-| High/Critical vulns     | 0 (or baselined) | osv / audit scan                    | Validate job           |
+1. **Slow CI runs** - Currently ~15 minutes for full pipeline
+2. **Inefficient caching** - Turbo cache hit rate only ~50%
+3. **Redundant test execution** - Tests run for unchanged code
+4. **Poor parallelization** - Sequential tasks that could run concurrently
+5. **Large Docker images** - Unoptimized container builds
+6. **Missing performance metrics** - No visibility into bottlenecks
 
-Fail early: if any hard gate fails in `validate`, skip downstream matrix
-(short-circuit).
+## Optimization Patterns
 
-## Pipeline Shape (Happy Path)
+### Pattern 1: Turbo Cache Optimization
 
-1. validate (fast ≤3m)
-   - checkout (fetch-depth 0)
-   - pnpm install (frozen)
-   - turbo warm-up (dry-run to confirm cache scope)
-   - typecheck + lint + security scan + quality gates (no build yet if
-     avoidable)
-   - compute affected graph + export JSON artifact (used by tests & builds)
-2. test (matrix)
-   - shards only for affected packages; if root change → all
-   - vitest shard command: `pnpm test:ci --shard=N/total`
-3. build (matrix)
-   - only affected build targets (skip if purely doc/tests)
-4. coverage-merge
-   - download shard artifacts, merge, enforce threshold
-5. quality-report (optional soft)
-   - push metrics JSON for trend tracking
+#### Current Issue
 
-## Minimal Workflow Skeleton (reference only)
+Turbo cache hit rate is only ~50%, causing unnecessary rebuilds.
 
-```yaml
-name: CI
-on:
-  pull_request:
-  push:
+#### Solution Implementation
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+**File:** `turbo.jsonc`
 
-jobs:
-  validate:
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - uses: actions/checkout@v4
-        with: { fetch-depth: 0 }
-      - uses: pnpm/action-setup@v4
-        with: { version: 9 }
-      - uses: actions/setup-node@v4
-        with: { node-version-file: '.nvmrc', cache: pnpm }
-      - run: pnpm install --frozen-lockfile --prefer-offline
-      - name: Turbo cache dry-run
-        run: turbo run build --dry-run=json > turbo-dry-run.json
-      - name: Validate gates
-        run: pnpm validate
-      - name: Detect affected
-        run: pnpm ts-node scripts/affected.ts > affected.json
-      - uses: actions/upload-artifact@v4
-        with: { name: affected, path: affected.json }
+```typescript
+// ❌ BEFORE - Broad input patterns causing cache misses
+{
+  "tasks": {
+    "build": {
+      "inputs": ["**/*"],
+      "outputs": ["dist/**"]
+    }
+  }
+}
 
-  test:
-    needs: validate
-    if: needs.validate.result == 'success'
-    strategy:
-      fail-fast: false
-      matrix: { shard: [1,2,3,4] }
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
-        with: { name: affected }
-      - uses: ./.github/actions/setup
-      - run: pnpm test:ci --shard=${{ matrix.shard }}/4
-      - uses: actions/upload-artifact@v4
-        with: { name: cov-${{ matrix.shard }}, path: coverage }
-
-  coverage-merge:
-    needs: test
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/download-artifact@v4
-        with: { path: ./artifacts }
-      - run: pnpm merge:coverage ./artifacts
-      - run: pnpm coverage:gate
-```
-
-## Turbo Inputs (Principle)
-
-Only list files that materially change outputs. Avoid wildcards that explode
-dependency graph.
-
-```json
+// ✅ AFTER - Precise input patterns for better caching
 {
   "$schema": "./node_modules/turbo/schema.json",
   "tasks": {
@@ -125,114 +53,536 @@ dependency graph.
         "src/**/*.ts",
         "src/**/*.tsx",
         "tsconfig.json",
+        "tsup.config.ts",
         "package.json"
       ],
-      "outputs": ["dist/**"]
+      "outputs": ["dist/**", ".turbo/**"],
+      "cache": true,
+      "outputLogs": "errors-only"
+    },
+    "test": {
+      "dependsOn": ["build"],
+      "inputs": [
+        "src/**/*.ts",
+        "src/**/*.tsx",
+        "tests/**/*.test.ts",
+        "vitest.config.ts"
+      ],
+      "outputs": ["coverage/**"],
+      "cache": true,
+      "env": ["NODE_ENV"],
+      "passThroughEnv": ["CI"]
     }
   },
-  "globalDependencies": ["pnpm-lock.yaml", ".nvmrc"]
+  "globalDependencies": [
+    "pnpm-lock.yaml",
+    ".nvmrc",
+    "tsconfig.base.json"
+  ]
 }
 ```
 
-## Sharding Rules
+### Pattern 2: GitHub Actions Matrix Optimization
 
-| Rule                                                      | Rationale                              |
-| --------------------------------------------------------- | -------------------------------------- |
-| Fixed shard count (start at 4)                            | Keep deterministic timing & simplicity |
-| Rebalance only if P95 shard > 1.5× median 3 runs in a row | Avoid churn                            |
-| Do not shard <25 total test files                         | Overhead > benefit                     |
-| Fail one shard → fail whole job                           | Integrity                              |
+**File:** `.github/workflows/ci.yml`
 
-## Affected Logic (Concept)
+```yaml
+# ❌ BEFORE - Sequential job execution
+name: CI
+on: [push, pull_request]
 
-Pseudo: diff base→HEAD, map to top-level package/app directories. Any root file
-change sets global rebuild flag. Output JSON consumed by tests/build jobs to
-filter.
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: pnpm install
+      - run: pnpm test
+      - run: pnpm lint
+      - run: pnpm build
 
-Invoke: `pnpm affected:list --json > affected.json`
+# ✅ AFTER - Parallel matrix with smart caching
+name: CI
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    types: [opened, synchronize, reopened]
 
-If global flag = true → run full matrix regardless.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
-## Metrics & Collection
+jobs:
+  # Quick validation first
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # For affected package detection
 
-| Metric          | Tool / Command                              | Stored As             | Gate?     |
-| --------------- | ------------------------------------------- | --------------------- | --------- |
-| build_warm_ms   | `pnpm perf:build` (script times second run) | metrics.json          | Yes       |
-| test_warm_ms    | Vitest summary parse                        | metrics.json          | Yes       |
-| turbo_hit_ratio | parse `turbo-dry-run.json`                  | metrics.json          | Yes       |
-| coverage_lines  | lcov merge                                  | coverage-summary.json | Yes       |
-| vuln_high       | osv scan                                    | security-summary.json | Yes       |
-| flaky_tests     | (future) repeated failure detector          | metrics.json          | No (soft) |
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
 
-## Anti-Patterns
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'pnpm'
 
-| Anti-Pattern                     | Why Bad                      | Replacement                |
-| -------------------------------- | ---------------------------- | -------------------------- |
-| Wildcard inputs (`"**/*"`)       | Invalidates cache constantly | Minimal file lists         |
-| Sequential mega-job              | Slow feedback / late fail    | Validate + parallel shards |
-| Reinstall per job w/out cache    | Wastes minutes               | Shared pnpm store cache    |
-| Running all tests on doc changes | Wasted compute               | Affected detection skip    |
-| Hiding performance regressions   | Drift accumulates            | Trend metrics + gates      |
-| Silent gate failures (warn only) | False sense of quality       | Hard fail validate         |
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
 
-## Rollout Slices
+      - name: Type check
+        run: pnpm typecheck
 
-| Slice | Change                             | Success Signal                |
-| ----- | ---------------------------------- | ----------------------------- |
-| 1     | Introduce validate job + gates     | Pipeline time drops (<12m)    |
-| 2     | Add Turbo input pruning            | Cache hit ≥70%                |
-| 3     | Add sharded tests                  | Test wall time 50%+ reduction |
-| 4     | Add affected detection             | Skips on doc-only PRs         |
-| 5     | Add coverage merge + gating        | Stable ≥85% lines             |
-| 6     | Add remote cache + metrics publish | Cache hit ≥85% sustained      |
+  # Parallel test matrix
+  test:
+    needs: validate
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        node: [20]
+        shard: [1, 2, 3, 4] # Parallel test shards
 
-## Minimal Checklist
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-- [ ] Validate job: typecheck, lint, security, turbo dry-run
-- [ ] Hard gate script exits non-zero on breach
-- [ ] Turbo inputs pruned (no `**/*`)
-- [ ] Sharded test command implemented
-- [ ] Coverage merge & threshold gate
-- [ ] Affected detection JSON artifact
-- [ ] Concurrency cancellation configured
-- [ ] Remote cache secrets present (TURBO_TOKEN/TEAM)
-- [ ] Metrics artifact (metrics.json) uploaded
+      - name: Setup environment
+        uses: ./.github/actions/setup
+        with:
+          node-version: ${{ matrix.node }}
 
-## Troubleshooting (Essentials Only)
+      - name: Restore Turbo cache
+        uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: turbo-${{ runner.os }}-${{ github.sha }}
+          restore-keys: |
+            turbo-${{ runner.os }}-
 
-```bash
-# Turbo cache status
-turbo run build --dry-run=json | jq '.tasks[].cache'
+      - name: Run tests (shard ${{ matrix.shard }}/4)
+        run: |
+          pnpm test:ci --shard=${{ matrix.shard }}/4
+        env:
+          TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+          TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
 
-# Force rebuild to repopulate
-turbo run build --force
+      - name: Upload coverage
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./coverage/lcov.info
+          flags: shard-${{ matrix.shard }}
 
-# Find slow tests (>1s)
-pnpm test:ci --reporter=json | jq '.testResults[].assertionResults[] | select(.duration>1000)'
+  # Parallel build matrix
+  build:
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      matrix:
+        package: [utils, web, server]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup environment
+        uses: ./.github/actions/setup
+
+      - name: Build package
+        run: pnpm --filter @template/${{ matrix.package }} build
+        env:
+          TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
 ```
 
-## Principles Recap
+### Pattern 3: Reusable Workflow Actions
 
-1. Fast fail > full completion
-2. Deterministic inputs > clever heuristics (start simple)
-3. Enforce gates centrally, not per workflow copy
-4. Avoid premature micro-optimizations (rebalance shards later)
-5. Measure before expanding complexity
+**File:** `.github/actions/setup/action.yml`
 
-## Deferred / Future Notes
+```yaml
+name: 'Setup Environment'
+description: 'Setup Node.js, pnpm, and restore caches'
 
-- Flaky test quarantine lane (requires historical store)
-- Automatic shard weight balancing
-- Performance regression alert workflow (status checks)
-- Multi-arch Docker builds once needed
+inputs:
+  node-version:
+    description: 'Node.js version'
+    default: '20'
 
-## References
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v4
+      with:
+        version: 9
 
-- Turborepo caching docs
-- GitHub Actions concurrency docs
-- Vitest sharding docs
-- pnpm store caching
-- OWASP dependency guidance (for vuln gating)
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+        cache: 'pnpm'
 
-Legacy long-form examples removed: consult commit history if deep context
-required.
+    - name: Get pnpm store directory
+      id: pnpm-cache
+      shell: bash
+      run: |
+        echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+    - name: Setup pnpm cache
+      uses: actions/cache@v4
+      with:
+        path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+        key: pnpm-store-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+        restore-keys: |
+          pnpm-store-${{ runner.os }}-
+
+    - name: Install dependencies
+      shell: bash
+      run: pnpm install --frozen-lockfile --prefer-offline
+```
+
+### Pattern 4: Docker Build Optimization
+
+**File:** `Dockerfile`
+
+```dockerfile
+# ❌ BEFORE - Large unoptimized image
+FROM node:20
+WORKDIR /app
+COPY . .
+RUN npm install
+RUN npm run build
+CMD ["npm", "start"]
+
+# ✅ AFTER - Multi-stage optimized build
+# Stage 1: Prune dependencies
+FROM node:20-alpine AS pruner
+RUN apk add --no-cache libc6-compat
+RUN corepack enable pnpm
+WORKDIR /app
+
+COPY . .
+RUN pnpm dlx turbo prune @template/web --docker
+
+# Stage 2: Build application
+FROM node:20-alpine AS builder
+RUN apk add --no-cache libc6-compat
+RUN corepack enable pnpm
+WORKDIR /app
+
+# Copy pruned lockfile and package.json files
+COPY --from=pruner /app/out/json/ .
+COPY --from=pruner /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
+
+# Install dependencies
+RUN pnpm install --frozen-lockfile --prefer-offline
+
+# Copy source code
+COPY --from=pruner /app/out/full/ .
+
+# Build application
+RUN pnpm turbo build --filter=@template/web
+
+# Stage 3: Production runner
+FROM node:20-alpine AS runner
+RUN apk add --no-cache libc6-compat
+WORKDIR /app
+
+# Create non-root user
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+
+# Copy built application
+COPY --from=builder /app/apps/web/.next/standalone ./
+COPY --from=builder /app/apps/web/.next/static ./apps/web/.next/static
+COPY --from=builder /app/apps/web/public ./apps/web/public
+
+# Set user and expose port
+USER nextjs
+EXPOSE 3000
+ENV PORT=3000
+ENV NODE_ENV=production
+
+CMD ["node", "apps/web/server.js"]
+```
+
+### Pattern 5: Intelligent Test Selection
+
+**File:** `scripts/test-affected.ts`
+
+```typescript
+import { execSync } from 'child_process'
+import { readFileSync } from 'fs'
+import { resolve } from 'path'
+
+interface AffectedPackages {
+  packages: string[]
+  hasRootChanges: boolean
+}
+
+/**
+ * Detect packages affected by changes
+ */
+function getAffectedPackages(base: string = 'main'): AffectedPackages {
+  try {
+    // Get changed files
+    const changedFiles = execSync(`git diff --name-only ${base}...HEAD`, {
+      encoding: 'utf-8',
+    })
+      .trim()
+      .split('\n')
+      .filter(Boolean)
+
+    const packages = new Set<string>()
+    let hasRootChanges = false
+
+    for (const file of changedFiles) {
+      if (file.startsWith('packages/')) {
+        const packageName = file.split('/')[1]
+        packages.add(packageName)
+      } else if (file.startsWith('apps/')) {
+        const appName = file.split('/')[1]
+        packages.add(appName)
+      } else {
+        // Root level changes affect everything
+        hasRootChanges = true
+      }
+    }
+
+    return {
+      packages: Array.from(packages),
+      hasRootChanges,
+    }
+  } catch (error) {
+    console.error('Failed to detect affected packages:', error)
+    return { packages: [], hasRootChanges: true }
+  }
+}
+
+/**
+ * Run tests for affected packages only
+ */
+async function runAffectedTests(): Promise<void> {
+  const { packages, hasRootChanges } = getAffectedPackages()
+
+  if (hasRootChanges) {
+    console.log('Root changes detected, running all tests...')
+    execSync('pnpm test', { stdio: 'inherit' })
+    return
+  }
+
+  if (packages.length === 0) {
+    console.log('No changes detected, skipping tests')
+    return
+  }
+
+  console.log(`Running tests for affected packages: ${packages.join(', ')}`)
+
+  for (const pkg of packages) {
+    try {
+      execSync(`pnpm --filter @template/${pkg} test`, {
+        stdio: 'inherit',
+      })
+    } catch (error) {
+      console.error(`Tests failed for package: ${pkg}`)
+      process.exit(1)
+    }
+  }
+}
+
+// Execute if run directly
+if (require.main === module) {
+  runAffectedTests()
+}
+```
+
+### Pattern 6: Performance Monitoring
+
+**File:** `.github/workflows/performance.yml`
+
+```yaml
+name: Performance Monitoring
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '0 0 * * *' # Daily
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup environment
+        uses: ./.github/actions/setup
+
+      - name: Run build benchmark
+        id: build-bench
+        run: |
+          START=$(date +%s)
+          pnpm build:all
+          END=$(date +%s)
+          DURATION=$((END - START))
+          echo "duration=$DURATION" >> $GITHUB_OUTPUT
+
+      - name: Run test benchmark
+        id: test-bench
+        run: |
+          START=$(date +%s)
+          pnpm test
+          END=$(date +%s)
+          DURATION=$((END - START))
+          echo "duration=$DURATION" >> $GITHUB_OUTPUT
+
+      - name: Store metrics
+        uses: benchmark-action/github-action-benchmark@v1
+        with:
+          tool: 'customBiggerIsBetter'
+          output-file-path: ./benchmark-results.json
+          benchmark-data-dir-path: 'dev/bench'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          auto-push: true
+          alert-threshold: '120%'
+          comment-on-alert: true
+          fail-on-alert: false
+```
+
+## CI/CD Configuration Files
+
+### Turborepo Remote Cache Setup
+
+**File:** `.turbo/config.json`
+
+```json
+{
+  "teamId": "team_xxxxx",
+  "apiUrl": "https://api.vercel.com",
+  "loginUrl": "https://vercel.com"
+}
+```
+
+### Environment Variables
+
+**File:** `.github/workflows/env.yml`
+
+```yaml
+env:
+  # Turbo
+  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+  TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
+  TURBO_REMOTE_ONLY: true
+
+  # Performance
+  NODE_OPTIONS: '--max-old-space-size=8192'
+
+  # pnpm
+  PNPM_PARALLEL_WORKERS: 4
+```
+
+## Optimization Metrics
+
+### Before Optimization
+
+| Metric          | Value   | Impact                  |
+| --------------- | ------- | ----------------------- |
+| Full CI run     | ~15 min | High friction           |
+| Turbo cache hit | ~50%    | Wasted compute          |
+| Test execution  | ~10s    | Slow feedback           |
+| Docker build    | ~5 min  | Deployment delay        |
+| Parallel jobs   | 1       | Underutilized resources |
+
+### After Optimization
+
+| Metric          | Value   | Improvement     |
+| --------------- | ------- | --------------- |
+| Full CI run     | <10 min | 33% faster      |
+| Turbo cache hit | >85%    | 70% improvement |
+| Test execution  | <5s     | 50% faster      |
+| Docker build    | <2 min  | 60% faster      |
+| Parallel jobs   | 4-8     | 4-8x throughput |
+
+## Implementation Checklist
+
+### Quick Wins (Do First)
+
+- [ ] Update turbo.jsonc with precise input patterns
+- [ ] Enable Turbo remote caching
+- [ ] Add concurrency groups to workflows
+- [ ] Implement build matrix parallelization
+
+### Medium Effort
+
+- [ ] Create reusable GitHub Actions
+- [ ] Implement test sharding
+- [ ] Add affected package detection
+- [ ] Setup performance monitoring
+
+### Long Term
+
+- [ ] Optimize Docker builds with multi-stage
+- [ ] Implement dependency caching strategies
+- [ ] Add performance regression detection
+- [ ] Create custom runners for heavy workloads
+
+## Troubleshooting Guide
+
+### Cache Miss Issues
+
+```bash
+# Debug Turbo cache
+TURBO_DRY_RUN=true pnpm build
+
+# Check cache status
+turbo run build --dry-run=json | jq '.tasks[].cache'
+
+# Force cache refresh
+turbo run build --force
+```
+
+### Slow Test Detection
+
+```bash
+# Profile test execution
+pnpm test -- --reporter=verbose --reporter=json > test-times.json
+
+# Find slow tests
+jq '.testResults[].assertionResults[] | select(.duration > 1000)' test-times.json
+```
+
+### Docker Build Analysis
+
+```bash
+# Analyze layer sizes
+docker history <image> --human --format "table {{.CreatedBy}}\t{{.Size}}"
+
+# Build with cache mount
+docker buildx build --cache-from type=registry,ref=myapp:cache .
+```
+
+## Best Practices
+
+1. **Always use exact dependency versions** in CI (frozen lockfile)
+2. **Fail fast** with validation before expensive operations
+3. **Cache aggressively** but invalidate precisely
+4. **Parallelize** independent tasks across matrix
+5. **Monitor trends** not just current performance
+6. **Use timeouts** to prevent hanging builds
+7. **Cancel outdated** workflows on new pushes
+
+## Resources
+
+- [Turborepo Caching Documentation](https://turbo.build/repo/docs/core-concepts/caching)
+- [GitHub Actions Best Practices](https://docs.github.com/en/actions/guides)
+- [Docker Multi-stage Builds](https://docs.docker.com/build/building/multi-stage/)
+- [pnpm Performance Tips](https://pnpm.io/benchmarks)

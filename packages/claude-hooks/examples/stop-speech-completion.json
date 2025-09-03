@@ -1,0 +1,15 @@
+{
+  "settings": {
+    "soundEnabled": false,
+    "speechEnabled": true,
+    "transcriptEnabled": true,
+    "volume": "medium",
+    "speechMessage": "Task completed successfully",
+    "speechRate": 180,
+    "quietHours": {
+      "enabled": true,
+      "start": "21:00",
+      "end": "09:00"
+    }
+  }
+}

@@ -1,119 +1,571 @@
-# Validation Checklist (Lean)
+# Validation Checklist
 
-> Purpose: Fast, ADHD-friendly confirmation that the DX Cleanup is READY. This
-> file is intentionally short. Deep/verbose command recipes moved to Appendix.
+> Comprehensive validation checklist for DX cleanup implementation Version:
+> 1.0.0 Created: 2025-08-31
 
-## How To Use
+## Overview
 
-1. Run the single consolidated status command:
+This checklist ensures all cleanup tasks are properly implemented, tested, and
+validated. Each section includes specific acceptance criteria and verification
+commands.
 
-```bash
-pnpm dx:status
-```
+## Pre-Implementation Validation
 
-1. Compare against the Enforcement Matrix in the main spec
-   (`specs/2025-08-31-dx-cleanup-code-smells/spec.md`).
+### Environment Setup
 
-1. Only investigate a section below if `dx:status` (or CI) shows a FAIL / WARN.
+- [ ] Node.js 20.x LTS installed
 
-## MUST PASS (Hard Gates)
+  ```bash
+  node --version # Should show v20.x.x
+  ```
 
-| Gate               | Threshold / Condition         | Source Of Truth             | Status |
-| ------------------ | ----------------------------- | --------------------------- | ------ |
-| Type coverage      | ≥ 95%                         | `pnpm type:coverage`        | ⬜     |
-| Test line coverage | ≥ 85%                         | `pnpm test:coverage`        | ⬜     |
-| `any` types        | 0 unsafe (`: any`, `any /*`)  | lint + typecheck            | ⬜     |
-| Build (warm)       | < 2s core packages            | `pnpm build:core` (2nd run) | ⬜     |
-| Test duration      | < 5s (local warm)             | `pnpm test:ci --run`        | ⬜     |
-| Turbo cache hit    | ≥ 85%                         | CI summary / `dx:status`    | ⬜     |
-| High vulns         | 0 (unless whitelisted)        | `pnpm security:scan`        | ⬜     |
-| SBOM generated     | `security-sbom.json` present  | repo root                   | ⬜     |
-| Scripts count      | < 30 top-level                | `package.json`              | ⬜     |
-| Export maps        | Present & valid               | lint / build                | ⬜     |
-| Structured logging | Logger module exists          | `scripts/lib/logger.ts`     | ⬜     |
-| Error hierarchy    | Errors module exists          | `scripts/lib/errors.ts`     | ⬜     |
-| Sanitization utils | `command` & `path` safe utils | `scripts/lib/*`             | ⬜     |
+- [ ] pnpm 9.x installed
 
-Mark all ⬜ → ✅. Stop if any remain.
+  ```bash
+  pnpm --version # Should show 9.x.x
+  ```
 
-## SHOULD PASS (Soft / Yellow Gates)
+- [ ] All Bun artifacts removed
 
-| Item                 | Target              | Why it matters                | Status |
-| -------------------- | ------------------- | ----------------------------- | ------ |
-| CI total time        | < 10 min            | Fast feedback loop            | ⬜     |
-| Image size (if used) | < 200MB             | Deploy speed / cost           | ⬜     |
-| HMR latency          | < 1s edit→refresh   | Flow / focus retention        | ⬜     |
-| Context recovery     | < 10s after return  | ADHD cognitive load reduction | ⬜     |
-| Onboarding           | First commit < 5min | Team scalability              | ⬜     |
+  ```bash
+  # Should return no results
+  find . -name "bun.lockb" -o -name "bunfig.toml" -o -name "*bun-types*"
+  ```
 
-Soft gates can ship with a documented follow-up if ≥ 80% of soft targets are
-green.
+- [ ] Clean dependency installation
+  ```bash
+  rm -rf node_modules pnpm-lock.yaml
+  pnpm install
+  # Should complete without errors
+  ```
 
-## QUICK CHECK COMMANDS
+### Baseline Metrics
 
-| Category  | Command (Representative)                  | What To Scan For |
-| --------- | ----------------------------------------- | ---------------- |
-| Types     | `pnpm typecheck`                          | 0 errors         |
-| Coverage  | `pnpm test:coverage`                      | ≥ thresholds     |
-| Any types | `pnpm lint:types`                         | No unsafe any    |
-| Security  | `pnpm security:scan`                      | 0 high/critical  |
-| Build     | `time pnpm build:core`                    | Warm < 2s        |
-| Cache     | `pnpm build:core` (run twice)             | Cache hits       |
-| Scripts   | Count script keys via jq (scripts length) | < 30             |
-| Exports   | `pnpm lint:exports` (if configured)       | No violations    |
+- [ ] Capture current metrics
 
-## ARTIFACT EXISTENCE SNAPSHOT
+  ```bash
+  # Record these values for comparison
+  pnpm dx:status
+  pnpm test --coverage
+  time pnpm build:all
+  ```
 
-| Path / Artifact                | Exists | Notes                |
-| ------------------------------ | ------ | -------------------- |
-| `scripts/lib/logger.ts`        | ⬜     | Structured JSON logs |
-| `scripts/lib/errors.ts`        | ⬜     | Base + domain errors |
-| `scripts/lib/retry.ts`         | ⬜     | Exponential backoff  |
-| `scripts/lib/command-utils.ts` | ⬜     | Safe exec wrapper    |
-| `scripts/lib/path-utils.ts`    | ⬜     | Path traversal guard |
-| `security-sbom.json`           | ⬜     | CycloneDX            |
-| `.quality-baseline.json`       | ⬜     | Performance + types  |
-| `.security-baseline.json`      | ⬜     | Vuln snapshot        |
+- [ ] Document current type errors
 
-All should be ✅.
+  ```bash
+  pnpm typecheck 2>&1 | tee type-errors-baseline.txt
+  # Count: grep -c "error TS" type-errors-baseline.txt
+  ```
 
-## SIGN-OFF FLOW
+- [ ] Count `any` types
+  ```bash
+  grep -r "any" --include="*.ts" --include="*.tsx" . | grep -v node_modules | wc -l
+  ```
 
-1. Run `pnpm dx:status` → capture snapshot (commit if new baselines updated).
-2. Ensure all MUST PASS gates green.
-3. Log soft gate misses (if any) in follow-up issue with owner + ETA.
-4. Tag release branch / proceed with merge.
+## Type Safety Validation
 
-## ROLLBACK (Simplified)
+### TypeScript Strict Mode
 
-| Scenario               | Action                              |
-| ---------------------- | ----------------------------------- |
-| Broken build           | Revert last commit                  |
-| Widespread type fail   | Restore previous `tsconfig*` files  |
-| Security regression    | Re-run scan; revert dependency bump |
-| Performance regression | Revert perf-impact commit           |
+- [ ] No `any` types remaining
 
-Use `git revert <sha>` (avoid force-push to main).
+  ```bash
+  # Should return 0
+  grep -r ": any" --include="*.ts" --include="*.tsx" packages apps | wc -l
+  ```
 
-## SUCCESS SNAPSHOT
+- [ ] All functions have return types
 
-| Metric Group | Primary Signals               | Improvement Definition                   |
-| ------------ | ----------------------------- | ---------------------------------------- |
-| Reliability  | 0 flaky tests / stable CI     | No re-runs required                      |
-| Safety       | 0 high vulns / 0 unsafe any   | All enforced by gates                    |
-| Speed        | Build + Test within targets   | Warm loops feel instant                  |
-| Focus        | Commands memorable (< 7 core) | Dev can resume context < 10s             |
-| Maintainable | Modules small & typed         | No >500 line script / no sprawling utils |
+  ```bash
+  # Check for missing return types (manual review needed)
+  grep -E "function \w+\([^)]*\)[^:{\n]" --include="*.ts" --include="*.tsx" -r .
+  ```
 
-If all five groups satisfy definitions → PROJECT READY.
+- [ ] Strict boolean expressions pass
 
-## APPENDIX (Deep Dives – Only When Red)
+  ```bash
+  pnpm lint:strict
+  # Should show no strict-boolean-expressions errors
+  ```
 
-Rather than clutter the main checklist, detailed one-off commands for forensic
-investigation live in `docs/dx-status-enhancement-plan.md` & security / CI
-sub-specs. Add new deep-dive commands there, not here.
+- [ ] No floating promises
+  ```bash
+  # Should pass without no-floating-promises errors
+  pnpm lint | grep "no-floating-promises"
+  ```
+
+### Type Coverage
+
+- [ ] Type coverage meets threshold
+
+  ```bash
+  npx type-coverage --detail
+  # Should be > 95%
+  ```
+
+- [ ] No implicit any in test files
+  ```bash
+  pnpm tsc --noEmit --strict
+  # Should complete without errors
+  ```
+
+## Script Organization Validation
+
+### Script Discovery
+
+- [ ] Interactive help system works
+
+  ```bash
+  pnpm dx:help
+  # Should display categorized scripts
+  ```
+
+- [ ] All scripts categorized
+
+  ```bash
+  # Verify package.json has organized script sections
+  cat package.json | jq '.scripts | keys' | wc -l
+  # Should be < 30 top-level scripts
+  ```
+
+- [ ] Script documentation complete
+  ```bash
+  # Each script should have a description
+  pnpm run --help
+  ```
+
+### Command Validation
+
+- [ ] Core commands work
+
+  ```bash
+  pnpm dev          # Should start all services
+  pnpm test         # Should run all tests
+  pnpm build:all    # Should build all packages
+  pnpm dx:status    # Should show project status
+  ```
+
+- [ ] DX commands functional
+  ```bash
+  pnpm dx:idea      # Should open idea capture
+  pnpm dx:snapshot  # Should save session
+  pnpm dx:resume    # Should restore session
+  ```
+
+## Error Handling Validation
+
+### Error Classes
+
+- [ ] Custom error classes created
+
+  ```bash
+  # Should exist
+  ls scripts/lib/errors.ts
+  ```
+
+- [ ] Errors have proper context
+  ```typescript
+  // Test error context
+  const error = new ValidationError('Test', 'field')
+  console.log(error.toJSON())
+  // Should include: name, message, code, timestamp, context
+  ```
+
+### Logging System
+
+- [ ] Structured logger implemented
+
+  ```bash
+  # Should exist
+  ls scripts/lib/logger.ts
+  ```
+
+- [ ] Log levels work correctly
+  ```bash
+  LOG_LEVEL=DEBUG pnpm test 2>&1 | grep "DEBUG"
+  # Should show debug logs
+  ```
+
+### Retry Logic
+
+- [ ] Retry utilities functional
+
+  ```bash
+  # Should exist
+  ls scripts/lib/retry.ts
+  ```
+
+- [ ] Exponential backoff works
+  ```typescript
+  // Test retry with failure
+  await retry(() => Promise.reject(new Error('Test')), {
+    maxAttempts: 3,
+    initialDelay: 100,
+  })
+  // Should retry 3 times with increasing delays
+  ```
+
+## Security Validation
+
+### SBOM Generation
+
+- [ ] SBOM generation fixed
+
+  ```bash
+  pnpm security:scan
+  # Should generate security-sbom.json
+  ```
+
+- [ ] SBOM validates correctly
+
+  ```bash
+  # Check SBOM format
+  cat security-sbom.json | jq '.bomFormat'
+  # Should output "CycloneDX"
+  ```
+
+- [ ] Component count adequate
+  ```bash
+  cat security-sbom.json | jq '.components | length'
+  # Should be > 300
+  ```
+
+### Vulnerability Scanning
+
+- [ ] Security scan passes
+
+  ```bash
+  pnpm audit
+  # Should show no high/critical vulnerabilities
+  ```
+
+- [ ] License compliance checked
+  ```bash
+  pnpm licenses list
+  # Should not include GPL, AGPL licenses
+  ```
+
+### Input Sanitization
+
+- [ ] Command injection prevented
+
+  ```bash
+  # Test command sanitization
+  node -e "require('./scripts/lib/command-utils').safeExecute('ls', ['.; rm -rf /'])"
+  # Should reject with error
+  ```
+
+- [ ] Path traversal blocked
+  ```bash
+  # Test path traversal
+  node -e "require('./scripts/lib/path-utils').safePath('../../etc/passwd', '.')"
+  # Should throw error
+  ```
+
+## Build System Validation
+
+### Turbo Cache
+
+- [ ] Remote cache configured
+
+  ```bash
+  cat .turbo/config.json
+  # Should have teamId and apiUrl
+  ```
+
+- [ ] Cache hit rate improved
+
+  ```bash
+  pnpm build:all
+  pnpm build:all # Run again
+  # Second run should show "cache hit" for all tasks
+  ```
+
+- [ ] Cache metrics visible
+  ```bash
+  TURBO_DRY_RUN=true pnpm build
+  # Should show cache analysis
+  ```
+
+### Build Performance
+
+- [ ] Build time < 2s (warm)
+
+  ```bash
+  pnpm build:all # Warm up
+  time pnpm build:all
+  # Should complete in < 2 seconds
+  ```
+
+- [ ] Parallel builds work
+  ```bash
+  pnpm turbo build --concurrency=4
+  # Should use parallel execution
+  ```
+
+### Export Maps
+
+- [ ] All packages have valid exports
+
+  ```bash
+  # Check each package.json
+  for pkg in packages/*/package.json apps/*/package.json; do
+    cat $pkg | jq '.exports'
+  done
+  # All should have proper export maps
+  ```
+
+- [ ] TypeScript resolution works
+  ```bash
+  # Test imports in a TypeScript file
+  echo "import { utils } from '@template/utils'" | npx tsc --noEmit -
+  # Should resolve without errors
+  ```
+
+## Testing Validation
+
+### Test Execution
+
+- [ ] All tests pass
+
+  ```bash
+  pnpm test
+  # Should show 100% passing
+  ```
+
+- [ ] Test time < 5s
+
+  ```bash
+  time pnpm test
+  # Should complete in < 5 seconds
+  ```
+
+- [ ] Coverage meets threshold
+  ```bash
+  pnpm test:coverage
+  # Should be >= 85%
+  ```
+
+### Test Configuration
+
+- [ ] Vitest multi-project works
+
+  ```bash
+  pnpm test --project=utils
+  pnpm test --project=web
+  # Each should run respective tests
+  ```
+
+- [ ] Test sharding functional
+  ```bash
+  pnpm test -- --shard=1/2
+  pnpm test -- --shard=2/2
+  # Should split test execution
+  ```
+
+## CI/CD Validation
+
+### GitHub Actions
+
+- [ ] CI runs < 10 minutes
+
+  ```yaml
+  # Check recent workflow runs
+  # Should complete in < 10 minutes
+  ```
+
+- [ ] Matrix builds work
+
+  ```yaml
+  # Verify parallel jobs in Actions tab
+  # Should show multiple concurrent jobs
+  ```
+
+- [ ] Concurrency control active
+  ```yaml
+  # Push multiple times quickly
+  # Should cancel previous runs
+  ```
+
+### Docker Builds
+
+- [ ] Docker image builds
+
+  ```bash
+  docker build -t test-app .
+  # Should complete successfully
+  ```
+
+- [ ] Image size optimized
+  ```bash
+  docker images test-app --format "table {{.Repository}}\t{{.Tag}}\t{{.Size}}"
+  # Should be < 200MB
+  ```
+
+## Performance Validation
+
+### Development Performance
+
+- [ ] Fast refresh works
+
+  ```bash
+  pnpm dev
+  # Edit a file and save
+  # Should update in < 1 second
+  ```
+
+- [ ] HMR functional
+  ```bash
+  # With dev server running
+  # Edit a React component
+  # Should preserve state
+  ```
+
+### Runtime Performance
+
+- [ ] Memory usage stable
+
+  ```bash
+  # Monitor during test run
+  pnpm test &
+  ps aux | grep node
+  # Memory should not exceed 1GB
+  ```
+
+- [ ] CPU usage reasonable
+  ```bash
+  # During build
+  top -p $(pgrep -f "pnpm build")
+  # CPU should not stay at 100%
+  ```
+
+## Documentation Validation
+
+### Code Documentation
+
+- [ ] All public APIs documented
+
+  ```bash
+  # Generate docs
+  pnpm docs:generate
+  # Should complete without warnings
+  ```
+
+- [ ] README updated
+  ```bash
+  # Check for Bun references
+  grep -i "bun" README.md
+  # Should return no results
+  ```
+
+### Inline Documentation
+
+- [ ] Complex functions commented
+  ```bash
+  # Check for TODO comments
+  grep -r "TODO" --include="*.ts" --include="*.tsx" .
+  # Should be addressed or documented
+  ```
+
+## Final Validation
+
+### Integration Tests
+
+- [ ] Full workflow test
+
+  ```bash
+  # Clean start
+  rm -rf node_modules .turbo coverage
+  pnpm install
+  pnpm test
+  pnpm build:all
+  pnpm dx:status
+  # All should pass
+  ```
+
+- [ ] Package creation works
+  ```bash
+  pnpm gen:package test-pkg
+  # Should create new package structure
+  ```
+
+### User Acceptance
+
+- [ ] ADHD flow improvements
+  - [ ] Context recovery < 10s
+  - [ ] Decision paralysis reduced
+  - [ ] Visual feedback clear
+  - [ ] Commands memorable
+
+- [ ] Developer satisfaction
+  - [ ] Onboarding < 5 minutes
+  - [ ] First commit < 5 minutes
+  - [ ] Debugging easier
+  - [ ] Less cognitive load
+
+## Sign-off Checklist
+
+### Technical Sign-off
+
+- [ ] All type safety patterns implemented
+- [ ] Error handling comprehensive
+- [ ] Security vulnerabilities addressed
+- [ ] Performance targets met
+- [ ] Test coverage adequate
+
+### Process Sign-off
+
+- [ ] CI/CD optimized
+- [ ] Documentation complete
+- [ ] Scripts organized
+- [ ] Monitoring in place
+- [ ] Team trained
+
+### Business Sign-off
+
+- [ ] No regression in features
+- [ ] Performance improved
+- [ ] Security enhanced
+- [ ] Maintenance easier
+- [ ] Developer productivity increased
+
+## Rollback Plan
+
+If issues are discovered:
+
+1. **Immediate Rollback**
+
+   ```bash
+   git checkout main
+   git branch -D dx-cleanup
+   ```
+
+2. **Partial Rollback**
+
+   ```bash
+   git revert <commit-hash>
+   # Cherry-pick working changes
+   ```
+
+3. **Fix Forward**
+   - Identify specific issue
+   - Create hotfix branch
+   - Test thoroughly
+   - Deploy fix
+
+## Success Metrics Summary
+
+| Metric          | Target | Actual | Status |
+| --------------- | ------ | ------ | ------ |
+| Type coverage   | >95%   | \_\_\_ | ⬜     |
+| Test coverage   | ≥85%   | \_\_\_ | ⬜     |
+| Build time      | <2s    | \_\_\_ | ⬜     |
+| Test time       | <5s    | \_\_\_ | ⬜     |
+| CI time         | <10min | \_\_\_ | ⬜     |
+| `any` types     | 0      | \_\_\_ | ⬜     |
+| SBOM components | >300   | \_\_\_ | ⬜     |
+| Turbo cache hit | >85%   | \_\_\_ | ⬜     |
 
 ---
 
-Minimal surface area = faster green. If you feel pulled to add more boxes, first
-ask: Does the main spec gate already cover it? If yes — link, don't add.
+**Note:** Check off each item as completed. All items must be checked before
+considering the DX cleanup complete.

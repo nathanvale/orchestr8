@@ -54,7 +54,9 @@ describe('security-scan', () => {
     vi.restoreAllMocks()
   })
 
-  // Removed flaky test that was having file system issues in CI
+  test('should exist and be executable', () => {
+    expect(existsSync(SECURITY_SCRIPT)).toBe(true)
+  })
 
   describe('dependency audit', () => {
     test('should handle pnpm audit network failures with retry logic', () => {
@@ -101,9 +103,16 @@ describe('security-scan', () => {
       expect(scriptContent).toContain('thresholds.low')
     })
 
-    // Removed flaky test that was causing file system errors
-    // The test was checking for "status: 'fail'" strings in the script
-    // but was failing with unrelated file system errors in CI
+    test('should not downgrade critical failures to warnings', () => {
+      const scriptContent = readFileSync(SECURITY_SCRIPT, 'utf-8')
+
+      // Critical vulnerabilities should always fail
+      expect(scriptContent).toContain("status: 'fail'")
+
+      // Should not convert critical to warn based on options
+      const failLines = scriptContent.split('\n').filter((line) => line.includes("status: 'fail'"))
+      expect(failLines.length).toBeGreaterThan(0)
+    })
   })
 
   describe('SBOM generation', () => {
@@ -214,7 +223,18 @@ describe('security-scan', () => {
   })
 
   describe('report generation', () => {
-    // Removed flaky test that was checking script content but failing with file system errors
+    test('should generate structured security report', () => {
+      const scriptContent = readFileSync(SECURITY_SCRIPT, 'utf-8')
+
+      expect(scriptContent).toContain('generateSecurityReport')
+      expect(scriptContent).toContain('security-report.json')
+
+      // Should have proper summary
+      expect(scriptContent).toContain('summary')
+      expect(scriptContent).toContain('total')
+      expect(scriptContent).toContain('passed')
+      expect(scriptContent).toContain('failed')
+    })
 
     test('should have ADHD-friendly output', () => {
       const scriptContent = readFileSync(SECURITY_SCRIPT, 'utf-8')

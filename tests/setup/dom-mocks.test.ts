@@ -2,7 +2,7 @@
  * @vitest-environment happy-dom
  */
 
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { beforeAll, describe, expect, test, vi } from 'vitest'
 
 describe('DOM Mock Environment Checks', () => {
   test('should only mock browser APIs in test environment', () => {
@@ -80,7 +80,7 @@ describe('DOM Mock Environment Checks', () => {
   describe('Mock Clearing Verification', () => {
     let mockFn: ReturnType<typeof vi.fn>
 
-    beforeEach(() => {
+    beforeAll(() => {
       mockFn = vi.fn()
     })
 

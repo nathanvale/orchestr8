@@ -1,4 +1,4 @@
-#!/usr/bin/env tsx
+#!/usr/bin/env bun
 /**
  * Type declaration validator.
  * Ensures each export exposes runtime + matching type artifacts and maps.
@@ -11,6 +11,7 @@ import { isAbsolute, relative as relativePath, resolve as resolvePath } from 'no
 import packageJson from '../package.json'
 
 interface PackageJsonExportsEntry {
+  readonly bun?: string
   readonly import?: string
   readonly types?: string
   readonly default?: string

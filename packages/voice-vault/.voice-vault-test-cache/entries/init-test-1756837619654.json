@@ -1,0 +1,13 @@
+{
+  "timestamp": 1756837619656,
+  "metadata": {
+    "provider": "test",
+    "model": "test",
+    "voice": "test",
+    "createdAt": 1756837619656,
+    "sizeBytes": 4,
+    "correlationId": "vv-z530ci-mf2vrb"
+  },
+  "audioFile": "init-test-1756837619654.mp3",
+  "key": "init-test-1756837619654"
+}

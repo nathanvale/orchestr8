@@ -6,6 +6,6 @@
     "rootDir": ".",
     "types": ["node"]
   },
-  "include": ["src/**/*.ts", "vitest.setup.ts", "vitest.config.ts"],
-  "exclude": ["dist", "node_modules", "**/*.test.ts", "**/*.spec.ts"]
+  "include": ["src/**/*.ts", "vitest.setup.ts"],
+  "exclude": ["dist", "node_modules", "**/*.test.ts", "**/*.spec.ts", "vitest.config.ts"]
 }

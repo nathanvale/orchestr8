@@ -1,0 +1,13 @@
+{
+  "timestamp": 1756837501511,
+  "metadata": {
+    "provider": "test",
+    "model": "test",
+    "voice": "test",
+    "createdAt": 1756837501511,
+    "sizeBytes": 4,
+    "correlationId": "vv-oqa288-mf2vor"
+  },
+  "audioFile": "init-test-1756837501509.mp3",
+  "key": "init-test-1756837501509"
+}

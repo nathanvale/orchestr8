@@ -1,14 +1,10 @@
-// Root ESLint configuration - P2.2 Security Rule Separation
+// Root ESLint configuration - minimal config for maintenance scripts only
 import { baseConfig } from '@template/eslint-config/base'
-import { calibratedConfig } from '@template/eslint-config/calibrated'
-import { declarationFilesConfig } from '@template/eslint-config/declaration-files'
-import { securityConfig } from '@template/eslint-config/security'
+import { ciDeepConfig } from '@template/eslint-config/ci-deep'
 import { testsConfig } from '@template/eslint-config/tests'
 
-const eslintProfile = process.env.ESLINT_PROFILE ?? 'dev'
-
 export default [
-  // P2.1 & P2.3 - Enhanced ignores for generated files
+  // Global ignores for generated/external files
   {
     ignores: [
       'dist/**',
@@ -17,34 +13,23 @@ export default [
       'build/**',
       'coverage/**',
       'node_modules/**',
+      '**/*.d.ts',
       '.changeset/**',
       'packages/*/dist/**',
       'apps/*/dist/**',
       '~/**',
+      '.bun/**',
       '*.config.js',
       '.size-limit.js',
-      'runtime.test.ts',
-      // P2.3 - Exclude generated Next.js files from main linting
-      'apps/web/.next/**',
-      'apps/*/next-env.d.ts',
-      // P2.1 - Exclude generated declaration files (but lint handwritten ones)
-      '**/dist/**/*.d.ts',
-      '**/dist-types/**/*.d.ts',
+      'runtime.test.ts', // Old orphaned test file - not part of monorepo structure
     ],
   },
 
-  // Base config for all profiles (fast, essential rules only)
+  // Base config for root maintenance scripts & docs
   ...baseConfig,
 
-  // P2.2 - Conditional rule loading based on ESLINT_PROFILE
-  // dev (default): Fast local development with essential rules only
-  // security: Comprehensive security analysis with all rules
-  // ci: Legacy support for calibrated rules
-  ...(eslintProfile === 'security' ? securityConfig : []),
-  ...(eslintProfile === 'ci' ? calibratedConfig : []),
-
-  // P2.3 - Selective declaration file linting
-  ...declarationFilesConfig,
+  // CI deep profile for comprehensive checking
+  ...(process.env.ESLINT_PROFILE === 'ci' ? ciDeepConfig : []),
 
   // Test configuration
   ...testsConfig,

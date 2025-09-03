@@ -1,0 +1,11 @@
+{
+  "settings": {
+    "typescriptEnabled": true,
+    "eslintEnabled": true,
+    "prettierEnabled": true,
+    "autofixEnabled": true,
+    "strictMode": true,
+    "failOnWarnings": true,
+    "timeout": 30000
+  }
+}

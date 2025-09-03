@@ -1,0 +1,12 @@
+{
+  "settings": {
+    "soundEnabled": true,
+    "volume": "medium",
+    "loggingEnabled": true,
+    "cooldownMs": 2000,
+    "logDir": "~/.claude/logs/subagents",
+    "trackMetrics": true,
+    "alertOnLongTasks": true,
+    "longTaskThresholdMs": 30000
+  }
+}
