@@ -6,7 +6,6 @@
     "lib": ["ESNext", "DOM", "DOM.Iterable"],
     "module": "node16",
     // Why: "node16" resolution and module for better Node.js compatibility with pnpm and import.meta support
-    // Note: tsconfig.build.json overrides to "NodeNext" for Node.js compatibility
     "moduleResolution": "node16",
     "moduleDetection": "force", // Why: Treat all files as modules (no global scripts)
     "jsx": "react-jsx", // Why: React 17+ automatic JSX transform
@@ -72,7 +71,7 @@
       // Removed unused @types, @utils and @config paths (can reintroduce when directories exist)
     }
   },
-  "include": ["src/**/*", "types/**/*", "scripts/**/*", "vitest.config.ts", "vitest.setup.tsx"],
+  "include": ["packages/*/src/**/*", "apps/*/src/**/*", "tests/**/*", "vitest.config.ts"],
   "exclude": ["node_modules", "dist", "build", "coverage", ".turbo", "**/.bun/**"],
   // Removed TypeScript project references to rely on Turborepo task graph instead
   "ts-node": {

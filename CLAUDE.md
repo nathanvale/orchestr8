@@ -205,6 +205,7 @@ every edit unless a spec explicitly overrides.
   independent operations only.
 - **Promise return types:** Functions returning promises must have explicit
   Promise return types:
+
   ```typescript
   // ✅ GOOD
   async function prepare(): Promise<void> { ... }
@@ -275,10 +276,12 @@ every edit unless a spec explicitly overrides.
   ```
 
 - **Environment variables**: Use proper access patterns and fallbacks:
+
   ```typescript
   // ✅ GOOD - dot notation with nullish coalescing
   const apiUrl = import.meta.env.VITE_API_URL ?? 'http://localhost:3333'
   ```
+
 - **Deprecated methods**: Replace deprecated string methods:
 
   ```typescript
@@ -325,6 +328,7 @@ every edit unless a spec explicitly overrides.
 - Use inline factory helpers for repeated objects instead of global mutable
   fixtures.
 - **MSW setup**: Import Vitest globals explicitly to avoid unsafe calls:
+
   ```typescript
   import { afterAll, afterEach, beforeAll } from 'vitest'
   ```
@@ -378,87 +382,3 @@ every edit unless a spec explicitly overrides.
   function. For new API surface, prefer exceptions for truly exceptional states;
   otherwise return `{ ok: false, error }` with discriminant.
 - Always include original cause: `new SomeError('message', { cause: err })`.
-
-### 13. File & Package Hygiene
-
-- Never edit generated outputs: `dist*`, coverage, or lock files outside normal
-  tooling commands.
-- If adding a package: update root `workspaces`, add TS project ref, and ensure
-  build task outputs to `dist` / `dist-node` / `dist-types` pattern.
-
-### 14. Performance Considerations
-
-- Avoid unnecessary object spread in tight loops; preallocate arrays where size
-  known. Use pure functions in utilities (no side effects, no date/time I/O).
-- Early return over deeply nested conditionals.
-
-### 15. React / JSX (when present)
-
-- **Named function components** with explicit prop interfaces and return types:
-  ```typescript
-  interface Props { logs: LogEntry[] }
-  function LogDashboard({ logs }: Props): React.JSX.Element { ... }
-  ```
-- Derive minimal state; compute derived values inline.
-- No side effects in render path; hooks at top level only.
-- **Conditional rendering**: Use explicit null checks for optional props:
-  ```typescript
-  // ✅ GOOD - explicit null check
-  {(log.correlationId != null) && <span>({log.correlationId})</span>}
-  ```
-
-### 16. Prompt / Spec Alignment
-
-- If a spec contradicts a rule, add a brief `// deviation: reason` comment and
-  keep deviation localized.
-- Summarize multi-file changes before applying large edits.
-
-### 17. Example (Good)
-
-```typescript
-// utilities/src/math-utils.ts
-export interface SumOptions {
-  clampMin?: number
-  clampMax?: number
-}
-
-export function safeSum(
-  a: number,
-  b: number,
-  options: SumOptions = {},
-): number {
-  const total = a + b
-  const { clampMin, clampMax } = options
-  if (clampMin !== undefined && total < clampMin) return clampMin
-  if (clampMax !== undefined && total > clampMax) return clampMax
-  return total
-}
-
-// tests/math-utils.test.ts
-import { safeSum } from '@template/utilities'
-
-test('clamps above max', () => {
-  expect(safeSum(5, 10, { clampMax: 12 })).toBe(12)
-})
-```
-
-### 18. Common Agent Pitfalls (DO NOT)
-
-- Generating code with implicit `any` from missing generics.
-- Adding `!` to satisfy type errors instead of refining.
-- Using deep relative paths between packages.
-- Leaving floating promises in fire‑and‑forget utilities.
-- Writing tests with `.only` or forgetting `await` before async calls.
-- Creating large multi‑purpose functions to "save files"—prefer small focused
-  ones.
-- **Using deprecated `JSX.Element`** - always use `React.JSX.Element`
-- **Forgetting explicit return types** on functions, especially React components
-- **Using `||` instead of `??`** for null/undefined fallbacks
-- **Not handling array access** - always provide fallbacks for potentially
-  undefined values
-- **Floating promises in useEffect/setInterval** - wrap with `void` for
-  fire-and-forget
-- **Missing React imports** when using JSX types
-- **Raw `response.json()` returns** - always cast to expected types
-
-If unsure: produce a minimal diff and request clarification instead of guessing.

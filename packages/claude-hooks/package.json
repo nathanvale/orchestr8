@@ -78,24 +78,20 @@
     "claude-hooks-subagent": "./dist/bin/claude-hooks-subagent.js"
   },
   "files": [
-    "dist/**/*",
+    "dist",
     "README.md",
     "LICENSE"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "tsup",
     "cache:clear": "tsx src/bin/claude-hooks-cache-explorer.ts --clear",
     "cache:explorer": "tsx src/bin/claude-hooks-cache-explorer.ts",
     "cache:stats": "tsx src/bin/claude-hooks-cache-stats.ts",
     "clean": "rm -rf dist *.tsbuildinfo",
-    "dev": "tsc --watch",
-    "format": "prettier --write src",
-    "format:check": "prettier --check src",
     "lint": "NODE_NO_WARNINGS=1 eslint . --cache --cache-location .eslintcache",
     "prepublishOnly": "pnpm build",
     "test": "vitest",
-    "test:build": "./scripts/test-build.sh",
-    "type-check": "tsc --noEmit"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@elevenlabs/elevenlabs-js": "^2.8.0",

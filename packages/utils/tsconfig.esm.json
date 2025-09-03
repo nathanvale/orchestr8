@@ -1,8 +1,0 @@
-{
-  "extends": "../../tooling/tsconfig/esm-library.json",
-  "compilerOptions": {
-    "types": ["node", "react"]
-  },
-  "include": ["src/**/*"],
-  "exclude": ["**/*.test.*", "**/*.spec.*", "tests/**/*", "build-esm.js"]
-}

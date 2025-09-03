@@ -1,7 +1,5 @@
 ---
 '@template/utils': patch
-'@template/app': patch
-'@template/server': patch
 '@template/web': patch
 ---
 

@@ -14,25 +14,30 @@ const TURBO_DEFAULT = '$TURBO_DEFAULT$'
 
 // Common test constants
 const rootDir = process.cwd()
-const turboConfigPath = join(rootDir, 'turbo.jsonc')
+const turboConfigPath = join(rootDir, 'turbo.json')
+const turboConfigPathJsonc = join(rootDir, 'turbo.jsonc')
 
 // Tests for Turborepo 2.5 configuration best practices
 describe('Turborepo Pipeline Configuration', () => {
   describe('Configuration File', () => {
-    test('should have a valid turbo.jsonc file', () => {
-      expect(existsSync(turboConfigPath)).toBe(true)
+    test('should have a valid turbo config file', () => {
+      const hasJson = existsSync(turboConfigPath)
+      const hasJsonc = existsSync(turboConfigPathJsonc)
+      expect(hasJson || hasJsonc).toBe(true)
     })
 
     test('should have proper schema reference', () => {
-      if (existsSync(turboConfigPath)) {
-        const config = parseJsonc(readFileSync(turboConfigPath, 'utf8'))
+      const configPath = existsSync(turboConfigPath) ? turboConfigPath : turboConfigPathJsonc
+      if (existsSync(configPath)) {
+        const config = parseJsonc(readFileSync(configPath, 'utf8'))
         expect(config.$schema).toBe('./node_modules/turbo/schema.json')
       }
     })
 
     test('should define all required pipeline tasks', () => {
-      if (existsSync(turboConfigPath)) {
-        const config = parseJsonc(readFileSync(turboConfigPath, 'utf8'))
+      const configPath = existsSync(turboConfigPath) ? turboConfigPath : turboConfigPathJsonc
+      if (existsSync(configPath)) {
+        const config = parseJsonc(readFileSync(configPath, 'utf8'))
         expect(config.tasks).toBeDefined()
         expect(config.tasks.build).toBeDefined()
         expect(config.tasks.test).toBeDefined()
@@ -45,8 +50,9 @@ describe('Turborepo Pipeline Configuration', () => {
 
   describe('Task Dependencies', () => {
     test('should have proper build task dependencies', () => {
-      if (existsSync(turboConfigPath)) {
-        const config = parseJsonc(readFileSync(turboConfigPath, 'utf8'))
+      const configPath = existsSync(turboConfigPath) ? turboConfigPath : turboConfigPathJsonc
+      if (existsSync(configPath)) {
+        const config = parseJsonc(readFileSync(configPath, 'utf8'))
         expect(config.tasks.build.dependsOn).toContain('^build')
         expect(config.tasks.build.outputs).toContain('dist/**')
         expect(config.tasks.build.cache).toBe(true)
@@ -54,8 +60,9 @@ describe('Turborepo Pipeline Configuration', () => {
     })
 
     test('should have test depend on upstream builds', () => {
-      if (existsSync(turboConfigPath)) {
-        const config = parseJsonc(readFileSync(turboConfigPath, 'utf8'))
+      const configPath = existsSync(turboConfigPath) ? turboConfigPath : turboConfigPathJsonc
+      if (existsSync(configPath)) {
+        const config = parseJsonc(readFileSync(configPath, 'utf8'))
         expect(config.tasks.test.dependsOn).toContain('^build')
         expect(config.tasks.test.outputs).toContain('coverage/**')
         expect(config.tasks.test.cache).toBe(true)
@@ -63,8 +70,9 @@ describe('Turborepo Pipeline Configuration', () => {
     })
 
     test('should have typecheck with proper dependencies', () => {
-      if (existsSync(turboConfigPath)) {
-        const config = parseJsonc(readFileSync(turboConfigPath, 'utf8'))
+      const configPath = existsSync(turboConfigPath) ? turboConfigPath : turboConfigPathJsonc
+      if (existsSync(configPath)) {
+        const config = parseJsonc(readFileSync(configPath, 'utf8'))
         expect(config.tasks.typecheck.dependsOn).toContain('^typecheck')
         expect(config.tasks.typecheck.cache).toBe(true)
       }
@@ -73,8 +81,9 @@ describe('Turborepo Pipeline Configuration', () => {
 
   describe('Cache Configuration', () => {
     test('should have proper cache outputs defined', () => {
-      if (existsSync(turboConfigPath)) {
-        const config = parseJsonc(readFileSync(turboConfigPath, 'utf8'))
+      const configPath = existsSync(turboConfigPath) ? turboConfigPath : turboConfigPathJsonc
+      if (existsSync(configPath)) {
+        const config = parseJsonc(readFileSync(configPath, 'utf8'))
         // Build outputs should include all dist directories and TypeScript build info
         expect(config.tasks.build.outputs).toEqual([
           'dist/**',
@@ -88,8 +97,9 @@ describe('Turborepo Pipeline Configuration', () => {
     })
 
     test('should have proper global dependencies', () => {
-      if (existsSync(turboConfigPath)) {
-        const config = parseJsonc(readFileSync(turboConfigPath, 'utf8'))
+      const configPath = existsSync(turboConfigPath) ? turboConfigPath : turboConfigPathJsonc
+      if (existsSync(configPath)) {
+        const config = parseJsonc(readFileSync(configPath, 'utf8'))
         expect(config.globalDependencies).toContain('tsconfig.json')
         expect(config.globalDependencies).toContain('tooling/tsconfig/base.json')
         expect(config.globalDependencies.some((dep: string) => dep.includes('.env'))).toBe(true)
@@ -97,8 +107,9 @@ describe('Turborepo Pipeline Configuration', () => {
     })
 
     test('should disable cache for clean and dev tasks', () => {
-      if (existsSync(turboConfigPath)) {
-        const config = parseJsonc(readFileSync(turboConfigPath, 'utf8'))
+      const configPath = existsSync(turboConfigPath) ? turboConfigPath : turboConfigPathJsonc
+      if (existsSync(configPath)) {
+        const config = parseJsonc(readFileSync(configPath, 'utf8'))
         expect(config.tasks.clean.cache).toBe(false)
         expect(config.tasks.dev.cache).toBe(false)
       }
@@ -107,15 +118,17 @@ describe('Turborepo Pipeline Configuration', () => {
 
   describe('Environment Variables', () => {
     test('should have proper global environment variables', () => {
-      if (existsSync(turboConfigPath)) {
-        const config = parseJsonc(readFileSync(turboConfigPath, 'utf8'))
+      const configPath = existsSync(turboConfigPath) ? turboConfigPath : turboConfigPathJsonc
+      if (existsSync(configPath)) {
+        const config = parseJsonc(readFileSync(configPath, 'utf8'))
         expect(config.globalEnv).toContain('CI')
       }
     })
 
     test('should have test task include NODE_ENV', () => {
-      if (existsSync(turboConfigPath)) {
-        const config = parseJsonc(readFileSync(turboConfigPath, 'utf8'))
+      const configPath = existsSync(turboConfigPath) ? turboConfigPath : turboConfigPathJsonc
+      if (existsSync(configPath)) {
+        const config = parseJsonc(readFileSync(configPath, 'utf8'))
         expect(config.tasks.test.env).toContain('NODE_ENV')
       }
     })
@@ -173,8 +186,9 @@ describe('Turborepo Pipeline Configuration', () => {
 
   describe('Task Input Configuration', () => {
     test('should have explicit input globs for better cache precision', () => {
-      if (existsSync(turboConfigPath)) {
-        const config = parseJsonc(readFileSync(turboConfigPath, 'utf8'))
+      const configPath = existsSync(turboConfigPath) ? turboConfigPath : turboConfigPathJsonc
+      if (existsSync(configPath)) {
+        const config = parseJsonc(readFileSync(configPath, 'utf8'))
         // All tasks should have defined inputs
         expect(config.tasks.build.inputs).toBeDefined()
         expect(config.tasks.test.inputs).toBeDefined()
@@ -225,8 +239,9 @@ describe('Turborepo Pipeline Configuration', () => {
 
   describe('Task Execution Order', () => {
     test('should define correct execution order through dependencies', () => {
-      if (existsSync(turboConfigPath)) {
-        const config = parseJsonc(readFileSync(turboConfigPath, 'utf8'))
+      const configPath = existsSync(turboConfigPath) ? turboConfigPath : turboConfigPathJsonc
+      if (existsSync(configPath)) {
+        const config = parseJsonc(readFileSync(configPath, 'utf8'))
         // Build depends on upstream builds
         expect(config.tasks.build.dependsOn).toContain('^build')
         // Test depends on upstream builds being complete
@@ -239,8 +254,9 @@ describe('Turborepo Pipeline Configuration', () => {
     })
 
     test('should mark dev task as persistent', () => {
-      if (existsSync(turboConfigPath)) {
-        const config = parseJsonc(readFileSync(turboConfigPath, 'utf8'))
+      const configPath = existsSync(turboConfigPath) ? turboConfigPath : turboConfigPathJsonc
+      if (existsSync(configPath)) {
+        const config = parseJsonc(readFileSync(configPath, 'utf8'))
         expect(config.tasks.dev.persistent).toBe(true)
       }
     })
@@ -248,8 +264,9 @@ describe('Turborepo Pipeline Configuration', () => {
 
   describe('Input Glob Validation', () => {
     test('should exclude test files from build task inputs', () => {
-      if (existsSync(turboConfigPath)) {
-        const config = parseJsonc(readFileSync(turboConfigPath, 'utf8'))
+      const configPath = existsSync(turboConfigPath) ? turboConfigPath : turboConfigPathJsonc
+      if (existsSync(configPath)) {
+        const config = parseJsonc(readFileSync(configPath, 'utf8'))
         const buildInputs = config.tasks.build.inputs ?? []
         // When using $TURBO_DEFAULT$ macro, check exclusions instead
         const hasTurboDefault = buildInputs.some((input: string) => input.includes(TURBO_DEFAULT))
@@ -274,8 +291,9 @@ describe('Turborepo Pipeline Configuration', () => {
     })
 
     test('should exclude dist directories from build task inputs', () => {
-      if (existsSync(turboConfigPath)) {
-        const config = parseJsonc(readFileSync(turboConfigPath, 'utf8'))
+      const configPath = existsSync(turboConfigPath) ? turboConfigPath : turboConfigPathJsonc
+      if (existsSync(configPath)) {
+        const config = parseJsonc(readFileSync(configPath, 'utf8'))
         const buildInputs = config.tasks.build.inputs ?? []
         // When using $TURBO_DEFAULT$ macro, dist directories are automatically excluded
         const hasTurboDefault = buildInputs.some((input: string) => input.includes(TURBO_DEFAULT))
@@ -291,8 +309,9 @@ describe('Turborepo Pipeline Configuration', () => {
     })
 
     test('should exclude coverage directories from build task inputs', () => {
-      if (existsSync(turboConfigPath)) {
-        const config = parseJsonc(readFileSync(turboConfigPath, 'utf8'))
+      const configPath = existsSync(turboConfigPath) ? turboConfigPath : turboConfigPathJsonc
+      if (existsSync(configPath)) {
+        const config = parseJsonc(readFileSync(configPath, 'utf8'))
         const buildInputs = config.tasks.build.inputs ?? []
         // Ensure no build input accidentally includes coverage directories
         const hasCoverageFiles = buildInputs.some(
@@ -307,8 +326,9 @@ describe('Turborepo Pipeline Configuration', () => {
 describe('Turborepo Safety Guards', () => {
   describe('Dependency Safety Guards', () => {
     test('should fail if test:dist dependency reverts to plain build', () => {
-      if (existsSync(turboConfigPath)) {
-        const config = parseJsonc(readFileSync(turboConfigPath, 'utf8'))
+      const configPath = existsSync(turboConfigPath) ? turboConfigPath : turboConfigPathJsonc
+      if (existsSync(configPath)) {
+        const config = parseJsonc(readFileSync(configPath, 'utf8'))
         const testDistDeps = config.tasks['test:dist']?.dependsOn ?? []
         // Ensure test:dist uses ^build (upstream) not plain build (local)
         expect(testDistDeps).toContain('^build')
@@ -319,8 +339,9 @@ describe('Turborepo Safety Guards', () => {
 
   describe('JSONC Validation', () => {
     test('should parse turbo.jsonc without trailing comma issues', () => {
-      if (existsSync(turboConfigPath)) {
-        const content = readFileSync(turboConfigPath, 'utf8')
+      const configPath = existsSync(turboConfigPath) ? turboConfigPath : turboConfigPathJsonc
+      if (existsSync(configPath)) {
+        const content = readFileSync(configPath, 'utf8')
         // This should not throw - validates JSON5 can handle the format
         expect(() => parseJsonc(content)).not.toThrow()
 

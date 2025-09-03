@@ -37,10 +37,9 @@
     "README.md"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "tsup",
     "clean": "rm -rf dist .tsbuildinfo logs/voice-vault",
     "lint": "NODE_NO_WARNINGS=1 eslint . --cache --cache-location .eslintcache",
-    "lint:fix": "NODE_NO_WARNINGS=1 eslint . --fix --cache --cache-location .eslintcache",
     "prepublishOnly": "pnpm run build && test -d dist",
     "test": "vitest run",
     "test:all": "npm run test:cache && npm run test:fallback && npm run test:errors && npm run test:concurrent",
