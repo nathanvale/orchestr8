@@ -113,7 +113,7 @@ export class ESLintChecker {
 
   private async logESLintOutput(
     eslint: InstanceType<typeof import('eslint').ESLint>,
-    results: any[],
+    results: Array<import('eslint').ESLint.LintResult>,
   ): Promise<void> {
     try {
       const formatter = await eslint.loadFormatter('stylish')

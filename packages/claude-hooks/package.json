@@ -88,7 +88,7 @@
     "cache:explorer": "tsx src/bin/claude-hooks-cache-explorer.ts",
     "cache:stats": "tsx src/bin/claude-hooks-cache-stats.ts",
     "clean": "rm -rf dist *.tsbuildinfo",
-    "lint": "echo 'Skipping lint for claude-hooks package (too many pre-existing errors)'",
+    "lint": "eslint . --cache --cache-location ../../.eslintcache/claude-hooks --max-warnings 999",
     "prepublishOnly": "pnpm build",
     "test": "vitest",
     "typecheck": "tsc --noEmit"

@@ -34,7 +34,7 @@
   "scripts": {
     "build": "tsup",
     "clean": "rm -rf dist .tsbuildinfo",
-    "lint": "NODE_NO_WARNINGS=1 eslint . --cache --cache-location .eslintcache",
+    "lint": "eslint . --cache --cache-location ../../.eslintcache/utils",
     "prepublishOnly": "pnpm run build && test -d dist",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"

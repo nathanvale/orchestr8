@@ -2,7 +2,7 @@
  * Core quality checker that coordinates ESLint, Prettier, and TypeScript checks
  */
 
-import { promises as fs } from 'node:fs'
+import { promises as fs, statSync } from 'node:fs'
 import * as path from 'node:path'
 
 import type { Logger } from '@orchestr8/logger'
@@ -488,7 +488,7 @@ export class QualityChecker {
       const tsconfigPath = path.join(dir, 'tsconfig.json')
       try {
         // Check if tsconfig.json exists
-        require('fs').statSync(tsconfigPath)
+        statSync(tsconfigPath)
         return tsconfigPath
       } catch {
         // Continue searching up the directory tree

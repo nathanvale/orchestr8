@@ -27,7 +27,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "clean": "rm -rf dist .tsbuildinfo",
-    "lint": "echo 'Skipping lint for quality-check package (cleanup pending)'",
+    "lint": "eslint . --cache --cache-location ../../.eslintcache/quality-check",
     "lint:fix": "NODE_NO_WARNINGS=1 eslint . --fix --cache --cache-location .eslintcache",
     "prepublishOnly": "pnpm run build && test -d dist",
     "test": "vitest run",

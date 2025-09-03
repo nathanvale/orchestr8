@@ -7,11 +7,7 @@ import { execSync, spawn } from 'node:child_process'
 import { promises as fs } from 'node:fs'
 import { tmpdir } from 'node:os'
 import * as path from 'node:path'
-import { promisify } from 'node:util'
-
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
-
-const execAsync = promisify(spawn)
 
 describe('End-to-End Quality Check Testing', () => {
   let testDir: string
@@ -53,7 +49,7 @@ export function broken(x) {
   afterEach(async () => {
     try {
       await fs.rm(testDir, { recursive: true, force: true })
-    } catch (error) {
+    } catch {
       // Ignore cleanup errors
     }
   })
@@ -91,7 +87,7 @@ export function broken(x) {
           timeout: 10000,
         })
         expect.fail('Should have thrown error for missing file')
-      } catch (error: any) {
+      } catch {
         expect(error.status).toBe(1)
         expect(error.stderr.toString()).toContain('ENOENT')
       }
@@ -107,7 +103,7 @@ export function broken(x) {
         })
         // If no exception thrown, exit code was 0
         expect(true).toBe(true)
-      } catch (error: any) {
+      } catch {
         expect.fail(`Expected exit code 0, got ${error.status}`)
       }
     })
@@ -121,7 +117,7 @@ export function broken(x) {
           timeout: 10000,
         })
         expect.fail('Should have thrown error')
-      } catch (error: any) {
+      } catch {
         expect(error.status).toBe(1)
       }
     })
@@ -145,7 +141,7 @@ export function test(): string {
           timeout: 10000,
         })
         expect.fail('Should have thrown error')
-      } catch (error: any) {
+      } catch {
         expect(error.status).toBe(2)
       }
     })
@@ -168,7 +164,7 @@ export function broken(): string {
           timeout: 10000,
         })
         expect.fail('Should have thrown error')
-      } catch (error: any) {
+      } catch {
         expect(error.status).toBe(4)
       }
     })
@@ -180,7 +176,7 @@ export function broken(): string {
           encoding: 'utf-8',
           timeout: 5000,
         })
-      } catch (error: any) {
+      } catch {
         // Could be timeout (124) or other error depending on timing
         expect([1, 124]).toContain(error.status)
       }
@@ -196,7 +192,7 @@ export function broken(): string {
           encoding: 'utf-8',
           timeout: 3000, // Give 3s timeout to ensure we can measure
         })
-      } catch (error: any) {
+      } catch {
         // Even if there are quality issues, we're testing performance
         // So we accept non-zero exit codes here
       }
@@ -215,7 +211,7 @@ export function broken(): string {
           encoding: 'utf-8',
           timeout: 5000,
         })
-      } catch (error) {
+      } catch {
         // Ignore errors, we're measuring performance
       }
       const parallelDuration = performance.now() - parallelStart
@@ -227,7 +223,7 @@ export function broken(): string {
           encoding: 'utf-8',
           timeout: 5000,
         })
-      } catch (error) {
+      } catch {
         // Ignore errors, we're measuring performance
       }
       const sequentialDuration = performance.now() - sequentialStart
@@ -384,7 +380,7 @@ export function broken(): string {
         const module = await import(`file://${path.join(packagePath, 'dist/index.js')}`)
         expect(module.QualityChecker).toBeTruthy()
         expect(module.SafeFileOperations).toBeTruthy()
-      } catch (error) {
+      } catch {
         expect.fail(`Export map validation failed: ${error}`)
       }
     })
@@ -398,7 +394,7 @@ export function broken(): string {
           timeout: 5000,
         })
         expect.fail('Should handle invalid arguments')
-      } catch (error: any) {
+      } catch {
         // Should fail gracefully with proper exit code
         expect([1, 2, 3, 4, 5]).toContain(error.status)
       }
@@ -425,10 +421,10 @@ export function broken(): string {
             timeout: 5000,
           })
           expect.fail('Should handle permission errors')
-        } catch (error: any) {
+        } catch {
           expect(error.status).toBe(1)
         }
-      } catch (chmodError) {
+      } catch {
         // If chmod fails (e.g., on Windows), skip this test
         console.log('Skipping permission test - chmod not supported')
       }

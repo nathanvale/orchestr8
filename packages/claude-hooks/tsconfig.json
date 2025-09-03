@@ -6,5 +6,13 @@
     "lib": ["ES2022", "DOM", "DOM.Iterable"]
   },
   "include": ["src/**/*.ts", "src/**/*.tsx"],
-  "exclude": ["dist", "node_modules", "**/*.test.ts", "src/__tests__/**/*", "**/__tests__/**/*", "scripts/**/*", "tsup.config.ts"]
+  "exclude": [
+    "dist",
+    "node_modules",
+    "**/*.test.ts",
+    "src/__tests__/**/*",
+    "**/__tests__/**/*",
+    "scripts/**/*",
+    "tsup.config.ts"
+  ]
 }
