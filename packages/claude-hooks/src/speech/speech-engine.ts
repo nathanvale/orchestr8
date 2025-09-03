@@ -76,7 +76,7 @@ export class SpeechEngine {
           }
         })
       })
-    } catch (_error) {
+    } catch {
       return false
     }
   }
@@ -101,7 +101,7 @@ export class SpeechEngine {
           resolve(voices)
         })
       })
-    } catch (_error) {
+    } catch {
       return []
     }
   }

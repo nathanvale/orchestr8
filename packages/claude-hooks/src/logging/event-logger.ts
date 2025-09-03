@@ -81,7 +81,7 @@ export class EventLogger {
       await fs.writeFile(logFile, `${JSON.stringify(logEntry)}\n`, {
         flag: 'a',
       })
-    } catch (_error) {
+    } catch {
       // Silently fail - we don't want logging to break the hook
       // In production, we might want to log this to stderr
     }

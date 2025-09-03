@@ -54,15 +54,11 @@ function getOriginalWorkingDirectory(): string {
   // 2. PWD - shell sets this to the original directory
   // 3. Fall back to process.cwd()
 
-  // eslint-disable-next-line turbo/no-undeclared-env-vars
   if (process.env.INIT_CWD != null && process.env.INIT_CWD !== '') {
-    // eslint-disable-next-line turbo/no-undeclared-env-vars
     return process.env.INIT_CWD
   }
 
-  // eslint-disable-next-line turbo/no-undeclared-env-vars
   if (process.env.PWD != null && process.env.PWD !== '' && process.env.PWD !== process.cwd()) {
-    // eslint-disable-next-line turbo/no-undeclared-env-vars
     return process.env.PWD
   }
 
@@ -83,9 +79,8 @@ function getConfigSearchPaths(hookName: string): string[] {
   const currentCwd = process.cwd()
 
   // 1. Environment variable override (highest priority)
-  // eslint-disable-next-line turbo/no-undeclared-env-vars
+
   if (process.env.CLAUDE_HOOKS_CONFIG_DIR != null && process.env.CLAUDE_HOOKS_CONFIG_DIR !== '') {
-    // eslint-disable-next-line turbo/no-undeclared-env-vars
     paths.push(path.join(process.env.CLAUDE_HOOKS_CONFIG_DIR, configFileName))
   }
 

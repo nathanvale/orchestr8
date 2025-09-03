@@ -124,10 +124,10 @@ export abstract class BaseHook<TEvent extends ClaudeHookEvent = ClaudeHookEvent>
     } catch (error) {
       this.log.error(`Fatal error: ${error instanceof Error ? error.message : 'Unknown error'}`)
       exitCode = HookExitCode.GeneralError
-    } finally {
-      if (exitCode !== HookExitCode.Success) {
-        throw new Error(`Hook execution failed with exit code ${exitCode}`)
-      }
+    }
+
+    if (exitCode !== HookExitCode.Success) {
+      throw new Error(`Hook execution failed with exit code ${exitCode}`)
     }
   }
 

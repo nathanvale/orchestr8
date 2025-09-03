@@ -125,7 +125,7 @@ export class TranscriptParser {
       const parsed = this.parseTranscript(content, transcriptPath)
       const stored = await this.storeTranscript(parsed, transcriptPath)
       return stored
-    } catch (_error) {
+    } catch {
       // Silently fail - transcript parsing shouldn't break the hook
       return null
     }
@@ -159,7 +159,7 @@ export class TranscriptParser {
       await fs.writeFile(filePath, JSON.stringify(stored, null, 2))
 
       return stored
-    } catch (_error) {
+    } catch {
       // If storage fails, still return the transcript data
       const timestamp = new Date().toISOString()
       return {

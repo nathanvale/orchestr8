@@ -89,6 +89,7 @@
     "cache:stats": "tsx src/bin/claude-hooks-cache-stats.ts",
     "clean": "rm -rf dist *.tsbuildinfo",
     "lint": "eslint . --cache --cache-location ../../.eslintcache/claude-hooks --max-warnings 999",
+    "lint:fix": "eslint . --fix --cache --cache-location ../../.eslintcache/claude-hooks",
     "prepublishOnly": "pnpm build",
     "test": "vitest",
     "typecheck": "tsc --noEmit"

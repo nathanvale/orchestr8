@@ -135,7 +135,6 @@ export const SENSITIVITY_CONFIGS = {
  * Load configuration from environment variables
  */
 export function loadConfigFromEnv(): Partial<SubAgentConfig> {
-  /* eslint-disable turbo/no-undeclared-env-vars */
   const config: Partial<SubAgentConfig> = {}
 
   // Main toggles
@@ -406,34 +405,38 @@ export function createConfigFromArgs(args: string[]): Partial<SubAgentConfig> {
           i++
         }
         break
-      case '--subagent-max-rate':
+      case '--subagent-max-rate': {
         const rate = parseFloat(nextArg)
         if (!isNaN(rate)) {
           config.maxEscalationRate = rate
           i++
         }
         break
-      case '--subagent-cost-limit':
+      }
+      case '--subagent-cost-limit': {
         const costLimit = parseFloat(nextArg)
         if (!isNaN(costLimit)) {
           config.monthlyCostLimit = costLimit
           i++
         }
         break
-      case '--subagent-daily-limit':
+      }
+      case '--subagent-daily-limit': {
         const dailyLimit = parseInt(nextArg, 10)
         if (!isNaN(dailyLimit)) {
           config.dailyInvocationLimit = dailyLimit
           i++
         }
         break
-      case '--subagent-timeout':
+      }
+      case '--subagent-timeout': {
         const timeout = parseInt(nextArg, 10)
         if (!isNaN(timeout)) {
           config.timeout = timeout
           i++
         }
         break
+      }
       case '--subagent-debug':
         config.debug = true
         break

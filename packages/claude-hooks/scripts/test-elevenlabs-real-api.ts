@@ -1,5 +1,5 @@
 #!/usr/bin/env tsx
-/* eslint-disable no-console */
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Real API Test Script for ElevenLabs TTS Integration

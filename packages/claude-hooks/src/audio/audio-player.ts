@@ -47,7 +47,7 @@ export class AudioPlayer {
         default:
           return false
       }
-    } catch (_error) {
+    } catch {
       return false
     }
   }
