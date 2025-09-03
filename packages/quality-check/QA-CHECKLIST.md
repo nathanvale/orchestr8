@@ -57,16 +57,19 @@
 ### CRITICAL ISSUES DISCOVERED:
 
 - [!] **NPX execution not working** - no output from npx commands
-- [!] **Exit codes incorrect** - getting exit code 3 instead of 0 for valid files  
+- [!] **Exit codes incorrect** - getting exit code 3 instead of 0 for valid
+  files
 - [!] **Hook mode failing** - path traversal security check too restrictive
 - [!] **ESLint configuration issues** - files outside base path warnings
 - [!] **execSync not capturing output correctly** - may need different approach
 
 ### Performance Tests PASSED ✅
+
 - [x] <2s requirement met (774ms)
 - [x] Parallel vs sequential both under reasonable time
 
 ### Issues to Fix:
+
 1. Fix NPX execution and output capture
 2. Debug exit code logic
 3. Adjust hook mode security checks for temp files

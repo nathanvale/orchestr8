@@ -9,7 +9,7 @@ import { tmpdir } from 'node:os'
 import * as path from 'node:path'
 import { promisify } from 'node:util'
 
-import { describe, expect, test, beforeEach, afterEach } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 
 const execAsync = promisify(spawn)
 
@@ -60,9 +60,9 @@ export function broken(x) {
 
   describe('NPX Execution', () => {
     test('should show help via npx', async () => {
-      const result = execSync(`npx "${packagePath}" --help`, { 
+      const result = execSync(`npx "${packagePath}" --help`, {
         encoding: 'utf-8',
-        timeout: 10000
+        timeout: 10000,
       })
 
       expect(result).toContain('@template/quality-check')
@@ -75,7 +75,7 @@ export function broken(x) {
     test('should execute via npx with file mode', async () => {
       const result = execSync(`npx "${packagePath}" --file "${validFile}"`, {
         encoding: 'utf-8',
-        timeout: 10000
+        timeout: 10000,
       })
 
       expect(result).toContain('✅')
@@ -88,7 +88,7 @@ export function broken(x) {
       try {
         execSync(`npx "${packagePath}" --file "${nonExistentFile}"`, {
           encoding: 'utf-8',
-          timeout: 10000
+          timeout: 10000,
         })
         expect.fail('Should have thrown error for missing file')
       } catch (error: any) {
@@ -103,7 +103,7 @@ export function broken(x) {
       try {
         execSync(`node "${binPath}" --file "${validFile}"`, {
           encoding: 'utf-8',
-          timeout: 10000
+          timeout: 10000,
         })
         // If no exception thrown, exit code was 0
         expect(true).toBe(true)
@@ -118,7 +118,7 @@ export function broken(x) {
       try {
         execSync(`node "${binPath}" --file "${nonExistentFile}"`, {
           encoding: 'utf-8',
-          timeout: 10000
+          timeout: 10000,
         })
         expect.fail('Should have thrown error')
       } catch (error: any) {
@@ -142,7 +142,7 @@ export function test(): string {
       try {
         execSync(`node "${binPath}" --file "${eslintErrorFile}" --no-prettier --no-typescript`, {
           encoding: 'utf-8',
-          timeout: 10000
+          timeout: 10000,
         })
         expect.fail('Should have thrown error')
       } catch (error: any) {
@@ -165,7 +165,7 @@ export function broken(): string {
       try {
         execSync(`node "${binPath}" --file "${tsErrorFile}" --no-eslint --no-prettier`, {
           encoding: 'utf-8',
-          timeout: 10000
+          timeout: 10000,
         })
         expect.fail('Should have thrown error')
       } catch (error: any) {
@@ -178,7 +178,7 @@ export function broken(): string {
       try {
         execSync(`node "${binPath}" --file "${validFile}" --timeout 1`, {
           encoding: 'utf-8',
-          timeout: 5000
+          timeout: 5000,
         })
       } catch (error: any) {
         // Could be timeout (124) or other error depending on timing
@@ -190,11 +190,11 @@ export function broken(): string {
   describe('Performance Requirements', () => {
     test('should complete valid file check in under 2 seconds', async () => {
       const startTime = performance.now()
-      
+
       try {
         execSync(`node "${binPath}" --file "${validFile}"`, {
           encoding: 'utf-8',
-          timeout: 3000 // Give 3s timeout to ensure we can measure
+          timeout: 3000, // Give 3s timeout to ensure we can measure
         })
       } catch (error: any) {
         // Even if there are quality issues, we're testing performance
@@ -213,7 +213,7 @@ export function broken(): string {
       try {
         execSync(`node "${binPath}" --file "${validFile}"`, {
           encoding: 'utf-8',
-          timeout: 5000
+          timeout: 5000,
         })
       } catch (error) {
         // Ignore errors, we're measuring performance
@@ -225,14 +225,16 @@ export function broken(): string {
       try {
         execSync(`node "${binPath}" --file "${validFile}" --sequential`, {
           encoding: 'utf-8',
-          timeout: 5000
+          timeout: 5000,
         })
       } catch (error) {
         // Ignore errors, we're measuring performance
       }
       const sequentialDuration = performance.now() - sequentialStart
 
-      console.log(`Parallel: ${parallelDuration.toFixed(2)}ms, Sequential: ${sequentialDuration.toFixed(2)}ms`)
+      console.log(
+        `Parallel: ${parallelDuration.toFixed(2)}ms, Sequential: ${sequentialDuration.toFixed(2)}ms`,
+      )
 
       // Both should complete in reasonable time
       expect(parallelDuration).toBeLessThan(3000)
@@ -250,38 +252,40 @@ export function broken(): string {
       // Test stdin input (hook mode)
       const child = spawn('node', [binPath], {
         stdio: ['pipe', 'pipe', 'pipe'],
-        timeout: 10000
+        timeout: 10000,
       })
 
       child.stdin.write(hookInput)
       child.stdin.end()
 
-      const result = await new Promise<{stdout: string, stderr: string, exitCode: number}>((resolve, reject) => {
-        let stdout = ''
-        let stderr = ''
+      const result = await new Promise<{ stdout: string; stderr: string; exitCode: number }>(
+        (resolve, reject) => {
+          let stdout = ''
+          let stderr = ''
 
-        child.stdout.on('data', (data) => {
-          stdout += data.toString()
-        })
+          child.stdout.on('data', (data) => {
+            stdout += data.toString()
+          })
 
-        child.stderr.on('data', (data) => {
-          stderr += data.toString()
-        })
+          child.stderr.on('data', (data) => {
+            stderr += data.toString()
+          })
 
-        child.on('close', (code) => {
-          resolve({ stdout, stderr, exitCode: code ?? 0 })
-        })
+          child.on('close', (code) => {
+            resolve({ stdout, stderr, exitCode: code ?? 0 })
+          })
 
-        child.on('error', (error) => {
-          reject(error)
-        })
+          child.on('error', (error) => {
+            reject(error)
+          })
 
-        // Safety timeout
-        setTimeout(() => {
-          child.kill()
-          reject(new Error('Hook mode test timeout'))
-        }, 15000)
-      })
+          // Safety timeout
+          setTimeout(() => {
+            child.kill()
+            reject(new Error('Hook mode test timeout'))
+          }, 15000)
+        },
+      )
 
       expect(result.exitCode).toBe(0)
       expect(result.stdout).toContain('✅')
@@ -291,17 +295,17 @@ export function broken(): string {
       const hookInput = JSON.stringify({
         tool: 'Write',
         path: validFile,
-        correlationId: 'test-correlation-123'
+        correlationId: 'test-correlation-123',
       })
 
       const child = spawn('node', [binPath], {
-        stdio: ['pipe', 'pipe', 'pipe']
+        stdio: ['pipe', 'pipe', 'pipe'],
       })
 
       child.stdin.write(hookInput)
       child.stdin.end()
 
-      const result = await new Promise<{stdout: string, stderr: string}>((resolve, reject) => {
+      const result = await new Promise<{ stdout: string; stderr: string }>((resolve, reject) => {
         let stdout = ''
         let stderr = ''
 
@@ -335,7 +339,7 @@ export function broken(): string {
   describe('Package Distribution Readiness', () => {
     test('should have correct package.json configuration', async () => {
       const packageJson = JSON.parse(
-        await fs.readFile(path.join(packagePath, 'package.json'), 'utf-8')
+        await fs.readFile(path.join(packagePath, 'package.json'), 'utf-8'),
       )
 
       expect(packageJson.name).toBe('@template/quality-check')
@@ -350,14 +354,24 @@ export function broken(): string {
 
     test('should have complete build output', async () => {
       const distPath = path.join(packagePath, 'dist')
-      
+
       // Check main entry point exists and is executable
       const indexJs = path.join(distPath, 'index.js')
-      expect(await fs.access(indexJs).then(() => true).catch(() => false)).toBe(true)
-      
+      expect(
+        await fs
+          .access(indexJs)
+          .then(() => true)
+          .catch(() => false),
+      ).toBe(true)
+
       // Check type definitions exist
       const indexDts = path.join(distPath, 'index.d.ts')
-      expect(await fs.access(indexDts).then(() => true).catch(() => false)).toBe(true)
+      expect(
+        await fs
+          .access(indexDts)
+          .then(() => true)
+          .catch(() => false),
+      ).toBe(true)
 
       // Verify shebang exists
       const content = await fs.readFile(indexJs, 'utf-8')
@@ -381,7 +395,7 @@ export function broken(): string {
       try {
         execSync(`node "${binPath}" --invalid-flag`, {
           encoding: 'utf-8',
-          timeout: 5000
+          timeout: 5000,
         })
         expect.fail('Should handle invalid arguments')
       } catch (error: any) {
@@ -400,15 +414,15 @@ export function broken(): string {
       // Create a file we can't read (if possible on current system)
       const restrictedFile = path.join(testDir, 'restricted.ts')
       await fs.writeFile(restrictedFile, 'export const test = 1')
-      
+
       // Try to remove read permissions (may not work on all systems)
       try {
         await fs.chmod(restrictedFile, 0o000)
-        
+
         try {
           execSync(`node "${binPath}" --file "${restrictedFile}"`, {
             encoding: 'utf-8',
-            timeout: 5000
+            timeout: 5000,
           })
           expect.fail('Should handle permission errors')
         } catch (error: any) {

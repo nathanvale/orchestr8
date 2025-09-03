@@ -53,6 +53,7 @@ export default defineConfig({
       'packages/**/tests/**/*.{test,spec}.{ts,tsx}',
       'apps/*/src/**/*.{test,spec}.{ts,tsx}',
       'apps/*/tests/**/*.{test,spec}.{ts,tsx}',
+      'tooling/**/*.{test,spec}.{ts,tsx}',
     ],
 
     // Global excludes
@@ -105,7 +106,11 @@ export default defineConfig({
         '**/test-utils.tsx',
         '**/mocks/**',
       ],
-      include: ['packages/*/src/**/*.{js,ts,jsx,tsx}', 'apps/*/src/**/*.{js,ts,jsx,tsx}'],
+      include: [
+        'packages/*/src/**/*.{js,ts,jsx,tsx}',
+        'apps/*/src/**/*.{js,ts,jsx,tsx}',
+        'tooling/**/*.{js,ts,jsx,tsx}',
+      ],
       // Coverage threshold strategy:
       // - Global thresholds apply to all files by default
       // - Critical modules can have stricter per-file thresholds
