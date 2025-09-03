@@ -1,4 +1,4 @@
 {
-  "!(packages/claude-hooks/**)*.{ts,tsx,js,jsx}": ["eslint --fix", "prettier --write"],
-  "!(packages/claude-hooks/**)*.{json,md,yml,yaml}": ["prettier --write"]
+  "*.{ts,tsx,js,jsx}": ["prettier --write"],
+  "*.{json,md,yml,yaml}": ["prettier --write"]
 }

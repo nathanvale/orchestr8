@@ -12,6 +12,7 @@ import type { QualityCheckOptions, QualityCheckResult } from './types.js'
 
 import { fileMode } from './modes/file-mode.js'
 import { hookMode } from './modes/hook-mode.js'
+import { preCommitMode } from './modes/pre-commit-mode.js'
 
 // Check if running as CLI (npx or direct execution)
 const isCliMode = import.meta.url === `file://${process.argv[1]}`
@@ -50,6 +51,14 @@ async function main(): Promise<void> {
     // Check for help first, before any other processing
     if (args.includes('--help') || args.includes('-h')) {
       showHelp()
+      return
+    }
+
+    // Handle pre-commit mode first
+    if (options.preCommit) {
+      logger.debug('Running in pre-commit mode')
+      const result = await preCommitMode(options, logger)
+      handleResult(result)
       return
     }
 
@@ -140,6 +149,9 @@ function parseArgs(args: string[]): QualityCheckOptions {
           i++
         }
         break
+      case '--pre-commit':
+        options.preCommit = true
+        break
     }
   }
 
@@ -198,10 +210,12 @@ function showHelp(): void {
 
 Usage:
   npx @template/quality-check --file <path>        Check a specific file
+  npx @template/quality-check --pre-commit         Check all staged files
   echo '{"tool":"Write","path":"file.ts"}' | npx @template/quality-check   Hook mode
 
 Options:
   --file, -f <path>    Check a specific file
+  --pre-commit         Check all staged files (for git pre-commit hooks)
   --fix                Enable auto-fix for ESLint and Prettier
   --no-eslint          Skip ESLint checks
   --no-prettier        Skip Prettier checks
@@ -227,6 +241,9 @@ Examples:
 
   # Check with auto-fix
   npx @template/quality-check --file src/index.ts --fix
+
+  # Check staged files in pre-commit hook
+  npx @template/quality-check --pre-commit
 
   # Use as Claude Code PostToolUse hook
   echo '{"tool":"Write","path":"src/index.ts"}' | npx @template/quality-check
