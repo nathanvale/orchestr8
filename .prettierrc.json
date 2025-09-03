@@ -18,7 +18,6 @@
   "embeddedLanguageFormatting": "auto",
   "singleAttributePerLine": false,
   "experimentalTernaries": false,
-  "plugins": ["prettier-plugin-organize-imports", "prettier-plugin-packagejson"],
   "overrides": [
     {
       "files": "*.json",
