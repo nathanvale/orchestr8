@@ -3,10 +3,9 @@
   "extends": "../../tooling/tsconfig/esm-library.json",
   "compilerOptions": {
     "outDir": "dist",
-    "rootDir": "src",
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "jsx": "react-jsx"
   },
   "include": ["src/**/*.ts", "src/**/*.tsx"],
-  "exclude": ["dist", "node_modules", "**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts"]
+  "exclude": ["dist", "node_modules", "**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts", "tsup.config.ts"]
 }

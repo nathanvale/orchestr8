@@ -1,0 +1,6 @@
+tsup.config.ts
+dist
+node_modules
+coverage
+.turbo
+scripts

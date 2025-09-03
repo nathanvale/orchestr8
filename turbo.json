@@ -37,6 +37,19 @@
     "vitest.config.ts",
     "turbo.json*"
   ],
+  "globalEnv": [
+    "NODE_ENV",
+    "CI",
+    "VITEST",
+    "VITEST_WORKER_ID",
+    "JEST_WORKER_ID",
+    "WALLABY_WORKER",
+    "WALLABY_WORKER_ID",
+    "CLAUDE_HOOKS_*",
+    "ELEVENLABS_API_KEY",
+    "OPENAI_API_KEY",
+    "DEBUG"
+  ],
   "remoteCache": {
     "enabled": true,
     "signature": false,
