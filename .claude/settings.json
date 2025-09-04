@@ -6,20 +6,10 @@
         "hooks": [
           {
             "type": "command",
-            "command": "pnpm lint:fix || true",
+            "command": "cd $CLAUDE_PROJECT_DIR/packages/quality-check && QUALITY_CHECK_MODE=enforce node dist/index.js --hook --fix",
             "timeout": 10,
-            "description": "Fast Turborepo lint fix with 10s timeout protection"
-          }
-        ]
-      },
-      {
-        "matcher": "Write|Edit|MultiEdit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "pnpm format --write || true",
-            "timeout": 10,
-            "description": "Prettier formatting"
+            "description": "Quality check enforcement",
+            "continueOnError": false
           }
         ]
       }

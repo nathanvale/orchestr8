@@ -1,14 +1,35 @@
 /**
- * Core type definitions for quality-check package
+ * Shared type definitions
+ * ~30 lines total
  */
+
+export interface QualityCheckOptions {
+  file?: string
+  fix?: boolean
+  eslint?: boolean
+  prettier?: boolean
+  typescript?: boolean
+  silent?: boolean
+  debug?: boolean
+  timeout?: number
+  parallel?: boolean
+  respectGitignore?: boolean
+  hookMode?: boolean
+  preCommit?: boolean
+  cacheDir?: string
+  correlationId?: string
+}
+
+export interface CheckerResult {
+  success: boolean
+  errors?: string[]
+  warnings?: string[]
+  fixable?: boolean
+}
 
 export interface QualityCheckResult {
   success: boolean
-  errors: string[]
-  warnings: string[]
-  autofixes: string[]
-  correlationId: string
-  duration: number
+  file?: string
   checkers: {
     eslint?: CheckerResult
     prettier?: CheckerResult
@@ -16,59 +37,9 @@ export interface QualityCheckResult {
   }
 }
 
-export interface CheckerResult {
+export interface FixResult {
   success: boolean
-  errors: string[]
-  warnings?: string[]
-  autofixes?: string[]
-  duration: number
-}
-
-export interface QualityCheckOptions {
-  // Mode options
-  hook?: boolean // Auto-detected from stdin
-  file?: string // Direct file path
-  preCommit?: boolean // Check only staged files
-
-  // Feature flags
-  eslint?: boolean
-  prettier?: boolean
-  typescript?: boolean
-
-  // Auto-fix options
-  fix?: boolean
-  autofixSilent?: boolean
-
-  // Logging options
-  debug?: boolean
-  silent?: boolean
-  correlationId?: string
-
-  // Performance options
-  timeout?: number // Default: 5000ms
-  parallel?: boolean // Default: true
-
-  // Git options
-  respectGitignore?: boolean // Default: true
-}
-
-export interface HookPayload {
-  tool: string
-  path?: string
-  filePath?: string
-  projectDir?: string
-  timestamp?: string
-}
-
-export interface FileBackup {
-  originalPath: string
-  backupPath: string
-  hash: string
-  timestamp: number
-}
-
-export interface SecurityOptions {
-  maxFileSize?: number // Default: 10MB
-  allowedExtensions?: string[]
-  preventTraversal?: boolean // Default: true
+  count: number
+  fixed: string[]
+  error?: string
 }

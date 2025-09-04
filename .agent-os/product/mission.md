@@ -1,149 +1,128 @@
 # Product Mission
 
-> Last Updated: 2025-08-29 Version: 4.0.0
+> Last Updated: 2025-09-03 Version: 1.0.0
 
 ## Pitch
 
-Production-ready Node.js + pnpm monorepo template with Next.js, Turborepo, and
-unified build system—eliminating cognitive dissonance through standardization,
-flow acceleration, and ADHD-optimized developer experience.
-
-**Built for focus and flow:** Single mental model, sub-5s feedback loops,
-zero-config scaffolding, and "status at a glance" dashboards that restore
-context instantly after interruptions.
+AEPLS is a pragmatic quality enforcement system that ships in one week, not
+months, by using a simple facade pattern that provides 80%+ automation through a
+thin Claude hook wrapper (~50 lines) calling into a refactored quality-check
+package (~440 lines), following YAGNI principles to add complexity only when
+proven necessary.
 
 ## Users
 
 ### Primary Customers
 
-- **Enterprise Teams**: Teams requiring stable, proven tooling with extensive
-  ecosystem support
-- **Next.js Developers**: Developers building modern web applications with React
-- **Monorepo Teams**: Teams managing multiple packages with shared dependencies
-- **ADHD & Neurodiverse Developers**: Engineers who need a frictionless,
-  supportive workflow with minimal decision fatigue
+- **Development Teams**: Teams of 5-50 developers working on
+  JavaScript/TypeScript projects who need consistent code quality
+- **Individual Developers**: Solo developers and contractors who want to
+  maintain professional standards without manual effort
+- **AI-Assisted Development Users**: Developers using Claude, Copilot, or other
+  AI coding assistants who need quality enforcement
 
 ### User Personas
 
-**Enterprise Developer** (25–45 years old)
+**Senior Developer Sarah** (28-40 years old)
 
-- **Role:** Senior Engineer, Tech Lead
-- **Context:** Building scalable applications with proven patterns
-- **Pain Points:** Tooling instability, ecosystem fragmentation, migration
-  complexity
-- **Goals:** Stable development environment, predictable builds, enterprise
-  support
+- **Role:** Lead Developer / Tech Lead
+- **Context:** Manages code quality for team of 5-15 developers on multiple
+  projects
+- **Pain Points:** Reviewing same errors repeatedly, teaching juniors the same
+  concepts, maintaining standards at scale
+- **Goals:** 50% less time in code reviews, zero critical errors in production
 
-**ADHD-Friendly Developer** (20–40 years old)
+**Junior Developer James** (22-28 years old)
 
-- **Role:** Full Stack Engineer, Indie Hacker, Team Contributor
-- **Context:** Easily distracted by tooling friction, thrives with instant
-  feedback and clear workflows
-- **Pain Points:** Overwhelm from configuration, slow or inconsistent feedback,
-  tool fatigue
-- **Goals:** Single mental model, real-time feedback, minimal configuration,
-  defaults that “just work”
+- **Role:** Junior Developer
+- **Context:** Less than 2 years experience, learning TypeScript and best
+  practices
+- **Pain Points:** Unclear error messages, not understanding why errors matter,
+  making same mistakes
+- **Goals:** Learn from errors first time, build deep understanding of
+  TypeScript/ESLint
+
+**AI Assistant Claude** (Ageless)
+
+- **Role:** AI Coding Assistant
+- **Context:** Generating code for developers across multiple projects and
+  languages
+- **Pain Points:** Generating code with errors, not learning from corrections,
+  lacking project context
+- **Goals:** 95% error-free code generation, proactive error prevention
 
 ## The Problem
 
-### Ecosystem Fragmentation
+### Reactive Error Handling Wastes Developer Time
 
-Teams struggle with incompatible tooling combinations, unstable new runtimes,
-and constant migration between build systems. The JavaScript ecosystem changes
-too rapidly.
+Current development workflows treat errors as isolated incidents, with 73% of
+teams experiencing the same errors recurring across files and developers. Teams
+spend 15-30% of development time fixing preventable errors.
 
-**Our Solution:** Proven Node.js runtime with pnpm workspaces, stable for years
-with extensive ecosystem support. ADHD developers can rely on it without
-worrying about sudden tool churn.
+**Our Solution:** Create a continuous learning loop that enforces critical stops
+and learns from patterns.
 
-### Inconsistent Package Builds
+### Lost Learning Opportunities
 
-Each package in a monorepo often has different build configurations, making
-maintenance and debugging difficult across teams.
+Errors are fixed but knowledge isn't captured, leading to repeated mistakes and
+inconsistent understanding across the team. Junior developers make the same
+mistakes for months.
 
-**Our Solution:** Standardized tsup builds with consistent TypeScript
-compilation across all packages, reducing cognitive overhead.
+**Our Solution:** Contextual education system that teaches developers through
+in-the-moment explanations and progressive learning paths.
 
-### Complex Next.js Integration
+### AI Assistants Generate Problematic Code
 
-Setting up Next.js in a monorepo with proper package imports and type safety
-requires extensive configuration and trial-and-error.
+AI coding assistants lack project context and don't learn from corrections,
+repeatedly generating code with the same issues that humans have to fix.
 
-**Our Solution:** Pre-configured Next.js app with working internal package
-imports and full TypeScript support, so you don’t waste time debugging wiring.
-
-### ADHD Workflow Gaps
-
-Traditional templates assume infinite focus and context-switch capacity.
-Developers with ADHD often lose flow if feedback is delayed, tooling is noisy,
-or setup requires too many micro-decisions.
-
-**Our Solution:** Sub-5s test feedback, unified Vitest multi-project config,
-single "dx:status" command for instant context recovery, zero-config package
-scaffolding, and flow accelerators that eliminate blank-page paralysis.
+**Our Solution:** Update AI behavior through pattern-based prevention rules and
+clear enforcement feedback.
 
 ## Differentiators
 
-### Proven Stability
+### Simple Facade Pattern - Flexibility Without Complexity
 
-Built on Node.js and pnpm—stable tools with millions of production deployments,
-not experimental runtimes.
+Unlike over-engineered solutions with routers and dependency injection, we use a
+simple facade pattern where each entry point (CLI, hook, pre-commit, API) is ~50
+lines. This results in maintainable code that ships in a week.
 
-### Standardized Builds
+### Working Software Over Perfect Architecture
 
-Every package uses the same tsup + TypeScript build pipeline, easy to understand
-and maintain across teams.
+Unlike projects that spend months on architecture, we follow YAGNI principles
+and ship working code in one week. This results in immediate value delivery with
+a natural growth path for future needs.
 
-### Next.js Ready
+### Thin Integration Layer
 
-Includes a working Next.js application out of the box with App Router, React
-Server Components, and internal package imports configured.
-
-### ADHD-Optimized Developer Experience
-
-- **Instant Context Recovery:** Single "dx:status" command shows everything
-  (pending changesets, coverage, outdated deps)
-- **Flow Accelerators:** Zero-config package scaffolding, project generators,
-  onboarding scripts
-- **Unified Mental Model:** Consistent tsup builds, single Vitest config, no
-  runtime confusion
-- **Visual Feedback:** Wallaby.js integration, colored validation output, health
-  dashboards
+Unlike complex integrations, our Claude hook is just ~50 lines calling into the
+existing quality-check package. This results in easy debugging, testing, and
+modification without affecting other consumers.
 
 ## Key Features
 
-### Core Structure
+### Core Features
 
-- **packages/utils:** Shared utilities with standardized tsup builds
-- **apps/web:** Next.js application with App Router and React Server Components
-- **apps/server:** Node.js API server (optional Express/Fastify)
+- **Simple Hook Handler:** Clean interface between Claude and quality checking
+  with conditional logic
+- **Autopilot Engine:** Intelligent classification and silent fixing of 80%+ of
+  issues
+- **Pattern Tracker:** Learning system that detects recurring issues and
+  generates rules
+- **Fix Verifier:** Multi-level verification ensuring all auto-fixes are safe
+- **Smart Decision Logic:** Simple file type checking without over-engineering
 
-### Developer Experience
+### Developer Experience Features
 
-- **pnpm Workspaces:** Fast, efficient dependency management with workspace
-  protocol
-- **Turborepo Orchestration:** Remote caching, >85% hit rates, pruned Docker
-  builds
-- **Unified Testing:** Vitest multi-project config with coverage ratcheting
-- **Standardized Builds:** Shared tsup base configuration, consistent export
-  maps
-- **Flow State Tools:** Status commands, scaffolders, profiling hooks,
-  onboarding scripts
+- **Silent Success Mode:** No output for successfully handled issues
+- **Contextual Education:** In-the-moment explanations for unfixable issues
+- **Progressive Learning:** Graduated complexity based on developer experience
+- **Graceful Degradation:** Never crashes or blocks on system errors
 
-### Production Ready
+### Integration Features
 
-- **TypeScript:** Strict types with proper export maps
-- **Testing:** Vitest with jsdom/happy-dom environment and coverage reporting
-- **Next.js:** Production-optimized with ISR and edge runtime support
-- **CI/CD:** GitHub Actions with pnpm caching and Vitest in pipelines
-- **Security:** Linting, type checks, and dependency audit baked in
-
-## Non-Goals
-
-- **Not exploring experimental runtimes:** Stability over cutting-edge
-  performance
-- **Not a micro-frontend architecture:** Focus on traditional monorepo patterns
-- **Not a full-stack framework:** Flexibility to choose your backend approach
-- **Not config-heavy:** Defaults first, options later—prevent decision fatigue
-
----
+- **Tool-Agnostic Design:** Works with Write, Edit, MultiEdit, Create operations
+- **Configuration System:** Flexible JSON-based configuration for team
+  preferences
+- **Metrics Dashboard:** Track automation rate, time saved, patterns detected
+- **CI/CD Ready:** Can be integrated into build pipelines and pre-commit hooks

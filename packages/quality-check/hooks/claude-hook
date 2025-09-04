@@ -1,0 +1,65 @@
+#!/usr/bin/env node
+/**
+ * Claude Code PostToolUse Hook
+ * ~50 lines - thin wrapper for Claude integration
+ * 
+ * Installation:
+ * 1. Copy to ~/.claude/hooks/quality
+ * 2. Add to .claude/settings.json:
+ *    {
+ *      "hooks": {
+ *        "postToolUse": ["~/.claude/hooks/quality"]
+ *      }
+ *    }
+ */
+
+const { spawn } = require('child_process')
+const path = require('path')
+
+// Read stdin
+let input = ''
+process.stdin.setEncoding('utf8')
+process.stdin.on('data', chunk => input += chunk)
+
+process.stdin.on('end', () => {
+  try {
+    const payload = JSON.parse(input)
+    
+    // Only check write operations on code files
+    if (!shouldCheck(payload)) {
+      process.exit(0)
+    }
+
+    // Run quality check via the package
+    const qualityCheck = spawn('npx', [
+      '@template/quality-check',
+      '--claude'
+    ], {
+      stdio: ['pipe', 'inherit', 'inherit']
+    })
+
+    // Pass payload to quality check
+    qualityCheck.stdin.write(input)
+    qualityCheck.stdin.end()
+
+    qualityCheck.on('exit', code => {
+      process.exit(code || 0)
+    })
+  } catch {
+    // Never block Claude on errors
+    process.exit(0)
+  }
+})
+
+function shouldCheck(payload) {
+  // Check for write operations
+  const writeTools = ['Write', 'Edit', 'MultiEdit', 'Create']
+  if (!writeTools.includes(payload.tool)) return false
+  
+  // Check for code files
+  const codePath = payload.path || payload.filePath
+  if (!codePath) return false
+  
+  // Only check JS/TS files
+  return /\.(js|jsx|ts|tsx)$/.test(codePath)
+}
