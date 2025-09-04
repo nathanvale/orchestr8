@@ -1,72 +1,51 @@
-const { cpus } = require('node:os')
-
 module.exports = function (wallaby) {
   return {
-    // Vitest auto-detection (works with Wallaby v1.0.1369+)
     autoDetect: ['vitest'],
 
-    // Force use of specific vitest config for monorepo compatibility
+    // Force use of root vitest config - critical for monorepo
     testFramework: {
-      configFile: './vitest.config.ts'
+      configFile: './vitest.config.ts',
     },
-
-    // Debug mode: set WALLABY_TRACE=true environment variable to enable
-    trace: process.env.WALLABY_TRACE === 'true',
 
     env: {
       type: 'node',
       runner: 'node',
-      // Add Node.js flags for better Vitest compatibility
-      params: {
-        runner: '--experimental-vm-modules'
-      }
     },
 
-    // Optimized worker configuration for modern systems
     workers: {
-      initial: 1, // Conservative for stability
-      regular: 1, // Single worker to avoid conflicts
+      initial: 1,
+      regular: 1,
     },
 
-    // Reduced console noise for ADHD-friendly experience
-    maxConsoleMessagesPerTest: 50,
+    // Increase console message limits for noisy tests
+    maxConsoleMessagesPerTest: 1000,
 
-    // Comprehensive file patterns for monorepo
+    // Only include source tests, exclude node_modules completely
+    tests: [
+      'packages/*/src/**/*.test.ts',
+      'packages/*/src/**/*.test.tsx',
+      'tests/**/*.test.ts',
+      'tests/**/*.test.tsx',
+      '!**/node_modules/**', // Critical: exclude all node_modules
+      '!**/*performance*.test.ts', // Skip all performance tests
+      '!**/*benchmark*.test.ts', // Skip all benchmark tests
+      '!**/*.integration.test.ts', // Skip integration tests
+      '!**/*.e2e.test.ts', // Skip e2e tests
+      '!**/*.slow.test.ts', // Skip slow tests
+    ],
+
+    // Also exclude node_modules from files
     files: [
-      // Source files
-      'packages/**/*.{ts,tsx}',
-      '!packages/**/*.{test,spec}.{ts,tsx}',
-      
-      // Configuration files
-      'package.json',
+      'packages/*/src/**/*.ts',
+      'packages/*/src/**/*.tsx',
+      '!packages/*/src/**/*.test.ts',
+      '!packages/*/src/**/*.test.tsx',
+      '!**/node_modules/**', // Critical: exclude all node_modules
       'packages/*/package.json',
       'tsconfig*.json',
-      'vitest*.config.{ts,js}',
+      'vitest.config.ts',
       'vitest.shared.ts',
-      
-      // Exclude build outputs and dependencies
-      '!**/node_modules/**',
-      '!**/dist/**',
-      '!**/build/**',
-      '!**/coverage/**'
+      'vitest.setup.tsx',
     ],
-
-    tests: [
-      // Root tests
-      'tests/**/*.{test,spec}.{ts,tsx}',
-      // Package tests
-      'packages/**/*.{test,spec}.{ts,tsx}',
-      
-      // Exclusions
-      '!**/node_modules/**',
-      '!**/dist/**',
-      '!**/build/**'
-    ],
-
-    // Hints for better processing
-    hints: {
-      // Disable ignoreCoverage since we're using Vitest coverage
-      ignoreCoverage: /ignore file coverage/
-    }
   }
 }

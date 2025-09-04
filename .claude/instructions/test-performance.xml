@@ -1,0 +1,30 @@
+<!-- Performance Requirements for ADHD-Optimized Testing -->
+<performance-requirements priority="CRITICAL">
+  <test-execution>
+    <max-duration unit="milliseconds">500</max-duration>
+    <enforcement>FAIL test if exceeded</enforcement>
+    <monitoring>
+      <tool>Performance timer in afterEach hook</tool>
+      <reporting>Emoji indicators for visual feedback</reporting>
+    </monitoring>
+  </test-execution>
+  
+  <feedback-loop>
+    <target unit="seconds">2</target>
+    <wallaby-integration>true</wallaby-integration>
+    <watch-mode>Only changed files</watch-mode>
+  </feedback-loop>
+  
+  <emoji-indicators>
+    <fast emoji="⚡" range="0-100ms">Lightning fast</fast>
+    <acceptable emoji="✓" range="100-500ms">Within limits</acceptable>
+    <slow emoji="🐢" range="500ms+" action="MUST_REFACTOR">Too slow</slow>
+  </emoji-indicators>
+  
+  <performance-targets>
+    <target name="unit-test">Under 100ms</target>
+    <target name="integration-test">Under 1000ms</target>
+    <target name="total-suite">Under 30 seconds</target>
+    <target name="feedback-loop">Under 2 seconds</target>
+  </performance-targets>
+</performance-requirements>

@@ -1,0 +1,37 @@
+<!-- Validation Checklists for Quality Assurance -->
+<validation-checklists>
+  <pre-commit-checklist>
+    <check priority="CRITICAL">Wallaby.js was used for test development</check>
+    <check priority="CRITICAL">No terminal-first debugging detected</check>
+    <check priority="CRITICAL">No test.only or test.skip</check>
+    <check priority="CRITICAL">All tests pass</check>
+    <check priority="HIGH">No tests exceed 500ms</check>
+    <check priority="HIGH">Follows naming conventions</check>
+    <check priority="MEDIUM">Coverage maintained or improved</check>
+  </pre-commit-checklist>
+  
+  <code-review-checklist>
+    <check>Tests follow AAA pattern</check>
+    <check>Method names use underscores</check>
+    <check>Mocks are properly cleared</check>
+    <check>No excessive setup complexity</check>
+    <check>Edge cases covered</check>
+    <check>Error scenarios tested</check>
+    <check>No hardcoded test data</check>
+  </code-review-checklist>
+  
+  <performance-checklist>
+    <check>Each test under 500ms</check>
+    <check>Total suite under 30 seconds</check>
+    <check>Wallaby provides instant feedback</check>
+    <check>No unnecessary async/await</check>
+    <check>Minimal test setup complexity</check>
+  </performance-checklist>
+  
+  <naming-compliance>
+    <file-check>Ends with .unit.test.ts or .integration.test.ts</file-check>
+    <method-check>Follows should_X_when_Y pattern</method-check>
+    <describe-check>Uses component or feature name</describe-check>
+    <variable-check>Descriptive and meaningful names</variable-check>
+  </naming-compliance>
+</validation-checklists>

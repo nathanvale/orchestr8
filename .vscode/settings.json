@@ -21,8 +21,10 @@
   "[markdown]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
-  "typescript.tsdk": "node_modules/typescript/lib",
+  "typescript.tsdk": "./node_modules/typescript/lib",
   "typescript.enablePromptUseWorkspaceTsdk": true,
+  "typescript.disableAutomaticTypeAcquisition": true,
+  "typescript.tsserver.useSyntaxServer": "never",
   "eslint.validate": ["javascript", "javascriptreact", "typescript", "typescriptreact"],
   "files.exclude": {
     "**/.git": true,

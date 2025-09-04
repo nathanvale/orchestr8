@@ -3,6 +3,7 @@
 ## How to Prevent Version Mismatches in Future
 
 ### 1. **Use Workspace Dependencies**
+
 ```json
 // In package.json of individual packages
 {
@@ -11,9 +12,11 @@
   }
 }
 ```
+
 This ensures all packages use the same version as the root workspace.
 
 ### 2. **Root-Level Tool Dependencies**
+
 Add testing tools to the root `package.json` instead of individual packages:
 
 ```json
@@ -28,6 +31,7 @@ Add testing tools to the root `package.json` instead of individual packages:
 ```
 
 ### 3. **Regular Dependency Audits**
+
 Add these scripts to root `package.json`:
 
 ```json
@@ -41,6 +45,7 @@ Add these scripts to root `package.json`:
 ```
 
 ### 4. **Pre-commit Checks**
+
 Add dependency version check to your workflow:
 
 ```bash
@@ -57,13 +62,12 @@ fi
 ```
 
 ### 5. **pnpm Workspace Configuration**
+
 Ensure your root `package.json` has:
 
 ```json
 {
-  "workspaces": [
-    "packages/*"
-  ]
+  "workspaces": ["packages/*"]
 }
 ```
 
@@ -72,6 +76,7 @@ And use pnpm's workspace protocol for shared dependencies.
 ## Quick Fixes for Common Issues
 
 ### Version Mismatch Detected
+
 ```bash
 # 1. Check all versions
 pnpm list vitest
@@ -84,6 +89,7 @@ pnpm -r add -D vitest@^3.2.4
 ```
 
 ### Wallaby Not Working
+
 ```bash
 # 1. First check versions are aligned
 pnpm list vitest
@@ -95,6 +101,7 @@ pnpm run sync:deps
 ```
 
 ### Adding New Packages
+
 When creating new packages, use workspace dependencies:
 
 ```json
@@ -124,7 +131,8 @@ pnpm -r exec pnpm add -D vitest@^3.2.4
 
 ## Why This Matters
 
-**Wallaby.js Issues**: Version mismatches are the #1 cause of "Wallaby did not detect that any vitest tasks were executed" errors.
+**Wallaby.js Issues**: Version mismatches are the #1 cause of "Wallaby did not
+detect that any vitest tasks were executed" errors.
 
 **Performance**: Consistent versions ensure optimal caching and faster builds.
 
@@ -134,4 +142,5 @@ pnpm -r exec pnpm add -D vitest@^3.2.4
 
 ---
 
-By following these practices, you'll avoid the version mismatch issues that caused today's Wallaby problems.
+By following these practices, you'll avoid the version mismatch issues that
+caused today's Wallaby problems.

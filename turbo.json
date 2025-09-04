@@ -12,12 +12,12 @@
       "cache": true
     },
     "lint": {
-      "outputs": [".eslintcache"],
+      "outputs": [".eslintcache/**", "../../.eslintcache/**"],
       "cache": true
     },
     "typecheck": {
       "dependsOn": ["^typecheck"],
-      "outputs": ["**/.tsbuildinfo"],
+      "outputs": [],
       "cache": true
     },
     "clean": {

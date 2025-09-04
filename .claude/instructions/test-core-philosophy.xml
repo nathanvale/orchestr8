@@ -1,0 +1,32 @@
+<!-- Core Philosophy & Principles for ADHD-Optimized Testing -->
+<core-philosophy>
+  <principle priority="0" enforcement="CRITICAL">
+    <name>Wallaby-First Testing</name>
+    <requirement>Use Wallaby.js for ALL test development and debugging</requirement>
+    <rationale>Real-time visual feedback prevents context switching and maintains ADHD focus</rationale>
+  </principle>
+  
+  <principle priority="1" enforcement="MANDATORY">
+    <name>Test-Driven Development</name>
+    <requirement>Write tests BEFORE implementation</requirement>
+    <rationale>Prevents scope creep and maintains focus</rationale>
+  </principle>
+  
+  <principle priority="2" enforcement="STRICT">
+    <name>Sub-Second Feedback</name>
+    <requirement>Every test must execute in under 500ms</requirement>
+    <rationale>Maintains flow state and prevents context switching</rationale>
+  </principle>
+  
+  <principle priority="3" enforcement="STRICT">
+    <name>Minimal Output</name>
+    <requirement>Show only essential information</requirement>
+    <rationale>Reduces cognitive load and visual noise</rationale>
+  </principle>
+  
+  <principle priority="4" enforcement="HIGH">
+    <name>Instant Feedback</name>
+    <requirement>Prioritize speed over comprehensive reporting</requirement>
+    <rationale>ADHD brains need immediate validation</rationale>
+  </principle>
+</core-philosophy>

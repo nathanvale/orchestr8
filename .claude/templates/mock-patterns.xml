@@ -1,0 +1,44 @@
+<!-- Mocking Strategy and Patterns -->
+<mocking-strategy>
+  <principles>
+    <principle>Mock at system boundaries only</principle>
+    <principle>Prefer test doubles over complex mocks</principle>
+    <principle>Reset all mocks in beforeEach</principle>
+  </principles>
+  
+  <allowed-mocks>
+    <mock type="external-api">HTTP requests</mock>
+    <mock type="database">Database connections</mock>
+    <mock type="filesystem">File operations</mock>
+    <mock type="time">Date/Time functions</mock>
+    <mock type="random">Math.random()</mock>
+  </allowed-mocks>
+  
+  <forbidden-mocks>
+    <no-mock reason="Test the real logic">Internal business logic</no-mock>
+    <no-mock reason="No side effects">Pure functions</no-mock>
+    <no-mock reason="Test actual transforms">Data transformations</no-mock>
+    <no-mock reason="Part of unit under test">Private methods</no-mock>
+  </forbidden-mocks>
+  
+  <mock-setup><![CDATA[
+beforeEach(() => {
+  vi.clearAllMocks();
+  vi.resetModules();
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});]]></mock-setup>
+  
+  <msw-setup><![CDATA[
+import { afterAll, afterEach, beforeAll } from 'vitest';
+import { setupServer } from 'msw/node';
+import { handlers } from './handlers';
+
+const server = setupServer(...handlers);
+
+beforeAll(() => server.listen());
+afterEach(() => server.resetHandlers());
+afterAll(() => server.close());]]></msw-setup>
+</mocking-strategy>

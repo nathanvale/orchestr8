@@ -1,0 +1,90 @@
+<!-- Error Messages and Troubleshooting Guide -->
+<error-handling>
+  <common-errors>
+    <error code="WALLABY_NOT_RUNNING">
+      <message>🚫 CRITICAL: Wallaby.js not detected</message>
+      <solution>
+        1. Start Wallaby.js in your IDE
+        2. VS Code: Cmd+Shift+R R | WebStorm: Run → Wallaby.js
+        3. Wait for green indicators
+        4. Then begin test development
+      </solution>
+      <prevention>Always check Wallaby status bar before writing tests</prevention>
+      <severity>CRITICAL</severity>
+    </error>
+    
+    <error code="TERMINAL_TEST_DETECTED">
+      <message>⛔ STOP: Terminal testing detected during development</message>
+      <solution>
+        Use Wallaby.js for instant feedback:
+        - Stop terminal command immediately
+        - Start Wallaby in your IDE
+        - Get visual feedback without context switching
+      </solution>
+      <rationale>Terminal testing breaks ADHD focus with context switching</rationale>
+      <severity>CRITICAL</severity>
+    </error>
+    
+    <error code="SLOW_TEST">
+      <message>Test exceeded 500ms limit</message>
+      <solution>Split test, reduce setup, or move to .slow.test.ts</solution>
+      <example>Move complex integration logic to .integration.test.ts</example>
+    </error>
+    
+    <error code="NAMING_VIOLATION">
+      <message>Test name doesn't follow should_X_when_Y pattern</message>
+      <solution>Rename using exact pattern with underscores</solution>
+      <example>should_return_user_data_when_valid_id_provided</example>
+    </error>
+    
+    <error code="FOCUS_IN_COMMIT">
+      <message>test.only detected in commit</message>
+      <solution>Remove .only before committing</solution>
+      <prevention>Pre-commit hook will block this</prevention>
+    </error>
+    
+    <error code="EXCESSIVE_MOCKING">
+      <message>Too many mocks in single test</message>
+      <solution>Mock only at boundaries, test real logic when possible</solution>
+      <guideline>Maximum 3 mocks per test</guideline>
+    </error>
+    
+    <error code="MISSING_AAA">
+      <message>Test doesn't follow Arrange-Act-Assert pattern</message>
+      <solution>Structure test with clear AAA sections</solution>
+      <enforcement>Add // Arrange, // Act, // Assert comments</enforcement>
+    </error>
+  </common-errors>
+  
+  <troubleshooting>
+    <issue name="wallaby-not-showing">
+      <symptom>Wallaby not showing results</symptom>
+      <steps>
+        <step>Check file naming (.unit.test.ts)</step>
+        <step>Verify test file location</step>
+        <step>Restart Wallaby.js</step>
+        <step>Clear Wallaby cache</step>
+      </steps>
+    </issue>
+    
+    <issue name="slow-feedback">
+      <symptom>Tests taking too long for feedback</symptom>
+      <steps>
+        <step>Run pnpm test:find-slow</step>
+        <step>Move slow tests to .integration.test.ts</step>
+        <step>Optimize test setup/teardown</step>
+        <step>Use test.concurrent for independent tests</step>
+      </steps>
+    </issue>
+    
+    <issue name="flaky-tests">
+      <symptom>Tests randomly failing</symptom>
+      <steps>
+        <step>Check for timing dependencies</step>
+        <step>Ensure proper mock cleanup</step>
+        <step>Verify no shared state between tests</step>
+        <step>Add explicit wait conditions</step>
+      </steps>
+    </issue>
+  </troubleshooting>
+</error-handling>

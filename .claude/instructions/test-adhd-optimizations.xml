@@ -1,0 +1,43 @@
+<!-- ADHD-Specific Optimizations for Development Workflow -->
+<adhd-optimizations>
+  <focus-helpers>
+    <feature name="test.only">
+      <allowed>During development</allowed>
+      <forbidden>In committed code</forbidden>
+      <enforcement>Pre-commit hook blocks</enforcement>
+    </feature>
+    
+    <feature name="test.skip">
+      <allowed>Temporarily during refactoring</allowed>
+      <forbidden>In main branch</forbidden>
+    </feature>
+    
+    <feature name="watch-mode">
+      <default>Changed files only</default>
+      <option>Related files with --related flag</option>
+    </feature>
+  </focus-helpers>
+  
+  <cognitive-load-reduction>
+    <rule>Maximum 3 levels of describe nesting</rule>
+    <rule>Maximum 30 lines per test</rule>
+    <rule>Maximum 5 assertions per test</rule>
+    <rule>Descriptive variable names required</rule>
+  </cognitive-load-reduction>
+  
+  <visual-clarity>
+    <console-output>Suppress unless error</console-output>
+    <reporter>Dot reporter for minimal output</reporter>
+    <coverage>Show only on demand</coverage>
+  </visual-clarity>
+  
+  <quick-commands>
+    <cmd>pnpm test</cmd>
+    <cmd>pnpm test:unit</cmd>
+    <cmd>pnpm test:focus</cmd>
+    <cmd>pnpm test:debug</cmd>
+    <cmd>pnpm test:failed</cmd>
+    <cmd>pnpm test:integration</cmd>
+    <cmd>pnpm test:find-slow</cmd>
+  </quick-commands>
+</adhd-optimizations>

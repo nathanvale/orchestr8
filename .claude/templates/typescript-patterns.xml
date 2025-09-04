@@ -1,0 +1,281 @@
+<!-- TypeScript Common Patterns & Best Practices -->
+<typescript-patterns>
+  <pattern-overview>
+    <purpose>Common TypeScript patterns to follow in this codebase</purpose>
+    <priority>Apply these patterns to avoid ESLint warnings and errors</priority>
+  </pattern-overview>
+  
+  <type-safety-patterns>
+    <pattern name="unknown-over-any">
+      <when>Accepting data of unknown type</when>
+      <approach>Use 'unknown' and type guards</approach>
+      <example>
+        // ✅ GOOD - Type-safe approach
+        function parseJSON(json: string): unknown {
+          return JSON.parse(json)
+        }
+        
+        function isUser(value: unknown): value is User {
+          return (
+            typeof value === 'object' &&
+            value !== null &&
+            'id' in value &&
+            'name' in value
+          )
+        }
+        
+        // ❌ BAD - Loses type safety
+        function parseJSON(json: string): any {
+          return JSON.parse(json)
+        }
+      </example>
+    </pattern>
+    
+    <pattern name="type-predicates">
+      <when>Need to narrow types</when>
+      <approach>Use type predicate functions</approach>
+      <example>
+        // ✅ GOOD - Clear type narrowing
+        function isString(value: unknown): value is string {
+          return typeof value === 'string'
+        }
+        
+        function processValue(value: unknown) {
+          if (isString(value)) {
+            // TypeScript knows value is string here
+            return value.toLowerCase()
+          }
+        }
+      </example>
+    </pattern>
+    
+    <pattern name="discriminated-unions">
+      <when>Multiple possible types with different shapes</when>
+      <approach>Use discriminated unions with type field</approach>
+      <example>
+        // ✅ GOOD - Clear discrimination
+        type Result = 
+          | { type: 'success'; data: string }
+          | { type: 'error'; message: string }
+        
+        function handleResult(result: Result) {
+          switch (result.type) {
+            case 'success':
+              return result.data  // TypeScript knows this has 'data'
+            case 'error':
+              return result.message  // TypeScript knows this has 'message'
+          }
+        }
+      </example>
+    </pattern>
+  </type-safety-patterns>
+  
+  <function-patterns>
+    <pattern name="unused-parameters">
+      <when>Function has unused parameters</when>
+      <approach>Prefix with underscore</approach>
+      <example>
+        // ✅ GOOD - Clear intent
+        app.use((_req, _res, next) => {
+          next()
+        })
+        
+        array.map((item, _index) => item.name)
+        
+        // ❌ BAD - ESLint warning
+        app.use((req, res, next) => {
+          next()
+        })
+      </example>
+    </pattern>
+    
+    <pattern name="async-error-handling">
+      <when>Async functions that can fail</when>
+      <approach>Use try-catch with proper typing</approach>
+      <example>
+        // ✅ GOOD - Proper error handling
+        async function fetchData(): Promise&lt;Data | null&gt; {
+          try {
+            const response = await fetch('/api/data')
+            return await response.json() as Data
+          } catch (error) {
+            console.error('Failed to fetch:', error)
+            return null
+          }
+        }
+        
+        // ❌ BAD - No error handling
+        async function fetchData(): Promise&lt;Data&gt; {
+          const response = await fetch('/api/data')
+          return await response.json()
+        }
+      </example>
+    </pattern>
+    
+    <pattern name="optional-chaining">
+      <when>Accessing nested properties that might not exist</when>
+      <approach>Use optional chaining and nullish coalescing</approach>
+      <example>
+        // ✅ GOOD - Safe access
+        const userName = user?.profile?.name ?? 'Anonymous'
+        const firstItem = items?.[0]?.value
+        
+        // ❌ BAD - Can throw errors
+        const userName = user.profile.name || 'Anonymous'
+        const firstItem = items[0].value
+      </example>
+    </pattern>
+  </function-patterns>
+  
+  <react-patterns>
+    <pattern name="component-typing">
+      <when>Creating React components</when>
+      <approach>Use proper FC typing or return type</approach>
+      <example>
+        // ✅ GOOD - Properly typed
+        interface ButtonProps {
+          onClick: () => void
+          children: React.ReactNode
+        }
+        
+        const Button: React.FC&lt;ButtonProps&gt; = ({ onClick, children }) => {
+          return &lt;button onClick={onClick}&gt;{children}&lt;/button&gt;
+        }
+        
+        // Also good - explicit return type
+        function Button({ onClick, children }: ButtonProps): JSX.Element {
+          return &lt;button onClick={onClick}&gt;{children}&lt;/button&gt;
+        }
+      </example>
+    </pattern>
+    
+    <pattern name="event-handlers">
+      <when>Handling events in React</when>
+      <approach>Type event handlers properly</approach>
+      <example>
+        // ✅ GOOD - Properly typed events
+        const handleClick = (event: React.MouseEvent&lt;HTMLButtonElement&gt;) => {
+          event.preventDefault()
+        }
+        
+        const handleChange = (event: React.ChangeEvent&lt;HTMLInputElement&gt;) => {
+          setValue(event.target.value)
+        }
+        
+        // ❌ BAD - Using any
+        const handleClick = (event: any) => {
+          event.preventDefault()
+        }
+      </example>
+    </pattern>
+    
+    <pattern name="hooks-dependencies">
+      <when>Using useEffect, useMemo, useCallback</when>
+      <approach>Include all dependencies</approach>
+      <example>
+        // ✅ GOOD - All deps included
+        useEffect(() => {
+          fetchData(userId)
+        }, [userId, fetchData])
+        
+        const memoized = useMemo(
+          () => expensiveCalculation(data),
+          [data]
+        )
+        
+        // ⚠️ WARNING - Missing dependency
+        useEffect(() => {
+          fetchData(userId)
+        }, [])  // ESLint will warn about missing userId
+      </example>
+    </pattern>
+  </react-patterns>
+  
+  <test-patterns>
+    <pattern name="test-type-relaxation">
+      <when>Writing tests</when>
+      <approach>Relaxed typing is acceptable in tests</approach>
+      <example>
+        // ✅ OK IN TESTS - Relaxed rules
+        describe('MyComponent', () => {
+          it('should handle mock data', () => {
+            const mockData: any = { test: true }
+            const result = processData(mockData as Data)
+            expect(result).toBeDefined()
+          })
+          
+          it('should work with stubs', () => {
+            const stub = vi.fn().mockReturnValue('test')
+            // Non-null assertions OK in tests
+            const value = getValue()!
+            expect(value).toBe('test')
+          })
+        })
+      </example>
+    </pattern>
+    
+    <pattern name="long-test-functions">
+      <when>Test setup requires many lines</when>
+      <approach>Tests can be up to 500 lines</approach>
+      <note>Extract helper functions if exceeding 500 lines</note>
+    </pattern>
+  </test-patterns>
+  
+  <import-organization>
+    <pattern name="import-grouping">
+      <when>Organizing imports</when>
+      <approach>Follow consistent order</approach>
+      <example>
+        // ✅ GOOD - Organized imports
+        // Node built-ins
+        import { readFile } from 'node:fs/promises'
+        import path from 'node:path'
+        
+        // External packages
+        import React from 'react'
+        import { render } from '@testing-library/react'
+        
+        // Internal packages
+        import { utils } from '@template/shared'
+        import { Button } from '@template/ui'
+        
+        // Relative imports
+        import { MyComponent } from './MyComponent'
+        import { helper } from '../utils/helper'
+        
+        // Type imports
+        import type { Config } from './types'
+        import type { User } from '@template/types'
+      </example>
+    </pattern>
+  </import-organization>
+  
+  <common-gotchas>
+    <gotcha name="const-assertions">
+      <issue>Object/array should be immutable</issue>
+      <solution>Use 'as const' assertion</solution>
+      <example>
+        // ✅ GOOD - Immutable
+        const ROLES = ['admin', 'user', 'guest'] as const
+        const CONFIG = { api: '/api', timeout: 5000 } as const
+        
+        // ⚠️ Can be mutated
+        const ROLES = ['admin', 'user', 'guest']
+      </example>
+    </gotcha>
+    
+    <gotcha name="null-checks">
+      <issue>Checking for null or undefined</issue>
+      <solution>Use == null for both, === for specific</solution>
+      <example>
+        // ✅ GOOD - Clear intent
+        if (value == null) { }  // Checks null OR undefined
+        if (value === null) { }  // Only null
+        if (value === undefined) { }  // Only undefined
+        
+        // ❌ Confusing
+        if (!value) { }  // Also catches 0, '', false
+      </example>
+    </gotcha>
+  </common-gotchas>
+</typescript-patterns>

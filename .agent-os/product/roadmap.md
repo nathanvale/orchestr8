@@ -18,10 +18,10 @@ automation rate, <2s processing time
 
 ### Day 3: Add Autopilot
 
-- [ ] Create adapters/autopilot.ts (~100 lines) `M`
-- [ ] Define safe auto-fix rules list `S`
-- [ ] Implement simple classification logic `S`
-- [ ] Add fix verification `S`
+- [x] Create adapters/autopilot.ts (~100 lines) `M`
+- [x] Define safe auto-fix rules list `S`
+- [x] Implement simple classification logic `S`
+- [x] Add fix verification `S`
 
 ### Day 4: Claude Integration
 

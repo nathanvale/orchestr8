@@ -6,7 +6,7 @@ if (typeof window !== 'undefined') {
 import type { HttpHandler } from 'msw'
 import { http, HttpResponse } from 'msw'
 import { setupServer } from 'msw/node'
-import { afterAll, afterEach, beforeAll, beforeEach, vi } from 'vitest'
+import { afterAll, afterEach, beforeAll, beforeEach, vi, expect } from 'vitest'
 
 // Mock handlers for common API patterns
 const defaultHandlers: HttpHandler[] = [
@@ -242,10 +242,8 @@ export const customMatchers = {
   },
 }
 
-// Register matchers once (expect is global in Vitest)
-if (typeof (globalThis as any).expect?.extend === 'function') {
-  ;(globalThis as any).expect.extend(customMatchers)
-}
+// Register matchers with Vitest's expect
+expect.extend(customMatchers)
 
 // --- Fail-fast esbuild / vite subprocess diagnostics (opt-in) ---
 // Activate by running with env BUN_TEMPLATE_ESBUILD_DIAG=1 (or using diag scripts).

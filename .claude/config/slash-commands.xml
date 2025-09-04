@@ -1,0 +1,50 @@
+<!-- Slash Commands for Quick Testing Actions -->
+<slash-commands>
+  <command name="/test-fast">
+    <description>Run only fast unit tests</description>
+    <action>pnpm test:unit</action>
+    <shortcut>tf</shortcut>
+  </command>
+  
+  <command name="/test-focus">
+    <description>Run tests for changed files only</description>
+    <action>pnpm test:focus</action>
+    <shortcut>tfo</shortcut>
+  </command>
+  
+  <command name="/test-debug">
+    <description>Run with debugger attached</description>
+    <action>pnpm test:debug</action>
+    <shortcut>td</shortcut>
+  </command>
+  
+  <command name="/test-slow-find">
+    <description>Identify tests exceeding 500ms</description>
+    <action>pnpm test:find-slow</action>
+    <shortcut>tsf</shortcut>
+  </command>
+  
+  <command name="/test-failed">
+    <description>Re-run only failed tests</description>
+    <action>pnpm test:failed</action>
+    <shortcut>tfa</shortcut>
+  </command>
+  
+  <command name="/test-coverage">
+    <description>Run tests with coverage report</description>
+    <action>pnpm test:coverage</action>
+    <shortcut>tc</shortcut>
+  </command>
+  
+  <command name="/test-integration">
+    <description>Run integration tests only</description>
+    <action>TEST_MODE=integration pnpm test</action>
+    <shortcut>ti</shortcut>
+  </command>
+  
+  <command name="/test-all">
+    <description>Run all tests including slow ones</description>
+    <action>pnpm test:all</action>
+    <shortcut>ta</shortcut>
+  </command>
+</slash-commands>

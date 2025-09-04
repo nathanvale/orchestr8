@@ -1,0 +1,43 @@
+<!-- Continuous Improvement and Monitoring Rules -->
+<continuous-improvement>
+  <monitoring frequency="weekly">
+    <metric name="test-execution-time">
+      <threshold>500ms</threshold>
+      <action>Refactor tests exceeding threshold</action>
+    </metric>
+    
+    <metric name="flaky-tests">
+      <threshold>0</threshold>
+      <action>Fix or remove flaky tests immediately</action>
+    </metric>
+    
+    <metric name="coverage">
+      <threshold>80%</threshold>
+      <action>Add tests for uncovered critical paths</action>
+    </metric>
+    
+    <metric name="test-suite-time">
+      <threshold>30 seconds</threshold>
+      <action>Identify and optimize slow test areas</action>
+    </metric>
+  </monitoring>
+  
+  <feedback-collection>
+    <method>Weekly team retrospective</method>
+    <focus>Cognitive load and flow interruptions</focus>
+    <action>Adjust patterns based on team feedback</action>
+  </feedback-collection>
+  
+  <pattern-evolution>
+    <trigger>Repeated manual actions</trigger>
+    <action>Create new slash command or automation</action>
+    <priority>Developer experience over completeness</priority>
+  </pattern-evolution>
+  
+  <performance-review>
+    <frequency>Weekly</frequency>
+    <command>pnpm test:find-slow</command>
+    <report-location>./test-results/performance-report.md</report-location>
+    <action-threshold>5 tests over 500ms</action-threshold>
+  </performance-review>
+</continuous-improvement>

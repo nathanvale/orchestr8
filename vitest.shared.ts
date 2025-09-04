@@ -1,6 +1,6 @@
 /**
  * Shared Vitest Configuration Base (2025)
- * 
+ *
  * Common configuration shared across all workspace packages.
  * Packages can extend this base configuration with their specific needs.
  */
@@ -28,7 +28,7 @@ export const vitestSharedConfig: InlineConfig = {
 
     // ADHD-friendly timeouts: generous but not excessive
     testTimeout: 10000,
-    hookTimeout: 10000, 
+    hookTimeout: 10000,
     teardownTimeout: 15000,
 
     // Clean environment management
