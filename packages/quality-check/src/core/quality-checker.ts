@@ -6,6 +6,7 @@
 import { execSync } from 'node:child_process'
 import { existsSync } from 'node:fs'
 import type { QualityCheckOptions, QualityCheckResult, CheckerResult, FixResult } from '../types.js'
+import { ErrorParser } from './error-parser.js'
 
 interface ESLintMessage {
   severity: number
@@ -23,6 +24,8 @@ interface ESLintResult {
 }
 
 export class QualityChecker {
+  private errorParser = new ErrorParser()
+
   /**
    * Check files for quality issues
    */
@@ -202,12 +205,18 @@ export class QualityChecker {
         fixable: false,
       }
     } catch (error) {
+      // Parse TypeScript errors for better detail
       const errorMsg = error instanceof Error ? error.toString() : 'TypeScript check failed'
-      const errors = errorMsg.split('\n').filter((line) => line.includes('error TS'))
+      const parsedErrors = this.errorParser.parseTypeScriptErrors(errorMsg)
+
+      const errors =
+        parsedErrors.length > 0
+          ? parsedErrors.map((err) => this.errorParser.formatError(err))
+          : ['TypeScript compilation failed']
 
       return {
         success: false,
-        errors: errors.length > 0 ? errors : ['TypeScript compilation failed'],
+        errors,
         fixable: false,
       }
     }
