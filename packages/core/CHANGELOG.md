@@ -1,5 +1,12 @@
 # @orchestr8/core
 
+## 0.3.1
+
+### Patch Changes
+
+- Updated dependencies [[`30e0c59`](https://github.com/nathanvale/orchestr8/commit/30e0c598c56b1d2ec1ea83558e2a34bde79d90ea)]:
+  - @orchestr8/logger@2.1.0
+
 ## 0.3.0
 
 ### Minor Changes

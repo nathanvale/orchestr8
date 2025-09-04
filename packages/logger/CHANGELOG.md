@@ -1,5 +1,27 @@
 # @orchestr8/logger
 
+## 2.1.0
+
+### Minor Changes
+
+- [#18](https://github.com/nathanvale/orchestr8/pull/18) [`30e0c59`](https://github.com/nathanvale/orchestr8/commit/30e0c598c56b1d2ec1ea83558e2a34bde79d90ea) Thanks [@nathanvale](https://github.com/nathanvale)! - feat(logger): add prettyJson option for beautifully formatted JSON objects
+  - Add prettyJson boolean option to LoggerOptions interface
+  - Implement pretty JSON formatting in ConsoleLogger with 2-space indentation
+  - Add LOG_PRETTY_JSON environment variable support
+  - Maintain colored log levels and structured output for development debugging
+  - Add comprehensive test coverage for all pretty JSON scenarios
+  - Backward compatible - existing behavior unchanged, new feature is opt-in
+
+  Examples:
+  // Enable pretty JSON formatting
+  const logger = createConsoleLogger({
+  pretty: true,
+  prettyJson: true
+  })
+
+  // Or via environment variable
+  // LOG_PRETTY_JSON=true
+
 ## 2.0.0
 
 ### Major Changes
