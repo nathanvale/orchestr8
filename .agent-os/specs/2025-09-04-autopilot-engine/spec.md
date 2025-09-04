@@ -72,3 +72,9 @@ quality standards.
    through comprehensive test suite
 3. **Sub-10ms performance** - Classification and decision-making completes
    quickly enough for real-time use
+
+## Spec Documentation
+
+- Tasks: @.agent-os/specs/2025-09-04-autopilot-engine/tasks.md
+- Technical Specification: @.agent-os/specs/2025-09-04-autopilot-engine/sub-specs/technical-spec.md
+- Tests Specification: @.agent-os/specs/2025-09-04-autopilot-engine/sub-specs/tests.md
