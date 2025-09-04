@@ -43,3 +43,42 @@ export interface FixResult {
   fixed: string[]
   error?: string
 }
+
+// Autopilot-specific types
+
+export interface Issue {
+  rule: string
+  fixable: boolean
+  message?: string
+  file: string
+}
+
+export interface CheckResult {
+  filePath: string
+  issues: Issue[]
+  hasErrors: boolean
+  hasWarnings: boolean
+  fixable: boolean
+}
+
+export interface ContextCheck {
+  shouldAutoFix: boolean
+  reason: string
+  confidence: number
+}
+
+export interface AutopilotDecision {
+  action: 'FIX_SILENTLY' | 'FIX_AND_REPORT' | 'REPORT_ONLY' | 'CONTINUE'
+  fixes?: Issue[]
+  issues?: Issue[]
+  confidence: number
+}
+
+export interface Classification {
+  autoFixable: Issue[]
+  contextFixable: Issue[]
+  unfixable: Issue[]
+  allAutoFixable: boolean
+  hasAutoFixable: boolean
+  hasUnfixable: boolean
+}

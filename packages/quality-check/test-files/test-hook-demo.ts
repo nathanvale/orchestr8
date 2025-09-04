@@ -26,4 +26,7 @@ function processData(data) {
   return data.length // Implicit any
 }
 
+// Use variables to avoid lint errors
+console.log(user, unusedVar, messySpacing, noSemicolon, numberValue, shouldBeConst, badIndent)
+
 export { processData }

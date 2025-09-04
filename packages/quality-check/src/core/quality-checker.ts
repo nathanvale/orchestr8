@@ -7,6 +7,21 @@ import { execSync } from 'node:child_process'
 import { existsSync } from 'node:fs'
 import type { QualityCheckOptions, QualityCheckResult, CheckerResult, FixResult } from '../types.js'
 
+interface ESLintMessage {
+  severity: number
+  message: string
+  ruleId: string | null
+  line: number
+  column: number
+}
+
+interface ESLintResult {
+  errorCount: number
+  warningCount: number
+  messages: ESLintMessage[]
+  filePath: string
+}
+
 export class QualityChecker {
   /**
    * Check files for quality issues
@@ -113,14 +128,14 @@ export class QualityChecker {
         encoding: 'utf8',
       })
 
-      const results = JSON.parse(output) as any[]
+      const results = JSON.parse(output) as ESLintResult[]
       const errors: string[] = []
       let hasErrors = false
 
-      results.forEach((file: any) => {
+      results.forEach((file: ESLintResult) => {
         if (file.errorCount > 0) {
           hasErrors = true
-          file.messages.forEach((msg: any) => {
+          file.messages.forEach((msg: ESLintMessage) => {
             if (msg.severity === 2) {
               errors.push(
                 `${file.filePath}:${msg.line}:${msg.column} - ${msg.message} (${msg.ruleId})`,

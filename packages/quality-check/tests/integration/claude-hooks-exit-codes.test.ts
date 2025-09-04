@@ -92,7 +92,7 @@ describe('Claude Hooks Exit Code Scenarios', () => {
 
     try {
       await hookMode(options, mockLogger)
-    } catch (error) {
+    } catch {
       // The function is expected to exit, not throw
     }
 
@@ -117,7 +117,7 @@ describe('Claude Hooks Exit Code Scenarios', () => {
 
     try {
       await hookMode(options, mockLogger)
-    } catch (error) {
+    } catch {
       // The function is expected to exit, not throw
     }
 
@@ -185,7 +185,7 @@ describe('Claude Hooks Exit Code Scenarios', () => {
 
     try {
       await hookMode(options, mockLogger)
-    } catch (error) {
+    } catch {
       // The function is expected to exit, not throw
     }
 

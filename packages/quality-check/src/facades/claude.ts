@@ -3,10 +3,10 @@
  * ~80 lines with autopilot logic
  */
 
-import { QualityChecker } from '../core/quality-checker.js'
-import { IssueReporter } from '../core/issue-reporter.js'
 import { Autopilot } from '../adapters/autopilot.js'
 import { Fixer } from '../adapters/fixer.js'
+import { IssueReporter } from '../core/issue-reporter.js'
+import { QualityChecker } from '../core/quality-checker.js'
 
 interface ClaudeHookPayload {
   tool: string
@@ -47,11 +47,20 @@ export async function runClaudeHook(): Promise<void> {
       process.exit(0) // Silent success
     }
 
-    // Let autopilot decide what to do
-    const decision = autopilot.decide(result)
+    // Convert QualityCheckResult to CheckResult format
+    const checkResult = {
+      filePath: payload.path,
+      issues: [], // TODO: Extract issues from result
+      hasErrors: !result.success,
+      hasWarnings: false,
+      fixable: false,
+    }
 
-    switch (decision) {
-      case 'FIX_SILENTLY':
+    // Let autopilot decide what to do
+    const decision = autopilot.decide(checkResult)
+
+    switch (decision.action) {
+      case 'FIX_SILENTLY': {
         // Apply safe fixes automatically
         const fixResult = await fixer.autoFix(payload.path, result)
         if (fixResult.success) {
@@ -59,12 +68,14 @@ export async function runClaudeHook(): Promise<void> {
         }
         // Fall through if fix failed
         break
+      }
 
       case 'CONTINUE':
         // Let it through despite issues
         process.exit(0)
+        break
 
-      case 'REPORT_ISSUES':
+      case 'REPORT_ONLY': {
         // Show unfixable issues to user
         const output = reporter.formatForClaude(result)
         if (output) {
@@ -72,10 +83,24 @@ export async function runClaudeHook(): Promise<void> {
           process.exit(1) // Block with message
         }
         break
+      }
+
+      case 'FIX_AND_REPORT': {
+        // Apply fixes then show remaining issues
+        await fixer.autoFix(payload.path, result)
+        if (decision.issues && decision.issues.length > 0) {
+          const output2 = reporter.formatForClaude(result)
+          if (output2) {
+            console.error(output2)
+            process.exit(1) // Block with message about remaining issues
+          }
+        }
+        process.exit(0)
+      }
     }
 
     process.exit(0)
-  } catch (error) {
+  } catch {
     // Never crash Claude - fail silently
     process.exit(0)
   }

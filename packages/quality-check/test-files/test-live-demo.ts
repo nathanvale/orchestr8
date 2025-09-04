@@ -25,4 +25,7 @@ function processData(data) {
 const result: string = 123
 const items: number[] = ['one', 'two', 'three']
 
+// Use variables to avoid lint errors
+console.log(user, count, unused1, unused2, messySpacing, noSemi, badIndent, result, items)
+
 export { processData }

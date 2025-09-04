@@ -7,5 +7,7 @@ const someObject = { name: 'test' }
 console.log(someObject.nonExistentProperty) // TypeScript error
 
 export function testFunction() {
+  // Use unused variable to avoid lint error
+  console.log(unused)
   return message
 }

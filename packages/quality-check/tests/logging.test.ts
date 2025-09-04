@@ -4,7 +4,7 @@ import {
   createQualityLoggerSync,
   generateCorrelationId,
 } from '../src/logging/quality-logger.js'
-import { mkdtemp, readFile, rm } from 'node:fs/promises'
+import { mkdtemp, rm } from 'node:fs/promises'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 
