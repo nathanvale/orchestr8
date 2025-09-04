@@ -79,7 +79,7 @@ export class IssueReporter {
 
     // Parse errors to determine fixability
     const parsedErrors = this.lazyParseErrors(result, options)
-    const { fixable, unfixable } = this.errorParser.filterByFixability(parsedErrors)
+    const { unfixable } = this.errorParser.filterByFixability(parsedErrors)
 
     // If summary is requested and we have raw errors (but couldn't parse them)
     if (options.summary && unfixable.length === 0 && this.hasRawErrors(result)) {
@@ -139,17 +139,6 @@ export class IssueReporter {
     return formatted || '  Unknown error'
   }
 
-  private getUnfixableErrors(result: QualityCheckResult): string[] {
-    const errors: string[] = []
-    // Extract only critical unfixable errors
-    Object.values(result.checkers).forEach((checker) => {
-      if (checker && !checker.success && checker.errors) {
-        errors.push(...checker.errors.filter((e) => !e.includes('fixable')))
-      }
-    })
-    return errors
-  }
-
   /**
    * Lazily parse errors only when needed for performance
    */
@@ -193,14 +182,22 @@ export class IssueReporter {
             fixable: this.errorParser.categorizeError({
               code: match[5],
               source: 'eslint',
-            } as any).fixable,
+              file: '',
+              line: 0,
+              column: 0,
+              message: '',
+              severity: 'error',
+              fixable: false,
+            }).fixable,
           })
         }
       })
     }
 
     // Cache the parsed errors
-    ;(result as any).parsedErrors = allErrors
+    // Type assertion to add parsedErrors to result
+    const mutableResult = result as QualityCheckResult & { parsedErrors?: ParsedError[] }
+    mutableResult.parsedErrors = allErrors
     return allErrors
   }
 

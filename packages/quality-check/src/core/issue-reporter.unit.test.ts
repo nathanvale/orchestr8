@@ -1,15 +1,12 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { IssueReporter } from './issue-reporter.js'
-import { ErrorParser } from './error-parser.js'
 import type { QualityCheckResult } from '../types.js'
 
 describe('IssueReporter with Enhanced Error Formatting', () => {
   let reporter: IssueReporter
-  let errorParser: ErrorParser
 
   beforeEach(() => {
     reporter = new IssueReporter()
-    errorParser = new ErrorParser()
   })
 
   describe('Enhanced CLI formatting', () => {
