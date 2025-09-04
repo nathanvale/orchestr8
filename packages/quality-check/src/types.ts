@@ -27,6 +27,18 @@ export interface CheckerResult {
   fixable?: boolean
 }
 
+export interface ParsedError {
+  file: string
+  line: number
+  column: number
+  code: string
+  message: string
+  severity: 'error' | 'warning'
+  source: 'eslint' | 'prettier' | 'typescript'
+  fixable: boolean
+  category?: 'style' | 'type' | 'complexity' | 'syntax'
+}
+
 export interface QualityCheckResult {
   success: boolean
   file?: string
@@ -35,6 +47,7 @@ export interface QualityCheckResult {
     prettier?: CheckerResult
     typescript?: CheckerResult
   }
+  parsedErrors?: ParsedError[]
 }
 
 export interface FixResult {

@@ -3,17 +3,7 @@
  * Minimal implementation following YAGNI principles
  */
 
-export interface ParsedError {
-  file: string
-  line: number
-  column: number
-  code: string
-  message: string
-  severity: 'error' | 'warning'
-  source: 'eslint' | 'prettier' | 'typescript'
-  fixable: boolean
-  category?: 'style' | 'type' | 'complexity' | 'syntax'
-}
+import type { ParsedError } from '../types.js'
 
 interface ParseOptions {
   maxErrors?: number
