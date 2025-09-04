@@ -1,5 +1,13 @@
 # @orchestr8/testing
 
+## 0.1.3
+
+### Patch Changes
+
+- [#18](https://github.com/nathanvale/orchestr8/pull/18) [`30e0c59`](https://github.com/nathanvale/orchestr8/commit/30e0c598c56b1d2ec1ea83558e2a34bde79d90ea) Thanks [@nathanvale](https://github.com/nathanvale)! - fix(testing): relax CI/CD test to allow error handling in release script
+
+  Changed test from exact match to toContain() to allow helpful error messages
+
 ## 0.1.2
 
 ### Patch Changes

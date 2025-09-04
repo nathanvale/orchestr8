@@ -1,5 +1,12 @@
 # @orchestr8/cli
 
+## 0.2.2
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @orchestr8/core@0.3.1
+
 ## 0.2.1
 
 ### Patch Changes

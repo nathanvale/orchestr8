@@ -1,5 +1,12 @@
 # @orchestr8/resilience
 
+## 1.0.3
+
+### Patch Changes
+
+- Updated dependencies [[`30e0c59`](https://github.com/nathanvale/orchestr8/commit/30e0c598c56b1d2ec1ea83558e2a34bde79d90ea)]:
+  - @orchestr8/logger@2.1.0
+
 ## 1.0.2
 
 ### Patch Changes
