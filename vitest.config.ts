@@ -1,33 +1,26 @@
 /// <reference types="vitest/globals" />
 import { mkdirSync } from 'node:fs'
+import { cpus } from 'node:os'
 import path from 'node:path'
-import { defineConfig } from 'vitest/config'
+import { defineConfig, mergeConfig } from 'vitest/config'
+import { vitestSharedConfig } from './vitest.shared'
 
 /**
- * Shared Vitest Configuration
+ * Modern Vitest Configuration (2025)
  *
- * This is the base configuration used by all projects in the monorepo.
- * Individual projects can override these settings as needed.
- *
- * For multi-project workspace configuration, see vitest.workspace.ts
+ * Uses modern projects pattern for monorepo support with optimal performance.
+ * Configured for ADHD-friendly development with fast feedback loops.
+ * 
+ * Key improvements:
+ * - threads pool for better performance
+ * - auto-discovery of workspace packages
+ * - optimized coverage configuration
+ * - ADHD-friendly minimal output
  */
 
-// Helper function to extract package name from current working directory
-function getPackageName(): string {
-  const cwd = process.cwd()
-  if (cwd.includes('/packages/')) {
-    const match = /\/packages\/([^/]+)/.exec(cwd)
-    return match?.[1] ?? 'root'
-  }
-  if (cwd.includes('/apps/')) {
-    const match = /\/apps\/([^/]+)/.exec(cwd)
-    return match?.[1] ?? 'root'
-  }
-  return 'root'
-}
-
-const packageName = getPackageName()
-const coverageDirectory = `./test-results/coverage/${packageName}`
+// Modern approach: Use Vitest's native project discovery
+// Coverage directory simplified with workspace-aware naming
+const coverageDirectory = './test-results/coverage'
 
 // Ensure coverage directory exists for JUnit reporter.
 if (process.env['CI']) {
@@ -38,23 +31,29 @@ if (process.env['CI']) {
   }
 }
 
-export default defineConfig({
+export default mergeConfig(
+  vitestSharedConfig,
+  defineConfig({
   // Cache configuration
   cacheDir: '.vitest',
 
   test: {
-    // Default environment (can be overridden per project)
-    environment: 'node',
-
-    // Include all test files across the monorepo
-    include: [
-      'tests/**/*.{test,spec}.{ts,tsx}',
-      'packages/**/src/**/*.{test,spec}.{ts,tsx}',
-      'packages/**/tests/**/*.{test,spec}.{ts,tsx}',
-      'apps/*/src/**/*.{test,spec}.{ts,tsx}',
-      'apps/*/tests/**/*.{test,spec}.{ts,tsx}',
-      'tooling/**/*.{test,spec}.{ts,tsx}',
+    // Modern 2025 workspace pattern for automatic package discovery
+    projects: [
+      // Auto-discover all packages with their own configs
+      'packages/*',
+      // Include root-level tests
+      {
+        test: {
+          name: 'root',
+          environment: 'node',
+          include: ['tests/**/*.{test,spec}.{ts,tsx}'],
+        },
+      },
     ],
+
+    // Default environment for root project
+    environment: 'node',
 
     // Global excludes
     exclude: ['**/node_modules/**', '**/dist/**', '**/build/**', '**/coverage/**', '**/.next/**'],
@@ -62,10 +61,17 @@ export default defineConfig({
     // Setup files
     setupFiles: ['./vitest.setup.tsx'],
 
-    // Why: Forks pool prevents worker termination issues in Bun/Vitest hybrid
-    // Trade-off: Slightly slower than threads but more stable for Bun runtime
-    // Context: Official Vitest/Bun workaround for worker stability issues
-    pool: 'forks',
+    // Modern 2025: threads pool for optimal performance
+    // Threads provide better performance and memory efficiency
+    pool: 'threads',
+    poolOptions: {
+      threads: {
+        singleThread: false,
+        // Optimize for available CPUs, leaving some for system
+        maxThreads: Math.max(1, cpus().length - 1),
+        minThreads: 1,
+      },
+    },
 
     // Why: Ensure test isolation to prevent state bleed between tests
     isolate: true,
@@ -80,15 +86,16 @@ export default defineConfig({
     // Why: Clear mocks prevents test pollution and flaky failures
     clearMocks: true,
 
-    // Why: Coverage ensures code quality and catches untested paths
+    // Optimized coverage configuration for 2025
     coverage: {
-      // Why: V8 provider is 2-3x faster than Istanbul and works better with Bun
-      provider: 'v8',
+      provider: 'v8', // Fastest coverage provider
+      // ADHD-friendly: minimal output locally, comprehensive in CI
       reporter: process.env['CI']
-        ? ['text', 'text-summary', 'html', 'lcov', 'json-summary']
-        : ['text-summary'], // Reduce reporter noise in local development
+        ? ['text', 'html', 'lcov', 'json-summary'] 
+        : ['text-summary'], // Clean, minimal local output
       reportsDirectory: coverageDirectory,
       reportOnFailure: true,
+      clean: true, // Clean coverage directory before each run
       exclude: [
         'coverage/**',
         'dist/**',
@@ -134,14 +141,14 @@ export default defineConfig({
     hookTimeout: 10000, // Why: Setup/teardown may involve complex initialization
     teardownTimeout: 15000, // Why: MSW cleanup and worker termination need extra time
 
-    // Reporter configuration with balanced output
+    // ADHD-friendly reporter configuration: minimal cognitive load
     reporters: process.env['GITHUB_ACTIONS']
       ? ['dot', 'github-actions', 'junit']
       : process.env['CI']
         ? ['dot', 'junit']
         : process.env['VERBOSE'] === 'true'
           ? ['verbose']
-          : ['default'],
+          : [['default', { summary: false }]], // ADHD-friendly: minimal noise
     outputFile: {
       junit: `${coverageDirectory}/junit.xml`,
     },
@@ -193,4 +200,4 @@ export default defineConfig({
     keepNames: true,
     jsx: 'automatic',
   },
-})
+}))

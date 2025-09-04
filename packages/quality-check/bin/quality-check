@@ -6,7 +6,7 @@
 import { runCLI } from '../dist/facades/cli.js'
 
 // Run CLI with process arguments
-runCLI(process.argv.slice(2)).catch(error => {
+runCLI(process.argv.slice(2)).catch((error) => {
   console.error('Fatal error:', error)
   process.exit(1)
 })

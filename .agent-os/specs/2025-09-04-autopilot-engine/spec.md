@@ -76,5 +76,7 @@ quality standards.
 ## Spec Documentation
 
 - Tasks: @.agent-os/specs/2025-09-04-autopilot-engine/tasks.md
-- Technical Specification: @.agent-os/specs/2025-09-04-autopilot-engine/sub-specs/technical-spec.md
-- Tests Specification: @.agent-os/specs/2025-09-04-autopilot-engine/sub-specs/tests.md
+- Technical Specification:
+  @.agent-os/specs/2025-09-04-autopilot-engine/sub-specs/technical-spec.md
+- Tests Specification:
+  @.agent-os/specs/2025-09-04-autopilot-engine/sub-specs/tests.md

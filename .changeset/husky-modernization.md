@@ -1,6 +1,5 @@
 ---
 '@template/utils': patch
-'@template/web': patch
 ---
 
 feat: modernize Husky git hooks with ADHD-friendly enhancements

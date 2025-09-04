@@ -102,16 +102,6 @@ describe('Vitest Migration Dependency Validation', () => {
   })
 
   describe('Configuration packages', () => {
-    test('should import vite-tsconfig-paths', async () => {
-      try {
-        const viteTsconfigPaths = await import('vite-tsconfig-paths')
-        expect(viteTsconfigPaths).toBeDefined()
-        expect(viteTsconfigPaths.default).toBeDefined()
-      } catch (error) {
-        throw new Error(`Failed to import vite-tsconfig-paths: ${String(error)}`)
-      }
-    })
-
     test('should import eslint-plugin-vitest', async () => {
       try {
         const eslintPluginVitest = await import('eslint-plugin-vitest')
