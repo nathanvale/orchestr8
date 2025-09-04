@@ -1,0 +1,36 @@
+{
+  "$schema": "https://raw.githubusercontent.com/anthropics/claude-vscode/main/schemas/settings.json",
+  "name": "Quality Check Enforcement",
+  "description": "Enforces code quality standards with Critical Stop system",
+  "hooks": {
+    "postToolUse": {
+      "command": "npx @template/quality-check",
+      "enabled": true,
+      "environment": {
+        "QUALITY_CHECK_MODE": "enforce"
+      },
+      "tools": ["Write", "Edit", "MultiEdit"],
+      "timeout": 10000,
+      "blocking": true,
+      "continueOnError": false,
+      "outputHandler": {
+        "stdout": "suppress",
+        "stderr": "display"
+      }
+    }
+  },
+  "enforcement": {
+    "blockFileLocations": [".claude/ENFORCEMENT_BLOCK.md", ".ai/enforcement.md", "QUALITY_BLOCK.md"],
+    "autoFix": true,
+    "educate": true,
+    "blockOnErrors": true
+  },
+  "qualityRules": {
+    "eslint": true,
+    "prettier": true,
+    "typescript": true,
+    "parallel": true,
+    "timeout": 5000
+  },
+  "ignorePaths": ["node_modules/**", "dist/**", ".turbo/**", "coverage/**", "*.min.js", "*.min.css"]
+}

@@ -10,11 +10,11 @@ automation rate, <2s processing time
 
 ### Day 1-2: Package Refactor
 
-- [ ] Create new directory structure (core/, facades/, adapters/) `M`
-- [ ] Extract CLIFacade from current index.ts `S`
-- [ ] Create HookFacade for git pre-commit `S`
-- [ ] Create APIFacade for programmatic use `S`
-- [ ] Delete unnecessary enforcement files `S`
+- [x] Create new directory structure (core/, facades/, adapters/) `M`
+- [x] Extract CLIFacade from current index.ts `S`
+- [x] Create HookFacade for git pre-commit `S`
+- [x] Create APIFacade for programmatic use `S`
+- [x] Delete unnecessary enforcement files `S`
 
 ### Day 3: Add Autopilot
 
