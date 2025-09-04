@@ -19,7 +19,10 @@
     }
   },
   "types": "./dist/index.d.ts",
-  "bin": "./bin/quality-check",
+  "bin": {
+    "quality-check": "./bin/quality-check",
+    "quality-check-claude-hook": "./bin/claude-hook"
+  },
   "files": [
     "dist",
     "bin",

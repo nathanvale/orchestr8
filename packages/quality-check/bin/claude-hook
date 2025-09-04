@@ -1,0 +1,33 @@
+#!/usr/bin/env node
+/**
+ * Claude Code PostToolUse Hook Binary
+ * Distributed via @template/quality-check npm package
+ * Production-ready with proper error handling
+ * ~20 lines
+ */
+
+import { runClaudeHook } from '../dist/facades/claude.js'
+
+async function main() {
+  try {
+    // Call existing Claude facade with proper environment
+    await runClaudeHook()
+    process.exit(0)
+  } catch (error) {
+    // Facade handles its own exit codes and messaging
+    process.exit(error.exitCode || error.status || 2)
+  }
+}
+
+// Handle uncaught errors gracefully
+process.on('uncaughtException', (error) => {
+  console.error('Claude hook error:', error.message)
+  process.exit(2)
+})
+
+process.on('unhandledRejection', (error) => {
+  console.error('Claude hook rejection:', error)
+  process.exit(2)
+})
+
+main()

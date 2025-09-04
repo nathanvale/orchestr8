@@ -22,6 +22,7 @@ export default [
       '**/*.config.{js,mjs,cjs,ts}', // Ignore all config files
       '**/vite.config.ts',
       '**/next.config.mjs',
+      '**/wallaby.cjs', // Ignore Wallaby.js config
       '**/*.generated.*',
       '**/.eslintcache',
       '**/*.tsbuildinfo',
