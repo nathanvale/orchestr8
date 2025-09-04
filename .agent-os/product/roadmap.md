@@ -25,10 +25,10 @@ automation rate, <2s processing time
 
 ### Day 4: Claude Integration
 
-- [ ] Create hooks/claude-hook.js (~50 lines) `S`
-- [ ] Test with real Claude Code `M`
-- [ ] Update .claude/settings.json `S`
-- [ ] Verify silent fixing works `S`
+- [x] Create hooks/claude-hook.js (~50 lines) `S`
+- [x] Test with real Claude Code `M`
+- [x] Update .claude/settings.json `S`
+- [x] Verify silent fixing works `S`
 
 ### Day 5: Test & Deploy
 

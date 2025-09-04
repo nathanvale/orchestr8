@@ -82,3 +82,28 @@ export interface Classification {
   hasAutoFixable: boolean
   hasUnfixable: boolean
 }
+
+// Three-tier classification system types
+export interface ClaudeInstruction {
+  message: string
+  instruction: string
+  example: string
+  location: string
+  code?: string
+}
+
+export interface EducationalContent {
+  explanation: string
+  learningPath: string
+  nextSteps: string
+  category: 'complexity' | 'security' | 'architecture' | 'type-safety' | 'performance' | 'general'
+}
+
+export interface ThreeTierClassification {
+  tier: 'auto-fixable' | 'claude-fixable' | 'human-required'
+  action: 'silent-fix' | 'block-and-fix' | 'stop-and-educate'
+  shouldBlock: boolean
+  shouldEducate: boolean
+  instructions?: ClaudeInstruction
+  educational?: EducationalContent
+}

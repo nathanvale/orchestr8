@@ -4,7 +4,7 @@
 
 @.claude/instructions/test-core-philosophy.xml
 
-## Wallaby-First Enforcement (CRITICAL)
+## Wallaby-First Enforcement (🚨CRITICAL)
 
 @.claude/instructions/wallaby-first-enforcement.xml
 

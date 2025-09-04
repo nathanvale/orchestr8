@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "cd $CLAUDE_PROJECT_DIR/packages/quality-check && QUALITY_CHECK_MODE=enforce node dist/index.js --hook --fix",
+            "command": "./packages/quality-check/bin/claude-hook",
             "timeout": 10,
             "description": "Quality check enforcement",
             "continueOnError": false

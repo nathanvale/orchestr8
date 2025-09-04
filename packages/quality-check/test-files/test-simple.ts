@@ -1,6 +1,6 @@
-// Simple test file with fixable formatting issues
+// Simple test file with fixable formatting issues - updated
 
-const value = 42 // Extra spaces
+const value = 42 // Extra spaces here
 const name = 'test' // Missing spaces around =
 
 // Missing semicolon

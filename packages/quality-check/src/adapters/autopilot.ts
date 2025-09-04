@@ -1,6 +1,14 @@
 // src/adapters/autopilot.ts
 
-import type { CheckResult, Issue, AutopilotDecision, Classification } from '../types.js'
+import type {
+  CheckResult,
+  Issue,
+  AutopilotDecision,
+  Classification,
+  ClaudeInstruction,
+  EducationalContent,
+  ThreeTierClassification,
+} from '../types.js'
 
 /**
  * Autopilot: Smart decision engine for auto-fixing
@@ -82,19 +90,60 @@ export class Autopilot {
   ])
 
   /**
-   * Tier 2: Safe in specific contexts
+   * Tier 2: Claude-fixable with specific instructions
+   * These rules Claude can fix with guidance
+   */
+  private readonly CLAUDE_FIXABLE_RULES = new Map([
+    [
+      '@typescript-eslint/no-unused-vars',
+      {
+        instruction: 'Remove unused variables or prefix with underscore',
+        example: 'Change `const data = ...` to `const _data = ...` if intentionally unused',
+      },
+    ],
+    [
+      '@typescript-eslint/no-explicit-any',
+      {
+        instruction: 'Replace any with specific type or unknown',
+        example: 'Change `data: any` to `data: User | null` or `data: unknown`',
+      },
+    ],
+    [
+      'react-hooks/exhaustive-deps',
+      {
+        instruction: 'Add missing dependencies to useEffect array',
+        example: 'Add all used variables to dependency array: [userId, fetchData]',
+      },
+    ],
+    [
+      '@typescript-eslint/prefer-nullish-coalescing',
+      {
+        instruction: 'Use nullish coalescing operator (??) instead of logical OR (||)',
+        example: 'Change `value || fallback` to `value ?? fallback` for null/undefined checks',
+      },
+    ],
+    [
+      '@typescript-eslint/prefer-optional-chain',
+      {
+        instruction: 'Use optional chaining (?.) for safer property access',
+        example: 'Change `obj && obj.prop` to `obj?.prop`',
+      },
+    ],
+  ])
+
+  /**
+   * Tier 3: Safe in specific contexts
    * Check context before auto-fixing
    */
   private readonly CONTEXT_DEPENDENT = new Set([
     'no-console', // Safe to remove in production
     'no-debugger', // Always safe to remove
     'no-alert', // Safe to remove in Node.js
-    '@typescript-eslint/no-explicit-any', // any → unknown
     'no-var', // var → let/const
   ])
 
   /**
-   * Tier 3: NEVER auto-fix
+   * Tier 4: NEVER auto-fix - Human required
    * These require human judgment
    */
   private readonly NEVER_AUTO = new Set([
@@ -109,10 +158,45 @@ export class Autopilot {
     '@typescript-eslint/no-unsafe-assignment', // Type safety
     '@typescript-eslint/no-unsafe-call', // Type safety
     '@typescript-eslint/no-unsafe-member-access', // Type safety
-    '@typescript-eslint/no-unused-vars', // Let TypeScript handle this
     'no-unreachable', // Moved from ALWAYS_SAFE for safety
     '@typescript-eslint/ban-types', // Type safety
   ])
+
+  /**
+   * Educational content for human-required issues
+   */
+  private readonly HUMAN_REQUIRED_PATTERNS = {
+    'complexity': {
+      explanation: 'This function is too complex. Consider breaking it into smaller functions.',
+      learningPath: 'Read about Single Responsibility Principle',
+      nextSteps: 'Extract helper functions or use composition patterns',
+      category: 'complexity' as const,
+    },
+    'security': {
+      explanation: 'Potential security vulnerability detected.',
+      learningPath: 'Review OWASP security guidelines',
+      nextSteps: 'Consult security team or use secure alternatives',
+      category: 'security' as const,
+    },
+    'type-safety': {
+      explanation: 'This issue affects type safety and could lead to runtime errors.',
+      learningPath: 'Learn about TypeScript type guards and strict typing',
+      nextSteps: 'Add proper type checking or use type assertions carefully',
+      category: 'type-safety' as const,
+    },
+    'architecture': {
+      explanation: 'This change affects system architecture.',
+      learningPath: 'Discuss with tech lead or architect',
+      nextSteps: 'Consider design review before implementation',
+      category: 'architecture' as const,
+    },
+    'performance': {
+      explanation: 'This issue may impact application performance.',
+      learningPath: 'Study performance optimization techniques',
+      nextSteps: 'Profile code and measure impact before optimization',
+      category: 'performance' as const,
+    },
+  }
 
   /**
    * Main decision method - the brain of autopilot
@@ -186,15 +270,12 @@ export class Autopilot {
         continue
       }
 
-      // Skip if not fixable at all
-      if (!issue.fixable) {
-        unfixable.push(issue)
-        continue
-      }
-
       // Check which category
       if (this.ALWAYS_SAFE.has(issue.rule)) {
         autoFixable.push(issue)
+      } else if (this.CLAUDE_FIXABLE_RULES.has(issue.rule)) {
+        // Claude-fixable issues go to unfixable for now (need special handling)
+        unfixable.push(issue)
       } else if (this.CONTEXT_DEPENDENT.has(issue.rule)) {
         const contextDecision = this.checkContext(issue)
         if (contextDecision.safe) {
@@ -287,6 +368,104 @@ export class Autopilot {
     return issue.fixable === true
   }
 
+  /**
+   * Generate Claude-specific instructions for fixable issues
+   */
+  generateClaudeInstructions(issue: Issue): ClaudeInstruction {
+    const rule = this.CLAUDE_FIXABLE_RULES.get(issue.rule)
+
+    if (rule) {
+      return {
+        message: `Claude, please fix this ${issue.rule} error:`,
+        instruction: rule.instruction,
+        example: rule.example,
+        location: `${issue.file}:${issue.message || 'Unknown location'}`,
+        code: issue.message,
+      }
+    }
+
+    // Generic instruction for unknown rules
+    return {
+      message: `Claude, please fix this ${issue.rule} error:`,
+      instruction: 'Please review and fix this issue according to the rule requirements',
+      example: 'Follow the specific rule guidelines for this error type',
+      location: `${issue.file}:${issue.message || 'Unknown location'}`,
+      code: issue.message,
+    }
+  }
+
+  /**
+   * Generate educational content for human-required issues
+   */
+  generateEducationalContent(issue: Issue): EducationalContent {
+    // Map rules to educational categories
+    let categoryKey: keyof typeof this.HUMAN_REQUIRED_PATTERNS | null = null
+
+    if (
+      issue.rule.includes('complexity') ||
+      issue.rule.includes('max-lines') ||
+      issue.rule.includes('max-statements')
+    ) {
+      categoryKey = 'complexity'
+    } else if (issue.rule.includes('security/')) {
+      categoryKey = 'security'
+    } else if (issue.rule.includes('unsafe') || issue.rule.includes('ban-types')) {
+      categoryKey = 'type-safety'
+    } else if (issue.rule.includes('performance')) {
+      categoryKey = 'performance'
+    }
+
+    if (categoryKey) {
+      const pattern = this.HUMAN_REQUIRED_PATTERNS[categoryKey]
+      return {
+        explanation: pattern.explanation,
+        learningPath: pattern.learningPath,
+        nextSteps: pattern.nextSteps,
+        category: pattern.category,
+      }
+    }
+
+    // Generic educational content for unknown rules
+    return {
+      explanation: 'This issue requires careful consideration and human judgment.',
+      learningPath: 'Review relevant documentation and best practices for this rule',
+      nextSteps: 'Consider discussing with a team lead or senior developer',
+      category: 'general',
+    }
+  }
+
+  /**
+   * Three-tier classification for individual issues
+   */
+  classifyError(issue: Issue): ThreeTierClassification {
+    if (this.ALWAYS_SAFE.has(issue.rule)) {
+      return {
+        tier: 'auto-fixable',
+        action: 'silent-fix',
+        shouldBlock: false,
+        shouldEducate: false,
+      }
+    }
+
+    if (this.CLAUDE_FIXABLE_RULES.has(issue.rule)) {
+      return {
+        tier: 'claude-fixable',
+        action: 'block-and-fix',
+        shouldBlock: true,
+        shouldEducate: false,
+        instructions: this.generateClaudeInstructions(issue),
+      }
+    }
+
+    return {
+      tier: 'human-required',
+      action: 'stop-and-educate',
+      shouldBlock: true,
+      shouldEducate: true,
+      educational: this.generateEducationalContent(issue),
+    }
+  }
+
   // Public methods for testing rule sets
   getAlwaysSafeRules(): Set<string> {
     return new Set(this.ALWAYS_SAFE)
@@ -345,6 +524,10 @@ export class Autopilot {
       category = 'ALWAYS_SAFE'
       confidence = 1.0
       autoFixable = true
+    } else if (this.CLAUDE_FIXABLE_RULES.has(rule)) {
+      category = 'CLAUDE_FIXABLE'
+      confidence = 0.9
+      autoFixable = false // Requires Claude instructions
     } else if (this.CONTEXT_DEPENDENT.has(rule)) {
       category = 'CONTEXT_DEPENDENT'
       confidence = 0.8

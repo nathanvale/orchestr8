@@ -15,34 +15,35 @@ These are the tasks to be completed for the spec detailed in
   - [x] 1.5 Create development hooks/claude-hook.js alternative (optional)
   - [x] 1.6 Verify binary tests pass with Wallaby
 
-- [ ] 2. Implement Three-Tier Classification System
-  - [ ] 2.1 Write tests for auto-fixable rule detection
-  - [ ] 2.2 Write tests for Claude-fixable instruction generation
-  - [ ] 2.3 Write tests for human-required educational content
-  - [ ] 2.4 Enhance ErrorClassifier with Claude-specific logic
-  - [ ] 2.5 Verify classification tests pass with Wallaby
+- [x] 2. Implement Three-Tier Classification System
+  - [x] 2.1 Write tests for auto-fixable rule detection
+  - [x] 2.2 Write tests for Claude-fixable instruction generation
+  - [x] 2.3 Write tests for human-required educational content
+  - [x] 2.4 Enhance ErrorClassifier with Claude-specific logic
+  - [x] 2.5 Verify classification tests pass with Wallaby
 
-- [ ] 3. Hook Payload Processing Integration
-  - [ ] 3.1 Write tests for stdin JSON payload parsing
-  - [ ] 3.2 Write tests for legacy payload format support
-  - [ ] 3.3 Implement payload normalization in Claude facade
-  - [ ] 3.4 Add file type filtering logic
-  - [ ] 3.5 Verify payload processing tests pass with Wallaby
+- [x] 3. Hook Payload Processing Integration
+  - [x] 3.1 Write tests for stdin JSON payload parsing
+  - [x] 3.2 Write tests for legacy payload format support (removed per user
+        feedback)
+  - [x] 3.3 Implement payload normalization in Claude facade
+  - [x] 3.4 Add file type filtering logic
+  - [x] 3.5 Verify payload processing tests pass with Wallaby
 
-- [ ] 4. Configuration and Settings Integration
-  - [ ] 4.1 Write tests for .claude/settings.json hook configuration
-  - [ ] 4.2 Update .claude/settings.json to point to new hook wrapper
-  - [ ] 4.3 Add environment variable processing
-  - [ ] 4.4 Implement graceful configuration fallbacks
-  - [ ] 4.5 Verify configuration tests pass with Wallaby
+- [x] 4. Configuration and Settings Integration
+  - [x] 4.1 Write tests for .claude/settings.json hook configuration
+  - [x] 4.2 Update .claude/settings.json to point to new hook wrapper
+  - [x] 4.3 Add environment variable processing
+  - [x] 4.4 Implement graceful configuration fallbacks
+  - [x] 4.5 Verify configuration tests pass with Wallaby
 
-- [ ] 5. End-to-End Integration Testing
-  - [ ] 5.1 Write integration tests for complete hook workflow
-  - [ ] 5.2 Test with real Claude Code PostToolUse operations
-  - [ ] 5.3 Validate silent fixing for auto-fixable issues
-  - [ ] 5.4 Validate blocking behavior for Claude/Human-fixable issues
-  - [ ] 5.5 Verify performance requirements (sub-2s execution)
-  - [ ] 5.6 Verify all integration tests pass
+- [x] 5. End-to-End Integration Testing
+  - [x] 5.1 Write integration tests for complete hook workflow
+  - [x] 5.2 Test with real Claude Code PostToolUse operations
+  - [x] 5.3 Validate silent fixing for auto-fixable issues
+  - [x] 5.4 Validate blocking behavior for Claude/Human-fixable issues
+  - [x] 5.5 Verify performance requirements (sub-2s execution)
+  - [x] 5.6 Verify all integration tests pass
 
 ## Implementation Approach
 

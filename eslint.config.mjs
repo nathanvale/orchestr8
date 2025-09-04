@@ -108,20 +108,9 @@ export default [
       'max-lines-per-function': ['error', { max: 500, skipBlankLines: true, skipComments: true }], // Tests can be longer but still have limits
     },
   },
-
-  // Package-specific overrides for gradual migration
-  {
-    files: ['packages/claude-hooks/**/*.{ts,tsx,js,jsx}'],
-    rules: {
-      // Temporarily relaxed rules for claude-hooks during migration
-      '@typescript-eslint/no-explicit-any': 'warn',
-      '@typescript-eslint/no-unused-vars': 'warn',
-      '@typescript-eslint/no-require-imports': 'warn',
-      'max-lines-per-function': ['warn', { max: 200 }],
-    },
-  },
   {
     files: ['packages/quality-check/**/*.{ts,tsx,js,jsx}'],
+    ignores: ['**/*.test.{js,ts,jsx,tsx}', '**/*.spec.{js,ts,jsx,tsx}'],
     rules: {
       // Stricter rules for quality-check source files (not tests)
       'max-lines-per-function': ['error', { max: 150, skipBlankLines: true, skipComments: true }],
