@@ -35,6 +35,7 @@ export abstract class BaseLogger implements Logger {
   protected readonly name?: string
   protected readonly level: LogLevel
   protected readonly pretty: boolean
+  protected readonly prettyJson: boolean
   protected readonly redactKeys: Set<string>
   protected readonly maxFieldSize: number
   protected readonly defaultFields: LogFields
@@ -44,6 +45,7 @@ export abstract class BaseLogger implements Logger {
     this.name = options.name
     this.level = options.level || 'info'
     this.pretty = options.pretty || false
+    this.prettyJson = options.prettyJson || false
     this.maxFieldSize = options.maxFieldSize || 10000
     this.defaultFields = options.defaultFields || {}
     this.bindings = bindings
@@ -155,6 +157,13 @@ export function getLogLevelFromEnv(): LogLevel {
  */
 export function getPrettyFromEnv(): boolean {
   return process.env.LOG_PRETTY === 'true'
+}
+
+/**
+ * Check if pretty JSON formatting is enabled from environment
+ */
+export function getPrettyJsonFromEnv(): boolean {
+  return process.env.LOG_PRETTY_JSON === 'true'
 }
 
 /**

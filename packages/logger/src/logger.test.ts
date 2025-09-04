@@ -7,6 +7,7 @@ import {
   DEFAULT_REDACT_KEYS,
   getLogLevelFromEnv,
   getPrettyFromEnv,
+  getPrettyJsonFromEnv,
   getRedactKeysFromEnv,
   getMaxFieldSizeFromEnv,
 } from './logger.js'
@@ -21,6 +22,7 @@ class TestLogger extends BaseLogger {
         name: this.name,
         level: this.level,
         pretty: this.pretty,
+        prettyJson: this.prettyJson,
         redactKeys: Array.from(this.redactKeys),
         maxFieldSize: this.maxFieldSize,
         defaultFields: this.defaultFields,
@@ -319,6 +321,24 @@ describe('Environment helpers', () => {
 
       vi.stubEnv('LOG_PRETTY', '')
       expect(getPrettyFromEnv()).toBe(false)
+    })
+  })
+
+  describe('getPrettyJsonFromEnv', () => {
+    it('should return true when LOG_PRETTY_JSON is "true"', () => {
+      vi.stubEnv('LOG_PRETTY_JSON', 'true')
+      expect(getPrettyJsonFromEnv()).toBe(true)
+    })
+
+    it('should return false for any other value', () => {
+      vi.stubEnv('LOG_PRETTY_JSON', 'false')
+      expect(getPrettyJsonFromEnv()).toBe(false)
+
+      vi.stubEnv('LOG_PRETTY_JSON', '1')
+      expect(getPrettyJsonFromEnv()).toBe(false)
+
+      vi.stubEnv('LOG_PRETTY_JSON', '')
+      expect(getPrettyJsonFromEnv()).toBe(false)
     })
   })
 

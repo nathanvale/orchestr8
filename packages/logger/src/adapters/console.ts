@@ -59,6 +59,7 @@ export class ConsoleLogger extends BaseLogger {
         name: this.name,
         level: this.level,
         pretty: this.pretty,
+        prettyJson: this.prettyJson,
         redactKeys: Array.from(this.redactKeys),
         maxFieldSize: this.maxFieldSize,
         defaultFields: this.defaultFields,
@@ -152,15 +153,30 @@ export class ConsoleLogger extends BaseLogger {
           `${COLORS.blue}${key}${COLORS.reset}=${color}${value}${COLORS.reset}`,
         )
       } else if (typeof value === 'object') {
-        // For nested objects, show them inline if small, otherwise on new lines
+        // For nested objects, respect prettyJson setting
         try {
-          const json = JSON.stringify(value)
-          if (json.length < 50) {
-            entries.push(`${COLORS.blue}${key}${COLORS.reset}=${json}`)
+          if (this.prettyJson) {
+            // Always use pretty formatting when prettyJson is enabled
+            const prettyJson = JSON.stringify(value, null, 2)
+            if (prettyJson.includes('\n')) {
+              // Multi-line object - add newlines and indentation
+              entries.push(
+                `${COLORS.blue}${key}${COLORS.reset}=\n${prettyJson}`,
+              )
+            } else {
+              // Single-line objects stay inline
+              entries.push(`${COLORS.blue}${key}${COLORS.reset}=${prettyJson}`)
+            }
           } else {
-            entries.push(
-              `${COLORS.blue}${key}${COLORS.reset}=${JSON.stringify(value, null, 2)}`,
-            )
+            // Original logic: inline if small, otherwise multi-line
+            const json = JSON.stringify(value)
+            if (json.length < 50) {
+              entries.push(`${COLORS.blue}${key}${COLORS.reset}=${json}`)
+            } else {
+              entries.push(
+                `${COLORS.blue}${key}${COLORS.reset}=${JSON.stringify(value, null, 2)}`,
+              )
+            }
           }
         } catch {
           // Handle circular references
@@ -182,6 +198,7 @@ export function createConsoleLogger(options?: LoggerOptions): Logger {
   return new ConsoleLogger({
     level: options?.level || (process.env.LOG_LEVEL as LogLevel) || 'info',
     pretty: options?.pretty ?? process.env.LOG_PRETTY === 'true',
+    prettyJson: options?.prettyJson ?? process.env.LOG_PRETTY_JSON === 'true',
     ...options,
   })
 }
