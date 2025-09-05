@@ -1,0 +1,79 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Quality Check Performance Metrics",
+  "description": "Schema for performance benchmark results",
+  "type": "object",
+  "required": ["timestamp", "type", "durationMs"],
+  "properties": {
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of the benchmark"
+    },
+    "type": {
+      "type": "string",
+      "enum": ["cold", "warm"],
+      "description": "Whether this was a cold or warm run"
+    },
+    "durationMs": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Total duration in milliseconds"
+    },
+    "engines": {
+      "type": "object",
+      "properties": {
+        "typescript": {
+          "$ref": "#/definitions/engineMetrics"
+        },
+        "eslint": {
+          "$ref": "#/definitions/engineMetrics"
+        },
+        "prettier": {
+          "$ref": "#/definitions/engineMetrics"
+        }
+      },
+      "additionalProperties": false
+    },
+    "fileCount": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Number of files checked"
+    },
+    "cacheHit": {
+      "type": "boolean",
+      "description": "Whether cache was used"
+    },
+    "issueCount": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Total number of issues found"
+    }
+  },
+  "definitions": {
+    "engineMetrics": {
+      "type": "object",
+      "required": ["durationMs", "enabled"],
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Whether this engine was enabled for the check"
+        },
+        "durationMs": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Duration for this engine in milliseconds"
+        },
+        "cacheDir": {
+          "type": "string",
+          "description": "Cache directory used by this engine"
+        },
+        "issueCount": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of issues found by this engine"
+        }
+      }
+    }
+  }
+}

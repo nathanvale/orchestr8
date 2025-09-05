@@ -1,0 +1,324 @@
+<!--
+Testing Rules & Best Practices — Structured Test Plan (XML)
+Author: Nathan
+Date: 2025-09-06
+Purpose: Machine- and human-readable instruction set to drive test tooling (Wallaby MCP + Vitest) with strict HALT semantics.
+-->
+
+<TestPlan id="wallaby-vitest-plan" version="1.0">
+
+  <Metadata>
+    <Scope>Unit tests via Wallaby MCP; Integration/E2E via Vitest/pnpm</Scope>
+    <Principles>
+      <Principle>Determinism over convenience</Principle>
+      <Principle>Fail-fast with explicit HALT</Principle>
+      <Principle>Observe-before-acting (discover → analyze → fix → verify)</Principle>
+    </Principles>
+  </Metadata>
+
+  <!-- =========================
+       1) GLOBAL ROUTING RULES
+       ========================= -->
+  <Routing>
+    <DecisionTree name="test-tool-decision">
+      <Question>IsFilePattern(".unit.test.ts")?</Question>
+      <Yes>
+        <Action>Use Wallaby MCP tools</Action>
+        <Tools>
+          <Tool>wallaby_allTestsForFile</Tool>
+          <Tool>wallaby_failingTestsForFile</Tool>
+          <Tool>wallaby_runtimeValues</Tool>
+          <Tool>wallaby_coveredLinesForFile</Tool>
+          <Tool>wallaby_coveredLinesForTest</Tool>
+        </Tools>
+      </Yes>
+      <No>
+        <Action>Use Vitest/pnpm</Action>
+        <Routes>
+          <Route pattern="*.integration.test.ts">pnpm test / vitest</Route>
+          <Route pattern="*.e2e.test.ts">pnpm test / vitest</Route>
+          <Route pattern="*.slow.test.ts">pnpm test / vitest</Route>
+          <Route pattern="*">pnpm test / vitest</Route>
+        </Routes>
+      </No>
+    </DecisionTree>
+  </Routing>
+
+  <!-- =========================
+       2) HALT & NOTIFY (UNIT)
+       ========================= -->
+  <HaltProtocol appliesTo=".unit.test.ts">
+    <Trigger>
+      <Condition>Wallaby MCP returns "&lt;No data available&gt;" OR empty response</Condition>
+    </Trigger>
+    <ImmediateActions>
+      <Action priority="1">STOP all unit testing activities immediately</Action>
+      <Action priority="2">DO NOT run direct test commands as workaround</Action>
+      <Action priority="3">DO NOT continue with unit test implementation</Action>
+    </ImmediateActions>
+    <OneTimeNotification>
+      <Message severity="warning">⚠️ Wallaby server appears inactive or not configured.</Message>
+      <Checklist>
+        <Item>Confirm Wallaby server is running (VS Code status bar)</Item>
+        <Item>Verify wallaby.js config exists and is loaded</Item>
+        <Item>Run tests once to prime cache</Item>
+      </Checklist>
+      <Await>Explicit user confirmation that Wallaby is ready</Await>
+    </OneTimeNotification>
+    <AfterNotification>
+      <Action>HALT until user confirms readiness</Action>
+      <Constraint>Do not poll or re-mention status. No alternative methods suggested.</Constraint>
+    </AfterNotification>
+  </HaltProtocol>
+
+  <!-- =========================
+       3) WALLABY WORKFLOWS
+       ========================= -->
+  <WallabyWorkflows appliesTo=".unit.test.ts">
+
+    <PathResolutionRules>
+      <Rule context="tests">Use absolute path e.g. /Users/name/project/src/component.unit.test.ts</Rule>
+      <Rule context="runtimeValues">Prefer project-relative (src/component.ts) → fallback absolute</Rule>
+      <Rule context="coverage">Try project-relative; fallback absolute if needed</Rule>
+    </PathResolutionRules>
+
+    <Discovery name="test-discovery-sequence">
+      <Step index="1" id="detect-file">
+        <Call fn="wallaby_allTestsForFile" args="{ file:absolutePath }"/>
+        <Guard onFail="HALT_AND_NOTIFY">If result is null/empty</Guard>
+      </Step>
+      <Step index="2" id="list-failures">
+        <Call fn="wallaby_failingTestsForFile" args="{ file:absolutePath }"/>
+      </Step>
+      <Step index="3" id="runtime-prep">
+        <Condition>if failingTests.length &gt; 0</Condition>
+        <Advice>Capture runtime values on stable bindings (see RuntimeValueRules)</Advice>
+      </Step>
+    </Discovery>
+
+    <RuntimeValueRules>
+      <Do>
+        <Example title="Stable variable">
+{`const result = someFunction()  // L42
+const output = result.data      // L43
+// Query line 43 for 'output'`}
+        </Example>
+      </Do>
+      <Dont>
+        <Example title="Inline chain (unstable)">
+{`return someFunction().data.map((x) => x.id)`}
+        </Example>
+      </Dont>
+      <QueryTemplate fn="wallaby_runtimeValues">
+        <Args>
+          <Arg name="file">project-relative preferred</Arg>
+          <Arg name="line">stable binding line</Arg>
+          <Arg name="lineContent">exact current line text</Arg>
+          <Arg name="expression">variableName</Arg>
+        </Args>
+      </QueryTemplate>
+    </RuntimeValueRules>
+
+    <Iteration name="fix-loop">
+      <Step index="1" id="identify">
+        <Call fn="wallaby_failingTestsForFile" args="{ file:testFile }"/>
+        <Result shape="Array&lt;{name,line,error,testId}&gt;"/>
+      </Step>
+      <Step index="2" id="instrument">
+        <Call fn="wallaby_runtimeValuesByTest" args="{ testId, file:sourceFile, line:errorLine, expression:'variableName' }"/>
+      </Step>
+      <Step index="3" id="remediate">
+        <Action>Apply code fix</Action>
+      </Step>
+      <Step index="4" id="verify">
+        <Observation>Wallaby auto-reruns</Observation>
+        <Check>
+          <Call fn="wallaby_failingTestsForFile" args="{ file:testFile }"/>
+          <Branch condition="stillFailing.length === 0">
+            <Then>Mark test passing; proceed to next failure</Then>
+            <Else>Deepen analysis (expand expressions, inspect coverage)</Else>
+          </Branch>
+        </Check>
+      </Step>
+    </Iteration>
+
+    <CoverageWorkflow>
+      <Step index="1">
+        <Call fn="wallaby_coveredLinesForFile" args="{ file:'src/module.ts' }"/>
+      </Step>
+      <Step index="2">
+        <Call fn="wallaby_coveredLinesForTest" args="{ testId:'test-123', file:'src/module.ts' }"/>
+      </Step>
+      <Heuristic>
+        <Rule>If coverage.percentage &lt; 80 → identify uncovered lines; add tests</Rule>
+      </Heuristic>
+    </CoverageWorkflow>
+
+    <SmartSelection>
+      <Call fn="wallaby_failingTests" />
+      <GroupBy key="errorType" regex="TypeError|ReferenceError|AssertionError"/>
+      <Strategy>Fix same-type failures in batches</Strategy>
+    </SmartSelection>
+
+    <Performance>
+      <Do>Batch related calls with Promise.all where safe</Do>
+      <Dont>Serially fetch per-test metadata without need</Dont>
+    </Performance>
+
+    <Pitfalls>
+      <Pitfall>Assuming execution order (Wallaby runs in parallel)</Pitfall>
+      <Pitfall>Querying values on non-executed lines (check coverage first)</Pitfall>
+      <Pitfall>Omitting lineContent guard (prevents stale buffers)</Pitfall>
+      <Pitfall>Updating snapshots without explicit user permission</Pitfall>
+    </Pitfalls>
+  </WallabyWorkflows>
+
+  <!-- =========================
+       4) STATE MACHINE
+       ========================= -->
+  <StateMachine id="unit-fix-sm">
+    <State id="START" next="CHECK_WALLABY_ACTIVE"/>
+    <State id="CHECK_WALLABY_ACTIVE">
+      <Branch>
+        <When condition="inactive">NOTIFY_USER</When>
+        <When condition="active">DISCOVER_FAILING_TESTS</When>
+      </Branch>
+    </State>
+    <State id="NOTIFY_USER" terminal="true">
+      <Effect>Emit OneTimeNotification; HALT</Effect>
+    </State>
+    <State id="DISCOVER_FAILING_TESTS">
+      <Branch>
+        <When condition="noFailures">REPORT_SUCCESS</When>
+        <When condition="hasFailures">ANALYZE_FIRST_FAILURE</When>
+      </Branch>
+    </State>
+    <State id="ANALYZE_FIRST_FAILURE" next="GET_RUNTIME_VALUES"/>
+    <State id="GET_RUNTIME_VALUES" next="IMPLEMENT_FIX"/>
+    <State id="IMPLEMENT_FIX" next="VERIFY_FIX_WITH_WALLABY"/>
+    <State id="VERIFY_FIX_WITH_WALLABY">
+      <Branch>
+        <When condition="stillFailing">ANALYZE_DEEPER</When>
+        <When condition="fixed">NEXT_FAILURE_OR_END</When>
+      </Branch>
+    </State>
+    <State id="ANALYZE_DEEPER" next="GET_RUNTIME_VALUES"/>
+    <State id="NEXT_FAILURE_OR_END">
+      <Branch>
+        <When condition="remainingFailures">ANALYZE_FIRST_FAILURE</When>
+        <When condition="none">END</When>
+      </Branch>
+    </State>
+    <State id="REPORT_SUCCESS" next="END"/>
+    <State id="END" terminal="true"/>
+  </StateMachine>
+
+  <!-- =========================
+       5) RESPONSE TEMPLATES
+       ========================= -->
+  <ResponseTemplates>
+    <Template id="wallaby-working">
+      <Text>✅ Found {count} failing tests via Wallaby:</Text>
+      <List>
+        <Item>{index}. {name} (line {line})</Item>
+      </List>
+      <Next>Starting with the first failure… [runtime value analysis]</Next>
+    </Template>
+
+    <Template id="runtime-analysis">
+      <Text>🔍 Wallaby runtime analysis at line {line}:</Text>
+      <Bullet>- {expression}: {value}</Bullet>
+      <Bullet>- Issue: {diagnosis}</Bullet>
+      <Action>Implementing fix…</Action>
+    </Template>
+
+    <Template id="test-fixed">
+      <Text>✅ Test "{name}" now passing in Wallaby. Moving to next failure ({current} of {total}).</Text>
+    </Template>
+
+    <Template id="halt-notify" severity="warning" once="true">
+      <Text>⚠️ Wallaby server appears to be inactive or not configured for this project.</Text>
+      <Checklist>
+        <Item>Confirm Wallaby is running in VS Code</Item>
+        <Item>Ensure wallaby.js config is present and loaded</Item>
+        <Item>Run any test once to warm caches</Item>
+      </Checklist>
+      <Await>Reply when Wallaby is ready to continue.</Await>
+    </Template>
+  </ResponseTemplates>
+
+  <!-- =========================
+       6) POLICY ENFORCEMENT
+       ========================= -->
+  <Policies>
+    <Policy id="unit-only-wallaby">Wallaby MCP tools MUST NOT be used outside .unit.test.ts</Policy>
+    <Policy id="no-alternatives-on-halt">On HALT, do NOT suggest Vitest/pnpm as a workaround</Policy>
+    <Policy id="snapshot-permission">Never call wallaby_updateTestSnapshots without explicit user consent</Policy>
+  </Policies>
+
+  <!-- =========================
+       7) EXAMPLES (BOUND)
+       ========================= -->
+  <Examples>
+    <Example id="discovery-sequence">
+{`// Pseudocode sequence
+const all = await wallaby_allTestsForFile('/abs/path/to/foo.unit.test.ts')
+if (!all) HALT_AND_NOTIFY()
+
+const failing = await wallaby_failingTestsForFile('/abs/path/to/foo.unit.test.ts')
+if (failing.length > 0) {
+  const first = failing[0]
+  const rv = await wallaby_runtimeValues({
+    file: 'src/foo.ts',
+    line: first.line,
+    lineContent: 'const output = result.data',
+    expression: 'output'
+  })
+}`}
+    </Example>
+
+    <Example id="coverage">
+{`const [allTests, failing, coverage] = await Promise.all([
+  wallaby_allTestsForFile('/abs/path/to/foo.unit.test.ts'),
+  wallaby_failingTestsForFile('/abs/path/to/foo.unit.test.ts'),
+  wallaby_coveredLinesForFile({ file: 'src/foo.ts' })
+])
+
+if (coverage.percentage < 80) {
+  // add tests for uncovered lines
+}`}
+    </Example>
+  </Examples>
+
+  <!-- =========================
+       8) ACCEPTANCE CRITERIA
+       ========================= -->
+  <AcceptanceCriteria>
+    <Criterion>HALT occurs on first &lt;No data available&gt; for unit tests</Criterion>
+    <Criterion>Only one notification is emitted per HALT episode</Criterion>
+    <Criterion>All runtime value queries reference stable bindings</Criterion>
+    <Criterion>Coverage gate considered at 80% by default</Criterion>
+  </AcceptanceCriteria>
+
+  <!-- =========================
+       9) OPERATING MODES
+       ========================= -->
+  <Modes>
+    <Mode id="strict" default="true">
+      <Description>Enforces HALT, one-time notify, and no alternatives</Description>
+    </Mode>
+    <Mode id="advisory">
+      <Description>Same flows but allows optional coverage suggestions post-fix</Description>
+    </Mode>
+  </Modes>
+
+  <!-- =========================
+       10) IMPLEMENTATION NOTES
+       ========================= -->
+  <ImplementationNotes>
+    <Note>Prefer absolute test file paths; prefer project-relative source paths</Note>
+    <Note>Always include exact lineContent for runtime queries</Note>
+    <Note>Batch MCP calls where safe to reduce latency</Note>
+  </ImplementationNotes>
+
+</TestPlan>

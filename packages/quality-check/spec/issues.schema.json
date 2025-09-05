@@ -1,0 +1,55 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Quality Check Issue",
+  "description": "Schema for quality check issues reported by TypeScript, ESLint, or Prettier",
+  "type": "object",
+  "required": ["engine", "severity", "file", "line", "col", "message"],
+  "properties": {
+    "engine": {
+      "type": "string",
+      "enum": ["typescript", "eslint", "prettier"],
+      "description": "The quality check engine that reported the issue"
+    },
+    "severity": {
+      "type": "string",
+      "enum": ["error", "warning", "info"],
+      "description": "The severity level of the issue"
+    },
+    "ruleId": {
+      "type": "string",
+      "description": "The rule identifier (e.g., TS2307, no-unused-vars)"
+    },
+    "file": {
+      "type": "string",
+      "description": "Absolute path to the file containing the issue"
+    },
+    "line": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Line number where the issue occurs (1-based)"
+    },
+    "col": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Column number where the issue starts (1-based)"
+    },
+    "endLine": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Line number where the issue ends (1-based)"
+    },
+    "endCol": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Column number where the issue ends (1-based)"
+    },
+    "message": {
+      "type": "string",
+      "description": "Human-readable description of the issue"
+    },
+    "suggestion": {
+      "type": "string",
+      "description": "Optional suggestion for fixing the issue"
+    }
+  }
+}

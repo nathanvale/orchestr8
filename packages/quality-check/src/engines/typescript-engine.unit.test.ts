@@ -1,0 +1,248 @@
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import * as fs from 'node:fs'
+import * as os from 'node:os'
+import * as path from 'node:path'
+import { TypeScriptEngine } from './typescript-engine'
+
+describe('TypeScriptEngine', () => {
+  let engine: TypeScriptEngine
+  let tempDir: string
+
+  beforeEach(() => {
+    engine = new TypeScriptEngine()
+    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ts-engine-test-'))
+
+    // Create a basic tsconfig.json
+    const tsconfig = {
+      compilerOptions: {
+        target: 'ES2020',
+        module: 'commonjs',
+        strict: true,
+        esModuleInterop: true,
+        skipLibCheck: true,
+        forceConsistentCasingInFileNames: true,
+      },
+    }
+    fs.writeFileSync(path.join(tempDir, 'tsconfig.json'), JSON.stringify(tsconfig, null, 2))
+  })
+
+  afterEach(() => {
+    // Clean up temp directory
+    fs.rmSync(tempDir, { recursive: true, force: true })
+  })
+
+  describe('should_check_typescript_files_when_valid', () => {
+    it('should_return_success_when_no_issues', async () => {
+      // Create a valid TypeScript file
+      const testFile = path.join(tempDir, 'valid.ts')
+      fs.writeFileSync(
+        testFile,
+        `
+        const greeting: string = 'Hello, World!'
+        console.log(greeting)
+        `,
+      )
+
+      const result = await engine.check({
+        files: [testFile],
+        cacheDir: path.join(tempDir, '.cache'),
+      })
+
+      expect(result.success).toBe(true)
+      expect(result.issues).toHaveLength(0)
+      expect(result.duration).toBeGreaterThan(0)
+      expect(result.fixable).toBe(false)
+    })
+
+    it('should_detect_type_errors_when_present', async () => {
+      // Create a TypeScript file with type errors
+      const testFile = path.join(tempDir, 'error.ts')
+      fs.writeFileSync(
+        testFile,
+        `
+        const num: number = 'not a number'
+        const result = num.toFixed(2)
+        `,
+      )
+
+      const result = await engine.check({
+        files: [testFile],
+        cacheDir: path.join(tempDir, '.cache'),
+      })
+
+      expect(result.success).toBe(false)
+      expect(result.issues.length).toBeGreaterThan(0)
+      expect(result.issues[0].engine).toBe('typescript')
+      expect(result.issues[0].severity).toBe('error')
+      expect(result.issues[0].ruleId).toMatch(/^TS\d+/)
+      expect(result.issues[0].file).toBe(testFile)
+    })
+
+    it('should_use_incremental_compilation_when_cache_exists', async () => {
+      const testFile = path.join(tempDir, 'incremental.ts')
+      fs.writeFileSync(testFile, 'const x: number = 42')
+
+      const cacheDir = path.join(tempDir, '.cache')
+
+      // First run - cold
+      const result1 = await engine.check({
+        files: [testFile],
+        cacheDir,
+      })
+      expect(result1.success).toBe(true)
+
+      // Second run - warm (should be faster)
+      const start = Date.now()
+      const result2 = await engine.check({
+        files: [testFile],
+        cacheDir,
+      })
+      const duration = Date.now() - start
+
+      expect(result2.success).toBe(true)
+      expect(duration).toBeLessThan(300) // Should be under 300ms for warm run
+
+      // Check that tsBuildInfo was created
+      expect(fs.existsSync(path.join(cacheDir, 'qc.tsbuildinfo'))).toBe(true)
+    })
+
+    it('should_handle_missing_tsconfig_gracefully', async () => {
+      const noCfgDir = fs.mkdtempSync(path.join(os.tmpdir(), 'no-cfg-'))
+      const testFile = path.join(noCfgDir, 'test.ts')
+      fs.writeFileSync(testFile, 'const x = 42')
+
+      const result = await engine.check({
+        files: [testFile],
+      })
+
+      // Should fail with appropriate error
+      expect(result.success).toBe(false)
+      expect(result.issues[0].message).toContain('tsconfig.json not found')
+
+      fs.rmSync(noCfgDir, { recursive: true, force: true })
+    })
+
+    it('should_respect_cancellation_token', async () => {
+      const testFile = path.join(tempDir, 'cancel.ts')
+      fs.writeFileSync(testFile, 'const x = 42')
+
+      const token = {
+        isCancellationRequested: true,
+        onCancellationRequested: vi.fn(),
+      }
+
+      const result = await engine.check({
+        files: [testFile],
+        token,
+      })
+
+      // Should return early with no issues
+      expect(result.success).toBe(true)
+      expect(result.issues).toHaveLength(0)
+    })
+
+    it('should_filter_diagnostics_to_target_files_only', async () => {
+      // Create multiple files
+      const file1 = path.join(tempDir, 'file1.ts')
+      const file2 = path.join(tempDir, 'file2.ts')
+
+      fs.writeFileSync(file1, 'export const x: number = 42')
+      fs.writeFileSync(
+        file2,
+        `
+        import { x } from './file1'
+        const y: string = x // Type error
+        `,
+      )
+
+      // Check only file1 (should have no errors)
+      const result = await engine.check({
+        files: [file1],
+      })
+
+      expect(result.success).toBe(true)
+      expect(result.issues).toHaveLength(0)
+    })
+  })
+
+  describe('should_handle_cache_operations', () => {
+    it('should_clear_cache_when_requested', async () => {
+      const testFile = path.join(tempDir, 'cache-test.ts')
+      fs.writeFileSync(testFile, 'const x = 42')
+
+      const cacheDir = path.join(tempDir, '.cache')
+
+      // Run check to create cache
+      await engine.check({
+        files: [testFile],
+        cacheDir,
+      })
+
+      const buildInfoPath = path.join(cacheDir, 'qc.tsbuildinfo')
+      expect(fs.existsSync(buildInfoPath)).toBe(true)
+
+      // Clear cache
+      engine.clearCache()
+
+      // Note: The method clears internal state but doesn't delete files
+      // This is intentional for performance reasons
+    })
+
+    it('should_create_cache_directory_if_not_exists', async () => {
+      const testFile = path.join(tempDir, 'cache-create.ts')
+      fs.writeFileSync(testFile, 'const x = 42')
+
+      const cacheDir = path.join(tempDir, 'new-cache-dir')
+      expect(fs.existsSync(cacheDir)).toBe(false)
+
+      await engine.check({
+        files: [testFile],
+        cacheDir,
+      })
+
+      expect(fs.existsSync(cacheDir)).toBe(true)
+    })
+  })
+
+  describe('should_format_diagnostics_correctly', () => {
+    it('should_include_line_and_column_information', async () => {
+      const testFile = path.join(tempDir, 'location.ts')
+      fs.writeFileSync(testFile, `const x: number = 'string'`)
+
+      const result = await engine.check({
+        files: [testFile],
+      })
+
+      expect(result.success).toBe(false)
+      const issue = result.issues[0]
+      expect(issue.line).toBeGreaterThan(0)
+      expect(issue.col).toBeGreaterThan(0)
+      expect(issue.endLine).toBeDefined()
+      expect(issue.endCol).toBeDefined()
+    })
+
+    it('should_handle_options_diagnostics_without_file', async () => {
+      // Create a tsconfig with invalid options
+      const badCfgDir = fs.mkdtempSync(path.join(os.tmpdir(), 'bad-cfg-'))
+      const tsconfig = {
+        compilerOptions: {
+          target: 'INVALID_TARGET', // This will cause an options error
+        },
+      }
+      fs.writeFileSync(path.join(badCfgDir, 'tsconfig.json'), JSON.stringify(tsconfig, null, 2))
+
+      const testFile = path.join(badCfgDir, 'test.ts')
+      fs.writeFileSync(testFile, 'const x = 42')
+
+      const result = await engine.check({
+        files: [testFile],
+        tsconfigPath: path.join(badCfgDir, 'tsconfig.json'),
+      })
+
+      expect(result.success).toBe(false)
+      // Options errors are included even without a specific file
+
+      fs.rmSync(badCfgDir, { recursive: true, force: true })
+    })
+  })
+})

@@ -102,7 +102,8 @@ implemented - Testing style guidelines </search_code_style> </selective_reading>
             - Languages: [LANGUAGES_IN_TASK]
             - File types: [FILE_TYPES_BEING_MODIFIED]
             - Component patterns: [PATTERNS_BEING_IMPLEMENTED]
-            - Testing style guidelines"
+            - Testing style guidelines
+  VERIFY: That you have read          
   PROCESS: Returned style rules
   APPLY: Relevant formatting and patterns
 </instructions>

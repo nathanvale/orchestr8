@@ -15,9 +15,9 @@ interruption
 - [x] Create Claude hook wrapper - Thin ~50 line integration layer `S`
 - [x] Implement autopilot engine - Classification and auto-fix logic `S`
 - [x] Add conditional logic - Smart file type detection `XS`
-- [ ] Deploy to ~/.claude/hooks - Production deployment `XS`
+- [x] Deploy to ~/.claude/hooks - Production deployment `XS`
 - [x] Create basic metrics tracking - Count automation successes `S`
-- [ ] Test with real workflows - Validate 80% automation target `S`
+- [x] Test with real workflows - Validate 80% automation target `S`
 
 ### Dependencies
 
@@ -25,7 +25,21 @@ interruption
 - Claude Code PostToolUse hook support
 - ESLint and Prettier configurations
 
-## Phase 2: Learning System (Week 2-3)
+## Phase 2: Quality Checker Uplift (Week 2)
+
+**Goal:** Replace CLI-based checks with programmatic APIs and file-scoped TS validation  
+**Success Criteria:** 50% faster checks, sub-300ms warm TypeScript runs, stable JSON outputs for CI
+
+### Features
+
+- [ ] Implement ESLint Node API integration with flat config (v9) `M`
+- [ ] Implement Prettier Node API integration with resolveConfig + getFileInfo `S`
+- [ ] Add file-scoped TypeScript checks with incremental compile cache `M`
+- [ ] Add JSON + stylish reporters for CI vs local dev `S`
+- [ ] Integrate with GitIntegration for `--staged` / `--since` workflows `S`
+- [ ] Add structured logging fields for duration, counts, cache hits `S`
+
+## Phase 3: Learning System (Week 2-3)
 
 **Goal:** Build pattern detection to improve automation over time **Success
 Criteria:** System identifies and tracks recurring error patterns
@@ -44,7 +58,7 @@ Criteria:** System identifies and tracks recurring error patterns
 - Pattern analysis algorithm
 - Phase 1 completion
 
-## Phase 3: Developer Experience (Week 4-5)
+## Phase 4: Developer Experience (Week 4-5)
 
 **Goal:** Enhance education and progressive learning features **Success
 Criteria:** 50% reduction in repeat errors, improved developer satisfaction
