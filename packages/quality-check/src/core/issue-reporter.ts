@@ -3,9 +3,10 @@
  * Enhanced with error parsing and facade-specific formatting
  */
 
-import type { QualityCheckResult, CheckerResult, ParsedError } from '../types.js'
+import type { QualityCheckResult, CheckerResult, ParsedError, Issue } from '../types.js'
 import { ExitCodes } from './exit-codes.js'
 import { ErrorParser } from './error-parser.js'
+import { Autopilot } from '../adapters/autopilot.js'
 
 export interface FormatOptions {
   verbose?: boolean
@@ -15,6 +16,7 @@ export interface FormatOptions {
 
 export class IssueReporter {
   private errorParser = new ErrorParser()
+  private autopilot = new Autopilot()
   /**
    * Format results for CLI output with colors and symbols
    */
@@ -79,24 +81,84 @@ export class IssueReporter {
       return '' // Silent success
     }
 
+    // If summary is requested, provide minimal output
+    if (options.summary) {
+      const errorCount = this.getTotalErrorCount(result)
+      if (errorCount > 0) {
+        // Find which checker has the most errors
+        const checkerNames = []
+        if (result.checkers.typescript?.errors?.length) {
+          checkerNames.push(`${result.checkers.typescript.errors.length} TypeScript errors`)
+        }
+        if (result.checkers.eslint?.errors?.length) {
+          checkerNames.push(`${result.checkers.eslint.errors.length} ESLint errors`)
+        }
+        if (result.checkers.prettier?.errors?.length) {
+          checkerNames.push(`${result.checkers.prettier.errors.length} Prettier errors`)
+        }
+        return checkerNames.join(', ')
+      }
+    }
+
+    // Convert errors to Issues for Autopilot classification
+    const issues = this.convertToIssues(result)
+
+    // Use Autopilot to classify which errors are fixable
+    const classification = this.autopilot.decide({
+      filePath: 'unknown',
+      issues,
+      hasErrors: true,
+      hasWarnings: false,
+      fixable: true,
+    })
+
+    // If all issues are auto-fixable, return empty string
+    if (classification.action === 'FIX_SILENTLY') {
+      return ''
+    }
+
+    // Only show unfixable errors to Claude
+    const unfixableIssues = classification.issues || []
+    if (unfixableIssues.length === 0 && classification.action !== 'REPORT_ONLY') {
+      return '' // All errors are fixable
+    }
+
     const lines: string[] = []
-    lines.push('❌ Quality check failed:')
+    lines.push('Quality issues require attention:')
     lines.push('')
 
-    // Show all types of issues for Claude to see and potentially help fix
+    // Filter and show only unfixable issues
     if (result.checkers.eslint && !result.checkers.eslint.success) {
-      lines.push('📝 ESLint issues:')
-      lines.push(this.formatCheckerErrors(result.checkers.eslint, options.maxErrors))
+      const unfixableEslintErrors = this.filterUnfixableErrors(
+        result.checkers.eslint,
+        unfixableIssues,
+      )
+      if (unfixableEslintErrors.length > 0) {
+        lines.push('📝 ESLint issues:')
+        lines.push(unfixableEslintErrors.join('\n  '))
+      }
     }
 
     if (result.checkers.prettier && !result.checkers.prettier.success) {
-      lines.push('🎨 Prettier issues:')
-      lines.push(this.formatCheckerErrors(result.checkers.prettier, options.maxErrors))
+      const unfixablePrettierErrors = this.filterUnfixableErrors(
+        result.checkers.prettier,
+        unfixableIssues,
+      )
+      if (unfixablePrettierErrors.length > 0) {
+        lines.push('🎨 Prettier issues:')
+        lines.push(unfixablePrettierErrors.join('\n  '))
+      }
     }
 
     if (result.checkers.typescript && !result.checkers.typescript.success) {
-      lines.push('🔍 TypeScript issues:')
-      lines.push(this.formatCheckerErrors(result.checkers.typescript, options.maxErrors))
+      const unfixableTypeScriptErrors = this.filterUnfixableErrors(
+        result.checkers.typescript,
+        unfixableIssues,
+      )
+      if (unfixableTypeScriptErrors.length > 0) {
+        lines.push('🔍 TypeScript issues:')
+        lines.push(unfixableTypeScriptErrors.join('\n  '))
+      }
     }
 
     return lines.join('\n')
@@ -216,4 +278,107 @@ export class IssueReporter {
       .join('\n')
   }
 
+  /**
+   * Get total error count across all checkers
+   */
+  private getTotalErrorCount(result: QualityCheckResult): number {
+    let count = 0
+    if (result.checkers.typescript?.errors) {
+      count += result.checkers.typescript.errors.length
+    }
+    if (result.checkers.eslint?.errors) {
+      count += result.checkers.eslint.errors.length
+    }
+    if (result.checkers.prettier?.errors) {
+      count += result.checkers.prettier.errors.length
+    }
+    return count
+  }
+
+  /**
+   * Convert QualityCheckResult errors to Issues for Autopilot
+   */
+  private convertToIssues(result: QualityCheckResult): Issue[] {
+    const issues: Issue[] = []
+
+    // Convert ESLint errors
+    if (result.checkers.eslint?.errors) {
+      result.checkers.eslint.errors.forEach((error) => {
+        const match = error.match(/^(.+?):(\d+):(\d+) - (.+) \((.+)\)$/)
+        if (match) {
+          issues.push({
+            rule: match[5],
+            fixable: result.checkers.eslint?.fixable || false,
+            file: match[1],
+            message: `${match[1]}:${match[2]}:${match[3]} - ${match[4]}`,
+          })
+        }
+      })
+    }
+
+    // Convert Prettier errors
+    if (result.checkers.prettier?.errors) {
+      result.checkers.prettier.errors.forEach(() => {
+        issues.push({
+          rule: 'prettier/prettier',
+          fixable: true,
+          file: 'unknown',
+          message: 'File needs formatting',
+        })
+      })
+    }
+
+    // Convert TypeScript errors
+    if (result.checkers.typescript?.errors) {
+      result.checkers.typescript.errors.forEach((error) => {
+        // Try to parse TypeScript error format
+        const match =
+          error.match(/^(.+?):(\d+):(\d+) - (.+) \((TS\d+)\)$/) ||
+          error.match(/^(.+)\((\d+),(\d+)\): .+ (TS\d+): (.+)$/)
+        if (match) {
+          const code = match[5] || match[4]
+          issues.push({
+            rule: code,
+            fixable: false, // TypeScript errors are generally not auto-fixable
+            file: match[1],
+            message: error,
+          })
+        } else {
+          // Fallback for unparseable TypeScript errors
+          issues.push({
+            rule: 'typescript-error',
+            fixable: false,
+            file: 'unknown',
+            message: error,
+          })
+        }
+      })
+    }
+
+    return issues
+  }
+
+  /**
+   * Filter checker errors to only show unfixable ones
+   */
+  private filterUnfixableErrors(checker: CheckerResult, unfixableIssues: Issue[]): string[] {
+    if (!checker.errors) return []
+
+    // If this checker is marked as fixable (like Prettier), don't show any errors
+    if (checker.fixable) {
+      return []
+    }
+
+    // Filter errors to only show those that match unfixable issues
+    return checker.errors.filter((error) => {
+      // Check if this error corresponds to an unfixable issue
+      return unfixableIssues.some((issue) => {
+        // Check if the error message contains the issue's message or rule
+        return (
+          (issue.message && error.includes(issue.message.split(' - ')[1])) ||
+          error.includes(issue.rule)
+        )
+      })
+    })
+  }
 }

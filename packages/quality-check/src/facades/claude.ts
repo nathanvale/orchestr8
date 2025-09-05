@@ -32,14 +32,8 @@ export async function runClaudeHook(): Promise<void> {
   const hookTimer = createTimer('hook-execution')
   const correlationId = logger.setCorrelationId()
 
-  // Use standard output for user visibility
-  console.log('🔍 Quality check hook starting...')
-  console.error(
-    JSON.stringify({
-      feedback: 'Quality check started',
-      correlationId,
-    }),
-  )
+  // We'll determine if we should be silent based on the Autopilot decision
+  // So we'll hold off on any output initially
 
   try {
     logger.debug('Hook started', { correlationId })
@@ -52,28 +46,10 @@ export async function runClaudeHook(): Promise<void> {
       payload = JSON.parse(input) as ClaudeCodePayload
       logger.payloadReceived(payload)
       logger.payloadValidation(true)
-
-      // Output for file being processed
-      const fileName = payload.tool_input?.file_path?.split('/').pop()
-      console.log(`📝 Processing: ${fileName}`)
-      console.error(
-        JSON.stringify({
-          feedback: 'Processing file',
-          file: fileName,
-        }),
-      )
-
-      logger.hookStarted(payload.tool_name, payload.tool_input?.file_path || 'unknown')
     } catch (parseError) {
       logger.payloadValidation(false, [(parseError as Error).message])
       logger.warn('Malformed JSON payload, exiting gracefully')
-      console.log('❌ Invalid payload format')
-      console.error(
-        JSON.stringify({
-          feedback: 'Invalid payload format',
-          error: (parseError as Error).message,
-        }),
-      )
+      // Silent exit for malformed payloads
       process.exit(ExitCodes.SUCCESS)
     }
 
@@ -105,6 +81,9 @@ export async function runClaudeHook(): Promise<void> {
       process.exit(ExitCodes.SUCCESS)
     }
 
+    // Log hook started only after all skip checks pass
+    logger.hookStarted(payload.tool_name, payload.tool_input.file_path)
+
     // Initialize components
     logger.debug('Initializing quality check components')
     const checker = new QualityChecker()
@@ -122,15 +101,7 @@ export async function runClaudeHook(): Promise<void> {
       logger.qualityCheckCompleted(payload.tool_input.file_path, 0, qualityDuration)
       logger.hookCompleted(payload.tool_name, payload.tool_input.file_path, hookTimer.end(), true)
 
-      // Success feedback
-      console.log('✅ All quality checks passed!')
-      console.error(
-        JSON.stringify({
-          feedback: 'All quality checks passed',
-          file: payload.tool_input.file_path,
-        }),
-      )
-
+      // Silent success - no output
       process.exit(ExitCodes.SUCCESS)
     }
 
@@ -156,29 +127,46 @@ export async function runClaudeHook(): Promise<void> {
       reasoning,
     )
 
-    // Output for autopilot decision
-    console.log(`🤖 Autopilot: ${decision.action} (${issues.length} issues found)`)
-    console.error(
-      JSON.stringify({
-        feedback: 'Autopilot decision',
-        action: decision.action,
-        issueCount: issues.length,
-      }),
-    )
+    // Determine if we should operate silently
+    const isSilentMode = decision.action === 'FIX_SILENTLY' || decision.action === 'CONTINUE'
 
-    // Debug output to stderr to see which decision path is taken
-    console.error(`DEBUG: Autopilot decision = ${decision.action}, issues count = ${issues.length}`)
+    // Only output feedback if not in silent mode
+    if (!isSilentMode) {
+      console.log('🔍 Quality check hook starting...')
+      console.error(
+        JSON.stringify({
+          feedback: 'Quality check started',
+          correlationId,
+        }),
+      )
+
+      const fileName = payload.tool_input?.file_path?.split('/').pop()
+      console.log(`📝 Processing: ${fileName}`)
+      console.error(
+        JSON.stringify({
+          feedback: 'Processing file',
+          file: fileName,
+        }),
+      )
+
+      console.log(`🤖 Autopilot: ${decision.action} (${issues.length} issues found)`)
+      console.error(
+        JSON.stringify({
+          feedback: 'Autopilot decision',
+          action: decision.action,
+          issueCount: issues.length,
+        }),
+      )
+
+      // Debug output to stderr to see which decision path is taken
+      console.error(
+        `DEBUG: Autopilot decision = ${decision.action}, issues count = ${issues.length}`,
+      )
+    }
 
     switch (decision.action) {
       case 'FIX_SILENTLY': {
-        console.log('🔧 Auto-fixing issues...')
-        console.error(
-          JSON.stringify({
-            feedback: 'Auto-fixing issues',
-            file: payload.tool_input.file_path,
-          }),
-        )
-
+        // Operate completely silently - no console output at all
         logger.autoFixStarted(payload.tool_input.file_path)
         const fixTimer = createTimer('auto-fix')
         const fixResult = await fixer.autoFix(payload.tool_input.file_path, result)
@@ -193,29 +181,15 @@ export async function runClaudeHook(): Promise<void> {
             true,
           )
 
-          console.log('✅ All issues auto-fixed successfully!')
-          console.error(
-            JSON.stringify({
-              feedback: 'All issues auto-fixed',
-              file: payload.tool_input.file_path,
-            }),
-          )
-
+          // Silent success
           process.exit(ExitCodes.SUCCESS)
         }
 
         // If auto-fix failed, report the issues using JSON format for Claude
         logger.error('Auto-fix failed', undefined, { filePath: payload.tool_input.file_path })
 
-        console.log('❌ Auto-fix failed! Sending issues to Claude...')
-        console.log('💡 Claude will see these errors and can fix them')
-        console.error(
-          JSON.stringify({
-            feedback: 'Auto-fix failed',
-            file: payload.tool_input.file_path,
-            action: 'Claude will fix',
-          }),
-        )
+        // Even on failure, stay silent in FIX_SILENTLY mode
+        // But still need to report to Claude via exit code
 
         const output = reporter.formatForClaude(result)
         if (output) {
@@ -362,15 +336,7 @@ export async function runClaudeHook(): Promise<void> {
       correlationId: logger.getCorrelationId(),
     })
 
-    console.log('❌ Hook error occurred')
-    console.error(
-      JSON.stringify({
-        feedback: 'Hook error',
-        error: (error as Error).message,
-        correlationId: logger.getCorrelationId(),
-      }),
-    )
-
+    // Silent error handling - don't output to stderr
     // Exit gracefully - don't block Claude for hook issues
     logger.hookCompleted('unknown', 'unknown', hookTimer.end(), false)
     process.exit(ExitCodes.SUCCESS)

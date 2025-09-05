@@ -47,12 +47,10 @@ describe('Claude Hook End-to-End Integration', () => {
       await setupTestProject(testProjectDir)
 
       const payload = {
-        operation: 'write_file',
-        file_path: path.join(testProjectDir, 'src', 'test.ts'),
-        content: 'export const test = () => console.log("hello")',
-        metadata: {
-          tool_name: 'Write',
-          timestamp: new Date().toISOString(),
+        tool_name: 'Write',
+        tool_input: {
+          file_path: path.join(testProjectDir, 'src', 'test.ts'),
+          content: 'export const test = () => console.log("hello")',
         },
       }
 
@@ -115,9 +113,10 @@ describe('Claude Hook End-to-End Integration', () => {
       await setupTestProject(testProjectDir)
 
       const authenticPayload = {
-        operation: 'write_file',
-        file_path: path.join(testProjectDir, 'src', 'utils.ts'),
-        content: `/**
+        tool_name: 'Write',
+        tool_input: {
+          file_path: path.join(testProjectDir, 'src', 'utils.ts'),
+          content: `/**
  * Utility functions for the application
  */
 
@@ -135,10 +134,6 @@ export function debounce<T extends (...args: any[]) => any>(
     timeoutId = setTimeout(() => fn(...args), delay)
   }
 }`,
-        metadata: {
-          tool_name: 'Write',
-          timestamp: '2025-09-04T15:30:00.000Z',
-          session_id: 'claude-session-12345',
         },
       }
 
@@ -156,9 +151,10 @@ export function debounce<T extends (...args: any[]) => any>(
       await setupTestProject(testProjectDir)
 
       const reactComponentPayload = {
-        operation: 'write_file',
-        file_path: path.join(testProjectDir, 'src', 'UserProfile.tsx'),
-        content: `import React, { useState, useEffect } from 'react'
+        tool_name: 'Write',
+        tool_input: {
+          file_path: path.join(testProjectDir, 'src', 'UserProfile.tsx'),
+          content: `import React, { useState, useEffect } from 'react'
 
 interface UserProfileProps {
   userId: string
@@ -211,9 +207,6 @@ export const UserProfile: React.FC<UserProfileProps> = ({
     </div>
   )
 }`,
-        metadata: {
-          tool_name: 'Write',
-          timestamp: new Date().toISOString(),
         },
       }
 
@@ -237,10 +230,11 @@ return"world"
 }`
 
       const payload = {
-        operation: 'write_file',
-        file_path: path.join(testProjectDir, 'src', 'badly-formatted.ts'),
-        content: badlyFormattedCode,
-        metadata: { tool_name: 'Write' },
+        tool_name: 'Write',
+        tool_input: {
+          file_path: path.join(testProjectDir, 'src', 'badly-formatted.ts'),
+          content: badlyFormattedCode,
+        },
       }
 
       // Act
@@ -267,10 +261,11 @@ export const Component = () => {
 }`
 
       const payload = {
-        operation: 'write_file',
-        file_path: path.join(testProjectDir, 'src', 'unorganized.tsx'),
-        content: unorganizedImports,
-        metadata: { tool_name: 'Write' },
+        tool_name: 'Write',
+        tool_input: {
+          file_path: path.join(testProjectDir, 'src', 'unorganized.tsx'),
+          content: unorganizedImports,
+        },
       }
 
       // Act
@@ -293,10 +288,11 @@ export const Component = () => {
 }`
 
       const payload = {
-        operation: 'write_file',
-        file_path: path.join(testProjectDir, 'src', 'unsafe.ts'),
-        content: unsafeCode,
-        metadata: { tool_name: 'Write' },
+        tool_name: 'Write',
+        tool_input: {
+          file_path: path.join(testProjectDir, 'src', 'unsafe.ts'),
+          content: unsafeCode,
+        },
       }
 
       // Act
@@ -355,10 +351,11 @@ export const Component = () => {
 }`
 
       const payload = {
-        operation: 'write_file',
-        file_path: path.join(testProjectDir, 'src', 'complex.ts'),
-        content: complexCode,
-        metadata: { tool_name: 'Write' },
+        tool_name: 'Write',
+        tool_input: {
+          file_path: path.join(testProjectDir, 'src', 'complex.ts'),
+          content: complexCode,
+        },
       }
 
       // Act
@@ -379,10 +376,11 @@ export const Component = () => {
         await setupTestProject(testProjectDir)
 
         const payload = {
-          operation: 'write_file',
-          file_path: path.join(testProjectDir, 'src', 'performance-test.ts'),
-          content: 'export const perfTest = () => "fast"',
-          metadata: { tool_name: 'Write' },
+          tool_name: 'Write',
+          tool_input: {
+            file_path: path.join(testProjectDir, 'src', 'performance-test.ts'),
+            content: 'export const perfTest = () => "fast"',
+          },
         }
 
         // Act
@@ -411,10 +409,11 @@ export const Component = () => {
         ).join('\n')
 
         const payload = {
-          operation: 'write_file',
-          file_path: path.join(testProjectDir, 'src', 'large-file.ts'),
-          content: largeFileContent,
-          metadata: { tool_name: 'Write' },
+          tool_name: 'Write',
+          tool_input: {
+            file_path: path.join(testProjectDir, 'src', 'large-file.ts'),
+            content: largeFileContent,
+          },
         }
 
         // Act
@@ -434,10 +433,12 @@ export const Component = () => {
       await setupTestProject(testProjectDir)
 
       const payload = {
-        operation: 'edit_file',
-        file_path: '/non/existent/path/file.ts',
-        content: 'export const test = true',
-        metadata: { tool_name: 'Edit' },
+        tool_name: 'Edit',
+        tool_input: {
+          file_path: '/non/existent/path/file.ts',
+          old_string: '',
+          new_string: 'export const test = true',
+        },
       }
 
       // Act
@@ -453,10 +454,11 @@ export const Component = () => {
       await setupTestProject(testProjectDir)
 
       const payload = {
-        operation: 'write_file',
-        file_path: path.join(testProjectDir, 'README.md'),
-        content: '# Test Project',
-        metadata: { tool_name: 'Write' },
+        tool_name: 'Write',
+        tool_input: {
+          file_path: path.join(testProjectDir, 'README.md'),
+          content: '# Test Project',
+        },
       }
 
       // Act

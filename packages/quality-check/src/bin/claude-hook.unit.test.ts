@@ -14,18 +14,23 @@ describe('bin/claude-hook', () => {
   test('should_execute_successfully_with_valid_payload', () => {
     // Arrange: Valid Claude Code payload
     const payload = JSON.stringify({
-      tool: 'Write',
-      path: 'test.js', // Use .js to avoid TypeScript complexity in test
-      content: 'export const test = "hello"',
+      tool_name: 'Write',
+      tool_input: {
+        file_path: 'test.js', // Use .js to avoid TypeScript complexity in test
+        content: 'export const test = "hello"',
+      },
     })
 
     // Act: Execute the binary with valid stdin
     try {
-      const result = execSync(`echo '${payload}' | node "${CLAUDE_HOOK_BIN}"`, {
-        encoding: 'utf8',
-        timeout: 2000,
-        stdio: 'pipe', // Capture output properly
-      })
+      const result = execSync(
+        `echo '${payload}' | CLAUDE_HOOK_SILENT=true node "${CLAUDE_HOOK_BIN}"`,
+        {
+          encoding: 'utf8',
+          timeout: 2000,
+          stdio: 'pipe', // Capture output properly
+        },
+      )
 
       // Assert: Should complete without errors (exit code 0)
       expect(result).toBe('') // No output on success (silent mode)
@@ -44,7 +49,7 @@ describe('bin/claude-hook', () => {
 
     // Act: Execute binary with malformed input
     try {
-      execSync(`echo '${invalidPayload}' | node "${CLAUDE_HOOK_BIN}"`, {
+      execSync(`echo '${invalidPayload}' | CLAUDE_HOOK_SILENT=true node "${CLAUDE_HOOK_BIN}"`, {
         encoding: 'utf8',
         timeout: 2000,
         stdio: 'pipe',
@@ -60,39 +65,41 @@ describe('bin/claude-hook', () => {
   test('should_skip_non_write_operations', () => {
     // Arrange: Non-Write operation (should be skipped)
     const payload = JSON.stringify({
-      tool: 'Read', // Not a Write/Edit/MultiEdit/Create operation
-      path: 'test.js',
-      content: 'export const test = "hello"',
+      tool_name: 'Read', // Not a Write/Edit/MultiEdit operation
+      tool_input: {
+        file_path: 'test.js',
+        content: 'export const test = "hello"',
+      },
     })
 
     // Act: Execute binary
-    try {
-      const result = execSync(`echo '${payload}' | node "${CLAUDE_HOOK_BIN}"`, {
+    const result = execSync(
+      `echo '${payload}' | CLAUDE_HOOK_SILENT=true node "${CLAUDE_HOOK_BIN}"`,
+      {
         encoding: 'utf8',
         timeout: 2000,
         stdio: 'pipe',
-      })
+      },
+    )
 
-      // Assert: Should exit 0 and skip processing
-      expect(result).toBe('') // No output for skipped operations
-    } catch (error) {
-      const execError = error as { status?: number }
-      expect(execError.status).toBe(0)
-    }
+    // Assert: Should exit 0 and skip processing
+    expect(result).toBe('') // No output for skipped operations
   })
 
   test('should_timeout_properly_when_execSync_times_out', () => {
     // Arrange: Valid payload
     const payload = JSON.stringify({
-      tool: 'Write',
-      path: 'test.js',
-      content: 'export const test = "hello"',
+      tool_name: 'Write',
+      tool_input: {
+        file_path: 'test.js',
+        content: 'export const test = "hello"',
+      },
     })
 
     // Act & Assert: Test timeout behavior of execSync itself
     const start = Date.now()
     try {
-      execSync(`echo '${payload}' | node "${CLAUDE_HOOK_BIN}"`, {
+      execSync(`echo '${payload}' | CLAUDE_HOOK_SILENT=true node "${CLAUDE_HOOK_BIN}"`, {
         encoding: 'utf8',
         timeout: 100, // Very short timeout to test timeout handling
       })
@@ -108,25 +115,25 @@ describe('bin/claude-hook', () => {
   test('should_skip_non_js_files', () => {
     // Arrange: Non-JavaScript file
     const payload = JSON.stringify({
-      tool: 'Write',
-      path: 'README.md', // Non-JS file should be skipped
-      content: '# Test file',
+      tool_name: 'Write',
+      tool_input: {
+        file_path: 'README.md', // Non-JS file should be skipped
+        content: '# Test file',
+      },
     })
 
     // Act: Execute binary
-    try {
-      const result = execSync(`echo '${payload}' | node "${CLAUDE_HOOK_BIN}"`, {
+    const result = execSync(
+      `echo '${payload}' | CLAUDE_HOOK_SILENT=true node "${CLAUDE_HOOK_BIN}"`,
+      {
         encoding: 'utf8',
         timeout: 2000,
         stdio: 'pipe',
-      })
+      },
+    )
 
-      // Assert: Should skip and exit 0
-      expect(result).toBe('')
-    } catch (error) {
-      const execError = error as { status?: number }
-      expect(execError.status).toBe(0)
-    }
+    // Assert: Should skip and exit 0
+    expect(result).toBe('')
   })
 
   test('should_handle_empty_payload', () => {
@@ -135,7 +142,7 @@ describe('bin/claude-hook', () => {
 
     // Act: Execute binary with empty input
     try {
-      execSync(`echo '${payload}' | node "${CLAUDE_HOOK_BIN}"`, {
+      execSync(`echo '${payload}' | CLAUDE_HOOK_SILENT=true node "${CLAUDE_HOOK_BIN}"`, {
         encoding: 'utf8',
         timeout: 2000,
         stdio: 'pipe',
@@ -150,24 +157,24 @@ describe('bin/claude-hook', () => {
   test('should_handle_missing_path_in_payload', () => {
     // Arrange: Payload without path
     const payload = JSON.stringify({
-      tool: 'Write',
-      content: 'export const test = "hello"',
-      // Missing path property
+      tool_name: 'Write',
+      tool_input: {
+        content: 'export const test = "hello"',
+        // Missing file_path property
+      },
     })
 
     // Act: Execute binary
-    try {
-      const result = execSync(`echo '${payload}' | node "${CLAUDE_HOOK_BIN}"`, {
+    const result = execSync(
+      `echo '${payload}' | CLAUDE_HOOK_SILENT=true node "${CLAUDE_HOOK_BIN}"`,
+      {
         encoding: 'utf8',
         timeout: 2000,
         stdio: 'pipe',
-      })
+      },
+    )
 
-      // Assert: Should skip and exit 0
-      expect(result).toBe('')
-    } catch (error) {
-      const execError = error as { status?: number }
-      expect(execError.status).toBe(0)
-    }
+    // Assert: Should skip and exit 0
+    expect(result).toBe('')
   })
 })

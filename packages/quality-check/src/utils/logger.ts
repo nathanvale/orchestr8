@@ -14,11 +14,11 @@ let globalCorrelationId: string | null = null
 // Log levels for quality check operations
 export enum LogLevel {
   TRACE = 10,
-  DEBUG = 20, 
+  DEBUG = 20,
   INFO = 30,
   WARN = 40,
   ERROR = 50,
-  FATAL = 60
+  FATAL = 60,
 }
 
 // Structured log context
@@ -45,11 +45,12 @@ class QualityLogger {
 
     // Configure pino with simple setup
     const pinoConfig: pino.LoggerOptions = {
-      level: this.debugMode ? 'debug' : 'info',
+      level:
+        process.env.CLAUDE_HOOK_SILENT === 'true' ? 'silent' : this.debugMode ? 'debug' : 'info',
       timestamp: pino.stdTimeFunctions.isoTime,
       formatters: {
-        level: (label) => ({ level: label })
-      }
+        level: (label) => ({ level: label }),
+      },
     }
 
     this.logger = pino(pinoConfig)
@@ -57,7 +58,7 @@ class QualityLogger {
 
   private writeToFile(data: string): void {
     if (!this.logFile) return
-    
+
     try {
       const dir = dirname(this.logFile)
       if (!existsSync(dir)) {
@@ -73,7 +74,7 @@ class QualityLogger {
     return {
       correlationId: globalCorrelationId || this.generateCorrelationId(),
       component: 'quality-check',
-      ...context
+      ...context,
     }
   }
 
@@ -100,9 +101,9 @@ class QualityLogger {
     const context = this.buildContext({
       operation,
       filePath,
-      phase: 'hook-start'
+      phase: 'hook-start',
     })
-    
+
     const message = `Hook triggered: ${operation} on ${filePath}`
     this.logger.info(context, message)
     this.logToFile('info', message, context)
@@ -114,9 +115,9 @@ class QualityLogger {
       filePath,
       phase: 'hook-complete',
       duration,
-      success
+      success,
     })
-    
+
     const message = `Hook completed: ${success ? 'success' : 'failed'} in ${duration}ms`
     this.logger.info(context, message)
     this.logToFile('info', message, context)
@@ -127,9 +128,9 @@ class QualityLogger {
     const context = this.buildContext({
       filePath,
       phase: 'quality-check-start',
-      component: 'checker'
+      component: 'checker',
     })
-    
+
     const message = 'Starting quality check'
     this.logger.debug(context, message)
     this.logToFile('debug', message, context)
@@ -141,9 +142,9 @@ class QualityLogger {
       phase: 'quality-check-complete',
       component: 'checker',
       issues,
-      duration
+      duration,
     })
-    
+
     const message = `Quality check completed: ${issues} issues found in ${duration}ms`
     this.logger.info(context, message)
     this.logToFile('info', message, context)
@@ -157,9 +158,9 @@ class QualityLogger {
       component: 'autopilot',
       action,
       issues,
-      reasoning
+      reasoning,
     })
-    
+
     const message = `Autopilot decision: ${action} for ${issues} issues`
     this.logger.info(context, message)
     this.logToFile('info', message, context)
@@ -170,9 +171,9 @@ class QualityLogger {
     const context = this.buildContext({
       filePath,
       phase: 'auto-fix-start',
-      component: 'fixer'
+      component: 'fixer',
     })
-    
+
     const message = 'Starting auto-fix'
     this.logger.debug(context, message)
     this.logToFile('debug', message, context)
@@ -184,9 +185,9 @@ class QualityLogger {
       phase: 'auto-fix-complete',
       component: 'fixer',
       fixedCount,
-      remainingCount
+      remainingCount,
     })
-    
+
     const message = `Auto-fix completed: ${fixedCount} fixed, ${remainingCount} remaining`
     this.logger.info(context, message)
     this.logToFile('info', message, context)
@@ -201,9 +202,9 @@ class QualityLogger {
       args,
       duration,
       exitCode,
-      success: exitCode === 0
+      success: exitCode === 0,
     })
-    
+
     const message = `Tool executed: ${tool} (exit: ${exitCode}) in ${duration}ms`
     this.logger.debug(context, message)
     this.logToFile('debug', message, context)
@@ -214,13 +215,15 @@ class QualityLogger {
     const fullContext = this.buildContext({
       ...context,
       phase: 'error',
-      error: error ? {
-        name: error.name,
-        message: error.message,
-        stack: error.stack
-      } : undefined
+      error: error
+        ? {
+            name: error.name,
+            message: error.message,
+            stack: error.stack,
+          }
+        : undefined,
     })
-    
+
     this.logger.error(fullContext, message)
     this.logToFile('error', message, fullContext)
   }
@@ -232,7 +235,7 @@ class QualityLogger {
     this.logToFile('warn', message, fullContext)
   }
 
-  // Info logging  
+  // Info logging
   info(message: string, context: LogContext = {}): void {
     const fullContext = this.buildContext(context)
     this.logger.info(fullContext, message)
@@ -261,9 +264,9 @@ class QualityLogger {
     const context = this.buildContext({
       phase: 'payload-received',
       payloadType: typeof payload,
-      payloadSize: JSON.stringify(payload).length
+      payloadSize: JSON.stringify(payload).length,
     })
-    
+
     this.logger.debug(context, 'Payload received')
     this.logToFile('debug', 'Payload received', context)
   }
@@ -272,9 +275,9 @@ class QualityLogger {
     const context = this.buildContext({
       phase: 'payload-validation',
       valid,
-      errors
+      errors,
     })
-    
+
     const message = `Payload validation: ${valid ? 'valid' : 'invalid'}`
     this.logger.debug(context, message)
     this.logToFile('debug', message, context)
@@ -282,7 +285,7 @@ class QualityLogger {
 
   private logToFile(level: string, message: string, context: LogContext): void {
     if (!this.logFile) return
-    
+
     const timestamp = new Date().toISOString()
     const logEntry = `${timestamp} [${level.toUpperCase()}] ${message} ${JSON.stringify(context)}\n`
     this.writeToFile(logEntry)
@@ -300,6 +303,6 @@ export function createTimer(label: string) {
       const duration = Date.now() - start
       logger.debug(`Timer: ${label}`, { duration, phase: 'timing' })
       return duration
-    }
+    },
   }
 }
