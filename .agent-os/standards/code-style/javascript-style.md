@@ -24,7 +24,7 @@
         }
       </example>
     </rule>
-    
+
     <rule name="any-type-usage">
       <requirement>Avoid 'any' type - use 'unknown' or specific types</requirement>
       <severity>warning in source, off in tests</severity>
@@ -36,18 +36,18 @@
             return data
           }
         }
-        
+
         // ⚠️ WARNING in source files
         function processData(data: any): any {
           return data
         }
-        
+
         // ✅ OK in test files
         // **/*.test.ts, **/*.spec.ts
         const mockData: any = { test: true }
       </example>
     </rule>
-    
+
     <rule name="const-vs-let">
       <requirement>Use 'const' for values that don't change</requirement>
       <requirement>Use 'let' only when reassignment is needed</requirement>
@@ -58,15 +58,15 @@
         const config = loadConfig()
         let counter = 0
         counter++
-        
+
         // ❌ ERROR - never use var
         var oldStyle = true
-        
+
         // ⚠️ WARNING - should be const
         let neverChanges = 42
       </example>
     </rule>
-    
+
     <rule name="equality-checks">
       <requirement>Use === and !== for strict equality</requirement>
       <exception>Smart equality allowed: == null checks both null and undefined</exception>
@@ -75,11 +75,12 @@
         if (value === 42) { }
         if (value !== 'test') { }
         if (value == null) { }  // Checks null OR undefined
-        
+
         // ⚠️ WARNING - use strict equality
         if (value == 42) { }
       </example>
     </rule>
+
   </typescript-critical-rules>
   
   <function-length-limits>
@@ -94,13 +95,13 @@
         <max-lines>200</max-lines>
         <note>Relaxed during migration</note>
       </package>
-      
+
       <package path="packages/quality-check/**">
         <max-lines>150</max-lines>
         <note>Stricter for core quality code</note>
       </package>
     </package-overrides>
-    
+
     <test-overrides>
       <files>**/*.test.ts, **/*.spec.ts</files>
       <max-lines>500</max-lines>
@@ -108,6 +109,7 @@
       <allow-non-null-assertion>true</allow-non-null-assertion>
       <note>Tests can be longer and use relaxed type checking</note>
     </test-overrides>
+
   </function-length-limits>
   
   <react-specific>
@@ -122,11 +124,12 @@
       <severity>warning</severity>
       <note>Can disable with eslint-disable-next-line if intentional</note>
     </rule>
-    
+
     <rule name="react-import">
       <requirement>No need to import React for JSX (React 17+)</requirement>
       <note>TypeScript/build tools handle this automatically</note>
     </rule>
+
   </react-specific>
   
   <console-usage>
@@ -166,20 +169,21 @@
       <pattern>Not prefixing unused parameters with underscore</pattern>
       <fix>Add underscore prefix: _unusedParam</fix>
     </mistake>
-    
+
     <mistake>
       <pattern>Using 'any' type in source code</pattern>
       <fix>Use 'unknown' or specific type</fix>
     </mistake>
-    
+
     <mistake>
       <pattern>Functions exceeding line limits</pattern>
       <fix>Extract helper functions or split logic</fix>
     </mistake>
-    
+
     <mistake>
       <pattern>Using == instead of ===</pattern>
       <fix>Use strict equality (except for == null)</fix>
     </mistake>
+
   </common-mistakes-to-avoid>
 </code-style-enforcement>

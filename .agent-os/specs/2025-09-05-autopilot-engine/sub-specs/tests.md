@@ -1,18 +1,20 @@
 # Tests Specification
 
-This is the tests specification for the spec detailed in @.agent-os/specs/2025-09-05-autopilot-engine/spec.md
+This is the tests specification for the spec detailed in
+@.agent-os/specs/2025-09-05-autopilot-engine/spec.md
 
 ## Test Requirements
 
 ### Unit Tests for Rule Classification
 
 **Safe Rules Tests**
+
 ```typescript
 describe('Safe Rules', () => {
   it('should auto-fix formatting issues', () => {
     const issues = [
       { rule: 'prettier/prettier', fixable: true, file: 'test.ts' },
-      { rule: 'semi', fixable: true, file: 'test.ts' }
+      { rule: 'semi', fixable: true, file: 'test.ts' },
     ]
     expect(decision.action).toBe('FIX_SILENTLY')
     expect(decision.fixes).toHaveLength(2)
@@ -23,7 +25,7 @@ describe('Safe Rules', () => {
     const issues = [
       { rule: 'prefer-const', fixable: true, file: 'test.ts' },
       { rule: 'prefer-template', fixable: true, file: 'test.ts' },
-      { rule: 'object-shorthand', fixable: true, file: 'test.ts' }
+      { rule: 'object-shorthand', fixable: true, file: 'test.ts' },
     ]
     expect(decision.action).toBe('FIX_SILENTLY')
     expect(decision.fixes).toHaveLength(3)
@@ -32,6 +34,7 @@ describe('Safe Rules', () => {
 ```
 
 **Unsafe Rules Tests**
+
 ```typescript
 describe('Unsafe Rules', () => {
   it('should not auto-fix undefined variables', () => {
@@ -44,7 +47,7 @@ describe('Unsafe Rules', () => {
   it('should not auto-fix complexity issues', () => {
     const issues = [
       { rule: 'complexity', fixable: false, file: 'test.ts' },
-      { rule: 'max-lines-per-function', fixable: false, file: 'test.ts' }
+      { rule: 'max-lines-per-function', fixable: false, file: 'test.ts' },
     ]
     expect(decision.action).toBe('REPORT_ONLY')
     expect(decision.issues).toHaveLength(2)
@@ -53,12 +56,13 @@ describe('Unsafe Rules', () => {
 ```
 
 **Mixed Issues Tests**
+
 ```typescript
 describe('Mixed Issues', () => {
   it('should fix safe and report unsafe', () => {
     const issues = [
       { rule: 'semi', fixable: true, file: 'test.ts' },
-      { rule: 'no-undef', fixable: false, file: 'test.ts' }
+      { rule: 'no-undef', fixable: false, file: 'test.ts' },
     ]
     expect(decision.action).toBe('FIX_AND_REPORT')
     expect(decision.fixes).toHaveLength(1)
@@ -73,7 +77,7 @@ describe('Mixed Issues', () => {
 describe('Context-Dependent Rules', () => {
   it('should not remove console in test files', () => {
     const issues = [
-      { rule: 'no-console', fixable: true, file: 'component.test.ts' }
+      { rule: 'no-console', fixable: true, file: 'component.test.ts' },
     ]
     expect(decision.action).toBe('REPORT_ONLY')
     expect(decision.issues).toHaveLength(1)
@@ -81,31 +85,25 @@ describe('Context-Dependent Rules', () => {
 
   it('should remove console in production files', () => {
     const issues = [
-      { rule: 'no-console', fixable: true, file: 'api/handler.ts' }
+      { rule: 'no-console', fixable: true, file: 'api/handler.ts' },
     ]
     expect(decision.action).toBe('FIX_SILENTLY')
     expect(decision.fixes).toHaveLength(1)
   })
 
   it('should always remove debugger statements', () => {
-    const issues = [
-      { rule: 'no-debugger', fixable: true, file: 'any.file.ts' }
-    ]
+    const issues = [{ rule: 'no-debugger', fixable: true, file: 'any.file.ts' }]
     expect(decision.action).toBe('FIX_SILENTLY')
     expect(decision.fixes).toHaveLength(1)
   })
 
   it('should keep alert in UI files', () => {
-    const issues = [
-      { rule: 'no-alert', fixable: true, file: 'component.tsx' }
-    ]
+    const issues = [{ rule: 'no-alert', fixable: true, file: 'component.tsx' }]
     expect(decision.action).toBe('REPORT_ONLY')
   })
 
   it('should remove alert in non-UI files', () => {
-    const issues = [
-      { rule: 'no-alert', fixable: true, file: 'api/handler.ts' }
-    ]
+    const issues = [{ rule: 'no-alert', fixable: true, file: 'api/handler.ts' }]
     expect(decision.action).toBe('FIX_SILENTLY')
   })
 })
@@ -122,7 +120,7 @@ describe('File Type Detection', () => {
     { file: 'debug.utils.ts', isTest: false, isDev: true, isUI: false },
     { file: 'development.config.js', isTest: false, isDev: true, isUI: false },
     { file: 'Button.tsx', isTest: false, isDev: false, isUI: true },
-    { file: 'api/handler.ts', isTest: false, isDev: false, isUI: false }
+    { file: 'api/handler.ts', isTest: false, isDev: false, isUI: false },
   ]
 
   testCases.forEach(({ file, isTest, isDev, isUI }) => {
@@ -171,10 +169,12 @@ describe('Quality Checker Integration', () => {
   it('should handle CheckResult format', () => {
     const checkResult: CheckResult = {
       filePath: 'test.ts',
-      issues: [/* ... */],
+      issues: [
+        /* ... */
+      ],
       hasErrors: false,
       hasWarnings: true,
-      fixable: true
+      fixable: true,
     }
     const decision = autopilot.decide(checkResult)
     expect(decision).toHaveProperty('action')
@@ -202,7 +202,7 @@ describe('Edge Cases', () => {
 
   it('should handle unknown rules conservatively', () => {
     const issues = [
-      { rule: 'unknown-rule-xyz', fixable: true, file: 'test.ts' }
+      { rule: 'unknown-rule-xyz', fixable: true, file: 'test.ts' },
     ]
     const decision = autopilot.decide({ issues })
     expect(decision.action).toBe('REPORT_ONLY')
@@ -211,7 +211,7 @@ describe('Edge Cases', () => {
   it('should handle malformed issue data', () => {
     const issues = [
       { rule: null, fixable: true, file: 'test.ts' },
-      { rule: undefined, fixable: true, file: 'test.ts' }
+      { rule: undefined, fixable: true, file: 'test.ts' },
     ]
     const decision = autopilot.decide({ issues })
     expect(decision.action).toBe('REPORT_ONLY')
@@ -223,10 +223,10 @@ describe('Edge Cases', () => {
       undefined,
       {},
       { issues: null },
-      { issues: 'not-an-array' }
+      { issues: 'not-an-array' },
     ]
-    
-    testCases.forEach(testCase => {
+
+    testCases.forEach((testCase) => {
       expect(() => autopilot.decide(testCase)).not.toThrow()
     })
   })
@@ -236,6 +236,7 @@ describe('Edge Cases', () => {
 ## Success Metrics Validation
 
 ### Automation Rate Test
+
 ```typescript
 describe('Automation Rate', () => {
   it('should achieve >80% automation on common issues', () => {
@@ -245,9 +246,9 @@ describe('Automation Rate', () => {
       // 10 import issues
       ...Array(10).fill({ rule: 'import/order', fixable: true }),
       // 10 complexity issues
-      ...Array(10).fill({ rule: 'complexity', fixable: false })
+      ...Array(10).fill({ rule: 'complexity', fixable: false }),
     ]
-    
+
     const decision = autopilot.decide({ issues: commonIssues })
     const automationRate = decision.fixes.length / commonIssues.length
     expect(automationRate).toBeGreaterThan(0.8)
@@ -256,15 +257,20 @@ describe('Automation Rate', () => {
 ```
 
 ### False Positives Test
+
 ```typescript
 describe('False Positives', () => {
   it('should have 0% false positives', () => {
     const riskyIssues = [
       { rule: 'no-undef', fixable: true, file: 'test.ts' },
       { rule: 'no-unused-expressions', fixable: true, file: 'test.ts' },
-      { rule: 'security/detect-object-injection', fixable: true, file: 'test.ts' }
+      {
+        rule: 'security/detect-object-injection',
+        fixable: true,
+        file: 'test.ts',
+      },
     ]
-    
+
     const decision = autopilot.decide({ issues: riskyIssues })
     expect(decision.action).toBe('REPORT_ONLY')
     expect(decision.fixes).toBeUndefined()
@@ -275,6 +281,7 @@ describe('False Positives', () => {
 ## Test Data Fixtures
 
 ### Sample Files
+
 - `sample.ts` - Production code with mixed issues
 - `sample.test.ts` - Test file with console statements
 - `sample.dev.ts` - Development file with debugger
@@ -283,13 +290,14 @@ describe('False Positives', () => {
 - `api/handler.ts` - API endpoint file
 
 ### Issue Generators
+
 ```typescript
 function generateFormattingIssue(): Issue {
   const rules = ['semi', 'quotes', 'indent', 'comma-dangle']
   return {
     rule: rules[Math.floor(Math.random() * rules.length)],
     fixable: true,
-    file: 'test.ts'
+    file: 'test.ts',
   }
 }
 
@@ -298,7 +306,7 @@ function generateComplexityIssue(): Issue {
   return {
     rule: rules[Math.floor(Math.random() * rules.length)],
     fixable: false,
-    file: 'test.ts'
+    file: 'test.ts',
   }
 }
 ```
@@ -312,12 +320,12 @@ function generateComplexityIssue(): Issue {
 
 ## Performance Benchmarks
 
-| Metric | Target | Test Method |
-|--------|--------|-------------|
-| **Classification Speed** | <10ms for 10 issues | Performance timer |
-| **Memory Usage** | <1MB heap allocation | Memory profiler |
-| **Throughput** | 1000+ files/second | Batch processing test |
-| **Decision Latency** | <1ms single issue | Micro-benchmark |
+| Metric                   | Target               | Test Method           |
+| ------------------------ | -------------------- | --------------------- |
+| **Classification Speed** | <10ms for 10 issues  | Performance timer     |
+| **Memory Usage**         | <1MB heap allocation | Memory profiler       |
+| **Throughput**           | 1000+ files/second   | Batch processing test |
+| **Decision Latency**     | <1ms single issue    | Micro-benchmark       |
 
 ## Test Execution Plan
 
