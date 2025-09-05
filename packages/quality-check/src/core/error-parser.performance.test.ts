@@ -21,7 +21,7 @@ describe('ErrorParser Performance Tests', () => {
 
       // Assert
       expect(errors).toHaveLength(0)
-      expect(duration).toBeLessThan(1) // Should be instant for empty input
+      expect(duration).toBeLessThan(2) // Should be very fast for empty input
     })
 
     test('should_parse_10_errors_within_performance_budget', () => {

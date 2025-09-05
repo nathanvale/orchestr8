@@ -325,7 +325,8 @@ export class Autopilot {
     const isDevFile =
       issue.file.includes('.dev.') ||
       issue.file.includes('debug') ||
-      issue.file.includes('development')
+      issue.file.includes('development') ||
+      issue.file.includes('dev-server')
 
     switch (issue.rule) {
       case 'no-console':
@@ -491,7 +492,10 @@ export class Autopilot {
   isDevFile(filePath: string): boolean {
     if (!filePath) return false
     return (
-      filePath.includes('.dev.') || filePath.includes('debug') || filePath.includes('development')
+      filePath.includes('.dev.') ||
+      filePath.includes('debug') ||
+      filePath.includes('development') ||
+      filePath.includes('dev-server')
     )
   }
 

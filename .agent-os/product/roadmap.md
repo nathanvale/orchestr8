@@ -1,6 +1,6 @@
 # Product Roadmap
 
-> Last Updated: 2025-09-03 Version: 1.0.0
+> Last Updated: 2025-09-05 Version: 1.1.0
 
 ## Phase 1: MVP - Working Implementation (Week 1)
 
@@ -11,8 +11,8 @@
 
 - [x] Refactor quality-check package to facade pattern - Convert 3000+ lines to ~440 lines `M`
 - [x] Create Claude hook wrapper - Thin ~50 line integration layer `S`
-- [ ] Implement autopilot engine - Classification and auto-fix logic `S`
-- [ ] Add conditional logic - Smart file type detection `XS`
+- [x] Implement autopilot engine - Classification and auto-fix logic `S`
+- [x] Add conditional logic - Smart file type detection `XS`
 - [ ] Deploy to ~/.claude/hooks - Production deployment `XS`
 - [ ] Create basic metrics tracking - Count automation successes `S`
 - [ ] Test with real workflows - Validate 80% automation target `S`

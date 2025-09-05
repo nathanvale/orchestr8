@@ -369,62 +369,54 @@ export const Component = () => {
   })
 
   describe('Performance requirements validation', () => {
-    test(
-      'should_complete_execution_under_2_seconds',
-      async () => {
-        // Arrange
-        await setupTestProject(testProjectDir)
+    test('should_complete_execution_under_2_seconds', async () => {
+      // Arrange
+      await setupTestProject(testProjectDir)
 
-        const payload = {
-          tool_name: 'Write',
-          tool_input: {
-            file_path: path.join(testProjectDir, 'src', 'performance-test.ts'),
-            content: 'export const perfTest = () => "fast"',
-          },
-        }
+      const payload = {
+        tool_name: 'Write',
+        tool_input: {
+          file_path: path.join(testProjectDir, 'src', 'performance-test.ts'),
+          content: 'export const perfTest = () => "fast"',
+        },
+      }
 
-        // Act
-        const startTime = Date.now()
-        const result = await executeClaudeHook(JSON.stringify(payload))
-        const endTime = Date.now()
-        const actualDuration = endTime - startTime
+      // Act
+      const startTime = Date.now()
+      const result = await executeClaudeHook(JSON.stringify(payload))
+      const endTime = Date.now()
+      const actualDuration = endTime - startTime
 
-        // Assert
-        expect(actualDuration).toBeLessThan(2000)
-        expect(result.duration).toBeLessThan(2000)
-        expect(result.exitCode).toBe(0)
-      },
-      { timeout: 3000 },
-    )
+      // Assert
+      expect(actualDuration).toBeLessThan(2000)
+      expect(result.duration).toBeLessThan(2000)
+      expect(result.exitCode).toBe(0)
+    }, 3000)
 
-    test(
-      'should_handle_large_files_efficiently',
-      async () => {
-        // Arrange - Large file content
-        await setupTestProject(testProjectDir)
+    test('should_handle_large_files_efficiently', async () => {
+      // Arrange - Large file content
+      await setupTestProject(testProjectDir)
 
-        const largeFileContent = Array.from(
-          { length: 1000 },
-          (_, i) => `export const function${i} = () => { return ${i} }`,
-        ).join('\n')
+      const largeFileContent = Array.from(
+        { length: 1000 },
+        (_, i) => `export const function${i} = () => { return ${i} }`,
+      ).join('\n')
 
-        const payload = {
-          tool_name: 'Write',
-          tool_input: {
-            file_path: path.join(testProjectDir, 'src', 'large-file.ts'),
-            content: largeFileContent,
-          },
-        }
+      const payload = {
+        tool_name: 'Write',
+        tool_input: {
+          file_path: path.join(testProjectDir, 'src', 'large-file.ts'),
+          content: largeFileContent,
+        },
+      }
 
-        // Act
-        const result = await executeClaudeHook(JSON.stringify(payload))
+      // Act
+      const result = await executeClaudeHook(JSON.stringify(payload))
 
-        // Assert
-        expect(result.duration).toBeLessThan(2000)
-        expect(result.exitCode).toBe(0)
-      },
-      { timeout: 3000 },
-    )
+      // Assert
+      expect(result.duration).toBeLessThan(2000)
+      expect(result.exitCode).toBe(0)
+    }, 3000)
   })
 
   describe('Error handling and edge cases', () => {
