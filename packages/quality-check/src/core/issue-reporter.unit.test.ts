@@ -247,7 +247,7 @@ describe('IssueReporter with Enhanced Error Formatting', () => {
       const exitCode = reporter.getExitCode(result)
 
       // Assert
-      expect(exitCode).toBe(2) // Fixable errors
+      expect(exitCode).toBe(2) // All quality issues now return 2
     })
 
     it('should_return_exit_code_1_when_unfixable_errors_exist', () => {
@@ -267,7 +267,7 @@ describe('IssueReporter with Enhanced Error Formatting', () => {
       const exitCode = reporter.getExitCode(result)
 
       // Assert
-      expect(exitCode).toBe(4) // TypeScript errors (unfixable)
+      expect(exitCode).toBe(2) // All quality issues now return 2
     })
   })
 

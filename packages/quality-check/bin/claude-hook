@@ -15,6 +15,7 @@ async function main() {
     process.exit(0)
   } catch (error) {
     // Facade handles its own exit codes and messaging
+
     process.exit(error.exitCode || error.status || 2)
   }
 }

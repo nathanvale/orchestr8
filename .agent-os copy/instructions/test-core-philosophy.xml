@@ -30,3 +30,9 @@
     <rationale>ADHD brains need immediate validation</rationale>
   </principle>
 </core-philosophy>
+
+
+
+Use Wallaby.js for ALL test development and debugging
+Write tests BEFORE implementation
+Every unit test must execute in under 500ms

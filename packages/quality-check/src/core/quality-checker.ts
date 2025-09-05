@@ -1,12 +1,13 @@
 /**
  * QualityChecker - Core checking engine
- * ~200 lines - stateless, no side effects
+ * Enhanced with structured logging and observability
  */
 
 import { execSync } from 'node:child_process'
 import { existsSync } from 'node:fs'
 import type { QualityCheckOptions, QualityCheckResult, CheckerResult, FixResult } from '../types.js'
 import { ErrorParser } from './error-parser.js'
+import { logger, createTimer } from '../utils/logger.js'
 
 interface ESLintMessage {
   severity: number
@@ -25,6 +26,52 @@ interface ESLintResult {
 
 export class QualityChecker {
   private errorParser = new ErrorParser()
+
+  /**
+   * Execute command with structured logging and timing
+   */
+  private executeCommand(command: string, args: string[] = []): { stdout: string; stderr: string; exitCode: number; duration: number } {
+    const timer = createTimer('command-execution')
+    const fullCommand = args.length > 0 ? `${command} ${args.join(' ')}` : command
+    
+    logger.debug('Executing command', {
+      command,
+      args,
+      fullCommand,
+      phase: 'tool-start'
+    })
+    
+    try {
+      const output = execSync(fullCommand, { 
+        stdio: 'pipe',
+        encoding: 'utf8',
+        timeout: 30000 // 30 second timeout
+      })
+      const duration = timer.end()
+      
+      logger.toolExecution(command, args, duration, 0)
+      
+      return {
+        stdout: output.toString(),
+        stderr: '',
+        exitCode: 0,
+        duration
+      }
+    } catch (error: unknown) {
+      const duration = timer.end()
+      const exitCode = (error as any).status || 1
+      const stderr = (error as any).stderr?.toString() || (error as Error).message
+      
+      logger.toolExecution(command, args, duration, exitCode)
+      
+      return {
+        stdout: (error as any).stdout?.toString() || '',
+        stderr,
+        exitCode,
+        duration
+      }
+    }
+  }
 
   /**
    * Check files for quality issues
@@ -87,22 +134,26 @@ export class QualityChecker {
     try {
       // Always fix ESLint issues
       try {
-        const filesStr = existingFiles.map((f) => `"${f}"`).join(' ')
-        execSync(`npx eslint --fix ${filesStr}`, { stdio: 'pipe' })
-        fixed.push('ESLint')
-        fixCount++
+        const eslintResult = this.executeCommand('npx eslint', ['--fix', ...existingFiles.map(f => `"${f}"`)])
+        if (eslintResult.exitCode === 0) {
+          fixed.push('ESLint')
+          fixCount++
+          logger.debug('ESLint auto-fix successful', { files: existingFiles.length })
+        }
       } catch {
-        // ESLint fix failed, continue
+        logger.warn('ESLint fix failed', { files: existingFiles.length })
       }
 
       // Always fix Prettier issues
       try {
-        const filesStr = existingFiles.map((f) => `"${f}"`).join(' ')
-        execSync(`npx prettier --write ${filesStr}`, { stdio: 'pipe' })
-        fixed.push('Prettier')
-        fixCount++
+        const prettierResult = this.executeCommand('npx prettier', ['--write', ...existingFiles.map(f => `"${f}"`)])
+        if (prettierResult.exitCode === 0) {
+          fixed.push('Prettier')
+          fixCount++
+          logger.debug('Prettier auto-fix successful', { files: existingFiles.length })
+        }
       } catch {
-        // Prettier fix failed, continue
+        logger.warn('Prettier fix failed', { files: existingFiles.length })
       }
 
       return {
@@ -125,21 +176,28 @@ export class QualityChecker {
    */
   private async runESLint(files: string[]): Promise<CheckerResult> {
     try {
-      const filesStr = files.map((f) => `"${f}"`).join(' ')
-      const output = execSync(`npx eslint ${filesStr} --format=json`, {
-        stdio: 'pipe',
-        encoding: 'utf8',
-      })
-
-      const results = JSON.parse(output) as ESLintResult[]
+      const eslintResult = this.executeCommand('npx eslint', [...files.map(f => `"${f}"`), '--format=json'])
+      
+      let results: ESLintResult[] = []
+      let hasIssues = false
       const errors: string[] = []
-      let hasErrors = false
-
+      
+      // Parse output if available (ESLint may exit with non-zero but still provide JSON)
+      if (eslintResult.stdout) {
+        try {
+          results = JSON.parse(eslintResult.stdout) as ESLintResult[]
+        } catch (parseError) {
+          logger.warn('Failed to parse ESLint JSON output', { error: (parseError as Error).message })
+        }
+      }
+      
       results.forEach((file: ESLintResult) => {
-        if (file.errorCount > 0) {
-          hasErrors = true
+        // Consider both errors (severity 2) and warnings (severity 1) as issues
+        if (file.errorCount > 0 || file.warningCount > 0) {
+          hasIssues = true
           file.messages.forEach((msg: ESLintMessage) => {
-            if (msg.severity === 2) {
+            // Include both errors and warnings in the errors array
+            if (msg.severity === 2 || msg.severity === 1) {
               errors.push(
                 `${file.filePath}:${msg.line}:${msg.column} - ${msg.message} (${msg.ruleId})`,
               )
@@ -147,14 +205,27 @@ export class QualityChecker {
           })
         }
       })
+      
+      logger.debug('ESLint check completed', {
+        files: files.length,
+        errors: errors.length,
+        warnings: results.reduce((sum, r) => sum + r.warningCount, 0),
+        duration: eslintResult.duration,
+        exitCode: eslintResult.exitCode,
+        component: 'eslint'
+      })
 
       return {
-        success: !hasErrors,
+        success: !hasIssues,
         errors: errors.length > 0 ? errors : undefined,
         fixable: true,
       }
     } catch (error) {
-      // ESLint exits with non-zero on errors
+      logger.error('ESLint execution failed', error as Error, {
+        files: files.length,
+        component: 'eslint'
+      })
+      
       const errorMsg = error instanceof Error ? error.message : 'ESLint check failed'
       return {
         success: false,

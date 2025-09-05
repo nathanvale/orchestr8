@@ -1,0 +1,41 @@
+#!/usr/bin/env node
+/**
+ * Pre-commit Hook Binary for lint-staged
+ * Accepts file paths as arguments and runs quality checks
+ * Supports --fix flag for auto-fixing
+ * ~30 lines
+ */
+
+import { runGitHook } from '../dist/facades/git-hook.js'
+
+async function main() {
+  try {
+    // Get file paths from lint-staged (passed as arguments)
+    const args = process.argv.slice(2)
+    const files = args.filter((arg) => !arg.startsWith('--'))
+    const options = {
+      fix: args.includes('--fix'),
+      files: files.length > 0 ? files : undefined,
+    }
+
+    // Run git hook facade with files
+    await runGitHook(options)
+    process.exit(0)
+  } catch (error) {
+    // Error handling is done in the facade
+    process.exit(error.exitCode || 1)
+  }
+}
+
+// Handle uncaught errors gracefully
+process.on('uncaughtException', (error) => {
+  console.error('Pre-commit hook error:', error.message)
+  process.exit(1)
+})
+
+process.on('unhandledRejection', (error) => {
+  console.error('Pre-commit hook rejection:', error)
+  process.exit(1)
+})
+
+main()

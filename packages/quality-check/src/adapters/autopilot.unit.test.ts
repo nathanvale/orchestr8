@@ -9,6 +9,82 @@ describe('Autopilot - Three-Tier Classification System', () => {
     autopilot = new Autopilot()
   })
 
+  describe('Success Metrics Validation', () => {
+    test('should_achieve_80_percent_automation_rate_on_common_issues', () => {
+      // Arrange - Common distribution of issues
+      const commonIssues: Issue[] = [
+        // 80 formatting issues (80% of issues)
+        ...Array(80)
+          .fill(null)
+          .map(() => ({
+            rule: 'prettier/prettier',
+            fixable: true,
+            file: 'test.ts',
+          })),
+        // 10 import issues
+        ...Array(10)
+          .fill(null)
+          .map(() => ({
+            rule: 'import/order',
+            fixable: true,
+            file: 'test.ts',
+          })),
+        // 10 complexity issues (unfixable)
+        ...Array(10)
+          .fill(null)
+          .map(() => ({
+            rule: 'complexity',
+            fixable: false,
+            file: 'test.ts',
+          })),
+      ]
+
+      const checkResult: CheckResult = {
+        filePath: 'test.ts',
+        issues: commonIssues,
+        hasErrors: true,
+        hasWarnings: false,
+        fixable: true,
+      }
+
+      // Act
+      const decision = autopilot.decide(checkResult)
+
+      // Assert
+      const automationRate = (decision.fixes?.length || 0) / commonIssues.length
+      expect(automationRate).toBeGreaterThanOrEqual(0.8)
+      expect(decision.action).toBe('FIX_AND_REPORT')
+      expect(decision.fixes?.length).toBe(90)
+      expect(decision.issues?.length).toBe(10)
+    })
+
+    test('should_have_zero_false_positives_on_risky_issues', () => {
+      // Arrange - Issues that should never be auto-fixed
+      const riskyIssues: Issue[] = [
+        { rule: 'no-undef', fixable: true, file: 'test.ts' },
+        { rule: 'no-unused-expressions', fixable: true, file: 'test.ts' },
+        { rule: 'security/detect-object-injection', fixable: true, file: 'test.ts' },
+        { rule: '@typescript-eslint/no-unsafe-assignment', fixable: true, file: 'test.ts' },
+      ]
+
+      const checkResult: CheckResult = {
+        filePath: 'test.ts',
+        issues: riskyIssues,
+        hasErrors: true,
+        hasWarnings: false,
+        fixable: true,
+      }
+
+      // Act
+      const decision = autopilot.decide(checkResult)
+
+      // Assert - Should not auto-fix any risky issues
+      expect(decision.action).toBe('REPORT_ONLY')
+      expect(decision.fixes).toBeUndefined()
+      expect(decision.issues?.length).toBe(4)
+    })
+  })
+
   describe('Auto-fixable rule detection (Tier 1)', () => {
     test('should_classify_prettier_issues_as_auto_fixable', () => {
       // Act

@@ -4,6 +4,7 @@
  */
 
 import type { QualityCheckResult, CheckerResult, ParsedError } from '../types.js'
+import { ExitCodes } from './exit-codes.js'
 import { ErrorParser } from './error-parser.js'
 
 export interface FormatOptions {
@@ -70,61 +71,53 @@ export class IssueReporter {
   }
 
   /**
-   * Format results for Claude hook with minimal output
+   * Format results for Claude hook with comprehensive output
+   * This output goes to stderr with exit code 2, so Claude will see it
    */
   formatForClaude(result: QualityCheckResult, options: FormatOptions = {}): string {
     if (result.success) {
       return '' // Silent success
     }
 
-    // Parse errors to determine fixability
-    const parsedErrors = this.lazyParseErrors(result, options)
-    const { unfixable } = this.errorParser.filterByFixability(parsedErrors)
+    const lines: string[] = []
+    lines.push('❌ Quality check failed:')
+    lines.push('')
 
-    // If summary is requested and we have raw errors (but couldn't parse them)
-    if (options.summary && unfixable.length === 0 && this.hasRawErrors(result)) {
-      const counts = this.countRawErrorsByType(result)
-      const summary = Object.entries(counts)
-        .map(([type, count]) => `${count} ${type} errors`)
-        .join(', ')
-      return `Quality issues: ${summary}`
+    // Show all types of issues for Claude to see and potentially help fix
+    if (result.checkers.eslint && !result.checkers.eslint.success) {
+      lines.push('📝 ESLint issues:')
+      lines.push(this.formatCheckerErrors(result.checkers.eslint, options.maxErrors))
     }
 
-    // Only show unfixable errors
-    if (unfixable.length === 0) {
-      return '' // All errors were auto-fixed or fixable
+    if (result.checkers.prettier && !result.checkers.prettier.success) {
+      lines.push('🎨 Prettier issues:')
+      lines.push(this.formatCheckerErrors(result.checkers.prettier, options.maxErrors))
     }
 
-    if (options.summary) {
-      const counts = this.countErrorsByType(unfixable)
-      const summary = Object.entries(counts)
-        .map(([type, count]) => `${count} ${type} errors`)
-        .join(', ')
-      return `Quality issues: ${summary}`
+    if (result.checkers.typescript && !result.checkers.typescript.success) {
+      lines.push('🔍 TypeScript issues:')
+      lines.push(this.formatCheckerErrors(result.checkers.typescript, options.maxErrors))
     }
 
-    const errorMessages = unfixable
-      .slice(0, options.maxErrors || 10)
-      .map((err) => this.errorParser.formatError(err))
-
-    return `Quality issues require attention:\n${errorMessages.join('\n')}`
+    return lines.join('\n')
   }
 
   /**
    * Get appropriate exit code based on results
    */
   getExitCode(result: QualityCheckResult): number {
-    if (result.success) return 0
+    // Success - all checks passed
+    if (result.success) return ExitCodes.SUCCESS
 
-    const failed = []
-    if (result.checkers.eslint && !result.checkers.eslint.success) failed.push('eslint')
-    if (result.checkers.prettier && !result.checkers.prettier.success) failed.push('prettier')
-    if (result.checkers.typescript && !result.checkers.typescript.success) failed.push('typescript')
+    // Any quality issues should return QUALITY_ISSUES (2)
+    // We don't distinguish between different types for exit codes
+    // as Claude Code only needs to know "there are issues to fix"
+    const hasIssues =
+      (result.checkers.eslint && !result.checkers.eslint.success) ||
+      (result.checkers.prettier && !result.checkers.prettier.success) ||
+      (result.checkers.typescript && !result.checkers.typescript.success)
 
-    if (failed.length === 1) {
-      return failed[0] === 'eslint' ? 2 : failed[0] === 'prettier' ? 3 : 4
-    }
-    return failed.length > 1 ? 5 : 1
+    return hasIssues ? ExitCodes.QUALITY_ISSUES : ExitCodes.SUCCESS
   }
 
   private formatCheckerErrors(checker: CheckerResult, maxErrors?: number): string {
@@ -223,44 +216,4 @@ export class IssueReporter {
       .join('\n')
   }
 
-  /**
-   * Count errors by type for summary
-   */
-  private countErrorsByType(errors: ParsedError[]): Record<string, number> {
-    const counts: Record<string, number> = {}
-    errors.forEach((err) => {
-      const key =
-        err.source === 'typescript' ? 'TypeScript' : err.source === 'eslint' ? 'ESLint' : 'Prettier'
-      counts[key] = (counts[key] || 0) + 1
-    })
-    return counts
-  }
-
-  /**
-   * Check if there are raw errors in the result
-   */
-  private hasRawErrors(result: QualityCheckResult): boolean {
-    return Object.values(result.checkers).some(
-      (checker) => checker && !checker.success && checker.errors && checker.errors.length > 0,
-    )
-  }
-
-  /**
-   * Count raw errors by type when parsing fails
-   */
-  private countRawErrorsByType(result: QualityCheckResult): Record<string, number> {
-    const counts: Record<string, number> = {}
-
-    if (result.checkers.typescript?.errors) {
-      counts['TypeScript'] = result.checkers.typescript.errors.length
-    }
-    if (result.checkers.eslint?.errors) {
-      counts['ESLint'] = result.checkers.eslint.errors.length
-    }
-    if (result.checkers.prettier?.errors) {
-      counts['Prettier'] = result.checkers.prettier.errors.length
-    }
-
-    return counts
-  }
 }

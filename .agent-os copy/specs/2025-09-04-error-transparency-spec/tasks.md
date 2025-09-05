@@ -1,4 +1,4 @@
-# Spec Tasks
+1# Spec Tasks
 
 These are the tasks to be completed for the spec detailed in
 @.agent-os/specs/2025-09-04-error-transparency-spec/spec.md

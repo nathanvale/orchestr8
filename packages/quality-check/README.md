@@ -16,6 +16,8 @@ feedback and zero configuration complexity.
 - 🎯 **Exit Code Strategy** - Clear communication via standardized exit codes
 - 🚀 **Zero Global Install** - Works directly with `npx` - no PATH configuration
   needed
+- 🏗️ **Three-Tier System** - Progressive quality enforcement (pre-commit,
+  Claude, CI/CD)
 
 ## Installation
 
@@ -47,23 +49,45 @@ npx @template/quality-check --file src/index.ts --debug
 
 ### Claude Code PostToolUse Hook
 
-Add to your Claude Code configuration:
+The quality-check package includes full Claude Code hook integration. Run the
+setup script to configure:
+
+```bash
+# Setup Claude hooks automatically
+bash scripts/setup-claude-hooks.sh
+
+# Or configure manually by creating ~/.claude/hooks.json:
+```
 
 ```json
 {
-  "PostToolUse": {
-    "command": "npx @template/quality-check",
-    "args": [],
-    "runInBackground": false
+  "hooks": {
+    "post_tool_use": {
+      "enabled": true,
+      "command": "/path/to/project/packages/quality-check/bin/claude-hook",
+      "timeout": 5000,
+      "operations": ["write_file", "edit_file", "multi_edit", "create_file"],
+      "description": "Quality check for TypeScript, ESLint, and Prettier"
+    }
   }
 }
 ```
 
-The package automatically detects hook mode when receiving JSON via stdin:
+The hook automatically:
+
+- ✅ Checks TypeScript, ESLint, and Prettier on file operations
+- 🔧 Auto-fixes safe issues silently
+- 📝 Reports unfixable issues to Claude Code
+- 🚀 Works seamlessly in the background
+
+Test the hook manually:
 
 ```bash
-# Test hook mode manually
-echo '{"tool":"Write","path":"src/index.ts"}' | npx @template/quality-check
+# Test with valid code (silent pass)
+echo '{"operation":"write_file","file_path":"test.ts","content":"const x = 1;"}' | ./packages/quality-check/bin/claude-hook
+
+# Test with issues (will auto-fix or report)
+echo '{"operation":"write_file","file_path":"test.ts","content":"const x:any=1;console.log(x)"}' | ./packages/quality-check/bin/claude-hook
 ```
 
 ### Programmatic Usage
@@ -198,6 +222,17 @@ pipeline.
 - Node.js 18+
 - ESLint, Prettier, and/or TypeScript installed in your project (optional -
   checks are skipped if not found)
+
+## Three-Tier Quality System
+
+This package implements a comprehensive three-tier quality enforcement system:
+
+1. **Tier 1: Pre-commit** - Catches issues before commit (strict)
+2. **Tier 2: Claude Hook** - Auto-fixes safe issues during AI development
+   (smart)
+3. **Tier 3: CI/CD** - Final validation before merge (comprehensive)
+
+📚 **[Full Documentation](../docs/THREE-TIER-QUALITY-SYSTEM.md)**
 
 ## ADHD-Optimized Design
 

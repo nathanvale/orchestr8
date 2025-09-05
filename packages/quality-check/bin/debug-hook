@@ -1,0 +1,20 @@
+#!/bin/bash
+# Debug wrapper for Claude Code quality check hook
+# Since Claude doesn't provide proper stdin JSON, we'll work around it
+
+cd /Users/nathanvale/code/bun-changesets-template
+
+# Log the hook execution
+echo "$(date -u +"%Y-%m-%dT%H:%M:%S.%3NZ") - PostToolUse Hook Triggered" >> ~/.claude/quality-check.log
+
+# Get the most recently modified TypeScript/JavaScript file 
+LAST_MODIFIED_FILE=$(find . -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" | grep -v node_modules | grep -v dist | xargs stat -f "%m %N" 2>/dev/null | sort -n | tail -1 | cut -d' ' -f2-)
+
+if [ -n "$LAST_MODIFIED_FILE" ]; then
+    echo "$(date -u +"%Y-%m-%dT%H:%M:%S.%3NZ") - Checking file: $LAST_MODIFIED_FILE" >> ~/.claude/quality-check.log
+    
+    # Run the quality check directly on the file
+    CLAUDE_HOOK_DEBUG=true CLAUDE_HOOK_LOG_FILE=~/.claude/quality-check.log ./packages/quality-check/bin/quality-check --file "$LAST_MODIFIED_FILE" --hook --no-fix 2>&1 | tee -a ~/.claude/quality-check.log
+else
+    echo "$(date -u +"%Y-%m-%dT%H:%M:%S.%3NZ") - No TypeScript files found to check" >> ~/.claude/quality-check.log
+fi

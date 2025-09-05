@@ -4,13 +4,8 @@
 echo "🚀 Running pre-commit checks..."
 echo "💡 Tip: Use 'HUSKY=0 git commit' to bypass if needed"
 
-# Run quality-check on staged TypeScript/JavaScript files
-node packages/quality-check/dist/index.js --pre-commit
-
-# If quality-check passes, run prettier on other files
-if [ $? -eq 0 ]; then
-  pnpm exec lint-staged
-fi
+# Run lint-staged which will call quality-check for JS/TS files
+pnpm exec lint-staged
 
 if [ $? -eq 0 ]; then
   echo "✅ Pre-commit checks passed!"

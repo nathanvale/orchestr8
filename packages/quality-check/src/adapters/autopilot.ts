@@ -20,7 +20,7 @@ import type {
  */
 export class Autopilot {
   /**
-   * Tier 1: Always safe to auto-fix
+   * Tier 1: Always safe to auto-fix (54 rules total)
    * These rules NEVER change code behavior, only style
    */
   private readonly ALWAYS_SAFE = new Set([
@@ -28,7 +28,10 @@ export class Autopilot {
     'prettier/prettier',
     'indent',
     'semi',
+    'semi-spacing',
+    'semi-style',
     'quotes',
+    'quote-props',
     'jsx-quotes',
     'comma-dangle',
     'comma-spacing',
@@ -51,8 +54,6 @@ export class Autopilot {
     'eol-last',
     'linebreak-style',
     'no-multiple-empty-lines',
-    'semi-spacing',
-    'arrow-spacing',
 
     // Import organization - 4 rules (Safe reordering)
     'import/order',
@@ -65,28 +66,32 @@ export class Autopilot {
     'prefer-template',
     'template-curly-spacing',
     'prefer-arrow-callback',
+    'arrow-spacing',
     'arrow-parens',
     'arrow-body-style',
     'object-shorthand',
     'prefer-destructuring',
     'no-useless-rename',
-    'no-useless-constructor',
     'prefer-numeric-literals',
 
-    // Dead code removal - 5 rules (Safe cleanup)
+    // Dead code removal - 6 rules (Safe cleanup)
+    'no-unused-vars',
+    'no-unreachable',
     'no-empty',
     'no-useless-return',
     'no-useless-catch',
-    'no-unused-vars',
-    'no-useless-escape',
+    'no-useless-constructor',
 
-    // Simplification - 6 rules (Equivalent but simpler)
+    // Simplification - 9 rules (Equivalent but simpler)
     'no-extra-boolean-cast',
     'no-extra-parens',
     'no-extra-semi',
-    'no-unneeded-ternary',
     'yoda',
+    'no-unneeded-ternary',
     'no-else-return',
+    'no-lonely-if',
+    'operator-assignment',
+    'no-useless-escape',
   ])
 
   /**
@@ -341,10 +346,6 @@ export class Autopilot {
         }
         return { safe: true }
 
-      case '@typescript-eslint/no-explicit-any':
-        // Safe to convert to unknown
-        return { safe: true }
-
       case 'no-var':
         // Safe to convert to let/const
         return { safe: true }
@@ -380,7 +381,7 @@ export class Autopilot {
         instruction: rule.instruction,
         example: rule.example,
         location: `${issue.file}:${issue.message || 'Unknown location'}`,
-        code: issue.message,
+        code: issue.message || undefined,
       }
     }
 
@@ -390,7 +391,7 @@ export class Autopilot {
       instruction: 'Please review and fix this issue according to the rule requirements',
       example: 'Follow the specific rule guidelines for this error type',
       location: `${issue.file}:${issue.message || 'Unknown location'}`,
-      code: issue.message,
+      code: issue.message || undefined,
     }
   }
 

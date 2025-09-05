@@ -1,46 +1,93 @@
 /**
  * Git Hook Facade - Entry point for pre-commit hooks
- * ~50 lines
+ * Supports both direct usage and lint-staged integration
+ * ~60 lines
  */
 
 import { execSync } from 'node:child_process'
 import { QualityChecker } from '../core/quality-checker.js'
 import { IssueReporter } from '../core/issue-reporter.js'
+import { Autopilot } from '../adapters/autopilot.js'
+import { Fixer } from '../adapters/fixer.js'
 
-export async function runGitHook(): Promise<void> {
+interface GitHookOptions {
+  fix?: boolean
+  files?: string[]
+}
+
+export async function runGitHook(options: GitHookOptions = {}): Promise<void> {
   try {
-    // Get list of staged files
-    const stagedFiles = getStagedFiles()
-
-    if (stagedFiles.length === 0) {
-      console.log('No staged files to check')
-      process.exit(0)
-    }
+    // Use provided files from lint-staged or get staged files
+    const filesToCheck = options.files || getStagedFiles()
 
     // Filter for checkable files (JS/TS)
-    const filesToCheck = stagedFiles.filter((file) => /\.(js|jsx|ts|tsx)$/.test(file))
+    const checkableFiles = filesToCheck.filter((file) => /\.(js|jsx|ts|tsx)$/.test(file))
 
-    if (filesToCheck.length === 0) {
-      console.log('No JavaScript/TypeScript files to check')
+    if (checkableFiles.length === 0) {
+      // Silent success for non-JS/TS files
       process.exit(0)
     }
-
-    console.log(`Checking ${filesToCheck.length} staged file(s)...`)
 
     // Run quality check
     const checker = new QualityChecker()
     const reporter = new IssueReporter()
+    const autopilot = new Autopilot()
+    const fixer = new Fixer()
 
-    const result = await checker.check(filesToCheck, { fix: false })
+    const result = await checker.check(checkableFiles, { fix: false })
 
     if (!result.success) {
-      console.log(reporter.formatForCLI(result))
-      console.log('\n❌ Pre-commit check failed. Fix issues and try again.')
-      console.log('💡 Run with --fix flag to auto-fix some issues')
+      // Convert to CheckResult format for autopilot
+      const issues = []
+      if (result.checkers.eslint?.errors) {
+        issues.push(
+          ...result.checkers.eslint.errors.map((e) => ({
+            rule: 'eslint',
+            fixable: true,
+            message: e,
+            file: checkableFiles[0],
+          })),
+        )
+      }
+      if (result.checkers.typescript?.errors) {
+        issues.push(
+          ...result.checkers.typescript.errors.map((e) => ({
+            rule: 'typescript',
+            fixable: false,
+            message: e,
+            file: checkableFiles[0],
+          })),
+        )
+      }
+
+      const checkResult = {
+        filePath: checkableFiles[0],
+        issues,
+        hasErrors: true,
+        hasWarnings: issues.length > 0,
+        fixable: issues.some((i) => i.fixable),
+      }
+
+      // Let autopilot decide if we should fix automatically
+      const decision = autopilot.decide(checkResult)
+
+      if (options.fix && decision.action === 'FIX_SILENTLY') {
+        // Apply safe fixes
+        const fixResult = await fixer.autoFix(checkableFiles[0], result)
+        if (fixResult.success) {
+          console.log('✅ Auto-fixed safe issues')
+          process.exit(0)
+        }
+      }
+
+      // Show detailed errors
+      const output = reporter.formatForCLI(result)
+      console.error(output)
+      console.error('\n❌ Quality check failed')
+      console.error('Fix the issues above and try again')
       process.exit(1)
     }
 
-    console.log('✅ Pre-commit checks passed')
     process.exit(0)
   } catch (error) {
     console.error(
