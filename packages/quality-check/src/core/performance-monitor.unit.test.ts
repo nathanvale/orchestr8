@@ -288,10 +288,16 @@ describe('PerformanceMonitor', () => {
       const savedPath = await monitor.saveReport(report, 'test-report.json')
 
       expect(mockMkdir).toHaveBeenCalled()
-      expect(mockWriteFile).toHaveBeenCalledWith(
-        expect.stringContaining('test-report.json'),
-        expect.stringContaining('"engine":"typescript"'),
-      )
+
+      // Check that writeFile was called with correct arguments
+      expect(mockWriteFile).toHaveBeenCalled()
+      const [filePath, content] = mockWriteFile.mock.calls[0]
+      expect(filePath).toContain('test-report.json')
+      // The content is a JSON string, check it contains the engine data
+      expect(typeof content).toBe('string')
+      const parsed = JSON.parse(content)
+      expect(parsed.metrics[0].engine).toBe('typescript')
+
       expect(savedPath).toContain('test-report.json')
     })
 

@@ -63,8 +63,14 @@ export class TypeScriptEngine {
         config.files[0],
       )
 
-      // Create incremental program
-      this.createIncrementalProgram(config.files, parsedConfig, configPath)
+      // Create or reuse incremental program
+      if (!this.program) {
+        this.createIncrementalProgram(config.files, parsedConfig, configPath)
+      } else {
+        // Reuse existing program for warm cache performance
+        // Just update the root files if needed
+        this.updateRootFiles(config.files, parsedConfig, configPath)
+      }
 
       // Get diagnostics
       const issues = this.getDiagnostics(config.files, config.token)
@@ -294,6 +300,31 @@ export class TypeScriptEngine {
         // Ignore errors when clearing cache
       }
     }
+  }
+
+  /**
+   * Update root files for existing program
+   */
+  private updateRootFiles(
+    files: string[],
+    parsedConfig: ts.ParsedCommandLine,
+    _configPath: string,
+  ): void {
+    // If the files are the same as last check, no need to recreate
+    const newRootNames = files.map((f) => path.resolve(f))
+    const oldProgram = this.program?.getProgram()
+    const oldRootNames = oldProgram?.getRootFileNames() ?? []
+
+    // Check if root files have changed
+    const filesChanged =
+      newRootNames.length !== oldRootNames.length ||
+      !newRootNames.every((f) => oldRootNames.includes(f))
+
+    if (filesChanged) {
+      // Files changed, need to recreate program
+      this.createIncrementalProgram(files, parsedConfig, _configPath)
+    }
+    // Otherwise reuse existing program for maximum performance
   }
 
   /**

@@ -150,19 +150,31 @@ export class PerformanceMonitor {
       const engineDurations = metrics.map((m) => m.duration).sort((a, b) => a - b)
       const engineSuccess = metrics.filter((m) => m.success).length
 
+      const median =
+        engineDurations.length % 2 === 0
+          ? (engineDurations[engineDurations.length / 2 - 1] +
+              engineDurations[engineDurations.length / 2]) /
+            2
+          : engineDurations[Math.floor(engineDurations.length / 2)]
+
       engineStats[engine] = {
         count: metrics.length,
         avgDuration: engineDurations.reduce((a, b) => a + b, 0) / engineDurations.length,
-        medianDuration: engineDurations[Math.floor(engineDurations.length / 2)],
+        medianDuration: median,
         successRate: (engineSuccess / metrics.length) * 100,
       }
     }
+
+    const overallMedian =
+      durations.length % 2 === 0
+        ? (durations[durations.length / 2 - 1] + durations[durations.length / 2]) / 2
+        : durations[Math.floor(durations.length / 2)]
 
     const report: PerformanceReport = {
       summary: {
         totalDuration,
         avgDuration: durations.reduce((a, b) => a + b, 0) / durations.length,
-        medianDuration: durations[Math.floor(durations.length / 2)],
+        medianDuration: overallMedian,
         minDuration: durations[0],
         maxDuration: durations[durations.length - 1],
         successRate: (successCount / this.metrics.length) * 100,
