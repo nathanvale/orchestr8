@@ -1,10 +1,10 @@
-import * as ts from 'typescript'
-import * as path from 'node:path'
 import * as fs from 'node:fs'
 import * as os from 'node:os'
-import type { Issue, CheckerResult } from '../types/issue-types'
-import { ToolMissingError, FileError } from '../core/errors'
+import * as path from 'node:path'
+import * as ts from 'typescript'
+import { FileError, ToolMissingError } from '../core/errors'
 import type { CancellationToken } from '../core/timeout-manager'
+import type { CheckerResult, Issue } from '../types/issue-types'
 
 /**
  * TypeScript engine configuration
@@ -294,5 +294,12 @@ export class TypeScriptEngine {
         // Ignore errors when clearing cache
       }
     }
+  }
+
+  /**
+   * Check if the engine has cached compilation state
+   */
+  hasCacheState(): boolean {
+    return this.program !== undefined
   }
 }

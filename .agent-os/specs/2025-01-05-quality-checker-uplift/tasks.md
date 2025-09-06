@@ -80,6 +80,7 @@ Upgrade the Quality Checker to implement TypeScript 5.7+ file-scoped incremental
   - [x] Add `--typescript-cache-dir` and `--eslint-cache-dir` options
   - [x] Add `--since` and `--staged` git integration options (sequential expansion)
   - [x] Ensure backward compatibility with existing options
+  - [ ] Remove legacy CLI client and make CLI-V2 to standard (rename it to cli.ts)
 
 - [ ] **Task 3.2: Ensure Facade Compatibility**
   - [ ] Verify API facade (`src/facades/api.ts`) maintains existing signatures

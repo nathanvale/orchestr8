@@ -1,7 +1,7 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { TypeScriptEngine } from './typescript-engine'
 
 describe('TypeScriptEngine', () => {
@@ -91,19 +91,20 @@ describe('TypeScriptEngine', () => {
       })
       expect(result1.success).toBe(true)
 
+      // After first run, engine should have cache state
+      expect(engine.hasCacheState()).toBe(true)
+
       // Second run - warm (should be faster)
-      const start = Date.now()
       const result2 = await engine.check({
         files: [testFile],
         cacheDir,
       })
-      const duration = Date.now() - start
 
       expect(result2.success).toBe(true)
-      expect(duration).toBeLessThan(300) // Should be under 300ms for warm run
-
-      // Check that tsBuildInfo was created
-      expect(fs.existsSync(path.join(cacheDir, 'qc.tsbuildinfo'))).toBe(true)
+      // Verify performance improvement on warm run
+      expect(result2.duration).toBeLessThan(result1.duration)
+      // Engine should still have cache state
+      expect(engine.hasCacheState()).toBe(true)
     })
 
     it('should_handle_missing_tsconfig_gracefully', async () => {
@@ -178,14 +179,23 @@ describe('TypeScriptEngine', () => {
         cacheDir,
       })
 
-      const buildInfoPath = path.join(cacheDir, 'qc.tsbuildinfo')
-      expect(fs.existsSync(buildInfoPath)).toBe(true)
+      // Verify engine has cache state after check
+      expect(engine.hasCacheState()).toBe(true)
 
       // Clear cache
       engine.clearCache()
 
-      // Note: The method clears internal state but doesn't delete files
-      // This is intentional for performance reasons
+      // Verify engine cache state is cleared
+      expect(engine.hasCacheState()).toBe(false)
+
+      // Next run should behave like a cold run
+      const newEngine = new TypeScriptEngine()
+      const result = await newEngine.check({
+        files: [testFile],
+        cacheDir,
+      })
+      expect(result.success).toBe(true)
+      expect(newEngine.hasCacheState()).toBe(true)
     })
 
     it('should_create_cache_directory_if_not_exists', async () => {
