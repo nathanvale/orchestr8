@@ -35,6 +35,20 @@ Before reading further, confirm you understand:
 - [ ] I will use TodoWrite for progress tracking
 - [ ] I understand violations cause failure
 
+### Sequential Execution Rule
+```
+ENFORCEMENT: Phases MUST be completed sequentially:
+- Phase 1 (Setup): Complete ALL steps → FULL STOP → Validate
+- Phase 2 (Implementation): Execute tasks → FULL STOP → Validate  
+- Phase 3 (Post-execution): Finalize → FULL STOP → Complete
+
+VIOLATION PROTOCOL: If you skip a phase boundary validation:
+1. IMMEDIATELY output: "CHECKPOINT VIOLATION DETECTED"
+2. STOP all current work
+3. Return to last validated checkpoint
+4. Re-execute from that point
+```
+
 <pre_flight_check>
 EXECUTE: @.agent-os/instructions/meta/pre-flight.md
 </pre_flight_check>
@@ -166,6 +180,58 @@ IMPLEMENTATION NOTE: If subagent doesn't exist:
 
 </step>
 
+## 🛑 MANDATORY PHASE 1 COMPLETION GATE 🛑
+
+<phase_1_validation enforcement="BLOCKING">
+
+### Phase 1 Exit Validation
+
+**CRITICAL**: You MUST output the following validation BEFORE proceeding to Phase 2.
+
+<mandatory_output>
+You MUST output EXACTLY this format:
+
+```
+=== PHASE 1 COMPLETION VALIDATION ===
+
+Step 1 - Task Assignment:
+✅ TodoWrite used: [Yes/No - specify number of tasks created]
+✅ Tasks identified: [List the specific tasks]
+✅ User confirmation: [Yes/No - quote user's response]
+
+Step 2 - Context Analysis:
+✅ Files loaded: [List each file loaded]
+✅ Context understood: [Yes/No]
+✅ Technical requirements: [Briefly state key requirements]
+
+Step 3 - Git Branch:
+✅ Current branch: [State branch name]
+✅ Branch correct: [Yes/No]
+✅ Working tree: [Clean/Has changes]
+
+TodoWrite Status:
+✅ Task list active: [Yes/No - show current in_progress task]
+✅ Total tasks: [Number]
+
+ALL CHECKS PASSED: [Yes/No]
+=== VALIDATION COMPLETE ===
+```
+</mandatory_output>
+
+<enforcement_rules>
+IF output != mandatory_output format:
+  ERROR: "Phase 1 validation incomplete"
+  ACTION: DO NOT proceed to Phase 2
+  REQUIREMENT: Complete validation output first
+
+IF "ALL CHECKS PASSED" != "Yes":
+  ERROR: "Phase 1 has incomplete items"  
+  ACTION: Return to incomplete step
+  REQUIREMENT: Complete ALL Phase 1 steps before proceeding
+</enforcement_rules>
+
+</phase_1_validation>
+
 ## Phase 2: Task Execution Loop
 
 <step number="4" name="task_execution_loop">
@@ -173,15 +239,43 @@ IMPLEMENTATION NOTE: If subagent doesn't exist:
 ### Step 4: Task Execution Loop
 
 #### 🔒 PHASE 2 ENTRY VALIDATION 🔒
-```
-STOP AND VERIFY:
-☑ Phase 1 Step 1: Task assignment complete? 
-☑ Phase 1 Step 2: Context loaded?
-☑ Phase 1 Step 3: Git branch ready?
-☑ TodoWrite: Task list created and active?
 
-IF ANY UNCHECKED: GO BACK TO INCOMPLETE STEP
+<implementation_gate enforcement="MANDATORY">
+
+**STOP**: Before ANY implementation code (Write, Edit, MultiEdit, Bash modifications):
+
+<required_validation>
+You MUST output this EXACT validation:
+
 ```
+=== PHASE 2 ENTRY CHECKPOINT ===
+[ ] Phase 1 Validation Output Complete
+[ ] Todo List Shows Task In Progress  
+[ ] Context Files Accessible
+[ ] Implementation Plan Clear
+
+PROCEEDING TO IMPLEMENTATION: [Yes/No]
+=== CHECKPOINT PASSED ===
+```
+
+ONLY after outputting the above with "PROCEEDING TO IMPLEMENTATION: Yes" may you:
+- Write any files
+- Edit any code
+- Run modifying commands
+- Create directories
+- Execute implementation tasks
+</required_validation>
+
+<violation_detection>
+IF you start coding without the checkpoint output:
+1. IMMEDIATELY STOP
+2. Output: "CHECKPOINT VIOLATION - Rolling back to Phase 2 entry"
+3. Delete/revert any changes made
+4. Output the required validation
+5. Only then proceed with implementation
+</violation_detection>
+
+</implementation_gate>
 
 **CRITICAL**: This is an iterative loop. You MUST execute ALL assigned tasks completely before moving to Phase 3.
 
