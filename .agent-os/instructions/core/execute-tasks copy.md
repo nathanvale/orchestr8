@@ -12,53 +12,19 @@ encoding: UTF-8
 
 Execute tasks for a given spec following three MANDATORY sequential phases.
 
-### 📋 EXECUTION TREE (Pre-compile before starting)
-
-```
-execute-tasks.md
-├─ Phase 1: Pre-Execution Setup
-│  ├─ Step 1: Task Assignment (TodoWrite required)
-│  ├─ Step 2: Context Analysis
-│  └─ Step 3: Git Branch Management
-├─ Phase 2: Task Execution Loop
-│  └─ Step 4: FOR EACH task
-│     └─ LOAD & EXECUTE: execute-task.md (7 steps)
-│        ├─ Steps 1-4: Setup & validation
-│        └─ Step 5-7: Execution & status
-└─ Phase 3: Post-Execution Tasks
-   └─ Step 5: LOAD & EXECUTE: post-execution-tasks.md
-      ├─ Step 1: Run full test suite
-      ├─ Step 2: Git workflow (commit, push, PR)
-      ├─ Step 3: Verify tasks complete
-      ├─ Step 4: Update roadmap (if applicable)
-      ├─ Step 5: Create recap document
-      ├─ Step 6: Generate completion summary
-      └─ Step 7: Play notification sound
-```
-
 ### ⛔ PROCESS ENFORCEMENT RULES ⛔
 
 ```
 RULE 1: You CANNOT proceed to Phase 2 until ALL Phase 1 steps are COMPLETE
 RULE 2: You CANNOT proceed to Phase 3 until ALL Phase 2 tasks are COMPLETE
 RULE 3: You CANNOT end this command until Phase 3 is COMPLETE
-RULE 4: You MUST use TodoWrite to track ALL task progress INCLUDING nested steps
+RULE 4: You MUST use TodoWrite to track ALL task progress
 RULE 5: Skipping ANY step requires EXPLICIT user override
-RULE 6: When you see "LOAD:", you MUST load AND execute ALL steps from that file
 
 VIOLATION CONSEQUENCE: Task execution will FAIL and require full restart
 ```
 
-### 📚 INSTRUCTION STACK TRACKING
-
-Maintain this mental model throughout execution:
-
-```
-Current Stack: [track your position here]
-Example: execute-tasks.md → Step 4 → execute-task.md → Step 5
-```
-
-### Phase Structure
+### Phase Structure:
 
 1. **Pre-execution setup** (Steps 1-3) - Setup and validation
 2. **Task execution loop** (Step 4) - Implementation work
@@ -151,17 +117,18 @@ IMPLEMENTATION NOTE: If subagent doesn't exist:
 
 <instructions>
   1. LOAD CONTEXT (use Read tool if no subagent):
-
+     
      REQUEST 1: "Load the spec tasks.md file from [SPEC_PATH]/tasks.md"
-
+     
      REQUEST 2 (if not in context): "Get product pitch from @.agent-os/product/mission-lite.md"
-
+     
      REQUEST 3 (if not in context): "Get spec summary from [SPEC_PATH]/spec-lite.md"
-
+     
      REQUEST 4 (if not in context): "Get technical approach from [SPEC_PATH]/sub-specs/technical-spec.md"
-
-2. WAIT: For subagent to return all requested information
-3. VERIFY: Essential context loaded successfully </instructions>
+  
+  2. WAIT: For subagent to return all requested information
+  3. VERIFY: Essential context loaded successfully
+</instructions>
 
 <context_requirements> <mandatory> - tasks.md (MUST exist and be loaded)
 </mandatory> <optional> - mission-lite.md (load if exists) - spec-lite.md (load
@@ -362,30 +329,7 @@ IF ANY = N: STOP AND RESTART STEP 4
 
 <execution_algorithm>
 
-### 🔍 NESTED INSTRUCTION DETECTION MIDDLEWARE
-
-```
-IF instruction contains "LOAD:" or "EXECUTE:":
-   🔴 STOP - NESTED INSTRUCTION DETECTED
-   Current file: execute-tasks.md
-   Target file: execute-task.md
-   Current position: Step 4, inside task loop
-   Action Required: MUST load AND execute ALL 7 steps
-   Execution Mode: INLINE (not deferred)
-```
-
 1. LOAD (once): @.agent-os/instructions/core/execute-task.md
-
-   <!-- MANDATORY LOAD CONFIRMATION -->
-
-   OUTPUT:
-
-   ```
-   📚 INSTRUCTION STACK UPDATE:
-   Level 1: execute-tasks.md (Step 4 - Task Loop)
-   Level 2: Loading execute-task.md (7 steps detected)
-   Execution: Will execute ALL 7 steps for EACH task
-   ```
 
 2. SET: assigned_tasks = tasks from Step 1
 3. SET: current_index = 0
@@ -400,16 +344,14 @@ IF instruction contains "LOAD:" or "EXECUTE:":
    === LOOP PROGRESS ===
    Task [current_index + 1] of [length(assigned_tasks)]: STARTING
    Task Description: [current_task.description]
-   📚 Stack: execute-tasks.md → Step 4 → execute-task.md
    - Loading execute-task.md...
-   - Will execute ALL 7 steps from execute-task.md
+   - Executing 7-step process...
    ```
 
-   a. GET: current_task = assigned_tasks[current_index] b. EXECUTE: ALL 7 steps
+   a. GET: current_task = assigned_tasks[current_index] b. EXECUTE: Instructions
    from execute-task.md with:
    - parent_task_number = current_task.number
-   - subtasks = current_task.subtasks
-   - INCLUDING Step 5 if it loads another file c. WAIT: Until ALL 7 steps
+   - subtasks = current_task.subtasks c. WAIT: Until current_task is fully
      complete d. UPDATE: tasks.md to mark current_task as "✓ Completed"
 
    <!-- MANDATORY COMPLETION OUTPUT -->
@@ -481,73 +423,24 @@ progress, await user guidance </error_exit> </loop_termination>
 **MANDATORY**: This phase MUST be executed. Never end without completing these
 steps.
 
-#### 🔍 NESTED INSTRUCTION DETECTION - PHASE 3
-
-```
-🔴 ATTENTION: This step contains "LOAD:" instruction
-Current position: execute-tasks.md → Step 5 (Phase 3)
-Target file: post-execution-tasks.md
-Action Required: MUST load AND execute ALL 7 steps
-Execution Mode: IMMEDIATE (not deferred)
-```
-
-<pre_step_5_gate enforcement="MANDATORY">
-
-You MUST output this before proceeding:
-
-```
-=== PHASE 3 ENTRY - NESTED INSTRUCTION CHECKPOINT ===
-📚 INSTRUCTION STACK:
-  Level 1: execute-tasks.md (Step 5 - Post-Execution)
-  Level 2: About to LOAD post-execution-tasks.md
-
-Confirm Understanding:
-[ ] I will LOAD post-execution-tasks.md NOW
-[ ] I will EXECUTE ALL 7 steps from that file
-[ ] I will NOT defer this to later
-[ ] These steps happen INSIDE Step 5, not after
-
-PROCEEDING WITH NESTED EXECUTION: [Yes/No]
-=== CHECKPOINT CONFIRMED ===
-```
-
-</pre_step_5_gate>
-
-<instructions>
+Please update my context, my executeTasksMD to implement this.<instructions>
   1. LOAD: @.agent-os/instructions/core/post-execution-tasks.md
-
-     OUTPUT AFTER LOADING:
-     ```
-     📚 LOADED: post-execution-tasks.md
-     Steps detected: 7
-     Now executing ALL steps sequentially...
-     ```
-
-2. EXECUTE: Every step in post-execution-tasks.md process_flow sequentially:
-
-- Step 1: Run full test suite
-- Step 2: Execute git workflow (commit, push, PR)
-- Step 3: Verify all tasks marked complete
-- Step 4: Update roadmap if applicable
-- Step 5: Create recap document
-- Step 6: Generate completion summary
-- Step 7: Play notification sound
-
-3. TRACK progress with TodoWrite:
-
-   ```
-   todos.push("Post-execution Step 1: Run tests")
-   todos.push("Post-execution Step 2: Git workflow")
-   todos.push("Post-execution Step 3: Verify tasks")
-   // ... etc for all 7 steps
-   ```
-
-4. WAIT: For each step to complete before proceeding to next
-
-5. VERIFY: All post-execution steps completed successfully
-
-6. REPORT: "Task execution complete. All phases finished successfully."
-   </instructions>
+  
+  2. EXECUTE: Every step in post-execution-tasks.md process_flow sequentially:
+     - Step 1: Run full test suite
+     - Step 2: Execute git workflow (commit, push, PR)
+     - Step 3: Verify all tasks marked complete
+     - Step 4: Update roadmap if applicable
+     - Step 5: Create recap document
+     - Step 6: Generate completion summary
+     - Step 7: Play notification sound
+  
+  3. WAIT: For each step to complete before proceeding to next
+  
+  4. VERIFY: All post-execution steps completed successfully
+  
+  5. REPORT: "Task execution complete. All phases finished successfully."
+</instructions>
 
 <completion_checklist> □ All assigned tasks executed □ Tests run and passing □
 Code committed and pushed □ Pull request created □ Tasks marked complete in
@@ -557,44 +450,6 @@ generated □ Notification played </completion_checklist>
 </step>
 
 </process_flow>
-
-## 🏁 FINAL EXECUTION VALIDATION
-
-<final_validation enforcement="MANDATORY">
-
-Before completing, you MUST output this comprehensive validation:
-
-```
-=== FINAL EXECUTION VALIDATION ===
-
-📋 INSTRUCTION EXECUTION AUDIT:
-✅ execute-tasks.md loaded and executed: Yes
-✅ execute-task.md loaded in Step 4: [Yes/No]
-✅ execute-task.md ALL 7 steps executed: [Yes/No]
-✅ post-execution-tasks.md loaded in Step 5: [Yes/No]
-✅ post-execution-tasks.md ALL 7 steps executed: [Yes/No]
-
-📚 NESTED INSTRUCTIONS TRACKING:
-- Total LOAD instructions encountered: [N]
-- Total files loaded and executed: [N]
-- Nested instructions missed: [0 or list them]
-
-✅ PHASE COMPLETION:
-- Phase 1 (Pre-execution): Complete
-- Phase 2 (Task execution): Complete
-- Phase 3 (Post-execution): Complete
-
-🎯 EXECUTION RESULT:
-ALL INSTRUCTIONS EXECUTED: [Yes/No]
-ANY STEPS SKIPPED: [No or list them]
-
-=== VALIDATION COMPLETE ===
-```
-
-IF "ALL INSTRUCTIONS EXECUTED" != "Yes": ERROR: "Incomplete execution detected"
-ACTION: Return to missed step REQUIREMENT: Complete ALL steps before finishing
-
-</final_validation>
 
 <post_flight_check> EXECUTE: @.agent-os/instructions/meta/post-flight.md
 </post_flight_check>
