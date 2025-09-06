@@ -2,13 +2,13 @@
 
 ## Tasks
 
-- [ ] 1. Migrate Claude facade to QualityCheckerV2 architecture
-  - [ ] 1.1 Write tests for Claude facade V2 integration
-  - [ ] 1.2 Update Claude facade to import and use QualityCheckerV2
-  - [ ] 1.3 Modify result processing to handle structured Issue[] format
-  - [ ] 1.4 Update extractIssuesFromQualityResult to work with new format
-  - [ ] 1.5 Ensure backward compatibility with existing hook payloads
-  - [ ] 1.6 Verify all facade tests pass
+- [x] 1. Migrate Claude facade to QualityCheckerV2 architecture
+  - [x] 1.1 Write tests for Claude facade V2 integration
+  - [x] 1.2 Update Claude facade to import and use QualityCheckerV2
+  - [x] 1.3 Modify result processing to handle structured Issue[] format
+  - [x] 1.4 Update extractIssuesFromQualityResult to work with new format
+  - [x] 1.5 Ensure backward compatibility with existing hook payloads
+  - [x] 1.6 Verify all facade tests pass
 
 - [ ] 2. Create Claude-optimized formatter for structured output
   - [ ] 2.1 Write tests for ClaudeFormatter class
