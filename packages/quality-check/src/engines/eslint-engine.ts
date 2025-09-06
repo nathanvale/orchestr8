@@ -124,6 +124,10 @@ export class ESLintEngine {
     format: 'stylish' | 'json' = 'stylish',
   ): Promise<string> {
     if (!this.eslint) {
+      // If no eslint instance, return proper format
+      if (format === 'json') {
+        return JSON.stringify(results)
+      }
       return ''
     }
 

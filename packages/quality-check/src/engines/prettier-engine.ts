@@ -198,7 +198,9 @@ export class PrettierEngine {
    */
   async isConfigured(): Promise<boolean> {
     try {
-      const config = await prettier.resolveConfig(this.cwd)
+      // Check for a sample JS file in the cwd
+      const testPath = path.join(this.cwd, 'test.js')
+      const config = await prettier.resolveConfig(testPath)
       return config !== null
     } catch {
       return false

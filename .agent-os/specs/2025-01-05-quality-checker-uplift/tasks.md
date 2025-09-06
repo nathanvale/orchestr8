@@ -48,14 +48,14 @@ Upgrade the Quality Checker to implement TypeScript 5.7+ file-scoped incremental
   - [x] Implement flat config support (`eslint.config.js`)
   - [x] Enable built-in caching mechanism
   - [x] Add programmatic linting via `eslint.lintFiles()`
-  - [ ] Write unit tests for ESLint engine
+  - [x] Write unit tests for ESLint engine
 
 - [x] **Task 1.3: Create Prettier Engine**
   - [x] Create `src/engines/prettier-engine.ts` with Prettier Node API
   - [x] Implement `prettier.check()` and `prettier.format()` methods
   - [x] Add `prettier.resolveConfig()` for per-file configuration
   - [x] Respect `.prettierignore` via `prettier.getFileInfo()`
-  - [ ] Write unit tests for Prettier engine
+  - [x] Write unit tests for Prettier engine
 
 #### Phase 2: Output Formatting & Integration
 
@@ -63,7 +63,7 @@ Upgrade the Quality Checker to implement TypeScript 5.7+ file-scoped incremental
   - [x] Create `src/formatters/stylish-formatter.ts` with ESLint-style output
   - [x] Create `src/formatters/json-formatter.ts` with structured Issue objects
   - [x] Create `src/formatters/aggregator.ts` to normalize results across engines
-  - [ ] Write unit tests for all formatters
+  - [x] Write unit tests for all formatters
 
 - [x] **Task 2.2: Update QualityChecker Coordinator**
   - [x] Refactor `src/core/quality-checker.ts` to use new engines
@@ -80,13 +80,13 @@ Upgrade the Quality Checker to implement TypeScript 5.7+ file-scoped incremental
   - [x] Add `--typescript-cache-dir` and `--eslint-cache-dir` options
   - [x] Add `--since` and `--staged` git integration options (sequential expansion)
   - [x] Ensure backward compatibility with existing options
-  - [ ] Remove legacy CLI client and make CLI-V2 to standard (rename it to cli.ts)
+  - [x] Remove legacy CLI client and make CLI-V2 to standard (rename it to cli.ts)
 
-- [ ] **Task 3.2: Ensure Facade Compatibility**
-  - [ ] Verify API facade (`src/facades/api.ts`) maintains existing signatures
-  - [ ] Test Claude hook facade (`src/facades/claude.ts`) continues functioning
-  - [ ] Validate pre-commit hook (`src/facades/git-hook.ts`) works without changes
-  - [ ] Update type definitions in `src/types.ts`
+- [x] **Task 3.2: Ensure Facade Compatibility**
+  - [x] Verify API facade (`src/facades/api.ts`) maintains existing signatures
+  - [x] Test Claude hook facade (`src/facades/claude.ts`) continues functioning
+  - [x] Validate pre-commit hook (`src/facades/git-hook.ts`) works without changes
+  - [x] Update type definitions in `src/types.ts`
 
 #### Phase 4: Testing & Optimization
 

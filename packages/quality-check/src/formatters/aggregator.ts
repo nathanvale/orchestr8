@@ -55,12 +55,16 @@ export class ResultAggregator {
     const timestamp = new Date().toISOString()
     const isWarm = process.env.QC_WARM_RUN === 'true'
 
+    let totalIssues = 0
+    const fileSet = new Set<string>()
+
     const metrics: PerfMetrics = {
       timestamp,
       type: isWarm ? 'warm' : 'cold',
       durationMs: totalDuration,
       engines: {},
       issueCount: 0,
+      fileCount: 0,
     }
 
     // Add engine-specific metrics
@@ -73,10 +77,56 @@ export class ResultAggregator {
         issueCount: result.issues.length,
       }
 
-      metrics.issueCount! += result.issues.length
+      // Count issues
+      totalIssues += result.issues.length
+
+      // Count unique files
+      for (const issue of result.issues) {
+        fileSet.add(issue.file)
+      }
     }
 
+    metrics.issueCount = totalIssues
+    metrics.fileCount = fileSet.size
+
+    // Add extended metrics as a separate property if needed
+    const extendedMetrics = this.getExtendedMetrics(results)
+    Object.assign(metrics, { extended: extendedMetrics })
+
     return metrics
+  }
+
+  /**
+   * Get extended metrics for testing purposes
+   */
+  private getExtendedMetrics(results: Map<string, CheckerResult>) {
+    let errorCount = 0
+    let warningCount = 0
+    let infoCount = 0
+    let fixableCount = 0
+    let fixedCount = 0
+
+    for (const [_engine, result] of results) {
+      // Count by severity
+      for (const issue of result.issues) {
+        if (issue.severity === 'error') errorCount++
+        else if (issue.severity === 'warning') warningCount++
+        else if (issue.severity === 'info') infoCount++
+      }
+
+      // Count fixable/fixed
+      if (result.fixable) fixableCount++
+      if (result.fixedCount) fixedCount += result.fixedCount
+    }
+
+    return {
+      errorCount,
+      warningCount,
+      infoCount,
+      engineCount: results.size,
+      fixableCount,
+      fixedCount,
+    }
   }
 
   /**
@@ -193,5 +243,22 @@ export class ResultAggregator {
       bySeverity,
       byFile,
     }
+  }
+
+  /**
+   * Group issues by file
+   */
+  groupByFile(issues: Issue[]): Map<string, Issue[]> {
+    const groups = new Map<string, Issue[]>()
+
+    for (const issue of issues) {
+      const file = issue.file
+      if (!groups.has(file)) {
+        groups.set(file, [])
+      }
+      groups.get(file)!.push(issue)
+    }
+
+    return groups
   }
 }
