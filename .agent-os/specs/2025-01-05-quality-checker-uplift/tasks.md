@@ -10,13 +10,13 @@
   - [x] 1.5 Ensure backward compatibility with existing hook payloads
   - [x] 1.6 Verify all facade tests pass
 
-- [ ] 2. Create Claude-optimized formatter for structured output
-  - [ ] 2.1 Write tests for ClaudeFormatter class
-  - [ ] 2.2 Implement ClaudeFormatter with XML-based prompt engineering format
-  - [ ] 2.3 Add support for TypeScript, ESLint, and Prettier error formatting
-  - [ ] 2.4 Include file paths, line/column numbers, and error codes
-  - [ ] 2.5 Create helper methods for different error severity levels
-  - [ ] 2.6 Verify formatter outputs are properly structured for Claude
+- [x] 2. Create Claude-optimized formatter for structured output
+  - [x] 2.1 Write tests for ClaudeFormatter class
+  - [x] 2.2 Implement ClaudeFormatter with XML-based prompt engineering format
+  - [x] 2.3 Add support for TypeScript, ESLint, and Prettier error formatting
+  - [x] 2.4 Include file paths, line/column numbers, and error codes
+  - [x] 2.5 Create helper methods for different error severity levels
+  - [x] 2.6 Verify formatter outputs are properly structured for Claude
 
 - [ ] 3. Enhance issue reporter for better Claude integration
   - [ ] 3.1 Write tests for updated formatForClaude method
