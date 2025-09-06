@@ -91,30 +91,30 @@ Upgrade the Quality Checker to implement TypeScript 5.7+ file-scoped incremental
 #### Phase 4: Testing & Optimization
 
 - [x] **Task 4.1: Write Comprehensive Tests** (Partial)
-  - [ ] Create integration tests with fixture repositories
-  - [ ] Add performance benchmarks for cold vs warm runs
-  - [ ] Create CI/CD pipeline tests with JSON output validation
+  - [x] Create integration tests with fixture repositories
+  - [x] Add performance benchmarks for cold vs warm runs
+  - [x] Create CI/CD pipeline tests with JSON output validation
   - [x] Add edge case tests for missing tools and error conditions
 
-- [x] **Task 4.2: Performance Optimization** (Partial)
+- [x] **Task 4.2: Performance Optimization**
   - [x] Optimize TypeScript cache persistence
   - [x] Batch Prettier file I/O operations
   - [x] Verify median warm performance ≤300ms for single files
-  - [ ] Create performance monitoring and reporting
+  - [x] Create performance monitoring and reporting
 
 #### Phase 5: Documentation & Deployment
 
-- [ ] **Task 5.1: Update Documentation**
-  - [ ] Update README.md with new features and options
-  - [ ] Create migration guide for ESLint v9 flat config
-  - [ ] Document performance tuning options
-  - [ ] Add CI/CD integration examples
+- [x] **Task 5.1: Update Documentation**
+  - [x] Update README.md with new features and options
+  - [x] Create migration guide for ESLint v9 flat config
+  - [x] Document performance tuning options
+  - [x] Add CI/CD integration examples
 
-- [ ] **Task 5.2: Final Validation**
-  - [ ] Run full test suite with all changes
-  - [ ] Verify all existing facades work without breaking changes
-  - [ ] Test in sample projects with different configurations
-  - [ ] Ensure exit codes match specification (0=ok, 1=issues, 2=error)
+- [x] **Task 5.2: Final Validation**
+  - [x] Run full test suite with all changes
+  - [x] Verify all existing facades work without breaking changes
+  - [x] Test in sample projects with different configurations
+  - [x] Ensure exit codes match specification (0=ok, 1=issues, 2=error)
 
 ## Success Criteria
 

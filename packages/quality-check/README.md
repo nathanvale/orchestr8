@@ -6,18 +6,19 @@ feedback and zero configuration complexity.
 
 ## Features
 
-- ⚡ **Sub-2s Performance** - All checks complete in under 2 seconds
-- 🔄 **Parallel Execution** - Run ESLint, Prettier, and TypeScript checks
-  simultaneously
+- ⚡ **Sub-300ms Warm Performance** - TypeScript 5.7+ incremental compilation with persistent cache
+- 🔄 **Parallel Execution** - Run ESLint, Prettier, and TypeScript checks simultaneously
 - 🛡️ **Atomic File Operations** - Safe auto-fixes with backup/restore capability
-- 🔍 **Smart Auto-Detection** - Automatically detects Claude Code hook mode via
-  stdin
+- 🔍 **Smart Auto-Detection** - Automatically detects Claude Code hook mode via stdin
 - 📊 **Correlation IDs** - Track operations across the validation pipeline
-- 🎯 **Exit Code Strategy** - Clear communication via standardized exit codes
-- 🚀 **Zero Global Install** - Works directly with `npx` - no PATH configuration
-  needed
-- 🏗️ **Three-Tier System** - Progressive quality enforcement (pre-commit,
-  Claude, CI/CD)
+- 🎯 **Exit Code Strategy** - Clear communication via standardized exit codes (0=ok, 1=issues, 2=error)
+- 🚀 **Zero Global Install** - Works directly with `npx` - no PATH configuration needed
+- 🏗️ **Three-Tier System** - Progressive quality enforcement (pre-commit, Claude, CI/CD)
+- 📋 **JSON Output Mode** - Structured output for CI/CD integration
+- 🎨 **Stylish Formatter** - ESLint-style human-readable output
+- 🚄 **ESLint v9 Support** - Flat config support with built-in caching
+- 💅 **Prettier Node API** - Direct API integration for maximum performance
+- 📈 **Performance Monitoring** - Built-in performance tracking and reporting
 
 ## Installation
 
@@ -127,32 +128,33 @@ console.log(result)
 
 ## Command Line Options
 
-| Option              | Description                                 | Default |
-| ------------------- | ------------------------------------------- | ------- |
-| `--file, -f <path>` | Check a specific file                       | -       |
-| `--fix`             | Enable auto-fix for ESLint and Prettier     | `false` |
-| `--no-eslint`       | Skip ESLint checks                          | `false` |
-| `--no-prettier`     | Skip Prettier checks                        | `false` |
-| `--no-typescript`   | Skip TypeScript checks                      | `false` |
-| `--debug`           | Enable debug logging                        | `false` |
-| `--silent`          | Suppress output                             | `false` |
-| `--sequential`      | Run checks sequentially instead of parallel | `false` |
-| `--timeout <ms>`    | Set timeout in milliseconds                 | `5000`  |
-| `--help, -h`        | Show help message                           | -       |
+| Option                    | Description                                 | Default    |
+| ------------------------- | ------------------------------------------- | ---------- |
+| `--file, -f <path>`       | Check a specific file                       | -          |
+| `--fix`                   | Enable auto-fix for ESLint and Prettier     | `false`    |
+| `--no-eslint`             | Skip ESLint checks                          | `false`    |
+| `--no-prettier`           | Skip Prettier checks                        | `false`    |
+| `--no-typescript`         | Skip TypeScript checks                      | `false`    |
+| `--debug`                 | Enable debug logging                        | `false`    |
+| `--silent`                | Suppress output                             | `false`    |
+| `--sequential`            | Run checks sequentially instead of parallel | `false`    |
+| `--timeout <ms>`          | Set timeout in milliseconds                 | `3000`     |
+| `--format <type>`         | Output format: stylish or json              | `stylish`  |
+| `--staged`                | Check only staged files (git)               | `false`    |
+| `--since <ref>`           | Check files changed since git ref           | -          |
+| `--typescript-cache-dir`  | TypeScript cache directory                  | OS temp    |
+| `--eslint-cache-dir`      | ESLint cache directory                      | `.cache`   |
+| `--help, -h`              | Show help message                           | -          |
 
 ## Exit Codes
 
 The package uses standardized exit codes for clear communication:
 
-| Code  | Description                 |
-| ----- | --------------------------- |
-| `0`   | Success - all checks passed |
-| `1`   | General error               |
-| `2`   | ESLint errors found         |
-| `3`   | Prettier errors found       |
-| `4`   | TypeScript errors found     |
-| `5`   | Multiple checker errors     |
-| `124` | Timeout exceeded            |
+| Code | Description                               |
+| ---- | ----------------------------------------- |
+| `0`  | Success - all checks passed              |
+| `1`  | Issues found (linting/formatting errors) |
+| `2`  | Internal error or misconfiguration       |
 
 ## Hook Payload Formats
 
@@ -179,18 +181,38 @@ The package supports both modern and legacy Claude Code payload formats:
 
 ## Performance
 
-All quality checks are optimized to complete within 2 seconds:
+All quality checks are optimized for sub-300ms warm performance:
 
-- **ESLint**: Multithread linting with v9.34+ for 30-60% performance boost
-- **Prettier**: Content-based caching to minimize redundant operations
-- **TypeScript**: Leverages Node.js 22 compile cache for 2.5x faster checking
+- **TypeScript 5.7+**: File-scoped incremental compilation with persistent tsBuildInfo cache
+- **ESLint v9**: Flat config support with built-in caching mechanism
+- **Prettier Node API**: Direct API integration with resolveConfig() and format()
 - **Parallel Execution**: All checkers run simultaneously by default
 
 Typical execution times:
 
-- Single file: ~500-900ms
-- With all three checkers: <1.5s
-- With auto-fix enabled: <2s
+- Cold run (first check): ~500-900ms
+- Warm run (with cache): <300ms median
+- With all three checkers: <500ms warm
+- With auto-fix enabled: <600ms warm
+
+### Performance Monitoring
+
+The package includes built-in performance monitoring:
+
+```typescript
+import { PerformanceMonitor } from '@template/quality-check'
+
+const monitor = new PerformanceMonitor()
+monitor.startSession()
+
+// Track operations
+await monitor.trackOperation('typescript', 'check', async () => {
+  // Your check operation
+})
+
+const report = monitor.generateReport()
+monitor.printSummary(report)
+```
 
 ## Security Features
 
@@ -220,8 +242,11 @@ pipeline.
 ## Requirements
 
 - Node.js 18+
-- ESLint, Prettier, and/or TypeScript installed in your project (optional -
-  checks are skipped if not found)
+- TypeScript 5.7+ (for incremental compilation features)
+- ESLint 9.0+ (for flat config support)
+- Prettier 3.3+ (already compatible)
+
+Checks are gracefully skipped if tools are not found.
 
 ## Three-Tier Quality System
 

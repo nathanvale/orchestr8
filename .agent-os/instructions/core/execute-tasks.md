@@ -238,6 +238,33 @@ IF "ALL CHECKS PASSED" != "Yes":
 
 ### Step 4: Task Execution Loop
 
+#### 🔴 CRITICAL MANDATORY LOOP 🔴
+#### ⚠️ FAILURE TO EXECUTE THIS LOOP = COMPLETE RESTART ⚠️
+#### YOU MUST EXECUTE THE FOLLOWING LOOP OR THE ENTIRE PROCESS FAILS
+
+<pre_loop_commitment_gate enforcement="MANDATORY">
+
+### LOOP COMMITMENT GATE - REQUIRED OUTPUT
+
+You MUST output this EXACT commitment before proceeding:
+
+```
+=== LOOP COMMITMENT GATE ===
+I ACKNOWLEDGE: I must execute EACH task using execute-task.md
+TASK COUNT: [N] tasks to process
+LOOP STRUCTURE: FOR i=0 to N-1: LOAD execute-task.md → EXECUTE → COMPLETE
+CONFIRMED: I will NOT skip to implementation
+CONFIRMED: I will follow the 7-step process in execute-task.md for EACH task
+=== GATE CONFIRMED ===
+```
+
+IF you do not output this commitment:
+- ERROR: "LOOP COMMITMENT MISSING"
+- ACTION: HALT all execution
+- REQUIREMENT: Output commitment before continuing
+
+</pre_loop_commitment_gate>
+
 #### 🔒 PHASE 2 ENTRY VALIDATION 🔒
 
 <implementation_gate enforcement="MANDATORY">
@@ -253,6 +280,7 @@ You MUST output this EXACT validation:
 [ ] Todo List Shows Task In Progress  
 [ ] Context Files Accessible
 [ ] Implementation Plan Clear
+[ ] Loop Commitment Gate Completed
 
 PROCEEDING TO IMPLEMENTATION: [Yes/No]
 === CHECKPOINT PASSED ===
@@ -277,7 +305,36 @@ IF you start coding without the checkpoint output:
 
 </implementation_gate>
 
-**CRITICAL**: This is an iterative loop. You MUST execute ALL assigned tasks completely before moving to Phase 3.
+### VISUAL LOOP STRUCTURE - MANDATORY TO FOLLOW
+
+```
+┌─────────────────────────────────────────────────────┐
+│ ⚠️ CRITICAL LOOP - DO NOT SKIP ⚠️                  │
+├─────────────────────────────────────────────────────┤
+│ FOR EACH task in assigned_tasks:                   │
+│   1. LOAD execute-task.md                          │
+│   2. EXECUTE ALL 7 STEPS from execute-task.md      │
+│   3. COMPLETE task fully                           │
+│   4. OUTPUT progress tracker                       │
+│   5. NEXT task                                     │
+└─────────────────────────────────────────────────────┘
+```
+
+<loop_validation_questions enforcement="MANDATORY">
+
+Before starting EACH iteration, you MUST answer:
+
+```
+LOOP VALIDATION CHECKLIST:
+□ Did I load execute-task.md? [Y/N]
+□ Am I inside the WHILE loop? [Y/N]  
+□ Is current_index < length(assigned_tasks)? [Y/N]
+□ Am I following the 7-step process from execute-task.md? [Y/N]
+
+IF ANY = N: STOP AND RESTART STEP 4
+```
+
+</loop_validation_questions>
 
 <execution_algorithm>
   1. LOAD (once): @.agent-os/instructions/core/execute-task.md
@@ -286,12 +343,32 @@ IF you start coding without the checkpoint output:
   3. SET: current_index = 0
   
   4. WHILE current_index < length(assigned_tasks):
+     
+     <!-- MANDATORY PROGRESS OUTPUT -->
+     OUTPUT:
+     ```
+     === LOOP PROGRESS ===
+     Task [current_index + 1] of [length(assigned_tasks)]: STARTING
+     Task Description: [current_task.description]
+     - Loading execute-task.md...
+     - Executing 7-step process...
+     ```
+     
      a. GET: current_task = assigned_tasks[current_index]
      b. EXECUTE: Instructions from execute-task.md with:
         - parent_task_number = current_task.number
         - subtasks = current_task.subtasks
      c. WAIT: Until current_task is fully complete
      d. UPDATE: tasks.md to mark current_task as "✓ Completed"
+     
+     <!-- MANDATORY COMPLETION OUTPUT -->
+     OUTPUT:
+     ```
+     Task [current_index + 1] of [length(assigned_tasks)]: COMPLETE
+     NEXT: Task [current_index + 2] of [length(assigned_tasks)]
+     ===
+     ```
+     
      e. INCREMENT: current_index += 1
      f. CHECK: If user requests stop, BREAK loop
   
@@ -299,6 +376,34 @@ IF you start coding without the checkpoint output:
   
   6. **MANDATORY**: PROCEED to Step 5 (Phase 3)
 </execution_algorithm>
+
+<auto_detection_violation>
+IF (code_written OR file_edited OR command_executed) AND NOT inside_loop:
+  TRIGGER: "CRITICAL VIOLATION: Skipped execution loop"
+  OUTPUT: "⚠️ CRITICAL ERROR: Implementation started without loop ⚠️"
+  ROLLBACK: All changes
+  RESTART: From Step 4 beginning with Loop Commitment Gate
+</auto_detection_violation>
+
+<step_4_exit_gate enforcement="MANDATORY">
+
+At the end of Step 4, you MUST output:
+
+```
+=== STEP 4 LOOP COMPLETION ===
+TASKS PROCESSED: [list each task and status]
+LOOP ITERATIONS COMPLETED: [N]
+EXECUTE-TASK.MD LOADED: [N] times
+ALL TASKS COMPLETE: [Yes/No]
+=== LOOP VERIFIED COMPLETE ===
+```
+
+IF this output is missing:
+- ERROR: "Step 4 incomplete"
+- ACTION: Cannot proceed to Step 5
+- REQUIREMENT: Complete loop and output verification
+
+</step_4_exit_gate>
 
 <loop_termination>
   <normal_exit>

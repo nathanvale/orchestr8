@@ -3,11 +3,11 @@
  */
 
 import { Autopilot } from '../adapters/autopilot.js'
-import { ExitCodes, getExitCode } from '../core/errors'
-import { QualityCheckerV2 } from '../core/quality-checker-v2'
+import { ExitCodes, getExitCode } from '../core/errors.js'
+import { QualityCheckerV2 } from '../core/quality-checker-v2.js'
 import type { QualityCheckOptions } from '../types.js'
 import type { Issue as AutopilotIssue } from '../types.js'
-import type { Issue } from '../types/issue-types'
+import type { Issue } from '../types/issue-types.js'
 
 interface CLIOptions extends QualityCheckOptions {
   help?: boolean
