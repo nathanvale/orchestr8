@@ -4,9 +4,14 @@
  */
 
 import type { QualityCheckResult, CheckerResult, ParsedError, Issue } from '../types.js'
+import type {
+  Issue as V2Issue,
+  QualityCheckResult as V2QualityCheckResult,
+} from '../types/issue-types.js'
 import { ExitCodes } from './exit-codes.js'
 import { ErrorParser } from './error-parser.js'
 import { Autopilot } from '../adapters/autopilot.js'
+import { ClaudeFormatter } from '../formatters/claude-formatter.js'
 
 export interface FormatOptions {
   verbose?: boolean
@@ -17,6 +22,7 @@ export interface FormatOptions {
 export class IssueReporter {
   private errorParser = new ErrorParser()
   private autopilot = new Autopilot()
+  private claudeFormatter = new ClaudeFormatter()
   /**
    * Format results for CLI output with colors and symbols
    */
@@ -73,10 +79,70 @@ export class IssueReporter {
   }
 
   /**
+   * Format Issues for Claude using ClaudeFormatter (V2 API)
+   */
+  formatForClaude(issues: V2Issue[], options?: FormatOptions): string
+
+  /**
+   * Format V2 QualityCheckResult for Claude using ClaudeFormatter
+   */
+  formatForClaude(result: V2QualityCheckResult, options?: FormatOptions): string
+
+  /**
+   * Format legacy QualityCheckResult for Claude (backward compatibility)
+   */
+  formatForClaude(result: QualityCheckResult, options?: FormatOptions): string
+
+  /**
    * Format results for Claude hook with comprehensive output
    * This output goes to stderr with exit code 2, so Claude will see it
    */
-  formatForClaude(result: QualityCheckResult, options: FormatOptions = {}): string {
+  formatForClaude(
+    resultOrIssues: QualityCheckResult | V2QualityCheckResult | V2Issue[],
+    options: FormatOptions = {},
+  ): string {
+    // Handle different input types
+    if (Array.isArray(resultOrIssues)) {
+      // V2Issue[] format
+      return this.formatIssuesForClaude(resultOrIssues, options)
+    } else if ('issues' in resultOrIssues) {
+      // V2QualityCheckResult format
+      if (resultOrIssues.success || resultOrIssues.issues.length === 0) {
+        return '' // Silent success
+      }
+      return this.formatIssuesForClaude(resultOrIssues.issues, options)
+    } else {
+      // Legacy QualityCheckResult format (backward compatibility)
+      return this.formatLegacyResultForClaude(resultOrIssues, options)
+    }
+  }
+
+  /**
+   * Format V2 Issues using ClaudeFormatter
+   */
+  private formatIssuesForClaude(issues: V2Issue[], options: FormatOptions = {}): string {
+    if (!issues || issues.length === 0) {
+      return '' // Silent success
+    }
+
+    // Handle different output modes
+    if (options.summary) {
+      return this.claudeFormatter.formatSummary(issues)
+    } else if (options.verbose) {
+      return this.claudeFormatter.formatDetailed(issues)
+    } else {
+      // Default XML format for Claude
+      return this.claudeFormatter.format(issues)
+    }
+  }
+
+  /**
+   * Format legacy QualityCheckResult for backward compatibility
+   */
+  private formatLegacyResultForClaude(
+    result: QualityCheckResult,
+    options: FormatOptions = {},
+  ): string {
     if (result.success) {
       return '' // Silent success
     }
@@ -307,9 +373,12 @@ export class IssueReporter {
         const match = error.match(/^(.+?):(\d+):(\d+) - (.+) \((.+)\)$/)
         if (match) {
           issues.push({
-            rule: match[5],
-            fixable: result.checkers.eslint?.fixable || false,
+            engine: 'eslint' as const,
+            severity: 'error' as const,
+            ruleId: match[5],
             file: match[1],
+            line: parseInt(match[2], 10),
+            col: parseInt(match[3], 10),
             message: `${match[1]}:${match[2]}:${match[3]} - ${match[4]}`,
           })
         }
@@ -320,9 +389,12 @@ export class IssueReporter {
     if (result.checkers.prettier?.errors) {
       result.checkers.prettier.errors.forEach(() => {
         issues.push({
-          rule: 'prettier/prettier',
-          fixable: true,
+          engine: 'prettier' as const,
+          severity: 'error' as const,
+          ruleId: 'prettier/prettier',
           file: 'unknown',
+          line: 1,
+          col: 1,
           message: 'File needs formatting',
         })
       })
@@ -337,18 +409,26 @@ export class IssueReporter {
           error.match(/^(.+)\((\d+),(\d+)\): .+ (TS\d+): (.+)$/)
         if (match) {
           const code = match[5] || match[4]
+          const line = parseInt(match[2], 10) || 1
+          const col = parseInt(match[3], 10) || 1
           issues.push({
-            rule: code,
-            fixable: false, // TypeScript errors are generally not auto-fixable
+            engine: 'typescript' as const,
+            severity: 'error' as const,
+            ruleId: code,
             file: match[1],
+            line,
+            col,
             message: error,
           })
         } else {
           // Fallback for unparseable TypeScript errors
           issues.push({
-            rule: 'typescript-error',
-            fixable: false,
+            engine: 'typescript' as const,
+            severity: 'error' as const,
+            ruleId: 'typescript-error',
             file: 'unknown',
+            line: 1,
+            col: 1,
             message: error,
           })
         }
@@ -376,7 +456,7 @@ export class IssueReporter {
         // Check if the error message contains the issue's message or rule
         return (
           (issue.message && error.includes(issue.message.split(' - ')[1])) ||
-          error.includes(issue.rule)
+          (issue.ruleId && error.includes(issue.ruleId))
         )
       })
     })

@@ -116,7 +116,9 @@ export async function runClaudeHookV2(): Promise<void> {
 
     // Let autopilot decide what to do
     const decision = autopilot.decide(checkResult)
-    const reasoning = decision.issues?.map((i) => i.rule).join(', ') || 'No specific reasoning'
+    const reasoning =
+      decision.issues?.map((i) => i.ruleId || `${i.engine}-${i.severity}`).join(', ') ||
+      'No specific reasoning'
     logger.autopilotDecision(
       payload.tool_input.file_path,
       decision.action,
@@ -216,7 +218,7 @@ export async function runClaudeHookV2(): Promise<void> {
         if (decision.issues && decision.issues.length > 0) {
           const relevantIssues = issues.filter((issue) =>
             decision.issues?.some(
-              (di) => di.message?.includes(issue.message) || di.rule === issue.ruleId,
+              (di) => di.message?.includes(issue.message) || di.ruleId === issue.ruleId,
             ),
           )
 
@@ -254,7 +256,7 @@ export async function runClaudeHookV2(): Promise<void> {
         if (decision.issues && decision.issues.length > 0) {
           const remainingIssues = issues.filter((issue) =>
             decision.issues?.some(
-              (di) => di.message?.includes(issue.message) || di.rule === issue.ruleId,
+              (di) => di.message?.includes(issue.message) || di.ruleId === issue.ruleId,
             ),
           )
 
@@ -366,10 +368,13 @@ function shouldProcessOperation(operation: string): boolean {
  */
 function convertToAutopilotIssues(issues: Issue[], filePath: string): AutopilotIssue[] {
   return issues.map((issue) => ({
-    rule: issue.ruleId || `${issue.engine}-${issue.severity}`,
-    fixable: determineIssueFixability(issue),
-    message: issue.message,
+    engine: issue.engine,
+    severity: issue.severity,
+    ruleId: issue.ruleId,
     file: filePath,
+    line: issue.line,
+    col: issue.col,
+    message: issue.message,
   }))
 }
 

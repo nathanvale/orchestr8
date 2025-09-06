@@ -1,24 +1,32 @@
 # Quality Checker Uplift Plan (YAGNI, Turborepo-friendly)
 
-**Owner:** Nathan • **Date:** 2025-09-06 • **Scope:** Replace shell-based checks with fast, file-scoped engines, leverage TS 5.7+ incremental cache, keep config surface tiny.
+**Owner:** Nathan • **Date:** 2025-09-06 • **Scope:** Replace shell-based checks
+with fast, file-scoped engines, leverage TS 5.7+ incremental cache, keep config
+surface tiny.
 
 ---
 
 ## 0) Objectives
 
 - ⚡ **Speed**: sub-300ms re-runs for unchanged files; no cold `npx` overhead.
-- 🎯 **File-Scoped TS**: check exactly the files passed (and their imports via the compiler) — not the entire project.
-- 🧰 **YAGNI**: no project references orchestration, no solution builder, no background daemons.
+- 🎯 **File-Scoped TS**: check exactly the files passed (and their imports via
+  the compiler) — not the entire project.
+- 🧰 **YAGNI**: no project references orchestration, no solution builder, no
+  background daemons.
 - 🧪 **Deterministic CI**: JSON reporter + non-zero exit when issues present.
-- 🔎 **Observability**: per-check timings, cache dir, and counts logged via `@orchestr8/logger`.
+- 🔎 **Observability**: per-check timings, cache dir, and counts logged via
+  `@orchestr8/logger`.
 
 ---
 
 ## 1) Risks / Current Issues
 
-- `execSync('npx ...')` introduces **process startup overhead**, version ambiguity, and noisy stderr parsing.
-- `tsc --noEmit` at project root is **project-wide** and **non-incremental** in this flow.
-- ESLint output parsing via CLI JSON is brittle; better to use the **ESLint Node API**.
+- `execSync('npx ...')` introduces **process startup overhead**, version
+  ambiguity, and noisy stderr parsing.
+- `tsc --noEmit` at project root is **project-wide** and **non-incremental** in
+  this flow.
+- ESLint output parsing via CLI JSON is brittle; better to use the **ESLint Node
+  API**.
 - Lack of **stable cache directory** for TS compile metadata.
 - Mixed relative vs absolute file comparisons can drop diagnostics.
 - Prettier uses CLI; Node API is available (you partly use it in other project).
@@ -27,30 +35,41 @@
 
 ## 2) Target Architecture (minimal)
 
-- **ESLint**: Node API (`new ESLint()`), format with `stylish` or `json` based on options. Optional `--fix` via API.
-- **Prettier**: Node API (`check`/`format`), respect repo config with `resolveConfig`.
-- **TypeScript**: `createIncrementalProgram` with `incremental: true`, `noEmit: true`, `tsBuildInfoFile: <cacheDir>/qc.tsbuildinfo`. Root = **target files** only. Diagnostics **filtered to target files** (normalize with `path.resolve`).
+- **ESLint**: Node API (`new ESLint()`), format with `stylish` or `json` based
+  on options. Optional `--fix` via API.
+- **Prettier**: Node API (`check`/`format`), respect repo config with
+  `resolveConfig`.
+- **TypeScript**: `createIncrementalProgram` with `incremental: true`,
+  `noEmit: true`, `tsBuildInfoFile: <cacheDir>/qc.tsbuildinfo`. Root = **target
+  files** only. Diagnostics **filtered to target files** (normalize with
+  `path.resolve`).
 
-**Cache directory**: default `os.tmpdir()/quality-check-ts-cache`; override with `QC_TS_CACHE_DIR` or option.
+**Cache directory**: default `os.tmpdir()/quality-check-ts-cache`; override with
+`QC_TS_CACHE_DIR` or option.
 
 ---
 
 ## 3) Migration Plan (3 phases)
 
 ### Phase 1 — Drop-in perf wins
+
 1. Add a small helper `src/checkers/typescript-file-scope-yagni.ts` (below).
 2. Replace `runTypeScript()` with file-scoped incremental version.
 3. Replace ESLint shell call with ESLint Node API (keeps stylish output).
-4. Keep Prettier as-is short-term (CLI) if desired, but prefer Node API for consistency.
+4. Keep Prettier as-is short-term (CLI) if desired, but prefer Node API for
+   consistency.
 
 ### Phase 2 — Config & DX
+
 1. Add options:
    - `typescript: { cacheDir?: string }`
    - `format?: 'stylish' | 'json'` (global output mode)
    - `maxWarnings?: number`
-2. Add `--staged` / `--since <ref>` at the CLI layer (use existing `GitIntegration`).
+2. Add `--staged` / `--since <ref>` at the CLI layer (use existing
+   `GitIntegration`).
 
 ### Phase 3 — CI & Bench
+
 1. Add JSON reporter (aggregate per-checker issues).
 2. Write a tiny benchmark harness printing warm vs cold times.
 3. Add CI job using `--since origin/main` for PRs.
@@ -62,35 +81,36 @@
 Create **`src/checkers/typescript-file-scope-yagni.ts`**:
 
 ```ts
-import fs from 'node:fs';
-import path from 'node:path';
-import os from 'node:os';
-import ts from 'typescript';
+import fs from 'node:fs'
+import path from 'node:path'
+import os from 'node:os'
+import ts from 'typescript'
 
 export interface TSCheckOptions {
-  project?: string;   // tsconfig path or dir
-  cacheDir?: string;  // default: OS tmpdir
+  project?: string // tsconfig path or dir
+  cacheDir?: string // default: OS tmpdir
 }
 
 export interface TSIssue {
-  filePath?: string;
-  line: number;
-  column: number;
-  message: string;
-  code: string;       // e.g., TS2307
-  severity: 'error' | 'warning';
+  filePath?: string
+  line: number
+  column: number
+  message: string
+  code: string // e.g., TS2307
+  severity: 'error' | 'warning'
 }
 
 export async function checkFile(targetFile: string, opts: TSCheckOptions = {}) {
-  const cwd = process.cwd();
-  const cacheDir = opts.cacheDir ?? path.join(os.tmpdir(), 'quality-check-ts-cache');
-  fs.mkdirSync(cacheDir, { recursive: true });
+  const cwd = process.cwd()
+  const cacheDir =
+    opts.cacheDir ?? path.join(os.tmpdir(), 'quality-check-ts-cache')
+  fs.mkdirSync(cacheDir, { recursive: true })
 
   // Allow loaders that honor this to reuse compiled output
-  process.env.NODE_COMPILE_CACHE = cacheDir;
+  process.env.NODE_COMPILE_CACHE = cacheDir
 
-  const tsconfigPath = resolveTsconfig(opts.project, cwd);
-  const parsed = loadTsConfig(tsconfigPath);
+  const tsconfigPath = resolveTsconfig(opts.project, cwd)
+  const parsed = loadTsConfig(tsconfigPath)
 
   const options: ts.CompilerOptions = {
     ...parsed.options,
@@ -99,27 +119,43 @@ export async function checkFile(targetFile: string, opts: TSCheckOptions = {}) {
     tsBuildInfoFile: path.join(cacheDir, 'qc.tsbuildinfo'),
     skipLibCheck: parsed.options.skipLibCheck ?? true,
     strict: parsed.options.strict ?? true,
-  };
+  }
 
-  const host = ts.createIncrementalCompilerHost(options);
+  const host = ts.createIncrementalCompilerHost(options)
   const program = ts.createIncrementalProgram({
     rootNames: [path.resolve(targetFile)],
     options,
     host,
-  });
+  })
 
-  const issues = collectIssues(program, path.resolve(targetFile));
-  const success = issues.every(i => i.severity !== 'error');
-  return { success, issues };
+  const issues = collectIssues(program, path.resolve(targetFile))
+  const success = issues.every((i) => i.severity !== 'error')
+  return { success, issues }
 }
 
-function collectIssues(program: ts.EmitAndSemanticDiagnosticsBuilderProgram, targetAbs: string): TSIssue[] {
-  const mk = (ds: readonly ts.Diagnostic[], severity: 'error'|'warning'): TSIssue[] =>
-    ds.map(d => {
-      const message = ts.flattenDiagnosticMessageText(d.messageText, '\n');
-      const code = `TS${d.code ?? ''}`;
-      if (!d.file) return { filePath: undefined, line: 1, column: 1, message, code, severity };
-      const { line, character } = d.file.getLineAndCharacterOfPosition(d.start ?? 0);
+function collectIssues(
+  program: ts.EmitAndSemanticDiagnosticsBuilderProgram,
+  targetAbs: string,
+): TSIssue[] {
+  const mk = (
+    ds: readonly ts.Diagnostic[],
+    severity: 'error' | 'warning',
+  ): TSIssue[] =>
+    ds.map((d) => {
+      const message = ts.flattenDiagnosticMessageText(d.messageText, '\n')
+      const code = `TS${d.code ?? ''}`
+      if (!d.file)
+        return {
+          filePath: undefined,
+          line: 1,
+          column: 1,
+          message,
+          code,
+          severity,
+        }
+      const { line, character } = d.file.getLineAndCharacterOfPosition(
+        d.start ?? 0,
+      )
       return {
         filePath: path.resolve(d.file.fileName),
         line: line + 1,
@@ -127,37 +163,47 @@ function collectIssues(program: ts.EmitAndSemanticDiagnosticsBuilderProgram, tar
         message,
         code,
         severity,
-      };
-    });
+      }
+    })
 
-  const syntactic = mk(program.getSyntacticDiagnostics(), 'error');
-  const semantic = mk(program.getSemanticDiagnostics(), 'error');
-  const optionDiags = mk(program.getOptionsDiagnostics(), 'warning');
+  const syntactic = mk(program.getSyntacticDiagnostics(), 'error')
+  const semantic = mk(program.getSemanticDiagnostics(), 'error')
+  const optionDiags = mk(program.getOptionsDiagnostics(), 'warning')
 
-  return [...syntactic, ...semantic, ...optionDiags]
-    .filter(i => !i.filePath || i.filePath === targetAbs);
+  return [...syntactic, ...semantic, ...optionDiags].filter(
+    (i) => !i.filePath || i.filePath === targetAbs,
+  )
 }
 
-function resolveTsconfig(specified: string|undefined, cwd: string) {
+function resolveTsconfig(specified: string | undefined, cwd: string) {
   if (specified) {
-    const p = path.resolve(cwd, specified);
+    const p = path.resolve(cwd, specified)
     return fs.existsSync(p) && fs.statSync(p).isDirectory()
       ? path.join(p, 'tsconfig.json')
-      : p;
+      : p
   }
-  let dir = cwd;
+  let dir = cwd
   while (dir !== path.dirname(dir)) {
-    const p = path.join(dir, 'tsconfig.json');
-    if (fs.existsSync(p)) return p;
-    dir = path.dirname(dir);
+    const p = path.join(dir, 'tsconfig.json')
+    if (fs.existsSync(p)) return p
+    dir = path.dirname(dir)
   }
-  return path.join(cwd, 'tsconfig.json');
+  return path.join(cwd, 'tsconfig.json')
 }
 
 function loadTsConfig(tsconfigPath: string) {
-  const conf = ts.readConfigFile(tsconfigPath, ts.sys.readFile);
-  if (conf.error) throw new Error(ts.flattenDiagnosticMessageText(conf.error.messageText, '\n'));
-  return ts.parseJsonConfigFileContent(conf.config, ts.sys, path.dirname(tsconfigPath), {}, tsconfigPath);
+  const conf = ts.readConfigFile(tsconfigPath, ts.sys.readFile)
+  if (conf.error)
+    throw new Error(
+      ts.flattenDiagnosticMessageText(conf.error.messageText, '\n'),
+    )
+  return ts.parseJsonConfigFileContent(
+    conf.config,
+    ts.sys,
+    path.dirname(tsconfigPath),
+    {},
+    tsconfigPath,
+  )
 }
 ```
 
@@ -299,17 +345,18 @@ Add minimal options to `QualityCheckOptions`:
 
 ```ts
 export interface QualityCheckOptions {
-  parallel?: boolean;
-  fix?: boolean;
-  eslint?: boolean;
-  prettier?: boolean;
-  typescript?: boolean;
-  format?: 'stylish' | 'json';
-  typescriptCacheDir?: string; // optional
+  parallel?: boolean
+  fix?: boolean
+  eslint?: boolean
+  prettier?: boolean
+  typescript?: boolean
+  format?: 'stylish' | 'json'
+  typescriptCacheDir?: string // optional
 }
 ```
 
-Wire `typescriptCacheDir` to `checkFile(..., { cacheDir: this.options.typescriptCacheDir || process.env.QC_TS_CACHE_DIR })`.
+Wire `typescriptCacheDir` to
+`checkFile(..., { cacheDir: this.options.typescriptCacheDir || process.env.QC_TS_CACHE_DIR })`.
 
 ---
 
@@ -317,7 +364,8 @@ Wire `typescriptCacheDir` to `checkFile(..., { cacheDir: this.options.typescript
 
 - **Pre-commit**: `qc --staged --format stylish`
 - **PR CI**: `qc --since origin/main --format json` → parse JSON, annotate PR
-- Turborepo: keep as a **single-task step**; rely on Turbo cache for unchanged files (your internal file-scoped cache further accelerates interactive runs).
+- Turborepo: keep as a **single-task step**; rely on Turbo cache for unchanged
+  files (your internal file-scoped cache further accelerates interactive runs).
 
 ---
 
@@ -328,6 +376,7 @@ Wire `typescriptCacheDir` to `checkFile(..., { cacheDir: this.options.typescript
 3. Vary file sizes (small, medium, large).
 
 Log to `@orchestr8/logger`:
+
 - `{ component: 'ts', durationMs, cacheDir, fileCount, errorCount }`
 - `{ component: 'eslint', durationMs, errorCount, warningCount }`
 - `{ component: 'prettier', durationMs, formattedCount }`

@@ -2,13 +2,13 @@
 
 import type {
   CheckResult,
-  Issue,
   AutopilotDecision,
   Classification,
   ClaudeInstruction,
   EducationalContent,
   ThreeTierClassification,
 } from '../types.js'
+import type { Issue } from '../types/issue-types.js'
 
 /**
  * Autopilot: Smart decision engine for auto-fixing
@@ -204,6 +204,50 @@ export class Autopilot {
   }
 
   /**
+   * Map new Issue structure to legacy rule format for backward compatibility
+   */
+  private mapIssueToRule(issue: Issue): string {
+    // Handle new Issue structure
+    if (issue.ruleId) {
+      return issue.ruleId
+    }
+    // Fallback for any edge cases
+    return 'unknown'
+  }
+
+  /**
+   * Check if an issue is fixable based on engine and rule
+   */
+  private isFixable(issue: Issue): boolean {
+    const rule = this.mapIssueToRule(issue)
+
+    // Prettier is always fixable
+    if (issue.engine === 'prettier') {
+      return true
+    }
+
+    // Check if rule is in auto-fixable categories
+    if (this.ALWAYS_SAFE.has(rule)) {
+      return true
+    }
+
+    if (this.CLAUDE_FIXABLE_RULES.has(rule)) {
+      return true
+    }
+
+    if (this.CONTEXT_DEPENDENT.has(rule)) {
+      return true
+    }
+
+    // TypeScript errors are generally not auto-fixable
+    if (issue.engine === 'typescript') {
+      return false
+    }
+
+    return false
+  }
+
+  /**
    * Main decision method - the brain of autopilot
    */
   decide(result: CheckResult): AutopilotDecision {
@@ -270,25 +314,40 @@ export class Autopilot {
 
     for (const issue of issues) {
       // Handle malformed issues
-      if (!issue || !issue.rule) {
+      if (!issue) {
         unfixable.push(issue)
         continue
       }
 
-      // Check which category
-      if (this.ALWAYS_SAFE.has(issue.rule)) {
+      const rule = this.mapIssueToRule(issue)
+
+      // Handle TypeScript errors specially
+      if (issue.engine === 'typescript') {
+        // TypeScript errors are generally not auto-fixable
+        unfixable.push(issue)
+        continue
+      }
+
+      // Handle Prettier formatting
+      if (issue.engine === 'prettier') {
         autoFixable.push(issue)
-      } else if (this.CLAUDE_FIXABLE_RULES.has(issue.rule)) {
+        continue
+      }
+
+      // Check which category for ESLint rules
+      if (this.ALWAYS_SAFE.has(rule)) {
+        autoFixable.push(issue)
+      } else if (this.CLAUDE_FIXABLE_RULES.has(rule)) {
         // Claude-fixable issues go to unfixable for now (need special handling)
         unfixable.push(issue)
-      } else if (this.CONTEXT_DEPENDENT.has(issue.rule)) {
+      } else if (this.CONTEXT_DEPENDENT.has(rule)) {
         const contextDecision = this.checkContext(issue)
         if (contextDecision.safe) {
           autoFixable.push(issue)
         } else {
           unfixable.push(issue)
         }
-      } else if (this.NEVER_AUTO.has(issue.rule)) {
+      } else if (this.NEVER_AUTO.has(rule)) {
         unfixable.push(issue)
       } else {
         // Unknown rule - be conservative
@@ -328,7 +387,9 @@ export class Autopilot {
       issue.file.includes('development') ||
       issue.file.includes('dev-server')
 
-    switch (issue.rule) {
+    const rule = this.mapIssueToRule(issue)
+
+    switch (rule) {
       case 'no-console':
         // Safe to remove in production files
         if (isTestFile || isDevFile) {
@@ -360,38 +421,41 @@ export class Autopilot {
    * Verify a fix is safe (optional enhanced verification)
    */
   verifyFix(issue: Issue): boolean {
+    const rule = this.mapIssueToRule(issue)
+
     // For always-safe rules, no verification needed
-    if (this.ALWAYS_SAFE.has(issue.rule)) {
+    if (this.ALWAYS_SAFE.has(rule)) {
       return true
     }
 
     // For others, could add AST comparison, etc.
-    // For now, trust ESLint's fixable flag
-    return issue.fixable === true
+    // For now, check if it's fixable
+    return this.isFixable(issue)
   }
 
   /**
    * Generate Claude-specific instructions for fixable issues
    */
   generateClaudeInstructions(issue: Issue): ClaudeInstruction {
-    const rule = this.CLAUDE_FIXABLE_RULES.get(issue.rule)
+    const ruleId = this.mapIssueToRule(issue)
+    const rule = this.CLAUDE_FIXABLE_RULES.get(ruleId)
 
     if (rule) {
       return {
-        message: `Claude, please fix this ${issue.rule} error:`,
+        message: `Claude, please fix this ${ruleId} error:`,
         instruction: rule.instruction,
         example: rule.example,
-        location: `${issue.file}:${issue.message || 'Unknown location'}`,
+        location: `${issue.file}:${issue.line}:${issue.col}`,
         code: issue.message || undefined,
       }
     }
 
     // Generic instruction for unknown rules
     return {
-      message: `Claude, please fix this ${issue.rule} error:`,
+      message: `Claude, please fix this ${ruleId} error:`,
       instruction: 'Please review and fix this issue according to the rule requirements',
       example: 'Follow the specific rule guidelines for this error type',
-      location: `${issue.file}:${issue.message || 'Unknown location'}`,
+      location: `${issue.file}:${issue.line}:${issue.col}`,
       code: issue.message || undefined,
     }
   }
@@ -402,18 +466,19 @@ export class Autopilot {
   generateEducationalContent(issue: Issue): EducationalContent {
     // Map rules to educational categories
     let categoryKey: keyof typeof this.HUMAN_REQUIRED_PATTERNS | null = null
+    const rule = this.mapIssueToRule(issue)
 
     if (
-      issue.rule.includes('complexity') ||
-      issue.rule.includes('max-lines') ||
-      issue.rule.includes('max-statements')
+      rule.includes('complexity') ||
+      rule.includes('max-lines') ||
+      rule.includes('max-statements')
     ) {
       categoryKey = 'complexity'
-    } else if (issue.rule.includes('security/')) {
+    } else if (rule.includes('security/')) {
       categoryKey = 'security'
-    } else if (issue.rule.includes('unsafe') || issue.rule.includes('ban-types')) {
+    } else if (rule.includes('unsafe') || rule.includes('ban-types')) {
       categoryKey = 'type-safety'
-    } else if (issue.rule.includes('performance')) {
+    } else if (rule.includes('performance')) {
       categoryKey = 'performance'
     }
 
@@ -440,7 +505,9 @@ export class Autopilot {
    * Three-tier classification for individual issues
    */
   classifyError(issue: Issue): ThreeTierClassification {
-    if (this.ALWAYS_SAFE.has(issue.rule)) {
+    const rule = this.mapIssueToRule(issue)
+
+    if (this.ALWAYS_SAFE.has(rule)) {
       return {
         tier: 'auto-fixable',
         action: 'silent-fix',
@@ -449,7 +516,7 @@ export class Autopilot {
       }
     }
 
-    if (this.CLAUDE_FIXABLE_RULES.has(issue.rule)) {
+    if (this.CLAUDE_FIXABLE_RULES.has(rule)) {
       return {
         tier: 'claude-fixable',
         action: 'block-and-fix',
@@ -506,11 +573,165 @@ export class Autopilot {
 
   // Public method for testing context checking
   checkContextPublic(rule: string, filePath: string): { shouldAutoFix: boolean; reason: string } {
-    const issue: Issue = { rule, fixable: true, file: filePath }
+    const issue: Issue = {
+      engine: 'eslint',
+      severity: 'warning',
+      ruleId: rule,
+      file: filePath,
+      line: 1,
+      col: 1,
+      message: 'Test message',
+    }
     const result = this.checkContext(issue)
     return {
       shouldAutoFix: result.safe,
       reason: result.reason || (result.safe ? 'Safe to auto-fix' : 'Not safe to auto-fix'),
+    }
+  }
+
+  /**
+   * Classify TypeScript error codes into categories
+   */
+  classifyErrorCode(issue: Issue): {
+    category: string
+    fixable: boolean
+  } {
+    if (issue.engine !== 'typescript' || !issue.ruleId) {
+      return { category: 'unknown', fixable: false }
+    }
+
+    const code = issue.ruleId
+
+    // TS2xxx - Type-related errors
+    if (code.startsWith('TS2')) {
+      if (code === 'TS2307') return { category: 'import-error', fixable: false }
+      if (code === 'TS2304') return { category: 'reference-error', fixable: false }
+      if (code === 'TS2322') return { category: 'type-mismatch', fixable: false }
+      if (code === 'TS2345') return { category: 'argument-type-error', fixable: false }
+      if (code === 'TS2339') return { category: 'property-not-exist', fixable: false }
+      return { category: 'type-error', fixable: false }
+    }
+
+    // TS7xxx - Config/Options errors
+    if (code.startsWith('TS7')) {
+      if (code === 'TS7006') return { category: 'implicit-any', fixable: true }
+      if (code === 'TS7016') return { category: 'no-type-declaration', fixable: false }
+      if (code === 'TS7053') return { category: 'index-signature', fixable: false }
+      return { category: 'config-error', fixable: false }
+    }
+
+    return { category: 'unknown', fixable: false }
+  }
+
+  /**
+   * Calculate confidence score based on severity
+   */
+  calculateConfidenceFromSeverity(issue: Issue): number {
+    switch (issue.severity) {
+      case 'error':
+        return 1.0
+      case 'warning':
+        return 0.8
+      case 'info':
+        return 0.6
+      default:
+        return 0.5
+    }
+  }
+
+  /**
+   * Assess targeting precision based on location information
+   */
+  assessTargetingPrecision(issue: Issue): {
+    hasPreciseLocation: boolean
+    confidence: number
+  } {
+    const hasPreciseLocation = !!(issue.endLine && issue.endCol)
+    const confidence = hasPreciseLocation ? 0.95 : 0.65
+    return { hasPreciseLocation, confidence }
+  }
+
+  /**
+   * Group issues by their engine type
+   */
+  groupIssuesByEngine(issues: Issue[]): {
+    typescript: Issue[]
+    eslint: Issue[]
+    prettier: Issue[]
+  } {
+    const grouped = {
+      typescript: [] as Issue[],
+      eslint: [] as Issue[],
+      prettier: [] as Issue[],
+    }
+
+    for (const issue of issues) {
+      if (issue.engine === 'typescript') {
+        grouped.typescript.push(issue)
+      } else if (issue.engine === 'eslint') {
+        grouped.eslint.push(issue)
+      } else if (issue.engine === 'prettier') {
+        grouped.prettier.push(issue)
+      }
+    }
+
+    return grouped
+  }
+
+  /**
+   * Classify TypeScript errors specifically
+   */
+  classifyTypeScriptError(issue: Issue): {
+    category: string
+    isTypeError: boolean
+    isConfigError: boolean
+  } {
+    const classification = this.classifyErrorCode(issue)
+    const isTypeError = issue.ruleId?.startsWith('TS2') || false
+    const isConfigError = issue.ruleId?.startsWith('TS7') || false
+
+    return {
+      category: classification.category,
+      isTypeError,
+      isConfigError,
+    }
+  }
+
+  /**
+   * Classify ESLint rules with metadata
+   */
+  classifyESLintRule(issue: Issue): {
+    plugin: string
+    rule: string
+    fixable: boolean
+    requiresContext: boolean
+  } {
+    const ruleId = this.mapIssueToRule(issue)
+    const parts = ruleId.split('/')
+
+    // Handle scoped plugins like @typescript-eslint
+    const plugin = parts.length > 1 ? parts[0] : 'core'
+    const rule = parts.length > 1 ? parts.slice(1).join('/') : ruleId
+
+    const fixable = this.ALWAYS_SAFE.has(ruleId) || this.CLAUDE_FIXABLE_RULES.has(ruleId)
+    const requiresContext =
+      this.CONTEXT_DEPENDENT.has(ruleId) || ruleId === 'react-hooks/exhaustive-deps'
+
+    return { plugin, rule, fixable, requiresContext }
+  }
+
+  /**
+   * Classify Prettier issues
+   */
+  classifyPrettierIssue(_issue: Issue): {
+    alwaysSafe: boolean
+    autoFixable: boolean
+    confidence: number
+  } {
+    return {
+      alwaysSafe: true,
+      autoFixable: true,
+      confidence: 1.0,
     }
   }
 

@@ -6,19 +6,29 @@ feedback and zero configuration complexity.
 
 ## Features
 
-- ⚡ **Sub-300ms Warm Performance** - TypeScript 5.7+ incremental compilation with persistent cache
-- 🔄 **Parallel Execution** - Run ESLint, Prettier, and TypeScript checks simultaneously
+- ⚡ **Sub-300ms Warm Performance** - TypeScript 5.7+ incremental compilation
+  with persistent cache
+- 🔄 **Parallel Execution** - Run ESLint, Prettier, and TypeScript checks
+  simultaneously
 - 🛡️ **Atomic File Operations** - Safe auto-fixes with backup/restore capability
-- 🔍 **Smart Auto-Detection** - Automatically detects Claude Code hook mode via stdin
+- 🔍 **Smart Auto-Detection** - Automatically detects Claude Code hook mode via
+  stdin
 - 📊 **Correlation IDs** - Track operations across the validation pipeline
-- 🎯 **Exit Code Strategy** - Clear communication via standardized exit codes (0=ok, 1=issues, 2=error)
-- 🚀 **Zero Global Install** - Works directly with `npx` - no PATH configuration needed
-- 🏗️ **Three-Tier System** - Progressive quality enforcement (pre-commit, Claude, CI/CD)
+- 🎯 **Exit Code Strategy** - Clear communication via standardized exit codes
+  (0=ok, 1=issues, 2=error)
+- 🚀 **Zero Global Install** - Works directly with `npx` - no PATH configuration
+  needed
+- 🏗️ **Three-Tier System** - Progressive quality enforcement (pre-commit,
+  Claude, CI/CD)
 - 📋 **JSON Output Mode** - Structured output for CI/CD integration
 - 🎨 **Stylish Formatter** - ESLint-style human-readable output
 - 🚄 **ESLint v9 Support** - Flat config support with built-in caching
 - 💅 **Prettier Node API** - Direct API integration for maximum performance
 - 📈 **Performance Monitoring** - Built-in performance tracking and reporting
+- 🤖 **Enhanced Autopilot** - Intelligent classification of fixable issues with
+  TypeScript error code support
+- 📝 **Rich Diagnostics** - Structured issue format with engine, severity,
+  line/column, and suggestion data
 
 ## Installation
 
@@ -128,30 +138,30 @@ console.log(result)
 
 ## Command Line Options
 
-| Option                    | Description                                 | Default    |
-| ------------------------- | ------------------------------------------- | ---------- |
-| `--file, -f <path>`       | Check a specific file                       | -          |
-| `--fix`                   | Enable auto-fix for ESLint and Prettier     | `false`    |
-| `--no-eslint`             | Skip ESLint checks                          | `false`    |
-| `--no-prettier`           | Skip Prettier checks                        | `false`    |
-| `--no-typescript`         | Skip TypeScript checks                      | `false`    |
-| `--debug`                 | Enable debug logging                        | `false`    |
-| `--silent`                | Suppress output                             | `false`    |
-| `--sequential`            | Run checks sequentially instead of parallel | `false`    |
-| `--timeout <ms>`          | Set timeout in milliseconds                 | `3000`     |
-| `--format <type>`         | Output format: stylish or json              | `stylish`  |
-| `--staged`                | Check only staged files (git)               | `false`    |
-| `--since <ref>`           | Check files changed since git ref           | -          |
-| `--typescript-cache-dir`  | TypeScript cache directory                  | OS temp    |
-| `--eslint-cache-dir`      | ESLint cache directory                      | `.cache`   |
-| `--help, -h`              | Show help message                           | -          |
+| Option                   | Description                                 | Default   |
+| ------------------------ | ------------------------------------------- | --------- |
+| `--file, -f <path>`      | Check a specific file                       | -         |
+| `--fix`                  | Enable auto-fix for ESLint and Prettier     | `false`   |
+| `--no-eslint`            | Skip ESLint checks                          | `false`   |
+| `--no-prettier`          | Skip Prettier checks                        | `false`   |
+| `--no-typescript`        | Skip TypeScript checks                      | `false`   |
+| `--debug`                | Enable debug logging                        | `false`   |
+| `--silent`               | Suppress output                             | `false`   |
+| `--sequential`           | Run checks sequentially instead of parallel | `false`   |
+| `--timeout <ms>`         | Set timeout in milliseconds                 | `3000`    |
+| `--format <type>`        | Output format: stylish or json              | `stylish` |
+| `--staged`               | Check only staged files (git)               | `false`   |
+| `--since <ref>`          | Check files changed since git ref           | -         |
+| `--typescript-cache-dir` | TypeScript cache directory                  | OS temp   |
+| `--eslint-cache-dir`     | ESLint cache directory                      | `.cache`  |
+| `--help, -h`             | Show help message                           | -         |
 
 ## Exit Codes
 
 The package uses standardized exit codes for clear communication:
 
-| Code | Description                               |
-| ---- | ----------------------------------------- |
+| Code | Description                              |
+| ---- | ---------------------------------------- |
 | `0`  | Success - all checks passed              |
 | `1`  | Issues found (linting/formatting errors) |
 | `2`  | Internal error or misconfiguration       |
@@ -183,9 +193,11 @@ The package supports both modern and legacy Claude Code payload formats:
 
 All quality checks are optimized for sub-300ms warm performance:
 
-- **TypeScript 5.7+**: File-scoped incremental compilation with persistent tsBuildInfo cache
+- **TypeScript 5.7+**: File-scoped incremental compilation with persistent
+  tsBuildInfo cache
 - **ESLint v9**: Flat config support with built-in caching mechanism
-- **Prettier Node API**: Direct API integration with resolveConfig() and format()
+- **Prettier Node API**: Direct API integration with resolveConfig() and
+  format()
 - **Parallel Execution**: All checkers run simultaneously by default
 
 Typical execution times:

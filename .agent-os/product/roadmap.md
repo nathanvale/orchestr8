@@ -27,13 +27,15 @@ interruption
 
 ## Phase 2: Quality Checker Uplift (Week 2)
 
-**Goal:** Replace CLI-based checks with programmatic APIs and file-scoped TS validation  
-**Success Criteria:** 50% faster checks, sub-300ms warm TypeScript runs, stable JSON outputs for CI
+**Goal:** Replace CLI-based checks with programmatic APIs and file-scoped TS
+validation   **Success Criteria:** 50% faster checks, sub-300ms warm TypeScript
+runs, stable JSON outputs for CI
 
 ### Features
 
 - [ ] Implement ESLint Node API integration with flat config (v9) `M`
-- [ ] Implement Prettier Node API integration with resolveConfig + getFileInfo `S`
+- [ ] Implement Prettier Node API integration with resolveConfig + getFileInfo
+      `S`
 - [ ] Add file-scoped TypeScript checks with incremental compile cache `M`
 - [ ] Add JSON + stylish reporters for CI vs local dev `S`
 - [ ] Integrate with GitIntegration for `--staged` / `--since` workflows `S`

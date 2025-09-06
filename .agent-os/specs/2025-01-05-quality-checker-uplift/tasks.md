@@ -18,27 +18,27 @@
   - [x] 2.5 Create helper methods for different error severity levels
   - [x] 2.6 Verify formatter outputs are properly structured for Claude
 
-- [ ] 3. Enhance issue reporter for better Claude integration
-  - [ ] 3.1 Write tests for updated formatForClaude method
-  - [ ] 3.2 Update formatForClaude to use ClaudeFormatter
-  - [ ] 3.3 Preserve all diagnostic metadata through the pipeline
-  - [ ] 3.4 Group errors by engine with full context
-  - [ ] 3.5 Add support for both summary and detailed output modes
-  - [ ] 3.6 Verify issue reporter tests pass
+- [x] 3. Enhance issue reporter for better Claude integration
+  - [x] 3.1 Write tests for updated formatForClaude method
+  - [x] 3.2 Update formatForClaude to use ClaudeFormatter
+  - [x] 3.3 Preserve all diagnostic metadata through the pipeline
+  - [x] 3.4 Group errors by engine with full context
+  - [x] 3.5 Add support for both summary and detailed output modes
+  - [x] 3.6 Verify issue reporter tests pass
 
-- [ ] 4. Update Autopilot decision making with rich error data
-  - [ ] 4.1 Write tests for enhanced Autopilot classification
-  - [ ] 4.2 Update Autopilot to use structured Issue data
-  - [ ] 4.3 Improve fixable vs non-fixable issue classification
-  - [ ] 4.4 Add error code-based decision rules
-  - [ ] 4.5 Enhance confidence scoring with diagnostic details
-  - [ ] 4.6 Verify Autopilot tests pass
+- [x] 4. Update Autopilot decision making with rich error data
+  - [x] 4.1 Write tests for enhanced Autopilot classification
+  - [x] 4.2 Update Autopilot to use structured Issue data
+  - [x] 4.3 Improve fixable vs non-fixable issue classification
+  - [x] 4.4 Add error code-based decision rules
+  - [x] 4.5 Enhance confidence scoring with diagnostic details
+  - [x] 4.6 Verify Autopilot tests pass
 
-- [ ] 5. Integration testing and migration path
-  - [ ] 5.1 Write end-to-end tests for Claude hook with TypeScript errors
-  - [ ] 5.2 Test with real TypeScript compilation errors
-  - [ ] 5.3 Verify structured output format in Claude hook responses
-  - [ ] 5.4 Document migration path for git-hook and API facades
-  - [ ] 5.5 Performance test to ensure no regression
-  - [ ] 5.6 Update package documentation
-  - [ ] 5.7 Run full test suite and ensure all tests pass
+- [x] 5. Integration testing and migration path
+  - [x] 5.1 Write end-to-end tests for Claude hook with TypeScript errors
+  - [x] 5.2 Test with real TypeScript compilation errors
+  - [x] 5.3 Verify structured output format in Claude hook responses
+  - [x] 5.4 Document migration path for git-hook and API facades
+  - [x] 5.5 Performance test to ensure no regression
+  - [x] 5.6 Update package documentation
+  - [x] 5.7 Run full test suite and ensure all tests pass

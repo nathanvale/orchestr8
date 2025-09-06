@@ -114,12 +114,14 @@ export async function runClaudeHook(): Promise<void> {
       issues,
       hasErrors: !result.success,
       hasWarnings: issues.length > 0,
-      fixable: issues.some((issue) => issue.fixable),
+      fixable: issues.some((issue) => issue.engine === 'eslint' || issue.engine === 'prettier'),
     }
 
     // Let autopilot decide what to do
     const decision = autopilot.decide(checkResult)
-    const reasoning = decision.issues?.map((i) => i.rule).join(', ') || 'No specific reasoning'
+    const reasoning =
+      decision.issues?.map((i) => i.ruleId || `${i.engine}-${i.severity}`).join(', ') ||
+      'No specific reasoning'
     logger.autopilotDecision(
       payload.tool_input.file_path,
       decision.action,
@@ -223,7 +225,7 @@ export async function runClaudeHook(): Promise<void> {
 
         if (decision.issues && decision.issues.length > 0) {
           const messages = decision.issues
-            .map((issue) => issue.message || issue.rule)
+            .map((issue) => issue.message || issue.ruleId || `${issue.engine}-${issue.severity}`)
             .filter(Boolean)
 
           logger.warn('Quality issues require manual intervention', {
@@ -263,7 +265,7 @@ export async function runClaudeHook(): Promise<void> {
 
         if (decision.issues && decision.issues.length > 0) {
           const messages = decision.issues
-            .map((issue) => issue.message || issue.rule)
+            .map((issue) => issue.message || issue.ruleId || `${issue.engine}-${issue.severity}`)
             .filter(Boolean)
 
           logger.warn('Some issues remain after auto-fix', {
@@ -422,10 +424,13 @@ function extractIssuesFromQualityResult(result: QualityCheckResult, filePath: st
       const rule = ruleMatch ? ruleMatch[1] : 'eslint-error'
 
       issues.push({
-        rule,
-        fixable: true, // Most ESLint rules are fixable
-        message: error,
+        engine: 'eslint' as const,
+        severity: 'error' as const,
+        ruleId: rule,
         file: filePath,
+        line: 1,
+        col: 1,
+        message: error,
       })
     }
   }
@@ -434,10 +439,13 @@ function extractIssuesFromQualityResult(result: QualityCheckResult, filePath: st
   if (result.checkers.typescript && result.checkers.typescript.errors) {
     for (const error of result.checkers.typescript.errors) {
       issues.push({
-        rule: 'typescript-error',
-        fixable: false, // TypeScript errors usually require human intervention
-        message: error,
+        engine: 'typescript' as const,
+        severity: 'error' as const,
+        ruleId: 'typescript-error',
         file: filePath,
+        line: 1,
+        col: 1,
+        message: error,
       })
     }
   }
@@ -446,10 +454,13 @@ function extractIssuesFromQualityResult(result: QualityCheckResult, filePath: st
   if (result.checkers.prettier && result.checkers.prettier.errors) {
     for (const error of result.checkers.prettier.errors) {
       issues.push({
-        rule: 'prettier/prettier',
-        fixable: true, // Prettier issues are always auto-fixable
-        message: error,
+        engine: 'prettier' as const,
+        severity: 'error' as const,
+        ruleId: 'prettier/prettier',
         file: filePath,
+        line: 1,
+        col: 1,
+        message: error,
       })
     }
   }

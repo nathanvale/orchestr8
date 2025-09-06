@@ -239,9 +239,12 @@ Performance Tips:
  */
 function convertToAutopilotIssues(issues: Issue[], filePath: string): AutopilotIssue[] {
   return issues.map((issue) => ({
-    rule: issue.ruleId || `${issue.engine}-${issue.severity}`,
-    fixable: issue.engine === 'eslint' || issue.engine === 'prettier',
-    message: issue.message,
+    engine: issue.engine,
+    severity: issue.severity,
+    ruleId: issue.ruleId,
     file: issue.file || filePath,
+    line: issue.line,
+    col: issue.col,
+    message: issue.message,
   }))
 }

@@ -38,24 +38,30 @@ export async function runGitHook(options: GitHookOptions = {}): Promise<void> {
 
     if (!result.success) {
       // Convert to CheckResult format for autopilot
-      const issues = []
+      const issues: import('../types/issue-types.js').Issue[] = []
       if (result.checkers.eslint?.errors) {
         issues.push(
           ...result.checkers.eslint.errors.map((e) => ({
-            rule: 'eslint',
-            fixable: true,
-            message: e,
+            engine: 'eslint' as const,
+            severity: 'error' as const,
+            ruleId: 'eslint-error',
             file: checkableFiles[0],
+            line: 1,
+            col: 1,
+            message: e,
           })),
         )
       }
       if (result.checkers.typescript?.errors) {
         issues.push(
           ...result.checkers.typescript.errors.map((e) => ({
-            rule: 'typescript',
-            fixable: false,
-            message: e,
+            engine: 'typescript' as const,
+            severity: 'error' as const,
+            ruleId: 'typescript-error',
             file: checkableFiles[0],
+            line: 1,
+            col: 1,
+            message: e,
           })),
         )
       }
@@ -65,7 +71,7 @@ export async function runGitHook(options: GitHookOptions = {}): Promise<void> {
         issues,
         hasErrors: true,
         hasWarnings: issues.length > 0,
-        fixable: issues.some((i) => i.fixable),
+        fixable: issues.some((i) => i.engine === 'eslint' || i.engine === 'prettier'),
       }
 
       // Let autopilot decide if we should fix automatically

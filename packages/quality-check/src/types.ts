@@ -59,16 +59,12 @@ export interface FixResult {
 
 // Autopilot-specific types
 
-export interface Issue {
-  rule: string
-  fixable: boolean
-  message?: string
-  file: string
-}
+// Re-export Issue from issue-types
+export type { Issue } from './types/issue-types.js'
 
 export interface CheckResult {
   filePath: string
-  issues: Issue[]
+  issues: import('./types/issue-types.js').Issue[]
   hasErrors: boolean
   hasWarnings: boolean
   fixable: boolean
@@ -82,15 +78,15 @@ export interface ContextCheck {
 
 export interface AutopilotDecision {
   action: 'FIX_SILENTLY' | 'FIX_AND_REPORT' | 'REPORT_ONLY' | 'CONTINUE'
-  fixes?: Issue[]
-  issues?: Issue[]
+  fixes?: import('./types/issue-types.js').Issue[]
+  issues?: import('./types/issue-types.js').Issue[]
   confidence: number
 }
 
 export interface Classification {
-  autoFixable: Issue[]
-  contextFixable: Issue[]
-  unfixable: Issue[]
+  autoFixable: import('./types/issue-types.js').Issue[]
+  contextFixable: import('./types/issue-types.js').Issue[]
+  unfixable: import('./types/issue-types.js').Issue[]
   allAutoFixable: boolean
   hasAutoFixable: boolean
   hasUnfixable: boolean

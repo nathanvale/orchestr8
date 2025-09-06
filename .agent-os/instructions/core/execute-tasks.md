@@ -13,9 +13,10 @@ encoding: UTF-8
 Execute tasks for a given spec following three MANDATORY sequential phases.
 
 ### ⛔ PROCESS ENFORCEMENT RULES ⛔
+
 ```
 RULE 1: You CANNOT proceed to Phase 2 until ALL Phase 1 steps are COMPLETE
-RULE 2: You CANNOT proceed to Phase 3 until ALL Phase 2 tasks are COMPLETE  
+RULE 2: You CANNOT proceed to Phase 3 until ALL Phase 2 tasks are COMPLETE
 RULE 3: You CANNOT end this command until Phase 3 is COMPLETE
 RULE 4: You MUST use TodoWrite to track ALL task progress
 RULE 5: Skipping ANY step requires EXPLICIT user override
@@ -24,22 +25,26 @@ VIOLATION CONSEQUENCE: Task execution will FAIL and require full restart
 ```
 
 ### Phase Structure:
+
 1. **Pre-execution setup** (Steps 1-3) - Setup and validation
-2. **Task execution loop** (Step 4) - Implementation work  
+2. **Task execution loop** (Step 4) - Implementation work
 3. **Post-execution tasks** (Step 5) - Finalization
 
 ### 🔴 VALIDATION CHECKPOINT 🔴
+
 Before reading further, confirm you understand:
+
 - [ ] I will complete ALL steps in sequence
 - [ ] I will NOT skip ahead to implementation
 - [ ] I will use TodoWrite for progress tracking
 - [ ] I understand violations cause failure
 
 ### Sequential Execution Rule
+
 ```
 ENFORCEMENT: Phases MUST be completed sequentially:
 - Phase 1 (Setup): Complete ALL steps → FULL STOP → Validate
-- Phase 2 (Implementation): Execute tasks → FULL STOP → Validate  
+- Phase 2 (Implementation): Execute tasks → FULL STOP → Validate
 - Phase 3 (Post-execution): Finalize → FULL STOP → Complete
 
 VIOLATION PROTOCOL: If you skip a phase boundary validation:
@@ -49,8 +54,7 @@ VIOLATION PROTOCOL: If you skip a phase boundary validation:
 4. Re-execute from that point
 ```
 
-<pre_flight_check>
-EXECUTE: @.agent-os/instructions/meta/pre-flight.md
+<pre_flight_check> EXECUTE: @.agent-os/instructions/meta/pre-flight.md
 </pre_flight_check>
 
 <process_flow>
@@ -64,6 +68,7 @@ EXECUTE: @.agent-os/instructions/meta/pre-flight.md
 Identify which tasks to execute from the spec.
 
 #### 🛑 STEP 1 GATE CHECK 🛑
+
 ```
 BEFORE PROCEEDING:
 1. You MUST use TodoWrite to create task tracking list
@@ -73,17 +78,10 @@ BEFORE PROCEEDING:
 IF YOU SKIP THIS: Execution will fail
 ```
 
-<task_selection>
-  <explicit>
-    IF user provides specific_tasks array:
-      USE: Exact task numbers provided
-  </explicit>
-  <implicit>
-    IF no specific tasks provided:
-      1. READ: spec's tasks.md file
-      2. FIND: First parent task where status != "✓ Completed"
-      3. SELECT: That task and all its subtasks
-  </implicit>
+<task_selection> <explicit> IF user provides specific_tasks array: USE: Exact
+task numbers provided </explicit> <implicit> IF no specific tasks provided: 1.
+READ: spec's tasks.md file 2. FIND: First parent task where status != "✓
+Completed" 3. SELECT: That task and all its subtasks </implicit>
 </task_selection>
 
 <instructions>
@@ -96,12 +94,9 @@ IF YOU SKIP THIS: Execution will fail
   7. VALIDATE: User said "yes" before continuing
 </instructions>
 
-<validation_checklist>
-☐ TodoWrite used to create task list
-☐ Tasks clearly identified and listed
-☐ User confirmation explicitly received
-☐ No implementation work started
-</validation_checklist>
+<validation_checklist> ☐ TodoWrite used to create task list ☐ Tasks clearly
+identified and listed ☐ User confirmation explicitly received ☐ No
+implementation work started </validation_checklist>
 
 </step>
 
@@ -112,6 +107,7 @@ IF YOU SKIP THIS: Execution will fail
 Gather minimal necessary context for task understanding.
 
 #### 🛑 STEP 2 GATE CHECK 🛑
+
 ```
 IMPLEMENTATION NOTE: If subagent doesn't exist:
 - READ files directly using Read tool
@@ -134,15 +130,9 @@ IMPLEMENTATION NOTE: If subagent doesn't exist:
   3. VERIFY: Essential context loaded successfully
 </instructions>
 
-<context_requirements>
-  <mandatory>
-    - tasks.md (MUST exist and be loaded)
-  </mandatory>
-  <optional>
-    - mission-lite.md (load if exists)
-    - spec-lite.md (load if exists)
-    - technical-spec.md (load if exists)
-  </optional>
+<context_requirements> <mandatory> - tasks.md (MUST exist and be loaded)
+</mandatory> <optional> - mission-lite.md (load if exists) - spec-lite.md (load
+if exists) - technical-spec.md (load if exists) </optional>
 </context_requirements>
 
 </step>
@@ -154,6 +144,7 @@ IMPLEMENTATION NOTE: If subagent doesn't exist:
 Ensure proper git branch isolation for the spec.
 
 #### 🛑 STEP 3 GATE CHECK 🛑
+
 ```
 IMPLEMENTATION NOTE: If subagent doesn't exist:
 - USE Bash tool for git commands directly
@@ -186,10 +177,10 @@ IMPLEMENTATION NOTE: If subagent doesn't exist:
 
 ### Phase 1 Exit Validation
 
-**CRITICAL**: You MUST output the following validation BEFORE proceeding to Phase 2.
+**CRITICAL**: You MUST output the following validation BEFORE proceeding to
+Phase 2.
 
-<mandatory_output>
-You MUST output EXACTLY this format:
+<mandatory_output> You MUST output EXACTLY this format:
 
 ```
 === PHASE 1 COMPLETION VALIDATION ===
@@ -216,19 +207,16 @@ TodoWrite Status:
 ALL CHECKS PASSED: [Yes/No]
 === VALIDATION COMPLETE ===
 ```
+
 </mandatory_output>
 
-<enforcement_rules>
-IF output != mandatory_output format:
-  ERROR: "Phase 1 validation incomplete"
-  ACTION: DO NOT proceed to Phase 2
-  REQUIREMENT: Complete validation output first
+<enforcement_rules> IF output != mandatory_output format: ERROR: "Phase 1
+validation incomplete" ACTION: DO NOT proceed to Phase 2 REQUIREMENT: Complete
+validation output first
 
-IF "ALL CHECKS PASSED" != "Yes":
-  ERROR: "Phase 1 has incomplete items"  
-  ACTION: Return to incomplete step
-  REQUIREMENT: Complete ALL Phase 1 steps before proceeding
-</enforcement_rules>
+IF "ALL CHECKS PASSED" != "Yes": ERROR: "Phase 1 has incomplete items"  
+ ACTION: Return to incomplete step REQUIREMENT: Complete ALL Phase 1 steps
+before proceeding </enforcement_rules>
 
 </phase_1_validation>
 
@@ -239,7 +227,9 @@ IF "ALL CHECKS PASSED" != "Yes":
 ### Step 4: Task Execution Loop
 
 #### 🔴 CRITICAL MANDATORY LOOP 🔴
+
 #### ⚠️ FAILURE TO EXECUTE THIS LOOP = COMPLETE RESTART ⚠️
+
 #### YOU MUST EXECUTE THE FOLLOWING LOOP OR THE ENTIRE PROCESS FAILS
 
 <pre_loop_commitment_gate enforcement="MANDATORY">
@@ -259,6 +249,7 @@ CONFIRMED: I will follow the 7-step process in execute-task.md for EACH task
 ```
 
 IF you do not output this commitment:
+
 - ERROR: "LOOP COMMITMENT MISSING"
 - ACTION: HALT all execution
 - REQUIREMENT: Output commitment before continuing
@@ -269,15 +260,15 @@ IF you do not output this commitment:
 
 <implementation_gate enforcement="MANDATORY">
 
-**STOP**: Before ANY implementation code (Write, Edit, MultiEdit, Bash modifications):
+**STOP**: Before ANY implementation code (Write, Edit, MultiEdit, Bash
+modifications):
 
-<required_validation>
-You MUST output this EXACT validation:
+<required_validation> You MUST output this EXACT validation:
 
 ```
 === PHASE 2 ENTRY CHECKPOINT ===
 [ ] Phase 1 Validation Output Complete
-[ ] Todo List Shows Task In Progress  
+[ ] Todo List Shows Task In Progress
 [ ] Context Files Accessible
 [ ] Implementation Plan Clear
 [ ] Loop Commitment Gate Completed
@@ -286,22 +277,22 @@ PROCEEDING TO IMPLEMENTATION: [Yes/No]
 === CHECKPOINT PASSED ===
 ```
 
-ONLY after outputting the above with "PROCEEDING TO IMPLEMENTATION: Yes" may you:
+ONLY after outputting the above with "PROCEEDING TO IMPLEMENTATION: Yes" may
+you:
+
 - Write any files
 - Edit any code
 - Run modifying commands
 - Create directories
-- Execute implementation tasks
-</required_validation>
+- Execute implementation tasks </required_validation>
 
-<violation_detection>
-IF you start coding without the checkpoint output:
+<violation_detection> IF you start coding without the checkpoint output:
+
 1. IMMEDIATELY STOP
 2. Output: "CHECKPOINT VIOLATION - Rolling back to Phase 2 entry"
 3. Delete/revert any changes made
 4. Output the required validation
-5. Only then proceed with implementation
-</violation_detection>
+5. Only then proceed with implementation </violation_detection>
 
 </implementation_gate>
 
@@ -327,7 +318,7 @@ Before starting EACH iteration, you MUST answer:
 ```
 LOOP VALIDATION CHECKLIST:
 □ Did I load execute-task.md? [Y/N]
-□ Am I inside the WHILE loop? [Y/N]  
+□ Am I inside the WHILE loop? [Y/N]
 □ Is current_index < length(assigned_tasks)? [Y/N]
 □ Am I following the 7-step process from execute-task.md? [Y/N]
 
@@ -337,52 +328,52 @@ IF ANY = N: STOP AND RESTART STEP 4
 </loop_validation_questions>
 
 <execution_algorithm>
-  1. LOAD (once): @.agent-os/instructions/core/execute-task.md
-  
-  2. SET: assigned_tasks = tasks from Step 1
-  3. SET: current_index = 0
-  
-  4. WHILE current_index < length(assigned_tasks):
-     
-     <!-- MANDATORY PROGRESS OUTPUT -->
-     OUTPUT:
-     ```
-     === LOOP PROGRESS ===
-     Task [current_index + 1] of [length(assigned_tasks)]: STARTING
-     Task Description: [current_task.description]
-     - Loading execute-task.md...
-     - Executing 7-step process...
-     ```
-     
-     a. GET: current_task = assigned_tasks[current_index]
-     b. EXECUTE: Instructions from execute-task.md with:
-        - parent_task_number = current_task.number
-        - subtasks = current_task.subtasks
-     c. WAIT: Until current_task is fully complete
-     d. UPDATE: tasks.md to mark current_task as "✓ Completed"
-     
-     <!-- MANDATORY COMPLETION OUTPUT -->
-     OUTPUT:
-     ```
-     Task [current_index + 1] of [length(assigned_tasks)]: COMPLETE
-     NEXT: Task [current_index + 2] of [length(assigned_tasks)]
-     ===
-     ```
-     
-     e. INCREMENT: current_index += 1
-     f. CHECK: If user requests stop, BREAK loop
-  
-  5. VERIFY: All assigned tasks show "✓ Completed" in tasks.md
-  
-  6. **MANDATORY**: PROCEED to Step 5 (Phase 3)
-</execution_algorithm>
 
-<auto_detection_violation>
-IF (code_written OR file_edited OR command_executed) AND NOT inside_loop:
-  TRIGGER: "CRITICAL VIOLATION: Skipped execution loop"
-  OUTPUT: "⚠️ CRITICAL ERROR: Implementation started without loop ⚠️"
-  ROLLBACK: All changes
-  RESTART: From Step 4 beginning with Loop Commitment Gate
+1. LOAD (once): @.agent-os/instructions/core/execute-task.md
+
+2. SET: assigned_tasks = tasks from Step 1
+3. SET: current_index = 0
+
+4. WHILE current_index < length(assigned_tasks):
+
+   <!-- MANDATORY PROGRESS OUTPUT -->
+
+   OUTPUT:
+
+   ```
+   === LOOP PROGRESS ===
+   Task [current_index + 1] of [length(assigned_tasks)]: STARTING
+   Task Description: [current_task.description]
+   - Loading execute-task.md...
+   - Executing 7-step process...
+   ```
+
+   a. GET: current_task = assigned_tasks[current_index] b. EXECUTE: Instructions
+   from execute-task.md with:
+   - parent_task_number = current_task.number
+   - subtasks = current_task.subtasks c. WAIT: Until current_task is fully
+     complete d. UPDATE: tasks.md to mark current_task as "✓ Completed"
+
+   <!-- MANDATORY COMPLETION OUTPUT -->
+
+   OUTPUT:
+
+   ```
+   Task [current_index + 1] of [length(assigned_tasks)]: COMPLETE
+   NEXT: Task [current_index + 2] of [length(assigned_tasks)]
+   ===
+   ```
+
+   e. INCREMENT: current_index += 1 f. CHECK: If user requests stop, BREAK loop
+
+5. VERIFY: All assigned tasks show "✓ Completed" in tasks.md
+
+6. **MANDATORY**: PROCEED to Step 5 (Phase 3) </execution_algorithm>
+
+<auto_detection_violation> IF (code_written OR file_edited OR command_executed)
+AND NOT inside_loop: TRIGGER: "CRITICAL VIOLATION: Skipped execution loop"
+OUTPUT: "⚠️ CRITICAL ERROR: Implementation started without loop ⚠️" ROLLBACK:
+All changes RESTART: From Step 4 beginning with Loop Commitment Gate
 </auto_detection_violation>
 
 <step_4_exit_gate enforcement="MANDATORY">
@@ -399,26 +390,19 @@ ALL TASKS COMPLETE: [Yes/No]
 ```
 
 IF this output is missing:
+
 - ERROR: "Step 4 incomplete"
 - ACTION: Cannot proceed to Step 5
 - REQUIREMENT: Complete loop and output verification
 
 </step_4_exit_gate>
 
-<loop_termination>
-  <normal_exit>
-    CONDITION: current_index >= length(assigned_tasks)
-    ACTION: Proceed immediately to Step 5
-  </normal_exit>
-  <early_exit>
-    CONDITION: User explicitly requests "stop" or "pause"
-    ACTION: Save progress and ask if user wants to continue later
-  </early_exit>
-  <error_exit>
-    CONDITION: Blocking error that cannot be resolved
-    ACTION: Report error, save progress, await user guidance
-  </error_exit>
-</loop_termination>
+<loop_termination> <normal_exit> CONDITION: current_index >=
+length(assigned_tasks) ACTION: Proceed immediately to Step 5 </normal_exit>
+<early_exit> CONDITION: User explicitly requests "stop" or "pause" ACTION: Save
+progress and ask if user wants to continue later </early_exit> <error_exit>
+CONDITION: Blocking error that cannot be resolved ACTION: Report error, save
+progress, await user guidance </error_exit> </loop_termination>
 
 <verification>
   AFTER loop completes:
@@ -436,7 +420,8 @@ IF this output is missing:
 
 ### Step 5: Run Task Completion Steps
 
-**MANDATORY**: This phase MUST be executed. Never end without completing these steps.
+**MANDATORY**: This phase MUST be executed. Never end without completing these
+steps.
 
 <instructions>
   1. LOAD: @.agent-os/instructions/core/post-execution-tasks.md
@@ -457,22 +442,14 @@ IF this output is missing:
   5. REPORT: "Task execution complete. All phases finished successfully."
 </instructions>
 
-<completion_checklist>
-  □ All assigned tasks executed
-  □ Tests run and passing
-  □ Code committed and pushed
-  □ Pull request created
-  □ Tasks marked complete in tasks.md
-  □ Roadmap updated (if needed)
-  □ Recap document created
-  □ Summary generated
-  □ Notification played
-</completion_checklist>
+<completion_checklist> □ All assigned tasks executed □ Tests run and passing □
+Code committed and pushed □ Pull request created □ Tasks marked complete in
+tasks.md □ Roadmap updated (if needed) □ Recap document created □ Summary
+generated □ Notification played </completion_checklist>
 
 </step>
 
 </process_flow>
 
-<post_flight_check>
-EXECUTE: @.agent-os/instructions/meta/post-flight.md
+<post_flight_check> EXECUTE: @.agent-os/instructions/meta/post-flight.md
 </post_flight_check>
