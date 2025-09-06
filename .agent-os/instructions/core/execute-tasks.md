@@ -10,13 +10,30 @@ encoding: UTF-8
 
 ## Overview
 
-Execute tasks for a given spec following three MANDATORY sequential phases:
+Execute tasks for a given spec following three MANDATORY sequential phases.
 
-1. **Pre-execution setup** (Steps 1-3) - MUST complete before Phase 2
-2. **Task execution loop** (Step 4) - MUST complete ALL tasks before Phase 3  
-3. **Post-execution tasks** (Step 5) - MUST complete before ending
+### ⛔ PROCESS ENFORCEMENT RULES ⛔
+```
+RULE 1: You CANNOT proceed to Phase 2 until ALL Phase 1 steps are COMPLETE
+RULE 2: You CANNOT proceed to Phase 3 until ALL Phase 2 tasks are COMPLETE  
+RULE 3: You CANNOT end this command until Phase 3 is COMPLETE
+RULE 4: You MUST use TodoWrite to track ALL task progress
+RULE 5: Skipping ANY step requires EXPLICIT user override
 
-**CRITICAL**: You MUST complete ALL three phases. Never stop after Phase 2.
+VIOLATION CONSEQUENCE: Task execution will FAIL and require full restart
+```
+
+### Phase Structure:
+1. **Pre-execution setup** (Steps 1-3) - Setup and validation
+2. **Task execution loop** (Step 4) - Implementation work  
+3. **Post-execution tasks** (Step 5) - Finalization
+
+### 🔴 VALIDATION CHECKPOINT 🔴
+Before reading further, confirm you understand:
+- [ ] I will complete ALL steps in sequence
+- [ ] I will NOT skip ahead to implementation
+- [ ] I will use TodoWrite for progress tracking
+- [ ] I understand violations cause failure
 
 <pre_flight_check>
 EXECUTE: @.agent-os/instructions/meta/pre-flight.md
@@ -26,11 +43,21 @@ EXECUTE: @.agent-os/instructions/meta/pre-flight.md
 
 ## Phase 1: Pre-Execution Setup
 
-<step number="1" name="task_assignment">
+<step number="1" name="task_assignment" validation="required">
 
 ### Step 1: Task Assignment
 
 Identify which tasks to execute from the spec.
+
+#### 🛑 STEP 1 GATE CHECK 🛑
+```
+BEFORE PROCEEDING:
+1. You MUST use TodoWrite to create task tracking list
+2. You MUST get explicit user confirmation
+3. You MUST NOT start any implementation work
+
+IF YOU SKIP THIS: Execution will fail
+```
 
 <task_selection>
   <explicit>
@@ -46,22 +73,40 @@ Identify which tasks to execute from the spec.
 </task_selection>
 
 <instructions>
-  1. DETERMINE: Task selection method (explicit vs implicit)
-  2. IDENTIFY: Target task(s) to execute
-  3. CONFIRM: "I will execute: [list of tasks]" with user
-  4. WAIT: For user confirmation before proceeding
+  1. USE TodoWrite: Create todo list with ALL identified tasks
+  2. DETERMINE: Task selection method (explicit vs implicit)
+  3. IDENTIFY: Target task(s) to execute
+  4. OUTPUT: "I will execute: [numbered list of tasks]"
+  5. ASK: "Do you want me to proceed with these tasks?"
+  6. WAIT: For user confirmation (yes/no)
+  7. VALIDATE: User said "yes" before continuing
 </instructions>
+
+<validation_checklist>
+☐ TodoWrite used to create task list
+☐ Tasks clearly identified and listed
+☐ User confirmation explicitly received
+☐ No implementation work started
+</validation_checklist>
 
 </step>
 
-<step number="2" subagent="context-fetcher" name="context_analysis">
+<step number="2" name="context_analysis">
 
 ### Step 2: Context Analysis
 
 Gather minimal necessary context for task understanding.
 
+#### 🛑 STEP 2 GATE CHECK 🛑
+```
+IMPLEMENTATION NOTE: If subagent doesn't exist:
+- READ files directly using Read tool
+- DO NOT skip this step
+- DO NOT proceed without context
+```
+
 <instructions>
-  1. INVOKE: context-fetcher subagent with these EXACT requests:
+  1. LOAD CONTEXT (use Read tool if no subagent):
      
      REQUEST 1: "Load the spec tasks.md file from [SPEC_PATH]/tasks.md"
      
@@ -88,18 +133,26 @@ Gather minimal necessary context for task understanding.
 
 </step>
 
-<step number="3" subagent="git-workflow" name="git_branch_management">
+<step number="3" name="git_branch_management">
 
 ### Step 3: Git Branch Management
 
 Ensure proper git branch isolation for the spec.
+
+#### 🛑 STEP 3 GATE CHECK 🛑
+```
+IMPLEMENTATION NOTE: If subagent doesn't exist:
+- USE Bash tool for git commands directly
+- DO NOT skip this step
+- MUST be on correct branch before Phase 2
+```
 
 <instructions>
   1. EXTRACT: Spec folder name from spec_srd_reference path
   2. DERIVE: Branch name by removing date prefix from folder name
      Example: "2025-03-15-password-reset" → "password-reset"
   
-  3. INVOKE: git-workflow subagent with EXACT request:
+  3. EXECUTE GIT WORKFLOW (use Bash if no subagent):
      "Manage git branch for spec implementation:
       - Target branch name: [DERIVED_BRANCH_NAME]
       - If branch exists: switch to it
@@ -118,6 +171,17 @@ Ensure proper git branch isolation for the spec.
 <step number="4" name="task_execution_loop">
 
 ### Step 4: Task Execution Loop
+
+#### 🔒 PHASE 2 ENTRY VALIDATION 🔒
+```
+STOP AND VERIFY:
+☑ Phase 1 Step 1: Task assignment complete? 
+☑ Phase 1 Step 2: Context loaded?
+☑ Phase 1 Step 3: Git branch ready?
+☑ TodoWrite: Task list created and active?
+
+IF ANY UNCHECKED: GO BACK TO INCOMPLETE STEP
+```
 
 **CRITICAL**: This is an iterative loop. You MUST execute ALL assigned tasks completely before moving to Phase 3.
 
