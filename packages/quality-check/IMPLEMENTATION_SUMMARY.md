@@ -11,7 +11,8 @@
 
 2. **Task 0.2: Error Taxonomy & Exit Codes** ✅
    - Created `src/core/errors.ts` with typed error classes
-   - Implemented error hierarchy: `ToolMissingError`, `ConfigError`, `TimeoutError`, `InternalError`, `FileError`
+   - Implemented error hierarchy: `ToolMissingError`, `ConfigError`,
+     `TimeoutError`, `InternalError`, `FileError`
    - Defined exit codes: 0=success, 1=issues found, 2=error
 
 3. **Task 0.3: Config Discovery & Precedence** ✅
@@ -84,18 +85,21 @@
 ## Key Features Implemented
 
 ### Performance Optimizations
+
 - **TypeScript**: Incremental compilation with persistent cache
 - **ESLint**: Built-in caching mechanism
 - **Prettier**: Efficient file I/O batching
 - **Target**: ≤300ms warm check time for single files
 
 ### Architecture Improvements
+
 - Clean separation of concerns with engine pattern
 - Pluggable formatters (stylish/JSON)
 - Configurable via multiple sources
 - Graceful degradation when tools missing
 
 ### Developer Experience
+
 - Multiple config file formats supported
 - Git integration (`--staged`, `--since`)
 - Autopilot integration maintained
