@@ -10,11 +10,12 @@ encoding: UTF-8
 
 ## Overview
 
-Execute a specific parent task and all its sub-tasks following strict TDD
-workflow with mandatory verification gates.
+Execute a specific task along with its sub-tasks systematically following a TDD development workflow.
 
-<pre_flight_check> EXECUTE: @.agent-os/instructions/meta/pre-flight.md
+<pre_flight_check>
+  EXECUTE: @.agent-os/instructions/meta/pre-flight.md
 </pre_flight_check>
+
 
 <process_flow>
 
@@ -22,26 +23,23 @@ workflow with mandatory verification gates.
 
 ### Step 1: Task Understanding
 
-Load and analyze the complete task scope from tasks.md.
+Read and analyze the given parent task and all its sub-tasks from tasks.md to gain complete understanding of what needs to be built.
 
-<algorithm>
-  1. READ: tasks.md file
-  2. LOCATE: Parent task with number = [parent_task_number]
-  3. EXTRACT:
-     - parent_task.description
-     - parent_task.subtasks[] (all sub-tasks under parent)
-     - parent_task.dependencies[] (if any)
-     - parent_task.acceptance_criteria (if specified)
-  4. COUNT: total_subtasks = length(parent_task.subtasks)
-  5. VERIFY: All subtasks have clear descriptions
-</algorithm>
+<task_analysis>
+  <read_from_tasks_md>
+    - Parent task description
+    - All sub-task descriptions
+    - Task dependencies
+    - Expected outcomes
+  </read_from_tasks_md>
+</task_analysis>
 
-<required_output> MUST STATE:
-
-- "Parent task [#]: [description]"
-- "Found [N] subtasks to execute"
-- "First subtask: [description]"
-- "Last subtask: [description]" </required_output>
+<instructions>
+  ACTION: Read the specific parent task and all its sub-tasks
+  ANALYZE: Full scope of implementation required
+  UNDERSTAND: Dependencies and expected deliverables
+  NOTE: Test requirements for each sub-task
+</instructions>
 
 </step>
 
@@ -49,30 +47,24 @@ Load and analyze the complete task scope from tasks.md.
 
 ### Step 2: Technical Specification Review
 
-Extract task-relevant technical implementation details.
+Search and extract relevant sections from technical-spec.md to understand the technical implementation approach for this task.
 
-<algorithm>
-  1. SEARCH: technical-spec.md for keywords from parent_task.description
-  2. FIND sections containing:
-     - Feature name from task
-     - Component names mentioned in task
-     - API endpoints if task involves APIs
-     - Database schemas if task involves data
-  3. EXTRACT:
-     - implementation_approach (if found)
-     - performance_requirements (if found)
-     - integration_points (if found)
-  4. IF no matches found:
-     SET: technical_requirements = "None specified"
-</algorithm>
+<selective_reading>
+  <search_technical_spec>
+    FIND sections in technical-spec.md related to:
+    - Current task functionality
+    - Implementation approach for this feature
+    - Integration requirements
+    - Performance criteria
+  </search_technical_spec>
+</selective_reading>
 
-<verification_gate> MUST OUTPUT one of: □ "Found implementation approach:
-[specific approach]" □ "Found performance requirement: [specific requirement]" □
-"Found integration requirement: [specific requirement]" □ "No task-specific
-technical requirements found"
-
-IF none provided: ERROR: "Step 2 incomplete - missing technical spec review"
-ACTION: HALT and re-execute Step 2 </verification_gate>
+<instructions>
+  ACTION: Search technical-spec.md for task-relevant sections
+  EXTRACT: Only implementation details for current task
+  SKIP: Unrelated technical specifications
+  FOCUS: Technical approach for this specific feature
+</instructions>
 
 </step>
 
@@ -80,33 +72,28 @@ ACTION: HALT and re-execute Step 2 </verification_gate>
 
 ### Step 3: Best Practices Review
 
-Retrieve and verify understanding of applicable best practices.
+Use the context-fetcher subagent to retrieve relevant sections from @.agent-os/standards/best-practices.md that apply to the current task's technology stack and feature type.
 
-<subagent_invocation>
+<selective_reading>
+  <search_best_practices>
+    FIND sections relevant to:
+    - Task's technology stack
+    - Feature type being implemented
+    - Testing approaches needed
+    - Code organization patterns
+  </search_best_practices>
+</selective_reading>
 
-1. DETERMINE from parent_task:
-   - technology_stack = [extracted from task description]
-   - feature_type = [extracted from task description]
-
-2. INVOKE: context-fetcher with EXACT request: "Load best practices for:
-   - Technology: [technology_stack]
-   - Feature type: [feature_type]
-   - Section: Testing patterns
-   - Section: Wallaby.js rules From: @.agent-os/standards/best-practices.md"
-
-3. WAIT: For subagent response
-4. EXTRACT: Key guidelines from response </subagent_invocation>
-
-<verification*gate> MUST CORRECTLY STATE ALL: □ Test naming:
-"should*[expectedBehavior]_when_[condition]" □ Wallaby rule: "Wallaby for
-.unit.test.ts files ONLY, Vitest for all others" □ One additional guideline:
-[state specific guideline found]
-
-IF Wallaby rule incorrect: ERROR: "Failed Wallaby verification" ACTION: Re-read
-wallaby-rules.xml Section 1 RETRY: Step 3 with correct understanding
-
-IF any item missing: ERROR: "Step 3 incomplete - missing [specific item]"
-ACTION: HALT until all items verified </verification_gate>
+<instructions>
+  ACTION: Use context-fetcher subagent
+  REQUEST: "Find best practices sections relevant to:
+            - Task's technology stack: [CURRENT_TECH]
+            - Feature type: [CURRENT_FEATURE_TYPE]
+            - Testing approaches needed
+            - Code organization patterns"
+  PROCESS: Returned best practices
+  APPLY: Relevant patterns to implementation
+</instructions>
 
 </step>
 
@@ -114,96 +101,90 @@ ACTION: HALT until all items verified </verification_gate>
 
 ### Step 4: Code Style Review
 
-Retrieve and apply language-specific style rules.
+Use the context-fetcher subagent to retrieve relevant code style rules from @.agent-os/standards/code-style.md for the languages and file types being used in this task.
 
-<analysis_algorithm>
+<selective_reading>
+  <search_code_style>
+    FIND style rules for:
+    - Languages used in this task
+    - File types being modified
+    - Component patterns being implemented
+    - Testing style guidelines
+  </search_code_style>
+</selective_reading>
 
-1. ANALYZE parent_task and subtasks to determine:
-   - languages[] = [TypeScript, JavaScript, etc.]
-   - file_types[] = [.ts, .test.ts, .unit.test.ts, etc.]
-   - patterns[] = [component, service, utility, etc.]
-
-2. INVOKE: context-fetcher with EXACT request: "Load code style rules for:
-   - Languages: [languages.join(', ')]
-   - File extensions: [file_types.join(', ')]
-   - Pattern types: [patterns.join(', ')] From:
-     @.agent-os/standards/code-style.md"
-
-3. WAIT: For subagent response
-4. EXTRACT: Applicable style rules </analysis_algorithm>
-
-<verification_gate> MUST PROVIDE ALL: □ Primary languages: [list identified
-languages] □ File types to create/modify: [list file extensions] □ Specific
-style rule: [quote one applicable rule]
-
-IF any missing: ERROR: "Step 4 incomplete - missing [specific item]" ACTION:
-HALT and complete identification </verification_gate>
+<instructions>
+  ACTION: Use context-fetcher subagent
+  REQUEST: "Find code style rules for:
+            - Languages: [LANGUAGES_IN_TASK]
+            - File types: [FILE_TYPES_BEING_MODIFIED]
+            - Component patterns: [PATTERNS_BEING_IMPLEMENTED]
+            - Testing style guidelines"
+  PROCESS: Returned style rules
+  APPLY: Relevant formatting and patterns
+</instructions>
 
 </step>
-
-<pre_execution_gate enforcement="MANDATORY">
-
-### EXECUTION GATE - MANDATORY CHECKPOINT
-
-<verification_checklist> VERIFY ALL items checked: □ Step 1: Task scope
-understood (parent + all subtasks identified) □ Step 2: Technical spec reviewed
-(approach stated or "none found") □ Step 3: Test pattern verified
-("should_X_when_Y" confirmed) □ Step 3: Wallaby rule correct ("\*.unit.test.ts
-ONLY" confirmed) □ Step 4: Languages and file types identified □ Step 4: Style
-rule quoted </verification_checklist>
-
-<gate_logic> IF checklist.all_checked == false: missing_items =
-checklist.filter(item => !item.checked) ERROR: "GATE FAILED - Missing:
-[missing_items]" ACTION: RETURN to step with missing verification FORBIDDEN: Do
-NOT proceed to Step 5
-
-ELSE: STATUS: "GATE PASSED - All verifications complete" ACTION: PROCEED to Step
-5 implementation </gate_logic>
-
-</pre_execution_gate>
 
 <step number="5" name="task_execution">
 
 ### Step 5: Task and Sub-task Execution
 
-Execute all subtasks using strict TDD workflow.
+Execute the parent task and all sub-tasks in order using test-driven development (TDD) approach.
 
-<execution_algorithm>
+<typical_task_structure>
+  <first_subtask>Write tests for [feature]</first_subtask>
+  <middle_subtasks>Implementation steps</middle_subtasks>
+  <final_subtask>Verify all tests pass</final_subtask>
+</typical_task_structure>
 
-1. SET: subtasks = parent_task.subtasks
-2. SET: current_subtask_index = 0
+<execution_order>
+  <subtask_1_tests>
+    IF sub-task 1 is "Write tests for [feature]":
+      - Write all tests for the parent feature
+      - Include unit tests, integration tests, edge cases
+      - Run tests to ensure they fail appropriately
+      - Mark sub-task 1 complete
+  </subtask_1_tests>
 
-3. WHILE current_subtask_index < length(subtasks):
+  <middle_subtasks_implementation>
+    FOR each implementation sub-task (2 through n-1):
+      - Implement the specific functionality
+      - Make relevant tests pass
+      - Update any adjacent/related tests if needed
+      - Refactor while keeping tests green
+      - Mark sub-task complete
+  </middle_subtasks_implementation>
 
-   current = subtasks[current_subtask_index]
+  <final_subtask_verification>
+    IF final sub-task is "Verify all tests pass":
+      - Run entire test suite
+      - Fix any remaining failures
+      - Ensure no regressions
+      - Mark final sub-task complete
+  </final_subtask_verification>
+</execution_order>
 
-   IF current.description.includes("Write tests") OR
-   current.description.includes("write tests"): a. WRITE: All tests for the
-   parent feature b. INCLUDE: Unit tests, integration tests, edge cases c. RUN:
-   Tests to verify they fail correctly d. CONFIRM: Red phase of TDD complete
+<test_management>
+  <new_tests>
+    - Written in first sub-task
+    - Cover all aspects of parent feature
+    - Include edge cases and error handling
+  </new_tests>
+  <test_updates>
+    - Made during implementation sub-tasks
+    - Update expectations for changed behavior
+    - Maintain backward compatibility
+  </test_updates>
+</test_management>
 
-   ELSE IF current.description.includes("Implement") OR
-   current.description.includes("implement"): a. CODE: Implement specific
-   functionality b. RUN: Related tests frequently c. MAKE: Tests pass (green
-   phase) d. REFACTOR: Code while keeping tests green e. UPDATE: Any affected
-   adjacent tests
-
-   ELSE IF current.description.includes("Verify") AND
-   current.description.includes("tests"): a. RUN: All tests for this feature b.
-   FIX: Any remaining failures c. VERIFY: No regressions introduced d. CONFIRM:
-   All feature tests passing
-
-   ELSE: a. EXECUTE: Task as described b. TEST: Functionality if applicable c.
-   VERIFY: Meets acceptance criteria
-
-   UPDATE: tasks.md - mark current subtask as "[x] Completed" INCREMENT:
-   current_subtask_index += 1
-
-4. VERIFY: All subtasks marked complete in tasks.md </execution_algorithm>
-
-<tdd_enforcement> RULE: Tests MUST exist before implementation PATTERN: Red →
-Green → Refactor REQUIREMENT: Each subtask completion requires passing tests
-</tdd_enforcement>
+<instructions>
+  ACTION: Execute sub-tasks in their defined order
+  RECOGNIZE: First sub-task typically writes all tests
+  IMPLEMENT: Middle sub-tasks build functionality
+  VERIFY: Final sub-task ensures all tests pass
+  UPDATE: Mark each sub-task complete as finished
+</instructions>
 
 </step>
 
@@ -211,75 +192,72 @@ Green → Refactor REQUIREMENT: Each subtask completion requires passing tests
 
 ### Step 6: Task-Specific Test Verification
 
-Run focused tests for this feature only.
+Use the test-runner subagent to run and verify only the tests specific to this parent task (not the full test suite) to ensure the feature is working correctly.
 
-<test_identification>
+<focused_test_execution>
+  <run_only>
+    - All new tests written for this parent task
+    - All tests updated during this task
+    - Tests directly related to this feature
+  </run_only>
+  <skip>
+    - Full test suite (done later in execute-tasks.md)
+    - Unrelated test files
+  </skip>
+</focused_test_execution>
 
-1. IDENTIFY: Test files created/modified in Step 5 test_files[] = [list all test
-   files for this feature]
+<final_verification>
+  IF any test failures:
+    - Debug and fix the specific issue
+    - Re-run only the failed tests
+  ELSE:
+    - Confirm all task tests passing
+    - Ready to proceed
+</final_verification>
 
-2. CATEGORIZE: - new_tests[] = tests created in this task - modified_tests[] =
-   existing tests updated - related_tests[] = tests that cover this feature
-   </test_identification>
-
-<subagent_invocation>
-
-1. INVOKE: test-runner with EXACT request: "Run focused tests for feature
-   [parent_task.description]:
-   - Test files: [test_files.join(', ')]
-   - Skip unrelated tests
-   - Report failures with full stack traces"
-
-2. WAIT: For test results
-
-3. IF failures_count > 0: a. ANALYZE: Each failure message b. FIX: Root cause of
-   failure c. RE-INVOKE: test-runner for failed tests only d. REPEAT: Until
-   failures_count == 0
-
-4. ELSE: CONFIRM: "All task-specific tests passing (100% success rate)"
-   </subagent_invocation>
-
-<success_criteria> REQUIRED: 100% pass rate for all task-specific tests
-FORBIDDEN: Proceeding with any test failures </success_criteria>
+<instructions>
+  ACTION: Use test-runner subagent
+  REQUEST: "Run tests for [this parent task's test files]"
+  WAIT: For test-runner analysis
+  PROCESS: Returned failure information
+  VERIFY: 100% pass rate for task-specific tests
+  CONFIRM: This feature's tests are complete
+</instructions>
 
 </step>
 
 <step number="7" name="task_status_updates">
 
-### Step 7: Final Status Update
+### Step 7: Mark this task and sub-tasks complete
 
-Update tasks.md with final completion status.
+IMPORTANT: In the tasks.md file, mark this task and its sub-tasks complete by updating each task checkbox to [x].
 
-<status_update_algorithm>
+<update_format>
+  <completed>- [x] Task description</completed>
+  <incomplete>- [ ] Task description</incomplete>
+  <blocked>
+    - [ ] Task description
+    ⚠️ Blocking issue: [DESCRIPTION]
+  </blocked>
+</update_format>
 
-1. READ: Current tasks.md content
+<blocking_criteria>
+  <attempts>maximum 3 different approaches</attempts>
+  <action>document blocking issue</action>
+  <emoji>⚠️</emoji>
+</blocking_criteria>
 
-2. FOR each subtask in parent_task.subtasks: IF subtask.completed == true:
-   UPDATE: "- [ ]" → "- [x]" ELSE IF subtask.blocked == true: UPDATE: "- [ ]" →
-   "- [ ] ⚠️ Blocked: [reason]" ELSE: LEAVE: "- [ ]" unchanged
-
-3. IF all_subtasks_complete: UPDATE: parent_task status → "- [x]" ELSE: UPDATE:
-   parent_task status → "- [ ] (Partial: [X]/[Y] complete)"
-
-4. WRITE: Updated content back to tasks.md
-
-5. REPORT: "Task [#] status: [completion_percentage]% complete"
-   </status_update_algorithm>
-
-<blocking_rules> MAX_ATTEMPTS: 3 IF attempts >= MAX_ATTEMPTS: MARK: "⚠️ Blocked
-after 3 attempts" DOCUMENT: Specific blocking reason PROCEED: To next subtask
-</blocking_rules>
-
-<final_output> MUST REPORT:
-
-- "Parent task [#]: [status]"
-- "Completed subtasks: [count]"
-- "Blocked subtasks: [count]" (if any)
-- "Ready for next parent task" OR "Manual intervention needed" </final_output>
+<instructions>
+  ACTION: Update tasks.md after each task completion
+  MARK: [x] for completed items immediately
+  DOCUMENT: Blocking issues with ⚠️ emoji
+  LIMIT: 3 attempts before marking as blocked
+</instructions>
 
 </step>
 
 </process_flow>
 
-<post_flight_check> EXECUTE: @.agent-os/instructions/meta/post-flight.md
+<post_flight_check>
+  EXECUTE: @.agent-os/instructions/meta/post-flight.md
 </post_flight_check>

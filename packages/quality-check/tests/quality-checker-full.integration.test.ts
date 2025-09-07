@@ -3,6 +3,7 @@ import { QualityChecker } from '../src/core/quality-checker'
 import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
 import { tmpdir } from 'node:os'
+import { execSync } from 'node:child_process'
 
 describe('QualityChecker Integration Tests', () => {
   let fixtureDir: string
@@ -32,6 +33,9 @@ describe('QualityChecker Integration Tests', () => {
               paths: {
                 '@utils/*': ['./utils/*'],
               },
+              noEmit: true,
+              skipLibCheck: true,
+              moduleResolution: 'node',
             },
           },
           null,
@@ -51,15 +55,37 @@ describe('QualityChecker Integration Tests', () => {
       `,
       )
 
-      const result = await checker.check([srcFile], {
+      // Create a package.json and install TypeScript
+      await fs.writeFile(
+        path.join(fixtureDir, 'package.json'),
+        JSON.stringify({ name: 'test', version: '1.0.0' }),
+      )
+
+      // Change to fixture directory so TypeScript can find the tsconfig
+      const originalCwd = process.cwd()
+      process.chdir(fixtureDir)
+
+      // Install TypeScript
+      execSync('npm install --save-dev typescript', { stdio: 'ignore' })
+
+      const result = await checker.check(['test.ts'], {
         typescript: true,
         eslint: false,
         prettier: false,
       })
 
+      // Restore original working directory
+      process.chdir(originalCwd)
+
       expect(result.success).toBe(false)
       expect(result.checkers.typescript?.errors).toBeDefined()
       const errors = result.checkers.typescript?.errors || []
+
+      // Debug: log the actual errors
+      if (!errors.some((e) => e.includes('TS2307') && e.includes('@missing/helper'))) {
+        console.log('TypeScript errors:', errors)
+      }
+
       expect(errors.some((e) => e.includes('TS2307') && e.includes('@missing/helper'))).toBe(true)
     })
 
@@ -152,11 +178,18 @@ describe('QualityChecker Integration Tests', () => {
       `,
       )
 
-      const result = await checker.check([srcFile], {
+      // Change to fixture directory for ESLint to work
+      const originalCwd = process.cwd()
+      process.chdir(fixtureDir)
+
+      const result = await checker.check(['lint-test.js'], {
         eslint: true,
         typescript: false,
         prettier: false,
       })
+
+      // Restore original working directory
+      process.chdir(originalCwd)
 
       expect(result.success).toBe(false)
       const errors = result.checkers.eslint?.errors || []
@@ -260,11 +293,39 @@ describe('QualityChecker Integration Tests', () => {
       `,
       )
 
-      const result = await checker.check([tsFile], {
+      // Create package.json and install TypeScript
+      await fs.writeFile(
+        path.join(fixtureDir, 'package.json'),
+        JSON.stringify({ name: 'test-multi', version: '1.0.0' }),
+      )
+
+      // Create ESLint config
+      await fs.writeFile(
+        path.join(fixtureDir, 'eslint.config.js'),
+        `export default [{ rules: { 'no-unused-vars': 'error' } }]`,
+      )
+
+      // Create tsconfig for TypeScript
+      await fs.writeFile(
+        path.join(fixtureDir, 'tsconfig.json'),
+        JSON.stringify({ compilerOptions: { strict: true, noEmit: true } }),
+      )
+
+      // Change to fixture directory
+      const originalCwd = process.cwd()
+      process.chdir(fixtureDir)
+
+      // Install TypeScript
+      execSync('npm install --save-dev typescript', { stdio: 'ignore' })
+
+      const result = await checker.check(['multi.ts'], {
         typescript: true,
         eslint: true,
         prettier: true,
       })
+
+      // Restore original working directory
+      process.chdir(originalCwd)
 
       expect(result.success).toBe(false)
 
@@ -293,11 +354,18 @@ describe('QualityChecker Integration Tests', () => {
       await fs.writeFile(ignoredFile, 'const    bad   =    "formatting";')
       await fs.writeFile(checkedFile, 'const    bad   =    "formatting";')
 
-      const result = await checker.check([ignoredFile, checkedFile], {
+      // Change to fixture directory
+      const originalCwd = process.cwd()
+      process.chdir(fixtureDir)
+
+      const result = await checker.check(['ignored.js', 'checked.js'], {
         prettier: true,
         eslint: false,
         typescript: false,
       })
+
+      // Restore original working directory
+      process.chdir(originalCwd)
 
       const errors = result.checkers.prettier?.errors || []
       expect(errors.some((e) => e.includes('ignored.js'))).toBe(false)
@@ -330,11 +398,24 @@ describe('QualityChecker Integration Tests', () => {
       await fs.writeFile(ignoredFile, badCode)
       await fs.writeFile(checkedFile, badCode)
 
-      const result = await checker.check([ignoredFile, checkedFile], {
+      // Change to fixture directory
+      const originalCwd = process.cwd()
+      process.chdir(fixtureDir)
+
+      // Copy config to root
+      await fs.writeFile(
+        path.join(fixtureDir, 'eslint.config.js'),
+        await fs.readFile(configPath, 'utf-8'),
+      )
+
+      const result = await checker.check(['build/generated.js', 'src/source.js'], {
         eslint: true,
         typescript: false,
         prettier: false,
       })
+
+      // Restore original working directory
+      process.chdir(originalCwd)
 
       const errors = result.checkers.eslint?.errors || []
       expect(errors.some((e) => e.includes('generated.js'))).toBe(false)
@@ -347,11 +428,25 @@ describe('QualityChecker Integration Tests', () => {
       const cleanFile = path.join(fixtureDir, 'clean.js')
       await fs.writeFile(cleanFile, 'export const clean = 42;')
 
-      const result = await checker.check([cleanFile], {
+      // Create configs for clean file check
+      await fs.writeFile(
+        path.join(fixtureDir, 'eslint.config.js'),
+        `export default [{ rules: {} }]`,
+      )
+      await fs.writeFile(path.join(fixtureDir, '.prettierrc'), JSON.stringify({ semi: true }))
+
+      // Change to fixture directory
+      const originalCwd = process.cwd()
+      process.chdir(fixtureDir)
+
+      const result = await checker.check(['clean.js'], {
         eslint: true,
         prettier: true,
         typescript: false,
       })
+
+      // Restore original working directory
+      process.chdir(originalCwd)
 
       expect(result.success).toBe(true)
       const eslintErrors = result.checkers.eslint?.errors || []
@@ -387,11 +482,31 @@ describe('QualityChecker Integration Tests', () => {
       `,
       )
 
-      const result = await checker.check([testFile], {
+      // Create package.json and tsconfig
+      await fs.writeFile(
+        path.join(fixtureDir, 'package.json'),
+        JSON.stringify({ name: 'test-json', version: '1.0.0' }),
+      )
+      await fs.writeFile(
+        path.join(fixtureDir, 'tsconfig.json'),
+        JSON.stringify({ compilerOptions: { strict: true, noEmit: true } }),
+      )
+
+      // Change to fixture directory
+      const originalCwd = process.cwd()
+      process.chdir(fixtureDir)
+
+      // Install TypeScript
+      execSync('npm install --save-dev typescript', { stdio: 'ignore' })
+
+      const result = await checker.check(['json-test.ts'], {
         typescript: true,
         eslint: false,
         prettier: false,
       })
+
+      // Restore original working directory
+      process.chdir(originalCwd)
 
       expect(result).toHaveProperty('success')
       expect(result).toHaveProperty('checkers')

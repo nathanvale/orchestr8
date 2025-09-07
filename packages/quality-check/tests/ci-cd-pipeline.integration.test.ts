@@ -103,23 +103,50 @@ describe('CI/CD Pipeline Integration', () => {
 
   describe('Exit Code Compliance', () => {
     it('should_return_correct_exit_codes_when_running_cli', async () => {
+      // Create ESLint config to handle files in this directory
+      await fs.writeFile(
+        path.join(fixtureDir, 'eslint.config.js'),
+        `export default [{
+  rules: {
+    'no-unused-vars': 'error'
+  }
+}]`,
+      )
+
+      // Create Prettier config
+      await fs.writeFile(
+        path.join(fixtureDir, '.prettierrc'),
+        JSON.stringify({ semi: false, singleQuote: true }),
+      )
+
       // Create a clean file
       const cleanFile = path.join(fixtureDir, 'clean.js')
       await fs.writeFile(
         cleanFile,
-        `
-        export function clean() {
-          return 'clean';
-        }
-      `,
+        `export function clean() {
+  return 'clean'
+}
+`,
       )
 
       // Test exit code 0 (success)
-      const cleanResult = await checker.check([cleanFile], {
+      // Change to the fixture directory so ESLint can find the config
+      const originalCwd = process.cwd()
+      process.chdir(fixtureDir)
+
+      const cleanResult = await checker.check(['clean.js'], {
         eslint: true,
         prettier: true,
         typescript: false,
       })
+
+      // Restore original working directory
+      process.chdir(originalCwd)
+
+      // Debug: log the result to see what's failing
+      if (!cleanResult.success) {
+        console.log('Check failed:', JSON.stringify(cleanResult, null, 2))
+      }
       expect(cleanResult.success).toBe(true)
 
       // Create a file with issues
@@ -135,11 +162,13 @@ describe('CI/CD Pipeline Integration', () => {
       )
 
       // Test exit code 1 (issues found)
-      const issueResult = await checker.check([issueFile], {
+      process.chdir(fixtureDir)
+      const issueResult = await checker.check(['issues.js'], {
         eslint: true,
         prettier: true,
         typescript: false,
       })
+      process.chdir(originalCwd)
       expect(issueResult.success).toBe(false)
     })
 

@@ -71,12 +71,14 @@ export class QualityChecker {
         message?: string
       }
       const exitCode = execError.status || 1
-      const stderr = execError.stderr?.toString() || (error as Error).message
+      // TypeScript outputs errors to stdout, not stderr
+      const stdout = execError.stdout?.toString() || ''
+      const stderr = execError.stderr?.toString() || stdout || (error as Error).message
 
       logger.toolExecution(command, args, duration, exitCode)
 
       return {
-        stdout: execError.stdout?.toString() || '',
+        stdout,
         stderr,
         exitCode,
         duration,
@@ -285,33 +287,35 @@ export class QualityChecker {
    * Run TypeScript check
    */
   private async runTypeScript(_files: string[]): Promise<CheckerResult> {
-    try {
-      // Check if tsconfig exists
-      if (!existsSync('tsconfig.json')) {
-        return { success: true }
-      }
+    // Check if tsconfig exists
+    if (!existsSync('tsconfig.json')) {
+      return { success: true }
+    }
 
-      execSync('npx tsc --noEmit', { stdio: 'pipe' })
+    const result = this.executeCommand('npx tsc', ['--noEmit'])
 
+    if (result.exitCode === 0) {
       return {
         success: true,
         fixable: false,
       }
-    } catch (error) {
-      // Parse TypeScript errors for better detail
-      const errorMsg = error instanceof Error ? error.toString() : 'TypeScript check failed'
-      const parsedErrors = this.errorParser.parseTypeScriptErrors(errorMsg)
+    }
 
-      const errors =
-        parsedErrors.length > 0
-          ? parsedErrors.map((err) => this.errorParser.formatError(err))
+    // Parse TypeScript errors from stderr
+    const errorOutput = result.stderr || result.stdout
+    const parsedErrors = this.errorParser.parseTypeScriptErrors(errorOutput)
+
+    const errors =
+      parsedErrors.length > 0
+        ? parsedErrors.map((err) => this.errorParser.formatError(err))
+        : errorOutput
+          ? errorOutput.split('\n').filter((line) => line.trim())
           : ['TypeScript compilation failed']
 
-      return {
-        success: false,
-        errors,
-        fixable: false,
-      }
+    return {
+      success: false,
+      errors,
+      fixable: false,
     }
   }
 
