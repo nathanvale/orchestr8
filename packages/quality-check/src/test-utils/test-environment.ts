@@ -56,6 +56,9 @@ export class MockWritable extends Writable {
  * Setup test environment with proper isolation
  */
 export function setupTestEnvironment(): TestEnvironment {
+  // Store original environment BEFORE making changes
+  const originalEnv = { ...process.env }
+
   // Disable Claude hook in test environment
   process.env.CLAUDE_HOOK_DISABLED = 'true'
 
@@ -75,9 +78,6 @@ export function setupTestEnvironment(): TestEnvironment {
       // Don't throw to prevent test interruption
       return undefined as never
     })
-
-  // Store original environment
-  const originalEnv = { ...process.env }
 
   // Replace standard streams
   Object.defineProperty(process, 'stdin', {

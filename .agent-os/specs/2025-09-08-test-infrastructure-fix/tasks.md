@@ -20,13 +20,13 @@ Fix 23 failing integration tests by addressing mock isolation, disabling real Cl
   - [x] 1.6 Verify all hook isolation tests pass
 
 - [ ] 2. Create Mock Infrastructure
-  - [ ] 2.1 Write tests for MockQualityChecker class
-  - [ ] 2.2 Implement MockQualityChecker with predictable results
-  - [ ] 2.3 Create InMemoryFileSystem using Map<string, string>
-  - [ ] 2.4 Implement MockConfigLoader for test fixtures
-  - [ ] 2.5 Create mock factory pattern in test-utils/mock-factory.ts
+  - [x] 2.1 Write tests for MockQualityChecker class
+  - [x] 2.2 Implement MockQualityChecker with predictable results
+  - [x] 2.3 Create InMemoryFileSystem using Map<string, string>
+  - [x] 2.4 Implement MockConfigLoader for test fixtures
+  - [x] 2.5 Create mock factory pattern in test-utils/mock-factory.ts
   - [ ] 2.6 Replace real quality checker with mocks in all integration tests
-  - [ ] 2.7 Verify mock infrastructure tests pass
+  - [x] 2.7 Verify mock infrastructure tests pass
 
 - [ ] 3. Fix Configuration Loading
   - [ ] 3.1 Write tests for ESLint flat config detection
