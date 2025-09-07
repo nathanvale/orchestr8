@@ -3,6 +3,7 @@
 ## Interactive Spec Selection Flow
 
 ### Scenario 1: No Input Provided
+
 ```
 User runs: execute-tasks-master
 System responds:
@@ -11,7 +12,7 @@ System responds:
 
 Available specs:
 1. 2025-09-07-xml-security-remediation
-2. 2025-09-07-fix-skipped-tests  
+2. 2025-09-07-fix-skipped-tests
 3. 2025-09-05-autopilot-engine
 4. 2025-01-05-quality-checker-uplift
 
@@ -27,6 +28,7 @@ System: Executes tasks 2.2, 2.3, 2.4, 2.5, 2.6
 ```
 
 ### Scenario 2: Fuzzy Match Input
+
 ```
 User runs: execute-tasks-master "autopilot"
 System: Fuzzy matches to 2025-09-05-autopilot-engine
@@ -35,6 +37,7 @@ System: Executes those tasks
 ```
 
 ### Scenario 3: Full Path with Specific Tasks
+
 ```
 User runs: execute-tasks-master ".agent-os/specs/2025-01-05-quality-checker-uplift" ["2.2", "2.3"]
 System: Uses exact path
@@ -46,6 +49,7 @@ System: Executes only tasks 2.2 and 2.3
 ### Finding Next Uncompleted Parent Task
 
 Given this task structure:
+
 ```markdown
 - [x] 1. Fix TypeScript Strict Mode Tests
   - [x] 1.1 Enable and analyze TypeScript strict null checks
@@ -55,13 +59,13 @@ Given this task structure:
   - [x] 1.5 Remove skip modifiers
   - [x] 1.6 Verify all TypeScript strict mode tests pass
 
-- [ ] 2. Fix Blocking Behavior Tests        <-- SELECTED (first incomplete parent)
+- [ ] 2. Fix Blocking Behavior Tests <-- SELECTED (first incomplete parent)
   - [x] 2.1 Enable blocking behavior describe block
-  - [ ] 2.2 Analyze type safety blocking    <-- EXECUTE
-  - [ ] 2.3 Update autopilot adapter        <-- EXECUTE
-  - [ ] 2.4 Analyze complexity blocking      <-- EXECUTE
-  - [ ] 2.5 Update autopilot adapter        <-- EXECUTE
-  - [ ] 2.6 Verify all blocking tests       <-- EXECUTE
+  - [ ] 2.2 Analyze type safety blocking <-- EXECUTE
+  - [ ] 2.3 Update autopilot adapter <-- EXECUTE
+  - [ ] 2.4 Analyze complexity blocking <-- EXECUTE
+  - [ ] 2.5 Update autopilot adapter <-- EXECUTE
+  - [ ] 2.6 Verify all blocking tests <-- EXECUTE
 
 - [ ] 3. Fix Failing Unit Tests
   - [ ] 3.1 Analyze quality-checker.unit.test.ts
@@ -69,6 +73,7 @@ Given this task structure:
 ```
 
 The system will:
+
 1. Skip Task 1 (all subtasks complete)
 2. Select Task 2 (has incomplete subtasks)
 3. Execute tasks 2.2 through 2.6
@@ -98,6 +103,7 @@ The fuzzy matching uses these strategies:
 ## Error Handling
 
 ### No Match Found
+
 ```
 User runs: execute-tasks-master "nonexistent spec"
 System responds:
@@ -114,6 +120,7 @@ Please try again with a different search term.
 ```
 
 ### Invalid Path
+
 ```
 User runs: execute-tasks-master "/invalid/path"
 System responds:
@@ -122,6 +129,7 @@ System responds:
 ```
 
 ### All Tasks Complete
+
 ```
 If all tasks in the selected spec are complete:
 System: "All tasks in this spec are already complete. No work to do!"

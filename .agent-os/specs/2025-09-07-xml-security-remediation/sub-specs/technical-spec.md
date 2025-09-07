@@ -1,19 +1,23 @@
 # Technical Specification
 
-This is the technical specification for the spec detailed in @.agent-os/specs/2025-09-07-xml-security-remediation/spec.md
+This is the technical specification for the spec detailed in
+@.agent-os/specs/2025-09-07-xml-security-remediation/spec.md
 
 ## Technical Requirements
 
 ### Priority 1: Critical Security Fixes (Week 1)
 
 #### Command Injection Prevention
-- Implement input sanitization for all template variables ({{BRANCH_NAME}}, {{SPEC_PATH}}, {{FILE_PATH}}, etc.)
+
+- Implement input sanitization for all template variables ({{BRANCH_NAME}},
+  {{SPEC_PATH}}, {{FILE_PATH}}, etc.)
 - Create validation schemas with regex patterns for each variable type
 - Replace string interpolation with parameterized command execution
 - Add shell escape functions for all Bash tool invocations
 - Implement allowlist validation for Git branch names and file paths
 
-#### Prompt Injection Protection  
+#### Prompt Injection Protection
+
 - Remove all "IMMEDIATE EXECUTION" and "BYPASS" directives
 - Implement mandatory validation gates before tool execution
 - Add user confirmation requirements for sensitive operations
@@ -21,6 +25,7 @@ This is the technical specification for the spec detailed in @.agent-os/specs/20
 - Implement rate limiting for tool execution
 
 #### Path Traversal Prevention
+
 - Implement path canonicalization for all file operations
 - Create allowlist of permitted directory paths
 - Validate all file paths against traversal patterns (../, ..\, etc.)
@@ -30,12 +35,14 @@ This is the technical specification for the spec detailed in @.agent-os/specs/20
 ### Priority 2: Structural Fixes (Week 1-2)
 
 #### XML Syntax Corrections
+
 - Fix unescaped characters in phase2-execution.xml line 39
 - Wrap comparison operators in CDATA sections
 - Validate all XML files against W3C standards
 - Implement XML schema validation (XSD)
 
 #### Token Optimization (25% reduction target)
+
 - Extract common enforcement rules to shared component (~850 tokens saved)
 - Flatten deep nesting structures (~600 tokens saved)
 - Standardize metadata format (~400 tokens saved)
@@ -43,6 +50,7 @@ This is the technical specification for the spec detailed in @.agent-os/specs/20
 - Convert verbose elements to concise attributes where appropriate
 
 #### Dependency Resolution
+
 - Map and document all import dependencies
 - Eliminate circular dependencies between files
 - Create linear dependency hierarchy
@@ -51,12 +59,14 @@ This is the technical specification for the spec detailed in @.agent-os/specs/20
 ### Priority 3: Semantic Improvements (Week 2)
 
 #### Execution Model Clarification
+
 - Define single, consistent execution strategy (direct tools vs subagents)
 - Remove contradictory directives
 - Create clear execution flow documentation
 - Implement execution mode configuration
 
 #### Variable Registry Implementation
+
 - Create comprehensive variable registry with:
   - Variable name and type definitions
   - Source identification (user input, system, derived)
@@ -66,6 +76,7 @@ This is the technical specification for the spec detailed in @.agent-os/specs/20
 - Add type checking for all variables
 
 #### Error Handling Framework
+
 - Add timeout specifications for all operations (default: 30s)
 - Implement rollback procedures for failed operations
 - Add retry logic with exponential backoff

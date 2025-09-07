@@ -9,20 +9,12 @@
     "ecmaVersion": "latest",
     "sourceType": "module"
   },
-  "extends": [
-    "eslint:recommended"
-  ],
+  "extends": ["eslint:recommended"],
   "rules": {
     "no-var": "error",
     "prefer-const": "error",
-    "space-before-function-paren": [
-      "error",
-      "always"
-    ],
+    "space-before-function-paren": ["error", "always"],
     "no-trailing-spaces": "error",
-    "indent": [
-      "error",
-      2
-    ]
+    "indent": ["error", 2]
   }
 }

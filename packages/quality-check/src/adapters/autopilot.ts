@@ -271,13 +271,16 @@ export class Autopilot {
 
     // Check for critical issues that should always block
     const hasCriticalIssues = this.hasCriticalBlockingIssues(result.issues)
-    
+
     // Debug logging
     if (process.env.DEBUG_AUTOPILOT) {
       console.error('DEBUG: hasCriticalIssues =', hasCriticalIssues)
-      console.error('DEBUG: issues =', result.issues.map(i => ({ rule: this.mapIssueToRule(i), engine: i.engine })))
+      console.error(
+        'DEBUG: issues =',
+        result.issues.map((i) => ({ rule: this.mapIssueToRule(i), engine: i.engine })),
+      )
     }
-    
+
     // If we have critical issues (type safety, complexity), always report without auto-fixing
     if (hasCriticalIssues) {
       return {
@@ -331,12 +334,12 @@ export class Autopilot {
     // Check for specific patterns that require blocking without auto-fix
     for (const issue of issues) {
       const rule = this.mapIssueToRule(issue)
-      
+
       // Debug logging
       if (process.env.CLAUDE_HOOK_DEBUG) {
         console.error(`DEBUG hasCriticalBlockingIssues: Checking rule "${rule}"`)
       }
-      
+
       // Type safety issues with 'any' - these should block
       if (rule === '@typescript-eslint/no-explicit-any') {
         if (process.env.CLAUDE_HOOK_DEBUG) {
@@ -344,18 +347,18 @@ export class Autopilot {
         }
         return true
       }
-      
+
       // TypeScript index signature errors (complexity indicator - dynamic property access)
       if (rule === 'TS7053') {
         return true
       }
-      
+
       // Prototype access issues (potential security/complexity)
       if (rule === 'no-prototype-builtins') {
         return true
       }
     }
-    
+
     return false
   }
 
@@ -674,7 +677,7 @@ export class Autopilot {
       return { category: 'type-error', fixable: false }
     }
 
-    // TS6xxx - Unused code errors  
+    // TS6xxx - Unused code errors
     if (code.startsWith('TS6')) {
       if (code === 'TS6133') return { category: 'unused-parameter', fixable: false }
       return { category: 'unused-code', fixable: false }

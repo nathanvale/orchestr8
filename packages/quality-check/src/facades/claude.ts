@@ -48,15 +48,15 @@ export async function runClaudeHook(): Promise<void> {
         process.exit(ExitCodes.SUCCESS)
         return
       }
-      
+
       const parsed = JSON.parse(input)
       // Additional safety check for null/undefined parsed content
       if (parsed === null || parsed === undefined) {
-        logger.warn('Null/undefined payload after parsing, exiting gracefully')  
+        logger.warn('Null/undefined payload after parsing, exiting gracefully')
         process.exit(ExitCodes.SUCCESS)
         return
       }
-      
+
       payload = parsed as ClaudeCodePayload
       logger.payloadReceived(payload)
       logger.payloadValidation(true)
@@ -79,7 +79,7 @@ export async function runClaudeHook(): Promise<void> {
       return // Additional safety return to satisfy TypeScript and prevent further execution
     }
 
-    // Only process supported operations  
+    // Only process supported operations
     if (!shouldProcessOperation(payload.tool_name)) {
       logger.debug('Skipping unsupported operation', {
         operation: payload.tool_name,
@@ -103,19 +103,23 @@ export async function runClaudeHook(): Promise<void> {
     logger.hookStarted(payload.tool_name, payload.tool_input.file_path)
 
     // For Write operations, write the file first (skip for test paths)
-    if (payload.tool_name === 'Write' && payload.tool_input.content && !payload.tool_input.file_path.startsWith('/test/')) {
+    if (
+      payload.tool_name === 'Write' &&
+      payload.tool_input.content &&
+      !payload.tool_input.file_path.startsWith('/test/')
+    ) {
       const fs = await import('node:fs/promises')
       const path = await import('node:path')
-      
+
       // Ensure directory exists
       const dir = path.dirname(payload.tool_input.file_path)
       await fs.mkdir(dir, { recursive: true })
-      
+
       // Write the file
       await fs.writeFile(payload.tool_input.file_path, payload.tool_input.content, 'utf8')
       logger.debug('File written for Write operation', {
         filePath: payload.tool_input.file_path,
-        contentLength: payload.tool_input.content.length
+        contentLength: payload.tool_input.content.length,
       })
     }
 
@@ -409,7 +413,7 @@ export async function runClaudeHook(): Promise<void> {
     if (error instanceof Error && error.message.startsWith('PROCESS_EXIT_')) {
       throw error
     }
-    
+
     logger.error('Claude hook error', error as Error, {
       phase: 'hook-error',
       correlationId: logger.getCorrelationId(),

@@ -194,7 +194,7 @@ describe('ESLint Config Variations Integration', () => {
       // Accept either message since both indicate blocking for manual intervention
       expect(
         result.stderr.includes('Quality issues require manual intervention') ||
-        result.stderr.includes('Some issues remain after auto-fix')
+          result.stderr.includes('Some issues remain after auto-fix'),
       ).toBe(true)
       expect(result.duration).toBeLessThan(2000)
     }, 5000)
@@ -230,7 +230,7 @@ describe('ESLint Config Variations Integration', () => {
       // Accept either message since both indicate blocking for manual intervention
       expect(
         result.stderr.includes('Quality issues require manual intervention') ||
-        result.stderr.includes('Some issues remain after auto-fix')
+          result.stderr.includes('Some issues remain after auto-fix'),
       ).toBe(true)
       expect(result.duration).toBeLessThan(2000)
     }, 5000)
@@ -269,7 +269,7 @@ describe('ESLint Config Variations Integration', () => {
       expect(result.exitCode).toBe(2)
       expect(
         result.stderr.includes('Quality issues require manual intervention') ||
-        result.stderr.includes('Some issues remain after auto-fix')
+          result.stderr.includes('Some issues remain after auto-fix'),
       ).toBe(true)
       expect(result.duration).toBeLessThan(2000)
     }, 5000)

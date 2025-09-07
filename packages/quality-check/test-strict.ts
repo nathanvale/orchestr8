@@ -10,5 +10,5 @@ export function getUserEmail(user: User | null): string {
 }
 
 export function processUsers(users: User[]): string[] {
-  return users.map(u => u.email)
+  return users.map((u) => u.email)
 }

@@ -18,10 +18,10 @@ describe('Claude Hook XML Output', () => {
 
     // Mock process.exit to capture exit codes and stop execution
     originalProcessExit = process.exit
-    mockProcess = { 
+    mockProcess = {
       exit: vi.fn((code: number) => {
         throw new Error(`PROCESS_EXIT_${code}`)
-      })
+      }),
     }
     process.exit = mockProcess.exit as any
 

@@ -2,37 +2,51 @@
 
 ## Fix Skipped Tests in Quality Checker
 
-Date: 2025-09-07
-Status: Active
-Updated: 2025-09-07
+Date: 2025-09-07 Status: Active Updated: 2025-09-07
 
 ### Overview
-This task list addresses skipped and failing tests in the quality checker package to ensure comprehensive test coverage and proper functionality. Extended to include comprehensive fixes for 30 failing integration tests across 4 test suites.
+
+This task list addresses skipped and failing tests in the quality checker
+package to ensure comprehensive test coverage and proper functionality. Extended
+to include comprehensive fixes for 30 failing integration tests across 4 test
+suites.
 
 ## Tasks
 
 - [x] 1. Fix TypeScript Strict Mode Tests
-  - [x] 1.1 Enable and analyze TypeScript strict null checks test in config-variations.integration.test.ts
-  - [x] 1.2 Update TypeScript engine to handle strict null checks compiler option properly
-  - [x] 1.3 Enable and analyze TypeScript no implicit any test in config-variations.integration.test.ts
+  - [x] 1.1 Enable and analyze TypeScript strict null checks test in
+        config-variations.integration.test.ts
+  - [x] 1.2 Update TypeScript engine to handle strict null checks compiler
+        option properly
+  - [x] 1.3 Enable and analyze TypeScript no implicit any test in
+        config-variations.integration.test.ts
   - [x] 1.4 Update TypeScript engine to handle noImplicitAny compiler option
-  - [x] 1.5 Remove skip modifiers from TypeScript strict mode describe block (line 157)
+  - [x] 1.5 Remove skip modifiers from TypeScript strict mode describe block
+        (line 157)
   - [x] 1.6 Verify all TypeScript strict mode tests pass
 
 - [ ] 2. Fix Blocking Behavior Tests
-  - [x] 2.1 Enable blocking behavior describe block in claude-hook-workflow.integration.test.ts (line 281)
-  - [x] 2.2 Analyze type safety blocking requirements for should_block_for_type_safety_issues test
-  - [x] 2.3 Update autopilot adapter to properly detect and block type safety issues
-  - [x] 2.4 Analyze complexity blocking requirements for should_block_for_complexity_issues test
-  - [x] 2.5 Update autopilot adapter to properly detect and block complexity issues
+  - [x] 2.1 Enable blocking behavior describe block in
+        claude-hook-workflow.integration.test.ts (line 281)
+  - [x] 2.2 Analyze type safety blocking requirements for
+        should_block_for_type_safety_issues test
+  - [x] 2.3 Update autopilot adapter to properly detect and block type safety
+        issues
+  - [x] 2.4 Analyze complexity blocking requirements for
+        should_block_for_complexity_issues test
+  - [x] 2.5 Update autopilot adapter to properly detect and block complexity
+        issues
   - [x] 2.6 Verify all blocking behavior tests pass
 
 - [x] 3. Fix Failing Unit Tests
-  - [x] 3.1 Analyze quality-checker.unit.test.ts TypeScript error handling failure
+  - [x] 3.1 Analyze quality-checker.unit.test.ts TypeScript error handling
+        failure
   - [x] 3.2 Update error message expectations to match actual TypeScript output
   - [x] 3.3 Analyze claude.unit.test.ts invalid payload handling failures
-  - [x] 3.4 Fix payload validation in claude facade to handle undefined gracefully
-  - [x] 3.5 Add defensive checks for missing payload properties (tool_name, file_path)
+  - [x] 3.4 Fix payload validation in claude facade to handle undefined
+        gracefully
+  - [x] 3.5 Add defensive checks for missing payload properties (tool_name,
+        file_path)
   - [x] 3.6 Verify all unit tests pass
 
 - [ ] 4. Integration and Performance Validation
@@ -53,6 +67,7 @@ This task list addresses skipped and failing tests in the quality checker packag
 ## Technical Notes
 
 ### Affected Files:
+
 - `packages/quality-check/src/integration/config-variations.integration.test.ts`
 - `packages/quality-check/src/integration/claude-hook-workflow.integration.test.ts`
 - `packages/quality-check/src/core/quality-checker.unit.test.ts`
@@ -61,6 +76,7 @@ This task list addresses skipped and failing tests in the quality checker packag
 - `packages/quality-check/src/adapters/autopilot.ts`
 
 ### Key Components:
+
 - TypeScript Engine: Handles TypeScript compilation and error detection
 - Autopilot Adapter: Makes decisions about blocking vs auto-fixing issues
 - Claude Facade: Handles Claude hook integration and payload validation
@@ -71,10 +87,12 @@ This task list addresses skipped and failing tests in the quality checker packag
 ### 5. Performance Optimization (Priority 1 - Affects Multiple Suites)
 
 - [ ] 5.1 TypeScript Engine Performance
-  - [ ] 5.1.1 Implement proper TypeScript incremental compilation caching in typescript-engine.ts
+  - [ ] 5.1.1 Implement proper TypeScript incremental compilation caching in
+        typescript-engine.ts
   - [ ] 5.1.2 Add persistent tsBuildInfo cache directory management
   - [ ] 5.1.3 Optimize file system operations to reduce I/O overhead
-  - [ ] 5.1.4 Implement parallel processing for multi-file checks where applicable
+  - [ ] 5.1.4 Implement parallel processing for multi-file checks where
+        applicable
   - [ ] 5.1.5 Add performance monitoring and metrics collection
   - [ ] 5.1.6 Verify all performance tests complete under 2000ms threshold
 
@@ -88,16 +106,21 @@ This task list addresses skipped and failing tests in the quality checker packag
 ### 6. Exit Code Standardization
 
 - [ ] 6.1 Core Exit Code Logic
-  - [ ] 6.1.1 Standardize exit code mapping (0 for success/warnings, non-zero for errors)
+  - [ ] 6.1.1 Standardize exit code mapping (0 for success/warnings, non-zero
+        for errors)
   - [ ] 6.1.2 Ensure consistency across TypeScript, ESLint, and Prettier engines
-  - [ ] 6.1.3 Fix aggregation logic when multiple engines report different severities
+  - [ ] 6.1.3 Fix aggregation logic when multiple engines report different
+        severities
   - [ ] 6.1.4 Update quality-checker.ts to return proper exit codes
 
 - [ ] 6.2 Test-Specific Fixes
   - [ ] 6.2.1 Fix exit code compliance in ci-cd-pipeline.integration.test.ts
-  - [ ] 6.2.2 Fix exit code 0 when no issues in quality-checker-full.integration.test.ts
-  - [ ] 6.2.3 Fix custom enterprise config exit codes in config-variations.integration.test.ts
-  - [ ] 6.2.4 Fix non-existent file operation exit codes in claude-hook-workflow.integration.test.ts
+  - [ ] 6.2.2 Fix exit code 0 when no issues in
+        quality-checker-full.integration.test.ts
+  - [ ] 6.2.3 Fix custom enterprise config exit codes in
+        config-variations.integration.test.ts
+  - [ ] 6.2.4 Fix non-existent file operation exit codes in
+        claude-hook-workflow.integration.test.ts
 
 ### 7. Auto-Fix Functionality
 
@@ -108,10 +131,14 @@ This task list addresses skipped and failing tests in the quality checker packag
   - [ ] 7.1.4 Add proper error handling for auto-fix operations
 
 - [ ] 7.2 Test-Specific Fixes
-  - [ ] 7.2.1 Fix silently_fix_formatting_issues in claude-hook-workflow.integration.test.ts
-  - [ ] 7.2.2 Fix silently_fix_import_organization_issues in claude-hook-workflow.integration.test.ts
-  - [ ] 7.2.3 Fix Prettier custom print width auto-fix in config-variations.integration.test.ts
-  - [ ] 7.2.4 Fix tabs vs spaces auto-fix in config-variations.integration.test.ts
+  - [ ] 7.2.1 Fix silently_fix_formatting_issues in
+        claude-hook-workflow.integration.test.ts
+  - [ ] 7.2.2 Fix silently_fix_import_organization_issues in
+        claude-hook-workflow.integration.test.ts
+  - [ ] 7.2.3 Fix Prettier custom print width auto-fix in
+        config-variations.integration.test.ts
+  - [ ] 7.2.4 Fix tabs vs spaces auto-fix in
+        config-variations.integration.test.ts
 
 ### 8. Configuration Handling
 
@@ -140,7 +167,8 @@ This task list addresses skipped and failing tests in the quality checker packag
 - [ ] 9.1 JSON Output Validation
   - [ ] 9.1.1 Fix JSON schema validation timeout (10s limit)
   - [ ] 9.1.2 Ensure valid JSON output format
-  - [ ] 9.1.3 Include all required fields (tool, file, line, column, code, severity, message)
+  - [ ] 9.1.3 Include all required fields (tool, file, line, column, code,
+        severity, message)
 
 - [ ] 9.2 Output Format Consistency
   - [ ] 9.2.1 Fix output consistency across engines
@@ -193,14 +221,18 @@ This task list addresses skipped and failing tests in the quality checker packag
 ## Execution Order
 
 ### Priority Order (Based on Dependencies):
-1. **Phase 1: Performance Optimization (5.x)** - Fixes root causes affecting multiple suites
-2. **Phase 2: Exit Code Standardization (6.x)** - Core functionality needed by all tests
+
+1. **Phase 1: Performance Optimization (5.x)** - Fixes root causes affecting
+   multiple suites
+2. **Phase 2: Exit Code Standardization (6.x)** - Core functionality needed by
+   all tests
 3. **Phase 3: Auto-Fix Functionality (7.x)** - Builds on exit code logic
 4. **Phase 4: Configuration Handling (8.x)** - Requires working engines
 5. **Phase 5: Suite-Specific Fixes (9.x, 10.x, 11.x)** - Apply after core fixes
 6. **Phase 6: Final Validation (12.x)** - Comprehensive verification
 
 ### Test-Driven Approach:
+
 1. Run failing tests to understand current behavior
 2. Implement fixes based on test requirements
 3. Verify specific test passes after each fix
@@ -210,18 +242,22 @@ This task list addresses skipped and failing tests in the quality checker packag
 ## Summary
 
 ### Total Scope:
+
 - **Phase 1 (Original):** 4 main task groups with 20+ subtasks for skipped tests
-- **Phase 2 (New):** 8 main task categories with 70+ subtasks for failing integration tests
+- **Phase 2 (New):** 8 main task categories with 70+ subtasks for failing
+  integration tests
 - **Total Failing Tests to Fix:** 30 integration tests across 4 test suites
 - **Performance Target:** All tests < 2000ms, warm performance < 300ms
 
 ### Test Suite Breakdown:
+
 1. **CI/CD Pipeline Integration:** 4 failing tests
-2. **Quality Checker Full Integration:** 5 failing tests  
+2. **Quality Checker Full Integration:** 5 failing tests
 3. **Claude Hook Workflow Integration:** 11 failing tests
 4. **Config Variations Integration:** 10 failing tests
 
 ### Key Areas of Focus:
+
 - Performance optimization and caching
 - Exit code standardization
 - Silent auto-fix functionality

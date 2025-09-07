@@ -1,6 +1,7 @@
 # Security Specification
 
-This is the security remediation specification for the spec detailed in @.agent-os/specs/2025-09-07-xml-security-remediation/spec.md
+This is the security remediation specification for the spec detailed in
+@.agent-os/specs/2025-09-07-xml-security-remediation/spec.md
 
 ## Security Architecture
 
@@ -127,6 +128,7 @@ This is the security remediation specification for the spec detailed in @.agent-
 ## Security Implementation Checklist
 
 ### Week 1: Critical Patches
+
 - [ ] Remove all IMMEDIATE/BYPASS directives from all files
 - [ ] Implement input validation layer with sanitization
 - [ ] Add mandatory confirmation gates for tool execution
@@ -136,6 +138,7 @@ This is the security remediation specification for the spec detailed in @.agent-
 - [ ] Fix XML syntax errors
 
 ### Week 2: Hardening
+
 - [ ] Implement file access control lists
 - [ ] Add timeout and resource monitoring
 - [ ] Create error recovery procedures
