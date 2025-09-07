@@ -1,4 +1,4 @@
-import { TimeoutError } from './errors'
+import { TimeoutError } from './errors.js'
 
 /**
  * Cancellation token for cancellable operations

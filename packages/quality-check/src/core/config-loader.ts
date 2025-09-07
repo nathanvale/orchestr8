@@ -1,6 +1,6 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
-import { ConfigError } from './errors'
+import { ConfigError } from './errors.js'
 
 /**
  * Quality Checker configuration options

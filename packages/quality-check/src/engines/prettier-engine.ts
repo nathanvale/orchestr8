@@ -1,9 +1,9 @@
 import * as prettier from 'prettier'
 import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
-import type { Issue, CheckerResult } from '../types/issue-types'
-import { ToolMissingError, FileError } from '../core/errors'
-import type { CancellationToken } from '../core/timeout-manager'
+import type { Issue, CheckerResult } from '../types/issue-types.js'
+import { ToolMissingError, FileError } from '../core/errors.js'
+import type { CancellationToken } from '../core/timeout-manager.js'
 
 /**
  * Prettier engine configuration

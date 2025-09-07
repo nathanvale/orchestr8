@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { runClaudeHook } from './claude.js'
 import * as AutopilotModule from '../adapters/autopilot.js'
-import * as QualityCheckerModule from '../core/quality-checker.js'
+import * as QualityCheckerV2Module from '../core/quality-checker-v2.js'
 import * as FixerModule from '../adapters/fixer.js'
 import { ClaudeFormatter } from '../formatters/claude-formatter.js'
 
@@ -16,9 +16,13 @@ describe('Claude Hook XML Output', () => {
   beforeEach(() => {
     vi.clearAllMocks()
 
-    // Mock process.exit to capture exit codes
+    // Mock process.exit to capture exit codes and stop execution
     originalProcessExit = process.exit
-    mockProcess = { exit: vi.fn() }
+    mockProcess = { 
+      exit: vi.fn((code: number) => {
+        throw new Error(`PROCESS_EXIT_${code}`)
+      })
+    }
     process.exit = mockProcess.exit as any
 
     // Mock console to capture output
@@ -58,17 +62,24 @@ describe('Claude Hook XML Output', () => {
       }
       const payloadString = JSON.stringify(payload)
 
-      // Mock QualityChecker to return TypeScript errors
+      // Mock QualityCheckerV2 to return TypeScript errors
       const mockQualityResult = {
         success: false,
-        checkers: {
-          typescript: {
-            success: false,
-            errors: ['TS7006: Parameter implicitly has an any type'],
+        issues: [
+          {
+            engine: 'typescript' as const,
+            severity: 'error' as const,
+            ruleId: 'TS7006',
+            file: '/test/component.ts',
+            line: 1,
+            col: 7,
+            message: 'Parameter implicitly has an any type',
           },
-        },
+        ],
+        errors: [],
+        warnings: [],
       }
-      vi.spyOn(QualityCheckerModule, 'QualityChecker').mockImplementation(
+      vi.spyOn(QualityCheckerV2Module, 'QualityCheckerV2').mockImplementation(
         () =>
           ({
             check: vi.fn().mockResolvedValue(mockQualityResult),
@@ -98,23 +109,22 @@ describe('Claude Hook XML Output', () => {
       )
 
       // Setup stdin callbacks
-      const dataCallback = vi.fn()
-      const endCallback = vi.fn()
       mockStdin.on.mockImplementation((event: string, callback: (...args: any[]) => void) => {
-        if (event === 'data') dataCallback.mockImplementation(callback)
-        if (event === 'end') endCallback.mockImplementation(callback)
+        if (event === 'data') {
+          setTimeout(() => callback(payloadString), 0)
+        }
+        if (event === 'end') {
+          setTimeout(() => callback(), 10)
+        }
         return mockStdin
       })
 
       // Act
-      const promise = runClaudeHook()
-      dataCallback(payloadString)
-      endCallback()
-      await promise
+      await expect(runClaudeHook()).rejects.toThrow('PROCESS_EXIT_2')
 
       // Assert - Should output XML formatted issues to stderr
       const errorCalls = mockConsole.error.mock.calls
-      const xmlOutput = errorCalls.map((call) => call.join(' ')).join('\n')
+      const xmlOutput = errorCalls.map((call: any[]) => call.join(' ')).join('\n')
 
       // Check for XML structure in output
       expect(xmlOutput).toContain('<quality-check-result>')
@@ -147,14 +157,21 @@ describe('Claude Hook XML Output', () => {
       // Mock quality result with special characters
       const mockQualityResult = {
         success: false,
-        checkers: {
-          eslint: {
-            success: false,
-            errors: ['Unexpected use of < and > operators & "quotes"'],
+        issues: [
+          {
+            engine: 'eslint' as const,
+            severity: 'error' as const,
+            ruleId: 'custom-rule',
+            file: '/test/component.ts',
+            line: 1,
+            col: 1,
+            message: 'Unexpected use of < and > operators & "quotes"',
           },
-        },
+        ],
+        errors: [],
+        warnings: [],
       }
-      vi.spyOn(QualityCheckerModule, 'QualityChecker').mockImplementation(
+      vi.spyOn(QualityCheckerV2Module, 'QualityCheckerV2').mockImplementation(
         () =>
           ({
             check: vi.fn().mockResolvedValue(mockQualityResult),
@@ -184,23 +201,22 @@ describe('Claude Hook XML Output', () => {
       )
 
       // Setup stdin
-      const dataCallback = vi.fn()
-      const endCallback = vi.fn()
       mockStdin.on.mockImplementation((event: string, callback: (...args: any[]) => void) => {
-        if (event === 'data') dataCallback.mockImplementation(callback)
-        if (event === 'end') endCallback.mockImplementation(callback)
+        if (event === 'data') {
+          setTimeout(() => callback(payloadString), 0)
+        }
+        if (event === 'end') {
+          setTimeout(() => callback(), 10)
+        }
         return mockStdin
       })
 
       // Act
-      const promise = runClaudeHook()
-      dataCallback(payloadString)
-      endCallback()
-      await promise
+      await expect(runClaudeHook()).rejects.toThrow('PROCESS_EXIT_2')
 
       // Assert - XML special characters should be escaped
       const errorCalls = mockConsole.error.mock.calls
-      const xmlOutput = errorCalls.map((call) => call.join(' ')).join('\n')
+      const xmlOutput = errorCalls.map((call: any[]) => call.join(' ')).join('\n')
 
       expect(xmlOutput).toContain('&lt;')
       expect(xmlOutput).toContain('&gt;')
@@ -222,18 +238,39 @@ describe('Claude Hook XML Output', () => {
       // Mock multiple issues from different engines
       const mockQualityResult = {
         success: false,
-        checkers: {
-          typescript: {
-            success: false,
-            errors: ['TS2307: Cannot find module', 'TS2304: Cannot find name'],
+        issues: [
+          {
+            engine: 'typescript' as const,
+            severity: 'error' as const,
+            ruleId: 'TS2307',
+            file: '/test/mixed.ts',
+            line: 1,
+            col: 1,
+            message: 'Cannot find module',
           },
-          eslint: {
-            success: false,
-            errors: ['no-console: Unexpected console statement'],
+          {
+            engine: 'typescript' as const,
+            severity: 'error' as const,
+            ruleId: 'TS2304',
+            file: '/test/mixed.ts',
+            line: 2,
+            col: 5,
+            message: 'Cannot find name',
           },
-        },
+          {
+            engine: 'eslint' as const,
+            severity: 'warning' as const,
+            ruleId: 'no-console',
+            file: '/test/mixed.ts',
+            line: 3,
+            col: 1,
+            message: 'Unexpected console statement',
+          },
+        ],
+        errors: [],
+        warnings: [],
       }
-      vi.spyOn(QualityCheckerModule, 'QualityChecker').mockImplementation(
+      vi.spyOn(QualityCheckerV2Module, 'QualityCheckerV2').mockImplementation(
         () =>
           ({
             check: vi.fn().mockResolvedValue(mockQualityResult),
@@ -281,23 +318,22 @@ describe('Claude Hook XML Output', () => {
       )
 
       // Setup stdin
-      const dataCallback = vi.fn()
-      const endCallback = vi.fn()
       mockStdin.on.mockImplementation((event: string, callback: (...args: any[]) => void) => {
-        if (event === 'data') dataCallback.mockImplementation(callback)
-        if (event === 'end') endCallback.mockImplementation(callback)
+        if (event === 'data') {
+          setTimeout(() => callback(payloadString), 0)
+        }
+        if (event === 'end') {
+          setTimeout(() => callback(), 10)
+        }
         return mockStdin
       })
 
       // Act
-      const promise = runClaudeHook()
-      dataCallback(payloadString)
-      endCallback()
-      await promise
+      await expect(runClaudeHook()).rejects.toThrow('PROCESS_EXIT_2')
 
       // Assert - Issues should be grouped by engine
       const errorCalls = mockConsole.error.mock.calls
-      const xmlOutput = errorCalls.map((call) => call.join(' ')).join('\n')
+      const xmlOutput = errorCalls.map((call: any[]) => call.join(' ')).join('\n')
 
       // Check TypeScript section has 2 errors
       const tsMatch = xmlOutput.match(/<typescript>([\s\S]*?)<\/typescript>/)
@@ -329,18 +365,30 @@ describe('Claude Hook XML Output', () => {
       // Mock quality result with mixed fixable/unfixable issues
       const mockQualityResult = {
         success: false,
-        checkers: {
-          typescript: {
-            success: false,
-            errors: ['TS2307: Cannot find module "missing"'],
+        issues: [
+          {
+            engine: 'typescript' as const,
+            severity: 'error' as const,
+            ruleId: 'TS2307',
+            file: '/test/mixed.ts',
+            line: 1,
+            col: 8,
+            message: 'Cannot find module "missing"',
           },
-          prettier: {
-            success: false,
-            errors: ['Code style issues'],
+          {
+            engine: 'prettier' as const,
+            severity: 'error' as const,
+            ruleId: 'format',
+            file: '/test/mixed.ts',
+            line: 1,
+            col: 1,
+            message: 'Code style issues',
           },
-        },
+        ],
+        errors: [],
+        warnings: [],
       }
-      vi.spyOn(QualityCheckerModule, 'QualityChecker').mockImplementation(
+      vi.spyOn(QualityCheckerV2Module, 'QualityCheckerV2').mockImplementation(
         () =>
           ({
             check: vi.fn().mockResolvedValue(mockQualityResult),
@@ -381,23 +429,22 @@ describe('Claude Hook XML Output', () => {
       )
 
       // Setup stdin
-      const dataCallback = vi.fn()
-      const endCallback = vi.fn()
       mockStdin.on.mockImplementation((event: string, callback: (...args: any[]) => void) => {
-        if (event === 'data') dataCallback.mockImplementation(callback)
-        if (event === 'end') endCallback.mockImplementation(callback)
+        if (event === 'data') {
+          setTimeout(() => callback(payloadString), 0)
+        }
+        if (event === 'end') {
+          setTimeout(() => callback(), 10)
+        }
         return mockStdin
       })
 
       // Act
-      const promise = runClaudeHook()
-      dataCallback(payloadString)
-      endCallback()
-      await promise
+      await expect(runClaudeHook()).rejects.toThrow('PROCESS_EXIT_2')
 
       // Assert - Should output XML for remaining issues
       const errorCalls = mockConsole.error.mock.calls
-      const xmlOutput = errorCalls.map((call) => call.join(' ')).join('\n')
+      const xmlOutput = errorCalls.map((call: any[]) => call.join(' ')).join('\n')
 
       expect(xmlOutput).toContain('<quality-check-result>')
       expect(xmlOutput).toContain('<typescript>')
@@ -422,14 +469,21 @@ describe('Claude Hook XML Output', () => {
       // Mock quality result with only fixable issues
       const mockQualityResult = {
         success: false,
-        checkers: {
-          prettier: {
-            success: false,
-            errors: ['Formatting issues'],
+        issues: [
+          {
+            engine: 'prettier' as const,
+            severity: 'error' as const,
+            ruleId: 'format',
+            file: '/test/formatting.ts',
+            line: 1,
+            col: 1,
+            message: 'Formatting issues',
           },
-        },
+        ],
+        errors: [],
+        warnings: [],
       }
-      vi.spyOn(QualityCheckerModule, 'QualityChecker').mockImplementation(
+      vi.spyOn(QualityCheckerV2Module, 'QualityCheckerV2').mockImplementation(
         () =>
           ({
             check: vi.fn().mockResolvedValue(mockQualityResult),
@@ -460,115 +514,114 @@ describe('Claude Hook XML Output', () => {
       )
 
       // Setup stdin
-      const dataCallback = vi.fn()
-      const endCallback = vi.fn()
       mockStdin.on.mockImplementation((event: string, callback: (...args: any[]) => void) => {
-        if (event === 'data') dataCallback.mockImplementation(callback)
-        if (event === 'end') endCallback.mockImplementation(callback)
+        if (event === 'data') {
+          setTimeout(() => callback(payloadString), 0)
+        }
+        if (event === 'end') {
+          setTimeout(() => callback(), 10)
+        }
         return mockStdin
       })
 
       // Act
-      const promise = runClaudeHook()
-      dataCallback(payloadString)
-      endCallback()
-      await promise
+      await expect(runClaudeHook()).rejects.toThrow('PROCESS_EXIT_0')
 
       // Assert - Should exit successfully without XML output
       expect(mockProcess.exit).toHaveBeenCalledWith(0)
 
       // Should not output XML when all issues are fixed
       const errorCalls = mockConsole.error.mock.calls
-      const xmlOutput = errorCalls.map((call) => call.join(' ')).join('\n')
+      const xmlOutput = errorCalls.map((call: any[]) => call.join(' ')).join('\n')
       expect(xmlOutput).not.toContain('<quality-check-result>')
     })
   })
+})
 
-  describe('XML formatter integration', () => {
-    test('should_properly_format_issues_with_suggestions', () => {
-      // Arrange
-      const formatter = new ClaudeFormatter()
-      const issues = [
-        {
-          engine: 'typescript' as const,
-          severity: 'error' as const,
-          ruleId: 'TS7006',
-          file: '/test/file.ts',
-          line: 10,
-          col: 15,
-          endLine: 10,
-          endCol: 25,
-          message: 'Parameter implicitly has an any type',
-          suggestion: 'Add explicit type annotation',
-        },
-      ]
+describe('XML formatter integration', () => {
+  test('should_properly_format_issues_with_suggestions', () => {
+    // Arrange
+    const formatter = new ClaudeFormatter()
+    const issues = [
+      {
+        engine: 'typescript' as const,
+        severity: 'error' as const,
+        ruleId: 'TS7006',
+        file: '/test/file.ts',
+        line: 10,
+        col: 15,
+        endLine: 10,
+        endCol: 25,
+        message: 'Parameter implicitly has an any type',
+        suggestion: 'Add explicit type annotation',
+      },
+    ]
 
-      // Act
-      const xml = formatter.format(issues)
+    // Act
+    const xml = formatter.format(issues)
 
-      // Assert
-      expect(xml).toContain('<quality-check-result>')
-      expect(xml).toContain('<typescript>')
-      expect(xml).toContain('code="TS7006"')
-      expect(xml).toContain('endLine="10"')
-      expect(xml).toContain('endColumn="25"')
-      expect(xml).toContain('SUGGESTION: Add explicit type annotation')
-      expect(xml).toContain('</typescript>')
-      expect(xml).toContain('</quality-check-result>')
-    })
+    // Assert
+    expect(xml).toContain('<quality-check-result>')
+    expect(xml).toContain('<typescript>')
+    expect(xml).toContain('code="TS7006"')
+    expect(xml).toContain('endLine="10"')
+    expect(xml).toContain('endColumn="25"')
+    expect(xml).toContain('SUGGESTION: Add explicit type annotation')
+    expect(xml).toContain('</typescript>')
+    expect(xml).toContain('</quality-check-result>')
+  })
 
-    test('should_handle_empty_issues_array', () => {
-      // Arrange
-      const formatter = new ClaudeFormatter()
-      const issues: any[] = []
+  test('should_handle_empty_issues_array', () => {
+    // Arrange
+    const formatter = new ClaudeFormatter()
+    const issues: any[] = []
 
-      // Act
-      const xml = formatter.format(issues)
+    // Act
+    const xml = formatter.format(issues)
 
-      // Assert
-      expect(xml).toBe('')
-    })
+    // Assert
+    expect(xml).toBe('')
+  })
 
-    test('should_use_severity_based_tags', () => {
-      // Arrange
-      const formatter = new ClaudeFormatter()
-      const issues = [
-        {
-          engine: 'eslint' as const,
-          severity: 'error' as const,
-          ruleId: 'no-unused-vars',
-          file: '/test.ts',
-          line: 1,
-          col: 1,
-          message: 'Unused variable',
-        },
-        {
-          engine: 'eslint' as const,
-          severity: 'warning' as const,
-          ruleId: 'no-console',
-          file: '/test.ts',
-          line: 2,
-          col: 1,
-          message: 'Console statement',
-        },
-        {
-          engine: 'eslint' as const,
-          severity: 'info' as const,
-          ruleId: 'custom-info',
-          file: '/test.ts',
-          line: 3,
-          col: 1,
-          message: 'Info message',
-        },
-      ]
+  test('should_use_severity_based_tags', () => {
+    // Arrange
+    const formatter = new ClaudeFormatter()
+    const issues = [
+      {
+        engine: 'eslint' as const,
+        severity: 'error' as const,
+        ruleId: 'no-unused-vars',
+        file: '/test.ts',
+        line: 1,
+        col: 1,
+        message: 'Unused variable',
+      },
+      {
+        engine: 'eslint' as const,
+        severity: 'warning' as const,
+        ruleId: 'no-console',
+        file: '/test.ts',
+        line: 2,
+        col: 1,
+        message: 'Console statement',
+      },
+      {
+        engine: 'eslint' as const,
+        severity: 'info' as const,
+        ruleId: 'custom-info',
+        file: '/test.ts',
+        line: 3,
+        col: 1,
+        message: 'Info message',
+      },
+    ]
 
-      // Act
-      const xml = formatter.format(issues)
+    // Act
+    const xml = formatter.format(issues)
 
-      // Assert
-      expect(xml).toContain('<error')
-      expect(xml).toContain('<warning')
-      expect(xml).toContain('<info')
-    })
+    // Assert
+    expect(xml).toContain('<error')
+    expect(xml).toContain('<warning')
+    expect(xml).toContain('<info')
   })
 })

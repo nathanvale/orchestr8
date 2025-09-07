@@ -1,7 +1,7 @@
 import { ESLint } from 'eslint'
-import type { Issue, CheckerResult } from '../types/issue-types'
-import { ToolMissingError } from '../core/errors'
-import type { CancellationToken } from '../core/timeout-manager'
+import type { Issue, CheckerResult } from '../types/issue-types.js'
+import { ToolMissingError } from '../core/errors.js'
+import type { CancellationToken } from '../core/timeout-manager.js'
 
 /**
  * ESLint engine configuration
