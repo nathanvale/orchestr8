@@ -172,13 +172,14 @@ export class TypeScriptEngine {
     parsedConfig: ts.ParsedCommandLine,
     _configPath: string,
   ): void {
-    // Set up compiler options
+    // Set up compiler options - preserve all options from tsconfig
     const options: ts.CompilerOptions = {
       ...parsedConfig.options,
       noEmit: true,
       incremental: true,
       tsBuildInfoFile: path.join(this.cacheDir, 'qc.tsbuildinfo'),
-      skipLibCheck: true,
+      // Don't override skipLibCheck if it's set in tsconfig
+      skipLibCheck: parsedConfig.options.skipLibCheck ?? true,
     }
 
     // Create compiler host

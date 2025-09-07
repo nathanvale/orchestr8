@@ -278,7 +278,7 @@ export const Component = () => {
     }, 5000)
   })
 
-  describe.skip('Blocking behavior for complex issues', () => {
+  describe('Blocking behavior for complex issues', () => {
     test('should_block_for_type_safety_issues', async () => {
       // Arrange - Code with type safety issues that require human judgment
       await setupTestProject(testProjectDir)

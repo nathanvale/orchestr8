@@ -5,17 +5,21 @@
 
 import type { QualityCheckOptions, FixResult } from '../types.js'
 import type { QualityCheckResult, CheckerResult } from '../types/issue-types'
-import { TypeScriptEngine } from '../engines/typescript-engine'
-import { ESLintEngine } from '../engines/eslint-engine'
-import { PrettierEngine } from '../engines/prettier-engine'
-import { ResultAggregator } from '../formatters/aggregator'
-import { StylishFormatter } from '../formatters/stylish-formatter'
-import { JsonFormatter } from '../formatters/json-formatter'
-import { ConfigLoader, type ResolvedConfig } from './config-loader'
-import { FileMatcher } from './file-matcher'
-import { TimeoutManager, CancellationTokenSource, type CancellationToken } from './timeout-manager'
+import { TypeScriptEngine } from '../engines/typescript-engine.js'
+import { ESLintEngine } from '../engines/eslint-engine.js'
+import { PrettierEngine } from '../engines/prettier-engine.js'
+import { ResultAggregator } from '../formatters/aggregator.js'
+import { StylishFormatter } from '../formatters/stylish-formatter.js'
+import { JsonFormatter } from '../formatters/json-formatter.js'
+import { ConfigLoader, type ResolvedConfig } from './config-loader.js'
+import { FileMatcher } from './file-matcher.js'
+import {
+  TimeoutManager,
+  CancellationTokenSource,
+  type CancellationToken,
+} from './timeout-manager.js'
 import { logger, createTimer } from '../utils/logger.js'
-import { ToolMissingError } from './errors'
+import { ToolMissingError } from './errors.js'
 
 /**
  * Enhanced quality checker using new engine architecture

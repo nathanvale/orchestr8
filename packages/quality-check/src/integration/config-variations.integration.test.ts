@@ -154,8 +154,8 @@ describe('ESLint Config Variations Integration', () => {
     }, 5000)
   })
 
-  describe.skip('TypeScript strict mode scenarios', () => {
-    test.skip('should_handle_typescript_strict_null_checks', async () => {
+  describe('TypeScript strict mode scenarios', () => {
+    test('should_handle_typescript_strict_null_checks', async () => {
       // Arrange - TypeScript with strict null checks
       await setupTypeScriptProject(testProjectDir, {
         strict: true,
@@ -195,7 +195,7 @@ describe('ESLint Config Variations Integration', () => {
       expect(result.duration).toBeLessThan(2000)
     }, 5000)
 
-    test.skip('should_handle_typescript_no_implicit_any', async () => {
+    test('should_handle_typescript_no_implicit_any', async () => {
       // Arrange - TypeScript with noImplicitAny
       await setupTypeScriptProject(testProjectDir, {
         strict: false,

@@ -325,7 +325,17 @@ export class Autopilot {
 
       // Handle TypeScript errors specially
       if (issue.engine === 'typescript') {
-        // TypeScript errors are generally not auto-fixable
+        // TypeScript errors are generally not auto-fixable but should block
+        // This includes strict mode errors like:
+        // - TS2322: Type not assignable
+        // - TS2345: Argument type error
+        // - TS2339: Property doesn't exist
+        // - TS2531: Object possibly null
+        // - TS2532: Object possibly undefined
+        // - TS7006: Implicit any
+        // - TS7053: Index signature implicit any
+
+        // All TypeScript errors go to unfixable for proper blocking behavior
         unfixable.push(issue)
         continue
       }
