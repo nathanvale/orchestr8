@@ -3,4 +3,4 @@
 Execute the next task.
 
 Refer to the instructions located in this file:
-@..agent-os/instructions/core/execute-tasks-master-v6.xml
+@..agent-os/instructions/coreexecute-tasks-master-v6.xml
