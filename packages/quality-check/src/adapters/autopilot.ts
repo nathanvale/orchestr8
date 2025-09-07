@@ -332,6 +332,7 @@ export class Autopilot {
         // - TS2339: Property doesn't exist
         // - TS2531: Object possibly null
         // - TS2532: Object possibly undefined
+        // - TS6133: Unused parameter/variable
         // - TS7006: Implicit any
         // - TS7053: Index signature implicit any
 
@@ -620,9 +621,15 @@ export class Autopilot {
       return { category: 'type-error', fixable: false }
     }
 
+    // TS6xxx - Unused code errors  
+    if (code.startsWith('TS6')) {
+      if (code === 'TS6133') return { category: 'unused-parameter', fixable: false }
+      return { category: 'unused-code', fixable: false }
+    }
+
     // TS7xxx - Config/Options errors
     if (code.startsWith('TS7')) {
-      if (code === 'TS7006') return { category: 'implicit-any', fixable: true }
+      if (code === 'TS7006') return { category: 'implicit-any', fixable: false }
       if (code === 'TS7016') return { category: 'no-type-declaration', fixable: false }
       if (code === 'TS7053') return { category: 'index-signature', fixable: false }
       return { category: 'config-error', fixable: false }

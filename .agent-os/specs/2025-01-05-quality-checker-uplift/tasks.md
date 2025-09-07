@@ -16,11 +16,11 @@ This task list addresses skipped and failing tests in the quality checker packag
   - [x] 1.2 Update TypeScript engine to handle strict null checks compiler option properly
   - [x] 1.3 Enable and analyze TypeScript no implicit any test in config-variations.integration.test.ts
   - [x] 1.4 Update TypeScript engine to handle noImplicitAny compiler option
-  - [ ] 1.5 Remove skip modifiers from TypeScript strict mode describe block (line 157)
-  - [ ] 1.6 Verify all TypeScript strict mode tests pass
+  - [x] 1.5 Remove skip modifiers from TypeScript strict mode describe block (line 157)
+  - [x] 1.6 Verify all TypeScript strict mode tests pass
 
 - [ ] 2. Fix Blocking Behavior Tests
-  - [ ] 2.1 Enable blocking behavior describe block in claude-hook-workflow.integration.test.ts (line 281)
+  - [x] 2.1 Enable blocking behavior describe block in claude-hook-workflow.integration.test.ts (line 281)
   - [ ] 2.2 Analyze type safety blocking requirements for should_block_for_type_safety_issues test
   - [ ] 2.3 Update autopilot adapter to properly detect and block type safety issues
   - [ ] 2.4 Analyze complexity blocking requirements for should_block_for_complexity_issues test
