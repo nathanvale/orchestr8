@@ -21,11 +21,11 @@ This task list addresses skipped and failing tests in the quality checker packag
 
 - [ ] 2. Fix Blocking Behavior Tests
   - [x] 2.1 Enable blocking behavior describe block in claude-hook-workflow.integration.test.ts (line 281)
-  - [ ] 2.2 Analyze type safety blocking requirements for should_block_for_type_safety_issues test
-  - [ ] 2.3 Update autopilot adapter to properly detect and block type safety issues
-  - [ ] 2.4 Analyze complexity blocking requirements for should_block_for_complexity_issues test
-  - [ ] 2.5 Update autopilot adapter to properly detect and block complexity issues
-  - [ ] 2.6 Verify all blocking behavior tests pass
+  - [x] 2.2 Analyze type safety blocking requirements for should_block_for_type_safety_issues test
+  - [x] 2.3 Update autopilot adapter to properly detect and block type safety issues
+  - [x] 2.4 Analyze complexity blocking requirements for should_block_for_complexity_issues test
+  - [x] 2.5 Update autopilot adapter to properly detect and block complexity issues
+  - [x] 2.6 Verify all blocking behavior tests pass
 
 - [ ] 3. Fix Failing Unit Tests
   - [ ] 3.1 Analyze quality-checker.unit.test.ts TypeScript error handling failure

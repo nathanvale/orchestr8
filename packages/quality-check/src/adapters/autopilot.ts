@@ -269,6 +269,24 @@ export class Autopilot {
 
     const classification = this.classify(result.issues)
 
+    // Check for critical issues that should always block
+    const hasCriticalIssues = this.hasCriticalBlockingIssues(result.issues)
+    
+    // Debug logging
+    if (process.env.DEBUG_AUTOPILOT) {
+      console.error('DEBUG: hasCriticalIssues =', hasCriticalIssues)
+      console.error('DEBUG: issues =', result.issues.map(i => ({ rule: this.mapIssueToRule(i), engine: i.engine })))
+    }
+    
+    // If we have critical issues (type safety, complexity), always report without auto-fixing
+    if (hasCriticalIssues) {
+      return {
+        action: 'REPORT_ONLY',
+        issues: result.issues, // Report all issues when critical ones are present
+        confidence: 1.0,
+      }
+    }
+
     // If we have any auto-fixable issues
     if (classification.hasAutoFixable) {
       // Mix of fixable and unfixable - fix what we can and report the rest
@@ -304,6 +322,41 @@ export class Autopilot {
       action: 'CONTINUE',
       confidence: 1.0,
     }
+  }
+
+  /**
+   * Check if there are critical issues that should block without auto-fixing
+   */
+  private hasCriticalBlockingIssues(issues: Issue[]): boolean {
+    // Check for specific patterns that require blocking without auto-fix
+    for (const issue of issues) {
+      const rule = this.mapIssueToRule(issue)
+      
+      // Debug logging
+      if (process.env.CLAUDE_HOOK_DEBUG) {
+        console.error(`DEBUG hasCriticalBlockingIssues: Checking rule "${rule}"`)
+      }
+      
+      // Type safety issues with 'any' - these should block
+      if (rule === '@typescript-eslint/no-explicit-any') {
+        if (process.env.CLAUDE_HOOK_DEBUG) {
+          console.error(`DEBUG hasCriticalBlockingIssues: Found critical issue - ${rule}`)
+        }
+        return true
+      }
+      
+      // TypeScript index signature errors (complexity indicator - dynamic property access)
+      if (rule === 'TS7053') {
+        return true
+      }
+      
+      // Prototype access issues (potential security/complexity)
+      if (rule === 'no-prototype-builtins') {
+        return true
+      }
+    }
+    
+    return false
   }
 
   /**
@@ -629,9 +682,9 @@ export class Autopilot {
 
     // TS7xxx - Config/Options errors
     if (code.startsWith('TS7')) {
-      if (code === 'TS7006') return { category: 'implicit-any', fixable: false }
-      if (code === 'TS7016') return { category: 'no-type-declaration', fixable: false }
-      if (code === 'TS7053') return { category: 'index-signature', fixable: false }
+      if (code === 'TS7006') return { category: 'implicit-any', fixable: true } // Can be fixed by adding type
+      if (code === 'TS7016') return { category: 'no-type-declaration', fixable: true } // Can be fixed by adding type declaration
+      if (code === 'TS7053') return { category: 'index-signature', fixable: true } // Can be fixed by adding index signature
       return { category: 'config-error', fixable: false }
     }
 
