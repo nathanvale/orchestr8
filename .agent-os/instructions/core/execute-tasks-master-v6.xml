@@ -330,6 +330,9 @@
         5. Success criteria
       </cognitive_processing>
       <store_as>TASK_DETAILS</store_as>
+      <output>
+        ${TASK_DETAILS}
+      </output>
     </step1_detailed_task_analysis>
 
     <step2_context_loading>

@@ -29,11 +29,11 @@ Fix 23 failing integration tests by addressing mock isolation, disabling real Cl
   - [x] 2.7 Verify mock infrastructure tests pass
 
 - [ ] 3. Fix Configuration Loading
-  - [ ] 3.1 Write tests for ESLint flat config detection
-  - [ ] 3.2 Fix ESLint engine to properly detect eslint.config.js
-  - [ ] 3.3 Update prettierignore handling to use test fixtures
-  - [ ] 3.4 Fix TypeScript config loading from test fixtures
-  - [ ] 3.5 Ensure all configs load from mocks, not filesystem
+  - [x] 3.1 Write tests for ESLint flat config detection
+  - [x] 3.2 Fix ESLint engine to properly detect eslint.config.js
+  - [x] 3.3 Update prettierignore handling to use test fixtures
+  - [x] 3.4 Fix TypeScript config loading from test fixtures
+  - [x] 3.5 Ensure all configs load from mocks, not filesystem
   - [ ] 3.6 Verify configuration loading tests pass
 
 - [ ] 4. Update Test Assertions and Performance
