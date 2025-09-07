@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<state_machines>
+
+  <metadata>
+    <description>State machine definitions for IMMEDIATE task execution</description>
+    <version>2.0</version>
+    <mode>IMMEDIATE_EXECUTION</mode>
+  </metadata>
+
+  <execution_context>
+    <mode>DIRECT</mode>
+    <instruction>EXECUTE STATE TRANSITIONS IMMEDIATELY. NO WAITING.</instruction>
+  </execution_context>
+  
+  <machine id="main-execution">
+    <enforcement>IMMEDIATE_TRANSITION</enforcement>
+    <state id="INIT" next="SETUP" auto="true"/>
+    <state id="SETUP" next="EXECUTION" auto="true"/>
+    <state id="EXECUTION" next="FINALIZATION" auto="true"/>
+    <state id="FINALIZATION" next="COMPLETE" auto="true"/>
+    <state id="COMPLETE" terminal="true">
+      <action>OUTPUT SUCCESS</action>
+    </state>
+    <state id="ERROR" recovery="true">
+      <on_retry>CONTINUE</on_retry>
+      <on_abort>COMPLETE</on_abort>
+      <no_wait>true</no_wait>
+    </state>
+  </machine>
+  
+  <machine id="wallaby-check">
+    <enforcement>IMMEDIATE_EXECUTION</enforcement>
+    <state id="START" next="CHECK_TEST_TYPE" auto="true"/>
+    
+    <state id="CHECK_TEST_TYPE">
+      <branch immediate="true">
+        <when condition="has_unit_tests">CHECK_WALLABY</when>
+        <when condition="no_unit_tests">PROCEED_NORMAL</when>
+      </branch>
+    </state>
+    
+    <state id="CHECK_WALLABY">
+      <action>USE mcp__wallaby__wallaby_failingTests IMMEDIATELY</action>
+      <branch immediate="true">
+        <when condition="active">PROCEED_WITH_WALLABY</when>
+        <when condition="inactive">PROCEED_NORMAL</when>
+      </branch>
+      <no_wait>true</no_wait>
+    </state>
+    
+    <state id="PROCEED_WITH_WALLABY" terminal="true">
+      <action>CONTINUE WITH WALLABY TOOLS</action>
+    </state>
+    <state id="PROCEED_NORMAL" terminal="true">
+      <action>CONTINUE WITHOUT WALLABY</action>
+    </state>
+  </machine>
+  
+  <machine id="task-execution">
+    <enforcement>IMMEDIATE_EXECUTION</enforcement>
+    <state id="UNDERSTAND" next="EXECUTE" auto="true">
+      <action>ANALYZE TASK IMMEDIATELY</action>
+    </state>
+    <state id="EXECUTE" next="VERIFY" auto="true">
+      <action>USE APPROPRIATE TOOLS NOW</action>
+    </state>
+    <state id="VERIFY" next="COMPLETE" auto="true">
+      <action>CHECK RESULTS IMMEDIATELY</action>
+    </state>
+    <state id="COMPLETE" terminal="true">
+      <action>MARK TASK DONE</action>
+    </state>
+  </machine>
+
+  <machine id="git-workflow">
+    <enforcement>IMMEDIATE_EXECUTION</enforcement>
+    <state id="STASH" next="BRANCH" auto="true">
+      <action>Bash: git stash</action>
+    </state>
+    <state id="BRANCH" next="COMMIT" auto="true">
+      <action>Bash: git checkout -b {{BRANCH}}</action>
+    </state>
+    <state id="COMMIT" next="PUSH" auto="true">
+      <action>Bash: git commit -m "{{MESSAGE}}"</action>
+    </state>
+    <state id="PUSH" next="COMPLETE" auto="true">
+      <action>Bash: git push origin {{BRANCH}}</action>
+    </state>
+    <state id="COMPLETE" terminal="true"/>
+  </machine>
+
+  <transition_rules>
+    <rule>ALL TRANSITIONS ARE AUTOMATIC</rule>
+    <rule>NO WAIT STATES ALLOWED</rule>
+    <rule>NO USER CONFIRMATION NEEDED</rule>
+    <rule>EXECUTE ACTIONS IMMEDIATELY</rule>
+    <rule>USE DIRECT TOOL CALLS</rule>
+  </transition_rules>
+
+  <enforcement>
+    <rule>EXECUTE STATE ACTIONS IMMEDIATELY</rule>
+    <rule>AUTO-TRANSITION BETWEEN STATES</rule>
+    <rule>NO MANUAL INTERVENTION</rule>
+    <rule>CONTINUE ON NON-CRITICAL ERRORS</rule>
+  </enforcement>
+
+</state_machines>

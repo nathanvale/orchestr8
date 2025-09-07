@@ -105,7 +105,8 @@ describe('IssueReporter with Enhanced Error Formatting', () => {
       const output = reporter.formatForClaude(result)
 
       // Assert
-      expect(output).toContain('Quality issues require attention')
+      expect(output).toContain('<quality-check-result>')
+      expect(output).toContain('<typescript>')
       expect(output).toContain('TS2304')
       expect(output).not.toContain('formatting') // Fixable issue should be excluded
     })

@@ -1,0 +1,428 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<execute_tasks_master_protocol>
+
+  <metadata>
+    <description>Master orchestrator for Agent OS task execution - ALL THREE PHASES</description>
+    <version>4.0</version>
+    <mode>IMPERATIVE_EXECUTION</mode>
+    <effectiveness_target>80%+</effectiveness_target>
+  </metadata>
+
+  <execution_context>
+    <instruction>EXECUTE ALL THREE PHASES IMMEDIATELY. USE CONCRETE TOOL CALLS. NO PLANNING MODE.</instruction>
+    <no_planning>true</no_planning>
+    <no_user_confirmation>true</no_user_confirmation>
+    <direct_tools_only>true</direct_tools_only>
+  </execution_context>
+
+  <!-- =======================================================================================
+       VARIABLE INITIALIZATION - RESOLVE ALL TEMPLATE VARIABLES IMMEDIATELY
+       ======================================================================================= -->
+  
+  <variable_initialization>
+    <instruction>EXECUTE THESE VARIABLE RESOLUTION STEPS FIRST - USE ACTUAL TOOLS:</instruction>
+    
+    <step1_find_spec_path>
+      <tool>Bash</tool>
+      <command>find .agent-os/specs -name "*$(date +%Y-%m-%d)*" -type d | head -1</command>
+      <fallback>
+        <tool>Bash</tool>
+        <command>ls -la .agent-os/specs | tail -1 | awk '{print $9}'</command>
+      </fallback>
+      <store_as>SPEC_PATH</store_as>
+      <required>true</required>
+    </step1_find_spec_path>
+    
+    <step2_derive_branch_name>
+      <tool>Bash</tool>
+      <command>echo "task-execution-$(date +%Y%m%d-%H%M)"</command>
+      <store_as>BRANCH_NAME</store_as>
+      <required>true</required>
+    </step2_derive_branch_name>
+    
+    <step3_read_tasks>
+      <tool>Read</tool>
+      <file_path>${SPEC_PATH}/tasks.md</file_path>
+      <store_as>TASK_CONTENT</store_as>
+      <required>true</required>
+    </step3_read_tasks>
+    
+    <step4_extract_folder_name>
+      <tool>Bash</tool>
+      <command>basename ${SPEC_PATH}</command>
+      <store_as>SPEC_FOLDER</store_as>
+      <required>true</required>
+    </step4_extract_folder_name>
+
+    <completion_signal>WHEN ALL VARIABLES RESOLVED, IMMEDIATELY PROCEED TO PHASE 1</completion_signal>
+  </variable_initialization>
+
+  <!-- =======================================================================================
+       PHASE 1 - PRE-EXECUTION SETUP
+       ======================================================================================= -->
+  
+  <phase_1_setup>
+    <title>PHASE 1 - PRE-EXECUTION SETUP</title>
+    <instruction>EXECUTE ALL STEPS IMMEDIATELY IN SEQUENCE</instruction>
+    
+    <step1_enhanced_task_understanding>
+      <title>Enhanced Task Understanding</title>
+      <sequential_execution>true</sequential_execution>
+      
+      <substep1_basic_discovery>
+        <tool>Bash</tool>
+        <command>grep -n "\- \[ \]" "${SPEC_PATH}/tasks.md"</command>
+        <description>Get line numbers and ALL incomplete task descriptions (including subtasks)</description>
+        <store_as>INCOMPLETE_TASKS_WITH_LINES</store_as>
+      </substep1_basic_discovery>
+      
+      <substep2_hierarchy_analysis>
+        <tool>Bash</tool>
+        <command>grep -n "^##\|^###\|\- \[ \]" "${SPEC_PATH}/tasks.md"</command>
+        <description>Map ALL tasks (including subtasks) to their parent sections and hierarchy</description>
+        <store_as>TASK_HIERARCHY</store_as>
+      </substep2_hierarchy_analysis>
+      
+      <substep3_dependency_check>
+        <tool>Bash</tool>
+        <command>grep -n -i "depends on\|requires\|after\|prerequisite\|blocked by" "${SPEC_PATH}/tasks.md" || echo "No dependencies found"</command>
+        <description>Extract task dependencies and relationships</description>
+        <store_as>TASK_DEPENDENCIES</store_as>
+      </substep3_dependency_check>
+      
+      <substep4_acceptance_criteria>
+        <tool>Bash</tool>
+        <command>grep -i -A 3 "acceptance criteria\|success criteria\|definition of done" "${SPEC_PATH}/tasks.md" || echo "No acceptance criteria found"</command>
+        <description>Extract acceptance criteria for tasks</description>
+        <store_as>ACCEPTANCE_CRITERIA</store_as>
+      </substep4_acceptance_criteria>
+      
+      <substep5_task_counting>
+        <tool>Bash</tool>
+        <command>grep -c "\- \[ \]" "${SPEC_PATH}/tasks.md"</command>
+        <description>Count ALL incomplete tasks (including subtasks) for progress tracking</description>
+        <store_as>TOTAL_INCOMPLETE_TASKS</store_as>
+      </substep5_task_counting>
+      
+      <substep6_context_extraction>
+        <tool>Bash</tool>
+        <command>grep -A 2 -B 1 "\- \[ \]" "${SPEC_PATH}/tasks.md"</command>
+        <description>Get context around ALL incomplete tasks (including subtasks)</description>
+        <store_as>TASK_CONTEXT</store_as>
+      </substep6_context_extraction>
+    </step1_enhanced_task_understanding>
+    
+    <step2_context_loading>
+      <title>Context Loading</title>
+      <parallel_execution>true</parallel_execution>
+      <tools>
+        <tool1>
+          <name>Read</name>
+          <file_path>${SPEC_PATH}/spec-lite.md</file_path>
+          <optional>true</optional>
+        </tool1>
+        <tool2>
+          <name>Read</name>
+          <file_path>${SPEC_PATH}/sub-specs/technical-spec.md</file_path>
+          <optional>true</optional>
+        </tool2>
+        <tool3>
+          <name>Read</name>
+          <file_path>.agent-os/product/mission-lite.md</file_path>
+          <optional>true</optional>
+        </tool3>
+      </tools>
+    </step2_context_loading>
+    
+    <step3_git_setup>
+      <title>Git Branch Management</title>
+      <sequential_execution>true</sequential_execution>
+      <commands>
+        <command1>
+          <tool>Bash</tool>
+          <command>git stash</command>
+          <description>Stash any pending changes</description>
+        </command1>
+        <command2>
+          <tool>Bash</tool>
+          <command>git checkout ${BRANCH_NAME} 2>/dev/null || git checkout -b ${BRANCH_NAME}</command>
+          <description>Create or switch to task branch</description>
+        </command2>
+      </commands>
+    </step3_git_setup>
+    
+    <step4_todo_initialization>
+      <title>Initialize Enhanced Todo Tracking</title>
+      <tool>TodoWrite</tool>
+      <action>Convert enhanced task data into comprehensive TodoWrite format using:</action>
+      <data_sources>
+        <source1>INCOMPLETE_TASKS_WITH_LINES for task descriptions and line references</source1>
+        <source2>TASK_HIERARCHY for task parent sections and context</source2>
+        <source3>TASK_DEPENDENCIES for understanding task relationships</source3>
+        <source4>ACCEPTANCE_CRITERIA for task success definitions</source4>
+        <source5>TOTAL_INCOMPLETE_TASKS for progress tracking setup</source5>
+      </data_sources>
+      <enhanced_format>
+        <example>
+          {"content": "Fix authentication bug (Section: Security, Line: 42)", "status": "pending", "activeForm": "Fixing authentication bug with security context"}
+        </example>
+        <context_inclusion>Include hierarchy context and line numbers where available</context_inclusion>
+        <dependency_awareness>Note any dependencies found in TASK_DEPENDENCIES variable</dependency_awareness>
+      </enhanced_format>
+    </step4_todo_initialization>
+
+    <phase1_completion_signal>
+      <message>✅ PHASE 1 COMPLETE - PROCEEDING TO PHASE 2 IMMEDIATELY</message>
+      <action>EXECUTE PHASE 2 NOW</action>
+    </phase1_completion_signal>
+  </phase_1_setup>
+
+  <!-- =======================================================================================
+       PHASE 2 - SEQUENTIAL TASK EXECUTION
+       ======================================================================================= -->
+  
+  <phase_2_execution>
+    <title>PHASE 2 - SEQUENTIAL TASK EXECUTION</title>
+    <instruction>EXECUTE ALL TASKS IN CONCRETE SEQUENCE</instruction>
+    
+    <step1_discover_incomplete_tasks>
+      <title>Discover Incomplete Tasks</title>
+      <tool>Bash</tool>
+      <command>echo "${INCOMPLETE_TASKS_WITH_LINES}" | head -20</command>
+      <description>Use enhanced task data from Phase 1 - line numbers and descriptions</description>
+      <store_as>INCOMPLETE_TASKS_LIST</store_as>
+    </step1_discover_incomplete_tasks>
+    
+    <step2_initialize_task_tracking>
+      <title>Initialize Task Tracking</title>
+      <tool>Bash</tool>
+      <command>echo "${TOTAL_INCOMPLETE_TASKS}"</command>
+      <description>Use enhanced task count from Phase 1</description>
+      <store_as>TOTAL_TASKS</store_as>
+    </step2_initialize_task_tracking>
+    
+    <step3_wallaby_check>
+      <title>Pre-execution Test Check</title>
+      <tool>mcp__wallaby__wallaby_failingTests</tool>
+      <params>{}</params>
+      <optional>true</optional>
+      <purpose>Check for failing tests before starting execution</purpose>
+    </step3_wallaby_check>
+    
+    <step4_execute_task_sequence>
+      <title>Execute Task Sequence</title>
+      <instruction>EXECUTE THESE STEPS FOR EACH INCOMPLETE TASK FOUND IN STEP1:</instruction>
+      
+      <task_execution_pattern>
+        <pattern_step1_extract_current_task>
+          <tool>Bash</tool>
+          <command>grep -m1 "\- \[ \]" "${SPEC_PATH}/tasks.md" | sed 's/^[[:space:]]*- \[ \][[:space:]]*//'</command>
+          <description>Extract the first incomplete task description (including subtasks)</description>
+          <store_as>CURRENT_TASK_NAME</store_as>
+        </pattern_step1_extract_current_task>
+        
+        <pattern_step2_announce_task>
+          <tool>Bash</tool>
+          <command>echo "🔄 EXECUTING TASK: ${CURRENT_TASK_NAME}"</command>
+          <description>Announce current task execution</description>
+        </pattern_step2_announce_task>
+        
+        <pattern_step3_update_todo_progress>
+          <tool>TodoWrite</tool>
+          <action>Mark the current task as in_progress in the TodoWrite list</action>
+          <description>Update TodoWrite with current task status</description>
+        </pattern_step3_update_todo_progress>
+        
+        <pattern_step4_execute_task_work>
+          <instruction>EXECUTE THE ACTUAL TASK IMPLEMENTATION:</instruction>
+          <concrete_execution>
+            <use_read_tool>For examining files and understanding context</use_read_tool>
+            <use_edit_tool>For modifying existing files</use_edit_tool>
+            <use_write_tool>For creating new files if absolutely necessary</use_write_tool>
+            <use_bash_tool>For running tests, builds, or file operations</use_bash_tool>
+            <use_grep_tool>For searching code patterns</use_grep_tool>
+            <use_glob_tool>For finding files by pattern</use_glob_tool>
+          </concrete_execution>
+          <description>Execute the actual implementation work for the current task</description>
+        </pattern_step4_execute_task_work>
+        
+        <pattern_step5_mark_task_complete_in_file>
+          <tool>Bash</tool>
+          <command>sed -i '' "s/\- \[ \] ${CURRENT_TASK_NAME}/- [x] ${CURRENT_TASK_NAME}/" "${SPEC_PATH}/tasks.md"</command>
+          <description>Mark the current task as complete in tasks.md (handles any indentation)</description>
+        </pattern_step5_mark_task_complete_in_file>
+        
+        <pattern_step6_update_todo_complete>
+          <tool>TodoWrite</tool>
+          <action>Mark the current task as completed in the TodoWrite list</action>
+          <description>Update TodoWrite to show task completion</description>
+        </pattern_step6_update_todo_complete>
+        
+        <pattern_step7_announce_completion>
+          <tool>Bash</tool>
+          <command>echo "✓ TASK COMPLETED: ${CURRENT_TASK_NAME}"</command>
+          <description>Announce task completion</description>
+        </pattern_step7_announce_completion>
+        
+        <pattern_step8_check_remaining>
+          <tool>Bash</tool>
+          <command>grep -c "\- \[ \]" "${SPEC_PATH}/tasks.md"</command>
+          <description>Check if more incomplete tasks remain (including subtasks)</description>
+          <store_as>REMAINING_TASKS_COUNT</store_as>
+        </pattern_step8_check_remaining>
+        
+        <pattern_step9_continuation_decision>
+          <instruction>IF REMAINING_TASKS_COUNT > 0: REPEAT pattern from step1</instruction>
+          <instruction>IF REMAINING_TASKS_COUNT = 0: PROCEED TO PHASE 3</instruction>
+        </pattern_step9_continuation_decision>
+      </task_execution_pattern>
+    </step4_execute_task_sequence>
+    
+    <step5_verify_all_tasks_complete>
+      <title>Verify Task Completion</title>
+      <tool>Bash</tool>
+      <command>grep -c "\- \[ \]" "${SPEC_PATH}/tasks.md"</command>
+      <description>Final verification that no incomplete tasks remain (including subtasks)</description>
+      <expected_result>0</expected_result>
+    </step5_verify_all_tasks_complete>
+
+    <phase2_completion_signal>
+      <message>✅ PHASE 2 COMPLETE - ALL TASKS EXECUTED SEQUENTIALLY - PROCEEDING TO PHASE 3</message>
+      <action>EXECUTE PHASE 3 NOW</action>
+    </phase2_completion_signal>
+  </phase_2_execution>
+
+  <!-- =======================================================================================
+       PHASE 3 - POST-EXECUTION FINALIZATION
+       ======================================================================================= -->
+  
+  <phase_3_finalization>
+    <title>PHASE 3 - POST-EXECUTION FINALIZATION</title>
+    <instruction>EXECUTE ALL FINALIZATION STEPS - COMPLETE THE CYCLE</instruction>
+    
+    <step1_run_tests>
+      <title>Run Test Suite</title>
+      <tool>Bash</tool>
+      <command>pnpm test</command>
+      <continue_on_failure>true</continue_on_failure>
+      <store_result>TEST_STATUS</store_result>
+    </step1_run_tests>
+    
+    <step2_git_operations>
+      <title>Git Commit and Push</title>
+      <sequential_execution>true</sequential_execution>
+      <commands>
+        <command1>
+          <tool>Bash</tool>
+          <command>git add -A</command>
+        </command1>
+        <command2>
+          <tool>Bash</tool>
+          <command>git commit -m "Complete tasks from ${SPEC_FOLDER}
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude &lt;noreply@anthropic.com&gt;"</command>
+        </command2>
+        <command3>
+          <tool>Bash</tool>
+          <command>git push origin ${BRANCH_NAME}</command>
+          <optional>true</optional>
+        </command3>
+      </commands>
+    </step2_git_operations>
+    
+    <step3_verify_completion>
+      <title>Verify All Tasks Complete</title>
+      <tool>Read</tool>
+      <file_path>${SPEC_PATH}/tasks.md</file_path>
+      <verification>Confirm no "- [ ]" lines remain</verification>
+    </step3_verify_completion>
+    
+    <step4_create_execution_recap>
+      <title>Create Execution Summary</title>
+      <tool>Write</tool>
+      <file_path>${SPEC_PATH}/execution-recap.md</file_path>
+      <content>
+# Execution Recap - ${SPEC_FOLDER}
+
+## Summary
+- **Branch**: ${BRANCH_NAME}
+- **Execution Date**: $(date)
+- **Tasks Completed**: [Count completed tasks]
+- **Test Status**: ${TEST_STATUS}
+
+## Tasks Executed
+[List all completed tasks]
+
+## Files Modified
+[List files changed during execution]
+
+## Notes
+Execution completed successfully using Agent OS v4.0
+      </content>
+    </step4_create_execution_recap>
+    
+    <step5_final_output>
+      <title>Generate Completion Summary</title>
+      <output_format>
+        <line1>🎉 AGENT OS EXECUTION COMPLETE</line1>
+        <line2>📁 Spec: ${SPEC_FOLDER}</line2>
+        <line3>🌲 Branch: ${BRANCH_NAME}</line3>
+        <line4>✅ Tasks: [count] completed</line4>
+        <line5>🧪 Tests: ${TEST_STATUS}</line5>
+        <line6>💾 Files: [count] modified</line6>
+      </output_format>
+    </step5_final_output>
+    
+    <step6_notification>
+      <title>Success Notification</title>
+      <tool>Bash</tool>
+      <command>afplay /System/Library/Sounds/Glass.aiff 2>/dev/null || echo "🔔 Execution Complete!"</command>
+      <optional>true</optional>
+    </step6_notification>
+
+    <phase3_completion_signal>
+      <message>✅ PHASE 3 COMPLETE - ALL THREE PHASES EXECUTED SUCCESSFULLY</message>
+      <status>EXECUTION_CYCLE_COMPLETE</status>
+    </phase3_completion_signal>
+  </phase_3_finalization>
+
+  <!-- =======================================================================================
+       EXECUTION ENFORCEMENT RULES
+       ======================================================================================= -->
+  
+  <enforcement_rules>
+    <rule1>MUST execute all phases in sequence: Variable Init → Phase 1 → Phase 2 → Phase 3</rule1>
+    <rule2>MUST use concrete tool calls - no abstract commands or loop constructs</rule2>
+    <rule3>MUST resolve all variables before proceeding</rule3>
+    <rule4>MUST proceed between phases automatically when completion signals trigger</rule4>
+    <rule5>MUST execute Phase 2 as sequential concrete steps, not abstract loops</rule5>
+    <rule6>MUST process each incomplete task using the task_execution_pattern</rule6>
+    <rule7>MUST update task status in both tasks.md file AND TodoWrite tool</rule7>
+    <rule8>MUST verify task completion before proceeding to next task</rule8>
+    <rule9>MUST NOT stop until Phase 3 completion signal</rule9>
+    <rule10>MUST use direct tools only - no subagent invocations</rule10>
+    <rule11>MUST continue on non-critical errors with status reporting</rule11>
+    <rule12>MUST maintain state tracking through CURRENT_TASK_NAME and REMAINING_TASKS_COUNT</rule12>
+  </enforcement_rules>
+
+  <execution_summary>
+    <instruction>WHEN YOU READ THIS FILE:</instruction>
+    <step1>Initialize all variables using concrete Bash and Read tool calls</step1>
+    <step2>Execute Phase 1 setup steps in exact sequence (step1 → step4)</step2>
+    <step3>Execute Phase 2 sequential task execution using task_execution_pattern</step3>
+    <step4>Execute Phase 3 finalization steps to completion</step4>
+    <step5>Output completion summary and finish with success notification</step5>
+    
+    <semantic_intelligence_guidance>
+      <principle1>Use CONCRETE tool calls only - avoid abstract loop constructs</principle1>
+      <principle2>Follow SEQUENTIAL execution pattern - Claude's natural processing model</principle2>
+      <principle3>Maintain explicit STATE through variables and TodoWrite</principle3>
+      <principle4>VERIFY completion at each step before proceeding</principle4>
+    </semantic_intelligence_guidance>
+    
+    <critical>DO NOT PLAN. DO NOT WAIT FOR APPROVAL. EXECUTE IMMEDIATELY WITH CONCRETE TOOLS.</critical>
+  </execution_summary>
+
+</execute_tasks_master_protocol>

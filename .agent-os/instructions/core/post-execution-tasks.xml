@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<post_execution_tasks>
+
+  <metadata>
+    <description>Post-execution finalization steps</description>
+    <version>1.0</version>
+  </metadata>
+  
+  <imports>
+    <import>@.agent-os/instructions/protocols/subagent-protocol.xml</import>
+    <import>@.agent-os/instructions/protocols/git-protocol.xml</import>
+  </imports>
+  
+  <process_flow>
+    
+    <step number="1" name="run_tests">
+      <title>Run Full Test Suite</title>
+      <subagent ref="test-runner"/>
+      <command>pnpm test</command>
+    </step>
+    
+    <step number="2" name="git_workflow">
+      <title>Git Workflow</title>
+      <subagent ref="git-workflow"/>
+      <actions>
+        <commit>All changes</commit>
+        <push>To remote</push>
+        <create>Pull request</create>
+      </actions>
+    </step>
+    
+    <step number="3" name="verify_completion">
+      <title>Verify Task Completion</title>
+      <check>All tasks marked [x] in tasks.md</check>
+    </step>
+    
+    <step number="4" name="update_roadmap">
+      <title>Update Roadmap</title>
+      <condition>If applicable</condition>
+    </step>
+    
+    <step number="5" name="create_recap">
+      <title>Create Recap Document</title>
+      <generate>Summary of work completed</generate>
+    </step>
+    
+    <step number="6" name="generate_summary">
+      <title>Generate Completion Summary</title>
+      <template ref="final-summary"/>
+    </step>
+    
+    <step number="7" name="notification">
+      <title>Play Notification</title>
+      <action>🔔 Send completion notification</action>
+    </step>
+    
+  </process_flow>
+
+</post_execution_tasks>

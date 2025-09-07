@@ -269,22 +269,24 @@ export class Autopilot {
 
     const classification = this.classify(result.issues)
 
-    // All issues are safely fixable
-    if (classification.allAutoFixable && classification.autoFixable.length > 0) {
-      return {
-        action: 'FIX_SILENTLY',
-        fixes: classification.autoFixable,
-        confidence: 1.0,
+    // If we have any auto-fixable issues
+    if (classification.hasAutoFixable) {
+      // Mix of fixable and unfixable - fix what we can and report the rest
+      if (classification.hasUnfixable) {
+        return {
+          action: 'FIX_AND_REPORT',
+          fixes: classification.autoFixable,
+          issues: classification.unfixable,
+          confidence: 0.8,
+        }
       }
-    }
-
-    // Mix of fixable and unfixable
-    if (classification.hasAutoFixable && classification.hasUnfixable) {
-      return {
-        action: 'FIX_AND_REPORT',
-        fixes: classification.autoFixable,
-        issues: classification.unfixable,
-        confidence: 0.8,
+      // All issues are safely fixable
+      else {
+        return {
+          action: 'FIX_SILENTLY',
+          fixes: classification.autoFixable,
+          confidence: 1.0,
+        }
       }
     }
 
@@ -440,24 +442,20 @@ export class Autopilot {
     const ruleId = this.mapIssueToRule(issue)
     const rule = this.CLAUDE_FIXABLE_RULES.get(ruleId)
 
-    if (rule) {
-      return {
-        message: `Claude, please fix this ${ruleId} error:`,
-        instruction: rule.instruction,
-        example: rule.example,
-        location: `${issue.file}:${issue.line}:${issue.col}`,
-        code: issue.message || undefined,
-      }
+    const instruction: ClaudeInstruction = {
+      message: `Claude, please fix this ${ruleId} error:`,
+      instruction:
+        rule?.instruction || 'Please review and fix this issue according to the rule requirements',
+      example: rule?.example || 'Follow the specific rule guidelines for this error type',
+      location: `${issue.file}:${issue.line}:${issue.col}`,
     }
 
-    // Generic instruction for unknown rules
-    return {
-      message: `Claude, please fix this ${ruleId} error:`,
-      instruction: 'Please review and fix this issue according to the rule requirements',
-      example: 'Follow the specific rule guidelines for this error type',
-      location: `${issue.file}:${issue.line}:${issue.col}`,
-      code: issue.message || undefined,
+    // Only add code property if message exists
+    if (issue.message) {
+      instruction.code = issue.message
     }
+
+    return instruction
   }
 
   /**

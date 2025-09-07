@@ -189,45 +189,8 @@ export class IssueReporter {
       return '' // All errors are fixable
     }
 
-    const lines: string[] = []
-    lines.push('Quality issues require attention:')
-    lines.push('')
-
-    // Filter and show only unfixable issues
-    if (result.checkers.eslint && !result.checkers.eslint.success) {
-      const unfixableEslintErrors = this.filterUnfixableErrors(
-        result.checkers.eslint,
-        unfixableIssues,
-      )
-      if (unfixableEslintErrors.length > 0) {
-        lines.push('📝 ESLint issues:')
-        lines.push(unfixableEslintErrors.join('\n  '))
-      }
-    }
-
-    if (result.checkers.prettier && !result.checkers.prettier.success) {
-      const unfixablePrettierErrors = this.filterUnfixableErrors(
-        result.checkers.prettier,
-        unfixableIssues,
-      )
-      if (unfixablePrettierErrors.length > 0) {
-        lines.push('🎨 Prettier issues:')
-        lines.push(unfixablePrettierErrors.join('\n  '))
-      }
-    }
-
-    if (result.checkers.typescript && !result.checkers.typescript.success) {
-      const unfixableTypeScriptErrors = this.filterUnfixableErrors(
-        result.checkers.typescript,
-        unfixableIssues,
-      )
-      if (unfixableTypeScriptErrors.length > 0) {
-        lines.push('🔍 TypeScript issues:')
-        lines.push(unfixableTypeScriptErrors.join('\n  '))
-      }
-    }
-
-    return lines.join('\n')
+    // Use the ClaudeFormatter to format issues in XML structure
+    return this.claudeFormatter.format(unfixableIssues)
   }
 
   /**
@@ -436,29 +399,5 @@ export class IssueReporter {
     }
 
     return issues
-  }
-
-  /**
-   * Filter checker errors to only show unfixable ones
-   */
-  private filterUnfixableErrors(checker: CheckerResult, unfixableIssues: Issue[]): string[] {
-    if (!checker.errors) return []
-
-    // If this checker is marked as fixable (like Prettier), don't show any errors
-    if (checker.fixable) {
-      return []
-    }
-
-    // Filter errors to only show those that match unfixable issues
-    return checker.errors.filter((error) => {
-      // Check if this error corresponds to an unfixable issue
-      return unfixableIssues.some((issue) => {
-        // Check if the error message contains the issue's message or rule
-        return (
-          (issue.message && error.includes(issue.message.split(' - ')[1])) ||
-          (issue.ruleId && error.includes(issue.ruleId))
-        )
-      })
-    })
   }
 }

@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wallaby_protocol>
+
+  <metadata>
+    <description>Wallaby MCP server integration protocol</description>
+    <version>1.0</version>
+    <enforcement>STRICT for .unit.test.ts files</enforcement>
+  </metadata>
+  
+  <detection>
+    <subagent>@wallaby-checker</subagent>
+    <check_command>wallaby_allTestsForFile</check_command>
+    <inactive_indicators>
+      <indicator><![CDATA[<No data available>]]></indicator>
+      <indicator>null response</indicator>
+      <indicator>empty response</indicator>
+      <indicator>undefined</indicator>
+    </inactive_indicators>
+  </detection>
+  
+  <check_and_notify id="wallaby_gate">
+    <condition>Working with .unit.test.ts files</condition>
+    
+    <check_status>
+      <invoke>@wallaby-checker, verify Wallaby MCP is active</invoke>
+      <wait>5 seconds</wait>
+    </check_status>
+    
+    <if_inactive>
+      <halt_protocol>
+        <immediate_actions>
+          <action priority="1">STOP all unit testing activities</action>
+          <action priority="2">DO NOT run direct test commands</action>
+          <action priority="3">DO NOT suggest alternatives</action>
+        </immediate_actions>
+        
+        <one_time_notification>
+          <template ref="wallaby-inactive-notification"/>
+        </one_time_notification>
+        
+        <wait_for_confirmation>
+          <expected>wallaby ready</expected>
+          <no_polling>true</no_polling>
+        </wait_for_confirmation>
+        
+        <after_confirmation>
+          <action>Re-check status</action>
+          <action>Proceed only if active</action>
+        </after_confirmation>
+      </halt_protocol>
+    </if_inactive>
+    
+    <if_active>
+      <proceed>
+        <template ref="wallaby-active-confirmation"/>
+      </proceed>
+    </if_active>
+  </check_and_notify>
+  
+  <routing_rules>
+    <route pattern=".unit.test.ts">
+      <tool>wallaby_mcp</tool>
+      <required>true</required>
+    </route>
+    <route pattern=".integration.test.ts">
+      <tool>vitest</tool>
+    </route>
+    <route pattern=".e2e.test.ts">
+      <tool>vitest</tool>
+    </route>
+    <route pattern=".slow.test.ts">
+      <tool>vitest</tool>
+    </route>
+  </routing_rules>
+  
+  <wallaby_tools>
+    <tool name="wallaby_allTestsForFile">
+      <purpose>Get all tests in file</purpose>
+      <args>file: absolute path</args>
+    </tool>
+    <tool name="wallaby_failingTestsForFile">
+      <purpose>Get failing tests</purpose>
+      <args>file: absolute path</args>
+    </tool>
+    <tool name="wallaby_runtimeValues">
+      <purpose>Debug runtime values</purpose>
+      <args>file, line, expression</args>
+    </tool>
+    <tool name="wallaby_coveredLinesForFile">
+      <purpose>Check coverage</purpose>
+      <args>file: project-relative path</args>
+    </tool>
+  </wallaby_tools>
+  
+  <policies>
+    <policy id="unit-only">Wallaby MCP ONLY for .unit.test.ts</policy>
+    <policy id="no-alternatives">Never suggest alternatives on halt</policy>
+    <policy id="coverage-threshold">Minimum 80% coverage</policy>
+  </policies>
+
+</wallaby_protocol>

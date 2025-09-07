@@ -154,10 +154,12 @@ console.log(x);`,
 
       // Assert
       expect(formatted).toContain('<quality-check-result>')
-      expect(formatted).toContain('<issue>')
-      expect(formatted).toContain('<engine>')
-      expect(formatted).toContain('<severity>')
-      expect(formatted).toContain('<location>')
+      // ClaudeFormatter uses severity-based tags (error, warning, info) instead of generic <issue>
+      expect(formatted).toMatch(/<(error|warning|info)/)
+      expect(formatted).toContain('<eslint>') // Should have ESLint grouping since TypeScript is disabled
+      expect(formatted).toContain('file=')
+      expect(formatted).toContain('line=')
+      expect(formatted).toContain('column=')
       expect(formatted).toContain('</quality-check-result>')
     })
 
@@ -208,7 +210,8 @@ console.log(x);`,
       const tsGroupMatch = formatted.match(/<typescript>([\s\S]*?)<\/typescript>/)
       expect(tsGroupMatch).toBeTruthy()
       const tsGroup = tsGroupMatch![1]
-      expect(tsGroup.match(/<issue>/g)?.length).toBe(2) // 2 TypeScript issues
+      // Count error tags instead of issue tags since ClaudeFormatter uses severity-based tags
+      expect(tsGroup.match(/<error/g)?.length).toBe(2) // 2 TypeScript errors
     })
 
     test('should_preserve_diagnostic_metadata_when_formatting', async () => {

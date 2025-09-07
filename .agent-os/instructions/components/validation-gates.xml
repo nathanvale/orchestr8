@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<validation_gates>
+
+  <metadata>
+    <description>Streamlined validation checkpoints for Agent OS v4.0</description>
+    <version>4.0</version>
+    <mode>CHECKPOINT_BASED</mode>
+    <architecture>SIMPLIFIED</architecture>
+  </metadata>
+
+  <execution_context>
+    <instruction>Validation is now built into the master execution protocol</instruction>
+    <reference>See execute-tasks-master.xml for completion signals</reference>
+  </execution_context>
+
+  <!-- SIMPLIFIED CHECKPOINT SYSTEM -->
+  <checkpoints>
+    
+    <checkpoint id="variable_init_complete">
+      <phase>Variable Initialization</phase>
+      <trigger>All template variables resolved successfully</trigger>
+      <action>PROCEED_TO_PHASE_1</action>
+      <blocking>false</blocking>
+    </checkpoint>
+    
+    <checkpoint id="phase1_complete">
+      <phase>Phase 1 - Setup</phase>
+      <trigger>Git branch created AND tasks analyzed AND TodoWrite initialized</trigger>
+      <action>PROCEED_TO_PHASE_2</action>
+      <blocking>false</blocking>
+    </checkpoint>
+    
+    <checkpoint id="phase2_complete">
+      <phase>Phase 2 - Execution</phase>
+      <trigger>All tasks in tasks.md marked [x] AND TodoWrite updated</trigger>
+      <action>PROCEED_TO_PHASE_3</action>
+      <blocking>false</blocking>
+    </checkpoint>
+    
+    <checkpoint id="phase3_complete">
+      <phase>Phase 3 - Finalization</phase>
+      <trigger>Tests run AND changes committed AND summary generated</trigger>
+      <action>EXECUTION_COMPLETE</action>
+      <blocking>false</blocking>
+    </checkpoint>
+    
+  </checkpoints>
+
+  <!-- SIMPLIFIED ERROR HANDLING -->
+  <error_recovery>
+    <policy>CONTINUE_ON_NON_CRITICAL_ERRORS</policy>
+    <critical_errors>
+      <error>Cannot resolve SPEC_PATH variable</error>
+      <error>Git repository not found</error>
+      <error>tasks.md file missing</error>
+    </critical_errors>
+    <non_critical_errors>
+      <error>Test failures</error>
+      <error>Optional file reads</error>
+      <error>Push to remote failures</error>
+      <error>Notification sound failures</error>
+    </non_critical_errors>
+  </error_recovery>
+
+  <!-- INTEGRATION WITH MASTER PROTOCOL -->
+  <master_integration>
+    <instruction>These checkpoints are built into execute-tasks-master.xml</instruction>
+    <reference>completion_signal elements in master file handle phase transitions</reference>
+    <note>This file documents the validation logic but execution is handled in master</note>
+  </master_integration>
+
+  <!-- STREAMLINED ENFORCEMENT -->
+  <enforcement_rules>
+    <rule>Use completion signals in master file for phase transitions</rule>
+    <rule>Continue on non-critical errors</rule>
+    <rule>Never block execution unless critical error occurs</rule>
+    <rule>All checkpoints are advisory only</rule>
+  </enforcement_rules>
+
+</validation_gates>

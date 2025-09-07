@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<execute_tasks_protocol>
+
+  <metadata>
+    <description>Agent OS Task Executor - Streamlined v4.0</description>
+    <version>4.0</version>
+    <mode>IMPERATIVE_EXECUTION</mode>
+    <architecture>CONSOLIDATED_MASTER</architecture>
+  </metadata>
+
+  <execution_context>
+    <instruction>EXECUTE ALL THREE PHASES IMMEDIATELY. NO PLANNING. NO CONFIRMATION.</instruction>
+    <no_planning>true</no_planning>
+    <no_user_confirmation>true</no_user_confirmation>
+    <direct_tools_only>true</direct_tools_only>
+  </execution_context>
+  
+  <!-- CRITICAL: This is the new streamlined execution approach -->
+  <master_execution_protocol>
+    <instruction>STEP 1: Read and execute the master protocol file IMMEDIATELY</instruction>
+    <action_required>
+      <step1>Call Read tool with file_path=".agent-os/instructions/core/execute-tasks-master.xml"</step1>
+      <step2>Follow ALL instructions in that file exactly as written</step2>
+      <step3>Execute all phases: Variable Init → Phase 1 → Phase 2 → Phase 3</step3>
+      <step4>Do not stop until Phase 3 completion signal</step4>
+    </action_required>
+  </master_execution_protocol>
+  
+  <simplified_overview>
+    The master protocol contains all concrete tool calls and execution logic.
+    DO NOT reference any other XML files - everything is consolidated.
+    
+    <execution_steps>
+      1. Initialize variables (SPEC_PATH, BRANCH_NAME, etc.)
+      2. Phase 1: Setup git branch and analyze tasks  
+      3. Phase 2: Execute all tasks in sequence
+      4. Phase 3: Run tests, commit, and generate summary
+    </execution_steps>
+  </simplified_overview>
+  
+  <direct_execution_command>
+    <critical>WHEN YOU READ THIS FILE:</critical>
+    <step1>Immediately call Read tool: file_path=".agent-os/instructions/core/execute-tasks-master.xml"</step1>
+    <step2>Follow the variable initialization section first</step2>
+    <step3>Then execute Phase 1, Phase 2, and Phase 3 in sequence</step3>
+    <step4>Use only the concrete tool calls specified in the master file</step4>
+    
+    <no_alternatives>DO NOT use any other XML files or imports</no_alternatives>
+    <no_planning>START EXECUTING IMMEDIATELY</no_planning>
+  </direct_execution_command>
+
+  <enforcement_rules>
+    <rule1>READ execute-tasks-master.xml and FOLLOW its instructions exactly</rule1>
+    <rule2>EXECUTE all phases without interruption</rule2>
+    <rule3>USE concrete tool calls only</rule3>
+    <rule4>DO NOT create plans or ask for confirmation</rule4>
+    <rule5>COMPLETE all three phases</rule5>
+  </enforcement_rules>
+
+</execute_tasks_protocol>

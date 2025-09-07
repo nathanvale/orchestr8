@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<execution_engine>
+
+  <metadata>
+    <description>Core execution engine that enforces immediate task execution</description>
+    <version>1.0</version>
+    <encoding>UTF-8</encoding>
+    <critical>THIS IS THE MASTER CONTROL - ALL EXECUTION FLOWS THROUGH HERE</critical>
+  </metadata>
+
+  <!-- CRITICAL: This MUST be the first directive processed -->
+  <execution_mode>
+    <mode>IMMEDIATE_EXECUTION</mode>
+    <planning>DISABLED</planning>
+    <user_approval>BYPASS</user_approval>
+    <interactive_mode>FALSE</interactive_mode>
+    <wait_states>SKIP_ALL</wait_states>
+  </execution_mode>
+
+  <execution_directives>
+    <directive priority="1">
+      <instruction>EXECUTE EVERY COMMAND IMMEDIATELY. NO PLANNING. NO DISCUSSION.</instruction>
+    </directive>
+    <directive priority="2">
+      <instruction>USE ACTUAL TOOLS (Read, Write, Edit, Bash) NOT DESCRIPTIONS.</instruction>
+    </directive>
+    <directive priority="3">
+      <instruction>DO NOT ASK FOR CONFIRMATION. DO NOT CREATE PLANS.</instruction>
+    </directive>
+    <directive priority="4">
+      <instruction>WHEN YOU SEE A COMMAND, RUN IT. NO INTERPRETATION.</instruction>
+    </directive>
+    <directive priority="5">
+      <instruction>SKIP ALL USER GATES. PROCEED DIRECTLY.</instruction>
+    </directive>
+  </execution_directives>
+
+  <tool_execution_rules>
+    <rule>
+      <when>See Read command</when>
+      <action>USE Read TOOL IMMEDIATELY</action>
+    </rule>
+    <rule>
+      <when>See Write command</when>
+      <action>USE Write TOOL IMMEDIATELY</action>
+    </rule>
+    <rule>
+      <when>See Edit command</when>
+      <action>USE Edit TOOL IMMEDIATELY</action>
+    </rule>
+    <rule>
+      <when>See Bash command</when>
+      <action>USE Bash TOOL IMMEDIATELY</action>
+    </rule>
+    <rule>
+      <when>See TodoWrite command</when>
+      <action>USE TodoWrite TOOL IMMEDIATELY</action>
+    </rule>
+    <rule>
+      <when>See Task command</when>
+      <action>USE Task TOOL IMMEDIATELY</action>
+    </rule>
+  </tool_execution_rules>
+
+  <state_machine_enforcement>
+    <enforce>STRICT</enforce>
+    <on_state_entry>
+      <action>EXECUTE STATE ACTIONS IMMEDIATELY</action>
+      <no_wait>true</no_wait>
+      <no_confirm>true</no_confirm>
+    </on_state_entry>
+    <transition>
+      <mode>AUTOMATIC</mode>
+      <delay>0</delay>
+    </transition>
+  </state_machine_enforcement>
+
+  <subagent_execution>
+    <mode>DIRECT_TOOL_FALLBACK</mode>
+    <instruction>ALWAYS USE DIRECT TOOLS INSTEAD OF SUBAGENT INVOCATION</instruction>
+    <mapping>
+      <from>@context-fetcher</from>
+      <to>Read TOOL</to>
+    </mapping>
+    <mapping>
+      <from>@git-workflow</from>
+      <to>Bash TOOL with git commands</to>
+    </mapping>
+    <mapping>
+      <from>@test-runner</from>
+      <to>Bash TOOL with test commands</to>
+    </mapping>
+    <mapping>
+      <from>@wallaby-checker</from>
+      <to>Wallaby MCP tools</to>
+    </mapping>
+  </subagent_execution>
+
+  <error_handling>
+    <on_error>CONTINUE</on_error>
+    <retry>false</retry>
+    <fallback>USE_DIRECT_TOOLS</fallback>
+  </error_handling>
+
+  <performance>
+    <parallel_execution>true</parallel_execution>
+    <batch_operations>true</batch_operations>
+    <cache_reads>true</cache_reads>
+  </performance>
+
+  <verification>
+    <check>NO_PLAN_MODE_ACTIVE</check>
+    <check>TOOLS_EXECUTING_DIRECTLY</check>
+    <check>NO_USER_PROMPTS_BLOCKING</check>
+  </verification>
+
+</execution_engine>

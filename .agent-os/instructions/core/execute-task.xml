@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<execute_task_protocol>
+
+  <metadata>
+    <description>Execute a single task with its sub-tasks using TDD workflow</description>
+    <version>2.0</version>
+    <workflow>TDD with Wallaby MCP for unit tests</workflow>
+  </metadata>
+  
+  <imports>
+    <import>@.agent-os/instructions/protocols/wallaby-protocol.xml</import>
+    <import>@.agent-os/instructions/protocols/subagent-protocol.xml</import>
+    <import>@.agent-os/instructions/components/response-templates.xml</import>
+  </imports>
+  
+  <pre_flight_check>
+    <execute>@.agent-os/instructions/meta/pre-flight.xml</execute>
+    <execute>@./testing-rules.xml</execute>
+    <execute>@./wallaby-rules.xml</execute>
+  </pre_flight_check>
+  
+  <process_flow>
+    
+    <step number="1" name="task_understanding">
+      <title>Task Understanding</title>
+      <actions>
+        <read>Parent task from tasks.md</read>
+        <read>All sub-task descriptions</read>
+        <identify>Test types needed (unit/integration/e2e)</identify>
+        <note>Dependencies and expected outcomes</note>
+      </actions>
+      <template ref="task-understanding-output"/>
+    </step>
+    
+    <step number="2" name="technical_spec_review">
+      <title>Technical Specification Review</title>
+      <selective_reading>
+        <find>Task-relevant sections only</find>
+        <skip>Unrelated specifications</skip>
+      </selective_reading>
+    </step>
+    
+    <step number="3" name="best_practices_review">
+      <title>Best Practices Review</title>
+      <subagent ref="context-fetcher"/>
+      <request>
+        <template ref="best-practices-request"/>
+      </request>
+    </step>
+    
+    <step number="4" name="code_style_review">
+      <title>Code Style Review</title>
+      <subagent ref="context-fetcher"/>
+      <request>
+        <template ref="code-style-request"/>
+      </request>
+    </step>
+    
+    <step number="5" name="task_execution">
+      <title>Task and Sub-task Execution</title>
+      
+      <wallaby_gate condition="has_unit_tests">
+        <import>@.agent-os/instructions/protocols/wallaby-protocol.xml#check_and_notify</import>
+      </wallaby_gate>
+      
+      <tdd_workflow>
+        <subtask_1>
+          <condition>IF "Write tests for [feature]"</condition>
+          <router>
+            <if pattern=".unit.test.ts">
+              <use protocol="wallaby-mcp"/>
+            </if>
+            <else pattern=".integration.test.ts|.e2e.test.ts">
+              <use protocol="standard-test"/>
+            </else>
+          </router>
+        </subtask_1>
+        
+        <middle_subtasks>
+          <loop>FOR each implementation sub-task</loop>
+          <with_wallaby condition="unit_tests_exist">
+            <monitor>Real-time test feedback</monitor>
+            <debug>wallaby_runtimeValues if needed</debug>
+          </with_wallaby>
+        </middle_subtasks>
+        
+        <final_subtask>
+          <verify>All tests pass</verify>
+          <coverage>Check if >= 80%</coverage>
+        </final_subtask>
+      </tdd_workflow>
+    </step>
+    
+    <step number="6" name="test_verification">
+      <title>Task-Specific Test Verification</title>
+      <router>
+        <route pattern=".unit.test.ts" tool="wallaby_mcp"/>
+        <route pattern="other" tool="vitest"/>
+      </router>
+    </step>
+    
+    <step number="7" name="status_update">
+      <title>Mark Task Complete</title>
+      <update>tasks.md with [x] checkboxes</update>
+      <blocking_criteria>
+        <max_attempts>3</max_attempts>
+        <indicator>⚠️</indicator>
+      </blocking_criteria>
+    </step>
+    
+  </process_flow>
+  
+  <completion_summary>
+    <template ref="task-completion-summary"/>
+  </completion_summary>
+
+</execute_task_protocol>

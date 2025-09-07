@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<response_templates>
+
+  <metadata>
+    <description>Centralized output templates</description>
+    <version>1.0</version>
+  </metadata>
+  
+  <!-- Phase 1 Templates -->
+  <template id="task-confirmation-request">
+    <![CDATA[
+    Tasks identified for execution:
+    {{#each tasks}}
+    - Task {{this.number}}: {{this.description}}
+    {{/each}}
+    
+    Total: {{task_count}} tasks
+    Proceed with these tasks? (yes/no):
+    ]]>
+  </template>
+  
+  <template id="phase1-completion-validation">
+    <![CDATA[
+    === PHASE 1 COMPLETION VALIDATION ===
+    
+    Step 1 - Task Assignment:
+    ✅ Tasks identified: {{task_count}}
+    ✅ User confirmation: "{{user_response}}"
+    
+    Step 2 - Context Analysis:
+    ✅ Files loaded: {{loaded_files}}
+    ✅ Context understood: Yes
+    
+    Step 3 - Git Branch:
+    ✅ Current branch: {{branch_name}}
+    ✅ Working tree: {{working_tree_status}}
+    
+    ALL CHECKS PASSED: Yes
+    === PROCEEDING TO PHASE 2 ===
+    ]]>
+  </template>
+  
+  <!-- Phase 2 Templates -->
+  <template id="phase2-commitment">
+    <![CDATA[
+    === PHASE 2 ENTRY COMMITMENT ===
+    I acknowledge:
+    - I must execute EACH task using execute-task.xml
+    - Task count: {{task_count}} tasks to process
+    - I will track progress with TodoWrite
+    === COMMITMENT CONFIRMED ===
+    ]]>
+  </template>
+  
+  <template id="task-iteration-start">
+    <![CDATA[
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    Task {{current_index + 1}} of {{task_count}}: STARTING
+    Task: {{task.number}} - {{task.description}}
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    ]]>
+  </template>
+  
+  <template id="task-iteration-complete">
+    <![CDATA[
+    ✅ Task {{current_index + 1}} of {{task_count}}: COMPLETE
+    {{#if has_next}}
+    ➡️  Next: Task {{next_task.number}}
+    {{else}}
+    ✨ All tasks in loop completed!
+    {{/if}}
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    ]]>
+  </template>
+  
+  <template id="phase2-completion-validation">
+    <![CDATA[
+    === PHASE 2 COMPLETION VALIDATION ===
+    
+    Tasks Processed:
+    {{#each completed_tasks}}
+    ✅ {{this.number}}: Complete
+    {{/each}}
+    
+    Summary:
+    ✅ Tasks executed: {{task_count}}
+    ✅ All marked complete: Yes
+    
+    === PROCEEDING TO PHASE 3 ===
+    ]]>
+  </template>
+  
+  <!-- Phase 3 Templates -->
+  <template id="phase3-entry">
+    <![CDATA[
+    === PHASE 3 ENTRY ===
+    Starting post-execution tasks...
+    This phase will:
+    1. Run tests
+    2. Commit and push code
+    3. Create pull request
+    4. Generate documentation
+    === LOADING POST-EXECUTION TASKS ===
+    ]]>
+  </template>
+  
+  <template id="phase3-completion-validation">
+    <![CDATA[
+    === PHASE 3 COMPLETION VALIDATION ===
+    
+    Post-Execution Tasks:
+    ✅ Tests run: {{test_status}}
+    ✅ Code committed: Yes
+    ✅ PR created: {{pr_url}}
+    ✅ Documentation: Complete
+    
+    === ALL PHASES COMPLETE ===
+    ]]>
+  </template>
+  
+  <!-- Wallaby Templates -->
+  <template id="wallaby-inactive-notification">
+    <![CDATA[
+    ⚠️ WALLABY MCP SERVER REQUIRED
+    
+    Wallaby server appears to be inactive or not configured.
+    
+    Please complete these steps:
+    1. Open VS Code
+    2. Check Wallaby status in the status bar (should show green)
+    3. Ensure Wallaby MCP server is running
+    4. Verify wallaby.js config exists and is loaded
+    5. Run any test once to warm the cache
+    
+    Reply "wallaby ready" when the server is active.
+    ]]>
+  </template>
+  
+  <template id="wallaby-active-confirmation">
+    <![CDATA[
+    ✅ Wallaby MCP server is active and ready
+    Proceeding with unit test implementation using Wallaby tools...
+    ]]>
+  </template>
+  
+  <!-- Task Execution Templates -->
+  <template id="task-understanding-output">
+    <![CDATA[
+    Reading task {{parent_task_number}} from tasks.md...
+    
+    Parent Task: {{parent_task_description}}
+    Sub-tasks identified:
+    {{#each subtasks}}
+    - {{this.number}}: {{this.description}}
+    {{/each}}
+    
+    Test types needed:
+    {{#each test_types}}
+    - {{this.type}}: {{this.pattern}}
+    {{/each}}
+    
+    {{#if has_unit_tests}}
+    ⚠️ Unit tests detected - Will verify Wallaby MCP
+    {{/if}}
+    ]]>
+  </template>
+  
+  <template id="best-practices-request">
+    <![CDATA[
+    @context-fetcher, find best practices sections relevant to:
+    - Task's technology stack: {{current_tech_stack}}
+    - Feature type: {{current_feature_type}}
+    - Testing approaches needed
+    - Code organization patterns
+    ]]>
+  </template>
+  
+  <template id="code-style-request">
+    <![CDATA[
+    @context-fetcher, find code style rules for:
+    - Languages: {{languages_in_task}}
+    - File types: {{file_types_being_modified}}
+    - Component patterns: {{patterns_being_implemented}}
+    - Testing style guidelines
+    ]]>
+  </template>
+  
+  <template id="task-completion-summary">
+    <![CDATA[
+    ╔════════════════════════════════════════╗
+    ║   TASK {{parent_task_number}} COMPLETE ║
+    ╠════════════════════════════════════════╣
+    ║                                        ║
+    ║ Sub-tasks completed: {{subtask_count}} ║
+    ║ Tests written: {{test_count}}          ║
+    ║ Tests passing: {{passing_percent}}%    ║
+    ║ Code coverage: {{coverage_percent}}%   ║
+    ║                                        ║
+    ║ Status: ✓ Complete                     ║
+    ╚════════════════════════════════════════╝
+    ]]>
+  </template>
+  
+  <!-- Final Summary Template -->
+  <template id="final-execution-summary">
+    <![CDATA[
+    ╔════════════════════════════════════╗
+    ║   TASK EXECUTION COMPLETE         ║
+    ╠════════════════════════════════════╣
+    ║ Phase 1: Setup         ✓ Complete  ║
+    ║ Phase 2: Execution     ✓ Complete  ║
+    ║ Phase 3: Finalization  ✓ Complete  ║
+    ║                                    ║
+    ║ Tasks completed: {{task_count}}    ║
+    ║ Tests (Unit/Wallaby): {{unit_count}}║
+    ║ Tests (Integration): {{int_count}} ║
+    ║ Tests (E2E): {{e2e_count}}         ║
+    ║                                    ║
+    ║ PR created: {{pr_url}}             ║
+    ║ Coverage: {{coverage}}%            ║
+    ║                                    ║
+    ║ All phases finished successfully   ║
+    ╚════════════════════════════════════════╝
+    ]]>
+  </template>
+
+</response_templates>

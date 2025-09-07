@@ -9,6 +9,7 @@ import { Fixer } from '../adapters/fixer.js'
 import { ExitCodes } from '../core/exit-codes.js'
 import { IssueReporter } from '../core/issue-reporter.js'
 import { QualityChecker } from '../core/quality-checker.js'
+import { OutputFormatter, OutputMode } from '../formatters/output-formatter.js'
 import type { Issue, QualityCheckResult } from '../types.js'
 import { createTimer, logger } from '../utils/logger.js'
 
@@ -54,11 +55,11 @@ export async function runClaudeHook(): Promise<void> {
     }
 
     // Validate required fields (only if we have a valid payload)
-    if (!payload || !payload.tool_name || !payload.tool_input?.file_path) {
+    if (!payload || !payload.tool_name || !payload.tool_input || !payload.tool_input.file_path) {
       logger.warn('Invalid payload: missing required fields', {
         hasPayload: !!payload,
         hasToolName: payload ? !!payload.tool_name : false,
-        hasFilePath: payload ? !!payload.tool_input?.file_path : false,
+        hasFilePath: payload?.tool_input ? !!payload.tool_input.file_path : false,
       })
       process.exit(ExitCodes.SUCCESS)
     }
@@ -90,6 +91,16 @@ export async function runClaudeHook(): Promise<void> {
     const reporter = new IssueReporter()
     const autopilot = new Autopilot()
     const fixer = new Fixer()
+    const formatter = new OutputFormatter()
+
+    // Log formatter selection
+    const outputMode = formatter.getOutputMode()
+    logger.debug('Formatter selected', {
+      formatter: 'OutputFormatter',
+      defaultMode: outputMode,
+      envMode: process.env.QUALITY_CHECK_OUTPUT_MODE,
+      correlationId,
+    })
 
     // Run quality check with timing
     logger.qualityCheckStarted(payload.tool_input.file_path)
@@ -122,12 +133,29 @@ export async function runClaudeHook(): Promise<void> {
     const reasoning =
       decision.issues?.map((i) => i.ruleId || `${i.engine}-${i.severity}`).join(', ') ||
       'No specific reasoning'
+
+    // Enhanced autopilot decision logging with detailed rationale
     logger.autopilotDecision(
       payload.tool_input.file_path,
       decision.action,
       issues.length,
       reasoning,
     )
+
+    // Log additional decision details for debugging
+    logger.debug('Autopilot decision details', {
+      action: decision.action,
+      totalIssues: issues.length,
+      fixableIssues: issues.filter((i) => i.engine === 'eslint' || i.engine === 'prettier').length,
+      unfixableIssues: issues.filter((i) => i.engine === 'typescript').length,
+      issuesByEngine: {
+        typescript: issues.filter((i) => i.engine === 'typescript').length,
+        eslint: issues.filter((i) => i.engine === 'eslint').length,
+        prettier: issues.filter((i) => i.engine === 'prettier').length,
+      },
+      decisionIssues: decision.issues?.length || 0,
+      correlationId,
+    })
 
     // Determine if we should operate silently
     const isSilentMode = decision.action === 'FIX_SILENTLY' || decision.action === 'CONTINUE'
@@ -187,15 +215,16 @@ export async function runClaudeHook(): Promise<void> {
           process.exit(ExitCodes.SUCCESS)
         }
 
-        // If auto-fix failed, report the issues using JSON format for Claude
+        // If auto-fix failed, report the issues using XML format for Claude
         logger.error('Auto-fix failed', undefined, { filePath: payload.tool_input.file_path })
 
         // Even on failure, stay silent in FIX_SILENTLY mode
         // But still need to report to Claude via exit code
-
-        const output = reporter.formatForClaude(result)
-        if (output) {
-          outputClaudeBlocking(output, 'Auto-fix failed, quality issues need attention')
+        const blockingOutput = formatter.formatForBlockingOutput(issues, {
+          context: 'Auto-fix failed, quality issues need attention',
+        })
+        if (blockingOutput) {
+          outputClaudeBlocking(blockingOutput)
           logger.hookCompleted(
             payload.tool_name,
             payload.tool_input.file_path,
@@ -224,19 +253,21 @@ export async function runClaudeHook(): Promise<void> {
         })
 
         if (decision.issues && decision.issues.length > 0) {
-          const messages = decision.issues
-            .map((issue) => issue.message || issue.ruleId || `${issue.engine}-${issue.severity}`)
-            .filter(Boolean)
+          const xmlOutput = formatter.formatIssuesForOutput(decision.issues, {
+            mode: OutputMode.XML,
+          })
 
           logger.warn('Quality issues require manual intervention', {
             filePath: payload.tool_input.file_path,
-            issueMessages: messages,
-            issueCount: messages.length,
+            issueMessages: decision.issues.map((i) => i.message),
+            issueCount: decision.issues.length,
           })
 
-          if (messages.length > 0) {
-            const output = `❌ Quality issues found:\n\n${messages.join('\n')}`
-            outputClaudeBlocking(output, 'Quality issues require manual intervention')
+          if (xmlOutput) {
+            const blockingOutput = formatter.formatForBlockingOutput(decision.issues, {
+              context: 'Quality issues require manual intervention',
+            })
+            outputClaudeBlocking(blockingOutput)
             logger.hookCompleted(
               payload.tool_name,
               payload.tool_input.file_path,
@@ -264,19 +295,21 @@ export async function runClaudeHook(): Promise<void> {
         logger.autoFixCompleted(payload.tool_input.file_path, fixedCount, remainingCount)
 
         if (decision.issues && decision.issues.length > 0) {
-          const messages = decision.issues
-            .map((issue) => issue.message || issue.ruleId || `${issue.engine}-${issue.severity}`)
-            .filter(Boolean)
+          const xmlOutput = formatter.formatIssuesForOutput(decision.issues, {
+            mode: OutputMode.XML,
+          })
 
           logger.warn('Some issues remain after auto-fix', {
             filePath: payload.tool_input.file_path,
-            remainingIssueMessages: messages,
-            remainingCount: messages.length,
+            remainingIssueMessages: decision.issues.map((i) => i.message),
+            remainingCount: decision.issues.length,
           })
 
-          if (messages.length > 0) {
-            const output = `❌ Quality issues found:\n\n${messages.join('\n')}`
-            outputClaudeBlocking(output, 'Some issues remain after auto-fix')
+          if (xmlOutput) {
+            const blockingOutput = formatter.formatForBlockingOutput(decision.issues, {
+              context: 'Some issues remain after auto-fix',
+            })
+            outputClaudeBlocking(blockingOutput)
             logger.hookCompleted(
               payload.tool_name,
               payload.tool_input.file_path,
@@ -381,33 +414,9 @@ function shouldProcessOperation(operation: string): boolean {
 /**
  * Output formatted text to stderr for Claude Code PostToolUse hooks with blocking behavior
  */
-function outputClaudeBlocking(reason: string, additionalContext?: string): void {
-  // Output formatted text to stderr for Claude to process (PostToolUse with exit code 2)
-  console.error('')
-  console.error('🚫 BLOCKING: You must fix these issues before proceeding:')
-  console.error('')
-
-  // Parse the reason to extract individual issues and format them with ACTION REQUIRED
-  const lines = reason.split('\n').filter((line) => line.trim())
-  let issueCount = 1
-
-  for (const line of lines) {
-    if (line.includes('❌ Quality issues found:')) continue
-    if (line.trim() === '') continue
-
-    console.error(`${issueCount}. QUALITY ISSUE: ${line}`)
-    console.error(`   ACTION REQUIRED: Fix this issue before continuing`)
-    console.error('')
-    issueCount++
-  }
-
-  if (additionalContext && additionalContext !== reason) {
-    console.error(`CONTEXT: ${additionalContext}`)
-    console.error('')
-  }
-
-  console.error('❌ DO NOT PROCEED until all issues are resolved. Update your code now.')
-  console.error('')
+function outputClaudeBlocking(formattedOutput: string): void {
+  // Output formatted issues to stderr for Claude to process (PostToolUse with exit code 2)
+  console.error(formattedOutput)
 }
 
 /**

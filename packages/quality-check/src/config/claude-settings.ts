@@ -58,17 +58,25 @@ export function validateClaudeHookConfig(settings: unknown): boolean {
 
   const settingsObj = settings as Record<string, unknown>
 
-  if (!settingsObj.hooks || typeof settingsObj.hooks !== 'object' || settingsObj.hooks === null) {
+  if (
+    !settingsObj['hooks'] ||
+    typeof settingsObj['hooks'] !== 'object' ||
+    settingsObj['hooks'] === null
+  ) {
     return false
   }
 
-  const hooks = settingsObj.hooks as Record<string, unknown>
+  const hooks = settingsObj['hooks'] as Record<string, unknown>
 
-  if (!hooks.PostToolUse || !Array.isArray(hooks.PostToolUse) || hooks.PostToolUse.length === 0) {
+  if (
+    !hooks['PostToolUse'] ||
+    !Array.isArray(hooks['PostToolUse']) ||
+    hooks['PostToolUse'].length === 0
+  ) {
     return false
   }
 
-  for (const postToolUse of hooks.PostToolUse) {
+  for (const postToolUse of hooks['PostToolUse']) {
     if (typeof postToolUse !== 'object' || postToolUse === null) {
       return false
     }
@@ -76,32 +84,32 @@ export function validateClaudeHookConfig(settings: unknown): boolean {
     const postToolUseObj = postToolUse as Record<string, unknown>
 
     if (
-      !postToolUseObj.matcher ||
-      typeof postToolUseObj.matcher !== 'string' ||
-      !postToolUseObj.matcher.trim()
+      !postToolUseObj['matcher'] ||
+      typeof postToolUseObj['matcher'] !== 'string' ||
+      !postToolUseObj['matcher'].trim()
     ) {
       return false
     }
 
     if (
-      !postToolUseObj.hooks ||
-      !Array.isArray(postToolUseObj.hooks) ||
-      postToolUseObj.hooks.length === 0
+      !postToolUseObj['hooks'] ||
+      !Array.isArray(postToolUseObj['hooks']) ||
+      postToolUseObj['hooks'].length === 0
     ) {
       return false
     }
 
-    for (const hook of postToolUseObj.hooks) {
+    for (const hook of postToolUseObj['hooks']) {
       if (typeof hook !== 'object' || hook === null) {
         return false
       }
 
       const hookObj = hook as Record<string, unknown>
 
-      if (!hookObj.type || hookObj.type !== 'command') {
+      if (!hookObj['type'] || hookObj['type'] !== 'command') {
         return false
       }
-      if (!hookObj.command || typeof hookObj.command !== 'string') {
+      if (!hookObj['command'] || typeof hookObj['command'] !== 'string') {
         return false
       }
     }
@@ -175,7 +183,7 @@ export async function isQualityCheckEnabled(
   projectDir?: string,
 ): Promise<boolean> {
   // Environment variable override
-  if (process.env.QUALITY_CHECK_DISABLED === 'true') {
+  if (process.env['QUALITY_CHECK_DISABLED'] === 'true') {
     return false
   }
 

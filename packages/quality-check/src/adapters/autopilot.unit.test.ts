@@ -87,12 +87,12 @@ describe('Autopilot - Enhanced Classification with Rich Error Data', () => {
       const classifications = issues.map((issue) => autopilot.classifyErrorCode(issue))
 
       // Assert
-      expect(classifications[0].category).toBe('import-error')
-      expect(classifications[0].fixable).toBe(false)
-      expect(classifications[1].category).toBe('reference-error')
-      expect(classifications[1].fixable).toBe(false)
-      expect(classifications[2].category).toBe('implicit-any')
-      expect(classifications[2].fixable).toBe(true) // Can be fixed by adding type
+      expect(classifications[0]?.category).toBe('import-error')
+      expect(classifications[0]?.fixable).toBe(false)
+      expect(classifications[1]?.category).toBe('reference-error')
+      expect(classifications[1]?.fixable).toBe(false)
+      expect(classifications[2]?.category).toBe('implicit-any')
+      expect(classifications[2]?.fixable).toBe(true) // Can be fixed by adding type
     })
 
     test('should_use_severity_for_confidence_scoring', () => {
@@ -221,8 +221,8 @@ describe('Autopilot - Enhanced Classification with Rich Error Data', () => {
       expect(grouped.typescript).toHaveLength(2)
       expect(grouped.eslint).toHaveLength(1)
       expect(grouped.prettier).toHaveLength(1)
-      expect(grouped.typescript[0].ruleId).toBe('TS2307')
-      expect(grouped.typescript[1].ruleId).toBe('TS2304')
+      expect(grouped.typescript[0]?.ruleId).toBe('TS2307')
+      expect(grouped.typescript[1]?.ruleId).toBe('TS2304')
     })
   })
 
@@ -308,12 +308,12 @@ describe('Autopilot - Enhanced Classification with Rich Error Data', () => {
       const classifications = eslintIssues.map((issue) => autopilot.classifyESLintRule(issue))
 
       // Assert
-      expect(classifications[0].plugin).toBe('@typescript-eslint')
-      expect(classifications[0].rule).toBe('no-unused-vars')
-      expect(classifications[0].fixable).toBe(true)
-      expect(classifications[1].plugin).toBe('react-hooks')
-      expect(classifications[1].rule).toBe('exhaustive-deps')
-      expect(classifications[1].requiresContext).toBe(true)
+      expect(classifications[0]?.plugin).toBe('@typescript-eslint')
+      expect(classifications[0]?.rule).toBe('no-unused-vars')
+      expect(classifications[0]?.fixable).toBe(true)
+      expect(classifications[1]?.plugin).toBe('react-hooks')
+      expect(classifications[1]?.rule).toBe('exhaustive-deps')
+      expect(classifications[1]?.requiresContext).toBe(true)
     })
   })
 
