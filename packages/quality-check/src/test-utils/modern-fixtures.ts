@@ -107,11 +107,11 @@ export class ESLintFixtureFactory {
     rules: ${JSON.stringify(config.rules || {}, null, 4)}
   }
 ];`
-    
+
     return {
       path: 'eslint.config.js',
       content: flatConfigContent,
-      exists: true
+      exists: true,
     }
   }
 
@@ -121,20 +121,20 @@ export class ESLintFixtureFactory {
       env: {
         browser: true,
         es2021: true,
-        node: true
+        node: true,
       },
       extends: config.extends || ['eslint:recommended'],
       parserOptions: config.parserOptions || {
         ecmaVersion: 'latest',
-        sourceType: 'module'
+        sourceType: 'module',
       },
-      rules: config.rules || {}
+      rules: config.rules || {},
     }
 
     return {
-      path: '.eslintrc.json', 
+      path: '.eslintrc.json',
       content: JSON.stringify(legacyConfig, null, 2),
-      exists: true
+      exists: true,
     }
   }
 
@@ -148,8 +148,8 @@ export class ESLintFixtureFactory {
             'object-curly-spacing': ['error', 'always'],
             'arrow-parens': ['error', 'always'],
             'quotes': ['error', 'single'],
-            'semi': ['error', 'never']
-          }
+            'semi': ['error', 'never'],
+          },
         }),
         {
           path: 'src/test.js',
@@ -157,8 +157,8 @@ export class ESLintFixtureFactory {
   const obj = {test: "value",another: "test"}
   return obj
 };`,
-          exists: true
-        }
+          exists: true,
+        },
       ],
       options: { eslint: true, typescript: false, prettier: false },
       expected: {
@@ -167,15 +167,43 @@ export class ESLintFixtureFactory {
           errorCount: 4,
           warningCount: 0,
           messages: [
-            { file: 'src/test.js', line: 1, column: 34, rule: 'arrow-parens', message: 'Expected parentheses around arrow function argument', severity: 'error' },
-            { file: 'src/test.js', line: 2, column: 16, rule: 'object-curly-spacing', message: 'A space is required after \'{\'', severity: 'error' },
-            { file: 'src/test.js', line: 2, column: 22, rule: 'quotes', message: 'Strings must use singlequote', severity: 'error' },
-            { file: 'src/test.js', line: 2, column: 45, rule: 'object-curly-spacing', message: 'A space is required before \'}\'', severity: 'error' }
+            {
+              file: 'src/test.js',
+              line: 1,
+              column: 34,
+              rule: 'arrow-parens',
+              message: 'Expected parentheses around arrow function argument',
+              severity: 'error',
+            },
+            {
+              file: 'src/test.js',
+              line: 2,
+              column: 16,
+              rule: 'object-curly-spacing',
+              message: "A space is required after '{'",
+              severity: 'error',
+            },
+            {
+              file: 'src/test.js',
+              line: 2,
+              column: 22,
+              rule: 'quotes',
+              message: 'Strings must use singlequote',
+              severity: 'error',
+            },
+            {
+              file: 'src/test.js',
+              line: 2,
+              column: 45,
+              rule: 'object-curly-spacing',
+              message: "A space is required before '}'",
+              severity: 'error',
+            },
           ],
-          containsErrors: ['object-curly-spacing', 'arrow-parens', 'quotes']
+          containsErrors: ['object-curly-spacing', 'arrow-parens', 'quotes'],
         },
-        overall: { success: false }
-      }
+        overall: { success: false },
+      },
     }
   }
 
@@ -187,16 +215,16 @@ export class ESLintFixtureFactory {
           rules: {
             'no-extra-semi': 'error',
             'space-before-function-paren': ['error', 'always'],
-            'indent': ['error', 2]
-          }
+            'indent': ['error', 2],
+          },
         }),
         {
           path: 'src/fixable.js',
           content: `function test() {;;
       return 42;;
   };;`,
-          exists: true
-        }
+          exists: true,
+        },
       ],
       options: { eslint: true, typescript: false, prettier: false },
       expected: {
@@ -205,16 +233,51 @@ export class ESLintFixtureFactory {
           errorCount: 5,
           fixableCount: 5,
           messages: [
-            { file: 'src/fixable.js', line: 1, column: 14, rule: 'space-before-function-paren', message: 'Missing space before function parentheses', severity: 'error' },
-            { file: 'src/fixable.js', line: 1, column: 18, rule: 'no-extra-semi', message: 'Unnecessary semicolon', severity: 'error' },
-            { file: 'src/fixable.js', line: 2, column: 1, rule: 'indent', message: 'Expected indentation of 2 spaces but found 6', severity: 'error' },
-            { file: 'src/fixable.js', line: 2, column: 18, rule: 'no-extra-semi', message: 'Unnecessary semicolon', severity: 'error' },
-            { file: 'src/fixable.js', line: 3, column: 4, rule: 'no-extra-semi', message: 'Unnecessary semicolon', severity: 'error' }
+            {
+              file: 'src/fixable.js',
+              line: 1,
+              column: 14,
+              rule: 'space-before-function-paren',
+              message: 'Missing space before function parentheses',
+              severity: 'error',
+            },
+            {
+              file: 'src/fixable.js',
+              line: 1,
+              column: 18,
+              rule: 'no-extra-semi',
+              message: 'Unnecessary semicolon',
+              severity: 'error',
+            },
+            {
+              file: 'src/fixable.js',
+              line: 2,
+              column: 1,
+              rule: 'indent',
+              message: 'Expected indentation of 2 spaces but found 6',
+              severity: 'error',
+            },
+            {
+              file: 'src/fixable.js',
+              line: 2,
+              column: 18,
+              rule: 'no-extra-semi',
+              message: 'Unnecessary semicolon',
+              severity: 'error',
+            },
+            {
+              file: 'src/fixable.js',
+              line: 3,
+              column: 4,
+              rule: 'no-extra-semi',
+              message: 'Unnecessary semicolon',
+              severity: 'error',
+            },
           ],
-          containsErrors: ['no-extra-semi', 'space-before-function-paren', 'indent']
+          containsErrors: ['no-extra-semi', 'space-before-function-paren', 'indent'],
         },
-        overall: { success: false }
-      }
+        overall: { success: false },
+      },
     }
   }
 }
@@ -231,16 +294,16 @@ export class TypeScriptFixtureFactory {
         moduleResolution: 'bundler',
         esModuleInterop: true,
         skipLibCheck: true,
-        ...config.compilerOptions
+        ...config.compilerOptions,
       },
       include: config.include || ['src/**/*'],
-      exclude: config.exclude || ['node_modules', 'dist']
+      exclude: config.exclude || ['node_modules', 'dist'],
     }
 
     return {
       path: 'tsconfig.json',
       content: JSON.stringify(tsConfig, null, 2),
-      exists: true
+      exists: true,
     }
   }
 
@@ -252,8 +315,8 @@ export class TypeScriptFixtureFactory {
           compilerOptions: {
             strict: true,
             strictNullChecks: true,
-            noImplicitAny: true
-          }
+            noImplicitAny: true,
+          },
         }),
         {
           path: 'src/strict.ts',
@@ -269,8 +332,8 @@ export function getEmail(user: User | null): string {
 export function process(data) { // Should error: implicit any
   return data.value
 }`,
-          exists: true
-        }
+          exists: true,
+        },
       ],
       options: { typescript: true, eslint: false, prettier: false },
       expected: {
@@ -278,14 +341,35 @@ export function process(data) { // Should error: implicit any
           success: false,
           errorCount: 3,
           messages: [
-            { file: 'src/strict.ts', line: 7, column: 10, rule: 'TS2533', message: 'Object is possibly null', severity: 'error' },
-            { file: 'src/strict.ts', line: 7, column: 10, rule: 'TS2532', message: 'Object is possibly undefined', severity: 'error' },
-            { file: 'src/strict.ts', line: 10, column: 25, rule: 'TS7006', message: 'Parameter data implicitly has an any type', severity: 'error' }
+            {
+              file: 'src/strict.ts',
+              line: 7,
+              column: 10,
+              rule: 'TS2533',
+              message: 'Object is possibly null',
+              severity: 'error',
+            },
+            {
+              file: 'src/strict.ts',
+              line: 7,
+              column: 10,
+              rule: 'TS2532',
+              message: 'Object is possibly undefined',
+              severity: 'error',
+            },
+            {
+              file: 'src/strict.ts',
+              line: 10,
+              column: 25,
+              rule: 'TS7006',
+              message: 'Parameter data implicitly has an any type',
+              severity: 'error',
+            },
           ],
-          containsErrors: ['TS2533', 'TS7006'] // Object possibly null/undefined, implicit any
+          containsErrors: ['TS2533', 'TS7006'], // Object possibly null/undefined, implicit any
         },
-        overall: { success: false }
-      }
+        overall: { success: false },
+      },
     }
   }
 
@@ -296,8 +380,8 @@ export function process(data) { // Should error: implicit any
         TypeScriptFixtureFactory.createConfig({
           compilerOptions: {
             noUnusedLocals: true,
-            noUnusedParameters: true
-          }
+            noUnusedParameters: true,
+          },
         }),
         {
           path: 'src/unused.ts',
@@ -305,8 +389,8 @@ export function process(data) { // Should error: implicit any
   const unusedLocal = 'not used'
   return value * factor
 }`,
-          exists: true
-        }
+          exists: true,
+        },
       ],
       options: { typescript: true, eslint: false, prettier: false },
       expected: {
@@ -314,13 +398,27 @@ export function process(data) { // Should error: implicit any
           success: false,
           errorCount: 2,
           messages: [
-            { file: 'src/unused.ts', line: 1, column: 43, rule: 'TS6133', message: 'unused is declared but its value is never read', severity: 'error' },
-            { file: 'src/unused.ts', line: 2, column: 9, rule: 'TS6133', message: 'unusedLocal is declared but its value is never read', severity: 'error' }
+            {
+              file: 'src/unused.ts',
+              line: 1,
+              column: 43,
+              rule: 'TS6133',
+              message: 'unused is declared but its value is never read',
+              severity: 'error',
+            },
+            {
+              file: 'src/unused.ts',
+              line: 2,
+              column: 9,
+              rule: 'TS6133',
+              message: 'unusedLocal is declared but its value is never read',
+              severity: 'error',
+            },
           ],
-          containsErrors: ['TS6133'] // Unused parameter/local
+          containsErrors: ['TS6133'], // Unused parameter/local
         },
-        overall: { success: false }
-      }
+        overall: { success: false },
+      },
     }
   }
 }
@@ -333,7 +431,7 @@ export class PrettierFixtureFactory {
     return {
       path: '.prettierrc',
       content: JSON.stringify(config, null, 2),
-      exists: true
+      exists: true,
     }
   }
 
@@ -345,7 +443,7 @@ export class PrettierFixtureFactory {
           semi: false,
           singleQuote: true,
           tabWidth: 2,
-          printWidth: 80
+          printWidth: 80,
         }),
         {
           path: 'src/format.js',
@@ -355,8 +453,8 @@ export class PrettierFixtureFactory {
         prop: "test"
     }
 };`,
-          exists: true
-        }
+          exists: true,
+        },
       ],
       options: { prettier: true, eslint: false, typescript: false },
       expected: {
@@ -365,12 +463,19 @@ export class PrettierFixtureFactory {
           errorCount: 1,
           fixableCount: 1,
           messages: [
-            { file: 'src/format.js', line: 1, column: 1, rule: 'prettier/prettier', message: 'File needs formatting', severity: 'error' }
+            {
+              file: 'src/format.js',
+              line: 1,
+              column: 1,
+              rule: 'prettier/prettier',
+              message: 'File needs formatting',
+              severity: 'error',
+            },
           ],
-          containsErrors: ['formatting', 'needs formatting']
+          containsErrors: ['formatting', 'needs formatting'],
         },
-        overall: { success: false }
-      }
+        overall: { success: false },
+      },
     }
   }
 
@@ -381,13 +486,13 @@ export class PrettierFixtureFactory {
         PrettierFixtureFactory.createConfig({
           semi: false,
           singleQuote: true,
-          tabWidth: 2
+          tabWidth: 2,
         }),
         {
           path: 'src/autofix.js',
           content: `const obj={key:"value",nested:{prop:"test"}};`,
-          exists: true
-        }
+          exists: true,
+        },
       ],
       options: { prettier: true, eslint: false, typescript: false },
       expected: {
@@ -396,11 +501,18 @@ export class PrettierFixtureFactory {
           errorCount: 1,
           fixableCount: 1,
           messages: [
-            { file: 'src/autofix.js', line: 1, column: 1, rule: 'prettier/prettier', message: 'File needs formatting', severity: 'error' }
-          ]
+            {
+              file: 'src/autofix.js',
+              line: 1,
+              column: 1,
+              rule: 'prettier/prettier',
+              message: 'File needs formatting',
+              severity: 'error',
+            },
+          ],
         },
-        overall: { success: false }
-      }
+        overall: { success: false },
+      },
     }
   }
 }
@@ -421,25 +533,25 @@ export class AutoFixBehaviorFactory {
             'semi': ['error', 'always'],
             'quotes': ['error', 'single'],
             'comma-spacing': ['error', { before: false, after: true }],
-            'no-extra-semi': 'error'
-          }
+            'no-extra-semi': 'error',
+          },
         }),
         {
           path: 'src/eslint-fix.js',
           content: `const test = "hello world";;
 const arr = [1,2,3,4];`,
-          exists: true
-        }
+          exists: true,
+        },
       ],
       options: { eslint: true, typescript: false, prettier: false, fix: true },
       expected: {
         eslint: {
           success: true, // After fix, should pass
           errorCount: 0,
-          fixableCount: 4
+          fixableCount: 4,
         },
-        overall: { success: true }
-      }
+        overall: { success: true },
+      },
     }
   }
 
@@ -454,24 +566,24 @@ const arr = [1,2,3,4];`,
           semi: true,
           singleQuote: true,
           tabWidth: 2,
-          trailingComma: 'es5'
+          trailingComma: 'es5',
         }),
         {
           path: 'src/prettier-fix.js',
           content: `function test(a,b,c){return a+b+c}
 const obj={key:"value",another:"test"}`,
-          exists: true
-        }
+          exists: true,
+        },
       ],
       options: { prettier: true, eslint: false, typescript: false, fix: true },
       expected: {
         prettier: {
           success: true, // After fix, should pass
           errorCount: 0,
-          fixableCount: 1
+          fixableCount: 1,
         },
-        overall: { success: true }
-      }
+        overall: { success: true },
+      },
     }
   }
 
@@ -486,21 +598,21 @@ const obj={key:"value",another:"test"}`,
           rules: {
             'no-console': 'warn',
             'no-unused-vars': 'error',
-            'semi': ['error', 'always']
-          }
+            'semi': ['error', 'always'],
+          },
         }),
         PrettierFixtureFactory.createConfig({
           semi: true,
           singleQuote: true,
-          tabWidth: 2
+          tabWidth: 2,
         }),
         {
           path: 'src/mixed-fix.js',
           content: `const test="hello world"
 console.log(test)
 const unused = 42`,
-          exists: true
-        }
+          exists: true,
+        },
       ],
       options: { eslint: true, prettier: true, typescript: false, fix: true },
       expected: {
@@ -510,15 +622,15 @@ const unused = 42`,
           warningCount: 1,
           fixableCount: 1,
           containsErrors: ['no-unused-vars'],
-          containsWarnings: ['no-console']
+          containsWarnings: ['no-console'],
         },
         prettier: {
           success: true, // Formatting can be fixed
           errorCount: 0,
-          fixableCount: 1
+          fixableCount: 1,
         },
-        overall: { success: false }
-      }
+        overall: { success: false },
+      },
     }
   }
 }
@@ -534,19 +646,19 @@ export class MultiEngineFixtureFactory {
         TypeScriptFixtureFactory.createConfig({
           compilerOptions: {
             strict: true,
-            noEmit: true
-          }
+            noEmit: true,
+          },
         }),
         ESLintFixtureFactory.createFlatConfig({
           rules: {
             'no-unused-vars': 'error',
-            'no-console': 'warn'
-          }
+            'no-console': 'warn',
+          },
         }),
         PrettierFixtureFactory.createConfig({
           semi: true,
           singleQuote: false,
-          tabWidth: 4
+          tabWidth: 4,
         }),
         {
           path: 'src/multi.ts',
@@ -555,8 +667,8 @@ function test(param: any) {
         console.log(    param    );
 }
 export { test };`,
-          exists: true
-        }
+          exists: true,
+        },
       ],
       options: { typescript: true, eslint: true, prettier: true },
       expected: {
@@ -564,31 +676,59 @@ export { test };`,
           success: false,
           errorCount: 1,
           messages: [
-            { file: 'src/multi.ts', line: 2, column: 15, rule: 'TS7006', message: 'Parameter param implicitly has an any type', severity: 'error' }
+            {
+              file: 'src/multi.ts',
+              line: 2,
+              column: 15,
+              rule: 'TS7006',
+              message: 'Parameter param implicitly has an any type',
+              severity: 'error',
+            },
           ],
-          containsErrors: ['TS7006'] // implicit any
+          containsErrors: ['TS7006'], // implicit any
         },
         eslint: {
           success: false,
           errorCount: 1,
           warningCount: 1,
           messages: [
-            { file: 'src/multi.ts', line: 1, column: 7, rule: 'no-unused-vars', message: 'unused is defined but never used', severity: 'error' },
-            { file: 'src/multi.ts', line: 3, column: 9, rule: 'no-console', message: 'Unexpected console statement', severity: 'warning' }
+            {
+              file: 'src/multi.ts',
+              line: 1,
+              column: 7,
+              rule: 'no-unused-vars',
+              message: 'unused is defined but never used',
+              severity: 'error',
+            },
+            {
+              file: 'src/multi.ts',
+              line: 3,
+              column: 9,
+              rule: 'no-console',
+              message: 'Unexpected console statement',
+              severity: 'warning',
+            },
           ],
           containsErrors: ['no-unused-vars'],
-          containsWarnings: ['no-console']
+          containsWarnings: ['no-console'],
         },
         prettier: {
           success: false,
           errorCount: 1,
           fixableCount: 1,
           messages: [
-            { file: 'src/multi.ts', line: 1, column: 1, rule: 'prettier/prettier', message: 'File needs formatting', severity: 'error' }
-          ]
+            {
+              file: 'src/multi.ts',
+              line: 1,
+              column: 1,
+              rule: 'prettier/prettier',
+              message: 'File needs formatting',
+              severity: 'error',
+            },
+          ],
         },
-        overall: { success: false }
-      }
+        overall: { success: false },
+      },
     }
   }
 
@@ -599,33 +739,33 @@ export { test };`,
         TypeScriptFixtureFactory.createConfig({
           compilerOptions: {
             strict: true,
-            noEmit: true
-          }
+            noEmit: true,
+          },
         }),
         ESLintFixtureFactory.createFlatConfig({
           rules: {
-            'no-unused-vars': 'error'
-          }
+            'no-unused-vars': 'error',
+          },
         }),
         PrettierFixtureFactory.createConfig({
           semi: true,
-          singleQuote: false
+          singleQuote: false,
         }),
         {
           path: 'src/clean.ts',
           content: `export function add(a: number, b: number): number {
   return a + b;
 }`,
-          exists: true
-        }
+          exists: true,
+        },
       ],
       options: { typescript: true, eslint: true, prettier: true },
       expected: {
         typescript: { success: true, errorCount: 0 },
         eslint: { success: true, errorCount: 0 },
         prettier: { success: true, errorCount: 0 },
-        overall: { success: true }
-      }
+        overall: { success: true },
+      },
     }
   }
 }
@@ -641,15 +781,15 @@ export class ExitCodeFixtureFactory {
         {
           path: 'src/clean.js',
           content: 'export const clean = 42;',
-          exists: true
-        }
+          exists: true,
+        },
       ],
       options: { eslint: true, prettier: true, typescript: false },
       expected: {
         eslint: { success: true, errorCount: 0 },
         prettier: { success: true, errorCount: 0 },
-        overall: { success: true }
-      }
+        overall: { success: true },
+      },
     }
   }
 
@@ -658,25 +798,32 @@ export class ExitCodeFixtureFactory {
       description: 'Code with errors should return exit code 1',
       files: [
         ESLintFixtureFactory.createFlatConfig({
-          rules: { 'no-unused-vars': 'error' }
+          rules: { 'no-unused-vars': 'error' },
         }),
         {
           path: 'src/error.js',
           content: 'const unused = 42;',
-          exists: true
-        }
+          exists: true,
+        },
       ],
       options: { eslint: true, typescript: false, prettier: false },
       expected: {
-        eslint: { 
-          success: false, 
+        eslint: {
+          success: false,
           errorCount: 1,
           messages: [
-            { file: 'src/error.js', line: 1, column: 7, rule: 'no-unused-vars', message: 'unused is defined but never used', severity: 'error' }
-          ]
+            {
+              file: 'src/error.js',
+              line: 1,
+              column: 7,
+              rule: 'no-unused-vars',
+              message: 'unused is defined but never used',
+              severity: 'error',
+            },
+          ],
         },
-        overall: { success: false }
-      }
+        overall: { success: false },
+      },
     }
   }
 }

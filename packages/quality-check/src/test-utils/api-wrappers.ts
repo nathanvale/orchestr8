@@ -6,7 +6,12 @@
 import { vi } from 'vitest'
 import { QualityChecker } from '../core/quality-checker.js'
 import type { QualityCheckOptions, QualityCheckResult, FixResult } from '../types.js'
-import type { TestFixture, MockFile, ExpectedEngineResult, ExpectedMessage } from './modern-fixtures.js'
+import type {
+  TestFixture,
+  MockFile,
+  ExpectedEngineResult,
+  ExpectedMessage,
+} from './modern-fixtures.js'
 
 /**
  * Mock execution result for simulating engine behavior
@@ -43,10 +48,10 @@ vi.mock('node:fs', () => ({
       globalMockFiles.set(filePath, {
         path: filePath,
         content,
-        exists: true
+        exists: true,
       })
     }
-  })
+  }),
 }))
 
 // Mock child_process operations
@@ -57,7 +62,7 @@ vi.mock('node:child_process', () => ({
       // Return a default success for commands we don't explicitly mock
       return Buffer.from('')
     }
-    
+
     if (result.exitCode !== 0) {
       const error = new Error(result.stderr) as Error & {
         status: number
@@ -69,9 +74,9 @@ vi.mock('node:child_process', () => ({
       error.stdout = Buffer.from(result.stdout)
       throw error
     }
-    
+
     return Buffer.from(result.stdout)
-  })
+  }),
 }))
 
 /**
@@ -106,39 +111,52 @@ export class MockedQualityChecker {
    */
   private setupExecutionResults(fixture: TestFixture): void {
     const options = fixture.options || {}
-    
+
     // Mock ESLint results
     if (fixture.expected.eslint) {
-      const eslintCommand = this.buildESLintCommand(fixture.files.map(f => f.path), options)
+      const eslintCommand = this.buildESLintCommand(
+        fixture.files.map((f) => f.path),
+        options,
+      )
       globalExecutionResults.set(eslintCommand, {
         stdout: JSON.stringify(this.createESLintOutput(fixture.expected.eslint)),
         stderr: '',
         exitCode: (fixture.expected.eslint.errorCount ?? 0) > 0 ? 1 : 0,
-        duration: 50
+        duration: 50,
       })
     }
 
     // Mock TypeScript results
     if (fixture.expected.typescript) {
-      const tscCommand = this.buildTypeScriptCommand(fixture.files.map(f => f.path), options)
+      const tscCommand = this.buildTypeScriptCommand(
+        fixture.files.map((f) => f.path),
+        options,
+      )
       globalExecutionResults.set(tscCommand, {
         stdout: this.createTypeScriptOutput(fixture.expected.typescript),
-        stderr: (fixture.expected.typescript.errorCount ?? 0) > 0 ? 
-          this.createTypeScriptOutput(fixture.expected.typescript) : '',
+        stderr:
+          (fixture.expected.typescript.errorCount ?? 0) > 0
+            ? this.createTypeScriptOutput(fixture.expected.typescript)
+            : '',
         exitCode: (fixture.expected.typescript.errorCount ?? 0) > 0 ? 1 : 0,
-        duration: 30
+        duration: 30,
       })
     }
 
     // Mock Prettier results
     if (fixture.expected.prettier) {
-      const prettierCommand = this.buildPrettierCommand(fixture.files.map(f => f.path), options)
+      const prettierCommand = this.buildPrettierCommand(
+        fixture.files.map((f) => f.path),
+        options,
+      )
       globalExecutionResults.set(prettierCommand, {
-        stdout: (fixture.expected.prettier.errorCount ?? 0) > 0 ? 
-          this.createPrettierOutput(fixture.expected.prettier) : '',
+        stdout:
+          (fixture.expected.prettier.errorCount ?? 0) > 0
+            ? this.createPrettierOutput(fixture.expected.prettier)
+            : '',
         stderr: '',
         exitCode: (fixture.expected.prettier.errorCount ?? 0) > 0 ? 1 : 0,
-        duration: 20
+        duration: 20,
       })
     }
   }
@@ -148,7 +166,7 @@ export class MockedQualityChecker {
    */
   private buildESLintCommand(files: string[], options: QualityCheckOptions): string {
     const parts = ['npx', 'eslint']
-    parts.push(...files.map(f => `"${f}"`))
+    parts.push(...files.map((f) => `"${f}"`))
     if (!options.fix) {
       parts.push('--format=json')
     } else {
@@ -184,14 +202,17 @@ export class MockedQualityChecker {
   private createESLintOutput(expected: ExpectedEngineResult): unknown {
     const messages = expected.messages || []
     // Group messages by file
-    const fileGroups = messages.reduce((acc, msg) => {
-      if (!acc[msg.file]) {
-        acc[msg.file] = []
-      }
-      acc[msg.file].push(msg)
-      return acc
-    }, {} as Record<string, ExpectedMessage[]>)
-    
+    const fileGroups = messages.reduce(
+      (acc, msg) => {
+        if (!acc[msg.file]) {
+          acc[msg.file] = []
+        }
+        acc[msg.file].push(msg)
+        return acc
+      },
+      {} as Record<string, ExpectedMessage[]>,
+    )
+
     // Create result for each file
     const results = Object.entries(fileGroups).map(([filePath, fileMessages]) => ({
       filePath,
@@ -200,26 +221,28 @@ export class MockedQualityChecker {
         severity: msg.severity === 'error' ? 2 : 1,
         message: msg.message,
         line: msg.line,
-        column: msg.column
+        column: msg.column,
       })),
-      errorCount: fileMessages.filter(m => m.severity === 'error').length,
-      warningCount: fileMessages.filter(m => m.severity === 'warning').length,
+      errorCount: fileMessages.filter((m) => m.severity === 'error').length,
+      warningCount: fileMessages.filter((m) => m.severity === 'warning').length,
       fixableErrorCount: expected.fixableCount ?? 0,
-      fixableWarningCount: 0
+      fixableWarningCount: 0,
     }))
-    
+
     // If no messages, return a single empty result
     if (results.length === 0) {
-      return [{
-        filePath: 'src/test.js',
-        messages: [],
-        errorCount: 0,
-        warningCount: 0,
-        fixableErrorCount: 0,
-        fixableWarningCount: 0
-      }]
+      return [
+        {
+          filePath: 'src/test.js',
+          messages: [],
+          errorCount: 0,
+          warningCount: 0,
+          fixableErrorCount: 0,
+          fixableWarningCount: 0,
+        },
+      ]
     }
-    
+
     return results
   }
 
@@ -228,9 +251,12 @@ export class MockedQualityChecker {
    */
   private createTypeScriptOutput(expected: ExpectedEngineResult): string {
     const messages = expected.messages || []
-    return messages.map((msg: ExpectedMessage) => 
-      `${msg.file}(${msg.line},${msg.column}): error TS${msg.rule || '0000'}: ${msg.message}`
-    ).join('\n')
+    return messages
+      .map(
+        (msg: ExpectedMessage) =>
+          `${msg.file}(${msg.line},${msg.column}): error TS${msg.rule || '0000'}: ${msg.message}`,
+      )
+      .join('\n')
   }
 
   /**
@@ -238,9 +264,7 @@ export class MockedQualityChecker {
    */
   private createPrettierOutput(expected: ExpectedEngineResult): string {
     const messages = expected.messages || []
-    return messages.map((msg: ExpectedMessage) => 
-      `${msg.file}\n${msg.message}`
-    ).join('\n')
+    return messages.map((msg: ExpectedMessage) => `${msg.file}\n${msg.message}`).join('\n')
   }
 
   /**
@@ -329,7 +353,7 @@ export class PerformanceWrapper {
     this.operations.push({
       name,
       duration,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     })
 
     return result
@@ -339,8 +363,8 @@ export class PerformanceWrapper {
    * Get average operation time
    */
   getAverageTime(operationName?: string): number {
-    const ops = operationName 
-      ? this.operations.filter(op => op.name === operationName)
+    const ops = operationName
+      ? this.operations.filter((op) => op.name === operationName)
       : this.operations
 
     if (ops.length === 0) return 0
@@ -351,23 +375,23 @@ export class PerformanceWrapper {
    * Get maximum operation time
    */
   getMaxTime(operationName?: string): number {
-    const ops = operationName 
-      ? this.operations.filter(op => op.name === operationName)
+    const ops = operationName
+      ? this.operations.filter((op) => op.name === operationName)
       : this.operations
 
     if (ops.length === 0) return 0
-    return Math.max(...ops.map(op => op.duration))
+    return Math.max(...ops.map((op) => op.duration))
   }
 
   /**
    * Assert that all operations completed within time limit
    */
   assertAllUnder(limitMs: number): void {
-    const slowOps = this.operations.filter(op => op.duration > limitMs)
+    const slowOps = this.operations.filter((op) => op.duration > limitMs)
     if (slowOps.length > 0) {
       throw new Error(
         `${slowOps.length} operations exceeded ${limitMs}ms limit:\n` +
-        slowOps.map(op => `  - ${op.name}: ${op.duration.toFixed(2)}ms`).join('\n')
+          slowOps.map((op) => `  - ${op.name}: ${op.duration.toFixed(2)}ms`).join('\n'),
       )
     }
   }

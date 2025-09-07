@@ -101,14 +101,14 @@ export class ESLintResultAssertions {
 
   shouldContainError(ruleOrMessage: string): this {
     const errors = this.result.errors || []
-    const hasError = errors.some(error => error.includes(ruleOrMessage))
+    const hasError = errors.some((error) => error.includes(ruleOrMessage))
     expect(hasError).toBe(true)
     return this
   }
 
   shouldContainWarning(ruleOrMessage: string): this {
     const warnings = this.result.warnings || []
-    const hasWarning = warnings.some(warning => warning.includes(ruleOrMessage))
+    const hasWarning = warnings.some((warning) => warning.includes(ruleOrMessage))
     expect(hasWarning).toBe(true)
     return this
   }
@@ -165,7 +165,7 @@ export class TypeScriptResultAssertions {
 
   shouldContainError(errorCode: string): this {
     const errors = this.result.errors || []
-    const hasError = errors.some(error => error.includes(errorCode))
+    const hasError = errors.some((error) => error.includes(errorCode))
     expect(hasError).toBe(true)
     return this
   }
@@ -173,17 +173,15 @@ export class TypeScriptResultAssertions {
   shouldHaveStrictModeErrors(): this {
     const strictErrors = ['TS2533', 'TS2531', 'TS2345', 'TS7006']
     const errors = this.result.errors || []
-    const hasStrictError = errors.some(error =>
-      strictErrors.some(code => error.includes(code))
-    )
+    const hasStrictError = errors.some((error) => strictErrors.some((code) => error.includes(code)))
     expect(hasStrictError).toBe(true)
     return this
   }
 
   shouldHaveUnusedErrors(): this {
     const errors = this.result.errors || []
-    const hasUnusedError = errors.some(error =>
-      error.includes('TS6133') || error.includes('unused')
+    const hasUnusedError = errors.some(
+      (error) => error.includes('TS6133') || error.includes('unused'),
     )
     expect(hasUnusedError).toBe(true)
     return this
@@ -231,8 +229,8 @@ export class PrettierResultAssertions {
 
   shouldContainFormattingError(fileOrPattern: string): this {
     const errors = this.result.errors || []
-    const hasError = errors.some(error =>
-      error.includes(fileOrPattern) || error.includes('formatting')
+    const hasError = errors.some(
+      (error) => error.includes(fileOrPattern) || error.includes('formatting'),
     )
     expect(hasError).toBe(true)
     return this

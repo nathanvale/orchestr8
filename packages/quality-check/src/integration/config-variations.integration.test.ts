@@ -546,7 +546,7 @@ async function executeClaudeHook(payload: string): Promise<{
   duration: number
 }> {
   const startTime = Date.now()
-  
+
   // Mock stdin for the Claude hook to read from
   const originalStdin = process.stdin
   const mockStdin = {
@@ -561,9 +561,9 @@ async function executeClaudeHook(payload: string): Promise<{
         setTimeout(() => handler(), 10)
       }
     }),
-    removeAllListeners: vi.fn()
+    removeAllListeners: vi.fn(),
   }
-  
+
   // Mock stdout and stderr to capture output
   let stdout = ''
   let stderr = ''
@@ -571,27 +571,27 @@ async function executeClaudeHook(payload: string): Promise<{
   const originalStderrWrite = process.stderr.write
   const originalExit = process.exit
   let exitCode = 0
-  
+
   process.stdout.write = vi.fn((chunk: any) => {
     stdout += chunk.toString()
     return true
   }) as any
-  
+
   process.stderr.write = vi.fn((chunk: any) => {
     stderr += chunk.toString()
     return true
   }) as any
-  
+
   process.exit = vi.fn((code?: number) => {
     exitCode = code || 0
     throw new Error('Process exit called')
   }) as any
-  
+
   Object.defineProperty(process, 'stdin', {
     value: mockStdin,
-    configurable: true
+    configurable: true,
   })
-  
+
   try {
     // Run the Claude hook directly using the API
     await runClaudeHook()
@@ -610,15 +610,15 @@ async function executeClaudeHook(payload: string): Promise<{
     process.exit = originalExit
     Object.defineProperty(process, 'stdin', {
       value: originalStdin,
-      configurable: true
+      configurable: true,
     })
   }
-  
+
   const endTime = Date.now()
   return {
     exitCode,
     stdout,
     stderr,
-    duration: endTime - startTime
+    duration: endTime - startTime,
   }
 }

@@ -5,7 +5,11 @@
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { MockedQualityChecker } from './api-wrappers.js'
-import { ESLintFixtureFactory, TypeScriptFixtureFactory, PrettierFixtureFactory } from './modern-fixtures.js'
+import {
+  ESLintFixtureFactory,
+  TypeScriptFixtureFactory,
+  PrettierFixtureFactory,
+} from './modern-fixtures.js'
 import type { TestFixture } from './modern-fixtures.js'
 
 describe('Exit Code Logic - Deterministic Patterns', () => {
@@ -27,34 +31,34 @@ describe('Exit Code Logic - Deterministic Patterns', () => {
         files: [
           ESLintFixtureFactory.createFlatConfig({
             rules: {
-              'semi': ['error', 'always'],
-              'quotes': ['error', 'single']
-            }
+              semi: ['error', 'always'],
+              quotes: ['error', 'single'],
+            },
           }),
           {
             path: 'src/clean.js',
             content: `const test = 'hello world';\nexport default test;\n`,
-            exists: true
-          }
+            exists: true,
+          },
         ],
         options: { eslint: true, typescript: false, prettier: false },
         expected: {
           eslint: { success: true, errorCount: 0 },
-          overall: { success: true }
-        }
+          overall: { success: true },
+        },
       }
-      
+
       wrapper.loadFixture(fixture)
-      
+
       // Act
       const startTime = Date.now()
-      const result = await wrapper.check(['src/clean.js'], { 
-        eslint: true, 
-        typescript: false, 
-        prettier: false 
+      const result = await wrapper.check(['src/clean.js'], {
+        eslint: true,
+        typescript: false,
+        prettier: false,
       })
       const executionTime = Date.now() - startTime
-      
+
       // Assert - Deterministic exit code based on success
       expect(result.success).toBe(true)
       // Exit code would be 0 for success
@@ -67,16 +71,16 @@ describe('Exit Code Logic - Deterministic Patterns', () => {
       // Arrange
       const fixture = ESLintFixtureFactory.createAirbnbStyleFixture()
       wrapper.loadFixture(fixture)
-      
+
       // Act
       const startTime = Date.now()
-      const result = await wrapper.check(['src/test.js'], { 
-        eslint: true, 
-        typescript: false, 
-        prettier: false 
+      const result = await wrapper.check(['src/test.js'], {
+        eslint: true,
+        typescript: false,
+        prettier: false,
       })
       const executionTime = Date.now() - startTime
-      
+
       // Assert - Deterministic exit code for errors
       expect(result.success).toBe(false)
       // Exit code would be 1 for errors
@@ -91,16 +95,16 @@ describe('Exit Code Logic - Deterministic Patterns', () => {
       // Arrange
       const fixture = TypeScriptFixtureFactory.createStrictModeFixture()
       wrapper.loadFixture(fixture)
-      
+
       // Act
       const startTime = Date.now()
-      const result = await wrapper.check(['src/strict.ts'], { 
-        typescript: true, 
-        eslint: false, 
-        prettier: false 
+      const result = await wrapper.check(['src/strict.ts'], {
+        typescript: true,
+        eslint: false,
+        prettier: false,
       })
       const executionTime = Date.now() - startTime
-      
+
       // Assert - TypeScript errors should map to exit code
       expect(result.success).toBe(false)
       // TypeScript errors result in non-zero exit code
@@ -121,18 +125,18 @@ describe('Exit Code Logic - Deterministic Patterns', () => {
           ESLintFixtureFactory.createFlatConfig({
             rules: {
               'no-console': 'warn', // Warning only
-              'semi': ['error', 'always']
-            }
+              'semi': ['error', 'always'],
+            },
           }),
           TypeScriptFixtureFactory.createConfig({
             compilerOptions: {
               strict: true,
-              noImplicitAny: true
-            }
+              noImplicitAny: true,
+            },
           }),
           PrettierFixtureFactory.createConfig({
             semi: true,
-            singleQuote: true
+            singleQuote: true,
           }),
           {
             path: 'src/mixed.ts',
@@ -140,46 +144,46 @@ describe('Exit Code Logic - Deterministic Patterns', () => {
   console.log(data) // ESLint warning
   return data
 }`, // Missing semicolon and formatting issues
-            exists: true
-          }
+            exists: true,
+          },
         ],
         options: { eslint: true, typescript: true, prettier: true },
         expected: {
-          eslint: { 
-            success: false, 
-            errorCount: 1, 
-            warningCount: 1 
+          eslint: {
+            success: false,
+            errorCount: 1,
+            warningCount: 1,
           },
-          typescript: { 
-            success: false, 
-            errorCount: 1 
+          typescript: {
+            success: false,
+            errorCount: 1,
           },
-          prettier: { 
-            success: false, 
-            errorCount: 1 
+          prettier: {
+            success: false,
+            errorCount: 1,
           },
-          overall: { success: false }
-        }
+          overall: { success: false },
+        },
       }
-      
+
       wrapper.loadFixture(fixture)
-      
+
       // Act
       const startTime = Date.now()
-      const result = await wrapper.check(['src/mixed.ts'], { 
-        eslint: true, 
-        typescript: true, 
-        prettier: true 
+      const result = await wrapper.check(['src/mixed.ts'], {
+        eslint: true,
+        typescript: true,
+        prettier: true,
       })
       const executionTime = Date.now() - startTime
-      
+
       // Assert - Should use highest severity exit code
       expect(result.success).toBe(false)
       // With multiple engine failures, exit code should be non-zero
       const exitCode = result.success ? 0 : 1
       expect(exitCode).toBeGreaterThanOrEqual(1)
       expect(executionTime).toBeLessThan(100)
-      
+
       // Verify all engines reported issues
       expect(result.checkers.eslint).toBeDefined()
       expect(result.checkers.typescript).toBeDefined()
@@ -192,29 +196,29 @@ describe('Exit Code Logic - Deterministic Patterns', () => {
       // Arrange
       const fixture = ESLintFixtureFactory.createAutoFixableIssuesFixture()
       wrapper.loadFixture(fixture)
-      
+
       // Act - Check initial state
-      const initialResult = await wrapper.check(['src/fixable.js'], { 
-        eslint: true, 
-        typescript: false, 
-        prettier: false 
+      const initialResult = await wrapper.check(['src/fixable.js'], {
+        eslint: true,
+        typescript: false,
+        prettier: false,
       })
-      
+
       // Perform fix
       const startTime = Date.now()
-      const fixResult = await wrapper.fix(['src/fixable.js'], { 
-        eslint: true, 
-        typescript: false, 
+      const fixResult = await wrapper.fix(['src/fixable.js'], {
+        eslint: true,
+        typescript: false,
         prettier: false,
-        fix: true 
+        fix: true,
       })
       const executionTime = Date.now() - startTime
-      
+
       // Assert
       expect(initialResult.success).toBe(false)
       const initialExitCode = initialResult.success ? 0 : 1
       expect(initialExitCode).toBeGreaterThanOrEqual(1)
-      
+
       // After fix, exit code should be 0
       expect(fixResult.success).toBe(true)
       const fixExitCode = fixResult.success ? 0 : 1
@@ -230,8 +234,8 @@ describe('Exit Code Logic - Deterministic Patterns', () => {
           TypeScriptFixtureFactory.createConfig({
             compilerOptions: {
               strict: true,
-              noUnusedLocals: true
-            }
+              noUnusedLocals: true,
+            },
           }),
           {
             path: 'src/unfixable.ts',
@@ -239,44 +243,44 @@ describe('Exit Code Logic - Deterministic Patterns', () => {
   const unused = 42; // Cannot auto-fix unused variable
   return 123; // Type error: number is not assignable to string
 }`,
-            exists: true
-          }
+            exists: true,
+          },
         ],
         options: { typescript: true, eslint: false, prettier: false, fix: true },
         expected: {
-          typescript: { 
-            success: false, 
+          typescript: {
+            success: false,
             errorCount: 2,
-            fixableCount: 0 
+            fixableCount: 0,
           },
-          overall: { success: false }
-        }
+          overall: { success: false },
+        },
       }
-      
+
       wrapper.loadFixture(fixture)
-      
+
       // Act
       const startTime = Date.now()
-      const result = await wrapper.check(['src/unfixable.ts'], { 
-        typescript: true, 
-        eslint: false, 
-        prettier: false 
-      })
-      
-      // Attempt fix (should fail for TypeScript type errors)
-      const fixResult = await wrapper.fix(['src/unfixable.ts'], { 
-        typescript: true, 
-        eslint: false, 
+      const result = await wrapper.check(['src/unfixable.ts'], {
+        typescript: true,
+        eslint: false,
         prettier: false,
-        fix: true 
+      })
+
+      // Attempt fix (should fail for TypeScript type errors)
+      const fixResult = await wrapper.fix(['src/unfixable.ts'], {
+        typescript: true,
+        eslint: false,
+        prettier: false,
+        fix: true,
       })
       const executionTime = Date.now() - startTime
-      
+
       // Assert - Exit code should remain non-zero
       expect(result.success).toBe(false)
       const resultExitCode = result.success ? 0 : 1
       expect(resultExitCode).toBeGreaterThanOrEqual(1)
-      
+
       // Fix should fail for unfixable issues
       expect(fixResult.success).toBe(false)
       const fixExitCode = fixResult.success ? 0 : 1
@@ -293,58 +297,58 @@ describe('Exit Code Logic - Deterministic Patterns', () => {
             rules: {
               'semi': ['error', 'always'], // Fixable
               'no-unused-vars': 'error', // Not auto-fixable
-              'quotes': ['error', 'single'] // Fixable
-            }
+              'quotes': ['error', 'single'], // Fixable
+            },
           }),
           {
             path: 'src/partial-fix.js',
             content: `const test = "hello world"
 const unused = 42
 export default test`,
-            exists: true
-          }
+            exists: true,
+          },
         ],
         options: { eslint: true, typescript: false, prettier: false, fix: true },
         expected: {
-          eslint: { 
-            success: false, 
+          eslint: {
+            success: false,
             errorCount: 3,
-            fixableCount: 2 // semi and quotes are fixable
+            fixableCount: 2, // semi and quotes are fixable
           },
-          overall: { success: false }
-        }
+          overall: { success: false },
+        },
       }
-      
+
       wrapper.loadFixture(fixture)
-      
+
       // Act
       const startTime = Date.now()
-      const fixResult = await wrapper.fix(['src/partial-fix.js'], { 
-        eslint: true, 
-        typescript: false, 
+      const fixResult = await wrapper.fix(['src/partial-fix.js'], {
+        eslint: true,
+        typescript: false,
         prettier: false,
-        fix: true 
+        fix: true,
       })
-      
+
       // Check after partial fix
-      const afterFixResult = await wrapper.check(['src/partial-fix.js'], { 
-        eslint: true, 
-        typescript: false, 
-        prettier: false 
+      const afterFixResult = await wrapper.check(['src/partial-fix.js'], {
+        eslint: true,
+        typescript: false,
+        prettier: false,
       })
       const executionTime = Date.now() - startTime
-      
+
       // Assert - Exit code should be non-zero due to remaining unfixable issues
       expect(fixResult.count).toBeGreaterThan(0) // Some issues were fixed
       expect(afterFixResult.success).toBe(false) // But not all
       const afterFixExitCode = afterFixResult.success ? 0 : 1
       expect(afterFixExitCode).toBeGreaterThanOrEqual(1)
       expect(executionTime).toBeLessThan(100)
-      
+
       // Verify unfixable issue remains
       expect(afterFixResult.checkers.eslint?.errors).toBeDefined()
       const errors = afterFixResult.checkers.eslint?.errors || []
-      expect(errors.some(e => e.includes('no-unused-vars'))).toBe(true)
+      expect(errors.some((e) => e.includes('no-unused-vars'))).toBe(true)
     })
   })
 })
