@@ -1,72 +1,137 @@
-import fs from 'node:fs/promises'
 import path from 'node:path'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import { runClaudeHook } from '../facades/claude.js'
+import { 
+  MockClaudeHookManager, 
+  MockClaudeHookScenarios, 
+  runMockClaudeHook 
+} from '../test-utils/mock-claude-hook.js'
 
-describe.skip('Claude Hook End-to-End Integration (Real - Deprecated)', () => {
+describe('Claude Hook End-to-End Integration (Mocked)', () => {
   let testProjectDir: string
-  let originalCwd: string
-  let cleanupPaths: string[]
 
   beforeEach(async () => {
     vi.clearAllMocks()
-    cleanupPaths = []
-    originalCwd = process.cwd()
-
-    // Create temporary test project directory
-    testProjectDir = path.join(
-      __dirname,
-      '..',
-      '..',
-      '..',
-      '..',
-      'test-temp',
-      `claude-test-${Date.now()}`,
-    )
-    await fs.mkdir(testProjectDir, { recursive: true })
-    cleanupPaths.push(testProjectDir)
-    process.chdir(testProjectDir)
+    MockClaudeHookManager.reset()
+    // Use a simulated test project directory path
+    testProjectDir = path.join('/tmp', 'test-project')
+    // Ensure NODE_ENV is set for test environment
+    process.env.NODE_ENV = 'test'
   })
 
   afterEach(async () => {
-    process.chdir(originalCwd)
+    MockClaudeHookManager.reset()
+  })
 
-    // Cleanup temp directories
-    for (const cleanupPath of cleanupPaths) {
-      try {
-        await fs.rm(cleanupPath, { recursive: true, force: true })
-      } catch {
-        // Ignore cleanup errors
+  // Helper function to execute mocked Claude hook
+  async function executeMockedClaudeHook(payload: string): Promise<{
+    exitCode: number
+    stdout: string
+    stderr: string
+    duration: number
+  }> {
+    const startTime = Date.now()
+    
+    // Ensure hook is not disabled for testing
+    const _originalHookDisabled = process.env.CLAUDE_HOOK_DISABLED
+    delete process.env.CLAUDE_HOOK_DISABLED
+
+    // Mock stdin for the Claude hook to read from
+    const originalStdin = process.stdin
+    const mockStdin = {
+      isTTY: false,
+      setEncoding: vi.fn(),
+      on: vi.fn((event: string, handler: (data?: any) => void) => {
+        if (event === 'data') {
+          setTimeout(() => handler(payload), 0)
+        } else if (event === 'end') {
+          setTimeout(() => handler(), 10)
+        }
+      }),
+      removeAllListeners: vi.fn(),
+    }
+
+    // Mock stdout and stderr to capture output
+    let stdout = ''
+    let stderr = ''
+    const originalStdoutWrite = process.stdout.write
+    const originalStderrWrite = process.stderr.write
+    const originalExit = process.exit
+    let exitCode = 0
+
+    process.stdout.write = vi.fn((chunk: any) => {
+      stdout += chunk.toString()
+      return true
+    }) as any
+
+    process.stderr.write = vi.fn((chunk: any) => {
+      stderr += chunk.toString()
+      return true
+    }) as any
+
+    process.exit = vi.fn((code?: number) => {
+      exitCode = code || 0
+      throw new Error('Process exit called')
+    }) as any
+
+    Object.defineProperty(process, 'stdin', {
+      value: mockStdin,
+      configurable: true,
+    })
+
+    try {
+      await runMockClaudeHook()
+    } catch (error: any) {
+      // Check if it's our controlled exit
+      if (error.message !== 'Process exit called') {
+        throw error
+      }
+    } finally {
+      // Restore original functions
+      process.stdout.write = originalStdoutWrite
+      process.stderr.write = originalStderrWrite
+      process.exit = originalExit
+      Object.defineProperty(process, 'stdin', {
+        value: originalStdin,
+        configurable: true,
+      })
+      // Restore CLAUDE_HOOK_DISABLED if it was set
+      if (_originalHookDisabled !== undefined) {
+        process.env.CLAUDE_HOOK_DISABLED = _originalHookDisabled
       }
     }
-  })
+
+    const endTime = Date.now()
+    return { exitCode, stdout, stderr, duration: endTime - startTime }
+  }
 
   describe('Complete hook workflow integration', () => {
     test('should_execute_complete_workflow_for_write_operation', async () => {
-      // Arrange - Set up test project structure
-      await setupTestProject(testProjectDir)
+      // Arrange - Setup mock for successful execution
+      const filePath = path.join(testProjectDir, 'src', 'test.ts')
+      const mockChecker = MockClaudeHookScenarios.createSuccessScenario()
+      MockClaudeHookManager.setMockQualityChecker(mockChecker)
 
       const payload = {
         tool_name: 'Write',
         tool_input: {
-          file_path: path.join(testProjectDir, 'src', 'test.ts'),
+          file_path: filePath,
           content: 'export const test = () => console.log("hello")',
         },
       }
 
-      // Act - Execute Claude hook via binary
-      const result = await executeClaudeHook(JSON.stringify(payload))
+      // Act
+      const result = await executeMockedClaudeHook(JSON.stringify(payload))
 
       // Assert - Hook should execute successfully
       expect(result.exitCode).toBe(0)
-      expect(result.duration).toBeLessThan(2000) // Sub-2s requirement
-    }, 5000)
+      expect(result.duration).toBeLessThan(100) // Much faster with mocks
+    })
 
     test('should_handle_edit_operations_correctly', async () => {
       // Arrange
-      await setupTestProject(testProjectDir)
       const testFile = path.join(testProjectDir, 'src', 'component.tsx')
-      await fs.writeFile(testFile, 'export const Button = () => <button>Old</button>')
+      const mockChecker = MockClaudeHookScenarios.createSuccessScenario()
+      MockClaudeHookManager.setMockQualityChecker(mockChecker)
 
       const payload = {
         operation: 'edit_file',
@@ -78,20 +143,22 @@ describe.skip('Claude Hook End-to-End Integration (Real - Deprecated)', () => {
       }
 
       // Act
-      const result = await executeClaudeHook(JSON.stringify(payload))
+      const result = await executeMockedClaudeHook(JSON.stringify(payload))
 
       // Assert
       expect(result.exitCode).toBe(0)
-      expect(result.duration).toBeLessThan(3000)
-    }, 5000)
+      expect(result.duration).toBeLessThan(100)
+    })
 
     test('should_handle_multi_edit_operations', async () => {
       // Arrange
-      await setupTestProject(testProjectDir)
+      const filePath = path.join(testProjectDir, 'src', 'service.ts')
+      const mockChecker = MockClaudeHookScenarios.createSuccessScenario()
+      MockClaudeHookManager.setMockQualityChecker(mockChecker)
 
       const payload = {
         operation: 'multi_edit',
-        file_path: path.join(testProjectDir, 'src', 'service.ts'),
+        file_path: filePath,
         content: 'export class UserService { getId() { return "123" } }',
         metadata: {
           tool_name: 'MultiEdit',
@@ -99,23 +166,25 @@ describe.skip('Claude Hook End-to-End Integration (Real - Deprecated)', () => {
       }
 
       // Act
-      const result = await executeClaudeHook(JSON.stringify(payload))
+      const result = await executeMockedClaudeHook(JSON.stringify(payload))
 
       // Assert
       expect(result.exitCode).toBe(0)
-      expect(result.duration).toBeLessThan(2000)
-    }, 5000)
+      expect(result.duration).toBeLessThan(100)
+    })
   })
 
   describe('Real Claude Code PostToolUse simulation', () => {
-    test.skip('should_process_authentic_claude_payload_format', async () => {
-      // Arrange - Authentic Claude Code payload structure
-      await setupTestProject(testProjectDir)
+    test('should_process_authentic_claude_payload_format', async () => {
+      // Arrange - Setup mock for successful execution
+      const filePath = path.join(testProjectDir, 'src', 'utils.ts')
+      const mockChecker = MockClaudeHookScenarios.createSuccessScenario()
+      MockClaudeHookManager.setMockQualityChecker(mockChecker)
 
       const authenticPayload = {
         tool_name: 'Write',
         tool_input: {
-          file_path: path.join(testProjectDir, 'src', 'utils.ts'),
+          file_path: filePath,
           content: `/**
  * Utility functions for the application
  */
@@ -138,22 +207,24 @@ export function debounce<T extends (...args: any[]) => any>(
       }
 
       // Act
-      const result = await executeClaudeHook(JSON.stringify(authenticPayload))
+      const result = await executeMockedClaudeHook(JSON.stringify(authenticPayload))
 
       // Assert
       expect(result.exitCode).toBe(0)
       expect(result.stderr).toBe('') // No error output expected
-      expect(result.duration).toBeLessThan(2000)
-    }, 5000)
+      expect(result.duration).toBeLessThan(100)
+    })
 
     test('should_handle_complex_react_component_payload', async () => {
-      // Arrange - Complex React component similar to Claude Code output
-      await setupTestProject(testProjectDir)
+      // Arrange
+      const filePath = path.join(testProjectDir, 'src', 'UserProfile.tsx')
+      const mockChecker = MockClaudeHookScenarios.createSuccessScenario()
+      MockClaudeHookManager.setMockQualityChecker(mockChecker)
 
       const reactComponentPayload = {
         tool_name: 'Write',
         tool_input: {
-          file_path: path.join(testProjectDir, 'src', 'UserProfile.tsx'),
+          file_path: filePath,
           content: `import React, { useState, useEffect } from 'react'
 
 interface UserProfileProps {
@@ -211,18 +282,20 @@ export const UserProfile: React.FC<UserProfileProps> = ({
       }
 
       // Act
-      const result = await executeClaudeHook(JSON.stringify(reactComponentPayload))
+      const result = await executeMockedClaudeHook(JSON.stringify(reactComponentPayload))
 
       // Assert
       expect(result.exitCode).toBe(0)
-      expect(result.duration).toBeLessThan(2000)
-    }, 5000)
+      expect(result.duration).toBeLessThan(100)
+    })
   })
 
   describe('Auto-fixable issues validation', () => {
-    test.skip('should_silently_fix_formatting_issues', async () => {
-      // Arrange - Code with formatting issues that should be auto-fixed
-      await setupTestProject(testProjectDir)
+    test('should_silently_fix_formatting_issues', async () => {
+      // Arrange - Setup mock for auto-fixable formatting issues
+      const filePath = path.join(testProjectDir, 'src', 'badly-formatted.ts')
+      const mockChecker = MockClaudeHookScenarios.createAutoFixableScenario(filePath)
+      MockClaudeHookManager.setMockQualityChecker(mockChecker)
 
       const badlyFormattedCode = `export const test=()=>{
 console.log("hello")
@@ -232,23 +305,25 @@ return"world"
       const payload = {
         tool_name: 'Write',
         tool_input: {
-          file_path: path.join(testProjectDir, 'src', 'badly-formatted.ts'),
+          file_path: filePath,
           content: badlyFormattedCode,
         },
       }
 
       // Act
-      const result = await executeClaudeHook(JSON.stringify(payload))
+      const result = await executeMockedClaudeHook(JSON.stringify(payload))
 
       // Assert - Should exit silently (0) after auto-fixing
       expect(result.exitCode).toBe(0)
       expect(result.stderr).toBe('') // No error output for auto-fixed issues
-      expect(result.duration).toBeLessThan(2000)
-    }, 5000)
+      expect(result.duration).toBeLessThan(100)
+    })
 
-    test.skip('should_silently_fix_import_organization_issues', async () => {
-      // Arrange - Code with import order issues
-      await setupTestProject(testProjectDir)
+    test('should_silently_fix_import_organization_issues', async () => {
+      // Arrange - Setup mock for auto-fixable import issues
+      const filePath = path.join(testProjectDir, 'src', 'unorganized.tsx')
+      const mockChecker = MockClaudeHookScenarios.createAutoFixableScenario(filePath)
+      MockClaudeHookManager.setMockQualityChecker(mockChecker)
 
       const unorganizedImports = `import { useState } from 'react'
 import path from 'node:path'
@@ -263,25 +338,27 @@ export const Component = () => {
       const payload = {
         tool_name: 'Write',
         tool_input: {
-          file_path: path.join(testProjectDir, 'src', 'unorganized.tsx'),
+          file_path: filePath,
           content: unorganizedImports,
         },
       }
 
       // Act
-      const result = await executeClaudeHook(JSON.stringify(payload))
+      const result = await executeMockedClaudeHook(JSON.stringify(payload))
 
       // Assert
       expect(result.exitCode).toBe(0)
       expect(result.stderr).toBe('')
-      expect(result.duration).toBeLessThan(2000)
-    }, 5000)
+      expect(result.duration).toBeLessThan(100)
+    })
   })
 
   describe('Blocking behavior for complex issues', () => {
-    test.skip('should_block_for_type_safety_issues', async () => {
-      // Arrange - Code with type safety issues that require human judgment
-      await setupTestProject(testProjectDir)
+    test('should_block_for_type_safety_issues', async () => {
+      // Arrange - Setup mock for TypeScript type safety errors
+      const filePath = path.join(testProjectDir, 'src', 'unsafe.ts')
+      const mockChecker = MockClaudeHookScenarios.createTypeScriptErrorScenario(filePath)
+      MockClaudeHookManager.setMockQualityChecker(mockChecker)
 
       const unsafeCode = `export function processData(data: any): any {
   return data.someProperty.anotherProperty
@@ -290,23 +367,25 @@ export const Component = () => {
       const payload = {
         tool_name: 'Write',
         tool_input: {
-          file_path: path.join(testProjectDir, 'src', 'unsafe.ts'),
+          file_path: filePath,
           content: unsafeCode,
         },
       }
 
       // Act
-      const result = await executeClaudeHook(JSON.stringify(payload))
+      const result = await executeMockedClaudeHook(JSON.stringify(payload))
 
       // Assert - Should block (exit code 2) for human-required issues
       expect(result.exitCode).toBe(2)
       expect(result.stderr).toContain('Quality issues require manual intervention')
-      expect(result.duration).toBeLessThan(2000)
-    }, 5000)
+      expect(result.duration).toBeLessThan(100)
+    })
 
-    test.skip('should_block_for_complexity_issues', async () => {
-      // Arrange - Overly complex function
-      await setupTestProject(testProjectDir)
+    test('should_block_for_complexity_issues', async () => {
+      // Arrange - Setup mock for complexity errors
+      const filePath = path.join(testProjectDir, 'src', 'complex.ts')
+      const mockChecker = MockClaudeHookScenarios.createComplexityErrorScenario(filePath)
+      MockClaudeHookManager.setMockQualityChecker(mockChecker)
 
       const complexCode = `export function complexFunction(a: number, b: string, c: boolean, d: object) {
   if (a > 0) {
@@ -353,49 +432,53 @@ export const Component = () => {
       const payload = {
         tool_name: 'Write',
         tool_input: {
-          file_path: path.join(testProjectDir, 'src', 'complex.ts'),
+          file_path: filePath,
           content: complexCode,
         },
       }
 
       // Act
-      const result = await executeClaudeHook(JSON.stringify(payload))
+      const result = await executeMockedClaudeHook(JSON.stringify(payload))
 
       // Assert - Should block for complexity issues
       expect(result.exitCode).toBe(2)
       expect(result.stderr).toContain('Quality issues require manual intervention')
-      expect(result.duration).toBeLessThan(2000)
-    }, 5000)
+      expect(result.duration).toBeLessThan(100)
+    })
   })
 
   describe('Performance requirements validation', () => {
-    test('should_complete_execution_under_2_seconds', async () => {
+    test('should_complete_execution_under_100ms', async () => {
       // Arrange
-      await setupTestProject(testProjectDir)
+      const filePath = path.join(testProjectDir, 'src', 'performance-test.ts')
+      const mockChecker = MockClaudeHookScenarios.createSuccessScenario()
+      MockClaudeHookManager.setMockQualityChecker(mockChecker)
 
       const payload = {
         tool_name: 'Write',
         tool_input: {
-          file_path: path.join(testProjectDir, 'src', 'performance-test.ts'),
+          file_path: filePath,
           content: 'export const perfTest = () => "fast"',
         },
       }
 
       // Act
       const startTime = Date.now()
-      const result = await executeClaudeHook(JSON.stringify(payload))
+      const result = await executeMockedClaudeHook(JSON.stringify(payload))
       const endTime = Date.now()
       const actualDuration = endTime - startTime
 
       // Assert
-      expect(actualDuration).toBeLessThan(2000)
-      expect(result.duration).toBeLessThan(2000)
+      expect(actualDuration).toBeLessThan(100)
+      expect(result.duration).toBeLessThan(100)
       expect(result.exitCode).toBe(0)
-    }, 3000)
+    })
 
     test('should_handle_large_files_efficiently', async () => {
-      // Arrange - Large file content
-      await setupTestProject(testProjectDir)
+      // Arrange
+      const filePath = path.join(testProjectDir, 'src', 'large-file.ts')
+      const mockChecker = MockClaudeHookScenarios.createSuccessScenario()
+      MockClaudeHookManager.setMockQualityChecker(mockChecker)
 
       const largeFileContent = Array.from(
         { length: 1000 },
@@ -405,24 +488,25 @@ export const Component = () => {
       const payload = {
         tool_name: 'Write',
         tool_input: {
-          file_path: path.join(testProjectDir, 'src', 'large-file.ts'),
+          file_path: filePath,
           content: largeFileContent,
         },
       }
 
       // Act
-      const result = await executeClaudeHook(JSON.stringify(payload))
+      const result = await executeMockedClaudeHook(JSON.stringify(payload))
 
       // Assert
-      expect(result.duration).toBeLessThan(2000)
+      expect(result.duration).toBeLessThan(100)
       expect(result.exitCode).toBe(0)
-    }, 3000)
+    })
   })
 
   describe('Error handling and edge cases', () => {
     test('should_handle_non_existent_file_operations_gracefully', async () => {
       // Arrange
-      await setupTestProject(testProjectDir)
+      const mockChecker = MockClaudeHookScenarios.createSuccessScenario()
+      MockClaudeHookManager.setMockQualityChecker(mockChecker)
 
       const payload = {
         tool_name: 'Edit',
@@ -434,151 +518,34 @@ export const Component = () => {
       }
 
       // Act
-      const result = await executeClaudeHook(JSON.stringify(payload))
+      const result = await executeMockedClaudeHook(JSON.stringify(payload))
 
       // Assert - Should exit gracefully, not crash
       expect([0, 1]).toContain(result.exitCode) // Either success or controlled failure
-      expect(result.duration).toBeLessThan(2000)
-    }, 5000)
+      expect(result.duration).toBeLessThan(100)
+    })
 
     test('should_skip_non_code_files_silently', async () => {
       // Arrange
-      await setupTestProject(testProjectDir)
+      const filePath = path.join(testProjectDir, 'README.md')
+      const mockChecker = MockClaudeHookScenarios.createSuccessScenario()
+      MockClaudeHookManager.setMockQualityChecker(mockChecker)
 
       const payload = {
         tool_name: 'Write',
         tool_input: {
-          file_path: path.join(testProjectDir, 'README.md'),
+          file_path: filePath,
           content: '# Test Project',
         },
       }
 
       // Act
-      const result = await executeClaudeHook(JSON.stringify(payload))
+      const result = await executeMockedClaudeHook(JSON.stringify(payload))
 
       // Assert - Should skip silently
       expect(result.exitCode).toBe(0)
       expect(result.stderr).toBe('')
-      expect(result.duration).toBeLessThan(1000) // Should be very fast for skipped files
-    }, 5000)
+      expect(result.duration).toBeLessThan(50) // Should be very fast for skipped files
+    })
   })
 })
-
-// Helper functions for integration testing
-async function setupTestProject(projectDir: string): Promise<void> {
-  // Create basic project structure
-  await fs.mkdir(path.join(projectDir, 'src'), { recursive: true })
-  await fs.mkdir(path.join(projectDir, 'dist'), { recursive: true })
-
-  // Create package.json
-  const packageJson = {
-    name: 'claude-test-project',
-    version: '1.0.0',
-    type: 'module',
-    dependencies: {
-      'react': '^18.0.0',
-      '@types/react': '^18.0.0',
-    },
-  }
-  await fs.writeFile(path.join(projectDir, 'package.json'), JSON.stringify(packageJson, null, 2))
-
-  // Create tsconfig.json
-  const tsConfig = {
-    compilerOptions: {
-      target: 'ES2020',
-      module: 'ESNext',
-      moduleResolution: 'bundler',
-      strict: true,
-      jsx: 'react-jsx',
-      esModuleInterop: true,
-      skipLibCheck: true,
-    },
-    include: ['src/**/*'],
-    exclude: ['node_modules', 'dist'],
-  }
-  await fs.writeFile(path.join(projectDir, 'tsconfig.json'), JSON.stringify(tsConfig, null, 2))
-}
-
-async function executeClaudeHook(payload: string): Promise<{
-  exitCode: number
-  stdout: string
-  stderr: string
-  duration: number
-}> {
-  const startTime = Date.now()
-
-  // Mock stdin for the Claude hook to read from
-  const originalStdin = process.stdin
-  const mockStdin = {
-    isTTY: false,
-    setEncoding: vi.fn(),
-    on: vi.fn((event: string, handler: (data?: any) => void) => {
-      if (event === 'data') {
-        // Immediately provide the payload
-        setTimeout(() => handler(payload), 0)
-      } else if (event === 'end') {
-        // Signal end of input
-        setTimeout(() => handler(), 10)
-      }
-    }),
-    removeAllListeners: vi.fn(),
-  }
-
-  // Mock stdout and stderr to capture output
-  let stdout = ''
-  let stderr = ''
-  const originalStdoutWrite = process.stdout.write
-  const originalStderrWrite = process.stderr.write
-  const originalExit = process.exit
-  let exitCode = 0
-
-  process.stdout.write = vi.fn((chunk: any) => {
-    stdout += chunk.toString()
-    return true
-  }) as any
-
-  process.stderr.write = vi.fn((chunk: any) => {
-    stderr += chunk.toString()
-    return true
-  }) as any
-
-  process.exit = vi.fn((code?: number) => {
-    exitCode = code || 0
-    throw new Error('Process exit called')
-  }) as any
-
-  Object.defineProperty(process, 'stdin', {
-    value: mockStdin,
-    configurable: true,
-  })
-
-  try {
-    // Run the Claude hook directly using the API
-    await runClaudeHook()
-  } catch (error: any) {
-    // Check if it's our controlled exit
-    if (error.message !== 'Process exit called') {
-      exitCode = error.exitCode || error.status || 2
-      if (error.message) {
-        stderr += error.message
-      }
-    }
-  } finally {
-    // Restore original functions
-    process.stdout.write = originalStdoutWrite
-    process.stderr.write = originalStderrWrite
-    process.exit = originalExit
-    Object.defineProperty(process, 'stdin', {
-      value: originalStdin,
-      configurable: true,
-    })
-  }
-
-  const endTime = Date.now()
-  return {
-    exitCode,
-    stdout,
-    stderr,
-    duration: endTime - startTime,
-  }
-}
