@@ -30,7 +30,7 @@ Focus on Engine Configuration Tests first for maximum impact.
   - [x] 2.5 Verify architecture supports <100ms execution target per test
   - [x] 2.6 Validate fixtures integrate with existing Vitest configuration
 
-- [x] 3. Engine Configuration Tests Rewrite (Priority: 8 tests)
+- [ ] 3. Engine Configuration Tests Rewrite (Priority: 8 tests)
   - [x] 3.1 Write modern test patterns for ESLint flat config tests (2 tests)
   - [x] 3.2 Replace child_process.spawn() with direct QualityChecker API calls
   - [x] 3.3 Implement in-memory mocking for auto-fix behavior tests (3 tests)

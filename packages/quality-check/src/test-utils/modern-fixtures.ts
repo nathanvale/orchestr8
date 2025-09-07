@@ -406,6 +406,124 @@ export class PrettierFixtureFactory {
 }
 
 /**
+ * Factory for creating auto-fix behavior test fixtures
+ */
+export class AutoFixBehaviorFactory {
+  /**
+   * Create fixture for testing ESLint auto-fix behavior
+   */
+  static createESLintAutoFixFixture(): TestFixture {
+    return {
+      description: 'ESLint auto-fix behavior test',
+      files: [
+        ESLintFixtureFactory.createFlatConfig({
+          rules: {
+            'semi': ['error', 'always'],
+            'quotes': ['error', 'single'],
+            'comma-spacing': ['error', { before: false, after: true }],
+            'no-extra-semi': 'error'
+          }
+        }),
+        {
+          path: 'src/eslint-fix.js',
+          content: `const test = "hello world";;
+const arr = [1,2,3,4];`,
+          exists: true
+        }
+      ],
+      options: { eslint: true, typescript: false, prettier: false, fix: true },
+      expected: {
+        eslint: {
+          success: true, // After fix, should pass
+          errorCount: 0,
+          fixableCount: 4
+        },
+        overall: { success: true }
+      }
+    }
+  }
+
+  /**
+   * Create fixture for testing Prettier auto-fix behavior
+   */
+  static createPrettierAutoFixFixture(): TestFixture {
+    return {
+      description: 'Prettier auto-fix behavior test',
+      files: [
+        PrettierFixtureFactory.createConfig({
+          semi: true,
+          singleQuote: true,
+          tabWidth: 2,
+          trailingComma: 'es5'
+        }),
+        {
+          path: 'src/prettier-fix.js',
+          content: `function test(a,b,c){return a+b+c}
+const obj={key:"value",another:"test"}`,
+          exists: true
+        }
+      ],
+      options: { prettier: true, eslint: false, typescript: false, fix: true },
+      expected: {
+        prettier: {
+          success: true, // After fix, should pass
+          errorCount: 0,
+          fixableCount: 1
+        },
+        overall: { success: true }
+      }
+    }
+  }
+
+  /**
+   * Create fixture for testing mixed auto-fix behavior
+   */
+  static createMixedAutoFixFixture(): TestFixture {
+    return {
+      description: 'Mixed ESLint and Prettier auto-fix behavior',
+      files: [
+        ESLintFixtureFactory.createFlatConfig({
+          rules: {
+            'no-console': 'warn',
+            'no-unused-vars': 'error',
+            'semi': ['error', 'always']
+          }
+        }),
+        PrettierFixtureFactory.createConfig({
+          semi: true,
+          singleQuote: true,
+          tabWidth: 2
+        }),
+        {
+          path: 'src/mixed-fix.js',
+          content: `const test="hello world"
+console.log(test)
+const unused = 42`,
+          exists: true
+        }
+      ],
+      options: { eslint: true, prettier: true, typescript: false, fix: true },
+      expected: {
+        eslint: {
+          success: false, // no-unused-vars cannot be auto-fixed
+          errorCount: 1,
+          warningCount: 1,
+          fixableCount: 1,
+          containsErrors: ['no-unused-vars'],
+          containsWarnings: ['no-console']
+        },
+        prettier: {
+          success: true, // Formatting can be fixed
+          errorCount: 0,
+          fixableCount: 1
+        },
+        overall: { success: false }
+      }
+    }
+  }
+}
+
+/**
  * Factory for creating multi-engine integration fixtures
  */
 export class MultiEngineFixtureFactory {

@@ -1,7 +1,7 @@
-import { spawn } from 'node:child_process'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { runClaudeHook } from '../facades/claude.js'
 
 describe('Claude Hook End-to-End Integration', () => {
   let testProjectDir: string
@@ -505,39 +505,80 @@ async function executeClaudeHook(payload: string): Promise<{
   stderr: string
   duration: number
 }> {
-  return new Promise((resolve) => {
-    const startTime = Date.now()
-
-    // Get the path to the claude hook binary
-    const binaryPath = path.resolve(__dirname, '..', '..', 'bin', 'claude-hook')
-
-    const child = spawn('node', [binaryPath], {
-      stdio: ['pipe', 'pipe', 'pipe'],
-    })
-
-    let stdout = ''
-    let stderr = ''
-
-    child.stdout?.on('data', (data) => {
-      stdout += data.toString()
-    })
-
-    child.stderr?.on('data', (data) => {
-      stderr += data.toString()
-    })
-
-    child.on('close', (code) => {
-      const endTime = Date.now()
-      resolve({
-        exitCode: code || 0,
-        stdout,
-        stderr,
-        duration: endTime - startTime,
-      })
-    })
-
-    // Send payload via stdin
-    child.stdin?.write(payload)
-    child.stdin?.end()
+  const startTime = Date.now()
+  
+  // Mock stdin for the Claude hook to read from
+  const originalStdin = process.stdin
+  const mockStdin = {
+    isTTY: false,
+    setEncoding: vi.fn(),
+    on: vi.fn((event: string, handler: (data?: any) => void) => {
+      if (event === 'data') {
+        // Immediately provide the payload
+        setTimeout(() => handler(payload), 0)
+      } else if (event === 'end') {
+        // Signal end of input
+        setTimeout(() => handler(), 10)
+      }
+    }),
+    removeAllListeners: vi.fn()
+  }
+  
+  // Mock stdout and stderr to capture output
+  let stdout = ''
+  let stderr = ''
+  const originalStdoutWrite = process.stdout.write
+  const originalStderrWrite = process.stderr.write
+  const originalExit = process.exit
+  let exitCode = 0
+  
+  process.stdout.write = vi.fn((chunk: any) => {
+    stdout += chunk.toString()
+    return true
+  }) as any
+  
+  process.stderr.write = vi.fn((chunk: any) => {
+    stderr += chunk.toString()
+    return true
+  }) as any
+  
+  process.exit = vi.fn((code?: number) => {
+    exitCode = code || 0
+    throw new Error('Process exit called')
+  }) as any
+  
+  Object.defineProperty(process, 'stdin', {
+    value: mockStdin,
+    configurable: true
   })
+  
+  try {
+    // Run the Claude hook directly using the API
+    await runClaudeHook()
+  } catch (error: any) {
+    // Check if it's our controlled exit
+    if (error.message !== 'Process exit called') {
+      exitCode = error.exitCode || error.status || 2
+      if (error.message) {
+        stderr += error.message
+      }
+    }
+  } finally {
+    // Restore original functions
+    process.stdout.write = originalStdoutWrite
+    process.stderr.write = originalStderrWrite
+    process.exit = originalExit
+    Object.defineProperty(process, 'stdin', {
+      value: originalStdin,
+      configurable: true
+    })
+  }
+  
+  const endTime = Date.now()
+  return {
+    exitCode,
+    stdout,
+    stderr,
+    duration: endTime - startTime
+  }
 }
