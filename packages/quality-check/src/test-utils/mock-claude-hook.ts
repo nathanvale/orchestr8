@@ -1,6 +1,6 @@
 /**
  * Mock Claude Hook Implementation for Integration Tests
- * 
+ *
  * Provides a mocked version of runClaudeHook that uses MockQualityChecker
  * instead of real linting/formatting tools for predictable test results.
  */
@@ -54,7 +54,7 @@ export class MockClaudeHookManager {
 
 /**
  * Mock version of runClaudeHook for integration tests
- * 
+ *
  * This function provides the same interface as the real runClaudeHook but uses
  * MockQualityChecker to provide predictable, controllable results for testing.
  */
@@ -121,10 +121,10 @@ export async function runMockClaudeHook(): Promise<void> {
 
     // Determine the mock behavior based on the predefined result
     // This simulates the autopilot decision logic but with predictable outcomes
-    const hasTypeScriptErrors = issues.some(issue => issue.engine === 'typescript')
-    const hasOnlyFixableIssues = issues.length > 0 && issues.every(issue => 
-      issue.engine === 'eslint' || issue.engine === 'prettier'
-    )
+    const hasTypeScriptErrors = issues.some((issue) => issue.engine === 'typescript')
+    const hasOnlyFixableIssues =
+      issues.length > 0 &&
+      issues.every((issue) => issue.engine === 'eslint' || issue.engine === 'prettier')
 
     if (hasTypeScriptErrors) {
       // Simulate REPORT_ONLY for TypeScript errors that require manual intervention
@@ -144,10 +144,13 @@ export async function runMockClaudeHook(): Promise<void> {
       // Default to success for no issues
       process.exit(ExitCodes.SUCCESS)
     }
-
   } catch (error) {
     // In test environment, if the error is from mocked process.exit, don't call exit again
-    if (process.env.NODE_ENV === 'test' && error instanceof Error && error.message === 'Process exit called') {
+    if (
+      process.env.NODE_ENV === 'test' &&
+      error instanceof Error &&
+      error.message === 'Process exit called'
+    ) {
       // Let the test handle it
       throw error
     }

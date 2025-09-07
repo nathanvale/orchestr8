@@ -1,9 +1,9 @@
 import path from 'node:path'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import { 
-  MockClaudeHookManager, 
-  MockClaudeHookScenarios, 
-  runMockClaudeHook 
+import {
+  MockClaudeHookManager,
+  MockClaudeHookScenarios,
+  runMockClaudeHook,
 } from '../test-utils/mock-claude-hook.js'
 
 describe('ESLint Config Variations Integration (Mocked)', () => {
@@ -186,7 +186,6 @@ describe('ESLint Config Variations Integration (Mocked)', () => {
       const filePath = path.join(testProjectDir, 'src', 'strict-null.ts')
       const mockChecker = MockClaudeHookScenarios.createTypeScriptErrorScenario(filePath)
       MockClaudeHookManager.setMockQualityChecker(mockChecker)
-      
 
       const strictNullCheckCode = `interface User {
         id: number

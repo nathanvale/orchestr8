@@ -9,9 +9,7 @@
     "ecmaVersion": "latest",
     "sourceType": "module"
   },
-  "extends": [
-    "eslint:recommended"
-  ],
+  "extends": ["eslint:recommended"],
   "rules": {
     "max-len": [
       "error",
@@ -19,13 +17,7 @@
         "code": 80
       }
     ],
-    "quotes": [
-      "error",
-      "double"
-    ],
-    "semi": [
-      "error",
-      "always"
-    ]
+    "quotes": ["error", "double"],
+    "semi": ["error", "always"]
   }
 }

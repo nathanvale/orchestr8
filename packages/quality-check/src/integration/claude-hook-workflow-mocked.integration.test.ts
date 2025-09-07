@@ -1,9 +1,9 @@
 import path from 'node:path'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import { 
-  MockClaudeHookManager, 
-  MockClaudeHookScenarios, 
-  runMockClaudeHook 
+import {
+  MockClaudeHookManager,
+  MockClaudeHookScenarios,
+  runMockClaudeHook,
 } from '../test-utils/mock-claude-hook.js'
 
 describe('Claude Hook End-to-End Integration (Mocked)', () => {
@@ -30,7 +30,7 @@ describe('Claude Hook End-to-End Integration (Mocked)', () => {
     duration: number
   }> {
     const startTime = Date.now()
-    
+
     // Ensure hook is not disabled for testing
     const _originalHookDisabled = process.env.CLAUDE_HOOK_DISABLED
     delete process.env.CLAUDE_HOOK_DISABLED

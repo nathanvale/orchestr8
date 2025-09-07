@@ -157,8 +157,14 @@ export class MockFileSystemFactory {
   static createWithTestFiles(): InMemoryFileSystem {
     const fs = new InMemoryFileSystem()
     fs.write('src/index.ts', 'export const hello = "world";\n')
-    fs.write('src/utils.ts', 'export function add(a: number, b: number): number {\n  return a + b;\n}\n')
-    fs.write('test/index.test.ts', 'import { hello } from "../src/index";\n\ntest("hello", () => {\n  expect(hello).toBe("world");\n});\n')
+    fs.write(
+      'src/utils.ts',
+      'export function add(a: number, b: number): number {\n  return a + b;\n}\n',
+    )
+    fs.write(
+      'test/index.test.ts',
+      'import { hello } from "../src/index";\n\ntest("hello", () => {\n  expect(hello).toBe("world");\n});\n',
+    )
     return fs
   }
 
@@ -191,8 +197,8 @@ export class MockConfigLoaderFactory {
     })
     loader.setConfig('eslint', {
       rules: {
-        semi: ['error', 'always'],
-        quotes: ['error', 'single'],
+        'semi': ['error', 'always'],
+        'quotes': ['error', 'single'],
         'no-unused-vars': 'error',
       },
     })
@@ -213,7 +219,7 @@ export class MockConfigLoaderFactory {
     })
     loader.setConfig('eslint', {
       rules: {
-        semi: 'off',
+        'semi': 'off',
         'no-unused-vars': 'warn',
       },
     })
@@ -326,7 +332,7 @@ export function createClaudePayload(
   toolName: string,
   filePath: string,
   content?: string,
-  edits?: Array<{ old_string: string; new_string: string }>
+  edits?: Array<{ old_string: string; new_string: string }>,
 ): unknown {
   return {
     tool_name: toolName,
@@ -341,10 +347,7 @@ export function createClaudePayload(
 /**
  * Helper to assert stdout/stderr output
  */
-export function assertOutput(
-  stream: MockWritable,
-  expected: string | RegExp
-): void {
+export function assertOutput(stream: MockWritable, expected: string | RegExp): void {
   const output = stream.getOutput()
   if (typeof expected === 'string') {
     expect(output).toContain(expected)

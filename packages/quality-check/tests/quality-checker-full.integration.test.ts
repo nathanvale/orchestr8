@@ -80,7 +80,9 @@ describe('QualityChecker Integration Tests', () => {
       expect(result.issues).toBeDefined()
       const errors = result.issues || []
 
-      expect(errors.some((e: any) => e.ruleId === 'TS2307' && e.message.includes('@missing/helper'))).toBe(true)
+      expect(
+        errors.some((e: any) => e.ruleId === 'TS2307' && e.message.includes('@missing/helper')),
+      ).toBe(true)
     })
 
     it('should_resolve_correctly_when_path_aliases_are_properly_configured', async () => {
@@ -311,7 +313,7 @@ describe('QualityChecker Integration Tests', () => {
           {
             line: 3,
             column: 22,
-            message: "Unexpected any. Specify a different type.",
+            message: 'Unexpected any. Specify a different type.',
             severity: 'error',
             engine: 'typescript',
             ruleId: '@typescript-eslint/no-explicit-any',
@@ -485,7 +487,7 @@ describe('QualityChecker Integration Tests', () => {
           {
             line: 2,
             column: 14,
-            message: "Unexpected any. Specify a different type.",
+            message: 'Unexpected any. Specify a different type.',
             severity: 'error',
             engine: 'typescript',
             ruleId: '@typescript-eslint/no-explicit-any',

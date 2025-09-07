@@ -43,7 +43,7 @@ describe('CI/CD Pipeline Integration', () => {
           {
             line: 2,
             column: 14,
-            message: "Unexpected any. Specify a different type.",
+            message: 'Unexpected any. Specify a different type.',
             severity: 'error',
             engine: 'typescript',
             ruleId: '@typescript-eslint/no-explicit-any',
@@ -158,14 +158,14 @@ describe('CI/CD Pipeline Integration', () => {
 
     it('should_handle_multiple_files_efficiently', async () => {
       const files: string[] = []
-      
+
       // Create multiple test files
       for (let i = 0; i < 10; i++) {
         const fileName = `file-${i}.ts`
         const filePath = path.join(fixtureDir, fileName)
         await fs.writeFile(filePath, `export const value${i} = ${i};`)
         files.push(fileName)
-        
+
         // Setup mock for each file
         mockEnv.qualityChecker.setPredefinedResult(fileName, {
           filePath: fileName,
@@ -206,7 +206,7 @@ describe('CI/CD Pipeline Integration', () => {
           {
             line: 2,
             column: 14,
-            message: "Unexpected any. Specify a different type.",
+            message: 'Unexpected any. Specify a different type.',
             severity: 'error',
             engine: 'typescript',
             ruleId: '@typescript-eslint/no-explicit-any',
@@ -241,7 +241,7 @@ describe('CI/CD Pipeline Integration', () => {
       const result = await mockEnv.qualityChecker.check(['aggregate-test.ts'])
 
       expect(result.success).toBe(false)
-      
+
       // Count issues by engine
       const engineCounts = result.issues.reduce((acc: Record<string, number>, issue: any) => {
         acc[issue.engine] = (acc[issue.engine] || 0) + 1
@@ -277,7 +277,7 @@ describe('CI/CD Pipeline Integration', () => {
       // Test file with no issues
       const cleanFile = path.join(fixtureDir, 'clean.ts')
       await fs.writeFile(cleanFile, 'export const clean = true;')
-      
+
       mockEnv.qualityChecker.setPredefinedResult('clean.ts', {
         filePath: 'clean.ts',
         success: true,
@@ -290,7 +290,7 @@ describe('CI/CD Pipeline Integration', () => {
       // Test file with warnings only
       const warningFile = path.join(fixtureDir, 'warning.ts')
       await fs.writeFile(warningFile, 'console.log("warning");')
-      
+
       mockEnv.qualityChecker.setPredefinedResult('warning.ts', {
         filePath: 'warning.ts',
         success: true,
@@ -312,7 +312,7 @@ describe('CI/CD Pipeline Integration', () => {
       // Test file with errors
       const errorFile = path.join(fixtureDir, 'error.ts')
       await fs.writeFile(errorFile, 'const unused = 42;')
-      
+
       mockEnv.qualityChecker.setPredefinedResult('error.ts', {
         filePath: 'error.ts',
         success: false,
@@ -336,35 +336,36 @@ describe('CI/CD Pipeline Integration', () => {
   describe('Parallel Processing', () => {
     it('should_handle_concurrent_checks_without_interference', async () => {
       const files: string[] = []
-      
+
       // Create test files
       for (let i = 0; i < 5; i++) {
         const fileName = `parallel-${i}.ts`
         const filePath = path.join(fixtureDir, fileName)
         await fs.writeFile(filePath, `export const value${i} = ${i};`)
         files.push(fileName)
-        
+
         // Setup different results for each file
         mockEnv.qualityChecker.setPredefinedResult(fileName, {
           filePath: fileName,
           success: i % 2 === 0, // Alternate between success and failure
-          issues: i % 2 === 0 ? [] : [
-            {
-              line: 1,
-              column: 1,
-              message: `Test issue for file ${i}`,
-              severity: 'error',
-              engine: 'eslint',
-              ruleId: 'test-rule',
-            },
-          ],
+          issues:
+            i % 2 === 0
+              ? []
+              : [
+                  {
+                    line: 1,
+                    column: 1,
+                    message: `Test issue for file ${i}`,
+                    severity: 'error',
+                    engine: 'eslint',
+                    ruleId: 'test-rule',
+                  },
+                ],
         })
       }
 
       // Run checks in parallel
-      const results = await Promise.all(
-        files.map(file => mockEnv.qualityChecker.check([file]))
-      )
+      const results = await Promise.all(files.map((file) => mockEnv.qualityChecker.check([file])))
 
       // Verify each result
       results.forEach((result, index) => {
@@ -412,7 +413,7 @@ describe('CI/CD Pipeline Integration', () => {
       // Results should be independent
       expect(result1.success).toBe(true)
       expect(result1.issues).toHaveLength(0)
-      
+
       expect(result2.success).toBe(false)
       expect(result2.issues).toHaveLength(1)
       expect(result2.issues[0].message).toBe('Error in file 2')

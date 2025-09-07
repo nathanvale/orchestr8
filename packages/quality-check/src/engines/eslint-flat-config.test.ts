@@ -30,7 +30,7 @@ describe('ESLint Flat Config Detection', () => {
               'no-unused-vars': 'error'
             }
           }
-        ];`
+        ];`,
       )
 
       const testFile = path.join(tempDir, 'test.js')
@@ -57,7 +57,7 @@ describe('ESLint Flat Config Detection', () => {
               'no-console': 'warn'
             }
           }
-        ];`
+        ];`,
       )
 
       const testFile = path.join(tempDir, 'test.js')
@@ -85,7 +85,7 @@ describe('ESLint Flat Config Detection', () => {
               'semi': ['error', 'never']
             }
           }
-        ];`
+        ];`,
       )
 
       const testFile = path.join(tempDir, 'test.js')
@@ -112,7 +112,7 @@ describe('ESLint Flat Config Detection', () => {
               'no-unused-vars': 'error'
             }
           }
-        ];`
+        ];`,
       )
 
       const testFile = path.join(tempDir, 'test.ts')
@@ -144,7 +144,7 @@ describe('ESLint Flat Config Detection', () => {
               'no-unused-vars': 'off'
             }
           }
-        ];`
+        ];`,
       )
 
       const testFile = path.join(tempDir, 'code.test.js')
@@ -174,7 +174,7 @@ describe('ESLint Flat Config Detection', () => {
               'no-unused-vars': 'error'
             }
           }
-        ];`
+        ];`,
       )
 
       // Create a dist directory with a file that should be ignored
@@ -214,14 +214,14 @@ describe('ESLint Flat Config Detection', () => {
               'no-undef': 'error'
             }
           }
-        ];`
+        ];`,
       )
 
       const testFile = path.join(tempDir, 'test.js')
       fs.writeFileSync(
         testFile,
         `console.log(process.env.NODE_ENV);
-export const test = 1;`
+export const test = 1;`,
       )
 
       const result = await engine.check({
@@ -253,7 +253,7 @@ export const test = 1;`
       const configPath = path.join(tempDir, 'eslint.config.js')
       fs.writeFileSync(
         configPath,
-        `module.exports = "not an array";` // Invalid config
+        `module.exports = "not an array";`, // Invalid config
       )
 
       const testFile = path.join(tempDir, 'test.js')
@@ -282,7 +282,7 @@ export const test = 1;`
               'no-unused-vars': 'error'
             }
           }
-        ];`
+        ];`,
       )
 
       // Change to the temp directory
@@ -312,7 +312,7 @@ export const test = 1;`
               'no-unused-vars': 'error'
             }
           }
-        ];`
+        ];`,
       )
 
       const testFile = path.join(tempDir, 'test.md')
@@ -321,7 +321,7 @@ export const test = 1;`
         `# Test
 \`\`\`js
 const unused = 1;
-\`\`\``
+\`\`\``,
       )
 
       // This test verifies that processor configuration is accepted
@@ -349,14 +349,14 @@ const unused = 1;
               'no-unused-vars': 'error'
             }
           }
-        ];`
+        ];`,
       )
 
       const testFile = path.join(tempDir, 'test.js')
       fs.writeFileSync(
         testFile,
         `/* eslint-disable no-unused-vars */
-const unused = 1;`
+const unused = 1;`,
       )
 
       const result = await engine.check({
@@ -383,7 +383,7 @@ const unused = 1;`
               'no-unused-vars': 'error'
             }
           }
-        ];`
+        ];`,
       )
 
       const legacyConfigPath = path.join(tempDir, '.eslintrc.json')
@@ -391,9 +391,9 @@ const unused = 1;`
         legacyConfigPath,
         JSON.stringify({
           rules: {
-            'no-unused-vars': 'off'
-          }
-        })
+            'no-unused-vars': 'off',
+          },
+        }),
       )
 
       const testFile = path.join(tempDir, 'test.js')
@@ -422,7 +422,7 @@ const unused = 1;`
               'no-console': 'warn'
             }
           }
-        ];`
+        ];`,
       )
 
       // Create subdirectory with test file
