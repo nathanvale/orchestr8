@@ -43,7 +43,21 @@ export async function runClaudeHook(): Promise<void> {
     let payload: ClaudeCodePayload | undefined
 
     try {
-      payload = JSON.parse(input) as ClaudeCodePayload
+      if (!input || input.trim() === '') {
+        logger.warn('Empty stdin payload, exiting gracefully')
+        process.exit(ExitCodes.SUCCESS)
+        return
+      }
+      
+      const parsed = JSON.parse(input)
+      // Additional safety check for null/undefined parsed content
+      if (parsed === null || parsed === undefined) {
+        logger.warn('Null/undefined payload after parsing, exiting gracefully')  
+        process.exit(ExitCodes.SUCCESS)
+        return
+      }
+      
+      payload = parsed as ClaudeCodePayload
       logger.payloadReceived(payload)
       logger.payloadValidation(true)
     } catch (parseError) {
@@ -51,6 +65,7 @@ export async function runClaudeHook(): Promise<void> {
       logger.warn('Malformed JSON payload, exiting gracefully')
       // Silent exit for malformed payloads
       process.exit(ExitCodes.SUCCESS)
+      return
     }
 
     // Validate required fields (only if we have a valid payload)
@@ -61,15 +76,17 @@ export async function runClaudeHook(): Promise<void> {
         hasFilePath: payload?.tool_input ? !!payload.tool_input.file_path : false,
       })
       process.exit(ExitCodes.SUCCESS)
+      return // Additional safety return to satisfy TypeScript and prevent further execution
     }
 
-    // Only process supported operations
+    // Only process supported operations  
     if (!shouldProcessOperation(payload.tool_name)) {
       logger.debug('Skipping unsupported operation', {
         operation: payload.tool_name,
         supportedOps: ['Write', 'Edit', 'MultiEdit'],
       })
       process.exit(ExitCodes.SUCCESS)
+      return // Additional safety return
     }
 
     // Skip non-code files
@@ -79,6 +96,7 @@ export async function runClaudeHook(): Promise<void> {
         fileExtension: payload.tool_input.file_path.split('.').pop(),
       })
       process.exit(ExitCodes.SUCCESS)
+      return // Additional safety return
     }
 
     // Log hook started only after all skip checks pass

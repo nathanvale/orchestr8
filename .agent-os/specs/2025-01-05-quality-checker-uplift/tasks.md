@@ -27,13 +27,13 @@ This task list addresses skipped and failing tests in the quality checker packag
   - [x] 2.5 Update autopilot adapter to properly detect and block complexity issues
   - [x] 2.6 Verify all blocking behavior tests pass
 
-- [ ] 3. Fix Failing Unit Tests
-  - [ ] 3.1 Analyze quality-checker.unit.test.ts TypeScript error handling failure
-  - [ ] 3.2 Update error message expectations to match actual TypeScript output
-  - [ ] 3.3 Analyze claude.unit.test.ts invalid payload handling failures
-  - [ ] 3.4 Fix payload validation in claude facade to handle undefined gracefully
-  - [ ] 3.5 Add defensive checks for missing payload properties (tool_name, file_path)
-  - [ ] 3.6 Verify all unit tests pass
+- [x] 3. Fix Failing Unit Tests
+  - [x] 3.1 Analyze quality-checker.unit.test.ts TypeScript error handling failure
+  - [x] 3.2 Update error message expectations to match actual TypeScript output
+  - [x] 3.3 Analyze claude.unit.test.ts invalid payload handling failures
+  - [x] 3.4 Fix payload validation in claude facade to handle undefined gracefully
+  - [x] 3.5 Add defensive checks for missing payload properties (tool_name, file_path)
+  - [x] 3.6 Verify all unit tests pass
 
 - [ ] 4. Integration and Performance Validation
   - [ ] 4.1 Run full test suite to ensure no regressions
