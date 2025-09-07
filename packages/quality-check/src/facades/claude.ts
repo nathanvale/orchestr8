@@ -35,6 +35,83 @@ export async function runClaudeHook(): Promise<void> {
     return
   }
 
+  const input = await readStdin()
+  return runClaudeHookWithPayload(input)
+}
+
+/**
+ * Test-friendly version of runClaudeHook that accepts payload directly
+ * Returns results instead of calling process.exit for easier testing
+ */
+export async function runClaudeHookForTesting(
+  payloadInput: string,
+  options: { skipFileWrite?: boolean; tempDir?: string } = {},
+): Promise<{
+  exitCode: number
+  stdout: string
+  stderr: string
+  duration: number
+}> {
+  const startTime = Date.now()
+  let exitCode = 0
+  let stdout = ''
+  let stderr = ''
+
+  // Capture console output
+  const originalConsoleLog = console.log
+  const originalConsoleError = console.error
+  const originalProcessExit = process.exit
+
+  console.log = (message: unknown) => {
+    stdout += String(message) + '\n'
+  }
+  console.error = (message: unknown) => {
+    stderr += String(message) + '\n'
+  }
+  process.exit = ((code?: number) => {
+    exitCode = code || 0
+    throw new Error(`PROCESS_EXIT_${code || 0}`)
+  }) as typeof process.exit
+
+  try {
+    await runClaudeHookWithPayload(payloadInput, options)
+  } catch (error: unknown) {
+    if (error instanceof Error && error.message.startsWith('PROCESS_EXIT_')) {
+      // Expected process.exit call - extract exit code
+      exitCode = parseInt(error.message.replace('PROCESS_EXIT_', ''), 10) || 0
+    } else {
+      // Unexpected error
+      exitCode = 1
+      stderr += error instanceof Error ? error.message : 'Unknown error'
+    }
+  } finally {
+    // Restore original functions
+    console.log = originalConsoleLog
+    console.error = originalConsoleError
+    process.exit = originalProcessExit
+  }
+
+  return {
+    exitCode,
+    stdout,
+    stderr,
+    duration: Date.now() - startTime,
+  }
+}
+
+/**
+ * Core Claude hook logic extracted for reuse by both entry points
+ */
+async function runClaudeHookWithPayload(
+  input: string,
+  options: { skipFileWrite?: boolean; tempDir?: string } = {},
+): Promise<void> {
+  // Early exit if hook is disabled (but allow in test environment)
+  if (process.env.NODE_ENV !== 'test' && process.env.CLAUDE_HOOK_DISABLED === 'true') {
+    process.exit(ExitCodes.SUCCESS)
+    return
+  }
+
   const hookTimer = createTimer('hook-execution')
   const correlationId = logger.setCorrelationId()
 
@@ -44,13 +121,12 @@ export async function runClaudeHook(): Promise<void> {
   try {
     logger.debug('Hook started', { correlationId })
 
-    // Read and parse payload from stdin
-    const input = await readStdin()
+    // Use provided input instead of reading from stdin
     let payload: ClaudeCodePayload | undefined
 
     try {
       if (!input || input.trim() === '') {
-        logger.warn('Empty stdin payload, exiting gracefully')
+        logger.warn('Empty input payload, exiting gracefully')
         process.exit(ExitCodes.SUCCESS)
         return
       }
@@ -108,10 +184,11 @@ export async function runClaudeHook(): Promise<void> {
     // Log hook started only after all skip checks pass
     logger.hookStarted(payload.tool_name, payload.tool_input.file_path)
 
-    // For Write operations, write the file first (skip for test paths)
+    // For Write operations, write the file first (unless skipped for testing)
     if (
       payload.tool_name === 'Write' &&
       payload.tool_input.content &&
+      !options.skipFileWrite &&
       !payload.tool_input.file_path.startsWith('/test/')
     ) {
       const fs = await import('node:fs/promises')

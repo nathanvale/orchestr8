@@ -1,9 +1,10 @@
 import fs from 'node:fs/promises'
+import os from 'node:os'
 import path from 'node:path'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import { runClaudeHook } from '../facades/claude.js'
+import { runClaudeHookForTesting } from '../facades/claude.js'
 
-describe.skip('Claude Hook End-to-End Integration (Real - Deprecated)', () => {
+describe('Claude Hook End-to-End Integration (Real - Strategic)', () => {
   let testProjectDir: string
   let originalCwd: string
   let cleanupPaths: string[]
@@ -55,14 +56,14 @@ describe.skip('Claude Hook End-to-End Integration (Real - Deprecated)', () => {
       }
 
       // Act - Execute Claude hook via binary
-      const result = await executeClaudeHook(JSON.stringify(payload))
+      const result = await executeClaudeHook(JSON.stringify(payload), testProjectDir)
 
       // Assert - Hook should execute successfully
       expect(result.exitCode).toBe(0)
       expect(result.duration).toBeLessThan(2000) // Sub-2s requirement
     }, 5000)
 
-    test('should_handle_edit_operations_correctly', async () => {
+    test.skip('should_handle_edit_operations_correctly', async () => {
       // Arrange
       await setupTestProject(testProjectDir)
       const testFile = path.join(testProjectDir, 'src', 'component.tsx')
@@ -78,14 +79,14 @@ describe.skip('Claude Hook End-to-End Integration (Real - Deprecated)', () => {
       }
 
       // Act
-      const result = await executeClaudeHook(JSON.stringify(payload))
+      const result = await executeClaudeHook(JSON.stringify(payload), testProjectDir)
 
       // Assert
       expect(result.exitCode).toBe(0)
       expect(result.duration).toBeLessThan(3000)
     }, 5000)
 
-    test('should_handle_multi_edit_operations', async () => {
+    test.skip('should_handle_multi_edit_operations', async () => {
       // Arrange
       await setupTestProject(testProjectDir)
 
@@ -99,7 +100,7 @@ describe.skip('Claude Hook End-to-End Integration (Real - Deprecated)', () => {
       }
 
       // Act
-      const result = await executeClaudeHook(JSON.stringify(payload))
+      const result = await executeClaudeHook(JSON.stringify(payload), testProjectDir)
 
       // Assert
       expect(result.exitCode).toBe(0)
@@ -138,7 +139,7 @@ export function debounce<T extends (...args: any[]) => any>(
       }
 
       // Act
-      const result = await executeClaudeHook(JSON.stringify(authenticPayload))
+      const result = await executeClaudeHook(JSON.stringify(authenticPayload), testProjectDir)
 
       // Assert
       expect(result.exitCode).toBe(0)
@@ -146,7 +147,7 @@ export function debounce<T extends (...args: any[]) => any>(
       expect(result.duration).toBeLessThan(2000)
     }, 5000)
 
-    test('should_handle_complex_react_component_payload', async () => {
+    test.skip('should_handle_complex_react_component_payload', async () => {
       // Arrange - Complex React component similar to Claude Code output
       await setupTestProject(testProjectDir)
 
@@ -211,7 +212,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({
       }
 
       // Act
-      const result = await executeClaudeHook(JSON.stringify(reactComponentPayload))
+      const result = await executeClaudeHook(JSON.stringify(reactComponentPayload), testProjectDir)
 
       // Assert
       expect(result.exitCode).toBe(0)
@@ -220,7 +221,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({
   })
 
   describe('Auto-fixable issues validation', () => {
-    test.skip('should_silently_fix_formatting_issues', async () => {
+    test('should_silently_fix_formatting_issues', async () => {
       // Arrange - Code with formatting issues that should be auto-fixed
       await setupTestProject(testProjectDir)
 
@@ -238,7 +239,7 @@ return"world"
       }
 
       // Act
-      const result = await executeClaudeHook(JSON.stringify(payload))
+      const result = await executeClaudeHook(JSON.stringify(payload), testProjectDir)
 
       // Assert - Should exit silently (0) after auto-fixing
       expect(result.exitCode).toBe(0)
@@ -269,7 +270,7 @@ export const Component = () => {
       }
 
       // Act
-      const result = await executeClaudeHook(JSON.stringify(payload))
+      const result = await executeClaudeHook(JSON.stringify(payload), testProjectDir)
 
       // Assert
       expect(result.exitCode).toBe(0)
@@ -279,7 +280,7 @@ export const Component = () => {
   })
 
   describe('Blocking behavior for complex issues', () => {
-    test.skip('should_block_for_type_safety_issues', async () => {
+    test('should_block_for_type_safety_issues', async () => {
       // Arrange - Code with type safety issues that require human judgment
       await setupTestProject(testProjectDir)
 
@@ -296,7 +297,7 @@ export const Component = () => {
       }
 
       // Act
-      const result = await executeClaudeHook(JSON.stringify(payload))
+      const result = await executeClaudeHook(JSON.stringify(payload), testProjectDir)
 
       // Assert - Should block (exit code 2) for human-required issues
       expect(result.exitCode).toBe(2)
@@ -359,7 +360,7 @@ export const Component = () => {
       }
 
       // Act
-      const result = await executeClaudeHook(JSON.stringify(payload))
+      const result = await executeClaudeHook(JSON.stringify(payload), testProjectDir)
 
       // Assert - Should block for complexity issues
       expect(result.exitCode).toBe(2)
@@ -383,7 +384,7 @@ export const Component = () => {
 
       // Act
       const startTime = Date.now()
-      const result = await executeClaudeHook(JSON.stringify(payload))
+      const result = await executeClaudeHook(JSON.stringify(payload), testProjectDir)
       const endTime = Date.now()
       const actualDuration = endTime - startTime
 
@@ -393,7 +394,7 @@ export const Component = () => {
       expect(result.exitCode).toBe(0)
     }, 3000)
 
-    test('should_handle_large_files_efficiently', async () => {
+    test.skip('should_handle_large_files_efficiently', async () => {
       // Arrange - Large file content
       await setupTestProject(testProjectDir)
 
@@ -411,7 +412,7 @@ export const Component = () => {
       }
 
       // Act
-      const result = await executeClaudeHook(JSON.stringify(payload))
+      const result = await executeClaudeHook(JSON.stringify(payload), testProjectDir)
 
       // Assert
       expect(result.duration).toBeLessThan(2000)
@@ -420,7 +421,7 @@ export const Component = () => {
   })
 
   describe('Error handling and edge cases', () => {
-    test('should_handle_non_existent_file_operations_gracefully', async () => {
+    test.skip('should_handle_non_existent_file_operations_gracefully', async () => {
       // Arrange
       await setupTestProject(testProjectDir)
 
@@ -434,14 +435,14 @@ export const Component = () => {
       }
 
       // Act
-      const result = await executeClaudeHook(JSON.stringify(payload))
+      const result = await executeClaudeHook(JSON.stringify(payload), testProjectDir)
 
       // Assert - Should exit gracefully, not crash
       expect([0, 1]).toContain(result.exitCode) // Either success or controlled failure
       expect(result.duration).toBeLessThan(2000)
     }, 5000)
 
-    test('should_skip_non_code_files_silently', async () => {
+    test.skip('should_skip_non_code_files_silently', async () => {
       // Arrange
       await setupTestProject(testProjectDir)
 
@@ -454,7 +455,7 @@ export const Component = () => {
       }
 
       // Act
-      const result = await executeClaudeHook(JSON.stringify(payload))
+      const result = await executeClaudeHook(JSON.stringify(payload), testProjectDir)
 
       // Assert - Should skip silently
       expect(result.exitCode).toBe(0)
@@ -499,86 +500,219 @@ async function setupTestProject(projectDir: string): Promise<void> {
   await fs.writeFile(path.join(projectDir, 'tsconfig.json'), JSON.stringify(tsConfig, null, 2))
 }
 
-async function executeClaudeHook(payload: string): Promise<{
+async function executeClaudeHook(
+  payload: string,
+  projectDir: string,
+): Promise<{
   exitCode: number
   stdout: string
   stderr: string
   duration: number
 }> {
-  const startTime = Date.now()
+  // Use the new test-friendly entry point
+  return await runClaudeHookForTesting(payload, {
+    skipFileWrite: false,
+    tempDir: projectDir,
+  })
+}
 
-  // Mock stdin for the Claude hook to read from
-  const originalStdin = process.stdin
-  const mockStdin = {
-    isTTY: false,
-    setEncoding: vi.fn(),
-    on: vi.fn((event: string, handler: (data?: any) => void) => {
-      if (event === 'data') {
-        // Immediately provide the payload
-        setTimeout(() => handler(payload), 0)
-      } else if (event === 'end') {
-        // Signal end of input
-        setTimeout(() => handler(), 10)
-      }
-    }),
-    removeAllListeners: vi.fn(),
-  }
+// Environment variable to control test execution: INTEGRATION_TEST_MODE=real|mocked|both
+const shouldRunRealTests =
+  process.env.INTEGRATION_TEST_MODE === 'real' ||
+  process.env.INTEGRATION_TEST_MODE === 'both' ||
+  process.env.CI === 'true'
 
-  // Mock stdout and stderr to capture output
-  let stdout = ''
-  let stderr = ''
-  const originalStdoutWrite = process.stdout.write
-  const originalStderrWrite = process.stderr.write
-  const originalExit = process.exit
-  let exitCode = 0
+// Improved Real Integration Tests - Strategic subset with better infrastructure
+const describeReal = shouldRunRealTests ? describe : describe.skip
 
-  process.stdout.write = vi.fn((chunk: any) => {
-    stdout += chunk.toString()
-    return true
-  }) as any
+describeReal('Claude Hook End-to-End Integration (Real - Optimized)', () => {
+  let testProjectDir: string
+  let cleanupPaths: string[]
 
-  process.stderr.write = vi.fn((chunk: any) => {
-    stderr += chunk.toString()
-    return true
-  }) as any
+  beforeEach(async () => {
+    vi.clearAllMocks()
+    cleanupPaths = []
 
-  process.exit = vi.fn((code?: number) => {
-    exitCode = code || 0
-    throw new Error('Process exit called')
-  }) as any
-
-  Object.defineProperty(process, 'stdin', {
-    value: mockStdin,
-    configurable: true,
+    // Create unique temp directory using OS temp dir
+    const uniqueId = `claude-test-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+    testProjectDir = path.join(os.tmpdir(), uniqueId)
+    await fs.mkdir(testProjectDir, { recursive: true })
+    cleanupPaths.push(testProjectDir)
   })
 
-  try {
-    // Run the Claude hook directly using the API
-    await runClaudeHook()
-  } catch (error: any) {
-    // Check if it's our controlled exit
-    if (error.message !== 'Process exit called') {
-      exitCode = error.exitCode || error.status || 2
-      if (error.message) {
-        stderr += error.message
+  afterEach(async () => {
+    // Reliable cleanup using try-catch for each path
+    for (const cleanupPath of cleanupPaths) {
+      try {
+        await fs.rm(cleanupPath, { recursive: true, force: true })
+      } catch {
+        // Ignore cleanup errors - temp files will be cleaned by OS eventually
       }
     }
-  } finally {
-    // Restore original functions
-    process.stdout.write = originalStdoutWrite
-    process.stderr.write = originalStderrWrite
-    process.exit = originalExit
-    Object.defineProperty(process, 'stdin', {
-      value: originalStdin,
-      configurable: true,
+  })
+
+  // Helper function using the improved test infrastructure
+  async function executeImprovedClaudeHook(
+    payload: string,
+    options: {
+      setupProject?: boolean
+      skipFileWrite?: boolean
+    } = {},
+  ): Promise<{
+    exitCode: number
+    stdout: string
+    stderr: string
+    duration: number
+  }> {
+    // Setup basic project structure if requested
+    if (options.setupProject) {
+      await setupMinimalTestProject(testProjectDir)
+    }
+
+    return runClaudeHookForTesting(payload, {
+      skipFileWrite: options.skipFileWrite,
+      tempDir: testProjectDir,
     })
   }
 
-  const endTime = Date.now()
-  return {
-    exitCode,
-    stdout,
-    stderr,
-    duration: endTime - startTime,
+  describe('Critical Integration Scenarios', () => {
+    test('should_execute_complete_workflow_for_write_operation', async () => {
+      // Arrange - Simple Write operation payload
+      const payload = {
+        tool_name: 'Write',
+        tool_input: {
+          file_path: path.join(testProjectDir, 'src', 'simple.ts'),
+          content: 'export const test = () => console.log("hello")',
+        },
+      }
+
+      // Act - Execute improved Claude hook
+      const result = await executeImprovedClaudeHook(JSON.stringify(payload), {
+        setupProject: true,
+      })
+
+      // Assert - Should complete successfully and reasonably fast
+      expect(result.exitCode).toBe(0)
+      expect(result.duration).toBeLessThan(2000) // 2s timeout for real operations
+      expect(result.stderr).toBe('') // No error output for successful operations
+    }, 3000)
+
+    test('should_silently_fix_formatting_issues', async () => {
+      // Arrange - Code with formatting issues that ESLint/Prettier can auto-fix
+      const badlyFormattedCode = `export const test=()=>{
+console.log("hello")
+return"world"
+}`
+
+      const payload = {
+        tool_name: 'Write',
+        tool_input: {
+          file_path: path.join(testProjectDir, 'src', 'badly-formatted.ts'),
+          content: badlyFormattedCode,
+        },
+      }
+
+      // Act
+      const result = await executeImprovedClaudeHook(JSON.stringify(payload), {
+        setupProject: true,
+      })
+
+      // Assert - Should exit silently (0) after auto-fixing
+      expect(result.exitCode).toBe(0)
+      expect(result.stderr).toBe('') // No error output for auto-fixed issues
+      expect(result.duration).toBeLessThan(2000)
+    }, 3000)
+
+    test('should_block_for_type_safety_issues', async () => {
+      // Arrange - Code with TypeScript errors that require manual intervention
+      const unsafeCode = `export function processData(data: any): string {
+  return data.someProperty.anotherProperty
+}`
+
+      const payload = {
+        tool_name: 'Write',
+        tool_input: {
+          file_path: path.join(testProjectDir, 'src', 'unsafe.ts'),
+          content: unsafeCode,
+        },
+      }
+
+      // Act
+      const result = await executeImprovedClaudeHook(JSON.stringify(payload), {
+        setupProject: true,
+      })
+
+      // Assert - Should block (exit code 2) for human-required issues
+      expect(result.exitCode).toBe(2)
+      expect(result.stderr).toContain('Quality issues require manual intervention')
+      expect(result.duration).toBeLessThan(2000)
+    }, 3000)
+
+    test('should_complete_execution_under_performance_threshold', async () => {
+      // Arrange - Performance validation test
+      const payload = {
+        tool_name: 'Write',
+        tool_input: {
+          file_path: path.join(testProjectDir, 'src', 'performance-test.ts'),
+          content: 'export const perfTest = () => "fast"',
+        },
+      }
+
+      // Act - Measure actual execution time
+      const startTime = Date.now()
+      const result = await executeImprovedClaudeHook(JSON.stringify(payload), {
+        setupProject: true,
+      })
+      const actualDuration = Date.now() - startTime
+
+      // Assert - Performance requirements
+      expect(actualDuration).toBeLessThan(2000) // Real-world performance threshold
+      expect(result.duration).toBeLessThan(2000)
+      expect(result.exitCode).toBe(0)
+    }, 3000)
+  })
+})
+
+// Minimal test project setup optimized for speed
+async function setupMinimalTestProject(projectDir: string): Promise<void> {
+  // Create basic structure
+  await fs.mkdir(path.join(projectDir, 'src'), { recursive: true })
+
+  // Minimal package.json
+  const packageJson = {
+    name: 'claude-test-project',
+    version: '1.0.0',
+    type: 'module',
+    dependencies: {
+      react: '^18.0.0',
+    },
   }
+  await fs.writeFile(path.join(projectDir, 'package.json'), JSON.stringify(packageJson, null, 2))
+
+  // Minimal tsconfig.json that works with temp directories
+  const tsConfig = {
+    compilerOptions: {
+      target: 'ES2020',
+      module: 'ESNext',
+      moduleResolution: 'bundler',
+      strict: true,
+      jsx: 'react-jsx',
+      esModuleInterop: true,
+      skipLibCheck: true,
+      allowJs: true,
+      noEmit: true,
+    },
+    include: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx'],
+    exclude: ['node_modules'],
+  }
+  await fs.writeFile(path.join(projectDir, 'tsconfig.json'), JSON.stringify(tsConfig, null, 2))
+
+  // Create a basic .eslintrc.json to avoid path issues
+  const eslintConfig = {
+    extends: ['@repo/eslint-config/library.js'],
+    parserOptions: {
+      project: './tsconfig.json',
+    },
+  }
+  await fs.writeFile(path.join(projectDir, '.eslintrc.json'), JSON.stringify(eslintConfig, null, 2))
 }
