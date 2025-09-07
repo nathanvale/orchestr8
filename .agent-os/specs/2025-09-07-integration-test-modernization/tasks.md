@@ -22,13 +22,13 @@ Focus on Engine Configuration Tests first for maximum impact.
   - [x] 1.5 Create baseline metrics (current failure rate, execution times,
         setup complexity)
 
-- [ ] 2. Modern Architecture Design & Setup
-  - [ ] 2.1 Write tests for new fixture factory patterns using Vitest
-  - [ ] 2.2 Create reusable test utilities with in-memory mocking (vi.mock())
-  - [ ] 2.3 Design direct API call wrappers replacing CLI/binary execution
-  - [ ] 2.4 Implement standardized assertion helpers for engine results
-  - [ ] 2.5 Verify architecture supports <100ms execution target per test
-  - [ ] 2.6 Validate fixtures integrate with existing Vitest configuration
+- [x] 2. Modern Architecture Design & Setup
+  - [x] 2.1 Write tests for new fixture factory patterns using Vitest
+  - [x] 2.2 Create reusable test utilities with in-memory mocking (vi.mock())
+  - [x] 2.3 Design direct API call wrappers replacing CLI/binary execution
+  - [x] 2.4 Implement standardized assertion helpers for engine results
+  - [x] 2.5 Verify architecture supports <100ms execution target per test
+  - [x] 2.6 Validate fixtures integrate with existing Vitest configuration
 
 - [ ] 3. Engine Configuration Tests Rewrite (Priority: 8 tests)
   - [ ] 3.1 Write modern test patterns for ESLint flat config tests (2 tests)
