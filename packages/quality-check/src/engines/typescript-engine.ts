@@ -2,9 +2,9 @@ import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
 import * as ts from 'typescript'
-import { FileError, ToolMissingError } from '../core/errors'
-import type { CancellationToken } from '../core/timeout-manager'
-import type { CheckerResult, Issue } from '../types/issue-types'
+import { FileError, ToolMissingError } from '../core/errors.js'
+import type { CancellationToken } from '../core/timeout-manager.js'
+import type { CheckerResult, Issue } from '../types/issue-types.js'
 
 /**
  * TypeScript engine configuration

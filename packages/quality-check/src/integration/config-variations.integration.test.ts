@@ -191,7 +191,7 @@ describe('ESLint Config Variations Integration', () => {
 
       // Assert - Should report TypeScript strict mode errors
       expect(result.exitCode).toBe(2) // Should block for type safety issues
-      expect(result.stderr).toContain('quality')
+      expect(result.stderr).toContain('Quality issues require manual intervention')
       expect(result.duration).toBeLessThan(2000)
     }, 5000)
 
@@ -223,7 +223,7 @@ describe('ESLint Config Variations Integration', () => {
 
       // Assert - Should report implicit any errors
       expect(result.exitCode).toBe(2)
-      expect(result.stderr).toContain('quality')
+      expect(result.stderr).toContain('Quality issues require manual intervention')
       expect(result.duration).toBeLessThan(2000)
     }, 5000)
 

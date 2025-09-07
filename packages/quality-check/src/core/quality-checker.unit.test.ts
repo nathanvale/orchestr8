@@ -60,7 +60,7 @@ src/app.ts(15,10): error TS2322: Type 'string' is not assignable to type 'number
 
       // Assert
       expect(result.checkers.typescript?.success).toBe(false)
-      expect(result.checkers.typescript?.errors).toContain('TypeScript compilation failed')
+      expect(result.checkers.typescript?.errors).toContain('Command failed: npx tsc --noEmit')
     })
   })
 

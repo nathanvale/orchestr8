@@ -4,7 +4,7 @@
 
 import { describe, expect, it, beforeEach } from 'vitest'
 import type { Issue } from '../types/issue-types.js'
-import { OutputFormatter, OutputMode, FormatOptions } from './output-formatter.js'
+import { OutputFormatter, OutputMode } from './output-formatter.js'
 
 describe('OutputFormatter', () => {
   let formatter: OutputFormatter

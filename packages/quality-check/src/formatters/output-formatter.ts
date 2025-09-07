@@ -358,19 +358,19 @@ export class OutputFormatter {
           if (!output.trim().startsWith('<') || !output.trim().endsWith('>')) {
             return false
           }
-          
+
           // Extract tag names from opening and closing tags, excluding self-closing tags
-          const tagMatches = output.match(/<\/?([^>\s\/]+)[^>]*>/g) || []
+          const tagMatches = output.match(/<\/?([^>\s/]+)[^>]*>/g) || []
           const stack: string[] = []
-          
+
           for (const match of tagMatches) {
             // Skip self-closing tags
             if (match.endsWith('/>')) continue
-            
+
             // Extract tag name
             const tagName = match.match(/<\/?([^>\s]+)/)?.[1]
             if (!tagName) continue
-            
+
             if (match.startsWith('</')) {
               // Closing tag
               const expected = stack.pop()
@@ -382,7 +382,7 @@ export class OutputFormatter {
               stack.push(tagName)
             }
           }
-          
+
           return stack.length === 0
         } catch {
           return false

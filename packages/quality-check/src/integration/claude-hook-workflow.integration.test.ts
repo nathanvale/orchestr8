@@ -298,9 +298,9 @@ export const Component = () => {
       // Act
       const result = await executeClaudeHook(JSON.stringify(payload))
 
-      // Assert - Should block (exit code 1) for human-required issues
+      // Assert - Should block (exit code 2) for human-required issues
       expect(result.exitCode).toBe(2)
-      expect(result.stderr).toContain('quality') // Should contain quality check feedback
+      expect(result.stderr).toContain('Quality issues require manual intervention')
       expect(result.duration).toBeLessThan(2000)
     }, 5000)
 
@@ -363,7 +363,7 @@ export const Component = () => {
 
       // Assert - Should block for complexity issues
       expect(result.exitCode).toBe(2)
-      expect(result.stderr).toContain('complexity') // Should mention complexity
+      expect(result.stderr).toContain('Quality issues require manual intervention')
       expect(result.duration).toBeLessThan(2000)
     }, 5000)
   })
