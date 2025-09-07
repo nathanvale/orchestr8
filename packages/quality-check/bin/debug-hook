@@ -2,6 +2,11 @@
 # Debug wrapper for Claude Code quality check hook
 # Since Claude doesn't provide proper stdin JSON, we'll work around it
 
+# Check if hook is disabled
+if [ "$CLAUDE_HOOK_DISABLED" = "true" ]; then
+    exit 0
+fi
+
 cd /Users/nathanvale/code/bun-changesets-template
 
 # Log the hook execution

@@ -1,0 +1,9 @@
+{
+  "name": "typescript-test-project",
+  "version": "1.0.0",
+  "type": "module",
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "@types/node": "^20.0.0"
+  }
+}

@@ -29,6 +29,12 @@ interface ClaudeCodePayload {
 }
 
 export async function runClaudeHook(): Promise<void> {
+  // Early exit if hook is disabled
+  if (process.env.CLAUDE_HOOK_DISABLED === 'true') {
+    process.exit(ExitCodes.SUCCESS)
+    return
+  }
+
   const hookTimer = createTimer('hook-execution')
   const correlationId = logger.setCorrelationId()
 

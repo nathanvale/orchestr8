@@ -9,6 +9,11 @@
 import { runClaudeHook } from '../dist/facades/claude.js'
 
 async function main() {
+  // Check if hook is disabled via environment variable
+  if (process.env.CLAUDE_HOOK_DISABLED === 'true') {
+    process.exit(0)
+  }
+
   try {
     // Call existing Claude facade with proper environment
     await runClaudeHook()

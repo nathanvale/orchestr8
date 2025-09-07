@@ -1,4 +1,4 @@
-import { describe, expect, test, vi, beforeEach } from 'vitest'
+import { describe, expect, test, vi, beforeEach, afterEach } from 'vitest'
 import { execSync } from 'node:child_process'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -9,6 +9,94 @@ const CLAUDE_HOOK_BIN = path.resolve(__dirname, '../../bin/claude-hook')
 describe('bin/claude-hook', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+  })
+
+  afterEach(() => {
+    delete process.env.CLAUDE_HOOK_DISABLED
+  })
+
+  test('should_immediately_exit_when_CLAUDE_HOOK_DISABLED_is_true', () => {
+    // Arrange: Valid payload but hook disabled
+    const payload = JSON.stringify({
+      tool_name: 'Write',
+      tool_input: {
+        file_path: 'test.js',
+        content: 'const test = "should not process";',
+      },
+    })
+
+    // Act: Execute with CLAUDE_HOOK_DISABLED=true
+    const result = execSync(
+      `echo '${payload}' | CLAUDE_HOOK_DISABLED=true node "${CLAUDE_HOOK_BIN}"`,
+      {
+        encoding: 'utf8',
+        timeout: 1000,
+        stdio: 'pipe',
+      },
+    )
+
+    // Assert: Should exit immediately without processing
+    expect(result).toBe('')
+  })
+
+  test('should_process_normally_when_CLAUDE_HOOK_DISABLED_is_false', () => {
+    // Arrange: Valid payload with hook explicitly enabled
+    const payload = JSON.stringify({
+      tool_name: 'Write',
+      tool_input: {
+        file_path: 'test.js',
+        content: 'export const test = "hello";\n',
+      },
+    })
+
+    // Act: Execute with CLAUDE_HOOK_DISABLED=false
+    try {
+      const result = execSync(
+        `echo '${payload}' | CLAUDE_HOOK_DISABLED=false CLAUDE_HOOK_SILENT=true node "${CLAUDE_HOOK_BIN}"`,
+        {
+          encoding: 'utf8',
+          timeout: 2000,
+          stdio: 'pipe',
+        },
+      )
+
+      // Assert: Should process normally
+      expect(result).toBe('')
+    } catch (error) {
+      const execError = error as { status?: number }
+      // Accept either 0 (no issues) or 2 (quality issues found)
+      expect([0, 2]).toContain(execError.status)
+    }
+  })
+
+  test('should_process_normally_when_CLAUDE_HOOK_DISABLED_is_not_set', () => {
+    // Arrange: Valid payload without environment variable
+    const payload = JSON.stringify({
+      tool_name: 'Write',
+      tool_input: {
+        file_path: 'test.js',
+        content: 'export const test = "hello";\n',
+      },
+    })
+
+    // Act: Execute without CLAUDE_HOOK_DISABLED
+    try {
+      const result = execSync(
+        `echo '${payload}' | CLAUDE_HOOK_SILENT=true node "${CLAUDE_HOOK_BIN}"`,
+        {
+          encoding: 'utf8',
+          timeout: 2000,
+          stdio: 'pipe',
+        },
+      )
+
+      // Assert: Should process normally
+      expect(result).toBe('')
+    } catch (error) {
+      const execError = error as { status?: number }
+      // Accept either 0 (no issues) or 2 (quality issues found)
+      expect([0, 2]).toContain(execError.status)
+    }
   })
 
   test('should_execute_successfully_with_valid_payload', () => {
