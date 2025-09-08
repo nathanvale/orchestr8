@@ -14,7 +14,9 @@ describe('Claude Hook End-to-End Integration (Real - Strategic)', () => {
     cleanupPaths = []
     originalCwd = process.cwd()
 
-    // Create temporary test project directory
+    // Create temporary test project directory in OS temp location
+    // Uses os.tmpdir() to avoid polluting project root with test artifacts
+    // Unique naming with process.pid and Date.now() prevents conflicts
     testProjectDir = path.join(
       os.tmpdir(),
       'quality-check-tests',
@@ -26,10 +28,12 @@ describe('Claude Hook End-to-End Integration (Real - Strategic)', () => {
   })
 
   afterEach(async () => {
-    // Restore original working directory first
+    // IMPORTANT: Restore original working directory first
+    // This prevents issues with removing the current working directory
     process.chdir(originalCwd)
 
-    // Cleanup temp directories with robust error handling
+    // Robust cleanup mechanism with multiple fallback strategies
+    // Ensures temp directories are cleaned even if tests fail
     for (const cleanupPath of cleanupPaths) {
       try {
         await fs.rm(cleanupPath, { recursive: true, force: true })
@@ -39,12 +43,12 @@ describe('Claude Hook End-to-End Integration (Real - Strategic)', () => {
           const fsSync = await import('node:fs')
           fsSync.rmSync(cleanupPath, { recursive: true, force: true })
         } catch {
-          // Ignore cleanup errors if both methods fail
+          // Ignore cleanup errors - OS will eventually clean temp files
         }
       }
     }
 
-    // Verify cleanup completed
+    // Verify cleanup completed (helps detect cleanup issues)
     for (const cleanupPath of cleanupPaths) {
       try {
         await fs.access(cleanupPath)
@@ -546,7 +550,9 @@ describeReal('Claude Hook End-to-End Integration (Real - Optimized)', () => {
     vi.clearAllMocks()
     cleanupPaths = []
 
-    // Create unique temp directory using OS temp dir
+    // Create unique temp directory using OS temp location
+    // Pattern: claude-test-{pid}-{timestamp}-{random}
+    // This ensures no conflicts even with parallel test execution
     const uniqueId = `claude-test-${process.pid}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
     testProjectDir = path.join(os.tmpdir(), 'quality-check-tests', uniqueId)
     await fs.mkdir(testProjectDir, { recursive: true })

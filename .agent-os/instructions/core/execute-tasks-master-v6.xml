@@ -365,51 +365,29 @@
     <step3_git_setup>
       <title>Git Branch Setup via Workflow Agent - MANDATORY DELEGATION</title>
       <delegation_pattern>MANDATORY - NO BYPASS ALLOWED</delegation_pattern>
-      
-      <step3a_capture_pre_state>
-        <tool>Bash</tool>
-        <command>git branch --show-current</command>
-        <store_as>PRE_DELEGATION_BRANCH</store_as>
-        <description>Capture branch state before mandatory delegation</description>
-      </step3a_capture_pre_state>
-      
-      <step3b_mandatory_delegate>
-        <title>MANDATORY Git Workflow Delegation - NO BYPASS ALLOWED</title>
+      <step3a_mandatory_delegate>
+        <title>Git Workflow Delegation</title>
         <tool>Task</tool>
         <subagent_type>git-workflow</subagent_type>
-        <description>MANDATORY: Setup git branch for spec - ALWAYS delegate regardless of current branch</description>
+        <description>Setup git branch for spec - ALWAYS delegate regardless of current branch</description>
         <prompt>
           Create feature branch for spec: ${SPEC_FOLDER}
-          
-          MANDATORY DELEGATION: Execute this regardless of current branch state.
           Just branch setup - no commits or PRs.
         </prompt>
         <mandatory>true</mandatory>
         <bypass_allowed>false</bypass_allowed>
         <wait_for_completion>true</wait_for_completion>
-      </step3b_mandatory_delegate>
-      
-      <step3c_verify_delegation_occurred>
-        <tool>Bash</tool>
-        <command>git branch --show-current</command>
-        <store_as>POST_DELEGATION_BRANCH</store_as>
-        <description>Verify delegation completed</description>
-      </step3c_verify_delegation_occurred>
-      
-      <step3d_architectural_compliance_check>
+      </step3a_mandatory_delegate>
+      <step3b_architectural_compliance_check>
         <cognitive_verification>
           VERIFY: Git workflow agent was actually invoked
-          VERIFY: Branch state may have changed through delegation
           CONFIRM: No independent git decisions were made
         </cognitive_verification>
         <output>
-          ✅ Architectural Compliance: Git delegation completed
-          - Pre-delegation: ${PRE_DELEGATION_BRANCH}
-          - Post-delegation: ${POST_DELEGATION_BRANCH}
-          - Delegation: COMPLETED via git-workflow agent
-          - Spec: ${SPEC_FOLDER}
+          ✅ Git setup for task execution
+          The branch name returned from the git-workflow agent
         </output>
-      </step3d_architectural_compliance_check>
+      </step3b_architectural_compliance_check>
     </step3_git_setup>
 
     <step4_todo_initialization>
@@ -658,7 +636,6 @@ Co-Authored-By: Claude <noreply@anthropic.com>"</command>
     <rule10>MUST complete all TARGET_TASKS before finishing</rule10>
     <rule11>MUST ALWAYS delegate ALL git operations to git-workflow agent - NO EXCEPTIONS regardless of current branch state</rule11>
     <rule12>NEVER make independent git decisions - delegation is MANDATORY architectural requirement</rule12>
-    <rule13>MUST verify delegation actually occurred with pre/post state capture</rule13>
   </enforcement_rules>
 
   <usage_examples>
