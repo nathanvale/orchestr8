@@ -19,7 +19,8 @@
       <from>@context-fetcher</from>
       <to>
         <tool>Read</tool>
-        <instruction>USE Read TOOL DIRECTLY ON SPECIFIED FILES</instruction>
+        <instruction>USE Read TOOL DIRECTLY ON SPECIFIED FILES IN .agent-os/ DIRECTORY ONLY</instruction>
+        <path_restriction>ONLY access files within .agent-os/ directory</path_restriction>
       </to>
     </mapping>
     

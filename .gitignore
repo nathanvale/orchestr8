@@ -95,6 +95,19 @@ test-temp/
 *.bak
 *.backup
 
+# Debug/temporary test files
+test-*.sh
+test-*.js
+test-*.ts
+!**/test/**/*.js
+!**/tests/**/*.js
+!**/*.test.js
+!**/*.spec.js
+!**/test/**/*.ts
+!**/tests/**/*.ts
+!**/*.test.ts
+!**/*.spec.ts
+
 # Package files
 *.tgz
 *.tar.gz

@@ -80,7 +80,8 @@
     <instruction>ALWAYS USE DIRECT TOOLS INSTEAD OF SUBAGENT INVOCATION</instruction>
     <mapping>
       <from>@context-fetcher</from>
-      <to>Read TOOL</to>
+      <to>Read TOOL - RESTRICTED TO .agent-os/ DIRECTORY ONLY</to>
+      <path_restriction>ONLY access files within .agent-os/ directory</path_restriction>
     </mapping>
     <mapping>
       <from>@git-workflow</from>

@@ -161,28 +161,47 @@
   <phase_1_setup>
     <title>PHASE 1 - PRE-EXECUTION SETUP</title>
 
-    <instructions>
-  <instruction>PREPARE ENVIRONMENT FOR TARGET_TASKS EXECUTION</instruction>
+    <instruction>PREPARE ENVIRONMENT FOR TARGET_TASKS EXECUTION</instruction>
 
-    </instructions>
-  
+    <step1_context_analysis>
+      <title>Context Analysis and Code Review - MANDATORY DELEGATIONS</title>
+      <delegation_pattern>MANDATORY - NO BYPASS ALLOWED</delegation_pattern>
 
-    <step1_detailed_task_analysis>
-      <title>Detailed Task Analysis</title>
-      <cognitive_processing>
-        For each task in TARGET_TASKS, extract:
-        1. Task ID (e.g., "2.2")
-        2. Full description
-        3. Any mentioned files or components
-        4. Dependencies or prerequisites
-        5. Success criteria
-      </cognitive_processing>
-      <store_as>TASK_DETAILS</store_as>
-      <output>
-        ${TASK_DETAILS}
-      </output>
-    </step1_detailed_task_analysis>
+      <!-- Claude Code Review Delegation - First Step -->
+      <step1a_context_fetcher_delegate>
+        <title>Claude Code Review Delegation</title>
+        <tool>Task</tool>
+        <subagent_type>context-fetcher</subagent_type>
+        <description>Gather context for task understanding</description>
+        <prompt>
+          Use the context-fetcher subagent to gather minimal context for task
+          understanding by always loading spec tasks.md, and conditionally loading
+          @.agent-os/product/mission-lite.md, spec-lite.md, and
+          sub-specs/technical-spec.md if not already in context.
+        </prompt>
+        <instructions>
+          ACTION: Use context-fetcher subagent to retrieve files using @ notation:
+          - REQUEST: "@.agent-os/product/mission-lite.md - product pitch section"
+          - REQUEST: "@.agent-os/specs/*/spec-lite.md - specification summary"
+          - REQUEST: "@.agent-os/specs/*/sub-specs/technical-spec.md - technical approach"
+          PROCESS: Extract and format returned content
+        </instructions>
+        <mandatory>true</mandatory>
+        <bypass_allowed>false</bypass_allowed>
+        <wait_for_completion>true</wait_for_completion>
+      </step1a_context_fetcher_delegate>
 
+      <step1b_context_analysis_compliance_check>
+        <cognitive_verification>
+          VERIFY: Context fetcher agent was actually invoked
+          CONFIRM: Review feedback was received and processed
+        </cognitive_verification>
+        <output>
+          ✅  Context analysis completed
+          echo what the fetcher returned
+        </output>
+      </step1b_context_analysis_compliance_check>
+    </step1_context_analysis>
     <step2_context_loading>
       <title>Load Relevant Context</title>
       <parallel_execution>true</parallel_execution>
