@@ -52,162 +52,56 @@
        ======================================================================================= -->
 
   <phase_0_spec_selection>
-    <title>SPEC SELECTION - Interactive and Intelligent</title>
+    <title>Spec Selection Phase</title>
     
-    <step1_evaluate_input>
-      <title>Evaluate User Input</title>
-      <cognitive_analysis>
-        ANALYZE spec_input parameter:
-        - IF null/empty: Set MODE = "interactive"
-        - IF contains "/" or starts with ".": Set MODE = "path"
-        - ELSE: Set MODE = "fuzzy"
-      </cognitive_analysis>
-      <store_as>SELECTION_MODE</store_as>
-    </step1_evaluate_input>
-
-    <step2_discover_available_specs>
-      <title>Discover Available Specs</title>
+    <step1_discover_specs>
       <tool>Bash</tool>
       <command>find .agent-os/specs -type d -maxdepth 1 -name "*-*" | sort -r</command>
-      <store_as>AVAILABLE_SPECS</store_as>
-      <description>Get all spec directories sorted by date (newest first)</description>
-    </step2_discover_available_specs>
-
-    <step3_handle_selection_mode>
-      <title>Handle Selection Based on Mode</title>
-      
-      <if_mode_interactive>
-        <condition>SELECTION_MODE == "interactive"</condition>
-        <action>
-          <prompt_user>
-            <message>
-              📋 Which spec would you like to work on?
-              
-              Available specs:
-              ${AVAILABLE_SPECS_FORMATTED}
-              
-              You can enter:
-              - A number (1-N) to select from the list
-              - A partial name like "quality checker" 
-              - A full path
-            </message>
-          </prompt_user>
-          <wait_for_response>true</wait_for_response>
-          <store_response_as>USER_SELECTION</store_response_as>
-          <then>Process USER_SELECTION through fuzzy matching</then>
-        </action>
-      </if_mode_interactive>
-
-      <if_mode_fuzzy>
-        <condition>SELECTION_MODE == "fuzzy"</condition>
-        <action>
-          <fuzzy_match_logic>
-            1. Normalize input: lowercase, remove special chars
-            2. For each spec in AVAILABLE_SPECS:
-               - Extract spec name from path (e.g., "quality-checker-uplift" from full path)
-               - Normalize spec name same way
-               - Calculate match score:
-                 * Exact substring match: score 100
-                 * All words present: score 80
-                 * Some words present: score 50
-                 * Levenshtein distance < 5: score 30
-            3. Select highest scoring match
-            4. If multiple equal scores: prompt for clarification
-            5. If no good matches: show error and list available specs
-          </fuzzy_match_logic>
-          <implementation>
-            <tool>Bash</tool>
-            <command>
-              # Fuzzy matching implementation
-              input="${spec_input// /-}"  # Replace spaces with dashes
-              input_lower=$(echo "$input" | tr '[:upper:]' '[:lower:]')
-              
-              best_match=""
-              best_score=0
-              
-              for spec in ${AVAILABLE_SPECS}; do
-                spec_name=$(basename "$spec")
-                spec_lower=$(echo "$spec_name" | tr '[:upper:]' '[:lower:]')
-                
-                # Check for substring match
-                if [[ "$spec_lower" == *"$input_lower"* ]]; then
-                  best_match="$spec"
-                  best_score=100
-                  break
-                fi
-                
-                # Check for word matches
-                words_matched=0
-                for word in $(echo "$input_lower" | tr '-' ' '); do
-                  if [[ "$spec_lower" == *"$word"* ]]; then
-                    ((words_matched++))
-                  fi
-                done
-                
-                if [ $words_matched -gt 0 ]; then
-                  score=$((words_matched * 30))
-                  if [ $score -gt $best_score ]; then
-                    best_match="$spec"
-                    best_score=$score
-                  fi
-                fi
-              done
-              
-              if [ -n "$best_match" ]; then
-                echo "$best_match"
-              else
-                echo "NO_MATCH"
-              fi
-            </command>
-            <store_as>MATCHED_SPEC</store_as>
-          </implementation>
-          <handle_no_match>
-            <if_no_match>
-              <output>
-                ❌ No spec found matching "${spec_input}"
-                
-                Available specs:
-                ${AVAILABLE_SPECS_FORMATTED}
-                
-                Please try again with a different search term.
-              </output>
-              <exit>true</exit>
-            </if_no_match>
-          </handle_no_match>
-        </action>
-      </if_mode_fuzzy>
-
-      <if_mode_path>
-        <condition>SELECTION_MODE == "path"</condition>
-        <action>
-          <validate_path>
-            <tool>Bash</tool>
-            <command>if [ -d "${spec_input}" ]; then echo "${spec_input}"; else echo "INVALID"; fi</command>
-            <store_as>VALIDATED_PATH</store_as>
-          </validate_path>
-          <handle_invalid>
-            <if_invalid>
-              <output>❌ Path not found: ${spec_input}</output>
-              <exit>true</exit>
-            </if_invalid>
-          </handle_invalid>
-        </action>
-      </if_mode_path>
-    </step3_handle_selection_mode>
-
-    <step4_confirm_spec_selection>
-      <title>Confirm Spec Selection</title>
-      <set_spec_path>
-        Determine SPEC_PATH from:
-        - MATCHED_SPEC (if fuzzy mode)
-        - VALIDATED_PATH (if path mode)
-        - USER_SELECTION processed result (if interactive mode)
-      </set_spec_path>
-      <output>
-        ✅ Selected spec: ${SPEC_PATH}
-      </output>
+      <description>List available spec directories</description>
+    </step1_discover_specs>
+    
+    <step2_determine_input_type>
+      <tool>Bash</tool>
+      <command>
+        if [ -z "${spec_input}" ]; then
+          echo "interactive"
+        elif [[ "${spec_input}" == *"/"* ]] || [[ "${spec_input}" == "."* ]]; then
+          echo "path"
+        else
+          echo "fuzzy"
+        fi
+      </command>
+      <description>Classify input type</description>
+    </step2_determine_input_type>
+    
+    <step3a_handle_interactive>
+      <condition>Previous output equals "interactive"</condition>
+      <action>Display available specs from step1 and prompt for selection</action>
+    </step3a_handle_interactive>
+    
+    <step3b_handle_path>
+      <condition>Previous output equals "path"</condition>
+      <tool>Bash</tool>
+      <command>test -d "${spec_input}" && echo "${spec_input}" || echo "INVALID"</command>
+      <description>Validate directory path</description>
+    </step3b_handle_path>
+    
+    <step3c_handle_fuzzy>
+      <condition>Previous output equals "fuzzy"</condition>
+      <tool>Bash</tool>
+      <command>
+        input_lower=$(echo "${spec_input}" | tr '[:upper:]' '[:lower:]' | tr ' ' '-')
+        find .agent-os/specs -name "*${input_lower}*" -type d | head -1
+      </command>
+      <description>Find matching spec directory</description>
+    </step3c_handle_fuzzy>
+    
+    <step4_validate_selection>
+      <tool>Bash</tool>
+      <command>test -d "${previous_result}" && echo "✅ Selected spec: ${previous_result}" || echo "❌ Invalid selection"</command>
+      <description>Confirm final spec path exists</description>
       <store_as>SPEC_PATH</store_as>
-    </step4_confirm_spec_selection>
+    </step4_validate_selection>
   </phase_0_spec_selection>
 
   <!-- =======================================================================================

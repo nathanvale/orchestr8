@@ -60,8 +60,10 @@
 
 ### Task 3.2: Refactor to use test utility (if beneficial)
 
-- [x] ~~Import `createIsolatedTestEnv` from test-utils~~ (Not beneficial - current implementation is robust)
-- [x] ~~Replace manual temp directory management~~ (Current approach already optimal)
+- [x] ~~Import `createIsolatedTestEnv` from test-utils~~ (Not beneficial -
+      current implementation is robust)
+- [x] ~~Replace manual temp directory management~~ (Current approach already
+      optimal)
 - [x] ~~Update test structure to use utility's context~~ (No migration needed)
 - [x] ~~Verify all tests still pass~~ (Skipped - no changes made)
 
@@ -102,7 +104,8 @@
 
 ### Task 5.2: Create cleanup script (optional)
 
-- [x] ~~Create script to clean old test directories from OS temp~~ (Skipped - auto-cleanup works)
+- [x] ~~Create script to clean old test directories from OS temp~~ (Skipped -
+      auto-cleanup works)
 - [x] ~~Add to package.json scripts if useful~~ (Not needed)
 - [x] ~~Document usage in README~~ (Not needed)
 
