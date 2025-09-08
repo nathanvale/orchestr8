@@ -10,11 +10,6 @@
 
   <pre_flight_check>
     EXECUTE: @.agent-os/instructions/meta/pre-flight.md
-    <critical_reminder>
-      MANDATORY: ALL steps with subagent="" attribute REQUIRE delegation.
-      NO EXCEPTIONS. NO BYPASSES. NO OPTIMIZATIONS.
-      Delegation is an ARCHITECTURAL BOUNDARY that MUST be respected.
-    </critical_reminder>
   </pre_flight_check>
 
   <!-- =======================================================================================
@@ -56,7 +51,7 @@
        SPEC SELECTION PHASE - Interactive and Intelligent
        ======================================================================================= -->
 
-  <spec_selection_phase>
+  <phase_0_spec_selection>
     <title>SPEC SELECTION - Interactive and Intelligent</title>
     
     <step1_evaluate_input>
@@ -213,7 +208,7 @@
       </output>
       <store_as>SPEC_PATH</store_as>
     </step4_confirm_spec_selection>
-  </spec_selection_phase>
+  </phase_0_spec_selection>
 
   <!-- =======================================================================================
        VARIABLE INITIALIZATION - After Spec Selection
@@ -385,7 +380,7 @@
         </cognitive_verification>
         <output>
           ✅ Git setup for task execution
-          The branch name returned from the git-workflow agent
+          - The branch name returned from the git-workflow agent
         </output>
       </step3b_architectural_compliance_check>
     </step3_git_setup>
