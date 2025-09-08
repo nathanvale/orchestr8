@@ -1,9 +1,0 @@
-{
-  "name": "claude-test-project",
-  "version": "1.0.0",
-  "type": "module",
-  "dependencies": {
-    "react": "^18.0.0",
-    "@types/react": "^18.0.0"
-  }
-}
