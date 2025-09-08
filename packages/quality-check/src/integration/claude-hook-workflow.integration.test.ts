@@ -16,13 +16,9 @@ describe('Claude Hook End-to-End Integration (Real - Strategic)', () => {
 
     // Create temporary test project directory
     testProjectDir = path.join(
-      __dirname,
-      '..',
-      '..',
-      '..',
-      '..',
-      'test-temp',
-      `claude-test-${Date.now()}`,
+      os.tmpdir(),
+      'quality-check-tests',
+      `claude-test-${process.pid}-${Date.now()}`,
     )
     await fs.mkdir(testProjectDir, { recursive: true })
     cleanupPaths.push(testProjectDir)
@@ -30,14 +26,31 @@ describe('Claude Hook End-to-End Integration (Real - Strategic)', () => {
   })
 
   afterEach(async () => {
+    // Restore original working directory first
     process.chdir(originalCwd)
 
-    // Cleanup temp directories
+    // Cleanup temp directories with robust error handling
     for (const cleanupPath of cleanupPaths) {
       try {
         await fs.rm(cleanupPath, { recursive: true, force: true })
       } catch {
-        // Ignore cleanup errors
+        // Fallback to sync removal if async fails
+        try {
+          const fsSync = await import('node:fs')
+          fsSync.rmSync(cleanupPath, { recursive: true, force: true })
+        } catch {
+          // Ignore cleanup errors if both methods fail
+        }
+      }
+    }
+
+    // Verify cleanup completed
+    for (const cleanupPath of cleanupPaths) {
+      try {
+        await fs.access(cleanupPath)
+        console.warn(`Warning: Failed to clean up test directory: ${cleanupPath}`)
+      } catch {
+        // Good - directory doesn't exist
       }
     }
   })
@@ -534,8 +547,8 @@ describeReal('Claude Hook End-to-End Integration (Real - Optimized)', () => {
     cleanupPaths = []
 
     // Create unique temp directory using OS temp dir
-    const uniqueId = `claude-test-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-    testProjectDir = path.join(os.tmpdir(), uniqueId)
+    const uniqueId = `claude-test-${process.pid}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+    testProjectDir = path.join(os.tmpdir(), 'quality-check-tests', uniqueId)
     await fs.mkdir(testProjectDir, { recursive: true })
     cleanupPaths.push(testProjectDir)
   })

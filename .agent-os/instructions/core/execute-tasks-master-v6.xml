@@ -1,641 +1,681 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <execute_tasks_master_protocol>
 
-<metadata>
-  <description>Master orchestrator for Agent OS task execution with intelligent interactive
-    selection</description>
-  <version>6.0</version>
-  <mode>IMPERATIVE_EXECUTION</mode>
-  <effectiveness_target>80%+</effectiveness_target>
-</metadata>
+  <metadata>
+    <description>Master orchestrator for Agent OS task execution with intelligent interactive selection</description>
+    <version>6.0</version>
+    <mode>IMPERATIVE_EXECUTION</mode>
+    <effectiveness_target>80%+</effectiveness_target>
+  </metadata>
 
-<pre_flight_check>
-  EXECUTE: @.agent-os/instructions/meta/pre-flight.md
-</pre_flight_check>
+  <pre_flight_check>
+    EXECUTE: @.agent-os/instructions/meta/pre-flight.md
+    <critical_reminder>
+      MANDATORY: ALL steps with subagent="" attribute REQUIRE delegation.
+      NO EXCEPTIONS. NO BYPASSES. NO OPTIMIZATIONS.
+      Delegation is an ARCHITECTURAL BOUNDARY that MUST be respected.
+    </critical_reminder>
+  </pre_flight_check>
 
-<!-- =======================================================================================
+  <!-- =======================================================================================
        INPUT PARAMETERS - Support fuzzy matching and interactive selection
        ======================================================================================= -->
+  
+  <input_parameters>
+    <spec_input>
+      <description>User input for spec selection - can be partial name, full path, or empty</description>
+      <type>string</type>
+      <required>false</required>
+      <default>null</default>
+      <examples>
+        <empty>null → prompts for selection</empty>
+        <fuzzy>"quality checker" → matches quality-checker-uplift</fuzzy>
+        <partial>"autopilot" → matches autopilot-engine</partial>
+        <full>".agent-os/specs/2025-01-05-quality-checker-uplift"</full>
+      </examples>
+    </spec_input>
+    
+    <specific_tasks>
+      <description>Optional array of specific task IDs or descriptions to execute</description>
+      <type>array</type>
+      <required>false</required>
+      <default>null</default>
+      <example>["2.2", "2.3", "2.4"]</example>
+    </specific_tasks>
+  </input_parameters>
 
-<input_parameters>
-  <spec_input>
-    <description>User input for spec selection - can be partial name, full path, or empty</description>
-    <type>string</type>
-    <required>false</required>
-    <default>null</default>
-    <examples>
-      <empty>null → prompts for selection</empty>
-      <fuzzy>"quality checker" → matches quality-checker-uplift</fuzzy>
-      <partial>"autopilot" → matches autopilot-engine</partial>
-      <full>".agent-os/specs/2025-01-05-quality-checker-uplift"</full>
-    </examples>
-  </spec_input>
+  <execution_context>
+    <instruction>INTELLIGENT SPEC SELECTION, THEN EXECUTE ALL PHASES</instruction>
+    <interactive_selection>true when no input</interactive_selection>
+    <fuzzy_matching>true for partial inputs</fuzzy_matching>
+    <no_planning>true once spec selected</no_planning>
+    <direct_tools_only>true</direct_tools_only>
+  </execution_context>
 
-  <specific_tasks>
-    <description>Optional array of specific task IDs or descriptions to execute</description>
-    <type>array</type>
-    <required>false</required>
-    <default>null</default>
-    <example>["2.2", "2.3", "2.4"]</example>
-  </specific_tasks>
-</input_parameters>
-
-<execution_context>
-  <instruction>INTELLIGENT SPEC SELECTION, THEN EXECUTE ALL PHASES</instruction>
-  <interactive_selection>true when no input</interactive_selection>
-  <fuzzy_matching>true for partial inputs</fuzzy_matching>
-  <no_planning>true once spec selected</no_planning>
-  <direct_tools_only>true</direct_tools_only>
-</execution_context>
-
-<!-- =======================================================================================
+  <!-- =======================================================================================
        SPEC SELECTION PHASE - Interactive and Intelligent
        ======================================================================================= -->
 
-<spec_selection_phase>
-  <title>SPEC SELECTION - Interactive and Intelligent</title>
+  <spec_selection_phase>
+    <title>SPEC SELECTION - Interactive and Intelligent</title>
+    
+    <step1_evaluate_input>
+      <title>Evaluate User Input</title>
+      <cognitive_analysis>
+        ANALYZE spec_input parameter:
+        - IF null/empty: Set MODE = "interactive"
+        - IF contains "/" or starts with ".": Set MODE = "path"
+        - ELSE: Set MODE = "fuzzy"
+      </cognitive_analysis>
+      <store_as>SELECTION_MODE</store_as>
+    </step1_evaluate_input>
 
-  <step1_evaluate_input>
-    <title>Evaluate User Input</title>
-    <cognitive_analysis>
-      ANALYZE spec_input parameter:
-      - IF null/empty: Set MODE = "interactive"
-      - IF contains "/" or starts with ".": Set MODE = "path"
-      - ELSE: Set MODE = "fuzzy"
-    </cognitive_analysis>
-    <store_as>SELECTION_MODE</store_as>
-  </step1_evaluate_input>
+    <step2_discover_available_specs>
+      <title>Discover Available Specs</title>
+      <tool>Bash</tool>
+      <command>find .agent-os/specs -type d -maxdepth 1 -name "*-*" | sort -r</command>
+      <store_as>AVAILABLE_SPECS</store_as>
+      <description>Get all spec directories sorted by date (newest first)</description>
+    </step2_discover_available_specs>
 
-  <step2_discover_available_specs>
-    <title>Discover Available Specs</title>
-    <tool>Bash</tool>
-    <command>find .agent-os/specs -type d -maxdepth 1 -name "*-*" | sort -r</command>
-    <store_as>AVAILABLE_SPECS</store_as>
-    <description>Get all spec directories sorted by date (newest first)</description>
-  </step2_discover_available_specs>
+    <step3_handle_selection_mode>
+      <title>Handle Selection Based on Mode</title>
+      
+      <if_mode_interactive>
+        <condition>SELECTION_MODE == "interactive"</condition>
+        <action>
+          <prompt_user>
+            <message>
+              📋 Which spec would you like to work on?
+              
+              Available specs:
+              ${AVAILABLE_SPECS_FORMATTED}
+              
+              You can enter:
+              - A number (1-N) to select from the list
+              - A partial name like "quality checker" 
+              - A full path
+            </message>
+          </prompt_user>
+          <wait_for_response>true</wait_for_response>
+          <store_response_as>USER_SELECTION</store_response_as>
+          <then>Process USER_SELECTION through fuzzy matching</then>
+        </action>
+      </if_mode_interactive>
 
-  <step3_handle_selection_mode>
-    <title>Handle Selection Based on Mode</title>
-
-    <if_mode_interactive>
-      <condition>SELECTION_MODE == "interactive"</condition>
-      <action>
-        <prompt_user>
-          <message>
-            📋 Which spec would you like to work on?
-
-            Available specs:
-            ${AVAILABLE_SPECS_FORMATTED}
-
-            You can enter:
-            - A number (1-N) to select from the list
-            - A partial name like "quality checker"
-            - A full path
-          </message>
-        </prompt_user>
-        <wait_for_response>true</wait_for_response>
-        <store_response_as>USER_SELECTION</store_response_as>
-        <then>Process USER_SELECTION through fuzzy matching</then>
-      </action>
-    </if_mode_interactive>
-
-    <if_mode_fuzzy>
-      <condition>SELECTION_MODE == "fuzzy"</condition>
-      <action>
-        <fuzzy_match_logic> 1. Normalize input: lowercase, remove special chars 2. For each spec in
-          AVAILABLE_SPECS: - Extract spec name from path (e.g., "quality-checker-uplift" from full
-          path) - Normalize spec name same way - Calculate match score: * Exact substring match:
-          score 100 * All words present: score 80 * Some words present: score 50 * Levenshtein
-          distance < 5: score 30
+      <if_mode_fuzzy>
+        <condition>SELECTION_MODE == "fuzzy"</condition>
+        <action>
+          <fuzzy_match_logic>
+            1. Normalize input: lowercase, remove special chars
+            2. For each spec in AVAILABLE_SPECS:
+               - Extract spec name from path (e.g., "quality-checker-uplift" from full path)
+               - Normalize spec name same way
+               - Calculate match score:
+                 * Exact substring match: score 100
+                 * All words present: score 80
+                 * Some words present: score 50
+                 * Levenshtein distance < 5: score 30
             3. Select highest scoring match
             4. If multiple equal scores: prompt for clarification
             5. If no good matches: show error and list available specs
-        </fuzzy_match_logic>
-        <implementation>
-          <tool>Bash</tool>
-          <command>
-            # Fuzzy matching implementation
-            input="${spec_input// /-}" # Replace spaces with dashes
-            input_lower=$(echo "$input" | tr '[:upper:]' '[:lower:]')
+          </fuzzy_match_logic>
+          <implementation>
+            <tool>Bash</tool>
+            <command>
+              # Fuzzy matching implementation
+              input="${spec_input// /-}"  # Replace spaces with dashes
+              input_lower=$(echo "$input" | tr '[:upper:]' '[:lower:]')
+              
+              best_match=""
+              best_score=0
+              
+              for spec in ${AVAILABLE_SPECS}; do
+                spec_name=$(basename "$spec")
+                spec_lower=$(echo "$spec_name" | tr '[:upper:]' '[:lower:]')
+                
+                # Check for substring match
+                if [[ "$spec_lower" == *"$input_lower"* ]]; then
+                  best_match="$spec"
+                  best_score=100
+                  break
+                fi
+                
+                # Check for word matches
+                words_matched=0
+                for word in $(echo "$input_lower" | tr '-' ' '); do
+                  if [[ "$spec_lower" == *"$word"* ]]; then
+                    ((words_matched++))
+                  fi
+                done
+                
+                if [ $words_matched -gt 0 ]; then
+                  score=$((words_matched * 30))
+                  if [ $score -gt $best_score ]; then
+                    best_match="$spec"
+                    best_score=$score
+                  fi
+                fi
+              done
+              
+              if [ -n "$best_match" ]; then
+                echo "$best_match"
+              else
+                echo "NO_MATCH"
+              fi
+            </command>
+            <store_as>MATCHED_SPEC</store_as>
+          </implementation>
+          <handle_no_match>
+            <if_no_match>
+              <output>
+                ❌ No spec found matching "${spec_input}"
+                
+                Available specs:
+                ${AVAILABLE_SPECS_FORMATTED}
+                
+                Please try again with a different search term.
+              </output>
+              <exit>true</exit>
+            </if_no_match>
+          </handle_no_match>
+        </action>
+      </if_mode_fuzzy>
 
-            best_match=""
-            best_score=0
+      <if_mode_path>
+        <condition>SELECTION_MODE == "path"</condition>
+        <action>
+          <validate_path>
+            <tool>Bash</tool>
+            <command>if [ -d "${spec_input}" ]; then echo "${spec_input}"; else echo "INVALID"; fi</command>
+            <store_as>VALIDATED_PATH</store_as>
+          </validate_path>
+          <handle_invalid>
+            <if_invalid>
+              <output>❌ Path not found: ${spec_input}</output>
+              <exit>true</exit>
+            </if_invalid>
+          </handle_invalid>
+        </action>
+      </if_mode_path>
+    </step3_handle_selection_mode>
 
-            for spec in ${AVAILABLE_SPECS}; do
-            spec_name=$(basename "$spec")
-            spec_lower=$(echo "$spec_name" | tr '[:upper:]' '[:lower:]')
+    <step4_confirm_spec_selection>
+      <title>Confirm Spec Selection</title>
+      <set_spec_path>
+        Determine SPEC_PATH from:
+        - MATCHED_SPEC (if fuzzy mode)
+        - VALIDATED_PATH (if path mode)
+        - USER_SELECTION processed result (if interactive mode)
+      </set_spec_path>
+      <output>
+        ✅ Selected spec: ${SPEC_PATH}
+      </output>
+      <store_as>SPEC_PATH</store_as>
+    </step4_confirm_spec_selection>
+  </spec_selection_phase>
 
-            # Check for substring match
-            if [[ "$spec_lower" == *"$input_lower"* ]]; then
-            best_match="$spec"
-            best_score=100
-            break
-            fi
-
-            # Check for word matches
-            words_matched=0
-            for word in $(echo "$input_lower" | tr '-' ' '); do
-            if [[ "$spec_lower" == *"$word"* ]]; then
-            ((words_matched++))
-            fi
-            done
-
-            if [ $words_matched -gt 0 ]; then
-            score=$((words_matched * 30))
-            if [ $score -gt $best_score ]; then
-            best_match="$spec"
-            best_score=$score
-            fi
-            fi
-            done
-
-            if [ -n "$best_match" ]; then
-            echo "$best_match"
-            else
-            echo "NO_MATCH"
-            fi
-          </command>
-          <store_as>MATCHED_SPEC</store_as>
-        </implementation>
-        <handle_no_match>
-          <if_no_match>
-            <output>
-              ❌ No spec found matching "${spec_input}"
-
-              Available specs:
-              ${AVAILABLE_SPECS_FORMATTED}
-
-              Please try again with a different search term.
-            </output>
-            <exit>true</exit>
-          </if_no_match>
-        </handle_no_match>
-      </action>
-    </if_mode_fuzzy>
-
-    <if_mode_path>
-      <condition>SELECTION_MODE == "path"</condition>
-      <action>
-        <validate_path>
-          <tool>Bash</tool>
-          <command>if [ -d "${spec_input}" ]; then echo "${spec_input}"; else echo "INVALID"; fi</command>
-          <store_as>VALIDATED_PATH</store_as>
-        </validate_path>
-        <handle_invalid>
-          <if_invalid>
-            <output>❌ Path not found: ${spec_input}</output>
-            <exit>true</exit>
-          </if_invalid>
-        </handle_invalid>
-      </action>
-    </if_mode_path>
-  </step3_handle_selection_mode>
-
-  <step4_confirm_spec_selection>
-    <title>Confirm Spec Selection</title>
-    <set_spec_path>
-      Determine SPEC_PATH from:
-      - MATCHED_SPEC (if fuzzy mode)
-      - VALIDATED_PATH (if path mode)
-      - USER_SELECTION processed result (if interactive mode)
-    </set_spec_path>
-    <output>
-      ✅ Selected spec: ${SPEC_PATH}
-    </output>
-    <store_as>SPEC_PATH</store_as>
-  </step4_confirm_spec_selection>
-</spec_selection_phase>
-
-<!-- =======================================================================================
+  <!-- =======================================================================================
        VARIABLE INITIALIZATION - After Spec Selection
        ======================================================================================= -->
 
-<variable_initialization>
-  <instruction>INITIALIZE EXECUTION VARIABLES AFTER SPEC SELECTION</instruction>
+  <variable_initialization>
+    <instruction>INITIALIZE EXECUTION VARIABLES AFTER SPEC SELECTION</instruction>
 
-  <step1_load_tasks_file>
-    <title>Load Tasks File</title>
-    <tool>Read</tool>
-    <file_path>${SPEC_PATH}/tasks.md</file_path>
-    <store_as>TASK_CONTENT</store_as>
-    <required>true</required>
-  </step1_load_tasks_file>
+    <step1_load_tasks_file>
+      <title>Load Tasks File</title>
+      <tool>Read</tool>
+      <file_path>${SPEC_PATH}/tasks.md</file_path>
+      <store_as>TASK_CONTENT</store_as>
+      <required>true</required>
+    </step1_load_tasks_file>
 
-  <step2_intelligent_task_selection>
-    <title>Intelligent Task Selection (No Bash)</title>
-    <instruction>COGNITIVELY ANALYZE TASK_CONTENT TO SELECT TASKS</instruction>
+    <step2_intelligent_task_selection>
+      <title>Intelligent Task Selection (No Bash)</title>
+      <instruction>COGNITIVELY ANALYZE TASK_CONTENT TO SELECT TASKS</instruction>
+      
+      <cognitive_task_analysis>
+        <parse_hierarchy>
+          Identify task structure from TASK_CONTENT:
+          1. Parent tasks: Lines matching "^- \[[ x]\] \d+\."
+          2. Subtasks: Lines matching "^  - \[[ x]\] \d+\.\d+"
+          3. Task completion: [x] = complete, [ ] = incomplete
+        </parse_hierarchy>
+        
+        <if_specific_tasks_provided>
+          <description>When specific_tasks parameter is provided</description>
+          <action>
+            Find tasks matching the IDs in specific_tasks array:
+            - Match by task number (e.g., "2.2")
+            - Include those specific tasks only
+            - Store in TARGET_TASKS
+          </action>
+        </if_specific_tasks_provided>
+        
+        <if_no_specific_tasks>
+          <description>Default: Find next uncompleted parent task</description>
+          <algorithm>
+            1. Scan through TASK_CONTENT line by line
+            2. For each parent task (e.g., "- [ ] 2. Fix Blocking Behavior Tests"):
+               a. Check if parent is marked incomplete
+               b. Look ahead for its subtasks
+               c. Check if any subtasks are incomplete
+               d. If yes, this is our target parent
+            3. Select ALL incomplete subtasks of that parent
+            4. Store selected tasks in TARGET_TASKS
+          </algorithm>
+          <example>
+            Reading tasks.md:
+            - [x] 1. Fix TypeScript Strict Mode Tests
+              - [x] 1.1 Enable and analyze...  ← All complete, skip
+              - [x] 1.2 Update TypeScript...
+            
+            - [ ] 2. Fix Blocking Behavior Tests  ← First incomplete parent!
+              - [x] 2.1 Enable blocking...       ← Complete
+              - [ ] 2.2 Analyze type safety...   ← Select this
+              - [ ] 2.3 Update autopilot...      ← Select this
+              - [ ] 2.4 Analyze complexity...    ← Select this
+              - [ ] 2.5 Update autopilot...      ← Select this
+              - [ ] 2.6 Verify all blocking...   ← Select this
+            
+            TARGET_TASKS = [2.2, 2.3, 2.4, 2.5, 2.6]
+          </example>
+        </if_no_specific_tasks>
+      </cognitive_task_analysis>
+      
+      <store_as>TARGET_TASKS</store_as>
+      <required>true</required>
+    </step2_intelligent_task_selection>
 
-    <cognitive_task_analysis>
-      <parse_hierarchy>
-        Identify task structure from TASK_CONTENT:
-        1. Parent tasks: Lines matching "^- \[[ x]\] \d+\."
-        2. Subtasks: Lines matching "^ - \[[ x]\] \d+\.\d+"
-        3. Task completion: [x] = complete, [ ] = incomplete
-      </parse_hierarchy>
+    <step3_confirm_task_selection>
+      <title>Confirm Task Selection</title>
+      <output>
+        📋 TASK SELECTION CONFIRMED
+        ━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        Spec: ${SPEC_PATH}
+        Mode: ${specific_tasks ? "Specific Tasks" : "Next Parent Task"}
+        Tasks to Execute: ${TARGET_TASKS}
+        Total: ${COUNT(TARGET_TASKS)} tasks
+      </output>
+    </step3_confirm_task_selection>
 
-      <if_specific_tasks_provided>
-        <description>When specific_tasks parameter is provided</description>
-        <action>
-          Find tasks matching the IDs in specific_tasks array:
-          - Match by task number (e.g., "2.2")
-          - Include those specific tasks only
-          - Store in TARGET_TASKS
-        </action>
-      </if_specific_tasks_provided>
+    <step4_derive_branch_name>
+      <tool>Bash</tool>
+      <command>echo "task-execution-$(date +%Y%m%d-%H%M)"</command>
+      <store_as>BRANCH_NAME</store_as>
+      <required>true</required>
+    </step4_derive_branch_name>
 
-      <if_no_specific_tasks>
-        <description>Default: Find next uncompleted parent task</description>
-        <algorithm>
-          1. Scan through TASK_CONTENT line by line
-          2. For each parent task (e.g., "- [ ] 2. Fix Blocking Behavior Tests"):
-          a. Check if parent is marked incomplete
-          b. Look ahead for its subtasks
-          c. Check if any subtasks are incomplete
-          d. If yes, this is our target parent
-          3. Select ALL incomplete subtasks of that parent
-          4. Store selected tasks in TARGET_TASKS
-        </algorithm>
-        <example>
-          Reading tasks.md:
-          - [x] 1. Fix TypeScript Strict Mode Tests
-          - [x] 1.1 Enable and analyze... ← All complete, skip
-          - [x] 1.2 Update TypeScript...
+    <step5_extract_folder_name>
+      <tool>Bash</tool>  
+      <command>basename "${SPEC_PATH}"</command>
+      <store_as>SPEC_FOLDER</store_as>
+      <required>true</required>
+    </step5_extract_folder_name>
 
-          - [ ] 2. Fix Blocking Behavior Tests ← First incomplete parent!
-          - [x] 2.1 Enable blocking... ← Complete
-          - [ ] 2.2 Analyze type safety... ← Select this
-          - [ ] 2.3 Update autopilot... ← Select this
-          - [ ] 2.4 Analyze complexity... ← Select this
-          - [ ] 2.5 Update autopilot... ← Select this
-          - [ ] 2.6 Verify all blocking... ← Select this
+    <completion_signal>PROCEED TO PHASE 1 WITH SELECTED TASKS</completion_signal>
+  </variable_initialization>
 
-          TARGET_TASKS = [2.2, 2.3, 2.4, 2.5, 2.6]
-        </example>
-      </if_no_specific_tasks>
-    </cognitive_task_analysis>
-
-    <store_as>TARGET_TASKS</store_as>
-    <required>true</required>
-  </step2_intelligent_task_selection>
-
-  <step3_confirm_task_selection>
-    <title>Confirm Task Selection</title>
-    <output>
-      📋 TASK SELECTION CONFIRMED
-      ━━━━━━━━━━━━━━━━━━━━━━━━━━━
-      Spec: ${SPEC_PATH}
-      Mode: ${specific_tasks ? "Specific Tasks" : "Next Parent Task"}
-      Tasks to Execute: ${TARGET_TASKS}
-      Total: ${COUNT(TARGET_TASKS)} tasks
-    </output>
-  </step3_confirm_task_selection>
-
-  <step4_derive_branch_name>
-    <tool>Bash</tool>
-    <command>echo "task-execution-$(date +%Y%m%d-%H%M)"</command>
-    <store_as>BRANCH_NAME</store_as>
-    <required>true</required>
-  </step4_derive_branch_name>
-
-  <step5_extract_folder_name>
-    <tool>Bash</tool>
-    <command>basename "${SPEC_PATH}"</command>
-    <store_as>SPEC_FOLDER</store_as>
-    <required>true</required>
-  </step5_extract_folder_name>
-
-  <completion_signal>PROCEED TO PHASE 1 WITH SELECTED TASKS</completion_signal>
-</variable_initialization>
-
-<!-- =======================================================================================
+  <!-- =======================================================================================
        PHASE 1 - PRE-EXECUTION SETUP
        ======================================================================================= -->
 
-<phase_1_setup>
-<title>PHASE 1 - PRE-EXECUTION SETUP</title>
-<instruction>PREPARE ENVIRONMENT FOR TARGET_TASKS EXECUTION</instruction>
+  <phase_1_setup>
+    <title>PHASE 1 - PRE-EXECUTION SETUP</title>
+    <instruction>PREPARE ENVIRONMENT FOR TARGET_TASKS EXECUTION</instruction>
 
-<step number="1" id="detailed_task_analysis">
-  <title>Detailed Task Analysis</title>
-  <cognitive_processing>
-    For each task in TARGET_TASKS, extract:
-    1. Task ID (e.g., "2.2")
-    2. Full description
-    3. Any mentioned files or components
-    4. Dependencies or prerequisites
-    5. Success criteria
-  </cognitive_processing>
-  <store_as>TASK_DETAILS</store_as>
-  <output>
-    ${TASK_DETAILS}
-  </output>
-</step>
+    <step1_detailed_task_analysis>
+      <title>Detailed Task Analysis</title>
+      <cognitive_processing>
+        For each task in TARGET_TASKS, extract:
+        1. Task ID (e.g., "2.2")
+        2. Full description
+        3. Any mentioned files or components
+        4. Dependencies or prerequisites
+        5. Success criteria
+      </cognitive_processing>
+      <store_as>TASK_DETAILS</store_as>
+      <output>
+        ${TASK_DETAILS}
+      </output>
+    </step1_detailed_task_analysis>
 
-<step number="2" id="context_loading"
-  <title>Load Relevant Context</title>
-  <parallel_execution>true</parallel_execution>
-  <tools>
-    <tool1>
-      <name>Read</name>
-      <file_path>${SPEC_PATH}/spec-lite.md</file_path>
-      <optional>true</optional>
-    </tool1>
-    <tool2>
-      <name>Read</name>
-      <file_path>${SPEC_PATH}/sub-specs/technical-spec.md</file_path>
-      <optional>true</optional>
-    </tool2>
-    <tool3>
-      <name>Read</name>
-      <file_path>.agent-os/product/mission-lite.md</file_path>
-      <optional>true</optional>
-    </tool3>
-  </tools>
-</step>
+    <step2_context_loading>
+      <title>Load Relevant Context</title>
+      <parallel_execution>true</parallel_execution>
+      <tools>
+        <tool1>
+          <name>Read</name>
+          <file_path>${SPEC_PATH}/spec-lite.md</file_path>
+          <optional>true</optional>
+        </tool1>
+        <tool2>
+          <name>Read</name>
+          <file_path>${SPEC_PATH}/sub-specs/technical-spec.md</file_path>
+          <optional>true</optional>
+        </tool2>
+        <tool3>
+          <name>Read</name>
+          <file_path>.agent-os/product/mission-lite.md</file_path>
+          <optional>true</optional>
+        </tool3>
+      </tools>
+    </step2_context_loading>
 
-<step number="3" id="git_setup" subagent="git-workflow">
-  <title>Git Branch Management</title>
-  <objective>Use the git-workflow subagent to manage git branches to ensure proper isolation
-    by creating or switching to the appropriate branch for the spec</objective>
-  <instructions>
-    ACTION: Use git-workflow subagent
-    REQUEST: "Check and manage branch for spec: [SPEC_FOLDER]
-    - Create branch if needed
-    - Switch to correct branch
-    - Handle any uncommitted changes"
-    WAIT: For branch setup completion
-</instructions>
-  <sequential_execution>true</sequential_execution>
-  <commands>
-    <command1>
-      <tool>Bash</tool>
-      <command>git stash</command>
-      <description>Stash any pending changes</description>
-    </command1>
-    <command2>
-      <tool>Bash</tool>
-      <command>git checkout ${BRANCH_NAME} 2>/dev/null || git checkout -b ${BRANCH_NAME}</command>
-      <description>Create or switch to task branch</description>
-    </command2>
-  </commands>
-</step>
+    <step3_git_setup>
+      <title>Git Branch Setup via Workflow Agent - MANDATORY DELEGATION</title>
+      <delegation_pattern>MANDATORY - NO BYPASS ALLOWED</delegation_pattern>
+      
+      <step3a_capture_pre_state>
+        <tool>Bash</tool>
+        <command>git branch --show-current</command>
+        <store_as>PRE_DELEGATION_BRANCH</store_as>
+        <description>Capture branch state before mandatory delegation</description>
+      </step3a_capture_pre_state>
+      
+      <step3b_mandatory_delegate>
+        <title>MANDATORY Git Workflow Delegation - NO BYPASS ALLOWED</title>
+        <tool>Task</tool>
+        <subagent_type>git-workflow</subagent_type>
+        <description>MANDATORY: Setup git branch for spec - ALWAYS delegate regardless of current branch</description>
+        <prompt>
+          Create feature branch for spec: ${SPEC_FOLDER}
+          
+          MANDATORY DELEGATION: Execute this regardless of current branch state.
+          Just branch setup - no commits or PRs.
+        </prompt>
+        <mandatory>true</mandatory>
+        <bypass_allowed>false</bypass_allowed>
+        <wait_for_completion>true</wait_for_completion>
+      </step3b_mandatory_delegate>
+      
+      <step3c_verify_delegation_occurred>
+        <tool>Bash</tool>
+        <command>git branch --show-current</command>
+        <store_as>POST_DELEGATION_BRANCH</store_as>
+        <description>Verify delegation completed</description>
+      </step3c_verify_delegation_occurred>
+      
+      <step3d_architectural_compliance_check>
+        <cognitive_verification>
+          VERIFY: Git workflow agent was actually invoked
+          VERIFY: Branch state may have changed through delegation
+          CONFIRM: No independent git decisions were made
+        </cognitive_verification>
+        <output>
+          ✅ Architectural Compliance: Git delegation completed
+          - Pre-delegation: ${PRE_DELEGATION_BRANCH}
+          - Post-delegation: ${POST_DELEGATION_BRANCH}
+          - Delegation: COMPLETED via git-workflow agent
+          - Spec: ${SPEC_FOLDER}
+        </output>
+      </step3d_architectural_compliance_check>
+    </step3_git_setup>
 
-<step number="4" id="todo_initialization">
-  <title>Initialize Todo Tracking</title>
-  <tool>TodoWrite</tool>
-  <action>
-    Create todo items for each task in TARGET_TASKS:
-    - Use task ID and full description
-    - Set all to "pending" status
-    - Include activeForm for each
-  </action>
-</step>
+    <step4_todo_initialization>
+      <title>Initialize Todo Tracking</title>
+      <tool>TodoWrite</tool>
+      <action>
+        Create todo items for each task in TARGET_TASKS:
+        - Use task ID and full description
+        - Set all to "pending" status
+        - Include activeForm for each
+      </action>
+    </step4_todo_initialization>
 
-<step number="5" id="pre_execution_checks">
-  <title>Pre-execution Checks</title>
-  <parallel_execution>true</parallel_execution>
-  <checks>
-    <wallaby_check>
-      <tool>mcp__wallaby__wallaby_failingTests</tool>
-      <params>{}</params>
-      <optional>true</optional>
-    </wallaby_check>
-    <test_status>
-      <tool>Bash</tool>
-      <command>pnpm test --run 2>&1 | tail -5</command>
-      <optional>true</optional>
-    </test_status>
-  </checks>
-</step>
+    <step5_pre_execution_checks>
+      <title>Pre-execution Checks</title>
+      <parallel_execution>true</parallel_execution>
+      <checks>
+        <wallaby_check>
+          <tool>mcp__wallaby__wallaby_failingTests</tool>
+          <params>{}</params>
+          <optional>true</optional>
+        </wallaby_check>
+        <test_status>
+          <tool>Bash</tool>
+          <command>pnpm test --run 2>&1 | tail -5</command>
+          <optional>true</optional>
+        </test_status>
+      </checks>
+    </step5_pre_execution_checks>
 
-<step number="6" id="phase1_completion">
-  <output>
-    ✅ PHASE 1 COMPLETE
-    Ready to execute ${COUNT(TARGET_TASKS)} tasks
-  </output>
-  <action>PROCEED TO PHASE 2</action>
-</step>
-</>
+    <phase1_completion>
+      <output>
+        ✅ PHASE 1 COMPLETE
+        Ready to execute ${COUNT(TARGET_TASKS)} tasks
+      </output>
+      <action>PROCEED TO PHASE 2</action>
+    </phase1_completion>
+  </phase_1_setup>
 
-<!-- =======================================================================================
+  <!-- =======================================================================================
        PHASE 2 - TASK EXECUTION
        ======================================================================================= -->
 
-<phase_2_execution>
-  <title>PHASE 2 - EXECUTE SELECTED TASKS</title>
-  <instruction>EXECUTE EACH TASK IN TARGET_TASKS SEQUENTIALLY</instruction>
+  <phase_2_execution>
+    <title>PHASE 2 - EXECUTE SELECTED TASKS</title>
+    <instruction>EXECUTE EACH TASK IN TARGET_TASKS SEQUENTIALLY</instruction>
 
-  <task_execution_loop>
-    <instruction>FOR EACH TASK IN TARGET_TASKS, EXECUTE:</instruction>
+    <task_execution_loop>
+      <instruction>FOR EACH TASK IN TARGET_TASKS, EXECUTE:</instruction>
+      
+      <step1_get_current_task>
+        <cognitive_action>
+          From TARGET_TASKS, take next unprocessed task
+          Extract: task_id, task_description, task_context
+        </cognitive_action>
+        <store_as>CURRENT_TASK</store_as>
+      </step1_get_current_task>
 
-    <step1_get_current_task>
-      <cognitive_action>
-        From TARGET_TASKS, take next unprocessed task
-        Extract: task_id, task_description, task_context
-      </cognitive_action>
-      <store_as>CURRENT_TASK</store_as>
-    </step1_get_current_task>
+      <step2_announce_task>
+        <output>
+          ━━━━━━━━━━━━━━━━━━━━━━━━━━━
+          🔄 EXECUTING: Task ${CURRENT_TASK.id}
+          📝 ${CURRENT_TASK.description}
+          ━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        </output>
+      </step2_announce_task>
 
-    <step2_announce_task>
+      <step3_update_todo_in_progress>
+        <tool>TodoWrite</tool>
+        <action>Update CURRENT_TASK status to "in_progress"</action>
+      </step3_update_todo_in_progress>
+
+      <step4_execute_task_implementation>
+        <title>Execute Task Implementation</title>
+        <instruction>
+          Based on CURRENT_TASK.description, determine and execute required actions
+        </instruction>
+        
+        <task_type_analysis>
+          <analyze_task>Parse task description to identify action type</analyze_task>
+          
+          <if_type_analyze>
+            <pattern>Contains: "Analyze", "Review", "Understand"</pattern>
+            <actions>
+              - Use Read tool to examine mentioned files
+              - Use Grep tool to search for patterns
+              - Document findings
+            </actions>
+          </if_type_analyze>
+          
+          <if_type_fix>
+            <pattern>Contains: "Fix", "Update", "Modify", "Implement"</pattern>
+            <actions>
+              - Use Read tool to understand current state
+              - Use Edit/MultiEdit tools to make changes
+              - Use Bash tool to run tests
+            </actions>
+          </if_type_fix>
+          
+          <if_type_verify>
+            <pattern>Contains: "Verify", "Test", "Ensure"</pattern>
+            <actions>
+              - Use Bash tool to run tests
+              - Use Read tool to check outputs
+              - Validate success criteria
+            </actions>
+          </if_type_verify>
+        </task_type_analysis>
+        
+        <concrete_execution>
+          Use appropriate tools based on task requirements
+          Follow task description precisely
+          Make incremental changes with verification
+        </concrete_execution>
+      </step4_execute_task_implementation>
+
+      <step5_mark_task_complete>
+        <tool>Edit</tool>
+        <file_path>${SPEC_PATH}/tasks.md</file_path>
+        <action>
+          Find line containing CURRENT_TASK
+          Change "- [ ]" to "- [x]"
+        </action>
+      </step5_mark_task_complete>
+
+      <step6_update_todo_complete>
+        <tool>TodoWrite</tool>
+        <action>Update CURRENT_TASK status to "completed"</action>
+      </step6_update_todo_complete>
+
+      <step7_announce_completion>
+        <output>
+          ✅ COMPLETED: Task ${CURRENT_TASK.id}
+        </output>
+      </step7_announce_completion>
+
+      <step8_continue_or_finish>
+        <cognitive_check>
+          IF more tasks in TARGET_TASKS:
+            Continue to next task
+          ELSE:
+            Proceed to Phase 3
+        </cognitive_check>
+      </step8_continue_or_finish>
+    </task_execution_loop>
+
+    <phase2_completion>
       <output>
-        ━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        🔄 EXECUTING: Task ${CURRENT_TASK.id}
-        📝 ${CURRENT_TASK.description}
-        ━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        ✅ PHASE 2 COMPLETE
+        All ${COUNT(TARGET_TASKS)} tasks executed successfully
       </output>
-    </step2_announce_task>
+      <action>PROCEED TO PHASE 3</action>
+    </phase2_completion>
+  </phase_2_execution>
 
-    <step3_update_todo_in_progress>
-      <tool>TodoWrite</tool>
-      <action>Update CURRENT_TASK status to "in_progress"</action>
-    </step3_update_todo_in_progress>
-
-    <step4_execute_task_implementation>
-      <title>Execute Task Implementation</title>
-      <instruction>
-        Based on CURRENT_TASK.description, determine and execute required actions
-      </instruction>
-
-      <task_type_analysis>
-        <analyze_task>Parse task description to identify action type</analyze_task>
-
-        <if_type_analyze>
-          <pattern>Contains: "Analyze", "Review", "Understand"</pattern>
-          <actions>
-            - Use Read tool to examine mentioned files
-            - Use Grep tool to search for patterns
-            - Document findings
-          </actions>
-        </if_type_analyze>
-
-        <if_type_fix>
-          <pattern>Contains: "Fix", "Update", "Modify", "Implement"</pattern>
-          <actions>
-            - Use Read tool to understand current state
-            - Use Edit/MultiEdit tools to make changes
-            - Use Bash tool to run tests
-          </actions>
-        </if_type_fix>
-
-        <if_type_verify>
-          <pattern>Contains: "Verify", "Test", "Ensure"</pattern>
-          <actions>
-            - Use Bash tool to run tests
-            - Use Read tool to check outputs
-            - Validate success criteria
-          </actions>
-        </if_type_verify>
-      </task_type_analysis>
-
-      <concrete_execution>
-        Use appropriate tools based on task requirements
-        Follow task description precisely
-        Make incremental changes with verification
-      </concrete_execution>
-    </step4_execute_task_implementation>
-
-    <step5_mark_task_complete>
-      <tool>Edit</tool>
-      <file_path>${SPEC_PATH}/tasks.md</file_path>
-      <action>
-        Find line containing CURRENT_TASK
-        Change "- [ ]" to "- [x]"
-      </action>
-    </step5_mark_task_complete>
-
-    <step6_update_todo_complete>
-      <tool>TodoWrite</tool>
-      <action>Update CURRENT_TASK status to "completed"</action>
-    </step6_update_todo_complete>
-
-    <step7_announce_completion>
-      <output>
-        ✅ COMPLETED: Task ${CURRENT_TASK.id}
-      </output>
-    </step7_announce_completion>
-
-    <step8_continue_or_finish>
-      <cognitive_check>
-        IF more tasks in TARGET_TASKS:
-        Continue to next task
-        ELSE:
-        Proceed to Phase 3
-      </cognitive_check>
-    </step8_continue_or_finish>
-  </task_execution_loop>
-
-  <phase2_completion>
-    <output>
-      ✅ PHASE 2 COMPLETE
-      All ${COUNT(TARGET_TASKS)} tasks executed successfully
-    </output>
-    <action>PROCEED TO PHASE 3</action>
-  </phase2_completion>
-</phase_2_execution>
-
-<!-- =======================================================================================
+  <!-- =======================================================================================
        PHASE 3 - POST-EXECUTION
        ======================================================================================= -->
 
-<phase_3_finalization>
-  <title>PHASE 3 - FINALIZATION</title>
-  <instruction>COMMIT CHANGES AND FINALIZE</instruction>
+  <phase_3_finalization>
+    <title>PHASE 3 - FINALIZATION</title>
+    <instruction>COMMIT CHANGES AND FINALIZE</instruction>
 
-  <step1_run_final_tests>
-    <title>Run Final Tests</title>
-    <tool>Bash</tool>
-    <command>pnpm test</command>
-    <continue_on_failure>true</continue_on_failure>
-    <store_result>TEST_STATUS</store_result>
-  </step1_run_final_tests>
+    <step1_run_final_tests>
+      <title>Run Final Tests</title>
+      <tool>Bash</tool>
+      <command>pnpm test</command>
+      <continue_on_failure>true</continue_on_failure>
+      <store_result>TEST_STATUS</store_result>
+    </step1_run_final_tests>
 
-  <step2_commit_changes>
-    <title>Commit Changes</title>
-    <sequential_execution>true</sequential_execution>
-    <commands>
-      <add_all>
-        <tool>Bash</tool>
-        <command>git add -A</command>
-      </add_all>
-      <commit>
-        <tool>Bash</tool>
-        <command>git commit -m "feat: complete tasks from ${SPEC_FOLDER} Completed tasks:
-          ${TARGET_TASKS} 🤖 Generated with [Claude Code](https://claude.ai/code) Co-Authored-By:
-          Claude <noreply @anthropic.com>"</command>
-      </commit>
-      <push>
-        <tool>Bash</tool>
-        <command>git push origin ${BRANCH_NAME}</command>
-        <optional>true</optional>
-      </push>
-    </commands>
-  </step2_commit_changes>
+    <step2_commit_changes>
+      <title>Commit Changes</title>
+      <sequential_execution>true</sequential_execution>
+      <commands>
+        <add_all>
+          <tool>Bash</tool>
+          <command>git add -A</command>
+        </add_all>
+        <commit>
+          <tool>Bash</tool>
+          <command>git commit -m "feat: complete tasks from ${SPEC_FOLDER}
 
-  <step3_update_execution_recap>
-    <title>Update Execution Recap</title>
-    <tool>Edit</tool>
-    <file_path>${SPEC_PATH}/execution-recap.md</file_path>
-    <action>
-      Append new execution session with:
-      - Date/time
-      - Tasks completed
-      - Test status
-      - Branch name
-    </action>
-  </step3_update_execution_recap>
+Completed tasks:
+${TARGET_TASKS}
 
-  <step4_final_summary>
-    <output>
-      ════════════════════════════════════════
-      🎉 EXECUTION COMPLETE
-      ════════════════════════════════════════
-      📁 Spec: ${SPEC_FOLDER}
-      🌲 Branch: ${BRANCH_NAME}
-      ✅ Tasks: ${COUNT(TARGET_TASKS)} completed
-      🧪 Tests: ${TEST_STATUS}
-      ════════════════════════════════════════
-    </output>
-  </step4_final_summary>
+🤖 Generated with [Claude Code](https://claude.ai/code)
 
-  <step5_notification>
-    <tool>Bash</tool>
-    <command>afplay /System/Library/Sounds/Glass.aiff 2>/dev/null || echo "🔔 Done!"</command>
-    <optional>true</optional>
-  </step5_notification>
-</phase_3_finalization>
+Co-Authored-By: Claude <noreply@anthropic.com>"</command>
+        </commit>
+        <push>
+          <tool>Bash</tool>
+          <command>git push origin ${BRANCH_NAME}</command>
+          <optional>true</optional>
+        </push>
+      </commands>
+    </step2_commit_changes>
 
-<!-- =======================================================================================
+    <step3_update_execution_recap>
+      <title>Update Execution Recap</title>
+      <tool>Edit</tool>
+      <file_path>${SPEC_PATH}/execution-recap.md</file_path>
+      <action>
+        Append new execution session with:
+        - Date/time
+        - Tasks completed
+        - Test status
+        - Branch name
+      </action>
+    </step3_update_execution_recap>
+
+    <step4_final_summary>
+      <output>
+        ════════════════════════════════════════
+        🎉 EXECUTION COMPLETE
+        ════════════════════════════════════════
+        📁 Spec: ${SPEC_FOLDER}
+        🌲 Branch: ${BRANCH_NAME}
+        ✅ Tasks: ${COUNT(TARGET_TASKS)} completed
+        🧪 Tests: ${TEST_STATUS}
+        ════════════════════════════════════════
+      </output>
+    </step4_final_summary>
+
+    <step5_notification>
+      <tool>Bash</tool>
+      <command>afplay /System/Library/Sounds/Glass.aiff 2>/dev/null || echo "🔔 Done!"</command>
+      <optional>true</optional>
+    </step5_notification>
+  </phase_3_finalization>
+
+  <!-- =======================================================================================
        EXECUTION RULES
        ======================================================================================= -->
 
-<enforcement_rules>
-  <rule1>MUST prompt user if no spec input provided</rule1>
-  <rule2>MUST use fuzzy matching for partial spec names</rule2>
-  <rule3>MUST use cognitive analysis for task selection, not bash parsing</rule3>
-  <rule4>MUST default to next uncompleted parent task unless specific tasks given</rule4>
-  <rule5>MUST execute only tasks in TARGET_TASKS</rule5>
-  <rule6>MUST maintain task hierarchy awareness</rule6>
-  <rule7>MUST update both tasks.md and TodoWrite for each task</rule7>
-  <rule8>MUST execute phases sequentially</rule8>
-  <rule9>MUST use concrete tool calls for implementation</rule9>
-  <rule10>MUST complete all TARGET_TASKS before finishing</rule10>
-</enforcement_rules>
+  <enforcement_rules>
+    <rule1>MUST prompt user if no spec input provided</rule1>
+    <rule2>MUST use fuzzy matching for partial spec names</rule2>
+    <rule3>MUST use cognitive analysis for task selection, not bash parsing</rule3>
+    <rule4>MUST default to next uncompleted parent task unless specific tasks given</rule4>
+    <rule5>MUST execute only tasks in TARGET_TASKS</rule5>
+    <rule6>MUST maintain task hierarchy awareness</rule6>
+    <rule7>MUST update both tasks.md and TodoWrite for each task</rule7>
+    <rule8>MUST execute phases sequentially</rule8>
+    <rule9>MUST use concrete tool calls for implementation</rule9>
+    <rule10>MUST complete all TARGET_TASKS before finishing</rule10>
+    <rule11>MUST ALWAYS delegate ALL git operations to git-workflow agent - NO EXCEPTIONS regardless of current branch state</rule11>
+    <rule12>NEVER make independent git decisions - delegation is MANDATORY architectural requirement</rule12>
+    <rule13>MUST verify delegation actually occurred with pre/post state capture</rule13>
+  </enforcement_rules>
 
-<usage_examples>
-  <example1>
-    <input>execute-tasks-master</input>
-    <behavior>Prompts user with list of available specs</behavior>
-  </example1>
-
-  <example2>
-    <input>execute-tasks-master "quality checker"</input>
-    <behavior>Fuzzy matches to quality-checker-uplift, selects next parent task</behavior>
-  </example2>
-
-  <example3>
-    <input>execute-tasks-master ".agent-os/specs/2025-01-05-quality-checker-uplift" ["2.2", "2.3"]</input>
-    <behavior>Uses exact path, executes only tasks 2.2 and 2.3</behavior>
-  </example3>
-</usage_examples>
+  <usage_examples>
+    <example1>
+      <input>execute-tasks-master</input>
+      <behavior>Prompts user with list of available specs</behavior>
+    </example1>
+    
+    <example2>
+      <input>execute-tasks-master "quality checker"</input>
+      <behavior>Fuzzy matches to quality-checker-uplift, selects next parent task</behavior>
+    </example2>
+    
+    <example3>
+      <input>execute-tasks-master ".agent-os/specs/2025-01-05-quality-checker-uplift" ["2.2", "2.3"]</input>
+      <behavior>Uses exact path, executes only tasks 2.2 and 2.3</behavior>
+    </example3>
+  </usage_examples>
 
 </execute_tasks_master_protocol>
