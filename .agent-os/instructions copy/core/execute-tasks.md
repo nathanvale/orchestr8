@@ -1,9 +1,6 @@
-****---
-description: Rules to initiate execution of a set of tasks using Agent OS
-globs:
-alwaysApply: false
-version: 1.0
-encoding: UTF-8
+\*\*\*\*--- description: Rules to initiate execution of a set of tasks using
+Agent OS globs: alwaysApply: false version: 1.0 encoding: UTF-8
+
 ---
 
 # Task Execution Rules

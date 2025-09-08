@@ -1,19 +1,23 @@
 # Technical Specification
 
-This is the technical specification for the spec detailed in @.agent-os/specs/2025-09-08-quality-check-test-cleanup/spec.md
+This is the technical specification for the spec detailed in
+@.agent-os/specs/2025-09-08-quality-check-test-cleanup/spec.md
 
 ## Technical Requirements
 
 ### Files to Delete
 
 **From packages/quality-check/**
-- `test-cwd-debug.sh` - Debug script for testing claude-hook with working directory issues
-- `test-hook-debug.sh` - Script for testing strict null check scenarios  
+
+- `test-cwd-debug.sh` - Debug script for testing claude-hook with working
+  directory issues
+- `test-hook-debug.sh` - Script for testing strict null check scenarios
 - `test-hook-manually.sh` - Manual test scenarios for claude-hook
 - `test-strict.ts` - TypeScript file with deliberate errors for testing
 - `test.js` - Minimal JavaScript file with simple export
 
 **From repository root/**
+
 - `test-strict-check.js` - Similar debug script in repository root
 
 ### Verification Steps

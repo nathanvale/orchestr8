@@ -22,9 +22,9 @@ mission.
 
 ### Step 1: Spec Initiation
 
-Use the context-fetcher subagent with @ notation to identify spec initiation method by either
-finding the next uncompleted roadmap item when user asks "what's next?" or
-accepting a specific spec idea from the user.
+Use the context-fetcher subagent with @ notation to identify spec initiation
+method by either finding the next uncompleted roadmap item when user asks
+"what's next?" or accepting a specific spec idea from the user.
 
 <option_a_flow> <trigger_phrases> - "what's next?" </trigger_phrases>
 <actions> 1. CHECK @.agent-os/product/roadmap.md 2. FIND next uncompleted
@@ -40,9 +40,9 @@ format, length, or detail level</accept> <proceed>to context gathering</proceed>
 
 ### Step 2: Context Gathering (Conditional)
 
-Use the context-fetcher subagent with @ notation to read @.agent-os/product/mission-lite.md and
-@.agent-os/product/tech-stack.md only if not already in context to ensure
-minimal context for spec alignment.
+Use the context-fetcher subagent with @ notation to read
+@.agent-os/product/mission-lite.md and @.agent-os/product/tech-stack.md only if
+not already in context to ensure minimal context for spec alignment.
 
 <conditional_logic> IF both mission-lite.md AND tech-stack.md already read in
 current context: SKIP this entire step PROCEED to step 3 ELSE: READ only files
@@ -58,8 +58,8 @@ not already in context: - mission-lite.md (if not in context) - tech-stack.md
 
 ### Step 3: Requirements Clarification
 
-Use the context-fetcher subagent with @ notation to clarify scope boundaries and technical
-considerations by asking numbered questions as needed to ensure clear
+Use the context-fetcher subagent with @ notation to clarify scope boundaries and
+technical considerations by asking numbered questions as needed to ensure clear
 requirements before proceeding.
 
 <clarification_areas> <scope> - in_scope: what is included - out_of_scope: what

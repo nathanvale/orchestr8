@@ -48,8 +48,8 @@ conventions - File organization patterns - Testing approach </code_patterns>
 
 ### Step 2: Gather Product Context
 
-Use the context-fetcher subagent with @ notation to supplement codebase analysis with business
-context and future plans.
+Use the context-fetcher subagent with @ notation to supplement codebase analysis
+with business context and future plans.
 
 <context_questions> Based on my analysis of your codebase, I can see you're
 building [OBSERVED_PRODUCT_TYPE].

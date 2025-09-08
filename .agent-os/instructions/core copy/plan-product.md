@@ -22,9 +22,10 @@ for AI agent consumption.
 
 ### Step 1: Gather User Input
 
-Use the context-fetcher subagent with @ notation to collect all required inputs from the user
-including main idea, key features (minimum 3), target users (minimum 1), and
-tech stack preferences with blocking validation before proceeding.
+Use the context-fetcher subagent with @ notation to collect all required inputs
+from the user including main idea, key features (minimum 3), target users
+(minimum 1), and tech stack preferences with blocking validation before
+proceeding.
 
 <data_sources> <primary>user_direct_input</primary> <fallback_sequence> 1.
 @.agent-os/standards/tech-stack.md 2. @.claude/CLAUDE.md 3. Cursor User Rules

@@ -20,9 +20,9 @@
   - [x] 3.2 Verify no other similar test files exist in root
 
 - [x] 4. Update .gitignore configuration
-  - [x] 4.1 Add pattern for test-*.sh files
-  - [x] 4.2 Add pattern for test-*.js files (excluding proper test files)
-  - [x] 4.3 Add pattern for test-*.ts files (excluding proper test files)
+  - [x] 4.1 Add pattern for test-\*.sh files
+  - [x] 4.2 Add pattern for test-\*.js files (excluding proper test files)
+  - [x] 4.3 Add pattern for test-\*.ts files (excluding proper test files)
   - [x] 4.4 Verify patterns don't accidentally exclude formal tests
 
 - [x] 5. Final verification and commit
