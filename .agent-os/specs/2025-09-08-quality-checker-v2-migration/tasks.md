@@ -9,37 +9,37 @@ These are the tasks to be completed for the spec detailed in
 
 ### Phase 1: Facade Testing and Preparation
 
-- [ ] 1. Write comprehensive V2 facade compatibility tests
-  - [ ] 1.1 Create test suite for api.ts facade with V2 implementation
-  - [ ] 1.2 Create test suite for git-hook.ts facade with V2 implementation
-  - [ ] 1.3 Create test suite for test-utils/api-wrappers.ts with V2
-  - [ ] 1.4 Write backward compatibility verification tests
-  - [ ] 1.5 Add integration tests for facade interactions
-  - [ ] 1.6 Verify all new tests pass
+- [x] 1. Write comprehensive V2 facade compatibility tests
+  - [x] 1.1 Create test suite for api.ts facade with V2 implementation
+  - [x] 1.2 Create test suite for git-hook.ts facade with V2 implementation
+  - [x] 1.3 Create test suite for test-utils/api-wrappers.ts with V2
+  - [x] 1.4 Write backward compatibility verification tests
+  - [x] 1.5 Add integration tests for facade interactions
+  - [x] 1.6 Verify all new tests pass
 
-- [ ] 2. Update api.ts facade to use QualityCheckerV2
-  - [ ] 2.1 Replace QualityChecker import with QualityCheckerV2
-  - [ ] 2.2 Update instantiation and configuration logic
-  - [ ] 2.3 Verify all API methods work correctly with V2
-  - [ ] 2.4 Run api.test.ts to confirm functionality
-  - [ ] 2.5 Fix any compatibility issues found
-  - [ ] 2.6 Verify api.ts tests pass with V2
+- [x] 2. Update api.ts facade to use QualityCheckerV2
+  - [x] 2.1 Replace QualityChecker import with QualityCheckerV2
+  - [x] 2.2 Update instantiation and configuration logic
+  - [x] 2.3 Verify all API methods work correctly with V2
+  - [x] 2.4 Run api.test.ts to confirm functionality
+  - [x] 2.5 Fix any compatibility issues found
+  - [x] 2.6 Verify api.ts tests pass with V2
 
-- [ ] 3. Update git-hook.ts facade to use QualityCheckerV2
-  - [ ] 3.1 Replace QualityChecker import with QualityCheckerV2
-  - [ ] 3.2 Update pre-commit hook integration code
-  - [ ] 3.3 Test staged file processing with V2
-  - [ ] 3.4 Verify error reporting and exit codes work correctly
-  - [ ] 3.5 Test git hook in actual git workflow
-  - [ ] 3.6 Verify git-hook.ts tests pass
+- [x] 3. Update git-hook.ts facade to use QualityCheckerV2
+  - [x] 3.1 Replace QualityChecker import with QualityCheckerV2
+  - [x] 3.2 Update pre-commit hook integration code
+  - [x] 3.3 Test staged file processing with V2
+  - [x] 3.4 Verify error reporting and exit codes work correctly
+  - [x] 3.5 Test git hook in actual git workflow
+  - [x] 3.6 Verify git-hook.ts tests pass
 
-- [ ] 4. Update test-utils/api-wrappers.ts to use V2
-  - [ ] 4.1 Update imports and initialization to V2
-  - [ ] 4.2 Verify test utility functions work with V2
-  - [ ] 4.3 Ensure mock and stub helpers are compatible
-  - [ ] 4.4 Update any type definitions for V2
-  - [ ] 4.5 Run tests using api-wrappers
-  - [ ] 4.6 Verify all wrapper tests pass
+- [x] 4. Update test-utils/api-wrappers.ts to use V2
+  - [x] 4.1 Update imports and initialization to V2
+  - [x] 4.2 Verify test utility functions work with V2
+  - [x] 4.3 Ensure mock and stub helpers are compatible
+  - [x] 4.4 Update any type definitions for V2
+  - [x] 4.5 Run tests using api-wrappers
+  - [x] 4.6 Verify all wrapper tests pass
 
 - [ ] 5. Clean up deprecated V2 facades
   - [ ] 5.1 Identify all references to claude-v2.ts

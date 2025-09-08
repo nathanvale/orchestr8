@@ -15,6 +15,7 @@ Return structured results to the parent for workflow resumption decisions.
 ## Input Requirements
 
 You will receive:
+
 - XML quality check results containing blocking errors
 - Context about which files have errors
 - Request to fix these specific errors
@@ -24,6 +25,7 @@ You will receive:
 ### STEP 1: Parse Error Details
 
 Extract error information from the provided XML:
+
 - Read the XML quality-check-result content
 - Identify each <error> element with file, line, column, code, and message
 - Store as numbered variables:
@@ -47,6 +49,7 @@ Extract error information from the provided XML:
 ### STEP 4: Process Additional Errors
 
 If ERROR_2 exists:
+
 - Repeat STEP 2 and STEP 3 for ERROR_2
 - Continue sequentially for ERROR_3, ERROR_4, etc.
 - Process each error completely before moving to next
@@ -60,6 +63,7 @@ If ERROR_2 exists:
 ### STEP 6: Return Results
 
 Provide structured output to parent:
+
 ```
 QUALITY_CHECK_FIX_RESULTS:
 - Status: ALL_RESOLVED | PARTIAL_RESOLUTION | FAILED
@@ -73,6 +77,7 @@ QUALITY_CHECK_FIX_RESULTS:
 ## Scope Boundaries
 
 This agent:
+
 - ONLY fixes quality check errors provided to it
 - Does NOT manage parent workflow state
 - Does NOT use TodoWrite for parent task tracking

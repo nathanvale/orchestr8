@@ -113,101 +113,52 @@ implemented - Testing style guidelines </search_code_style> </selective_reading>
 
 ### Step 5: Task and Sub-task Execution
 
-Execute the parent task and all sub-tasks using explicit step enumeration with
-integrated quality check handling.
+Execute the parent task and all sub-tasks in order using test-driven development
+(TDD) approach. MUST invoke quality-check-fixer subagent when blocking errors
+occur.
 
-<task_initialization>
-  ACTION: TodoWrite initialize task tracking with variables
-  VARIABLES: current_step, blocking_status, error_content
-  STATE: ready_for_execution
-</task_initialization>
+IMPORTANT: When any file operation shows "🚫 BLOCKING" or returns error code 2,
+you MUST invoke the quality-check-fixer subagent before continuing.
 
 <typical_task_structure> <first_subtask>Write tests for
 [feature]</first_subtask> <middle_subtasks>Implementation
 steps</middle_subtasks> <final_subtask>Verify all tests pass</final_subtask>
 </typical_task_structure>
 
-<subtask_1_tests>
-  ACTION: TodoWrite update current_step="write_tests"
-  IMPLEMENT: Write all tests for the parent feature
-  INCLUDE: Unit tests, integration tests, edge cases
-  VERIFY: Tests fail appropriately (red state)
-  COMPLETE: TodoWrite mark subtask_1 complete
-</subtask_1_tests>
+<execution_order> <subtask_1_tests> IF sub-task 1 is "Write tests for
+[feature]": - Write all tests for the parent feature - Include unit tests,
+integration tests, edge cases - Run tests to ensure they fail appropriately -
+Mark sub-task 1 complete </subtask_1_tests>
 
-<implementation_step_2>
-  ACTION: TodoWrite update current_step="implement_core_functionality"
-  IMPLEMENT: Build core feature functionality
-  QUALITY_MONITOR: Check output for "🚫 BLOCKING" pattern
-  IF_BLOCKING_DETECTED: Execute quality_check_resolution_sequence
-  VERIFY: Tests pass, no blocking errors
-  COMPLETE: TodoWrite mark implementation_step_2 complete
-</implementation_step_2>
+<middle_subtasks_implementation> FOR each implementation sub-task (2 through
+n-1):
 
-<implementation_step_3>
-  ACTION: TodoWrite update current_step="implement_additional_features"
-  IMPLEMENT: Add supplementary functionality
-  QUALITY_MONITOR: Check output for "🚫 BLOCKING" pattern
-  IF_BLOCKING_DETECTED: Execute quality_check_resolution_sequence
-  UPDATE: Adjust related tests as needed
-  COMPLETE: TodoWrite mark implementation_step_3 complete
-</implementation_step_3>
+- Implement the specific functionality
+- Make relevant tests pass
+- Update any adjacent/related tests if needed
+- Refactor while keeping tests green
 
-<implementation_step_n>
-  ACTION: TodoWrite update current_step="implement_final_components"
-  IMPLEMENT: Complete remaining functionality
-  QUALITY_MONITOR: Check output for "🚫 BLOCKING" pattern
-  IF_BLOCKING_DETECTED: Execute quality_check_resolution_sequence
-  REFACTOR: Keep tests green while refactoring
-  COMPLETE: TodoWrite mark implementation_step_n complete
-</implementation_step_n>
+  IF hook returns error code 2 OR output contains "🚫 BLOCKING":
+  - TodoWrite: Save current sub-task as "paused_for_quality_fix"
+  - TodoWrite: Create task "Fixing quality check errors for [current sub-task]"
+  - MUST use quality-check-fixer subagent with this request: "Fix the quality
+    check errors from this XML block: [Insert entire <quality-check-result> XML
+    block including all nested elements] Systematically resolve each error using
+    Read/Edit/MultiEdit tools Return status: ALL_RESOLVED, PARTIAL_RESOLUTION,
+    or FAILED"
+  - TodoWrite: Mark "Fixing quality check errors" complete
+  - If ALL_RESOLVED:
+    - TodoWrite: Resume saved sub-task from "paused_for_quality_fix"
+    - Continue with implementation
+  - If PARTIAL_RESOLUTION or FAILED:
+    - Document blocking issues with ⚠️
+    - TodoWrite: Mark current sub-task as blocked
 
-<quality_check_resolution_sequence>
-  TRIGGER: Output contains "🚫 BLOCKING" with XML quality-check-result
-  
-  STEP1: TodoWrite save current task state
-        - Store current_step value
-        - Mark current task as "blocked_by_quality_check"
-        - Create task: "Waiting for quality check fixes"
-  
-  STEP2: Extract error content for subagent
-        - Copy entire <quality-check-result> XML block
-        - Note affected file paths
-  
-  STEP3: Invoke quality-check-fixer subagent
-        REQUEST: "Fix these blocking quality check errors:
-                 [Insert full XML quality-check-result block]
-                 Affected files: [list of files with errors]
-                 Return structured results when complete."
-  
-  STEP4: Process subagent results
-        - Receive QUALITY_CHECK_FIX_RESULTS
-        - Check Status field (ALL_RESOLVED | PARTIAL_RESOLUTION | FAILED)
-  
-  STEP5: Handle results based on status
-        IF Status = ALL_RESOLVED:
-          - TodoWrite update: "Quality checks resolved, resuming [current_step]"
-          - Continue with saved current_step
-        IF Status = PARTIAL_RESOLUTION:
-          - Log unfixable errors for user attention
-          - Attempt to continue if possible
-        IF Status = FAILED:
-          - Mark task as blocked
-          - Request user intervention
-  
-  STEP6: Resume or escalate
-        - If resolved: Continue implementation at current_step
-        - If blocked: Document blocking issues with ⚠️
-</quality_check_resolution_sequence>
+- Mark sub-task complete </middle_subtasks_implementation>
 
-<final_subtask_verification>
-  ACTION: TodoWrite update current_step="final_verification"
-  TEST: Run entire test suite
-  QUALITY: Verify no blocking errors present
-  FIX: Address any remaining failures
-  ENSURE: No regressions occurred
-  COMPLETE: TodoWrite mark final_subtask complete
-</final_subtask_verification>
+<final_subtask_verification> IF final sub-task is "Verify all tests pass": - Run
+entire test suite - Fix any remaining failures - Ensure no regressions - Mark
+final sub-task complete </final_subtask_verification> </execution_order>
 
 <test_management> <new_tests> - Written in first sub-task - Cover all aspects of
 parent feature - Include edge cases and error handling </new_tests>
@@ -216,13 +167,11 @@ changed behavior - Maintain backward compatibility </test_updates>
 </test_management>
 
 <instructions>
-  ACTION: Execute sub-tasks using explicit steps
+  ACTION: Execute sub-tasks in their defined order
   RECOGNIZE: First sub-task typically writes all tests
-  IMPLEMENT: Middle sub-tasks build functionality step-by-step
-  MONITOR: Watch for "🚫 BLOCKING" quality check errors
-  DELEGATE: Use quality-check-fixer subagent for blocking issues
+  IMPLEMENT: Middle sub-tasks build functionality
   VERIFY: Final sub-task ensures all tests pass
-  UPDATE: Mark each sub-task complete in TodoWrite
+  UPDATE: Mark each sub-task complete as finished
 </instructions>
 
 </step>
