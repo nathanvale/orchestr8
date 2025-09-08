@@ -1,4 +1,4 @@
----
+****---
 description: Rules to initiate execution of a set of tasks using Agent OS
 globs:
 alwaysApply: false

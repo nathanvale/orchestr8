@@ -2,7 +2,8 @@
 <execute_tasks_master_protocol>
 
   <metadata>
-    <description>Master orchestrator for Agent OS task execution with intelligent interactive selection</description>
+    <description>Master orchestrator for Agent OS task execution with intelligent interactive
+      selection</description>
     <version>6.0</version>
     <mode>IMPERATIVE_EXECUTION</mode>
     <effectiveness_target>80%+</effectiveness_target>
@@ -15,7 +16,7 @@
   <!-- =======================================================================================
        INPUT PARAMETERS - Support fuzzy matching and interactive selection
        ======================================================================================= -->
-  
+
   <input_parameters>
     <spec_input>
       <description>User input for spec selection - can be partial name, full path, or empty</description>
@@ -29,7 +30,7 @@
         <full>".agent-os/specs/2025-01-05-quality-checker-uplift"</full>
       </examples>
     </spec_input>
-    
+
     <specific_tasks>
       <description>Optional array of specific task IDs or descriptions to execute</description>
       <type>array</type>
@@ -53,39 +54,39 @@
 
   <phase_0_spec_selection>
     <title>Spec Selection Phase</title>
-    
+
     <step1_discover_specs>
       <tool>Bash</tool>
       <command>find .agent-os/specs -type d -maxdepth 1 -name "*-*" | sort -r</command>
       <description>List available spec directories</description>
     </step1_discover_specs>
-    
+
     <step2_determine_input_type>
       <tool>Bash</tool>
       <command>
         if [ -z "${spec_input}" ]; then
-          echo "interactive"
+        echo "interactive"
         elif [[ "${spec_input}" == *"/"* ]] || [[ "${spec_input}" == "."* ]]; then
-          echo "path"
+        echo "path"
         else
-          echo "fuzzy"
+        echo "fuzzy"
         fi
       </command>
       <description>Classify input type</description>
     </step2_determine_input_type>
-    
+
     <step3a_handle_interactive>
       <condition>Previous output equals "interactive"</condition>
       <action>Display available specs from step1 and prompt for selection</action>
     </step3a_handle_interactive>
-    
+
     <step3b_handle_path>
       <condition>Previous output equals "path"</condition>
       <tool>Bash</tool>
       <command>test -d "${spec_input}" && echo "${spec_input}" || echo "INVALID"</command>
       <description>Validate directory path</description>
     </step3b_handle_path>
-    
+
     <step3c_handle_fuzzy>
       <condition>Previous output equals "fuzzy"</condition>
       <tool>Bash</tool>
@@ -95,10 +96,11 @@
       </command>
       <description>Find matching spec directory</description>
     </step3c_handle_fuzzy>
-    
+
     <step4_validate_selection>
       <tool>Bash</tool>
-      <command>test -d "${previous_result}" && echo "✅ Selected spec: ${previous_result}" || echo "❌ Invalid selection"</command>
+      <command>test -d "${previous_result}" && echo "✅ Selected spec: ${previous_result}" || echo "❌
+        Invalid selection"</command>
       <description>Confirm final spec path exists</description>
       <store_as>SPEC_PATH</store_as>
     </step4_validate_selection>
@@ -121,57 +123,11 @@
 
     <step2_intelligent_task_selection>
       <title>Intelligent Task Selection (No Bash)</title>
-      <instruction>COGNITIVELY ANALYZE TASK_CONTENT TO SELECT TASKS</instruction>
-      
-      <cognitive_task_analysis>
-        <parse_hierarchy>
-          Identify task structure from TASK_CONTENT:
-          1. Parent tasks: Lines matching "^- \[[ x]\] \d+\."
-          2. Subtasks: Lines matching "^  - \[[ x]\] \d+\.\d+"
-          3. Task completion: [x] = complete, [ ] = incomplete
-        </parse_hierarchy>
-        
-        <if_specific_tasks_provided>
-          <description>When specific_tasks parameter is provided</description>
-          <action>
-            Find tasks matching the IDs in specific_tasks array:
-            - Match by task number (e.g., "2.2")
-            - Include those specific tasks only
-            - Store in TARGET_TASKS
-          </action>
-        </if_specific_tasks_provided>
-        
-        <if_no_specific_tasks>
-          <description>Default: Find next uncompleted parent task</description>
-          <algorithm>
-            1. Scan through TASK_CONTENT line by line
-            2. For each parent task (e.g., "- [ ] 2. Fix Blocking Behavior Tests"):
-               a. Check if parent is marked incomplete
-               b. Look ahead for its subtasks
-               c. Check if any subtasks are incomplete
-               d. If yes, this is our target parent
-            3. Select ALL incomplete subtasks of that parent
-            4. Store selected tasks in TARGET_TASKS
-          </algorithm>
-          <example>
-            Reading tasks.md:
-            - [x] 1. Fix TypeScript Strict Mode Tests
-              - [x] 1.1 Enable and analyze...  ← All complete, skip
-              - [x] 1.2 Update TypeScript...
-            
-            - [ ] 2. Fix Blocking Behavior Tests  ← First incomplete parent!
-              - [x] 2.1 Enable blocking...       ← Complete
-              - [ ] 2.2 Analyze type safety...   ← Select this
-              - [ ] 2.3 Update autopilot...      ← Select this
-              - [ ] 2.4 Analyze complexity...    ← Select this
-              - [ ] 2.5 Update autopilot...      ← Select this
-              - [ ] 2.6 Verify all blocking...   ← Select this
-            
-            TARGET_TASKS = [2.2, 2.3, 2.4, 2.5, 2.6]
-          </example>
-        </if_no_specific_tasks>
-      </cognitive_task_analysis>
-      
+      <instructions>
+        ACTION: Identify task(s) to execute
+        DEFAULT: Select next uncompleted parent task if not specified
+        CONFIRM: Task selection with user
+      </instructions>
       <store_as>TARGET_TASKS</store_as>
       <required>true</required>
     </step2_intelligent_task_selection>
@@ -188,18 +144,11 @@
       </output>
     </step3_confirm_task_selection>
 
-    <step4_derive_branch_name>
-      <tool>Bash</tool>
-      <command>echo "task-execution-$(date +%Y%m%d-%H%M)"</command>
-      <store_as>BRANCH_NAME</store_as>
-      <required>true</required>
-    </step4_derive_branch_name>
-
-    <step5_extract_folder_name>
-      <tool>Bash</tool>  
-      <command>basename "${SPEC_PATH}"</command>
-      <store_as>SPEC_FOLDER</store_as>
-      <required>true</required>
+    <step4_extract_folder_name>
+    <tool>Bash</tool>
+    <command>basename "${SPEC_PATH}"</command>
+    <store_as>SPEC_FOLDER</store_as>
+    <required>true</required>
     </step5_extract_folder_name>
 
     <completion_signal>PROCEED TO PHASE 1 WITH SELECTED TASKS</completion_signal>
@@ -211,7 +160,12 @@
 
   <phase_1_setup>
     <title>PHASE 1 - PRE-EXECUTION SETUP</title>
-    <instruction>PREPARE ENVIRONMENT FOR TARGET_TASKS EXECUTION</instruction>
+
+    <instructions>
+  <instruction>PREPARE ENVIRONMENT FOR TARGET_TASKS EXECUTION</instruction>
+
+    </instructions>
+  
 
     <step1_detailed_task_analysis>
       <title>Detailed Task Analysis</title>
@@ -326,7 +280,7 @@
 
     <task_execution_loop>
       <instruction>FOR EACH TASK IN TARGET_TASKS, EXECUTE:</instruction>
-      
+
       <step1_get_current_task>
         <cognitive_action>
           From TARGET_TASKS, take next unprocessed task
@@ -354,10 +308,10 @@
         <instruction>
           Based on CURRENT_TASK.description, determine and execute required actions
         </instruction>
-        
+
         <task_type_analysis>
           <analyze_task>Parse task description to identify action type</analyze_task>
-          
+
           <if_type_analyze>
             <pattern>Contains: "Analyze", "Review", "Understand"</pattern>
             <actions>
@@ -366,7 +320,7 @@
               - Document findings
             </actions>
           </if_type_analyze>
-          
+
           <if_type_fix>
             <pattern>Contains: "Fix", "Update", "Modify", "Implement"</pattern>
             <actions>
@@ -375,7 +329,7 @@
               - Use Bash tool to run tests
             </actions>
           </if_type_fix>
-          
+
           <if_type_verify>
             <pattern>Contains: "Verify", "Test", "Ensure"</pattern>
             <actions>
@@ -385,7 +339,7 @@
             </actions>
           </if_type_verify>
         </task_type_analysis>
-        
+
         <concrete_execution>
           Use appropriate tools based on task requirements
           Follow task description precisely
@@ -416,9 +370,9 @@
       <step8_continue_or_finish>
         <cognitive_check>
           IF more tasks in TARGET_TASKS:
-            Continue to next task
+          Continue to next task
           ELSE:
-            Proceed to Phase 3
+          Proceed to Phase 3
         </cognitive_check>
       </step8_continue_or_finish>
     </task_execution_loop>
@@ -458,14 +412,9 @@
         </add_all>
         <commit>
           <tool>Bash</tool>
-          <command>git commit -m "feat: complete tasks from ${SPEC_FOLDER}
-
-Completed tasks:
-${TARGET_TASKS}
-
-🤖 Generated with [Claude Code](https://claude.ai/code)
-
-Co-Authored-By: Claude <noreply@anthropic.com>"</command>
+          <command>git commit -m "feat: complete tasks from ${SPEC_FOLDER} Completed tasks:
+            ${TARGET_TASKS} 🤖 Generated with [Claude Code](https://claude.ai/code) Co-Authored-By:
+            Claude <noreply @anthropic.com>"</command>
         </commit>
         <push>
           <tool>Bash</tool>
@@ -523,7 +472,8 @@ Co-Authored-By: Claude <noreply@anthropic.com>"</command>
     <rule8>MUST execute phases sequentially</rule8>
     <rule9>MUST use concrete tool calls for implementation</rule9>
     <rule10>MUST complete all TARGET_TASKS before finishing</rule10>
-    <rule11>MUST ALWAYS delegate ALL git operations to git-workflow agent - NO EXCEPTIONS regardless of current branch state</rule11>
+    <rule11>MUST ALWAYS delegate ALL git operations to git-workflow agent - NO EXCEPTIONS regardless
+      of current branch state</rule11>
     <rule12>NEVER make independent git decisions - delegation is MANDATORY architectural requirement</rule12>
   </enforcement_rules>
 
@@ -532,12 +482,12 @@ Co-Authored-By: Claude <noreply@anthropic.com>"</command>
       <input>execute-tasks-master</input>
       <behavior>Prompts user with list of available specs</behavior>
     </example1>
-    
+
     <example2>
       <input>execute-tasks-master "quality checker"</input>
       <behavior>Fuzzy matches to quality-checker-uplift, selects next parent task</behavior>
     </example2>
-    
+
     <example3>
       <input>execute-tasks-master ".agent-os/specs/2025-01-05-quality-checker-uplift" ["2.2", "2.3"]</input>
       <behavior>Uses exact path, executes only tasks 2.2 and 2.3</behavior>

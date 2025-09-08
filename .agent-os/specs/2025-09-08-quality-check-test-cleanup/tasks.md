@@ -8,12 +8,12 @@
   - [x] 1.3 Verify CI/CD pipelines don't reference these files
   - [x] 1.4 Confirm formal test suite covers all functionality
 
-- [ ] 2. Delete obsolete files from quality-check package
-  - [ ] 2.1 Delete test-cwd-debug.sh
-  - [ ] 2.2 Delete test-hook-debug.sh
-  - [ ] 2.3 Delete test-hook-manually.sh
-  - [ ] 2.4 Delete test-strict.ts
-  - [ ] 2.5 Delete test.js
+- [x] 2. Delete obsolete files from quality-check package
+  - [x] 2.1 Delete test-cwd-debug.sh
+  - [x] 2.2 Delete test-hook-debug.sh
+  - [x] 2.3 Delete test-hook-manually.sh
+  - [x] 2.4 Delete test-strict.ts
+  - [x] 2.5 Delete test.js
 
 - [ ] 3. Clean repository root
   - [ ] 3.1 Delete test-strict-check.js from repository root
