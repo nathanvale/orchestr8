@@ -1,5 +1,6 @@
 import { ESLint } from 'eslint'
 import type { Issue, CheckerResult } from '../types/issue-types.js'
+import type { ErrorReport } from '../utils/logger.js'
 import { ToolMissingError } from '../core/errors.js'
 import type { CancellationToken } from '../core/timeout-manager.js'
 
@@ -213,6 +214,71 @@ export class ESLintEngine {
     } catch {
       return undefined
     }
+  }
+
+  /**
+   * Convert ESLint results to ErrorReport format
+   */
+  async generateErrorReport(results: ESLint.LintResult[]): Promise<ErrorReport> {
+    const issues = this.convertResults(results)
+    const totalErrors = issues.filter(i => i.severity === 'error').length
+    const totalWarnings = issues.filter(i => i.severity === 'warning').length
+    const filesAffected = new Set(issues.map(i => i.file)).size
+    
+    // Get raw JSON output for debugging
+    const rawOutput = await this.format(results, 'json')
+    
+    return {
+      timestamp: new Date().toISOString(),
+      tool: 'eslint',
+      status: totalErrors > 0 ? 'error' : totalWarnings > 0 ? 'warning' : 'success',
+      summary: {
+        totalErrors,
+        totalWarnings,
+        filesAffected,
+      },
+      details: {
+        files: this.groupIssuesByFile(issues),
+      },
+      raw: rawOutput,
+    }
+  }
+
+  /**
+   * Group issues by file for ErrorReport format
+   */
+  private groupIssuesByFile(issues: Issue[]): Array<{
+    path: string
+    errors: Array<{
+      line: number
+      column: number
+      message: string
+      ruleId?: string
+      severity: 'error' | 'warning'
+    }>
+  }> {
+    const fileGroups: Record<string, Issue[]> = {}
+    
+    // Filter out 'info' severity issues since ErrorReport only accepts 'error' | 'warning'
+    const reportableIssues = issues.filter(issue => issue.severity !== 'info')
+    
+    for (const issue of reportableIssues) {
+      if (!fileGroups[issue.file]) {
+        fileGroups[issue.file] = []
+      }
+      fileGroups[issue.file].push(issue)
+    }
+    
+    return Object.entries(fileGroups).map(([path, fileIssues]) => ({
+      path,
+      errors: fileIssues.map(issue => ({
+        line: issue.line,
+        column: issue.col,
+        message: issue.message,
+        ruleId: issue.ruleId,
+        severity: issue.severity as 'error' | 'warning', // Safe cast since we filtered out 'info'
+      })),
+    }))
   }
 
   /**

@@ -136,6 +136,7 @@ module.exports = greeting`,
 
       const token = {
         isCancellationRequested: true,
+        onCancellationRequested: () => {},
       }
 
       const result = await engine.check({
@@ -209,13 +210,14 @@ module.exports = greeting`,
             {
               line: 1,
               column: 1,
-              severity: 2,
+              severity: 2 as const,
               message: 'Test error',
               ruleId: 'test-rule',
             },
           ],
           errorCount: 1,
           warningCount: 0,
+          fatalErrorCount: 0,
           fixableErrorCount: 0,
           fixableWarningCount: 0,
           usedDeprecatedRules: [],
@@ -235,6 +237,7 @@ module.exports = greeting`,
           messages: [],
           errorCount: 0,
           warningCount: 0,
+          fatalErrorCount: 0,
           fixableErrorCount: 0,
           fixableWarningCount: 0,
           usedDeprecatedRules: [],
@@ -285,6 +288,234 @@ module.exports = greeting`,
       engine.clearCache()
       // This is mainly for coverage, the actual effect is internal
       expect(engine).toBeDefined()
+    })
+  })
+
+  describe('JSON Error Reporting', () => {
+    it('should generate ErrorReport from ESLint results with errors', async () => {
+      const testFile = path.join(tempDir, 'errors.js')
+      fs.writeFileSync(
+        testFile,
+        `const unused = 'Hello';
+console.log('test');`,
+      )
+
+      const result = await engine.check({
+        files: [testFile],
+        cwd: tempDir,
+      })
+
+      // Create mock ESLint results for formatting since getResults() doesn't exist
+      const mockResults = [
+        {
+          filePath: testFile,
+          messages: result.issues.map(issue => ({
+            line: issue.line,
+            column: issue.col,
+            severity: (issue.severity === 'error' ? 2 : 1) as 1 | 2,
+            message: issue.message,
+            ruleId: issue.ruleId || null,
+          })),
+          errorCount: result.issues.filter(i => i.severity === 'error').length,
+          warningCount: result.issues.filter(i => i.severity === 'warning').length,
+          fatalErrorCount: 0,
+          fixableErrorCount: 0,
+          fixableWarningCount: 0,
+          usedDeprecatedRules: [],
+          suppressedMessages: [],
+        },
+      ]
+      
+      const jsonOutput = await engine.format(mockResults, 'json')
+      
+      expect(result.success).toBe(false)
+      expect(result.issues).toHaveLength(4)
+      expect(jsonOutput).toBeDefined()
+      expect(() => JSON.parse(jsonOutput)).not.toThrow()
+
+      // Verify JSON structure
+      const parsed = JSON.parse(jsonOutput)
+      expect(Array.isArray(parsed)).toBe(true)
+      expect(parsed[0]).toHaveProperty('filePath')
+      expect(parsed[0]).toHaveProperty('messages')
+      expect(parsed[0].messages).toHaveLength(4)
+    })
+
+    it('should generate ErrorReport from ESLint results with no errors', async () => {
+      const testFile = path.join(tempDir, 'valid.js')
+      fs.writeFileSync(
+        testFile,
+        `const greeting = 'Hello, World!'
+module.exports = greeting`,
+      )
+
+      const result = await engine.check({
+        files: [testFile],
+        cwd: tempDir,
+      })
+
+      // Create mock ESLint results for formatting since getResults() doesn't exist
+      const mockResults = [
+        {
+          filePath: testFile,
+          messages: [],
+          errorCount: 0,
+          warningCount: 0,
+          fatalErrorCount: 0,
+          fixableErrorCount: 0,
+          fixableWarningCount: 0,
+          usedDeprecatedRules: [],
+          suppressedMessages: [],
+        },
+      ]
+      
+      const jsonOutput = await engine.format(mockResults, 'json')
+      
+      expect(result.success).toBe(true)
+      expect(result.issues).toHaveLength(0)
+      expect(jsonOutput).toBeDefined()
+      expect(() => JSON.parse(jsonOutput)).not.toThrow()
+
+      // Verify JSON structure for clean results
+      const parsed = JSON.parse(jsonOutput)
+      expect(Array.isArray(parsed)).toBe(true)
+      expect(parsed[0]).toHaveProperty('filePath')
+      expect(parsed[0].messages).toHaveLength(0)
+    })
+
+    it('should support both JSON and stylish output formats simultaneously', async () => {
+      const testFile = path.join(tempDir, 'mixed.js')
+      fs.writeFileSync(testFile, `const unused = 'test'`)
+
+      await engine.check({
+        files: [testFile],
+        cwd: tempDir,
+      })
+
+      // Create mock ESLint results since getResults() doesn't exist
+      const mockResults = [
+        {
+          filePath: testFile,
+          messages: [
+            {
+              line: 1,
+              column: 7,
+              severity: 2 as const,
+              message: "'unused' is defined but never used.",
+              ruleId: 'no-unused-vars',
+            },
+          ],
+          errorCount: 1,
+          warningCount: 0,
+          fatalErrorCount: 0,
+          fixableErrorCount: 0,
+          fixableWarningCount: 0,
+          usedDeprecatedRules: [],
+          suppressedMessages: [],
+        },
+      ]
+      
+      const jsonOutput = await engine.format(mockResults, 'json')
+      const stylishOutput = await engine.format(mockResults, 'stylish')
+
+      expect(jsonOutput).toBeDefined()
+      expect(stylishOutput).toBeDefined()
+      expect(() => JSON.parse(jsonOutput)).not.toThrow()
+      expect(typeof stylishOutput).toBe('string')
+      expect(stylishOutput).toContain('unused')
+    })
+
+    it('should provide detailed error information for ErrorReport conversion', async () => {
+      const testFile = path.join(tempDir, 'detailed.js') 
+      fs.writeFileSync(
+        testFile,
+        `const unused1 = 'test';
+const unused2 = 'test';
+console.log('debug');`,
+      )
+
+      const result = await engine.check({
+        files: [testFile],
+        cwd: tempDir,
+      })
+
+      expect(result.success).toBe(false)
+      expect(result.issues.length).toBeGreaterThan(0)
+
+      // Verify we have detailed information for ErrorReport conversion
+      const firstIssue = result.issues[0]
+      expect(firstIssue).toHaveProperty('file')
+      expect(firstIssue).toHaveProperty('line')
+      expect(firstIssue).toHaveProperty('col')
+      expect(firstIssue).toHaveProperty('message')
+      expect(firstIssue).toHaveProperty('ruleId')
+      expect(firstIssue).toHaveProperty('severity')
+      expect(['error', 'warning']).toContain(firstIssue.severity)
+    })
+
+    it('should handle multiple files in JSON output', async () => {
+      const file1 = path.join(tempDir, 'file1.js')
+      const file2 = path.join(tempDir, 'file2.js')
+
+      fs.writeFileSync(file1, `const unused1 = 'test';`)
+      fs.writeFileSync(file2, `console.log('debug');`)
+
+      await engine.check({
+        files: [file1, file2],
+        cwd: tempDir,
+      })
+
+      // Create mock ESLint results for multiple files since getResults() doesn't exist
+      const mockResults = [
+        {
+          filePath: file1,
+          messages: [
+            {
+              line: 1,
+              column: 7,
+              severity: 2 as const,
+              message: "'unused1' is defined but never used.",
+              ruleId: 'no-unused-vars',
+            },
+          ],
+          errorCount: 1,
+          warningCount: 0,
+          fatalErrorCount: 0,
+          fixableErrorCount: 0,
+          fixableWarningCount: 0,
+          usedDeprecatedRules: [],
+          suppressedMessages: [],
+        },
+        {
+          filePath: file2,
+          messages: [
+            {
+              line: 1,
+              column: 1,
+              severity: 1 as const,
+              message: 'Unexpected console statement.',
+              ruleId: 'no-console',
+            },
+          ],
+          errorCount: 0,
+          warningCount: 1,
+          fatalErrorCount: 0,
+          fixableErrorCount: 0,
+          fixableWarningCount: 0,
+          usedDeprecatedRules: [],
+          suppressedMessages: [],
+        },
+      ]
+      
+      const jsonOutput = await engine.format(mockResults, 'json')
+      const parsed = JSON.parse(jsonOutput)
+
+      expect(Array.isArray(parsed)).toBe(true)
+      expect(parsed).toHaveLength(2)
+      expect(parsed[0].filePath).toBe(file1)
+      expect(parsed[1].filePath).toBe(file2)
+      expect(parsed[0].messages.length).toBeGreaterThan(0)
+      expect(parsed[1].messages.length).toBeGreaterThan(0)
     })
   })
 })

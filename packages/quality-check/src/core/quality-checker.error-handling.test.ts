@@ -21,6 +21,11 @@ vi.mock('../utils/logger.js', () => ({
     error: vi.fn(),
   },
   createTimer: vi.fn(() => ({ end: vi.fn(() => 100) })),
+  EnhancedLogger: vi.fn(() => ({
+    logErrorReport: vi.fn(),
+    ensureLogDirectories: vi.fn(),
+    config: { file: true, console: true },
+  })),
 }))
 
 describe('QualityChecker Error Handling', () => {

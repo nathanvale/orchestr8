@@ -13,6 +13,7 @@ import { StylishFormatter } from '../formatters/stylish-formatter.js'
 import { JsonFormatter } from '../formatters/json-formatter.js'
 import { ConfigLoader, type ResolvedConfig } from './config-loader.js'
 import { FileMatcher } from './file-matcher.js'
+import { EnhancedLogger } from '../utils/logger.js'
 import {
   TimeoutManager,
   CancellationTokenSource,
@@ -34,6 +35,7 @@ export class QualityChecker {
   private timeoutManager: TimeoutManager
   private stylishFormatter: StylishFormatter
   private jsonFormatter: JsonFormatter
+  private enhancedLogger: EnhancedLogger
 
   constructor() {
     this.typescriptEngine = new TypeScriptEngine()
@@ -45,6 +47,7 @@ export class QualityChecker {
     this.timeoutManager = new TimeoutManager()
     this.stylishFormatter = new StylishFormatter()
     this.jsonFormatter = new JsonFormatter()
+    this.enhancedLogger = new EnhancedLogger({ file: true, console: true })
   }
 
   /**
@@ -508,13 +511,22 @@ export class QualityChecker {
     token: CancellationToken,
   ): Promise<CheckerResult> {
     try {
-      return await this.eslintEngine.check({
+      const result = await this.eslintEngine.check({
         files,
         fix: config.fix,
         format: config.format,
         cacheDir: config.eslintCacheDir,
         token,
       })
+      
+      // Generate and log error report for enhanced logging
+      if (config.format === 'json' || result.issues.length > 0) {
+        const eslintResults = await this.eslintEngine['eslint']?.lintFiles(files) || []
+        const errorReport = await this.eslintEngine.generateErrorReport(eslintResults)
+        await this.enhancedLogger.logErrorReport(errorReport)
+      }
+      
+      return result
     } catch (error) {
       if (error instanceof ToolMissingError) {
         logger.warn('ESLint not available', { skipping: true })
