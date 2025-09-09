@@ -51,7 +51,7 @@ export async function runGitHook(options: GitHookOptions = {}): Promise<void> {
       const decision = autopilot.decide(checkResult)
 
       if (options.fix && decision.action === 'FIX_SILENTLY') {
-        // Apply safe fixes - convert V2 result to expected format
+        // Apply safe fixes - convert issues to checkers format for fixer
         const fixerResult = {
           success: result.success,
           checkers: {
@@ -97,7 +97,7 @@ export async function runGitHook(options: GitHookOptions = {}): Promise<void> {
         }
       }
 
-      // Show detailed errors - convert V2 result to expected format for reporter
+      // Show detailed errors - convert issues to checkers format for reporter
       const reporterResult = {
         success: result.success,
         checkers: {
@@ -145,6 +145,10 @@ export async function runGitHook(options: GitHookOptions = {}): Promise<void> {
 
     process.exit(0)
   } catch (error) {
+    // Don't catch errors from mocked process.exit
+    if (error instanceof Error && error.message.startsWith('Process exited with code')) {
+      throw error
+    }
     console.error(
       '❌ Pre-commit hook error:',
       error instanceof Error ? error.message : String(error),

@@ -6,6 +6,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import * as ts from 'typescript'
 import * as fs from 'node:fs'
+import * as path from 'node:path'
 import { TypeScriptEngine } from './typescript-engine.js'
 
 // Mock TypeScript module
@@ -15,6 +16,7 @@ vi.mock('typescript', () => ({
   parseJsonConfigFileContent: vi.fn(),
   createIncrementalProgram: vi.fn(),
   createProgram: vi.fn(),
+  createIncrementalCompilerHost: vi.fn(),
   sys: {
     fileExists: vi.fn(),
     readFile: vi.fn(),
@@ -44,6 +46,10 @@ beforeEach(() => {
   engine = new TypeScriptEngine()
   consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
   vi.mocked(fs.existsSync).mockReturnValue(true)
+
+  // Set up default mock implementations
+  vi.mocked(ts.createIncrementalCompilerHost).mockReturnValue({} as any)
+  vi.mocked(ts.getLineAndCharacterOfPosition).mockReturnValue({ line: 0, character: 0 })
 })
 
 afterEach(() => {
@@ -55,7 +61,7 @@ describe('Type Error Formatting', () => {
   it('should format basic type mismatch errors', async () => {
     const mockDiagnostic: ts.Diagnostic = {
       file: {
-        fileName: 'test.ts',
+        fileName: path.resolve('test.ts'),
         getLineAndCharacterOfPosition: vi.fn().mockReturnValue({ line: 5, character: 10 }),
       } as any,
       start: 100,
@@ -84,7 +90,9 @@ describe('Type Error Formatting', () => {
       getDeclarationDiagnostics: vi.fn().mockReturnValue([]),
       getConfigFileParsingDiagnostics: vi.fn().mockReturnValue([]),
       getGlobalDiagnostics: vi.fn().mockReturnValue([]),
+      getOptionsDiagnostics: vi.fn().mockReturnValue([]),
       getSourceFile: vi.fn().mockReturnValue(mockDiagnostic.file),
+      getSourceFiles: vi.fn().mockReturnValue([mockDiagnostic.file]),
     }
 
     vi.mocked(ts.createIncrementalProgram).mockReturnValue({
@@ -100,7 +108,7 @@ describe('Type Error Formatting', () => {
     expect(result.issues[0]).toMatchObject({
       engine: 'typescript',
       severity: 'error',
-      file: 'test.ts',
+      file: path.resolve('test.ts'),
       line: 6, // 0-indexed + 1
       col: 11, // 0-indexed + 1
       message: "Type 'string' is not assignable to type 'number'",
@@ -126,7 +134,7 @@ describe('Type Error Formatting', () => {
 
     const mockDiagnostic: ts.Diagnostic = {
       file: {
-        fileName: 'async.ts',
+        fileName: path.resolve('async.ts'),
         getLineAndCharacterOfPosition: vi.fn().mockReturnValue({ line: 10, character: 5 }),
       } as any,
       start: 200,
@@ -158,7 +166,10 @@ describe('Type Error Formatting', () => {
       getDeclarationDiagnostics: vi.fn().mockReturnValue([]),
       getConfigFileParsingDiagnostics: vi.fn().mockReturnValue([]),
       getGlobalDiagnostics: vi.fn().mockReturnValue([]),
+      getOptionsDiagnostics: vi.fn().mockReturnValue([]),
       getSourceFile: vi.fn().mockReturnValue(mockDiagnostic.file),
+      getSourceFiles: vi.fn().mockReturnValue([mockDiagnostic.file]),
+      getRootFileNames: vi.fn().mockReturnValue([path.resolve('async.ts')]),
     }
 
     vi.mocked(ts.createIncrementalProgram).mockReturnValue({
@@ -177,7 +188,7 @@ describe('Type Error Formatting', () => {
   it('should handle union type errors', async () => {
     const mockDiagnostic: ts.Diagnostic = {
       file: {
-        fileName: 'union.ts',
+        fileName: path.resolve('union.ts'),
         getLineAndCharacterOfPosition: vi.fn().mockReturnValue({ line: 3, character: 7 }),
       } as any,
       start: 50,
@@ -198,6 +209,9 @@ describe('Type Error Formatting', () => {
       fileNames: ['union.ts'],
       errors: [],
     } as any)
+    vi.mocked(ts.flattenDiagnosticMessageText).mockReturnValue(
+      "Type 'boolean' is not assignable to type 'string | number'",
+    )
 
     const mockProgram = {
       emit: vi.fn(),
@@ -206,7 +220,10 @@ describe('Type Error Formatting', () => {
       getDeclarationDiagnostics: vi.fn().mockReturnValue([]),
       getConfigFileParsingDiagnostics: vi.fn().mockReturnValue([]),
       getGlobalDiagnostics: vi.fn().mockReturnValue([]),
+      getOptionsDiagnostics: vi.fn().mockReturnValue([]),
       getSourceFile: vi.fn().mockReturnValue(mockDiagnostic.file),
+      getSourceFiles: vi.fn().mockReturnValue([mockDiagnostic.file]),
+      getRootFileNames: vi.fn().mockReturnValue([path.resolve('union.ts')]),
     }
 
     vi.mocked(ts.createIncrementalProgram).mockReturnValue({
@@ -225,7 +242,7 @@ describe('Compilation Error Tests', () => {
   it('should handle syntax errors', async () => {
     const mockDiagnostic: ts.Diagnostic = {
       file: {
-        fileName: 'syntax-error.ts',
+        fileName: path.resolve('syntax-error.ts'),
         getLineAndCharacterOfPosition: vi.fn().mockReturnValue({ line: 2, character: 0 }),
       } as any,
       start: 30,
@@ -246,6 +263,7 @@ describe('Compilation Error Tests', () => {
       fileNames: ['syntax-error.ts'],
       errors: [],
     } as any)
+    vi.mocked(ts.flattenDiagnosticMessageText).mockReturnValue("';' expected")
 
     const mockProgram = {
       emit: vi.fn(),
@@ -254,7 +272,10 @@ describe('Compilation Error Tests', () => {
       getDeclarationDiagnostics: vi.fn().mockReturnValue([]),
       getConfigFileParsingDiagnostics: vi.fn().mockReturnValue([]),
       getGlobalDiagnostics: vi.fn().mockReturnValue([]),
+      getOptionsDiagnostics: vi.fn().mockReturnValue([]),
       getSourceFile: vi.fn().mockReturnValue(mockDiagnostic.file),
+      getSourceFiles: vi.fn().mockReturnValue([mockDiagnostic.file]),
+      getRootFileNames: vi.fn().mockReturnValue([path.resolve('syntax-error.ts')]),
     }
 
     vi.mocked(ts.createIncrementalProgram).mockReturnValue({
@@ -273,7 +294,7 @@ describe('Compilation Error Tests', () => {
   it('should handle module resolution errors', async () => {
     const mockDiagnostic: ts.Diagnostic = {
       file: {
-        fileName: 'import-error.ts',
+        fileName: path.resolve('import-error.ts'),
         getLineAndCharacterOfPosition: vi.fn().mockReturnValue({ line: 0, character: 19 }),
       } as any,
       start: 19,
@@ -295,6 +316,9 @@ describe('Compilation Error Tests', () => {
       fileNames: ['import-error.ts'],
       errors: [],
     } as any)
+    vi.mocked(ts.flattenDiagnosticMessageText).mockReturnValue(
+      "Cannot find module 'non-existent-module' or its corresponding type declarations",
+    )
 
     const mockProgram = {
       emit: vi.fn(),
@@ -303,7 +327,10 @@ describe('Compilation Error Tests', () => {
       getDeclarationDiagnostics: vi.fn().mockReturnValue([]),
       getConfigFileParsingDiagnostics: vi.fn().mockReturnValue([]),
       getGlobalDiagnostics: vi.fn().mockReturnValue([]),
+      getOptionsDiagnostics: vi.fn().mockReturnValue([]),
       getSourceFile: vi.fn().mockReturnValue(mockDiagnostic.file),
+      getSourceFiles: vi.fn().mockReturnValue([mockDiagnostic.file]),
+      getRootFileNames: vi.fn().mockReturnValue([path.resolve('import-error.ts')]),
     }
 
     vi.mocked(ts.createIncrementalProgram).mockReturnValue({
@@ -321,7 +348,7 @@ describe('Compilation Error Tests', () => {
   it('should handle declaration errors', async () => {
     const mockDiagnostic: ts.Diagnostic = {
       file: {
-        fileName: 'declaration.ts',
+        fileName: path.resolve('declaration.ts'),
         getLineAndCharacterOfPosition: vi.fn().mockReturnValue({ line: 5, character: 2 }),
       } as any,
       start: 80,
@@ -343,6 +370,9 @@ describe('Compilation Error Tests', () => {
       fileNames: ['declaration.ts'],
       errors: [],
     } as any)
+    vi.mocked(ts.flattenDiagnosticMessageText).mockReturnValue(
+      "Property 'name' has no initializer and is not definitely assigned in the constructor",
+    )
 
     const mockProgram = {
       emit: vi.fn(),
@@ -351,7 +381,10 @@ describe('Compilation Error Tests', () => {
       getDeclarationDiagnostics: vi.fn().mockReturnValue([]),
       getConfigFileParsingDiagnostics: vi.fn().mockReturnValue([]),
       getGlobalDiagnostics: vi.fn().mockReturnValue([]),
+      getOptionsDiagnostics: vi.fn().mockReturnValue([]),
       getSourceFile: vi.fn().mockReturnValue(mockDiagnostic.file),
+      getSourceFiles: vi.fn().mockReturnValue([mockDiagnostic.file]),
+      getRootFileNames: vi.fn().mockReturnValue([path.resolve('declaration.ts')]),
     }
 
     vi.mocked(ts.createIncrementalProgram).mockReturnValue({
@@ -390,6 +423,7 @@ describe('TSConfig Validation Tests', () => {
         code: 5023,
       } as any,
     })
+    vi.mocked(ts.flattenDiagnosticMessageText).mockReturnValue('Invalid configuration option')
 
     const result = await engine.check({
       files: ['test.ts'],
@@ -417,34 +451,17 @@ describe('TSConfig Validation Tests', () => {
         } as any,
       ],
     } as any)
-
-    const mockProgram = {
-      emit: vi.fn(),
-      getSemanticDiagnostics: vi.fn().mockReturnValue([]),
-      getSyntacticDiagnostics: vi.fn().mockReturnValue([]),
-      getDeclarationDiagnostics: vi.fn().mockReturnValue([]),
-      getConfigFileParsingDiagnostics: vi.fn().mockReturnValue([
-        {
-          messageText: 'Unknown compiler option "invalidOption"',
-          category: ts.DiagnosticCategory.Error,
-          code: 5024,
-        },
-      ]),
-      getGlobalDiagnostics: vi.fn().mockReturnValue([]),
-      getSourceFile: vi.fn(),
-    }
-
-    vi.mocked(ts.createIncrementalProgram).mockReturnValue({
-      getProgram: () => mockProgram,
-    } as any)
+    vi.mocked(ts.flattenDiagnosticMessageText).mockReturnValue(
+      'Unknown compiler option "invalidOption"',
+    )
 
     const result = await engine.check({
       files: ['test.ts'],
     })
 
-    expect(result.issues.some((issue) => issue.message.includes('Unknown compiler option'))).toBe(
-      true,
-    )
+    expect(result.success).toBe(false)
+    expect(result.issues[0]?.message).toContain('Failed to parse tsconfig.json')
+    expect(result.issues[0]?.message).toContain('Unknown')
   })
 
   it('should use custom tsconfig path when provided', async () => {
@@ -461,6 +478,11 @@ describe('TSConfig Validation Tests', () => {
       errors: [],
     } as any)
 
+    const mockSourceFile = {
+      fileName: path.resolve('test.ts'),
+      getLineAndCharacterOfPosition: vi.fn().mockReturnValue({ line: 0, character: 0 }),
+    } as any
+
     const mockProgram = {
       emit: vi.fn(),
       getSemanticDiagnostics: vi.fn().mockReturnValue([]),
@@ -468,7 +490,9 @@ describe('TSConfig Validation Tests', () => {
       getDeclarationDiagnostics: vi.fn().mockReturnValue([]),
       getConfigFileParsingDiagnostics: vi.fn().mockReturnValue([]),
       getGlobalDiagnostics: vi.fn().mockReturnValue([]),
-      getSourceFile: vi.fn(),
+      getOptionsDiagnostics: vi.fn().mockReturnValue([]),
+      getSourceFile: vi.fn().mockReturnValue(mockSourceFile),
+      getSourceFiles: vi.fn().mockReturnValue([mockSourceFile]),
     }
 
     vi.mocked(ts.createIncrementalProgram).mockReturnValue({
@@ -489,7 +513,7 @@ describe('TypeScript 5.x Features', () => {
   it('should handle const type parameters', async () => {
     const mockDiagnostic: ts.Diagnostic = {
       file: {
-        fileName: 'const-generics.ts',
+        fileName: path.resolve('const-generics.ts'),
         getLineAndCharacterOfPosition: vi.fn().mockReturnValue({ line: 1, character: 15 }),
       } as any,
       start: 25,
@@ -510,6 +534,9 @@ describe('TypeScript 5.x Features', () => {
       fileNames: ['const-generics.ts'],
       errors: [],
     } as any)
+    vi.mocked(ts.flattenDiagnosticMessageText).mockReturnValue(
+      "Type parameter 'T' has a circular constraint",
+    )
 
     const mockProgram = {
       emit: vi.fn(),
@@ -518,7 +545,10 @@ describe('TypeScript 5.x Features', () => {
       getDeclarationDiagnostics: vi.fn().mockReturnValue([]),
       getConfigFileParsingDiagnostics: vi.fn().mockReturnValue([]),
       getGlobalDiagnostics: vi.fn().mockReturnValue([]),
+      getOptionsDiagnostics: vi.fn().mockReturnValue([]),
       getSourceFile: vi.fn().mockReturnValue(mockDiagnostic.file),
+      getSourceFiles: vi.fn().mockReturnValue([mockDiagnostic.file]),
+      getRootFileNames: vi.fn().mockReturnValue([path.resolve('const-generics.ts')]),
     }
 
     vi.mocked(ts.createIncrementalProgram).mockReturnValue({
@@ -535,7 +565,7 @@ describe('TypeScript 5.x Features', () => {
   it('should handle satisfies operator errors', async () => {
     const mockDiagnostic: ts.Diagnostic = {
       file: {
-        fileName: 'satisfies.ts',
+        fileName: path.resolve('satisfies.ts'),
         getLineAndCharacterOfPosition: vi.fn().mockReturnValue({ line: 3, character: 10 }),
       } as any,
       start: 60,
@@ -556,6 +586,9 @@ describe('TypeScript 5.x Features', () => {
       fileNames: ['satisfies.ts'],
       errors: [],
     } as any)
+    vi.mocked(ts.flattenDiagnosticMessageText).mockReturnValue(
+      "Type 'number' does not satisfy the expected type 'string'",
+    )
 
     const mockProgram = {
       emit: vi.fn(),
@@ -564,7 +597,10 @@ describe('TypeScript 5.x Features', () => {
       getDeclarationDiagnostics: vi.fn().mockReturnValue([]),
       getConfigFileParsingDiagnostics: vi.fn().mockReturnValue([]),
       getGlobalDiagnostics: vi.fn().mockReturnValue([]),
+      getOptionsDiagnostics: vi.fn().mockReturnValue([]),
       getSourceFile: vi.fn().mockReturnValue(mockDiagnostic.file),
+      getSourceFiles: vi.fn().mockReturnValue([mockDiagnostic.file]),
+      getRootFileNames: vi.fn().mockReturnValue([path.resolve('satisfies.ts')]),
     }
 
     vi.mocked(ts.createIncrementalProgram).mockReturnValue({
@@ -583,7 +619,7 @@ describe('Error Severity Mapping', () => {
   it('should map TypeScript warnings correctly', async () => {
     const mockDiagnostic: ts.Diagnostic = {
       file: {
-        fileName: 'warning.ts',
+        fileName: path.resolve('warning.ts'),
         getLineAndCharacterOfPosition: vi.fn().mockReturnValue({ line: 1, character: 0 }),
       } as any,
       start: 0,
@@ -612,7 +648,10 @@ describe('Error Severity Mapping', () => {
       getDeclarationDiagnostics: vi.fn().mockReturnValue([]),
       getConfigFileParsingDiagnostics: vi.fn().mockReturnValue([]),
       getGlobalDiagnostics: vi.fn().mockReturnValue([]),
+      getOptionsDiagnostics: vi.fn().mockReturnValue([]),
       getSourceFile: vi.fn().mockReturnValue(mockDiagnostic.file),
+      getSourceFiles: vi.fn().mockReturnValue([mockDiagnostic.file]),
+      getRootFileNames: vi.fn().mockReturnValue([path.resolve('warning.ts')]),
     }
 
     vi.mocked(ts.createIncrementalProgram).mockReturnValue({
@@ -630,7 +669,7 @@ describe('Error Severity Mapping', () => {
   it('should handle suggestion-level diagnostics', async () => {
     const mockDiagnostic: ts.Diagnostic = {
       file: {
-        fileName: 'suggestion.ts',
+        fileName: path.resolve('suggestion.ts'),
         getLineAndCharacterOfPosition: vi.fn().mockReturnValue({ line: 2, character: 5 }),
       } as any,
       start: 35,
@@ -659,7 +698,10 @@ describe('Error Severity Mapping', () => {
       getDeclarationDiagnostics: vi.fn().mockReturnValue([]),
       getConfigFileParsingDiagnostics: vi.fn().mockReturnValue([]),
       getGlobalDiagnostics: vi.fn().mockReturnValue([]),
+      getOptionsDiagnostics: vi.fn().mockReturnValue([]),
       getSourceFile: vi.fn().mockReturnValue(mockDiagnostic.file),
+      getSourceFiles: vi.fn().mockReturnValue([mockDiagnostic.file]),
+      getRootFileNames: vi.fn().mockReturnValue([path.resolve('suggestion.ts')]),
     }
 
     vi.mocked(ts.createIncrementalProgram).mockReturnValue({

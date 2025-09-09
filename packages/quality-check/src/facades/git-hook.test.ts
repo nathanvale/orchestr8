@@ -188,13 +188,35 @@ describe('Git Hook with V2 Implementation', () => {
       mockCheck.mockResolvedValue(failResult)
       mockDecide.mockReturnValue({ action: 'REPORT_ONLY' })
 
+      // Expected V2 format that formatForCLI receives
+      const expectedV2Format = {
+        success: false,
+        checkers: {
+          eslint: {
+            success: true,
+            errors: [],
+            warnings: [],
+          },
+          typescript: {
+            success: false,
+            errors: ['Type error at line 10'],
+            warnings: [],
+          },
+          prettier: {
+            success: true,
+            errors: [],
+            warnings: [],
+          },
+        },
+      }
+
       try {
         await runGitHook()
       } catch (e: any) {
         expect(e.message).toContain('Process exited with code 1')
       }
 
-      expect(mockFormatForCLI).toHaveBeenCalledWith(failResult)
+      expect(mockFormatForCLI).toHaveBeenCalledWith(expectedV2Format)
       expect(console.error).toHaveBeenCalledWith('Formatted errors')
       expect(console.error).toHaveBeenCalledWith('\n❌ Quality check failed')
       expect(exitCode).toBe(1)
@@ -254,6 +276,28 @@ describe('Git Hook with V2 Implementation', () => {
       mockDecide.mockReturnValue({ action: 'FIX_SILENTLY' })
       mockAutoFix.mockResolvedValue({ success: false })
 
+      // Expected V2 format that formatForCLI receives
+      const expectedV2Format = {
+        success: false,
+        checkers: {
+          eslint: {
+            success: false,
+            errors: ['Complex error'],
+            warnings: [],
+          },
+          typescript: {
+            success: true,
+            errors: [],
+            warnings: [],
+          },
+          prettier: {
+            success: true,
+            errors: [],
+            warnings: [],
+          },
+        },
+      }
+
       try {
         await runGitHook({ fix: true })
       } catch (e: any) {
@@ -261,7 +305,7 @@ describe('Git Hook with V2 Implementation', () => {
       }
 
       expect(mockAutoFix).toHaveBeenCalled()
-      expect(mockFormatForCLI).toHaveBeenCalledWith(failResult)
+      expect(mockFormatForCLI).toHaveBeenCalledWith(expectedV2Format)
       expect(exitCode).toBe(1)
     })
 
@@ -427,13 +471,35 @@ describe('Git Hook with V2 Implementation', () => {
       mockCheck.mockResolvedValue(v2Result)
       mockDecide.mockReturnValue({ action: 'REPORT_ONLY' })
 
+      // Expected V2 format that formatForCLI receives
+      const expectedV2Format = {
+        success: false,
+        checkers: {
+          eslint: {
+            success: true,
+            errors: [],
+            warnings: [],
+          },
+          typescript: {
+            success: false,
+            errors: ['Cannot find name "foo"'],
+            warnings: [],
+          },
+          prettier: {
+            success: true,
+            errors: [],
+            warnings: [],
+          },
+        },
+      }
+
       try {
         await runGitHook()
       } catch (e: any) {
         expect(e.message).toContain('Process exited with code 1')
       }
 
-      expect(mockFormatForCLI).toHaveBeenCalledWith(v2Result)
+      expect(mockFormatForCLI).toHaveBeenCalledWith(expectedV2Format)
       expect(exitCode).toBe(1)
     })
   })
