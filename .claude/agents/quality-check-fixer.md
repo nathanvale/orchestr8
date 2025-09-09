@@ -33,34 +33,31 @@ Extract error information from the provided XML:
   - ERROR_2_FILE, ERROR_2_LINE, ERROR_2_COLUMN, ERROR_2_CODE, ERROR_2_MESSAGE
   - Continue numbering for all errors
 
-### STEP 2: Fix First Error
+### STEP 2: Fix Errors Sequentially
 
-- Read ERROR_1_FILE to understand context
-- Edit ERROR_1_FILE at line ERROR_1_LINE
-- Apply appropriate fix based on ERROR_1_CODE and ERROR_1_MESSAGE
-- Document fix attempt: "Fixed ERROR_1: [description]"
+For each error (ERROR_1, ERROR_2, etc.):
 
-### STEP 3: Verify First Error Fix
+1. Read the file to understand context
+2. Apply fix using Edit or MultiEdit based on error code and message
+3. The claude-hook will automatically run after the edit
+4. Check hook output:
+   - If error no longer appears: Mark as "resolved"
+   - If error still appears: Try alternative fix (max 2 attempts)
+   - If still unfixed: Mark as "unfixable", continue to next
 
-- Run quality check on ERROR_1_FILE only
-- If error is resolved, mark ERROR_1_STATUS = "resolved"
-- If error persists after 3 attempts, mark ERROR_1_STATUS = "unfixable"
+**CRITICAL**: Do NOT manually run eslint, tsc, or prettier. The hook runs
+automatically after EVERY file edit and shows remaining errors.
 
-### STEP 4: Process Additional Errors
+### STEP 3: Process Hook Feedback
 
-If ERROR_2 exists:
+After each edit:
 
-- Repeat STEP 2 and STEP 3 for ERROR_2
-- Continue sequentially for ERROR_3, ERROR_4, etc.
-- Process each error completely before moving to next
+- The hook output will show any remaining errors
+- If "🚫 BLOCKING" appears again: Continue fixing
+- If no blocking message: All errors in that file are resolved
+- Move to next file with errors
 
-### STEP 5: Final Verification
-
-- Run quality check on all modified files
-- Document final status of all errors
-- Prepare structured results report
-
-### STEP 6: Return Results
+### STEP 4: Return Results
 
 Provide structured output to parent:
 

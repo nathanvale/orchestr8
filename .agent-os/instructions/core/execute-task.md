@@ -18,6 +18,14 @@ development workflow.
 
 <process_flow>
 
+🚨 **CRITICAL INTERRUPT RULE - ACTIVE THROUGHOUT ALL STEPS** 🚨
+
+IF you see "🚫 BLOCKING" or error code 2 at ANY point: → STOP IMMEDIATELY →
+INVOKE quality-check-fixer subagent  
+→ DO NOT attempt manual fixes
+
+This rule OVERRIDES all other instructions below
+
 <step number="1" name="task_understanding">
 
 ### Step 1: Task Understanding
@@ -113,12 +121,15 @@ implemented - Testing style guidelines </search_code_style> </selective_reading>
 
 ### Step 5: Task and Sub-task Execution
 
-Execute the parent task and all sub-tasks in order using test-driven development
-(TDD) approach. MUST invoke quality-check-fixer subagent when blocking errors
-occur.
+🚨 **GLOBAL INTERRUPT RULE - ALWAYS ACTIVE** 🚨
 
-IMPORTANT: When any file operation shows "🚫 BLOCKING" or returns error code 2,
-you MUST invoke the quality-check-fixer subagent before continuing.
+Pattern: "🚫 BLOCKING" appears OR error code 2 returned Action: IMMEDIATELY
+invoke quality-check-fixer subagent Priority: OVERRIDES ALL OTHER INSTRUCTIONS
+
+This rule is ALWAYS ACTIVE during ANY file operation below
+
+Execute the parent task and all sub-tasks in order using test-driven development
+(TDD) approach.
 
 <typical_task_structure> <first_subtask>Write tests for
 [feature]</first_subtask> <middle_subtasks>Implementation
@@ -133,32 +144,44 @@ Mark sub-task 1 complete </subtask_1_tests>
 <middle_subtasks_implementation> FOR each implementation sub-task (2 through
 n-1):
 
+🔴 REMEMBER: "🚫 BLOCKING" = STOP & USE quality-check-fixer IMMEDIATELY 🔴
+
 - Implement the specific functionality
 - Make relevant tests pass
 - Update any adjacent/related tests if needed
 - Refactor while keeping tests green
 
-  IF hook returns error code 2 OR output contains "🚫 BLOCKING":
-  - TodoWrite: Save current sub-task as "paused_for_quality_fix"
-  - TodoWrite: Create task "Fixing quality check errors for [current sub-task]"
-  - MUST use quality-check-fixer subagent with this request: "Fix the quality
-    check errors from this XML block: [Insert entire <quality-check-result> XML
-    block including all nested elements] Systematically resolve each error using
-    Read/Edit/MultiEdit tools Return status: ALL_RESOLVED, PARTIAL_RESOLUTION,
-    or FAILED"
-  - TodoWrite: Mark "Fixing quality check errors" complete
-  - If ALL_RESOLVED:
-    - TodoWrite: Resume saved sub-task from "paused_for_quality_fix"
-    - Continue with implementation
-  - If PARTIAL_RESOLUTION or FAILED:
-    - Document blocking issues with ⚠️
-    - TodoWrite: Mark current sub-task as blocked
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ⚡
+INTERRUPT HANDLER (Active at ALL times during execution):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ WHEN "🚫
+BLOCKING" appears OR error code 2 is returned:
+
+1. STOP current task immediately
+2. TodoWrite: Save current sub-task as "paused_for_quality_fix"
+3. TodoWrite: Create task "Fixing quality check errors for [current sub-task]"
+4. INVOKE quality-check-fixer subagent with: "Fix the quality check errors from
+   this XML block: [Insert entire <quality-check-result> XML block including all
+   nested elements] Systematically resolve each error using Read/Edit/MultiEdit
+   tools Return status: ALL_RESOLVED, PARTIAL_RESOLUTION, or FAILED"
+5. TodoWrite: Mark "Fixing quality check errors" complete
+6. If ALL_RESOLVED:
+   - TodoWrite: Resume saved sub-task from "paused_for_quality_fix"
+   - Provide agents results to the user
+   - Continue with implementation
+7. If PARTIAL_RESOLUTION or FAILED: - Document blocking issues with ⚠️ -
+   TodoWrite: Mark current sub-task as blocked
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 - Mark sub-task complete </middle_subtasks_implementation>
 
-<final_subtask_verification> IF final sub-task is "Verify all tests pass": - Run
-entire test suite - Fix any remaining failures - Ensure no regressions - Mark
-final sub-task complete </final_subtask_verification> </execution_order>
+<final_subtask_verification> IF final sub-task is "Verify all tests pass":
+
+🔴 REMINDER: "🚫 BLOCKING" still triggers quality-check-fixer IMMEDIATELY 🔴
+
+- Run entire test suite
+- Fix any remaining failures
+- Ensure no regressions
+- Mark final sub-task complete </final_subtask_verification> </execution_order>
 
 <test_management> <new_tests> - Written in first sub-task - Cover all aspects of
 parent feature - Include edge cases and error handling </new_tests>
@@ -167,11 +190,13 @@ changed behavior - Maintain backward compatibility </test_updates>
 </test_management>
 
 <instructions>
+  ⚠️ CRITICAL: "🚫 BLOCKING" = IMMEDIATE quality-check-fixer invocation ⚠️
   ACTION: Execute sub-tasks in their defined order
   RECOGNIZE: First sub-task typically writes all tests
   IMPLEMENT: Middle sub-tasks build functionality
   VERIFY: Final sub-task ensures all tests pass
   UPDATE: Mark each sub-task complete as finished
+  INTERRUPT: ANY "🚫 BLOCKING" overrides current action
 </instructions>
 
 </step>
