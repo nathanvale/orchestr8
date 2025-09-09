@@ -152,11 +152,14 @@ async function runClaudeHookWithPayload(
 
     // Validate required fields (only if we have a valid payload)
     if (!payload || !payload.tool_name || !payload.tool_input || !payload.tool_input.file_path) {
-      logger.warn('Invalid payload: missing required fields', {
-        hasPayload: !!payload,
-        hasToolName: payload ? !!payload.tool_name : false,
-        hasFilePath: payload?.tool_input ? !!payload.tool_input.file_path : false,
-      })
+      // Only log if not in silent mode
+      if (process.env.CLAUDE_HOOK_SILENT_OUTPUT !== 'true') {
+        logger.warn('Invalid payload: missing required fields', {
+          hasPayload: !!payload,
+          hasToolName: payload ? !!payload.tool_name : false,
+          hasFilePath: payload?.tool_input ? !!payload.tool_input.file_path : false,
+        })
+      }
       process.exit(ExitCodes.SUCCESS)
       return // Additional safety return to satisfy TypeScript and prevent further execution
     }
@@ -531,7 +534,7 @@ function readStdin(): Promise<string> {
  * Check if file type is supported for quality checking
  */
 function isSupportedFileType(filePath: string): boolean {
-  return /\.(js|jsx|ts|tsx|md)$/.test(filePath)
+  return /\.(js|jsx|ts|tsx)$/.test(filePath)
 }
 
 /**
