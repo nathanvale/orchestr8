@@ -213,17 +213,17 @@ describe('QualityChecker Class Rename Compatibility', () => {
   describe('Task 11.6: Preparatory tests for rename', () => {
     it('should simulate class rename behavior', () => {
       // Simulate what happens when we rename the class
-      const QualityChecker = QualityChecker
+      const QualityCheckerAlias = QualityChecker
 
-      const instance = new QualityChecker()
+      const instance = new QualityCheckerAlias()
       expect(instance).toBeInstanceOf(QualityChecker)
-      expect(instance).toBeInstanceOf(QualityChecker)
+      expect(instance).toBeInstanceOf(QualityCheckerAlias)
     })
 
     it('should work with aliased imports', () => {
       // Test import alias pattern
-      type QualityChecker = QualityChecker
-      const instance: QualityChecker = new QualityChecker()
+      type QualityCheckerType = QualityChecker
+      const instance: QualityCheckerType = new QualityChecker()
 
       expect(instance).toBeDefined()
     })
