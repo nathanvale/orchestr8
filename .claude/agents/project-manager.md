@@ -19,6 +19,7 @@ Track these concrete state variables throughout your execution:
 - test_command: The specific test command to execute
 - test_results: Output from test execution
 - files_updated: List of tracking files modified
+- issues_found: List of any issues encountered
 
 ## Supported File Paths
 
@@ -76,7 +77,7 @@ same status Step 16: Use Write tool to create recap file with format:
 
 ## Issues We Faced
 
-List ALL the issues we faced during the task execution.
+[issues_found]
 
 ## Concrete Tool Usage Patterns
 

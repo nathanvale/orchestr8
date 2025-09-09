@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
-import { QualityCheckerV2 } from '../src'
+import { QualityChecker } from '../src'
 import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
 import { tmpdir } from 'node:os'
@@ -7,13 +7,13 @@ import { performance } from 'node:perf_hooks'
 
 describe('Performance Benchmarks', () => {
   let fixtureDir: string
-  let checker: QualityCheckerV2
+  let checker: QualityChecker
   let testFile: string
 
   beforeAll(async () => {
     fixtureDir = path.join(tmpdir(), `qc-benchmark-${Date.now()}`)
     await fs.mkdir(fixtureDir, { recursive: true })
-    checker = new QualityCheckerV2()
+    checker = new QualityChecker()
 
     // Create a test TypeScript file
     testFile = path.join(fixtureDir, 'benchmark.ts')

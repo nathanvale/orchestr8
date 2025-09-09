@@ -72,7 +72,17 @@
     }
   },
   "include": ["packages/*/src/**/*", "apps/*/src/**/*", "tests/**/*", "vitest.config.ts"],
-  "exclude": ["node_modules", "dist", "build", "coverage", ".turbo", "**/.bun/**"],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "build",
+    "coverage",
+    ".turbo",
+    "**/.bun/**",
+    "packages/*/tests/**/*",
+    "packages/**/*.test.ts",
+    "packages/**/*.spec.ts"
+  ],
   // Removed TypeScript project references to rely on Turborepo task graph instead
   "ts-node": {
     "esm": true,

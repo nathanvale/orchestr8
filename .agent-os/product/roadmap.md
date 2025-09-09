@@ -1,6 +1,6 @@
 # Product Roadmap
 
-> Last Updated: 2025-09-05 Version: 1.1.0
+> Last Updated: 2025-09-09 Version: 1.2.0
 
 ## Phase 1: MVP - Working Implementation (Week 1)
 
@@ -25,7 +25,7 @@ interruption
 - Claude Code PostToolUse hook support
 - ESLint and Prettier configurations
 
-## Phase 2: Quality Checker Uplift (Week 2)
+## Phase 2: Quality Checker Uplift (Week 2) ✅
 
 **Goal:** Replace CLI-based checks with programmatic APIs and file-scoped TS
 validation   **Success Criteria:** 50% faster checks, sub-300ms warm TypeScript
@@ -33,13 +33,17 @@ runs, stable JSON outputs for CI
 
 ### Features
 
-- [ ] Implement ESLint Node API integration with flat config (v9) `M`
-- [ ] Implement Prettier Node API integration with resolveConfig + getFileInfo
+- [x] Implement ESLint Node API integration with flat config (v9) `M`
+- [x] Implement Prettier Node API integration with resolveConfig + getFileInfo
       `S`
-- [ ] Add file-scoped TypeScript checks with incremental compile cache `M`
-- [ ] Add JSON + stylish reporters for CI vs local dev `S`
-- [ ] Integrate with GitIntegration for `--staged` / `--since` workflows `S`
-- [ ] Add structured logging fields for duration, counts, cache hits `S`
+- [x] Add file-scoped TypeScript checks with incremental compile cache `M`
+- [x] Add JSON + stylish reporters for CI vs local dev `S`
+- [x] Integrate with GitIntegration for `--staged` / `--since` workflows `S`
+- [x] Add structured logging fields for duration, counts, cache hits `S`
+
+**Completed:** 2025-09-08 via quality-checker-v2-migration Phase 3  
+**Implementation:** V2 architecture with TypeScriptEngine, ESLintEngine,
+PrettierEngine using Node APIs
 
 ## Phase 3: Learning System (Week 2-3)
 
