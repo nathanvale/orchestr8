@@ -1,11 +1,11 @@
 /**
  * V2 Backward Compatibility Verification Tests
- * Ensures QualityCheckerV2 maintains full compatibility with V1 interfaces
+ * Ensures QualityChecker maintains full compatibility with V1 interfaces
  */
 
 import { describe, it, expect, vi } from 'vitest'
 // import { QualityChecker } from '../core/quality-checker.js'  // Unused in V2 compatibility tests
-import { QualityCheckerV2 } from '../core/quality-checker-v2.js'
+import { QualityChecker } from '../core/quality-checker.js'
 import type { QualityCheckOptions, FixResult } from '../types.js'
 import type { QualityCheckResult } from '../types/issue-types.js'
 
@@ -13,7 +13,7 @@ describe('V2 Backward Compatibility', () => {
   describe('API Surface Compatibility', () => {
     it('should expose all V1 public methods', () => {
       // const _v1Instance = {} as QualityChecker  // Commented out unused variable
-      const v2Instance = new QualityCheckerV2()
+      const v2Instance = new QualityChecker()
 
       // Core methods that must exist
       const requiredMethods = ['check', 'fix']
@@ -25,7 +25,7 @@ describe('V2 Backward Compatibility', () => {
     })
 
     it('should accept V1 check options', async () => {
-      const v2Instance = new QualityCheckerV2()
+      const v2Instance = new QualityChecker()
       const v1Options: QualityCheckOptions = {
         file: 'test.ts',
         fix: false,
@@ -55,7 +55,7 @@ describe('V2 Backward Compatibility', () => {
     })
 
     it('should accept V1 fix options', async () => {
-      const v2Instance = new QualityCheckerV2()
+      const v2Instance = new QualityChecker()
       const v1FixOptions = { safe: true }
 
       // Mock the fix method to verify it accepts V1 options
@@ -72,7 +72,7 @@ describe('V2 Backward Compatibility', () => {
 
   describe('Result Format Compatibility', () => {
     it('should return V1-compatible check results', async () => {
-      const v2Instance = new QualityCheckerV2()
+      const v2Instance = new QualityChecker()
 
       // Mock to return a result that simulates backward compatibility
       vi.spyOn(v2Instance, 'check').mockResolvedValue({
@@ -91,7 +91,7 @@ describe('V2 Backward Compatibility', () => {
     })
 
     it('should return V1-compatible fix results', async () => {
-      const v2Instance = new QualityCheckerV2()
+      const v2Instance = new QualityChecker()
 
       // Mock to return a result
       vi.spyOn(v2Instance, 'fix').mockResolvedValue({
@@ -110,7 +110,7 @@ describe('V2 Backward Compatibility', () => {
     })
 
     it('should handle error result formats', async () => {
-      const v2Instance = new QualityCheckerV2()
+      const v2Instance = new QualityChecker()
 
       const errorResult: QualityCheckResult = {
         success: false,
@@ -150,7 +150,7 @@ describe('V2 Backward Compatibility', () => {
 
   describe('Behavior Compatibility', () => {
     it('should respect disabled engines like V1', async () => {
-      const v2Instance = new QualityCheckerV2()
+      const v2Instance = new QualityChecker()
 
       const optionsWithDisabledEngines: QualityCheckOptions = {
         eslint: false,
@@ -176,7 +176,7 @@ describe('V2 Backward Compatibility', () => {
     })
 
     it('should handle timeout option like V1', async () => {
-      const v2Instance = new QualityCheckerV2()
+      const v2Instance = new QualityChecker()
 
       const optionsWithTimeout: QualityCheckOptions = {
         timeout: 1000,
@@ -192,7 +192,7 @@ describe('V2 Backward Compatibility', () => {
     })
 
     it('should support parallel execution like V1', async () => {
-      const v2Instance = new QualityCheckerV2()
+      const v2Instance = new QualityChecker()
 
       const optionsWithParallel: QualityCheckOptions = {
         parallel: true,
@@ -210,7 +210,7 @@ describe('V2 Backward Compatibility', () => {
 
   describe('Error Handling Compatibility', () => {
     it('should throw errors in the same format as V1', async () => {
-      const v2Instance = new QualityCheckerV2()
+      const v2Instance = new QualityChecker()
 
       const v1Error = new Error('Configuration file not found')
       vi.spyOn(v2Instance, 'check').mockRejectedValue(v1Error)
@@ -221,7 +221,7 @@ describe('V2 Backward Compatibility', () => {
     })
 
     it('should handle file not found errors like V1', async () => {
-      const v2Instance = new QualityCheckerV2()
+      const v2Instance = new QualityChecker()
 
       const fileError = new Error('ENOENT: no such file or directory')
       vi.spyOn(v2Instance, 'check').mockRejectedValue(fileError)
@@ -230,7 +230,7 @@ describe('V2 Backward Compatibility', () => {
     })
 
     it('should handle tool missing errors like V1', async () => {
-      const v2Instance = new QualityCheckerV2()
+      const v2Instance = new QualityChecker()
 
       const toolError = new Error('ESLint is not installed')
       vi.spyOn(v2Instance, 'check').mockRejectedValue(toolError)
@@ -241,7 +241,7 @@ describe('V2 Backward Compatibility', () => {
 
   describe('File Processing Compatibility', () => {
     it('should process single files like V1', async () => {
-      const v2Instance = new QualityCheckerV2()
+      const v2Instance = new QualityChecker()
 
       const checkSpy = vi.spyOn(v2Instance, 'check').mockResolvedValue({
         success: true,
@@ -254,7 +254,7 @@ describe('V2 Backward Compatibility', () => {
     })
 
     it('should process multiple files like V1', async () => {
-      const v2Instance = new QualityCheckerV2()
+      const v2Instance = new QualityChecker()
 
       const files = ['file1.ts', 'file2.js', 'file3.tsx']
       const checkSpy = vi.spyOn(v2Instance, 'check').mockResolvedValue({
@@ -268,7 +268,7 @@ describe('V2 Backward Compatibility', () => {
     })
 
     it('should handle empty file array like V1', async () => {
-      const v2Instance = new QualityCheckerV2()
+      const v2Instance = new QualityChecker()
 
       const checkSpy = vi.spyOn(v2Instance, 'check').mockResolvedValue({
         success: true,
@@ -283,7 +283,7 @@ describe('V2 Backward Compatibility', () => {
 
   describe('Configuration Compatibility', () => {
     it('should respect gitignore settings like V1', async () => {
-      const v2Instance = new QualityCheckerV2()
+      const v2Instance = new QualityChecker()
 
       const options: QualityCheckOptions = {
         respectGitignore: true,
@@ -299,7 +299,7 @@ describe('V2 Backward Compatibility', () => {
     })
 
     it('should handle cache directory configuration like V1', async () => {
-      const v2Instance = new QualityCheckerV2()
+      const v2Instance = new QualityChecker()
 
       const options: QualityCheckOptions = {
         cacheDir: '/custom/cache',
@@ -315,7 +315,7 @@ describe('V2 Backward Compatibility', () => {
     })
 
     it('should support hook mode like V1', async () => {
-      const v2Instance = new QualityCheckerV2()
+      const v2Instance = new QualityChecker()
 
       const options: QualityCheckOptions = {
         hookMode: true,
@@ -336,7 +336,7 @@ describe('V2 Backward Compatibility', () => {
   describe('Migration Safety', () => {
     it('should be safe to replace V1 imports with V2', () => {
       // This test verifies that V2 can be used as a drop-in replacement
-      const v2Instance = new QualityCheckerV2()
+      const v2Instance = new QualityChecker()
 
       // All V1 methods should exist
       expect(v2Instance.check).toBeDefined()
@@ -348,7 +348,7 @@ describe('V2 Backward Compatibility', () => {
     })
 
     it('should maintain same method signatures as V1', () => {
-      const v2Instance = new QualityCheckerV2()
+      const v2Instance = new QualityChecker()
 
       // Check method signature
       expect(v2Instance.check.length).toBeLessThanOrEqual(2) // files and options

@@ -1,6 +1,6 @@
 /**
  * Git Hook Facade V2 Compatibility Tests
- * Tests for runGitHook using QualityCheckerV2 implementation
+ * Tests for runGitHook using QualityChecker implementation
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
@@ -11,8 +11,8 @@ vi.mock('node:child_process', () => ({
   execSync: vi.fn(),
 }))
 
-vi.mock('../core/quality-checker-v2.js', () => ({
-  QualityCheckerV2: vi.fn(),
+vi.mock('../core/quality-checker.js', () => ({
+  QualityChecker: vi.fn(),
 }))
 
 vi.mock('../core/issue-reporter.js', () => ({
@@ -35,7 +35,7 @@ vi.mock('../adapters/fixer.js', () => ({
 
 // Import mocked modules
 import { execSync } from 'node:child_process'
-import { QualityCheckerV2 } from '../core/quality-checker-v2.js'
+import { QualityChecker } from '../core/quality-checker.js'
 import { IssueReporter } from '../core/issue-reporter.js'
 import { Autopilot } from '../adapters/autopilot.js'
 import { Fixer } from '../adapters/fixer.js'
@@ -59,7 +59,7 @@ describe('Git Hook with V2 Implementation', () => {
 
     // Mocks are already configured in vi.mock() calls above
     // Just update the mock function references
-    ;(QualityCheckerV2 as any).mockImplementation(() => ({
+    ;(QualityChecker as any).mockImplementation(() => ({
       check: mockCheck,
       fix: vi.fn(),
     }))
@@ -150,7 +150,7 @@ describe('Git Hook with V2 Implementation', () => {
   })
 
   describe('Quality Check Integration', () => {
-    it('should pass when QualityCheckerV2 returns success', async () => {
+    it('should pass when QualityChecker returns success', async () => {
       mockExecSync.mockReturnValue('src/file.ts\n')
       mockCheck.mockResolvedValue({
         success: true,
@@ -168,7 +168,7 @@ describe('Git Hook with V2 Implementation', () => {
       expect(mockFormatForCLI).not.toHaveBeenCalled()
     })
 
-    it('should fail and show errors when QualityCheckerV2 finds issues', async () => {
+    it('should fail and show errors when QualityChecker finds issues', async () => {
       mockExecSync.mockReturnValue('src/file.ts\n')
       const failResult = {
         success: false,
@@ -402,8 +402,8 @@ describe('Git Hook with V2 Implementation', () => {
         // Expected
       }
 
-      // Verify QualityCheckerV2 was instantiated
-      expect(QualityCheckerV2).toHaveBeenCalled()
+      // Verify QualityChecker was instantiated
+      expect(QualityChecker).toHaveBeenCalled()
       expect(mockCheck).toHaveBeenCalled()
     })
 

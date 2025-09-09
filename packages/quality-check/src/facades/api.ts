@@ -3,15 +3,15 @@
  * ~30 lines
  */
 
-import { QualityCheckerV2 } from '../core/quality-checker-v2.js'
+import { QualityChecker } from '../core/quality-checker.js'
 import type { QualityCheckOptions, FixResult } from '../types.js'
 import type { QualityCheckResult } from '../types/issue-types.js'
 
 export class QualityCheckAPI {
-  private checker: QualityCheckerV2
+  private checker: QualityChecker
 
   constructor() {
-    this.checker = new QualityCheckerV2()
+    this.checker = new QualityChecker()
   }
 
   /**

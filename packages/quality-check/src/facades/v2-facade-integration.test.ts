@@ -1,6 +1,6 @@
 /**
  * V2 Facade Integration Tests
- * Tests interactions between different facades using QualityCheckerV2
+ * Tests interactions between different facades using QualityChecker
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
@@ -11,9 +11,9 @@ import type { QualityCheckResult, FixResult } from '../types.js'
 
 // Mock dependencies
 vi.mock('../core/quality-checker.js', async () => {
-  const module = await vi.importActual('../core/quality-checker-v2.js')
+  const module = await vi.importActual('../core/quality-checker.js')
   return {
-    QualityChecker: module.QualityCheckerV2,
+    QualityChecker: module.QualityChecker,
   }
 })
 
@@ -71,7 +71,7 @@ describe('V2 Facade Integration', () => {
       // Mock git staged files
       vi.mocked(execSync).mockReturnValue('src/test.ts\n')
 
-      // Both should use QualityCheckerV2 internally
+      // Both should use QualityChecker internally
       expect(api['checker']).toBeDefined()
       expect(api['checker'].constructor.name).toContain('QualityChecker')
     })

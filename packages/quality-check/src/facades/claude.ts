@@ -8,7 +8,7 @@ import { Autopilot } from '../adapters/autopilot.js'
 import { Fixer } from '../adapters/fixer.js'
 import { ExitCodes } from '../core/exit-codes.js'
 import { IssueReporter } from '../core/issue-reporter.js'
-import { QualityCheckerV2 } from '../core/quality-checker-v2.js'
+import { QualityChecker } from '../core/quality-checker.js'
 import { OutputFormatter, OutputMode } from '../formatters/output-formatter.js'
 import { createTimer, logger } from '../utils/logger.js'
 
@@ -208,7 +208,7 @@ async function runClaudeHookWithPayload(
 
     // Initialize components
     logger.debug('Initializing quality check components')
-    const checker = new QualityCheckerV2()
+    const checker = new QualityChecker()
     const reporter = new IssueReporter()
     const autopilot = new Autopilot()
     const fixer = new Fixer()
@@ -237,7 +237,7 @@ async function runClaudeHookWithPayload(
       process.exit(ExitCodes.SUCCESS)
     }
 
-    // Use issues directly from QualityCheckerV2 result
+    // Use issues directly from QualityChecker result
     const issues = result.issues || []
     logger.qualityCheckCompleted(payload.tool_input.file_path, issues.length, qualityDuration)
 

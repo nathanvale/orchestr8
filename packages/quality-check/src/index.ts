@@ -11,7 +11,7 @@ export { QualityCheckAPI } from './facades/api.js'
 
 // Export core for advanced usage
 export { QualityChecker } from './core/quality-checker.js'
-export { QualityCheckerV2 } from './core/quality-checker-v2.js'
+export { QualityChecker as QualityCheckerV2 } from './core/quality-checker.js' // Backward compatibility alias
 export { IssueReporter } from './core/issue-reporter.js'
 
 // Export types

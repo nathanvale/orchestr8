@@ -1,179 +1,242 @@
 /**
- * QualityChecker - Core checking engine
- * Enhanced with structured logging and observability
+ * QualityChecker - Core checking engine with modern architecture
+ * Uses TypeScript, ESLint, and Prettier engines with incremental compilation
  */
 
-import { execSync } from 'node:child_process'
-import { existsSync } from 'node:fs'
-import type { QualityCheckOptions, QualityCheckResult, CheckerResult, FixResult } from '../types.js'
-import { ErrorParser } from './error-parser.js'
+import type { QualityCheckOptions, FixResult } from '../types.js'
+import type { QualityCheckResult, CheckerResult } from '../types/issue-types'
+import { TypeScriptEngine } from '../engines/typescript-engine.js'
+import { ESLintEngine } from '../engines/eslint-engine.js'
+import { PrettierEngine } from '../engines/prettier-engine.js'
+import { ResultAggregator } from '../formatters/aggregator.js'
+import { StylishFormatter } from '../formatters/stylish-formatter.js'
+import { JsonFormatter } from '../formatters/json-formatter.js'
+import { ConfigLoader, type ResolvedConfig } from './config-loader.js'
+import { FileMatcher } from './file-matcher.js'
+import {
+  TimeoutManager,
+  CancellationTokenSource,
+  type CancellationToken,
+} from './timeout-manager.js'
 import { logger, createTimer } from '../utils/logger.js'
+import { ToolMissingError } from './errors.js'
 
-interface ESLintMessage {
-  severity: number
-  message: string
-  ruleId: string | null
-  line: number
-  column: number
-}
-
-interface ESLintResult {
-  errorCount: number
-  warningCount: number
-  messages: ESLintMessage[]
-  filePath: string
-}
-
+/**
+ * Quality checker using modern engine architecture
+ */
 export class QualityChecker {
-  private errorParser = new ErrorParser()
+  private typescriptEngine: TypeScriptEngine
+  private eslintEngine: ESLintEngine
+  private prettierEngine: PrettierEngine
+  private aggregator: ResultAggregator
+  private configLoader: ConfigLoader
+  private fileMatcher: FileMatcher
+  private timeoutManager: TimeoutManager
+  private stylishFormatter: StylishFormatter
+  private jsonFormatter: JsonFormatter
 
-  /**
-   * Execute command with structured logging and timing
-   */
-  private executeCommand(
-    command: string,
-    args: string[] = [],
-  ): { stdout: string; stderr: string; exitCode: number; duration: number } {
-    const timer = createTimer('command-execution')
-    const fullCommand = args.length > 0 ? `${command} ${args.join(' ')}` : command
-
-    logger.debug('Executing command', {
-      command,
-      args,
-      fullCommand,
-      phase: 'tool-start',
-    })
-
-    try {
-      const output = execSync(fullCommand, {
-        stdio: 'pipe',
-        encoding: 'utf8',
-        timeout: 30000, // 30 second timeout
-      })
-      const duration = timer.end()
-
-      logger.toolExecution(command, args, duration, 0)
-
-      return {
-        stdout: output.toString(),
-        stderr: '',
-        exitCode: 0,
-        duration,
-      }
-    } catch (error: unknown) {
-      const duration = timer.end()
-
-      // Type guard for execaError
-      const execError = error as {
-        status?: number
-        stderr?: Buffer | string
-        stdout?: Buffer | string
-        message?: string
-      }
-      const exitCode = execError.status || 1
-      // TypeScript outputs errors to stdout, not stderr
-      const stdout = execError.stdout?.toString() || ''
-      const stderr = execError.stderr?.toString() || stdout || (error as Error).message
-
-      logger.toolExecution(command, args, duration, exitCode)
-
-      return {
-        stdout,
-        stderr,
-        exitCode,
-        duration,
-      }
-    }
+  constructor() {
+    this.typescriptEngine = new TypeScriptEngine()
+    this.eslintEngine = new ESLintEngine()
+    this.prettierEngine = new PrettierEngine()
+    this.aggregator = new ResultAggregator()
+    this.configLoader = new ConfigLoader()
+    this.fileMatcher = new FileMatcher()
+    this.timeoutManager = new TimeoutManager()
+    this.stylishFormatter = new StylishFormatter()
+    this.jsonFormatter = new JsonFormatter()
   }
 
   /**
    * Check files for quality issues
    */
-  async check(files: string[], options: QualityCheckOptions): Promise<QualityCheckResult> {
-    const result: QualityCheckResult = {
-      success: true,
-      checkers: {},
-    }
+  async check(
+    files: string[],
+    options: QualityCheckOptions & { format?: 'stylish' | 'json' },
+  ): Promise<QualityCheckResult> {
+    const timer = createTimer('quality-check')
+    const correlationId = this.generateCorrelationId()
 
-    // Filter non-existent files
-    const existingFiles = files.filter((file) => existsSync(file))
-    if (existingFiles.length === 0) {
-      return result
-    }
+    logger.debug('Starting quality check', {
+      files: files.length,
+      options,
+      correlationId,
+      phase: 'check-start',
+    })
 
-    // Run checks in parallel by default
-    const runParallel = options.parallel !== false
+    try {
+      // Load configuration
+      const config = await this.configLoader.load({
+        files,
+        fix: options.fix,
+        format: options.format,
+        engines: {
+          typescript: options.typescript !== false,
+          eslint: options.eslint !== false,
+          prettier: options.prettier !== false,
+        },
+      })
 
-    if (runParallel) {
-      const [eslint, prettier, typescript] = await Promise.all([
-        options.eslint !== false ? this.runESLint(existingFiles) : null,
-        options.prettier !== false ? this.runPrettier(existingFiles) : null,
-        options.typescript !== false ? this.runTypeScript(existingFiles) : null,
-      ])
+      // Resolve files
+      const targetFiles = await this.fileMatcher.resolveFiles({
+        files: config.files,
+        staged: config.staged,
+        since: config.since,
+      })
 
-      if (eslint) result.checkers.eslint = eslint
-      if (prettier) result.checkers.prettier = prettier
-      if (typescript) result.checkers.typescript = typescript
-    } else {
-      // Sequential execution
-      if (options.eslint !== false) {
-        result.checkers.eslint = await this.runESLint(existingFiles)
+      if (targetFiles.length === 0) {
+        return {
+          success: true,
+          duration: 0,
+          issues: [],
+          correlationId,
+        }
       }
-      if (options.prettier !== false) {
-        result.checkers.prettier = await this.runPrettier(existingFiles)
+
+      // Run checks with timeout
+      const results = await this.runChecks(targetFiles, config, correlationId)
+
+      // Aggregate results
+      const duration = timer.end()
+      const aggregated = this.aggregator.aggregate(results, {
+        duration,
+        correlationId,
+        trackMetrics: process.env.QC_TRACK_METRICS === 'true',
+      })
+
+      // Format output if needed
+      if (config.format === 'json') {
+        const output = this.jsonFormatter.format(aggregated.issues)
+        process.stdout.write(output + '\n')
+      } else if (aggregated.issues.length > 0) {
+        const output = this.stylishFormatter.format(aggregated.issues)
+        process.stderr.write(output + '\n')
       }
-      if (options.typescript !== false) {
-        result.checkers.typescript = await this.runTypeScript(existingFiles)
+
+      logger.debug('Quality check completed', {
+        success: aggregated.success,
+        issueCount: aggregated.issues.length,
+        duration,
+        correlationId,
+        phase: 'check-complete',
+      })
+
+      return aggregated
+    } catch (error) {
+      const duration = timer.end()
+
+      logger.error('Quality check failed', error as Error, {
+        files: files.length,
+        duration,
+        correlationId,
+      })
+
+      return {
+        success: false,
+        duration,
+        issues: [
+          {
+            engine: 'typescript',
+            severity: 'error',
+            file: files[0] ?? process.cwd(),
+            line: 1,
+            col: 1,
+            message: error instanceof Error ? error.message : String(error),
+          },
+        ],
+        correlationId,
       }
     }
-
-    // Determine overall success
-    result.success = this.isSuccessful(result)
-    return result
   }
 
   /**
    * Fix quality issues in files
    */
-  async fix(files: string[], _options: { safe?: boolean }): Promise<FixResult> {
-    const existingFiles = files.filter((file) => existsSync(file))
-    if (existingFiles.length === 0) {
-      return { success: true, count: 0, fixed: [] }
-    }
+  async fix(files: string[], options: { safe?: boolean } = {}): Promise<FixResult> {
+    const timer = createTimer('quality-fix')
+    const correlationId = this.generateCorrelationId()
 
-    let fixCount = 0
-    const fixed: string[] = []
+    logger.debug('Starting quality fix', {
+      files: files.length,
+      options,
+      correlationId,
+      phase: 'fix-start',
+    })
 
     try {
-      // Always fix ESLint issues
-      try {
-        const eslintResult = this.executeCommand('npx eslint', [
-          '--fix',
-          ...existingFiles.map((f) => `"${f}"`),
-        ])
-        if (eslintResult.exitCode === 0) {
-          fixed.push('ESLint')
-          fixCount++
-          logger.debug('ESLint auto-fix successful', { files: existingFiles.length })
+      // Load configuration with fix enabled
+      const config = await this.configLoader.load({
+        files,
+        fix: true,
+        prettierWrite: true,
+      })
+
+      // Resolve files
+      const targetFiles = await this.fileMatcher.resolveFiles({
+        files: config.files,
+        staged: config.staged,
+        since: config.since,
+      })
+
+      if (targetFiles.length === 0) {
+        return {
+          success: true,
+          count: 0,
+          fixed: [],
         }
-      } catch {
-        logger.warn('ESLint fix failed', { files: existingFiles.length })
       }
 
-      // Always fix Prettier issues
-      try {
-        const prettierResult = this.executeCommand('npx prettier', [
-          '--write',
-          ...existingFiles.map((f) => `"${f}"`),
-        ])
-        if (prettierResult.exitCode === 0) {
-          fixed.push('Prettier')
-          fixCount++
-          logger.debug('Prettier auto-fix successful', { files: existingFiles.length })
+      let fixCount = 0
+      const fixed: string[] = []
+
+      // Run ESLint fix
+      if (config.engines.eslint) {
+        try {
+          const result = await this.eslintEngine.check({
+            files: targetFiles,
+            fix: true,
+          })
+
+          if (result.fixedCount && result.fixedCount > 0) {
+            fixed.push('ESLint')
+            fixCount += result.fixedCount
+          }
+        } catch (error) {
+          if (!(error instanceof ToolMissingError)) {
+            logger.warn('ESLint fix failed', { error: (error as Error).message })
+          }
         }
-      } catch {
-        logger.warn('Prettier fix failed', { files: existingFiles.length })
       }
+
+      // Run Prettier fix
+      if (config.engines.prettier) {
+        try {
+          const result = await this.prettierEngine.check({
+            files: targetFiles,
+            write: true,
+          })
+
+          if (result.fixedCount && result.fixedCount > 0) {
+            fixed.push('Prettier')
+            fixCount += result.fixedCount
+          }
+        } catch (error) {
+          if (!(error instanceof ToolMissingError)) {
+            logger.warn('Prettier fix failed', { error: (error as Error).message })
+          }
+        }
+      }
+
+      const duration = timer.end()
+
+      logger.debug('Quality fix completed', {
+        success: fixCount > 0,
+        fixCount,
+        fixed,
+        duration,
+        correlationId,
+        phase: 'fix-complete',
+      })
 
       return {
         success: fixCount > 0,
@@ -181,6 +244,14 @@ export class QualityChecker {
         fixed,
       }
     } catch (error) {
+      const duration = timer.end()
+
+      logger.error('Quality fix failed', error as Error, {
+        files: files.length,
+        duration,
+        correlationId,
+      })
+
       return {
         success: false,
         count: 0,
@@ -191,140 +262,153 @@ export class QualityChecker {
   }
 
   /**
+   * Run checks with the enabled engines
+   */
+  private async runChecks(
+    files: string[],
+    config: ResolvedConfig,
+    correlationId: string,
+  ): Promise<Map<string, CheckerResult>> {
+    const results = new Map<string, CheckerResult>()
+    const source = new CancellationTokenSource()
+
+    try {
+      // Run checks with timeout
+      await this.timeoutManager.runWithTimeout(
+        async (token) => {
+          const checks: Promise<void>[] = []
+
+          // TypeScript check
+          if (config.engines.typescript) {
+            checks.push(
+              this.runTypeScriptCheck(files, config, token).then((result) => {
+                results.set('typescript', result)
+              }),
+            )
+          }
+
+          // ESLint check
+          if (config.engines.eslint) {
+            checks.push(
+              this.runESLintCheck(files, config, token).then((result) => {
+                results.set('eslint', result)
+              }),
+            )
+          }
+
+          // Prettier check
+          if (config.engines.prettier) {
+            checks.push(
+              this.runPrettierCheck(files, config, token).then((result) => {
+                results.set('prettier', result)
+              }),
+            )
+          }
+
+          // Wait for all checks to complete
+          await Promise.all(checks)
+        },
+        config.timeoutMs,
+        'quality-check',
+      )
+    } catch (error) {
+      // Handle timeout or other errors
+      logger.warn('Quality check timeout or error', {
+        error: (error as Error).message,
+        correlationId,
+      })
+    } finally {
+      source.cancel()
+    }
+
+    return results
+  }
+
+  /**
+   * Run TypeScript check
+   */
+  private async runTypeScriptCheck(
+    files: string[],
+    config: ResolvedConfig,
+    token: CancellationToken,
+  ): Promise<CheckerResult> {
+    try {
+      return await this.typescriptEngine.check({
+        files,
+        cacheDir: config.typescriptCacheDir,
+        token,
+      })
+    } catch (error) {
+      if (error instanceof ToolMissingError) {
+        logger.warn('TypeScript not available', { skipping: true })
+        return { success: true, issues: [] }
+      }
+      throw error
+    }
+  }
+
+  /**
    * Run ESLint check
    */
-  private async runESLint(files: string[]): Promise<CheckerResult> {
+  private async runESLintCheck(
+    files: string[],
+    config: ResolvedConfig,
+    token: CancellationToken,
+  ): Promise<CheckerResult> {
     try {
-      const eslintResult = this.executeCommand('npx eslint', [
-        ...files.map((f) => `"${f}"`),
-        '--format=json',
-      ])
-
-      let results: ESLintResult[] = []
-      let hasIssues = false
-      const errors: string[] = []
-
-      // Parse output if available (ESLint may exit with non-zero but still provide JSON)
-      if (eslintResult.stdout) {
-        try {
-          results = JSON.parse(eslintResult.stdout) as ESLintResult[]
-        } catch (parseError) {
-          logger.warn('Failed to parse ESLint JSON output', {
-            error: (parseError as Error).message,
-          })
-        }
-      }
-
-      results.forEach((file: ESLintResult) => {
-        // Consider both errors (severity 2) and warnings (severity 1) as issues
-        if (file.errorCount > 0 || file.warningCount > 0) {
-          hasIssues = true
-          file.messages.forEach((msg: ESLintMessage) => {
-            // Include both errors and warnings in the errors array
-            if (msg.severity === 2 || msg.severity === 1) {
-              errors.push(
-                `${file.filePath}:${msg.line}:${msg.column} - ${msg.message} (${msg.ruleId})`,
-              )
-            }
-          })
-        }
+      return await this.eslintEngine.check({
+        files,
+        fix: config.fix,
+        format: config.format,
+        cacheDir: config.eslintCacheDir,
+        token,
       })
-
-      logger.debug('ESLint check completed', {
-        files: files.length,
-        errors: errors.length,
-        warnings: results.reduce((sum, r) => sum + r.warningCount, 0),
-        duration: eslintResult.duration,
-        exitCode: eslintResult.exitCode,
-        component: 'eslint',
-      })
-
-      return {
-        success: !hasIssues,
-        errors: errors.length > 0 ? errors : undefined,
-        fixable: true,
-      }
     } catch (error) {
-      logger.error('ESLint execution failed', error as Error, {
-        files: files.length,
-        component: 'eslint',
-      })
-
-      const errorMsg = error instanceof Error ? error.message : 'ESLint check failed'
-      return {
-        success: false,
-        errors: [errorMsg],
-        fixable: true,
+      if (error instanceof ToolMissingError) {
+        logger.warn('ESLint not available', { skipping: true })
+        return { success: true, issues: [] }
       }
+      throw error
     }
   }
 
   /**
    * Run Prettier check
    */
-  private async runPrettier(files: string[]): Promise<CheckerResult> {
+  private async runPrettierCheck(
+    files: string[],
+    config: ResolvedConfig,
+    token: CancellationToken,
+  ): Promise<CheckerResult> {
     try {
-      const filesStr = files.map((f) => `"${f}"`).join(' ')
-      execSync(`npx prettier --check ${filesStr}`, {
-        stdio: 'pipe',
+      return await this.prettierEngine.check({
+        files,
+        write: config.prettierWrite,
+        token,
       })
-
-      return {
-        success: true,
-        fixable: true,
+    } catch (error) {
+      if (error instanceof ToolMissingError) {
+        logger.warn('Prettier not available', { skipping: true })
+        return { success: true, issues: [] }
       }
-    } catch {
-      // Prettier exits with non-zero when formatting needed
-      return {
-        success: false,
-        errors: ['File needs formatting'],
-        fixable: true,
-      }
+      throw error
     }
   }
 
   /**
-   * Run TypeScript check
+   * Generate correlation ID for tracking
    */
-  private async runTypeScript(_files: string[]): Promise<CheckerResult> {
-    // Check if tsconfig exists
-    if (!existsSync('tsconfig.json')) {
-      return { success: true }
-    }
-
-    const result = this.executeCommand('npx tsc', ['--noEmit'])
-
-    if (result.exitCode === 0) {
-      return {
-        success: true,
-        fixable: false,
-      }
-    }
-
-    // Parse TypeScript errors from stderr
-    const errorOutput = result.stderr || result.stdout
-    const parsedErrors = this.errorParser.parseTypeScriptErrors(errorOutput)
-
-    const errors =
-      parsedErrors.length > 0
-        ? parsedErrors.map((err) => this.errorParser.formatError(err))
-        : errorOutput
-          ? errorOutput.split('\n').filter((line) => line.trim())
-          : ['TypeScript compilation failed']
-
-    return {
-      success: false,
-      errors,
-      fixable: false,
-    }
+  private generateCorrelationId(): string {
+    return `qc-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`
   }
 
   /**
-   * Determine if all checks passed
+   * Clear all caches
    */
-  private isSuccessful(result: QualityCheckResult): boolean {
-    const checkers = Object.values(result.checkers)
-    if (checkers.length === 0) return true
-    return checkers.every((checker) => checker?.success !== false)
+  clearCaches(): void {
+    this.typescriptEngine.clearCache()
+    this.eslintEngine.clearCache()
+    this.configLoader.clearCache()
+    this.timeoutManager.clearAll()
   }
 }

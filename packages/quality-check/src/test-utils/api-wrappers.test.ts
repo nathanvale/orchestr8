@@ -1,6 +1,6 @@
 /**
  * API Wrappers V2 Compatibility Tests
- * Tests for test utilities using QualityCheckerV2 implementation
+ * Tests for test utilities using QualityChecker implementation
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
@@ -15,9 +15,9 @@ import type { QualityCheckOptions, QualityCheckResult, FixResult } from '../type
 
 // Mock the QualityChecker to use V2
 vi.mock('../core/quality-checker.js', async () => {
-  const module = await vi.importActual('../core/quality-checker-v2.js')
+  const module = await vi.importActual('../core/quality-checker.js')
   return {
-    QualityChecker: module.QualityCheckerV2,
+    QualityChecker: module.QualityChecker,
   }
 })
 
@@ -147,7 +147,7 @@ describe('API Wrappers with V2 Implementation', () => {
     })
 
     describe('V2 Check and Fix Methods', () => {
-      it('should use QualityCheckerV2 for check operations', async () => {
+      it('should use QualityChecker for check operations', async () => {
         checker.addMockFile('/src/test.ts', 'const x = 1;', true)
 
         const result = await checker.check(['/src/test.ts'])
@@ -156,7 +156,7 @@ describe('API Wrappers with V2 Implementation', () => {
         expect(result.success).toBeDefined()
       })
 
-      it('should use QualityCheckerV2 for fix operations', async () => {
+      it('should use QualityChecker for fix operations', async () => {
         checker.addMockFile('/src/test.ts', 'const x=1', true)
 
         const result = await checker.fix(['/src/test.ts'])
@@ -265,12 +265,12 @@ describe('API Wrappers with V2 Implementation', () => {
       wrapper = new DirectAPIWrapper()
     })
 
-    it('should create instance with QualityCheckerV2', () => {
+    it('should create instance with QualityChecker', () => {
       expect(wrapper).toBeDefined()
       expect(wrapper['checker']).toBeDefined()
     })
 
-    it('should delegate check to QualityCheckerV2', async () => {
+    it('should delegate check to QualityChecker', async () => {
       const checkSpy = vi.spyOn(wrapper['checker'], 'check').mockResolvedValue({
         success: true,
         checkers: {},
@@ -282,7 +282,7 @@ describe('API Wrappers with V2 Implementation', () => {
       expect(result.success).toBe(true)
     })
 
-    it('should delegate fix to QualityCheckerV2', async () => {
+    it('should delegate fix to QualityChecker', async () => {
       const fixSpy = vi.spyOn(wrapper['checker'], 'fix').mockResolvedValue({
         success: true,
         count: 1,

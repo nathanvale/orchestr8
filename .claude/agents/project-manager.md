@@ -74,6 +74,10 @@ same status Step 16: Use Write tool to create recap file with format:
 [Extracted from task dependencies]
 ```
 
+## Issues We Faced
+
+List ALL the issues we faced during the task execution.
+
 ## Concrete Tool Usage Patterns
 
 ### Finding Task Files

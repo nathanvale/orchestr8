@@ -4,7 +4,7 @@
  */
 
 import { vi } from 'vitest'
-import { QualityCheckerV2 } from '../core/quality-checker-v2.js'
+import { QualityChecker } from '../core/quality-checker.js'
 import type { QualityCheckOptions, FixResult } from '../types.js'
 import type { QualityCheckResult } from '../types/issue-types.js'
 import type {
@@ -283,21 +283,21 @@ export class MockedQualityChecker {
   }
 
   /**
-   * Check files using mocked QualityCheckerV2
+   * Check files using mocked QualityChecker
    */
   async check(files: string[], options?: QualityCheckOptions): Promise<QualityCheckResult> {
     this.startTime = Date.now()
-    const checker = new QualityCheckerV2()
+    const checker = new QualityChecker()
     return await checker.check(files, options || {})
   }
 
   /**
-   * Fix files using mocked QualityCheckerV2
+   * Fix files using mocked QualityChecker
    */
   async fix(files: string[], _options?: QualityCheckOptions): Promise<FixResult> {
     this.startTime = Date.now()
-    const checker = new QualityCheckerV2()
-    // QualityCheckerV2.fix expects { safe?: boolean } but we have QualityCheckOptions
+    const checker = new QualityChecker()
+    // QualityChecker.fix expects { safe?: boolean } but we have QualityCheckOptions
     // For now, default to safe: false
     return await checker.fix(files, { safe: false })
   }
@@ -406,14 +406,14 @@ export class PerformanceWrapper {
 }
 
 /**
- * Direct API wrapper for calling QualityCheckerV2 without mocking
+ * Direct API wrapper for calling QualityChecker without mocking
  * Used for testing actual integration with real engines
  */
 export class DirectAPIWrapper {
-  private checker: QualityCheckerV2
+  private checker: QualityChecker
 
   constructor() {
-    this.checker = new QualityCheckerV2()
+    this.checker = new QualityChecker()
   }
 
   /**
@@ -427,7 +427,7 @@ export class DirectAPIWrapper {
    * Direct fix call
    */
   async fix(files: string[], _options?: QualityCheckOptions): Promise<FixResult> {
-    // QualityCheckerV2.fix expects { safe?: boolean } but we have QualityCheckOptions
+    // QualityChecker.fix expects { safe?: boolean } but we have QualityCheckOptions
     // For now, default to safe: false
     return await this.checker.fix(files, { safe: false })
   }

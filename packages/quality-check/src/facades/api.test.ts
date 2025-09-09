@@ -1,6 +1,6 @@
 /**
  * API Facade V2 Compatibility Tests
- * Tests for QualityCheckAPI using QualityCheckerV2 implementation
+ * Tests for QualityCheckAPI using QualityChecker implementation
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
@@ -9,9 +9,9 @@ import type { QualityCheckOptions, FixResult, QualityCheckResult } from '../type
 
 // Mock the QualityChecker import to use V2
 vi.mock('../core/quality-checker.js', async () => {
-  const module = await vi.importActual('../core/quality-checker-v2.js')
+  const module = await vi.importActual('../core/quality-checker.js')
   return {
-    QualityChecker: module.QualityCheckerV2,
+    QualityChecker: module.QualityChecker,
   }
 })
 
@@ -45,16 +45,16 @@ describe('QualityCheckAPI with V2 Implementation', () => {
   })
 
   describe('constructor', () => {
-    it('should instantiate QualityCheckerV2 internally', () => {
+    it('should instantiate QualityChecker internally', () => {
       const newApi = new QualityCheckAPI()
       expect(newApi).toBeDefined()
-      // The internal checker should be an instance of QualityCheckerV2 (mocked as QualityChecker)
+      // The internal checker should be an instance of QualityChecker (mocked as QualityChecker)
       expect(newApi['checker']).toBeDefined()
     })
   })
 
   describe('check method', () => {
-    it('should call QualityCheckerV2.check with correct parameters', async () => {
+    it('should call QualityChecker.check with correct parameters', async () => {
       const checkSpy = vi.spyOn(api['checker'], 'check').mockResolvedValue(mockCheckResult)
       const files = ['src/test.ts']
       const options: QualityCheckOptions = { fix: false }
@@ -84,7 +84,7 @@ describe('QualityCheckAPI with V2 Implementation', () => {
       expect(result).toEqual(mockCheckResult)
     })
 
-    it('should propagate errors from QualityCheckerV2', async () => {
+    it('should propagate errors from QualityChecker', async () => {
       const error = new Error('Check failed')
       vi.spyOn(api['checker'], 'check').mockRejectedValue(error)
 
@@ -93,7 +93,7 @@ describe('QualityCheckAPI with V2 Implementation', () => {
   })
 
   describe('fix method', () => {
-    it('should call QualityCheckerV2.fix with correct parameters', async () => {
+    it('should call QualityChecker.fix with correct parameters', async () => {
       const fixSpy = vi.spyOn(api['checker'], 'fix').mockResolvedValue(mockFixResult)
       const files = ['src/test.ts']
       const options = { safe: false }
@@ -123,7 +123,7 @@ describe('QualityCheckAPI with V2 Implementation', () => {
       expect(result).toEqual(mockFixResult)
     })
 
-    it('should propagate errors from QualityCheckerV2', async () => {
+    it('should propagate errors from QualityChecker', async () => {
       const error = new Error('Fix failed')
       vi.spyOn(api['checker'], 'fix').mockRejectedValue(error)
 

@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { runClaudeHook } from './claude.js'
 import * as AutopilotModule from '../adapters/autopilot.js'
-import * as QualityCheckerV2Module from '../core/quality-checker-v2.js'
+import * as QualityCheckerModule from '../core/quality-checker.js'
 import * as FixerModule from '../adapters/fixer.js'
 import { ClaudeFormatter } from '../formatters/claude-formatter.js'
 
@@ -62,7 +62,7 @@ describe('Claude Hook XML Output', () => {
       }
       const payloadString = JSON.stringify(payload)
 
-      // Mock QualityCheckerV2 to return TypeScript errors
+      // Mock QualityChecker to return TypeScript errors
       const mockQualityResult = {
         success: false,
         issues: [
@@ -79,7 +79,7 @@ describe('Claude Hook XML Output', () => {
         errors: [],
         warnings: [],
       }
-      vi.spyOn(QualityCheckerV2Module, 'QualityCheckerV2').mockImplementation(
+      vi.spyOn(QualityCheckerModule, 'QualityChecker').mockImplementation(
         () =>
           ({
             check: vi.fn().mockResolvedValue(mockQualityResult),
@@ -171,7 +171,7 @@ describe('Claude Hook XML Output', () => {
         errors: [],
         warnings: [],
       }
-      vi.spyOn(QualityCheckerV2Module, 'QualityCheckerV2').mockImplementation(
+      vi.spyOn(QualityCheckerModule, 'QualityChecker').mockImplementation(
         () =>
           ({
             check: vi.fn().mockResolvedValue(mockQualityResult),
@@ -270,7 +270,7 @@ describe('Claude Hook XML Output', () => {
         errors: [],
         warnings: [],
       }
-      vi.spyOn(QualityCheckerV2Module, 'QualityCheckerV2').mockImplementation(
+      vi.spyOn(QualityCheckerModule, 'QualityChecker').mockImplementation(
         () =>
           ({
             check: vi.fn().mockResolvedValue(mockQualityResult),
@@ -388,7 +388,7 @@ describe('Claude Hook XML Output', () => {
         errors: [],
         warnings: [],
       }
-      vi.spyOn(QualityCheckerV2Module, 'QualityCheckerV2').mockImplementation(
+      vi.spyOn(QualityCheckerModule, 'QualityChecker').mockImplementation(
         () =>
           ({
             check: vi.fn().mockResolvedValue(mockQualityResult),
@@ -483,7 +483,7 @@ describe('Claude Hook XML Output', () => {
         errors: [],
         warnings: [],
       }
-      vi.spyOn(QualityCheckerV2Module, 'QualityCheckerV2').mockImplementation(
+      vi.spyOn(QualityCheckerModule, 'QualityChecker').mockImplementation(
         () =>
           ({
             check: vi.fn().mockResolvedValue(mockQualityResult),

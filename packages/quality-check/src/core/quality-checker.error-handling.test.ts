@@ -1,10 +1,10 @@
 /**
  * V2 Error Handling Test Suite
- * Tests error boundary, exception handling, and error recovery for QualityCheckerV2
+ * Tests error boundary, exception handling, and error recovery for QualityChecker
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { QualityCheckerV2 } from './quality-checker-v2.js'
+import { QualityChecker } from './quality-checker.js'
 import { ToolMissingError } from './errors.js'
 
 // Mock dependencies
@@ -23,13 +23,13 @@ vi.mock('../utils/logger.js', () => ({
   createTimer: vi.fn(() => ({ end: vi.fn(() => 100) })),
 }))
 
-describe('QualityCheckerV2 Error Handling', () => {
-  let checker: QualityCheckerV2
+describe('QualityChecker Error Handling', () => {
+  let checker: QualityChecker
   let consoleErrorSpy: ReturnType<typeof vi.spyOn>
   let consoleWarnSpy: ReturnType<typeof vi.spyOn>
 
   beforeEach(() => {
-    checker = new QualityCheckerV2()
+    checker = new QualityChecker()
     consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
     consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
   })

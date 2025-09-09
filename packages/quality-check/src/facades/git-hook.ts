@@ -5,7 +5,7 @@
  */
 
 import { execSync } from 'node:child_process'
-import { QualityCheckerV2 } from '../core/quality-checker-v2.js'
+import { QualityChecker } from '../core/quality-checker.js'
 import { IssueReporter } from '../core/issue-reporter.js'
 import { Autopilot } from '../adapters/autopilot.js'
 import { Fixer } from '../adapters/fixer.js'
@@ -29,7 +29,7 @@ export async function runGitHook(options: GitHookOptions = {}): Promise<void> {
     }
 
     // Run quality check
-    const checker = new QualityCheckerV2()
+    const checker = new QualityChecker()
     const reporter = new IssueReporter()
     const autopilot = new Autopilot()
     const fixer = new Fixer()
