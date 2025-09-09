@@ -546,6 +546,9 @@ function shouldProcessOperation(operation: string): boolean {
  * Output formatted text to stderr for Claude Code PostToolUse hooks with blocking behavior
  */
 function outputClaudeBlocking(formattedOutput: string): void {
-  // Output formatted issues to stderr for Claude to process (PostToolUse with exit code 2)
-  console.error(formattedOutput)
+  // Only output if not in silent mode - exit code still communicates the issue to Claude
+  if (process.env.CLAUDE_HOOK_SILENT_OUTPUT !== 'true') {
+    // Output formatted issues to stderr for Claude to process (PostToolUse with exit code 2)
+    console.error(formattedOutput)
+  }
 }

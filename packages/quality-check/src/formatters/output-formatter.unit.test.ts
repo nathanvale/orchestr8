@@ -10,6 +10,8 @@ describe('OutputFormatter', () => {
   let formatter: OutputFormatter
 
   beforeEach(() => {
+    // Clear silent mode for tests to ensure output is generated
+    delete process.env.CLAUDE_HOOK_SILENT_OUTPUT
     formatter = new OutputFormatter()
   })
 

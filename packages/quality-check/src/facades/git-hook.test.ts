@@ -50,6 +50,9 @@ describe('Git Hook with V2 Implementation', () => {
   let exitCode: number | undefined
 
   beforeEach(() => {
+    // Clear silent mode for tests to ensure output is generated
+    delete process.env.CLAUDE_HOOK_SILENT_OUTPUT
+    
     // Setup mocks
     mockExecSync = vi.mocked(execSync)
     mockCheck = vi.fn()

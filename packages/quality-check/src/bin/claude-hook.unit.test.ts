@@ -9,10 +9,13 @@ const CLAUDE_HOOK_BIN = path.resolve(__dirname, '../../bin/claude-hook')
 describe('bin/claude-hook', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    // Clear silent mode for tests to ensure output is generated
+    delete process.env.CLAUDE_HOOK_SILENT_OUTPUT
   })
 
   afterEach(() => {
     delete process.env.CLAUDE_HOOK_DISABLED
+    delete process.env.CLAUDE_HOOK_SILENT_OUTPUT
   })
 
   test('should_immediately_exit_when_CLAUDE_HOOK_DISABLED_is_true', () => {
@@ -139,7 +142,7 @@ describe('bin/claude-hook', () => {
 
     // Act: Execute binary with malformed input
     try {
-      execSync(`echo '${invalidPayload}' | CLAUDE_HOOK_SILENT=true node "${CLAUDE_HOOK_BIN}"`, {
+      execSync(`echo '${invalidPayload}' | CLAUDE_HOOK_SILENT_OUTPUT=true node "${CLAUDE_HOOK_BIN}"`, {
         encoding: 'utf8',
         timeout: 2000,
         stdio: 'pipe',
@@ -164,7 +167,7 @@ describe('bin/claude-hook', () => {
 
     // Act: Execute binary
     const result = execSync(
-      `echo '${payload}' | CLAUDE_HOOK_SILENT=true node "${CLAUDE_HOOK_BIN}"`,
+      `echo '${payload}' | CLAUDE_HOOK_SILENT_OUTPUT=true node "${CLAUDE_HOOK_BIN}"`,
       {
         encoding: 'utf8',
         timeout: 2000,
@@ -189,7 +192,7 @@ describe('bin/claude-hook', () => {
     // Act & Assert: Test timeout behavior of execSync itself
     const start = Date.now()
     try {
-      execSync(`echo '${payload}' | CLAUDE_HOOK_SILENT=true node "${CLAUDE_HOOK_BIN}"`, {
+      execSync(`echo '${payload}' | CLAUDE_HOOK_SILENT_OUTPUT=true node "${CLAUDE_HOOK_BIN}"`, {
         encoding: 'utf8',
         timeout: 100, // Very short timeout to test timeout handling
       })
@@ -214,7 +217,7 @@ describe('bin/claude-hook', () => {
 
     // Act: Execute binary
     const result = execSync(
-      `echo '${payload}' | CLAUDE_HOOK_SILENT=true node "${CLAUDE_HOOK_BIN}"`,
+      `echo '${payload}' | CLAUDE_HOOK_SILENT_OUTPUT=true node "${CLAUDE_HOOK_BIN}"`,
       {
         encoding: 'utf8',
         timeout: 2000,
@@ -232,7 +235,7 @@ describe('bin/claude-hook', () => {
 
     // Act: Execute binary with empty input
     try {
-      execSync(`echo '${payload}' | CLAUDE_HOOK_SILENT=true node "${CLAUDE_HOOK_BIN}"`, {
+      execSync(`echo '${payload}' | CLAUDE_HOOK_SILENT_OUTPUT=true node "${CLAUDE_HOOK_BIN}"`, {
         encoding: 'utf8',
         timeout: 2000,
         stdio: 'pipe',
@@ -256,7 +259,7 @@ describe('bin/claude-hook', () => {
 
     // Act: Execute binary
     const result = execSync(
-      `echo '${payload}' | CLAUDE_HOOK_SILENT=true node "${CLAUDE_HOOK_BIN}"`,
+      `echo '${payload}' | CLAUDE_HOOK_SILENT_OUTPUT=true node "${CLAUDE_HOOK_BIN}"`,
       {
         encoding: 'utf8',
         timeout: 2000,

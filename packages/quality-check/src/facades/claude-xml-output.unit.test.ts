@@ -16,6 +16,9 @@ describe('Claude Hook XML Output', () => {
   beforeEach(() => {
     vi.clearAllMocks()
 
+    // Clear silent mode for tests to ensure output is generated
+    delete process.env.CLAUDE_HOOK_SILENT_OUTPUT
+
     // Mock process.exit to capture exit codes and stop execution
     originalProcessExit = process.exit
     mockProcess = {

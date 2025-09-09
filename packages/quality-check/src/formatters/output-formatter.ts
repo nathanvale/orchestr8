@@ -265,6 +265,11 @@ export class OutputFormatter {
       mode: options.mode || OutputMode.XML,
     })
 
+    // In silent mode, only return the XML without the aggressive blocking text
+    if (process.env.CLAUDE_HOOK_SILENT_OUTPUT === 'true') {
+      return formattedIssues
+    }
+
     const lines: string[] = []
     lines.push('')
     lines.push('🚫 BLOCKING: You MUST employ the quality check fixer IMMEDIATELY:')
