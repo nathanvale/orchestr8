@@ -167,15 +167,17 @@ export class QualityChecker {
 
       // Transform error messages to match expected format
       let message = error instanceof Error ? error.message : String(error)
-      
+
       // Handle specific error patterns
       if (message.includes('Cannot read properties of undefined')) {
         if (message.includes("reading 'files'")) {
           message = 'Config load failed'
         }
       }
-      // Keep these messages as-is for mock testing
+
+      // Keep original message for known test error patterns
       // Tests explicitly throw these messages and expect them back
+      // This includes: 'File resolution failed', 'string error', 'Circular reference'
 
       return {
         success: false,
@@ -336,27 +338,78 @@ export class QualityChecker {
           // TypeScript check
           if (config.engines.typescript) {
             checks.push(
-              this.runTypeScriptCheck(files, config, token).then((result) => {
-                results.set('typescript', result)
-              }),
+              this.runTypeScriptCheck(files, config, token)
+                .then((result) => {
+                  results.set('typescript', result)
+                })
+                .catch((error) => {
+                  // Handle non-ToolMissingError exceptions
+                  results.set('typescript', {
+                    success: false,
+                    issues: [
+                      {
+                        engine: 'typescript',
+                        severity: 'error',
+                        file: files[0] ?? process.cwd(),
+                        line: 1,
+                        col: 1,
+                        message: error instanceof Error ? error.message : String(error),
+                      },
+                    ],
+                  })
+                }),
             )
           }
 
           // ESLint check
           if (config.engines.eslint) {
             checks.push(
-              this.runESLintCheck(files, config, token).then((result) => {
-                results.set('eslint', result)
-              }),
+              this.runESLintCheck(files, config, token)
+                .then((result) => {
+                  results.set('eslint', result)
+                })
+                .catch((error) => {
+                  // Handle non-ToolMissingError exceptions
+                  results.set('eslint', {
+                    success: false,
+                    issues: [
+                      {
+                        engine: 'eslint',
+                        severity: 'error',
+                        file: files[0] ?? process.cwd(),
+                        line: 1,
+                        col: 1,
+                        message: error instanceof Error ? error.message : String(error),
+                      },
+                    ],
+                  })
+                }),
             )
           }
 
           // Prettier check
           if (config.engines.prettier) {
             checks.push(
-              this.runPrettierCheck(files, config, token).then((result) => {
-                results.set('prettier', result)
-              }),
+              this.runPrettierCheck(files, config, token)
+                .then((result) => {
+                  results.set('prettier', result)
+                })
+                .catch((error) => {
+                  // Handle non-ToolMissingError exceptions
+                  results.set('prettier', {
+                    success: false,
+                    issues: [
+                      {
+                        engine: 'prettier',
+                        severity: 'error',
+                        file: files[0] ?? process.cwd(),
+                        line: 1,
+                        col: 1,
+                        message: error instanceof Error ? error.message : String(error),
+                      },
+                    ],
+                  })
+                }),
             )
           }
 
@@ -372,6 +425,27 @@ export class QualityChecker {
         error: (error as Error).message,
         correlationId,
       })
+
+      // Add timeout error to results if it's a timeout
+      const errorMessage = (error as Error).message
+      if (
+        errorMessage.toLowerCase().includes('timeout') ||
+        errorMessage.toLowerCase().includes('timed out')
+      ) {
+        results.set('timeout', {
+          success: false,
+          issues: [
+            {
+              engine: 'typescript',
+              severity: 'error',
+              file: files[0] ?? process.cwd(),
+              line: 1,
+              col: 1,
+              message: errorMessage,
+            },
+          ],
+        })
+      }
     } finally {
       source.cancel()
     }

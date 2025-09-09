@@ -271,6 +271,8 @@ export class OutputFormatter {
     lines.push('')
     lines.push(formattedIssues)
     lines.push('')
+    lines.push('❌ DO NOT PROCEED until these issues are resolved.')
+    lines.push('')
 
     if (options.context) {
       lines.push(`CONTEXT: ${options.context}`)

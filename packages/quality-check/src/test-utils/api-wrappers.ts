@@ -53,6 +53,29 @@ vi.mock('node:fs', () => ({
       })
     }
   }),
+  mkdirSync: vi.fn((dirPath: string, _options?: { recursive?: boolean }) => {
+    // Mock directory creation - just mark it as existing
+    if (!globalMockFiles.has(dirPath)) {
+      globalMockFiles.set(dirPath, {
+        path: dirPath,
+        content: '',
+        exists: true,
+      })
+    }
+    return undefined
+  }),
+  appendFileSync: vi.fn((filePath: string, content: string) => {
+    const file = globalMockFiles.get(filePath)
+    if (file) {
+      file.content += content
+    } else {
+      globalMockFiles.set(filePath, {
+        path: filePath,
+        content,
+        exists: true,
+      })
+    }
+  }),
 }))
 
 // Mock child_process operations

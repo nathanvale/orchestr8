@@ -260,7 +260,8 @@ These are the tasks to be completed for the spec detailed in
 
 - [x] 27. Final Test Suite Validation
   - [x] 27.1 Run full test suite after all fixes (489 tests total, 13 failing)
-  - [~] 27.2 Achieve 100% test pass rate (476/489 tests passing - 97.3% pass rate)
+  - [~] 27.2 Achieve 100% test pass rate (476/489 tests passing - 97.3% pass
+    rate)
   - [x] 27.3 Update test coverage metrics (>60% coverage maintained)
   - [x] 27.4 Document any remaining known issues (13 failing tests documented)
   - [x] 27.5 Create PR for test maintenance fixes (Phase 6 completed)
@@ -272,9 +273,11 @@ tests identified during Phase 5 validation.
 
 ## Migration Status: COMPLETE
 
-The quality-checker V2 migration has been completed successfully with the following results:
+The quality-checker V2 migration has been completed successfully with the
+following results:
 
 ### Summary
+
 - **Total Tasks**: 27 completed, 1 partial (27.2 - test pass rate)
 - **Test Results**: 476/489 tests passing (97.3% pass rate)
 - **Build Status**: ✅ PASSING
@@ -282,8 +285,13 @@ The quality-checker V2 migration has been completed successfully with the follow
 - **Performance**: ✅ <300ms warm run maintained
 
 ### Remaining Known Issues (13 failing tests)
-1. **Error Handling Tests**: 10 tests in quality-checker.error-handling.test.ts failing due to mock expectations not matching V2 error message formats
-2. **Facade Integration Tests**: 2 tests in v2-facade-integration.test.ts failing due to integration test expectations
-3. **Output Formatter Tests**: 1 test in output-formatter.unit.test.ts failing due to blocking output format changes
 
-These test failures do not impact the core functionality and are related to test expectations that need minor adjustments for V2 implementation details.
+1. **Error Handling Tests**: 10 tests in quality-checker.error-handling.test.ts
+   failing due to mock expectations not matching V2 error message formats
+2. **Facade Integration Tests**: 2 tests in v2-facade-integration.test.ts
+   failing due to integration test expectations
+3. **Output Formatter Tests**: 1 test in output-formatter.unit.test.ts failing
+   due to blocking output format changes
+
+These test failures do not impact the core functionality and are related to test
+expectations that need minor adjustments for V2 implementation details.

@@ -93,27 +93,13 @@ If fetch_mode="FULL":
 
 - Use all request_terms for comprehensive mapping
 
-Concrete file pattern lookup table:
+## Supported File Types
 
-- typescript → ".agent-os/standards/code-style/javascript-style.md"
-- javascript → ".agent-os/standards/code-style/javascript-style.md"
-- react → ".agent-os/standards/code-style/javascript-style.md"
-- css → ".agent-os/standards/code-style/css-style.md"
-- html → ".agent-os/standards/code-style/html-style.md"
-- validation → ".agent-os/standards/best-practices.md"
-- Task requests → Execute Glob with pattern ".agent-os/specs/\*\*/tasks.md"
-- Best practices requests → Execute Glob with pattern
-  ".agent-os/standards/best-practices.md"
-- Code style/Style guide requests → Execute Glob with pattern
-  ".agent-os/standards/code-style.md"
-- Specific language style (CSS/JS/HTML) → Execute Glob with pattern
-  ".agent-os/standards/code-style/\*.md"
-- Tech stack/Technology requests → Execute Glob with pattern
-  ".agent-os/standards/tech-stack.md"
-- All standards → Execute Glob with pattern ".agent-os/standards/\*_/_"
-- Mission/Product requests → Execute Glob with pattern ".agent-os/product/\*.md"
-- Roadmap requests → Execute Glob with pattern "\**/*roadmap\*.md" Store results
-  in matched_files variable
+- Specs: spec.md, spec-lite.md, technical-spec.md, sub-specs/\*
+- Product docs: mission.md, mission-lite.md, roadmap.md, tech-stack.md,
+  decisions.md
+- Standards: code-style.md, best-practices.md, language-specific styles
+- Tasks: tasks.md (specific task details)
 
 ### STEP_3_TARGETED_CONTENT_SEARCH
 
@@ -199,9 +185,9 @@ Update semantic tags: Add newly loaded semantic_tags to loaded_semantic_tags
 
 Use these concrete mappings for file location:
 
-- Specifications: `.agent-os/specs/**/*spec*.md`,
+- Specifications: `.agent-os/specs/[CURRENT_SPEC]/*spec*.md`,
   `.agent-os/specs/**/technical-spec.md`
-- Tasks: `.agent-os/specs/**/tasks.md`
+- Tasks: `.agent-os/specs/[CURRENT_SPEC]/tasks.md`
 - Best practices: `.agent-os/standards/best-practices.md`
 - Code style guides: `.agent-os/standards/code-style.md`
 - Language-specific styles: `.agent-os/standards/code-style/*.md` (css-style.md,

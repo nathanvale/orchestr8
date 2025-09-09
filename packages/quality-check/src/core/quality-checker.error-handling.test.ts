@@ -120,6 +120,7 @@ describe('QualityChecker Error Handling', () => {
 
       // ESLint succeeds
       vi.mocked(ESLintEngine).prototype.check = vi.fn().mockResolvedValue({
+        success: true,
         issues: [],
         fixedCount: 0,
       })
@@ -286,6 +287,7 @@ describe('QualityChecker Error Handling', () => {
 
       // Prettier works
       vi.mocked(PrettierEngine).prototype.check = vi.fn().mockResolvedValue({
+        success: true,
         issues: [],
         fixedCount: 1,
       })
@@ -401,13 +403,13 @@ describe('QualityChecker Error Handling', () => {
 
       vi.mocked(TypeScriptEngine).prototype.check = vi
         .fn()
-        .mockResolvedValue({ issues: [], fixedCount: 0 })
+        .mockResolvedValue({ success: true, issues: [], fixedCount: 0 })
       vi.mocked(ESLintEngine).prototype.check = vi
         .fn()
-        .mockResolvedValue({ issues: [], fixedCount: 0 })
+        .mockResolvedValue({ success: true, issues: [], fixedCount: 0 })
       vi.mocked(PrettierEngine).prototype.check = vi
         .fn()
-        .mockResolvedValue({ issues: [], fixedCount: 0 })
+        .mockResolvedValue({ success: true, issues: [], fixedCount: 0 })
 
       const result = await checker.check(largeFileList, {})
 
@@ -434,13 +436,13 @@ describe('QualityChecker Error Handling', () => {
 
       vi.mocked(TypeScriptEngine).prototype.check = vi
         .fn()
-        .mockResolvedValue({ issues: [], fixedCount: 0 })
+        .mockResolvedValue({ success: true, issues: [], fixedCount: 0 })
       vi.mocked(ESLintEngine).prototype.check = vi
         .fn()
-        .mockResolvedValue({ issues: [], fixedCount: 0 })
+        .mockResolvedValue({ success: true, issues: [], fixedCount: 0 })
       vi.mocked(PrettierEngine).prototype.check = vi
         .fn()
-        .mockResolvedValue({ issues: [], fixedCount: 0 })
+        .mockResolvedValue({ success: true, issues: [], fixedCount: 0 })
 
       // Run concurrent operations
       const [checkResult, fixResult] = await Promise.all([
