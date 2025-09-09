@@ -7,23 +7,23 @@ These are the tasks to be completed for the spec detailed in
 
 ## Tasks
 
-- [ ] 1. Enhance Logger Service with Dual Output Support
-  - [ ] 1.1 Write tests for enhanced Logger.ts with dual output modes
-  - [ ] 1.2 Extend Logger.ts interface to support console/file/silent/colored config options
-  - [ ] 1.3 Add JSON file writing capabilities to Logger service
-  - [ ] 1.4 Implement log directory management (.quality-check/logs/ structure)
-  - [ ] 1.5 Add ErrorReport interface and JSON schema validation
-  - [ ] 1.6 Implement automatic log cleanup with configurable retention
-  - [ ] 1.7 Verify all Logger enhancement tests pass
+- [x] 1. Enhance Logger Service with Dual Output Support
+  - [x] 1.1 Write tests for enhanced Logger.ts with dual output modes
+  - [x] 1.2 Extend Logger.ts interface to support console/file/silent/colored config options
+  - [x] 1.3 Add JSON file writing capabilities to Logger service
+  - [x] 1.4 Implement log directory management (.quality-check/logs/ structure)
+  - [x] 1.5 Add ErrorReport interface and JSON schema validation
+  - [x] 1.6 Implement automatic log cleanup with configurable retention
+  - [x] 1.7 Verify all Logger enhancement tests pass
 
-- [ ] 2. Create OutputFormatter Service for ANSI Console Output
-  - [ ] 2.1 Write tests for OutputFormatter service with color and formatting methods
-  - [ ] 2.2 Install chalk or picocolors dependency for ANSI color support
-  - [ ] 2.3 Implement OutputFormatter class with summary formatting methods
-  - [ ] 2.4 Add colorize method for error/warning/success color coding
-  - [ ] 2.5 Create console summary templates for different error types
-  - [ ] 2.6 Add silent mode support to suppress console output when needed
-  - [ ] 2.7 Verify all OutputFormatter tests pass
+- [x] 2. Create OutputFormatter Service for ANSI Console Output
+  - [x] 2.1 Write tests for OutputFormatter service with color and formatting methods
+  - [x] 2.2 Install chalk or picocolors dependency for ANSI color support
+  - [x] 2.3 Implement OutputFormatter class with summary formatting methods
+  - [x] 2.4 Add colorize method for error/warning/success color coding
+  - [x] 2.5 Create console summary templates for different error types
+  - [x] 2.6 Add silent mode support to suppress console output when needed
+  - [x] 2.7 Verify all OutputFormatter tests pass
 
 - [ ] 3. Update ESLint Facade for JSON Error Reporting
   - [ ] 3.1 Write tests for ESLint facade with new JSON output parsing

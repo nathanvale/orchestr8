@@ -1,12 +1,21 @@
 /**
  * Enhanced Logger with Pino - End-to-End Observability
  * Provides structured logging with correlation IDs and pretty printing
+ * Now with dual output support and JSON error reporting
  */
 
 import pino from 'pino'
 import { randomUUID } from 'node:crypto'
-import { appendFileSync, existsSync, mkdirSync } from 'node:fs'
-import { dirname } from 'node:path'
+import {
+  appendFileSync,
+  existsSync,
+  mkdirSync,
+  writeFileSync,
+  readdirSync,
+  unlinkSync,
+  statSync,
+} from 'node:fs'
+import { dirname, join } from 'node:path'
 
 // Global correlation ID for request tracing
 let globalCorrelationId: string | null = null
@@ -32,6 +41,44 @@ export interface LogContext {
   phase?: string
   component?: string
   [key: string]: unknown
+}
+
+// Logger configuration for dual output support
+export interface LoggerConfig {
+  console: boolean // Enable/disable console output
+  file: boolean // Enable/disable file logging
+  silent: boolean // Silent mode for automated tools
+  colored: boolean // Enable ANSI colors for console
+  logDir?: string // Directory for log files
+  retentionPolicy?: {
+    errorReports: number // Number of error reports to keep per tool
+    debugLogs: number // Number of debug logs to keep
+  }
+}
+
+// Error report structure for JSON output
+export interface ErrorReport {
+  timestamp: string
+  tool: 'eslint' | 'typescript' | 'prettier'
+  status: 'error' | 'warning' | 'success'
+  summary: {
+    totalErrors: number
+    totalWarnings: number
+    filesAffected: number
+  }
+  details: {
+    files: Array<{
+      path: string
+      errors: Array<{
+        line: number
+        column: number
+        message: string
+        ruleId?: string
+        severity: 'error' | 'warning'
+      }>
+    }>
+  }
+  raw: string // Original tool output for debugging
 }
 
 class QualityLogger {
@@ -292,7 +339,175 @@ class QualityLogger {
   }
 }
 
-// Export singleton instance
+// Enhanced Logger with dual output support
+export class EnhancedLogger extends QualityLogger {
+  public config: LoggerConfig
+  private logDir: string
+
+  constructor(config?: Partial<LoggerConfig>) {
+    super()
+    this.config = {
+      console: config?.console ?? true,
+      file: config?.file ?? false,
+      silent: config?.silent ?? process.env.CLAUDE_HOOK_SILENT === 'true',
+      colored: config?.colored ?? true,
+      logDir: config?.logDir ?? '.quality-check',
+      retentionPolicy: {
+        errorReports:
+          config?.retentionPolicy?.errorReports ??
+          (Number(process.env.LOG_RETENTION_ERROR_REPORTS) ||
+          10),
+        debugLogs:
+          config?.retentionPolicy?.debugLogs ??
+          (Number(process.env.LOG_RETENTION_DEBUG_LOGS) ||
+          5),
+      },
+    }
+    this.logDir = this.config.logDir!
+  }
+
+  // Ensure log directories exist
+  async ensureLogDirectories(): Promise<void> {
+    const errorsDir = join(this.logDir, 'logs', 'errors')
+    const debugDir = join(this.logDir, 'logs', 'debug')
+
+    if (!existsSync(errorsDir)) {
+      mkdirSync(errorsDir, { recursive: true })
+    }
+    if (!existsSync(debugDir)) {
+      mkdirSync(debugDir, { recursive: true })
+    }
+  }
+
+  // Write error report to JSON file
+  async writeErrorReport(report: ErrorReport): Promise<string> {
+    await this.ensureLogDirectories()
+
+    // Keep colons in timestamp for consistency
+    const filename = `${report.tool}-${report.timestamp}.json`
+    const filePath = join(this.logDir, 'logs', 'errors', filename)
+
+    writeFileSync(filePath, JSON.stringify(report, null, 2))
+    return filePath
+  }
+
+  // Write debug log to JSON file
+  async writeDebugLog(type: 'run' | 'performance', data: unknown): Promise<string> {
+    await this.ensureLogDirectories()
+
+    // Keep colons in timestamp for consistency
+    const timestamp = new Date().toISOString()
+    const filename = `${type}-${timestamp}.json`
+    const filePath = join(this.logDir, 'logs', 'debug', filename)
+
+    writeFileSync(filePath, JSON.stringify(data, null, 2))
+    return filePath
+  }
+
+  // Clean up old logs beyond retention limit
+  async cleanupOldLogs(tool: 'eslint' | 'typescript' | 'prettier'): Promise<void> {
+    const errorsDir = join(this.logDir, 'logs', 'errors')
+    if (!existsSync(errorsDir)) return
+
+    const files = readdirSync(errorsDir)
+      .filter((f) => f.startsWith(`${tool}-`))
+      .map((f) => ({
+        name: f,
+        path: join(errorsDir, f),
+        time: statSync(join(errorsDir, f)).mtime.getTime(),
+      }))
+      .sort((a, b) => b.time - a.time)
+
+    const maxReports = this.config.retentionPolicy!.errorReports
+    if (files.length > maxReports) {
+      files.slice(maxReports).forEach((f) => unlinkSync(f.path))
+    }
+  }
+
+  // Clean up debug logs
+  async cleanupDebugLogs(): Promise<void> {
+    const debugDir = join(this.logDir, 'logs', 'debug')
+    if (!existsSync(debugDir)) return
+
+    const files = readdirSync(debugDir)
+      .map((f) => ({
+        name: f,
+        path: join(debugDir, f),
+        time: statSync(join(debugDir, f)).mtime.getTime(),
+      }))
+      .sort((a, b) => b.time - a.time)
+
+    const maxLogs = this.config.retentionPolicy!.debugLogs
+    if (files.length > maxLogs) {
+      files.slice(maxLogs).forEach((f) => unlinkSync(f.path))
+    }
+  }
+
+  // Log error report with dual output
+  async logErrorReport(report: ErrorReport): Promise<void> {
+    // Write to file if enabled (even in silent mode for later access)
+    if (this.config.file) {
+      await this.writeErrorReport(report)
+      await this.cleanupOldLogs(report.tool)
+    }
+
+    // Write to console if enabled and not in silent mode
+    if (this.config.console && !this.config.silent) {
+      const summary = this.formatSummary(report)
+      console.log(summary)
+    }
+  }
+
+  // Format summary for console output
+  private formatSummary(report: ErrorReport): string {
+    // Proper capitalization for tool names
+    const toolNameMap: Record<string, string> = {
+      'eslint': 'ESLint',
+      'typescript': 'TypeScript',
+      'prettier': 'Prettier'
+    }
+    const toolName = toolNameMap[report.tool] || report.tool
+
+    if (report.status === 'success') {
+      return `${toolName}: ✓ No issues found`
+    }
+
+    const { totalErrors, totalWarnings, filesAffected } = report.summary
+    return `${toolName}: ${totalErrors} errors, ${totalWarnings} warnings in ${filesAffected} files`
+  }
+}
+
+// Helper functions for creating and validating error reports
+export function createErrorReport(
+  partial: Omit<ErrorReport, 'timestamp'>
+): ErrorReport {
+  return {
+    timestamp: new Date().toISOString(),
+    ...partial,
+  }
+}
+
+export function validateErrorReport(report: unknown): report is ErrorReport {
+  if (!report || typeof report !== 'object') return false
+
+  const r = report as Record<string, unknown>
+
+  return (
+    typeof r.timestamp === 'string' &&
+    ['eslint', 'typescript', 'prettier'].includes(r.tool as string) &&
+    ['error', 'warning', 'success'].includes(r.status as string) &&
+    typeof r.summary === 'object' &&
+    r.summary !== null &&
+    typeof (r.summary as Record<string, unknown>).totalErrors === 'number' &&
+    typeof (r.summary as Record<string, unknown>).totalWarnings === 'number' &&
+    typeof (r.summary as Record<string, unknown>).filesAffected === 'number' &&
+    typeof r.details === 'object' &&
+    r.details !== null &&
+    Array.isArray((r.details as Record<string, unknown>).files)
+  )
+}
+
+// Export singleton instance (backward compatibility)
 export const logger = new QualityLogger()
 
 // Export timer utility for performance measurement
