@@ -518,14 +518,14 @@ export class QualityChecker {
         cacheDir: config.eslintCacheDir,
         token,
       })
-      
+
       // Generate and log error report for enhanced logging
       if (config.format === 'json' || result.issues.length > 0) {
-        const eslintResults = await this.eslintEngine['eslint']?.lintFiles(files) || []
+        const eslintResults = (await this.eslintEngine['eslint']?.lintFiles(files)) || []
         const errorReport = await this.eslintEngine.generateErrorReport(eslintResults)
         await this.enhancedLogger.logErrorReport(errorReport)
       }
-      
+
       return result
     } catch (error) {
       if (error instanceof ToolMissingError) {

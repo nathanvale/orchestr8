@@ -309,15 +309,15 @@ console.log('test');`,
       const mockResults = [
         {
           filePath: testFile,
-          messages: result.issues.map(issue => ({
+          messages: result.issues.map((issue) => ({
             line: issue.line,
             column: issue.col,
             severity: (issue.severity === 'error' ? 2 : 1) as 1 | 2,
             message: issue.message,
             ruleId: issue.ruleId || null,
           })),
-          errorCount: result.issues.filter(i => i.severity === 'error').length,
-          warningCount: result.issues.filter(i => i.severity === 'warning').length,
+          errorCount: result.issues.filter((i) => i.severity === 'error').length,
+          warningCount: result.issues.filter((i) => i.severity === 'warning').length,
           fatalErrorCount: 0,
           fixableErrorCount: 0,
           fixableWarningCount: 0,
@@ -325,9 +325,9 @@ console.log('test');`,
           suppressedMessages: [],
         },
       ]
-      
+
       const jsonOutput = await engine.format(mockResults, 'json')
-      
+
       expect(result.success).toBe(false)
       expect(result.issues).toHaveLength(4)
       expect(jsonOutput).toBeDefined()
@@ -368,9 +368,9 @@ module.exports = greeting`,
           suppressedMessages: [],
         },
       ]
-      
+
       const jsonOutput = await engine.format(mockResults, 'json')
-      
+
       expect(result.success).toBe(true)
       expect(result.issues).toHaveLength(0)
       expect(jsonOutput).toBeDefined()
@@ -414,7 +414,7 @@ module.exports = greeting`,
           suppressedMessages: [],
         },
       ]
-      
+
       const jsonOutput = await engine.format(mockResults, 'json')
       const stylishOutput = await engine.format(mockResults, 'stylish')
 
@@ -426,7 +426,7 @@ module.exports = greeting`,
     })
 
     it('should provide detailed error information for ErrorReport conversion', async () => {
-      const testFile = path.join(tempDir, 'detailed.js') 
+      const testFile = path.join(tempDir, 'detailed.js')
       fs.writeFileSync(
         testFile,
         `const unused1 = 'test';
@@ -506,7 +506,7 @@ console.log('debug');`,
           suppressedMessages: [],
         },
       ]
-      
+
       const jsonOutput = await engine.format(mockResults, 'json')
       const parsed = JSON.parse(jsonOutput)
 
