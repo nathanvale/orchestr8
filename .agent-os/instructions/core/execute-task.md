@@ -18,13 +18,26 @@ development workflow.
 
 <process_flow>
 
-🚨 **CRITICAL INTERRUPT RULE - ACTIVE THROUGHOUT ALL STEPS** 🚨
+## EXECUTION CHECKLIST [ALL STEPS MANDATORY]
 
-IF you see "🚫 BLOCKING" or error code 2 at ANY point: → STOP IMMEDIATELY →
-INVOKE quality-check-fixer subagent  
+☐ Step 1: Task understanding - READ task from tasks.md
+☐ Step 2: Technical spec review - SEARCH technical-spec.md
+☐ Step 3: Context-fetcher (best practices) - MUST INVOKE subagent
+☐ Step 4: Context-fetcher (code style) - MUST INVOKE subagent  
+☐ Step 5: Execute tasks - IMPLEMENT with TDD approach
+☐ Step 6: Test-runner - VERIFY task-specific tests
+☐ Step 7: Mark complete - UPDATE tasks.md
+
+**IMPORTANT**: All steps must be completed in order. Steps 3-4 require subagent invocation.
+
+🚨 **CRITICAL INTERRUPT RULE - ACTIVE DURING FILE OPERATIONS** 🚨
+
+IF you see "🚫 BLOCKING" or error code 2 during Step 5 file modifications:
+→ STOP IMMEDIATELY → INVOKE quality-check-fixer subagent  
 → DO NOT attempt manual fixes
 
-This rule OVERRIDES all other instructions below
+This rule applies to Step 5 execution, NOT to subagent invocations in Steps 3-4.
+Subagent invocations in Steps 3-4 are MANDATORY and must be completed first.
 
 <step number="1" name="task_understanding">
 
@@ -69,48 +82,53 @@ feature - Integration requirements - Performance criteria
 
 <step number="3" subagent="context-fetcher" name="best_practices_review">
 
-### Step 3: Best Practices Review
+### Step 3: Best Practices Review [MANDATORY - MUST BE USED]
 
-Use the context-fetcher subagent to retrieve relevant sections from
-@.agent-os/standards/best-practices.md that apply to the current task's
-technology stack and feature type.
+MUST BE USED: PROACTIVELY invoke the context-fetcher subagent IMMEDIATELY to
+retrieve relevant sections from @.agent-os/standards/best-practices.md that
+apply to the current task's technology stack and feature type.
 
 <selective_reading> <search_best_practices> FIND sections relevant to: - Task's
 technology stack - Feature type being implemented - Testing approaches needed -
 Code organization patterns </search_best_practices> </selective_reading>
 
 <instructions>
-  ACTION: Use context-fetcher subagent
+  MANDATORY: This step CANNOT be skipped
+  ACTION: PROACTIVELY invoke context-fetcher subagent IMMEDIATELY
   REQUEST: "Find best practices sections relevant to:
             - Task's technology stack: [CURRENT_TECH]
             - Feature type: [CURRENT_FEATURE_TYPE]
-            - Testing approaches needed
             - Code organization patterns"
+  WAIT: For complete response from context-fetcher
+  VERIFY: Response received before proceeding to Step 4
   PROCESS: Returned best practices
   APPLY: Relevant patterns to implementation
 </instructions>
 
 </step>
 
-<step number="4" subagent="context-fetcher" name="code_style_review">
+<step number="4" subagent="context-fetcher">
 
-### Step 4: Code Style Review
+### Step 4: Code Style Review [MANDATORY - MUST BE USED]
 
-Use the context-fetcher subagent to retrieve relevant code style rules from
-@.agent-os/standards/code-style.md for the languages and file types being used
-in this task.
+MUST BE USED: PROACTIVELY invoke the context-fetcher subagent IMMEDIATELY to
+retrieve relevant code style rules from @.agent-os/standards/code-style.md for
+the languages and file types being used in this task.
 
 <selective_reading> <search_code_style> FIND style rules for: - Languages used
 in this task - File types being modified - Component patterns being
 implemented - Testing style guidelines </search_code_style> </selective_reading>
 
 <instructions>
-  ACTION: Use context-fetcher subagent
+  MANDATORY: This step CANNOT be skipped
+  ACTION: PROACTIVELY invoke context-fetcher subagent IMMEDIATELY
   REQUEST: "Find code style rules for:
             - Languages: [LANGUAGES_IN_TASK]
             - File types: [FILE_TYPES_BEING_MODIFIED]
             - Component patterns: [PATTERNS_BEING_IMPLEMENTED]
             - Testing style guidelines"
+  WAIT: For complete response from context-fetcher
+  VERIFY: Response received before proceeding to Step 5
   PROCESS: Returned style rules
   APPLY: Relevant formatting and patterns
 </instructions>

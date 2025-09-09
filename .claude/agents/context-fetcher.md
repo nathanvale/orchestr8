@@ -99,7 +99,6 @@ Concrete file pattern lookup table:
 - react → ".agent-os/standards/code-style/javascript-style.md"
 - css → ".agent-os/standards/code-style/css-style.md"
 - html → ".agent-os/standards/code-style/html-style.md"
-- testing → ".agent-os/instructions/testing-rules.md"
 - validation → ".agent-os/standards/best-practices.md"
 - spec → ".agent-os/specs/\**/*spec\*.md"
 - Task requests → Execute Glob with pattern ".agent-os/specs/\*\*/tasks.md"
@@ -111,10 +110,6 @@ Concrete file pattern lookup table:
   ".agent-os/standards/code-style/\*.md"
 - Tech stack/Technology requests → Execute Glob with pattern
   ".agent-os/standards/tech-stack.md"
-- Testing rules/Test standards → Execute Glob with pattern
-  ".agent-os/instructions/testing-rules.md"
-- Wallaby/HALT protocol → Execute Glob with pattern
-  ".agent-os/instructions/testing-rules.md"
 - All standards → Execute Glob with pattern ".agent-os/standards/\*_/_"
 - Mission/Product requests → Execute Glob with pattern ".agent-os/product/\*.md"
 - Roadmap requests → Execute Glob with pattern "\**/*roadmap\*.md" Store results
