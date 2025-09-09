@@ -18,6 +18,27 @@ development workflow.
 
 <process_flow>
 
+## EXECUTION CHECKLIST [ALL STEPS MANDATORY]
+
+☐ Step 1: Task understanding - READ task from tasks.md ☐ Step 2: Technical spec
+review - SEARCH technical-spec.md ☐ Step 3: Context-fetcher (best practices) -
+MUST INVOKE subagent ☐ Step 4: Context-fetcher (code style) - MUST INVOKE
+subagent  
+☐ Step 5: Execute tasks - IMPLEMENT with TDD approach ☐ Step 6: Test-runner -
+VERIFY task-specific tests ☐ Step 7: Mark complete - UPDATE tasks.md
+
+**IMPORTANT**: All steps must be completed in order. Steps 3-4 require subagent
+invocation.
+
+🚨 **CRITICAL INTERRUPT RULE - ACTIVE DURING FILE OPERATIONS** 🚨
+
+IF you see "🚫 BLOCKING" or error code 2 during Step 5 file modifications: →
+STOP IMMEDIATELY → INVOKE quality-check-fixer subagent  
+→ DO NOT attempt manual fixes
+
+This rule applies to Step 5 execution, NOT to subagent invocations in Steps 3-4.
+Subagent invocations in Steps 3-4 are MANDATORY and must be completed first.
+
 <step number="1" name="task_understanding">
 
 ### Step 1: Task Understanding
@@ -61,60 +82,72 @@ feature - Integration requirements - Performance criteria
 
 <step number="3" subagent="context-fetcher" name="best_practices_review">
 
-### Step 3: Best Practices Review
+### Step 3: Best Practices Review [MANDATORY - MUST BE USED]
 
-Use the context-fetcher subagent to retrieve relevant sections from
-@.agent-os/standards/best-practices.md that apply to the current task's
-technology stack and feature type.
+MUST BE USED: PROACTIVELY invoke the context-fetcher subagent IMMEDIATELY to
+retrieve relevant sections from @.agent-os/standards/best-practices.md that
+apply to the current task's technology stack and feature type.
 
 <selective_reading> <search_best_practices> FIND sections relevant to: - Task's
 technology stack - Feature type being implemented - Testing approaches needed -
 Code organization patterns </search_best_practices> </selective_reading>
 
 <instructions>
-  ACTION: Use context-fetcher subagent
+  MANDATORY: This step CANNOT be skipped
+  ACTION: PROACTIVELY invoke context-fetcher subagent IMMEDIATELY
   REQUEST: "Find best practices sections relevant to:
             - Task's technology stack: [CURRENT_TECH]
             - Feature type: [CURRENT_FEATURE_TYPE]
-            - Testing approaches needed
             - Code organization patterns"
+  WAIT: For complete response from context-fetcher
+  VERIFY: Response received before proceeding to Step 4
   PROCESS: Returned best practices
   APPLY: Relevant patterns to implementation
 </instructions>
 
 </step>
 
-<step number="4" subagent="context-fetcher" name="code_style_review">
+<step number="4" subagent="context-fetcher">
 
-### Step 4: Code Style Review
+### Step 4: Code Style Review [MANDATORY - MUST BE USED]
 
-Use the context-fetcher subagent to retrieve relevant code style rules from
-@.agent-os/standards/code-style.md for the languages and file types being used
-in this task.
+MUST BE USED: PROACTIVELY invoke the context-fetcher subagent IMMEDIATELY to
+retrieve relevant code style rules from @.agent-os/standards/code-style.md for
+the languages and file types being used in this task.
 
 <selective_reading> <search_code_style> FIND style rules for: - Languages used
 in this task - File types being modified - Component patterns being
 implemented - Testing style guidelines </search_code_style> </selective_reading>
 
 <instructions>
-  ACTION: Use context-fetcher subagent
+  MANDATORY: This step CANNOT be skipped
+  ACTION: PROACTIVELY invoke context-fetcher subagent IMMEDIATELY
   REQUEST: "Find code style rules for:
             - Languages: [LANGUAGES_IN_TASK]
             - File types: [FILE_TYPES_BEING_MODIFIED]
             - Component patterns: [PATTERNS_BEING_IMPLEMENTED]
             - Testing style guidelines"
+  WAIT: For complete response from context-fetcher
+  VERIFY: Response received before proceeding to Step 5
   PROCESS: Returned style rules
   APPLY: Relevant formatting and patterns
 </instructions>
 
 </step>
 
-<step number="5" name="task_execution">
+<step number="5" name="task_execution" subagent="quality-check-fixer">
 
 ### Step 5: Task and Sub-task Execution
 
+🚨 **GLOBAL INTERRUPT RULE - ALWAYS ACTIVE** 🚨
+
+Pattern: "🚫 BLOCKING" appears OR error code 2 returned Action: IMMEDIATELY
+invoke quality-check-fixer subagent Priority: OVERRIDES ALL OTHER INSTRUCTIONS
+
+This rule is ALWAYS ACTIVE during ANY file operation below
+
 Execute the parent task and all sub-tasks in order using test-driven development
-(TDD) approach.
+(TDD) approach. ALWAYS use the test-runner subagent to run tests.
 
 <typical_task_structure> <first_subtask>Write tests for
 [feature]</first_subtask> <middle_subtasks>Implementation
@@ -127,26 +160,63 @@ integration tests, edge cases - Run tests to ensure they fail appropriately -
 Mark sub-task 1 complete </subtask_1_tests>
 
 <middle_subtasks_implementation> FOR each implementation sub-task (2 through
-n-1): - Implement the specific functionality - Make relevant tests pass - Update
-any adjacent/related tests if needed - Refactor while keeping tests green - Mark
-sub-task complete </middle_subtasks_implementation>
+n-1):
 
-<final_subtask_verification> IF final sub-task is "Verify all tests pass": - Run
-entire test suite - Fix any remaining failures - Ensure no regressions - Mark
-final sub-task complete </final_subtask_verification> </execution_order>
+🔴 REMEMBER: "🚫 BLOCKING" = STOP & USE quality-check-fixer IMMEDIATELY 🔴
+
+- Implement the specific functionality
+- Make relevant tests pass
+- Update any adjacent/related tests if needed
+- Refactor while keeping tests green
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ⚡
+INTERRUPT HANDLER (Active at ALL times during execution):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ WHEN "🚫
+BLOCKING" appears OR error code 2 is returned:
+
+1. STOP current task immediately
+2. TodoWrite: Save current sub-task as "paused_for_quality_fix"
+3. TodoWrite: Create task "Fixing quality check errors for [current sub-task]"
+4. INVOKE quality-check-fixer subagent with: "Fix the quality check errors from
+   this XML block: [Insert entire <quality-check-result> XML block including all
+   nested elements] Systematically resolve each error using Read/Edit/MultiEdit
+   tools Return status: ALL_RESOLVED, PARTIAL_RESOLUTION, or FAILED"
+5. TodoWrite: Mark "Fixing quality check errors" complete
+6. If ALL_RESOLVED:
+   - TodoWrite: Resume saved sub-task from "paused_for_quality_fix"
+   - Output the results from the quality-checker-fixer to the user
+   - Continue with implementation
+7. If PARTIAL_RESOLUTION or FAILED: - Document blocking issues with ⚠️ -
+   TodoWrite: Mark current sub-task as blocked
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+- Mark sub-task complete </middle_subtasks_implementation>
+
+<final_subtask_verification> IF final sub-task is "Verify all tests pass":
+
+🔴 REMINDER: "🚫 BLOCKING" still triggers quality-check-fixer IMMEDIATELY 🔴
+
+- Run entire test suite
+- Fix any remaining failures
+- Ensure no regressions
+- Mark final sub-task complete </final_subtask_verification> </execution_order>
 
 <test_management> <new_tests> - Written in first sub-task - Cover all aspects of
 parent feature - Include edge cases and error handling </new_tests>
 <test_updates> - Made during implementation sub-tasks - Update expectations for
 changed behavior - Maintain backward compatibility </test_updates>
+<test_verification> ALWAYS use the test-runner subagent to run tests - Ensure
+100% pass rate - Debug and fix any failures immediately </test_verification>
 </test_management>
 
 <instructions>
+  ⚠️ CRITICAL: "🚫 BLOCKING" = IMMEDIATE quality-check-fixer invocation ⚠️
   ACTION: Execute sub-tasks in their defined order
   RECOGNIZE: First sub-task typically writes all tests
   IMPLEMENT: Middle sub-tasks build functionality
   VERIFY: Final sub-task ensures all tests pass
   UPDATE: Mark each sub-task complete as finished
+  INTERRUPT: ANY "🚫 BLOCKING" overrides current action
 </instructions>
 
 </step>

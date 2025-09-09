@@ -1,6 +1,33 @@
+/**
+ * ErrorParser Performance Test Suite
+ *
+ * Performance Expectations:
+ * - Empty input parsing: < 2ms (4ms in CI)
+ * - 10 errors: < 5ms (10ms in CI)
+ * - 50 errors: < 10ms (20ms in CI)
+ * - 100 errors with limit: < 15ms (30ms in CI)
+ * - ESLint JSON (50 errors): < 5ms (10ms in CI)
+ * - ESLint JSON (500 errors): < 15ms (30ms in CI)
+ * - Full workflow overhead: < 15ms (30ms in CI)
+ *
+ * CI environments get 2x tolerance due to:
+ * - Shared resources and variable CPU allocation
+ * - Container overhead
+ * - Network latency for dependencies
+ * - Cold starts and cache misses
+ */
+
 import { describe, test, expect, beforeEach } from 'vitest'
 import { ErrorParser } from './error-parser.js'
 import type { ParsedError } from '../types.js'
+
+// Environment-aware performance thresholds
+const isCI = process.env.CI === 'true' || process.env.GITHUB_ACTIONS === 'true'
+const performanceMultiplier = isCI ? 2 : 1 // Allow 2x slower in CI
+
+function getThreshold(baseMs: number): number {
+  return baseMs * performanceMultiplier
+}
 
 describe('ErrorParser Performance Tests', () => {
   let parser: ErrorParser
@@ -21,7 +48,7 @@ describe('ErrorParser Performance Tests', () => {
 
       // Assert
       expect(errors).toHaveLength(0)
-      expect(duration).toBeLessThan(2) // Should be very fast for empty input
+      expect(duration).toBeLessThan(getThreshold(2)) // Should be very fast for empty input
     })
 
     test('should_parse_10_errors_within_performance_budget', () => {
@@ -35,7 +62,7 @@ describe('ErrorParser Performance Tests', () => {
 
       // Assert
       expect(errors).toHaveLength(10)
-      expect(duration).toBeLessThan(5) // Should parse 10 errors in under 5ms
+      expect(duration).toBeLessThan(getThreshold(5)) // Should parse 10 errors in under 5ms
     })
 
     test('should_parse_50_errors_within_performance_budget', () => {
@@ -49,7 +76,7 @@ describe('ErrorParser Performance Tests', () => {
 
       // Assert
       expect(errors).toHaveLength(50)
-      expect(duration).toBeLessThan(10) // Should parse 50 errors in under 10ms
+      expect(duration).toBeLessThan(getThreshold(10)) // Should parse 50 errors in under 10ms
     })
 
     test('should_respect_max_errors_limit_for_performance', () => {
@@ -63,7 +90,7 @@ describe('ErrorParser Performance Tests', () => {
 
       // Assert
       expect(errors).toHaveLength(50) // Should stop at 50
-      expect(duration).toBeLessThan(10) // Should still be fast due to early exit
+      expect(duration).toBeLessThan(getThreshold(10)) // Should still be fast due to early exit
     })
 
     test('should_handle_100_plus_errors_with_limit', () => {
@@ -80,7 +107,7 @@ describe('ErrorParser Performance Tests', () => {
 
         // Assert
         expect(errors).toHaveLength(50)
-        expect(duration).toBeLessThan(15) // Should handle large inputs efficiently
+        expect(duration).toBeLessThan(getThreshold(15)) // Should handle large inputs efficiently
       })
     })
   })
@@ -97,7 +124,7 @@ describe('ErrorParser Performance Tests', () => {
 
       // Assert
       expect(errors).toHaveLength(50) // 10 files × 5 errors
-      expect(duration).toBeLessThan(5) // JSON parsing should be very fast
+      expect(duration).toBeLessThan(getThreshold(5)) // JSON parsing should be very fast
     })
 
     test('should_handle_large_eslint_results_efficiently', () => {
@@ -111,7 +138,7 @@ describe('ErrorParser Performance Tests', () => {
 
       // Assert
       expect(errors).toHaveLength(500)
-      expect(duration).toBeLessThan(20) // Should handle 500 errors efficiently
+      expect(duration).toBeLessThan(getThreshold(15)) // Should handle 500 errors efficiently
     })
   })
 
@@ -136,7 +163,7 @@ describe('ErrorParser Performance Tests', () => {
 
       // Assert
       expect(categorized).toHaveLength(100)
-      expect(duration).toBeLessThan(5) // Categorization should be very fast
+      expect(duration).toBeLessThan(getThreshold(5)) // Categorization should be very fast
     })
   })
 
@@ -161,17 +188,13 @@ describe('ErrorParser Performance Tests', () => {
 
       // Assert
       expect(fixable.length + unfixable.length).toBe(100)
-      expect(duration).toBeLessThan(5) // Filtering should be fast
+      expect(duration).toBeLessThan(getThreshold(5)) // Filtering should be fast
     })
   })
 
   describe('Overall parsing workflow performance', () => {
     test('should_complete_full_parsing_workflow_under_2_percent_overhead', () => {
       // Arrange - Simulate a real-world scenario
-      const baseExecutionTime = 1000 // Assume base execution is 1000ms
-      const maxOverheadPercent = 2
-      const maxOverheadMs = baseExecutionTime * (maxOverheadPercent / 100)
-
       // Generate realistic error sets
       const tsErrors = generateTypeScriptErrors(30)
       const eslintJson = generateESLintJSON(5, 10)
@@ -197,7 +220,7 @@ describe('ErrorParser Performance Tests', () => {
       // Assert
       expect(allErrors.length).toBeGreaterThan(0)
       expect(fixable.length + unfixable.length).toBe(categorized.length)
-      expect(duration).toBeLessThan(maxOverheadMs) // Must be under 2% (20ms for 1000ms base)
+      expect(duration).toBeLessThan(getThreshold(15)) // Must be under 15ms (30ms in CI)
     })
   })
 
@@ -213,7 +236,7 @@ describe('ErrorParser Performance Tests', () => {
 
       // Assert
       expect(errors).toHaveLength(50) // Limited to 50
-      expect(duration).toBeLessThan(20) // Should exit early, not process all 10000
+      expect(duration).toBeLessThan(getThreshold(15)) // Should exit early, not process all 10000
 
       // Verify memory efficiency by checking object size
       const jsonSize = JSON.stringify(errors).length

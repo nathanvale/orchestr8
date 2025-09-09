@@ -243,20 +243,20 @@ These are the tasks to be completed for the spec detailed in
   - [x] 24.7 Verify all TypeScript engine tests pass
 
 - [x] 25. Update Error Handling Test Expectations
-  - [ ] 25.1 Write tests for V2 error message formats
-  - [ ] 25.2 Update configuration loading error expectations
-  - [ ] 25.3 Fix file resolution error test assertions
-  - [ ] 25.4 Update timeout error handling tests
-  - [ ] 25.5 Fix tool missing error expectations
-  - [ ] 25.6 Update error recovery test messages
-  - [ ] 25.7 Verify all error handling tests pass
+  - [x] 25.1 Write tests for V2 error message formats
+  - [x] 25.2 Update configuration loading error expectations
+  - [x] 25.3 Fix file resolution error test assertions
+  - [x] 25.4 Update timeout error handling tests
+  - [x] 25.5 Fix tool missing error expectations
+  - [x] 25.6 Update error recovery test messages
+  - [x] 25.7 Verify all error handling tests pass
 
 - [x] 26. Performance Test Threshold Adjustments
-  - [ ] 26.1 Write tests with realistic CI performance thresholds
-  - [ ] 26.2 Update error-parser performance test from 15ms to 20ms
-  - [ ] 26.3 Add environment-aware threshold detection
-  - [ ] 26.4 Document performance expectations
-  - [ ] 26.5 Verify all performance tests pass
+  - [x] 26.1 Write tests with realistic CI performance thresholds
+  - [x] 26.2 Update error-parser performance test from 15ms to 20ms
+  - [x] 26.3 Add environment-aware threshold detection
+  - [x] 26.4 Document performance expectations
+  - [x] 26.5 Verify all performance tests pass
 
 - [x] 27. Final Test Suite Validation
   - [ ] 27.1 Run full test suite after all fixes

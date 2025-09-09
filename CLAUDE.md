@@ -34,24 +34,6 @@ The context-fetcher agent is an expert in searching and extracting relevant
 Agent-OS documentation. It provides concise, actionable summaries that preserve
 essential information while dramatically reducing context usage.
 
-### 5. Always use the quality-check-fixer sub-agent to fix blocking quality check errors
-
-The quality-check-fixer agent MUST be invoked automatically and immediately
-when:
-
-- Claude Code post-tool-use hooks return blocking quality check errors (exit
-  code 2)
-- Tool output contains "🚫 BLOCKING: You must fix these issues before
-  proceeding"
-- XML quality-check-result blocks appear with TypeScript/ESLint/formatting
-  errors
-- File operations (Write/Edit/MultiEdit) are blocked by quality enforcement
-  hooks
-
-This is NOT optional - the agent has PRIORITY OVERRIDE and must engage before
-any other actions when quality violations block workflow continuation. Do not
-wait for user instructions or manual assessment when these patterns appear.
-
 ## Philosophy
 
 ### Error Handling

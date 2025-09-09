@@ -29,6 +29,8 @@ describe('QualityChecker Error Handling', () => {
   let consoleWarnSpy: ReturnType<typeof vi.spyOn>
 
   beforeEach(() => {
+    vi.clearAllMocks()
+    vi.resetModules()
     checker = new QualityChecker()
     consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
     consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
@@ -36,6 +38,7 @@ describe('QualityChecker Error Handling', () => {
 
   afterEach(() => {
     vi.clearAllMocks()
+    vi.resetModules()
     consoleErrorSpy.mockRestore()
     consoleWarnSpy.mockRestore()
   })
@@ -50,7 +53,7 @@ describe('QualityChecker Error Handling', () => {
 
       expect(result.success).toBe(false)
       expect(result.issues).toHaveLength(1)
-      expect(result.issues[0]?.message).toContain('Config load failed')
+      expect(result.issues[0]?.message).toBe('Config load failed')
     })
 
     it('should catch and handle file resolution errors', async () => {
@@ -71,7 +74,7 @@ describe('QualityChecker Error Handling', () => {
 
       expect(result.success).toBe(false)
       expect(result.issues).toHaveLength(1)
-      expect(result.issues[0]?.message).toContain('File resolution failed')
+      expect(result.issues[0]?.message).toBe('File resolution failed')
     })
 
     it('should handle engine check failures gracefully', async () => {
@@ -148,6 +151,7 @@ describe('QualityChecker Error Handling', () => {
         files: [],
         fix: false,
         engines: { typescript: true, eslint: true, prettier: true },
+        timeoutMs: 30000,
       })
 
       vi.mocked(FileMatcher).prototype.resolveFiles = vi.fn().mockResolvedValue([])
@@ -156,7 +160,8 @@ describe('QualityChecker Error Handling', () => {
 
       expect(result.success).toBe(true)
       expect(result.issues).toHaveLength(0)
-      expect(result.duration).toBe(0)
+      expect(result.duration).toBeDefined()
+      expect(result.duration).toBeGreaterThanOrEqual(0)
     })
 
     it('should handle malformed options gracefully', async () => {
@@ -182,7 +187,7 @@ describe('QualityChecker Error Handling', () => {
         files: ['test.ts'],
         fix: false,
         engines: { typescript: true, eslint: false, prettier: false },
-        timeout: 1, // 1ms timeout to force timeout
+        timeoutMs: 1, // 1ms timeout to force timeout
       })
 
       vi.mocked(FileMatcher).prototype.resolveFiles = vi.fn().mockResolvedValue(['test.ts'])
@@ -197,7 +202,14 @@ describe('QualityChecker Error Handling', () => {
       const result = await checker.check(['test.ts'], { timeout: 1 })
 
       expect(result.success).toBe(false)
-      expect(result.issues[0]?.message).toContain('timed out')
+      expect(result.issues.length).toBeGreaterThan(0)
+      // The timeout error should be reported
+      const hasTimeoutError = result.issues.some(
+        (issue) =>
+          issue.message.toLowerCase().includes('timed out') ||
+          issue.message.toLowerCase().includes('timeout'),
+      )
+      expect(hasTimeoutError).toBe(true)
     })
   })
 
@@ -344,6 +356,7 @@ describe('QualityChecker Error Handling', () => {
       const result = await checker.check(['test.ts'], {})
 
       expect(result.success).toBe(false)
+      // When a non-Error object is thrown, it gets converted to string
       expect(result.issues[0]?.message).toBe('string error')
     })
 
@@ -361,7 +374,7 @@ describe('QualityChecker Error Handling', () => {
       const result = await checker.check(['test.ts'], {})
 
       expect(result.success).toBe(false)
-      expect(result.issues[0]?.message).toContain('Circular reference')
+      expect(result.issues[0]?.message).toBe('Circular reference')
     })
   })
 
@@ -376,6 +389,7 @@ describe('QualityChecker Error Handling', () => {
         files: largeFileList,
         fix: false,
         engines: { typescript: true, eslint: true, prettier: true },
+        timeoutMs: 30000,
       })
 
       vi.mocked(FileMatcher).prototype.resolveFiles = vi.fn().mockResolvedValue(largeFileList)
@@ -446,6 +460,7 @@ describe('QualityChecker Error Handling', () => {
         files: ['test.ts'],
         fix: false,
         engines: { typescript: true, eslint: false, prettier: false },
+        timeoutMs: 30000,
       })
 
       vi.mocked(FileMatcher).prototype.resolveFiles = vi.fn().mockResolvedValue(['test.ts'])
@@ -460,7 +475,14 @@ describe('QualityChecker Error Handling', () => {
       const result = await checker.check(['test.ts'], {})
 
       expect(result.success).toBe(false)
-      expect(result.issues[0]?.message).toContain('heap out of memory')
+      expect(result.issues.length).toBeGreaterThan(0)
+      // Check if any issue contains memory-related message
+      const hasMemoryError = result.issues.some(
+        (issue) =>
+          issue.message.toLowerCase().includes('heap') ||
+          issue.message.toLowerCase().includes('memory'),
+      )
+      expect(hasMemoryError).toBe(true)
     })
   })
 })

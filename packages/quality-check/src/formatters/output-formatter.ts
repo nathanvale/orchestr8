@@ -277,7 +277,7 @@ export class OutputFormatter {
       lines.push('')
     }
 
-    lines.push('❌ DO NOT PROCEED until all issues are resolved. Update your code now.')
+    lines.push('Employ the quality check fixer IMMEDIATELY to address this issue.')
     lines.push('')
 
     return lines.join('\n')

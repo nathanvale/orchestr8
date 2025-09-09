@@ -57,6 +57,25 @@ export class QualityChecker {
     const timer = createTimer('quality-check')
     const correlationId = this.generateCorrelationId()
 
+    // Input validation
+    if (!files || !Array.isArray(files)) {
+      return {
+        success: false,
+        duration: 0,
+        issues: [
+          {
+            engine: 'typescript',
+            severity: 'error',
+            file: process.cwd(),
+            line: 1,
+            col: 1,
+            message: 'Invalid input: files must be an array',
+          },
+        ],
+        correlationId,
+      }
+    }
+
     logger.debug('Starting quality check', {
       files: files.length,
       options,
@@ -155,6 +174,15 @@ export class QualityChecker {
   async fix(files: string[], options: { safe?: boolean } = {}): Promise<FixResult> {
     const timer = createTimer('quality-fix')
     const correlationId = this.generateCorrelationId()
+
+    // Input validation
+    if (!files || !Array.isArray(files)) {
+      return {
+        success: false,
+        count: 0,
+        fixed: [],
+      }
+    }
 
     logger.debug('Starting quality fix', {
       files: files.length,
@@ -341,7 +369,20 @@ export class QualityChecker {
     } catch (error) {
       if (error instanceof ToolMissingError) {
         logger.warn('TypeScript not available', { skipping: true })
-        return { success: true, issues: [] }
+        // For check operations, missing tools should fail
+        return {
+          success: false,
+          issues: [
+            {
+              engine: 'typescript',
+              severity: 'error',
+              file: files[0] ?? process.cwd(),
+              line: 1,
+              col: 1,
+              message: `TypeScript is not available: ${error.message}`,
+            },
+          ],
+        }
       }
       throw error
     }
@@ -366,7 +407,20 @@ export class QualityChecker {
     } catch (error) {
       if (error instanceof ToolMissingError) {
         logger.warn('ESLint not available', { skipping: true })
-        return { success: true, issues: [] }
+        // For check operations, missing tools should fail
+        return {
+          success: false,
+          issues: [
+            {
+              engine: 'eslint',
+              severity: 'error',
+              file: files[0] ?? process.cwd(),
+              line: 1,
+              col: 1,
+              message: `ESLint is not available: ${error.message}`,
+            },
+          ],
+        }
       }
       throw error
     }
@@ -389,7 +443,20 @@ export class QualityChecker {
     } catch (error) {
       if (error instanceof ToolMissingError) {
         logger.warn('Prettier not available', { skipping: true })
-        return { success: true, issues: [] }
+        // For check operations, missing tools should fail
+        return {
+          success: false,
+          issues: [
+            {
+              engine: 'prettier',
+              severity: 'error',
+              file: files[0] ?? process.cwd(),
+              line: 1,
+              col: 1,
+              message: `Prettier is not available: ${error.message}`,
+            },
+          ],
+        }
       }
       throw error
     }
