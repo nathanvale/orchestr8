@@ -18,17 +18,17 @@ vi.mock('pino', () => {
     fatal: vi.fn(),
     trace: vi.fn(),
   }
-  
+
   const mockPino = vi.fn(() => mockLogger) as any
   mockPino.stdTimeFunctions = {
-    isoTime: () => () => new Date().toISOString()
+    isoTime: () => () => new Date().toISOString(),
   }
-  
+
   return {
     default: mockPino,
     stdTimeFunctions: {
-      isoTime: () => () => new Date().toISOString()
-    }
+      isoTime: () => () => new Date().toISOString(),
+    },
   }
 })
 
@@ -38,13 +38,13 @@ let originalEnv: NodeJS.ProcessEnv
 beforeEach(() => {
   // Save original env
   originalEnv = { ...process.env }
-  
+
   // Create temp directory for test logs
   tempDir = mkdtempSync(path.join(tmpdir(), 'logger-test-'))
-  
+
   // Clear all mocks
   vi.clearAllMocks()
-  
+
   // Reset modules to get fresh logger instance
   vi.resetModules()
 })
@@ -52,7 +52,7 @@ beforeEach(() => {
 afterEach(() => {
   // Restore original env
   process.env = originalEnv
-  
+
   // Clean up temp directory
   if (fs.existsSync(tempDir)) {
     rmSync(tempDir, { recursive: true, force: true })
@@ -67,9 +67,9 @@ describe('LoggerConfig Interface', () => {
       console: true,
       file: false,
       silent: false,
-      colored: false
+      colored: false,
     })
-    
+
     expect(logger.config.console).toBe(true)
     expect(logger.config.file).toBe(false)
   })
@@ -81,9 +81,9 @@ describe('LoggerConfig Interface', () => {
       file: true,
       silent: false,
       colored: false,
-      logDir: tempDir
+      logDir: tempDir,
     })
-    
+
     expect(logger.config.file).toBe(true)
     expect(logger.config.console).toBe(false)
   })
@@ -94,9 +94,9 @@ describe('LoggerConfig Interface', () => {
       console: false,
       file: false,
       silent: true,
-      colored: false
+      colored: false,
     })
-    
+
     expect(logger.config.silent).toBe(true)
   })
 
@@ -106,9 +106,9 @@ describe('LoggerConfig Interface', () => {
       console: true,
       file: false,
       silent: false,
-      colored: true
+      colored: true,
     })
-    
+
     expect(logger.config.colored).toBe(true)
   })
 })
@@ -116,14 +116,14 @@ describe('LoggerConfig Interface', () => {
 describe('ErrorReport Interface', () => {
   it('should create valid ErrorReport structure', async () => {
     const { createErrorReport } = await import('./logger')
-    
+
     const report = createErrorReport({
       tool: 'eslint',
       status: 'error',
       summary: {
         totalErrors: 5,
         totalWarnings: 2,
-        filesAffected: 3
+        filesAffected: 3,
       },
       details: {
         files: [
@@ -135,15 +135,15 @@ describe('ErrorReport Interface', () => {
                 column: 10,
                 message: 'Missing semicolon',
                 ruleId: 'semi',
-                severity: 'error'
-              }
-            ]
-          }
-        ]
+                severity: 'error',
+              },
+            ],
+          },
+        ],
       },
-      raw: '<!-- Original ESLint output -->'
+      raw: '<!-- Original ESLint output -->',
     })
-    
+
     expect(report.timestamp).toBeDefined()
     expect(report.tool).toBe('eslint')
     expect(report.status).toBe('error')
@@ -153,7 +153,7 @@ describe('ErrorReport Interface', () => {
 
   it('should validate ErrorReport schema', async () => {
     const { validateErrorReport } = await import('./logger')
-    
+
     const validReport = {
       timestamp: new Date().toISOString(),
       tool: 'typescript' as const,
@@ -161,26 +161,26 @@ describe('ErrorReport Interface', () => {
       summary: {
         totalErrors: 1,
         totalWarnings: 0,
-        filesAffected: 1
+        filesAffected: 1,
       },
       details: {
-        files: []
+        files: [],
       },
-      raw: ''
+      raw: '',
     }
-    
+
     expect(validateErrorReport(validReport)).toBe(true)
   })
 
   it('should reject invalid ErrorReport schema', async () => {
     const { validateErrorReport } = await import('./logger')
-    
+
     const invalidReport = {
       tool: 'invalid-tool',
       status: 'unknown',
-      summary: {}
+      summary: {},
     }
-    
+
     expect(validateErrorReport(invalidReport)).toBe(false)
   })
 })
@@ -188,7 +188,7 @@ describe('ErrorReport Interface', () => {
 describe('Backward Compatibility', () => {
   it('should maintain existing logger methods', async () => {
     const { logger } = await import('./logger')
-    
+
     expect(typeof logger.info).toBe('function')
     expect(typeof logger.warn).toBe('function')
     expect(typeof logger.error).toBe('function')
@@ -201,16 +201,15 @@ describe('Backward Compatibility', () => {
 
   it('should support existing LogContext interface', async () => {
     const { logger } = await import('./logger')
-    
+
     const context = {
       correlationId: 'test-123',
       operation: 'test-op',
       filePath: '/test/file.ts',
       duration: 100,
-      issues: 5
+      issues: 5,
     }
-    
+
     expect(() => logger.info('Test message', context)).not.toThrow()
   })
 })
-

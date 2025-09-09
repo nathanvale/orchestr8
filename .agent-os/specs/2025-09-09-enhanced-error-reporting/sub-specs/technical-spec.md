@@ -27,34 +27,34 @@ Extend existing `src/services/Logger.ts` to support dual output modes:
 
 ```typescript
 interface LoggerConfig {
-  console: boolean;     // Enable/disable console output
-  file: boolean;        // Enable/disable file logging
-  silent: boolean;      // Silent mode for automated tools
-  colored: boolean;     // Enable ANSI colors for console
+  console: boolean // Enable/disable console output
+  file: boolean // Enable/disable file logging
+  silent: boolean // Silent mode for automated tools
+  colored: boolean // Enable ANSI colors for console
 }
 
 interface ErrorReport {
-  timestamp: string;
-  tool: 'eslint' | 'typescript' | 'prettier';
-  status: 'error' | 'warning' | 'success';
+  timestamp: string
+  tool: 'eslint' | 'typescript' | 'prettier'
+  status: 'error' | 'warning' | 'success'
   summary: {
-    totalErrors: number;
-    totalWarnings: number;
-    filesAffected: number;
-  };
+    totalErrors: number
+    totalWarnings: number
+    filesAffected: number
+  }
   details: {
     files: Array<{
-      path: string;
+      path: string
       errors: Array<{
-        line: number;
-        column: number;
-        message: string;
-        ruleId?: string;
-        severity: 'error' | 'warning';
-      }>;
-    }>;
-  };
-  raw: string;          // Original tool output for debugging
+        line: number
+        column: number
+        message: string
+        ruleId?: string
+        severity: 'error' | 'warning'
+      }>
+    }>
+  }
+  raw: string // Original tool output for debugging
 }
 ```
 
@@ -64,10 +64,10 @@ New service for ANSI-colored console output:
 
 ```typescript
 class OutputFormatter {
-  static formatErrorSummary(report: ErrorReport): string;
-  static formatSuccessSummary(report: ErrorReport): string;
-  static formatFileList(files: string[]): string;
-  static colorize(text: string, color: 'red' | 'yellow' | 'green'): string;
+  static formatErrorSummary(report: ErrorReport): string
+  static formatSuccessSummary(report: ErrorReport): string
+  static formatFileList(files: string[]): string
+  static colorize(text: string, color: 'red' | 'yellow' | 'green'): string
 }
 ```
 
@@ -130,24 +130,28 @@ Update existing facades to work with new logging system:
 ## Approach
 
 ### Phase 1: Logger Enhancement
+
 1. Extend Logger.ts with dual output support
 2. Add JSON file writing capabilities
 3. Implement log directory management
 4. Add cleanup functionality
 
 ### Phase 2: Output Formatting
+
 1. Create OutputFormatter service
 2. Implement ANSI color support
 3. Design console summary templates
 4. Add silent mode support
 
 ### Phase 3: Facade Updates
+
 1. Update ESLint facade for JSON parsing
 2. Modify TypeScript facade for structured output
 3. Update Prettier facade consistency
 4. Enhance Git Hook facade for mode support
 
 ### Phase 4: Integration & Testing
+
 1. Wire new components together
 2. Add comprehensive tests
 3. Update CLI argument handling
@@ -156,11 +160,13 @@ Update existing facades to work with new logging system:
 ## External Dependencies
 
 ### Required Packages
+
 - `chalk` or `picocolors`: ANSI color support for console output
 - `pino` (existing): JSON logging capabilities
 - `fs-extra` (existing): File system operations
 
 ### Optional Enhancements
+
 - `cli-table3`: Formatted table output for summaries
 - `strip-ansi`: Clean output for file storage
 - `date-fns`: Enhanced timestamp formatting
@@ -168,23 +174,27 @@ Update existing facades to work with new logging system:
 ## Benefits
 
 ### Context Reduction
+
 - **Before**: 2000+ tokens for typical ESLint XML output
 - **After**: 50-100 tokens for colored summary
 - **Reduction**: 95-98% context savings
 
 ### Developer Experience
+
 - Clean, readable console output
 - Immediate error understanding
 - Organized log storage
 - No context pollution
 
 ### Claude Agent Efficiency
+
 - Structured JSON access
 - Minimal context usage
 - Precise error targeting
 - Fast analysis capabilities
 
 ### Maintainability
+
 - Centralized logging logic
 - Consistent error formats
 - Automated cleanup

@@ -355,12 +355,9 @@ export class EnhancedLogger extends QualityLogger {
       retentionPolicy: {
         errorReports:
           config?.retentionPolicy?.errorReports ??
-          (Number(process.env.LOG_RETENTION_ERROR_REPORTS) ||
-          10),
+          (Number(process.env.LOG_RETENTION_ERROR_REPORTS) || 10),
         debugLogs:
-          config?.retentionPolicy?.debugLogs ??
-          (Number(process.env.LOG_RETENTION_DEBUG_LOGS) ||
-          5),
+          config?.retentionPolicy?.debugLogs ?? (Number(process.env.LOG_RETENTION_DEBUG_LOGS) || 5),
       },
     }
     this.logDir = this.config.logDir!
@@ -462,9 +459,9 @@ export class EnhancedLogger extends QualityLogger {
   private formatSummary(report: ErrorReport): string {
     // Proper capitalization for tool names
     const toolNameMap: Record<string, string> = {
-      'eslint': 'ESLint',
-      'typescript': 'TypeScript',
-      'prettier': 'Prettier'
+      eslint: 'ESLint',
+      typescript: 'TypeScript',
+      prettier: 'Prettier',
     }
     const toolName = toolNameMap[report.tool] || report.tool
 
@@ -478,9 +475,7 @@ export class EnhancedLogger extends QualityLogger {
 }
 
 // Helper functions for creating and validating error reports
-export function createErrorReport(
-  partial: Omit<ErrorReport, 'timestamp'>
-): ErrorReport {
+export function createErrorReport(partial: Omit<ErrorReport, 'timestamp'>): ErrorReport {
   return {
     timestamp: new Date().toISOString(),
     ...partial,

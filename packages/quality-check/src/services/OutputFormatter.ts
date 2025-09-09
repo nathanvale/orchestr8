@@ -67,11 +67,7 @@ export class OutputFormatter {
   /**
    * Format file list with proper indentation and bullets
    */
-  static formatFileList(
-    files: string[],
-    maxFiles = 10,
-    options?: OutputOptions
-  ): string {
+  static formatFileList(files: string[], maxFiles = 10, options?: OutputOptions): string {
     if (options?.silent) return ''
     if (files.length === 0) return ''
 
@@ -96,7 +92,7 @@ export class OutputFormatter {
   static colorize(
     text: string,
     color: 'red' | 'yellow' | 'green' | 'blue' | 'cyan' | 'magenta' | 'gray',
-    options?: OutputOptions
+    options?: OutputOptions,
   ): string {
     if (options?.colored === false) return text
 
@@ -135,9 +131,8 @@ export class OutputFormatter {
     const lines: string[] = []
 
     // Add header - TypeScript uses "Compilation" instead of "Check"
-    const header = toolName === 'TypeScript' 
-      ? `${toolName} Compilation Failed`
-      : `${toolName} Check Failed`
+    const header =
+      toolName === 'TypeScript' ? `${toolName} Compilation Failed` : `${toolName} Check Failed`
     lines.push(options?.colored !== false ? pc.red(pc.bold(header)) : header)
 
     // Add summary stats
@@ -169,18 +164,17 @@ export class OutputFormatter {
     message: string,
     severity: 'error' | 'warning',
     ruleId?: string,
-    options?: OutputOptions
+    options?: OutputOptions,
   ): string {
     if (options?.silent) return ''
 
     const location = `${file}:${line}:${column}`
     const severityColor = severity === 'error' ? 'red' : 'yellow'
-    const severityText = options?.colored !== false 
-      ? this.colorize(severity, severityColor, options)
-      : severity
+    const severityText =
+      options?.colored !== false ? this.colorize(severity, severityColor, options) : severity
 
     const rule = ruleId ? ` (${ruleId})` : ''
-    
+
     return `  ${location} ${severityText}: ${message}${rule}`
   }
 
@@ -208,8 +202,8 @@ export class OutputFormatter {
             error.message,
             error.severity,
             error.ruleId,
-            options
-          )
+            options,
+          ),
         )
       })
     })
@@ -223,7 +217,7 @@ export class OutputFormatter {
   static getCompactSummary(report: ErrorReport): string {
     const { totalErrors, totalWarnings, filesAffected } = report.summary
     const status = report.status === 'success' ? 'PASS' : 'FAIL'
-    
+
     return `[${report.tool.toUpperCase()}] ${status} - Errors: ${totalErrors}, Warnings: ${totalWarnings}, Files: ${filesAffected}`
   }
 }

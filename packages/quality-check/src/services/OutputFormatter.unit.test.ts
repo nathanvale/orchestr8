@@ -169,9 +169,9 @@ describe('OutputFormatter Service', () => {
         }
 
         const formatted = OutputFormatter.formatSuccessSummary(report)
-        const expectedName = tool === 'eslint' ? 'ESLint' : 
-                           tool === 'typescript' ? 'TypeScript' : 'Prettier'
-        
+        const expectedName =
+          tool === 'eslint' ? 'ESLint' : tool === 'typescript' ? 'TypeScript' : 'Prettier'
+
         expect(formatted).toContain(expectedName)
       }
     })
@@ -181,11 +181,7 @@ describe('OutputFormatter Service', () => {
     it('should format file list with proper indentation', async () => {
       const { OutputFormatter } = await import('./OutputFormatter')
 
-      const files = [
-        'src/index.ts',
-        'src/utils/logger.ts',
-        'src/services/api.ts',
-      ]
+      const files = ['src/index.ts', 'src/utils/logger.ts', 'src/services/api.ts']
 
       const formatted = OutputFormatter.formatFileList(files)
 

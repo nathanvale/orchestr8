@@ -9,7 +9,8 @@ These are the tasks to be completed for the spec detailed in
 
 - [x] 1. Enhance Logger Service with Dual Output Support
   - [x] 1.1 Write tests for enhanced Logger.ts with dual output modes
-  - [x] 1.2 Extend Logger.ts interface to support console/file/silent/colored config options
+  - [x] 1.2 Extend Logger.ts interface to support console/file/silent/colored
+        config options
   - [x] 1.3 Add JSON file writing capabilities to Logger service
   - [x] 1.4 Implement log directory management (.quality-check/logs/ structure)
   - [x] 1.5 Add ErrorReport interface and JSON schema validation
@@ -17,7 +18,8 @@ These are the tasks to be completed for the spec detailed in
   - [x] 1.7 Verify all Logger enhancement tests pass
 
 - [x] 2. Create OutputFormatter Service for ANSI Console Output
-  - [x] 2.1 Write tests for OutputFormatter service with color and formatting methods
+  - [x] 2.1 Write tests for OutputFormatter service with color and formatting
+        methods
   - [x] 2.2 Install chalk or picocolors dependency for ANSI color support
   - [x] 2.3 Implement OutputFormatter class with summary formatting methods
   - [x] 2.4 Add colorize method for error/warning/success color coding
@@ -29,14 +31,16 @@ These are the tasks to be completed for the spec detailed in
   - [ ] 3.1 Write tests for ESLint facade with new JSON output parsing
   - [ ] 3.2 Modify ESLint facade to parse JSON output instead of XML
   - [ ] 3.3 Transform ESLint results to structured ErrorReport format
-  - [ ] 3.4 Integrate with enhanced Logger for dual output (JSON file + console summary)
+  - [ ] 3.4 Integrate with enhanced Logger for dual output (JSON file + console
+        summary)
   - [ ] 3.5 Add error count and file affected summary calculation
   - [ ] 3.6 Preserve raw ESLint output in JSON for debugging purposes
   - [ ] 3.7 Verify all ESLint facade tests pass
 
 - [ ] 4. Update TypeScript Facade for Structured Error Output
   - [ ] 4.1 Write tests for TypeScript facade with structured error reporting
-  - [ ] 4.2 Modify TypeScript facade to transform TSC errors to ErrorReport format
+  - [ ] 4.2 Modify TypeScript facade to transform TSC errors to ErrorReport
+        format
   - [ ] 4.3 Parse TypeScript compiler output for line/column/message extraction
   - [ ] 4.4 Integrate with enhanced Logger for JSON storage and console summary
   - [ ] 4.5 Add TypeScript-specific error categorization and severity mapping

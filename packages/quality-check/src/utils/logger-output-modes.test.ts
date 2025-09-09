@@ -18,17 +18,17 @@ vi.mock('pino', () => {
     fatal: vi.fn(),
     trace: vi.fn(),
   }
-  
+
   const mockPino = vi.fn(() => mockLogger) as any
   mockPino.stdTimeFunctions = {
-    isoTime: () => () => new Date().toISOString()
+    isoTime: () => () => new Date().toISOString(),
   }
-  
+
   return {
     default: mockPino,
     stdTimeFunctions: {
-      isoTime: () => () => new Date().toISOString()
-    }
+      isoTime: () => () => new Date().toISOString(),
+    },
   }
 })
 
@@ -38,13 +38,13 @@ let originalEnv: NodeJS.ProcessEnv
 beforeEach(() => {
   // Save original env
   originalEnv = { ...process.env }
-  
+
   // Create temp directory for test logs
   tempDir = mkdtempSync(path.join(tmpdir(), 'logger-test-'))
-  
+
   // Clear all mocks
   vi.clearAllMocks()
-  
+
   // Reset modules to get fresh logger instance
   vi.resetModules()
 })
@@ -52,7 +52,7 @@ beforeEach(() => {
 afterEach(() => {
   // Restore original env
   process.env = originalEnv
-  
+
   // Clean up temp directory
   if (fs.existsSync(tempDir)) {
     rmSync(tempDir, { recursive: true, force: true })
@@ -62,16 +62,16 @@ afterEach(() => {
 describe('Dual Output Modes', () => {
   it('should write to both console and file when both enabled', async () => {
     const consoleSpy = vi.spyOn(console, 'log')
-    
+
     const { EnhancedLogger } = await import('./logger')
     const logger = new EnhancedLogger({
       console: true,
       file: true,
       silent: false,
       colored: false,
-      logDir: tempDir
+      logDir: tempDir,
     })
-    
+
     const report = {
       timestamp: new Date().toISOString(),
       tool: 'eslint' as const,
@@ -79,37 +79,37 @@ describe('Dual Output Modes', () => {
       summary: {
         totalErrors: 2,
         totalWarnings: 0,
-        filesAffected: 1
+        filesAffected: 1,
       },
       details: {
-        files: []
+        files: [],
       },
-      raw: ''
+      raw: '',
     }
-    
+
     await logger.logErrorReport(report)
-    
+
     // Check console output
     expect(consoleSpy).toHaveBeenCalled()
-    
+
     // Check file output
     const errorsDir = path.join(tempDir, 'logs', 'errors')
     const files = fs.readdirSync(errorsDir)
-    expect(files.some(f => f.startsWith('eslint-'))).toBe(true)
+    expect(files.some((f) => f.startsWith('eslint-'))).toBe(true)
   })
 
   it('should only write to file when console disabled', async () => {
     const consoleSpy = vi.spyOn(console, 'log')
-    
+
     const { EnhancedLogger } = await import('./logger')
     const logger = new EnhancedLogger({
       console: false,
       file: true,
       silent: false,
       colored: false,
-      logDir: tempDir
+      logDir: tempDir,
     })
-    
+
     const report = {
       timestamp: new Date().toISOString(),
       tool: 'typescript' as const,
@@ -117,37 +117,37 @@ describe('Dual Output Modes', () => {
       summary: {
         totalErrors: 0,
         totalWarnings: 0,
-        filesAffected: 0
+        filesAffected: 0,
       },
       details: {
-        files: []
+        files: [],
       },
-      raw: ''
+      raw: '',
     }
-    
+
     await logger.logErrorReport(report)
-    
+
     // Console should not be called
     expect(consoleSpy).not.toHaveBeenCalled()
-    
+
     // File should exist
     const errorsDir = path.join(tempDir, 'logs', 'errors')
     const files = fs.readdirSync(errorsDir)
-    expect(files.some(f => f.startsWith('typescript-'))).toBe(true)
+    expect(files.some((f) => f.startsWith('typescript-'))).toBe(true)
   })
 
   it('should suppress all output in silent mode', async () => {
     const consoleSpy = vi.spyOn(console, 'log')
-    
+
     const { EnhancedLogger } = await import('./logger')
     const logger = new EnhancedLogger({
       console: true,
       file: true,
       silent: true,
       colored: false,
-      logDir: tempDir
+      logDir: tempDir,
     })
-    
+
     const report = {
       timestamp: new Date().toISOString(),
       tool: 'prettier' as const,
@@ -155,38 +155,38 @@ describe('Dual Output Modes', () => {
       summary: {
         totalErrors: 0,
         totalWarnings: 1,
-        filesAffected: 1
+        filesAffected: 1,
       },
       details: {
-        files: []
+        files: [],
       },
-      raw: ''
+      raw: '',
     }
-    
+
     await logger.logErrorReport(report)
-    
+
     // Console should not be called
     expect(consoleSpy).not.toHaveBeenCalled()
-    
+
     // File should still be written (for later access)
     const errorsDir = path.join(tempDir, 'logs', 'errors')
     const files = fs.readdirSync(errorsDir)
-    expect(files.some(f => f.startsWith('prettier-'))).toBe(true)
+    expect(files.some((f) => f.startsWith('prettier-'))).toBe(true)
   })
 })
 
 describe('Enhanced Logger Methods', () => {
   it('should log error reports with summary', async () => {
     const consoleSpy = vi.spyOn(console, 'log')
-    
+
     const { EnhancedLogger } = await import('./logger')
     const logger = new EnhancedLogger({
       console: true,
       file: false,
       silent: false,
-      colored: false
+      colored: false,
     })
-    
+
     const report = {
       timestamp: new Date().toISOString(),
       tool: 'eslint' as const,
@@ -194,32 +194,32 @@ describe('Enhanced Logger Methods', () => {
       summary: {
         totalErrors: 3,
         totalWarnings: 1,
-        filesAffected: 2
+        filesAffected: 2,
       },
       details: {
-        files: []
+        files: [],
       },
-      raw: ''
+      raw: '',
     }
-    
+
     await logger.logErrorReport(report)
-    
+
     expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining('ESLint: 3 errors, 1 warnings in 2 files')
+      expect.stringContaining('ESLint: 3 errors, 1 warnings in 2 files'),
     )
   })
 
   it('should handle success reports differently', async () => {
     const consoleSpy = vi.spyOn(console, 'log')
-    
+
     const { EnhancedLogger } = await import('./logger')
     const logger = new EnhancedLogger({
       console: true,
       file: false,
       silent: false,
-      colored: false
+      colored: false,
     })
-    
+
     const report = {
       timestamp: new Date().toISOString(),
       tool: 'typescript' as const,
@@ -227,18 +227,18 @@ describe('Enhanced Logger Methods', () => {
       summary: {
         totalErrors: 0,
         totalWarnings: 0,
-        filesAffected: 0
+        filesAffected: 0,
       },
       details: {
-        files: []
+        files: [],
       },
-      raw: ''
+      raw: '',
     }
-    
+
     await logger.logErrorReport(report)
-    
+
     expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining('TypeScript: ✓ No issues found')
+      expect.stringContaining('TypeScript: ✓ No issues found'),
     )
   })
 })

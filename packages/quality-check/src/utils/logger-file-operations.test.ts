@@ -18,17 +18,17 @@ vi.mock('pino', () => {
     fatal: vi.fn(),
     trace: vi.fn(),
   }
-  
+
   const mockPino = vi.fn(() => mockLogger) as any
   mockPino.stdTimeFunctions = {
-    isoTime: () => () => new Date().toISOString()
+    isoTime: () => () => new Date().toISOString(),
   }
-  
+
   return {
     default: mockPino,
     stdTimeFunctions: {
-      isoTime: () => () => new Date().toISOString()
-    }
+      isoTime: () => () => new Date().toISOString(),
+    },
   }
 })
 
@@ -38,13 +38,13 @@ let originalEnv: NodeJS.ProcessEnv
 beforeEach(() => {
   // Save original env
   originalEnv = { ...process.env }
-  
+
   // Create temp directory for test logs
   tempDir = mkdtempSync(path.join(tmpdir(), 'logger-test-'))
-  
+
   // Clear all mocks
   vi.clearAllMocks()
-  
+
   // Reset modules to get fresh logger instance
   vi.resetModules()
 })
@@ -52,7 +52,7 @@ beforeEach(() => {
 afterEach(() => {
   // Restore original env
   process.env = originalEnv
-  
+
   // Clean up temp directory
   if (fs.existsSync(tempDir)) {
     rmSync(tempDir, { recursive: true, force: true })
@@ -67,9 +67,9 @@ describe('JSON File Writing', () => {
       file: true,
       silent: false,
       colored: false,
-      logDir: tempDir
+      logDir: tempDir,
     })
-    
+
     const report = {
       timestamp: new Date().toISOString(),
       tool: 'eslint' as const,
@@ -77,16 +77,16 @@ describe('JSON File Writing', () => {
       summary: {
         totalErrors: 2,
         totalWarnings: 1,
-        filesAffected: 1
+        filesAffected: 1,
       },
       details: {
-        files: []
+        files: [],
       },
-      raw: 'test output'
+      raw: 'test output',
     }
-    
+
     const filePath = await logger.writeErrorReport(report)
-    
+
     expect(fs.existsSync(filePath)).toBe(true)
     const content = JSON.parse(fs.readFileSync(filePath, 'utf-8'))
     expect(content.tool).toBe('eslint')
@@ -100,9 +100,9 @@ describe('JSON File Writing', () => {
       file: true,
       silent: false,
       colored: false,
-      logDir: tempDir
+      logDir: tempDir,
     })
-    
+
     const report = {
       timestamp: '2025-09-09T10:30:00.000Z',
       tool: 'typescript' as const,
@@ -110,17 +110,17 @@ describe('JSON File Writing', () => {
       summary: {
         totalErrors: 1,
         totalWarnings: 0,
-        filesAffected: 1
+        filesAffected: 1,
       },
       details: {
-        files: []
+        files: [],
       },
-      raw: ''
+      raw: '',
     }
-    
+
     const filePath = await logger.writeErrorReport(report)
     const filename = path.basename(filePath)
-    
+
     expect(filename).toMatch(/^typescript-\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z\.json$/)
   })
 
@@ -131,9 +131,9 @@ describe('JSON File Writing', () => {
       file: true,
       silent: false,
       colored: false,
-      logDir: tempDir
+      logDir: tempDir,
     })
-    
+
     const report = {
       timestamp: new Date().toISOString(),
       tool: 'prettier' as const,
@@ -141,16 +141,16 @@ describe('JSON File Writing', () => {
       summary: {
         totalErrors: 1,
         totalWarnings: 0,
-        filesAffected: 1
+        filesAffected: 1,
       },
       details: {
-        files: []
+        files: [],
       },
-      raw: ''
+      raw: '',
     }
-    
+
     const filePath = await logger.writeErrorReport(report)
-    
+
     expect(filePath).toContain(path.join('logs', 'errors'))
     expect(fs.existsSync(path.dirname(filePath))).toBe(true)
   })
@@ -165,11 +165,11 @@ describe('Log Directory Management', () => {
       file: true,
       silent: false,
       colored: false,
-      logDir
+      logDir,
     })
-    
+
     await logger.ensureLogDirectories()
-    
+
     expect(fs.existsSync(path.join(logDir, 'logs', 'errors'))).toBe(true)
     expect(fs.existsSync(path.join(logDir, 'logs', 'debug'))).toBe(true)
   })
@@ -177,16 +177,16 @@ describe('Log Directory Management', () => {
   it('should handle existing directories gracefully', async () => {
     const logDir = path.join(tempDir, '.quality-check')
     fs.mkdirSync(path.join(logDir, 'logs', 'errors'), { recursive: true })
-    
+
     const { EnhancedLogger } = await import('./logger')
     const logger = new EnhancedLogger({
       console: false,
       file: true,
       silent: false,
       colored: false,
-      logDir
+      logDir,
     })
-    
+
     await expect(logger.ensureLogDirectories()).resolves.not.toThrow()
   })
 })
@@ -199,20 +199,20 @@ describe('Debug Log Writing', () => {
       file: true,
       silent: false,
       colored: false,
-      logDir: tempDir
+      logDir: tempDir,
     })
-    
+
     const debugData = {
       timestamp: new Date().toISOString(),
       phase: 'execution',
       tool: 'eslint',
       command: 'eslint src/**/*.ts',
       exitCode: 0,
-      duration: 1234
+      duration: 1234,
     }
-    
+
     const filePath = await logger.writeDebugLog('run', debugData)
-    
+
     expect(fs.existsSync(filePath)).toBe(true)
     expect(filePath).toContain(path.join('logs', 'debug'))
     expect(path.basename(filePath)).toMatch(/^run-.*\.json$/)
@@ -225,21 +225,21 @@ describe('Debug Log Writing', () => {
       file: true,
       silent: false,
       colored: false,
-      logDir: tempDir
+      logDir: tempDir,
     })
-    
+
     const perfData = {
       timestamp: new Date().toISOString(),
       measurements: {
         eslint: 1234,
         typescript: 2345,
         prettier: 456,
-        total: 4035
-      }
+        total: 4035,
+      },
     }
-    
+
     const filePath = await logger.writeDebugLog('performance', perfData)
-    
+
     expect(fs.existsSync(filePath)).toBe(true)
     const content = JSON.parse(fs.readFileSync(filePath, 'utf-8'))
     expect(content.measurements.total).toBe(4035)
