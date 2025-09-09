@@ -59,12 +59,15 @@ describe('V2 Facade Integration', () => {
 
     // Mock console methods
     consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-    
+
     // Reset QualityChecker mock to default behavior
-    vi.mocked(QualityChecker).mockImplementation(() => ({
-      check: vi.fn().mockResolvedValue({ success: true, duration: 100, issues: [] }),
-      fix: vi.fn().mockResolvedValue({ success: true, count: 0, fixed: [] }),
-    }) as any)
+    vi.mocked(QualityChecker).mockImplementation(
+      () =>
+        ({
+          check: vi.fn().mockResolvedValue({ success: true, duration: 100, issues: [] }),
+          fix: vi.fn().mockResolvedValue({ success: true, count: 0, fixed: [] }),
+        }) as any,
+    )
   })
 
   afterEach(() => {
@@ -104,10 +107,13 @@ describe('V2 Facade Integration', () => {
       }
 
       // Configure all QualityChecker instances to return the failing result
-      vi.mocked(QualityChecker).mockImplementation(() => ({
-        check: vi.fn().mockResolvedValue(v2Result),
-        fix: vi.fn(),
-      }) as any)
+      vi.mocked(QualityChecker).mockImplementation(
+        () =>
+          ({
+            check: vi.fn().mockResolvedValue(v2Result),
+            fix: vi.fn(),
+          }) as any,
+      )
 
       // Create API AFTER setting up the mock
       const api = new QualityCheckAPI()
@@ -214,7 +220,7 @@ describe('V2 Facade Integration', () => {
 
       const initialResult = await api.check(['src/test.ts'])
       expect(initialResult.success).toBe(false)
-      expect(initialResult.issues.filter(i => i.engine === 'eslint')).toHaveLength(1)
+      expect(initialResult.issues.filter((i) => i.engine === 'eslint')).toHaveLength(1)
 
       // Step 2: Fix the issues
       const fixResult: FixResult = {
@@ -302,10 +308,13 @@ describe('V2 Facade Integration', () => {
       const error = new Error('Tool not found')
 
       // Configure all QualityChecker instances to throw the error
-      vi.mocked(QualityChecker).mockImplementation(() => ({
-        check: vi.fn().mockRejectedValue(error),
-        fix: vi.fn(),
-      }) as any)
+      vi.mocked(QualityChecker).mockImplementation(
+        () =>
+          ({
+            check: vi.fn().mockRejectedValue(error),
+            fix: vi.fn(),
+          }) as any,
+      )
 
       // Create API AFTER setting up the mock
       const api = new QualityCheckAPI()
@@ -352,7 +361,9 @@ describe('V2 Facade Integration', () => {
       const result = await api.check(['src/test.ts'])
 
       expect(result.success).toBe(false)
-      expect(result.issues.find(i => i.engine === 'typescript')?.message).toBe('Cannot find name "foo"')
+      expect(result.issues.find((i) => i.engine === 'typescript')?.message).toBe(
+        'Cannot find name "foo"',
+      )
     })
   })
 })

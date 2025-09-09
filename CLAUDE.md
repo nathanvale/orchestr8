@@ -3,6 +3,15 @@
 > Think carefully and implement the most concise solution that changes as little
 > code as possible.
 
+## PRE-FLIGHT CHECKS
+
+### Wallaby Test Runner Status
+
+Before using any Wallaby tools (mcp**wallaby**\*), ALWAYS first verify Wallaby
+is active by calling `mcp__wallaby__wallaby_allTests`. If it returns "No data
+available", inform the user that Wallaby needs to be started in their IDE/editor
+before proceeding. Offer to use standard Bash test commands as an alternative.
+
 ## USE SUB-AGENTS FOR CONTEXT OPTIMIZATION
 
 ### 1. Always use the file-analyzer sub-agent when asked to read files

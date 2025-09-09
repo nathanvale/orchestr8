@@ -172,14 +172,14 @@ export class QualityChecker {
       // Tests explicitly throw these messages and expect them back
       const testErrorPatterns = [
         'File resolution failed',
-        'string error', 
+        'string error',
         'Circular reference',
         'timeout',
-        'timed out'
+        'timed out',
       ]
-      
-      const isTestError = testErrorPatterns.some(pattern => 
-        message.toLowerCase().includes(pattern.toLowerCase())
+
+      const isTestError = testErrorPatterns.some((pattern) =>
+        message.toLowerCase().includes(pattern.toLowerCase()),
       )
 
       // Only transform non-test errors
