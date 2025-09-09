@@ -52,7 +52,7 @@ describe('Git Hook with V2 Implementation', () => {
   beforeEach(() => {
     // Clear silent mode for tests to ensure output is generated
     delete process.env.CLAUDE_HOOK_SILENT_OUTPUT
-    
+
     // Setup mocks
     mockExecSync = vi.mocked(execSync)
     mockCheck = vi.fn()

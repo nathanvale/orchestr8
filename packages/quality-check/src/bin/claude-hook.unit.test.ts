@@ -142,11 +142,14 @@ describe('bin/claude-hook', () => {
 
     // Act: Execute binary with malformed input
     try {
-      execSync(`echo '${invalidPayload}' | CLAUDE_HOOK_SILENT_OUTPUT=true node "${CLAUDE_HOOK_BIN}"`, {
-        encoding: 'utf8',
-        timeout: 2000,
-        stdio: 'pipe',
-      })
+      execSync(
+        `echo '${invalidPayload}' | CLAUDE_HOOK_SILENT_OUTPUT=true node "${CLAUDE_HOOK_BIN}"`,
+        {
+          encoding: 'utf8',
+          timeout: 2000,
+          stdio: 'pipe',
+        },
+      )
     } catch (error) {
       const execError = error as { status?: number }
       // The claude facade has a catch-all that exits 0 to never crash Claude
