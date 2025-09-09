@@ -16,6 +16,18 @@ feature spec.
 <pre_flight_check> EXECUTE: @.agent-os/instructions/meta/pre-flight.md
 </pre_flight_check>
 
+## EXECUTION CHECKLIST [ALL STEPS MANDATORY]
+
+☐ Step 1: Task understanding - READ task from tasks.md
+☐ Step 2: Technical spec
+review - SEARCH technical-spec.md
+☐ Step 3: Context-fetcher (best practices) -
+MUST INVOKE subagent
+☐ Step 4: Context-fetcher (code style) - MUST INVOKE
+subagent  
+☐ Step 5: Execute tasks - IMPLEMENT with TDD approach ☐ Step 6:
+Test-runner-VERIFY task-specific tests ☐ Step 7: Mark complete - UPDATE tasks.md
+
 <process_flow>
 
 <step number="1" subagent="file-creator" name="create_tasks">
