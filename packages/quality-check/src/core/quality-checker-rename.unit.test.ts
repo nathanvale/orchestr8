@@ -10,7 +10,7 @@ import type { QualityCheckResult } from '../types/issue-types.js'
 
 describe('QualityChecker Class Rename Compatibility', () => {
   let checker: QualityChecker
-  
+
   beforeEach(() => {
     vi.clearAllMocks()
     checker = new QualityChecker()
@@ -33,19 +33,19 @@ describe('QualityChecker Class Rename Compatibility', () => {
       const checkSpy = vi.spyOn(checker, 'check')
       const files = ['test.ts']
       const options: QualityCheckOptions = { fix: false }
-      
+
       // Call without await to check signature matches
       const checkPromise = checker.check(files, options)
       expect(checkPromise).toBeInstanceOf(Promise)
-      
+
       // Prevent actual execution
       checkSpy.mockResolvedValue({
         success: true,
         duration: 0,
         issues: [],
-        correlationId: 'test-id'
+        correlationId: 'test-id',
       })
-      
+
       await checkPromise
       expect(checkSpy).toHaveBeenCalledWith(files, options)
     })
@@ -68,13 +68,13 @@ describe('QualityChecker Class Rename Compatibility', () => {
         success: true,
         duration: 100,
         issues: [],
-        correlationId: 'mock-id'
+        correlationId: 'mock-id',
       }
-      
+
       vi.spyOn(checker, 'check').mockResolvedValue(mockResult)
-      
+
       const result = await checker.check(['test.ts'], {})
-      
+
       expect(result).toHaveProperty('success')
       expect(result).toHaveProperty('duration')
       expect(result).toHaveProperty('issues')
@@ -87,25 +87,25 @@ describe('QualityChecker Class Rename Compatibility', () => {
       // Mock internal dependencies to verify they're called
       const checkSpy = vi.spyOn(checker, 'check')
       const runChecksSpy = vi.spyOn(checker as any, 'runChecks')
-      
+
       // Mock to prevent actual execution
       runChecksSpy.mockResolvedValue([])
       checkSpy.mockResolvedValue({
         success: true,
         duration: 0,
         issues: [],
-        correlationId: 'test'
+        correlationId: 'test',
       })
-      
+
       await checker.check(['test.ts'], {})
-      
+
       expect(checkSpy).toHaveBeenCalled()
     })
 
     it('should maintain private method accessibility within class', () => {
       // Test that private methods exist (accessed via any)
       const instance = checker as any
-      
+
       expect(typeof instance.runChecks).toBe('function')
       expect(typeof instance.generateCorrelationId).toBe('function')
       expect(typeof instance.runTypeScriptCheck).toBe('function')
@@ -119,9 +119,9 @@ describe('QualityChecker Class Rename Compatibility', () => {
         success: true,
         duration: 0,
         issues: [],
-        correlationId: 'test'
+        correlationId: 'test',
       })
-      
+
       const checkMethod = checker.check.bind(checker)
       await checkMethod(['test.ts'], {})
       expect(spy).toHaveBeenCalled()
@@ -138,18 +138,18 @@ describe('QualityChecker Class Rename Compatibility', () => {
       const files: string[] = ['test.ts']
       const options: QualityCheckOptions & { format?: 'stylish' | 'json' } = {
         fix: false,
-        format: 'stylish'
+        format: 'stylish',
       }
-      
+
       const spy = vi.spyOn(checker, 'check').mockResolvedValue({
         success: true,
         duration: 0,
         issues: [],
-        correlationId: 'test'
+        correlationId: 'test',
       })
-      
+
       const result: QualityCheckResult = await checker.check(files, options)
-      
+
       expect(spy).toHaveBeenCalledWith(files, options)
       expect(result).toBeDefined()
     })
@@ -161,7 +161,7 @@ describe('QualityChecker Class Rename Compatibility', () => {
           return 'extended'
         }
       }
-      
+
       const extended = new ExtendedChecker()
       expect(extended).toBeInstanceOf(QualityChecker)
       expect(extended.customMethod()).toBe('extended')
@@ -175,7 +175,7 @@ describe('QualityChecker Class Rename Compatibility', () => {
 
     it('✓ All public methods are accessible', () => {
       const methods = ['check', 'fix']
-      methods.forEach(method => {
+      methods.forEach((method) => {
         expect(checker).toHaveProperty(method)
         expect(typeof (checker as any)[method]).toBe('function')
       })
@@ -191,15 +191,15 @@ describe('QualityChecker Class Rename Compatibility', () => {
         success: true,
         duration: 0,
         issues: [],
-        correlationId: 'test'
+        correlationId: 'test',
       })
-      
+
       const checkResult = await checker.check(['test.ts'], {})
       expect(checkResult).toMatchObject({
         success: expect.any(Boolean),
         duration: expect.any(Number),
         issues: expect.any(Array),
-        correlationId: expect.any(String)
+        correlationId: expect.any(String),
       })
     })
 
@@ -214,7 +214,7 @@ describe('QualityChecker Class Rename Compatibility', () => {
     it('should simulate class rename behavior', () => {
       // Simulate what happens when we rename the class
       const QualityChecker = QualityChecker
-      
+
       const instance = new QualityChecker()
       expect(instance).toBeInstanceOf(QualityChecker)
       expect(instance).toBeInstanceOf(QualityChecker)
@@ -224,7 +224,7 @@ describe('QualityChecker Class Rename Compatibility', () => {
       // Test import alias pattern
       type QualityChecker = QualityChecker
       const instance: QualityChecker = new QualityChecker()
-      
+
       expect(instance).toBeDefined()
     })
 
@@ -232,24 +232,24 @@ describe('QualityChecker Class Rename Compatibility', () => {
       // Simulate how facades will use the renamed class
       class MockFacade {
         private checker: QualityChecker
-        
+
         constructor() {
           this.checker = new QualityChecker()
         }
-        
+
         async runCheck(files: string[]) {
           return this.checker.check(files, {})
         }
       }
-      
+
       const facade = new MockFacade()
       const spy = vi.spyOn(QualityChecker.prototype, 'check').mockResolvedValue({
         success: true,
         duration: 0,
         issues: [],
-        correlationId: 'test'
+        correlationId: 'test',
       })
-      
+
       const result = await facade.runCheck(['test.ts'])
       expect(spy).toHaveBeenCalled()
       expect(result).toBeDefined()
@@ -259,7 +259,7 @@ describe('QualityChecker Class Rename Compatibility', () => {
       // Test that we can export and use the type
       type ExportedChecker = QualityChecker
       const instance: ExportedChecker = new QualityChecker()
-      
+
       expect(instance).toBeDefined()
     })
   })

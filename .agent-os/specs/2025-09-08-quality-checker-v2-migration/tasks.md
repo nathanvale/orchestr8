@@ -123,10 +123,12 @@ These are the tasks to be completed for the spec detailed in
   - [x] 12.3 Delete /src/core/quality-checker.ts file
   - [x] 12.4 Remove V1-specific test files
   - [x] 12.5 Verify build still works without V1
-  - [x] 12.6 Run tests to ensure no regressions (Note: Some error handling tests need fixes)
+  - [x] 12.6 Run tests to ensure no regressions (Note: Some error handling tests
+        need fixes)
 
 - [x] 13. Clean up unused V1 dependencies
-  - [x] 13.1 Check if error-parser.ts is used by V2 (Still used by IssueReporter)
+  - [x] 13.1 Check if error-parser.ts is used by V2 (Still used by
+        IssueReporter)
   - [x] 13.2 Verify no other files depend on error-parser.ts (Used by facades)
   - [x] 13.3 Delete error-parser.ts if unused (Kept - still in use)
   - [x] 13.4 Update any error parsing logic in V2 if needed (No update needed)
@@ -135,7 +137,8 @@ These are the tasks to be completed for the spec detailed in
 
 - [x] 14. Rename V2 files to primary implementation
   - [x] 14.1 Use git mv to rename quality-checker-v2.ts to quality-checker.ts
-  - [x] 14.2 Update file header comments to remove V2 references (Will do in Task 15)
+  - [x] 14.2 Update file header comments to remove V2 references (Will do in
+        Task 15)
   - [x] 14.3 Verify file permissions are correct
   - [x] 14.4 Update any build configuration if needed (No changes needed)
   - [x] 14.5 Commit the rename with clear message (Will do later)
