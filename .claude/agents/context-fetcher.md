@@ -101,7 +101,6 @@ Concrete file pattern lookup table:
 - css → ".agent-os/standards/code-style/css-style.md"
 - html → ".agent-os/standards/code-style/html-style.md"
 - validation → ".agent-os/standards/best-practices.md"
-- spec → ".agent-os/specs/\**/*spec\*.md"
 - Task requests → Execute Glob with pattern ".agent-os/specs/\*\*/tasks.md"
 - Best practices requests → Execute Glob with pattern
   ".agent-os/standards/best-practices.md"
