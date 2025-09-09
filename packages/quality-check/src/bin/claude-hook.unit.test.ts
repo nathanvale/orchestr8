@@ -20,7 +20,7 @@ describe('bin/claude-hook', () => {
     const payload = JSON.stringify({
       tool_name: 'Write',
       tool_input: {
-        file_path: 'test.js',
+        file_path: '/test/test.js',
         content: 'const test = "should not process";',
       },
     })
@@ -44,7 +44,7 @@ describe('bin/claude-hook', () => {
     const payload = JSON.stringify({
       tool_name: 'Write',
       tool_input: {
-        file_path: 'test.js',
+        file_path: '/test/test.js',
         content: 'export const test = "hello";\n',
       },
     })
@@ -74,7 +74,7 @@ describe('bin/claude-hook', () => {
     const payload = JSON.stringify({
       tool_name: 'Write',
       tool_input: {
-        file_path: 'test.js',
+        file_path: '/test/test.js',
         content: 'export const test = "hello";\n',
       },
     })
@@ -104,7 +104,7 @@ describe('bin/claude-hook', () => {
     const payload = JSON.stringify({
       tool_name: 'Write',
       tool_input: {
-        file_path: 'test.js', // Use .js to avoid TypeScript complexity in test
+        file_path: '/test/test.js', // Use .js to avoid TypeScript complexity in test
         content: 'export const test = "hello";\n', // Add semicolon and newline for prettier
       },
     })
@@ -157,7 +157,7 @@ describe('bin/claude-hook', () => {
     const payload = JSON.stringify({
       tool_name: 'Read', // Not a Write/Edit/MultiEdit operation
       tool_input: {
-        file_path: 'test.js',
+        file_path: '/test/test.js',
         content: 'export const test = "hello"',
       },
     })
@@ -181,7 +181,7 @@ describe('bin/claude-hook', () => {
     const payload = JSON.stringify({
       tool_name: 'Write',
       tool_input: {
-        file_path: 'test.js',
+        file_path: '/test/test.js',
         content: 'export const test = "hello"',
       },
     })
