@@ -166,7 +166,7 @@ BLOCKING" appears OR error code 2 is returned:
 5. TodoWrite: Mark "Fixing quality check errors" complete
 6. If ALL_RESOLVED:
    - TodoWrite: Resume saved sub-task from "paused_for_quality_fix"
-   - Provide agents results to the user
+   - Output the results from the quality-checker-fixer to the user
    - Continue with implementation
 7. If PARTIAL_RESOLUTION or FAILED: - Document blocking issues with ⚠️ -
    TodoWrite: Mark current sub-task as blocked
