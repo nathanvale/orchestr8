@@ -3,7 +3,7 @@
  * Tests for runGitHook using QualityChecker implementation
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { runGitHook } from './git-hook.js'
 
 // Mock dependencies
@@ -35,10 +35,10 @@ vi.mock('../adapters/fixer.js', () => ({
 
 // Import mocked modules
 import { execSync } from 'node:child_process'
-import { QualityChecker } from '../core/quality-checker.js'
-import { IssueReporter } from '../core/issue-reporter.js'
 import { Autopilot } from '../adapters/autopilot.js'
 import { Fixer } from '../adapters/fixer.js'
+import { IssueReporter } from '../core/issue-reporter.js'
+import { QualityChecker } from '../core/quality-checker.js'
 
 describe('Git Hook with V2 Implementation', () => {
   let mockExecSync: ReturnType<typeof vi.fn>

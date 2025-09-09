@@ -1,7 +1,7 @@
-import { describe, expect, test, vi, beforeEach, afterEach } from 'vitest'
 import { execSync } from 'node:child_process'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const CLAUDE_HOOK_BIN = path.resolve(__dirname, '../../bin/claude-hook')
