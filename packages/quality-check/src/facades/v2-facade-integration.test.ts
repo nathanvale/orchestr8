@@ -116,10 +116,9 @@ describe('V2 Facade Integration', () => {
       expect(apiResult).toEqual(v2Result)
 
       // Git hook should handle the same result format
-      vi.mocked(execSync).mockReturnValue('src/test.ts\n')
-
+      // Pass files directly to avoid execSync issues in tests
       try {
-        await runGitHook()
+        await runGitHook({ files: ['src/test.ts'] })
       } catch {
         // Expected to exit with error
       }
@@ -315,10 +314,9 @@ describe('V2 Facade Integration', () => {
       await expect(api.check(['test.ts'])).rejects.toThrow('Tool not found')
 
       // Git hook should handle gracefully
-      vi.mocked(execSync).mockReturnValue('test.ts\n')
-
+      // Pass files directly to avoid execSync issues in tests
       try {
-        await runGitHook()
+        await runGitHook({ files: ['test.ts'] })
       } catch {
         // Expected
       }
