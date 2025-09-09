@@ -4,6 +4,7 @@ import * as path from 'node:path'
 import type { Issue, CheckerResult } from '../types/issue-types.js'
 import { ToolMissingError, FileError } from '../core/errors.js'
 import type { CancellationToken } from '../core/timeout-manager.js'
+import type { ErrorReport } from '../utils/logger.js'
 
 /**
  * Prettier engine configuration
@@ -223,5 +224,73 @@ export class PrettierEngine {
    */
   static getSupportedExtensions(): string[] {
     return ['.js', '.jsx', '.ts', '.tsx', '.json', '.css', '.scss', '.md', '.html', '.yaml', '.yml']
+  }
+
+  /**
+   * Generate ErrorReport from Prettier issues
+   */
+  async generateErrorReport(issues: Issue[]): Promise<ErrorReport> {
+    const totalErrors = issues.filter((i) => i.severity === 'error').length
+    const totalWarnings = issues.filter((i) => i.severity === 'warning').length
+    const filesAffected = new Set(issues.map((i) => i.file)).size
+
+    // Format raw output similar to prettier CLI output
+    const rawOutput = issues
+      .map((issue) => {
+        return `${issue.file}:${issue.line}:${issue.col} ${issue.severity}: ${issue.message}`
+      })
+      .join('\n')
+
+    return {
+      timestamp: new Date().toISOString(),
+      tool: 'prettier',
+      status: totalErrors > 0 ? 'error' : totalWarnings > 0 ? 'warning' : 'success',
+      summary: {
+        totalErrors,
+        totalWarnings,
+        filesAffected,
+      },
+      details: {
+        files: this.groupIssuesByFile(issues),
+      },
+      raw: rawOutput,
+    }
+  }
+
+  /**
+   * Group issues by file for ErrorReport format
+   */
+  private groupIssuesByFile(issues: Issue[]): Array<{
+    path: string
+    errors: Array<{
+      line: number
+      column: number
+      message: string
+      ruleId?: string
+      severity: 'error' | 'warning'
+    }>
+  }> {
+    const fileGroups: Record<string, Issue[]> = {}
+
+    // Filter out 'info' severity issues since ErrorReport only accepts 'error' | 'warning'
+    const reportableIssues = issues.filter((issue) => issue.severity !== 'info')
+
+    for (const issue of reportableIssues) {
+      if (!fileGroups[issue.file]) {
+        fileGroups[issue.file] = []
+      }
+      fileGroups[issue.file].push(issue)
+    }
+
+    return Object.entries(fileGroups).map(([path, fileIssues]) => ({
+      path,
+      errors: fileIssues.map((issue) => ({
+        line: issue.line,
+        column: issue.col,
+        message: issue.message,
+        ruleId: issue.ruleId,
+        severity: issue.severity as 'error' | 'warning', // Safe cast since we filtered out 'info'
+      })),
+    }))
   }
 }

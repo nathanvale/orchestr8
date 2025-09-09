@@ -103,7 +103,7 @@ describe('TypeScriptEngine', () => {
       expect(result2.success).toBe(true)
       // Verify performance improvement on warm run or at least similar performance
       // (caching may not always be faster on small files due to overhead)
-      expect(result2.duration).toBeLessThanOrEqual(result1.duration * 1.5)
+      expect(result2.duration).toBeLessThanOrEqual((result1.duration ?? 1000) * 1.5)
       // Engine should still have cache state
       expect(engine.hasCacheState()).toBe(true)
     })
@@ -254,6 +254,96 @@ describe('TypeScriptEngine', () => {
       // Options errors are included even without a specific file
 
       fs.rmSync(badCfgDir, { recursive: true, force: true })
+    })
+  })
+
+  describe('should_generate_error_reports', () => {
+    it('should_generate_error_report_with_typescript_errors', async () => {
+      const testFile = path.join(tempDir, 'error-report.ts')
+      fs.writeFileSync(
+        testFile,
+        `
+        const x: number = 'string' // Type error
+        const y = undefinedVariable // Reference error
+        `,
+      )
+
+      const result = await engine.check({
+        files: [testFile],
+      })
+
+      expect(result.success).toBe(false)
+      expect(result.issues.length).toBeGreaterThan(0)
+
+      // Get diagnostics and generate error report
+      const diagnostics = engine.getLastDiagnostics()
+      const errorReport = await engine.generateErrorReport(diagnostics)
+
+      expect(errorReport.tool).toBe('typescript')
+      expect(errorReport.status).toBe('error')
+      expect(errorReport.summary.totalErrors).toBeGreaterThan(0)
+      expect(errorReport.summary.filesAffected).toBe(1)
+      expect(errorReport.details.files).toHaveLength(1)
+      expect(errorReport.details.files[0].path).toBe(testFile)
+      expect(errorReport.raw).toContain('TS')
+    })
+
+    it('should_generate_success_report_when_no_errors', async () => {
+      const testFile = path.join(tempDir, 'success-report.ts')
+      fs.writeFileSync(
+        testFile,
+        `
+        const greeting: string = 'Hello, World!'
+        console.log(greeting)
+        `,
+      )
+
+      const result = await engine.check({
+        files: [testFile],
+      })
+
+      expect(result.success).toBe(true)
+      expect(result.issues.length).toBe(0)
+
+      // Get diagnostics and generate error report
+      const diagnostics = engine.getLastDiagnostics()
+      const errorReport = await engine.generateErrorReport(diagnostics)
+
+      expect(errorReport.tool).toBe('typescript')
+      expect(errorReport.status).toBe('success')
+      expect(errorReport.summary.totalErrors).toBe(0)
+      expect(errorReport.summary.totalWarnings).toBe(0)
+      expect(errorReport.summary.filesAffected).toBe(0)
+      expect(errorReport.details.files).toHaveLength(0)
+    })
+
+    it('should_group_errors_by_file_in_error_report', async () => {
+      const testFile1 = path.join(tempDir, 'multi1.ts')
+      const testFile2 = path.join(tempDir, 'multi2.ts')
+
+      fs.writeFileSync(testFile1, `const x: number = 'string'`)
+      fs.writeFileSync(testFile2, `const y: string = 42`)
+
+      const result = await engine.check({
+        files: [testFile1, testFile2],
+      })
+
+      expect(result.success).toBe(false)
+      expect(result.issues.length).toBeGreaterThan(0)
+
+      // Get diagnostics and generate error report
+      const diagnostics = engine.getLastDiagnostics()
+      const errorReport = await engine.generateErrorReport(diagnostics)
+
+      expect(errorReport.tool).toBe('typescript')
+      expect(errorReport.status).toBe('error')
+      expect(errorReport.summary.filesAffected).toBe(2)
+      expect(errorReport.details.files).toHaveLength(2)
+
+      // Check that files are properly grouped
+      const filePaths = errorReport.details.files.map((f) => f.path)
+      expect(filePaths).toContain(testFile1)
+      expect(filePaths).toContain(testFile2)
     })
   })
 })

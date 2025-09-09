@@ -5,6 +5,7 @@ import * as ts from 'typescript'
 import { FileError, ToolMissingError } from '../core/errors.js'
 import type { CancellationToken } from '../core/timeout-manager.js'
 import type { CheckerResult, Issue } from '../types/issue-types.js'
+import type { ErrorReport } from '../utils/logger.js'
 
 /**
  * TypeScript engine configuration
@@ -30,6 +31,7 @@ export class TypeScriptEngine {
   private program: ts.BuilderProgram | undefined
   private host: ts.CompilerHost | undefined
   private cacheDir: string
+  private lastDiagnostics: readonly ts.Diagnostic[] = []
 
   constructor() {
     // Set default cache directory
@@ -204,6 +206,7 @@ export class TypeScriptEngine {
     }
 
     const issues: Issue[] = []
+    const allDiagnostics: ts.Diagnostic[] = []
     const program = this.program.getProgram()
     const targetFilesSet = new Set(targetFiles.map((f) => path.resolve(f)))
 
@@ -216,6 +219,7 @@ export class TypeScriptEngine {
     for (const sourceFile of program.getSourceFiles()) {
       if (targetFilesSet.has(sourceFile.fileName)) {
         const syntacticDiagnostics = program.getSyntacticDiagnostics(sourceFile)
+        allDiagnostics.push(...syntacticDiagnostics)
         issues.push(...this.convertDiagnostics(syntacticDiagnostics))
 
         // Check for cancellation
@@ -229,6 +233,7 @@ export class TypeScriptEngine {
     for (const sourceFile of program.getSourceFiles()) {
       if (targetFilesSet.has(sourceFile.fileName)) {
         const semanticDiagnostics = program.getSemanticDiagnostics(sourceFile)
+        allDiagnostics.push(...semanticDiagnostics)
         issues.push(...this.convertDiagnostics(semanticDiagnostics))
 
         // Check for cancellation
@@ -240,7 +245,11 @@ export class TypeScriptEngine {
 
     // Get options diagnostics (no file associated)
     const optionsDiagnostics = program.getOptionsDiagnostics()
+    allDiagnostics.push(...optionsDiagnostics)
     issues.push(...this.convertDiagnostics(optionsDiagnostics))
+
+    // Store diagnostics for error reporting
+    this.lastDiagnostics = allDiagnostics
 
     return issues
   }
@@ -333,5 +342,89 @@ export class TypeScriptEngine {
    */
   hasCacheState(): boolean {
     return this.program !== undefined
+  }
+
+  /**
+   * Get the last diagnostics from the most recent check
+   */
+  getLastDiagnostics(): readonly ts.Diagnostic[] {
+    return this.lastDiagnostics
+  }
+
+  /**
+   * Generate ErrorReport from TypeScript diagnostics
+   */
+  async generateErrorReport(diagnostics: readonly ts.Diagnostic[]): Promise<ErrorReport> {
+    const issues = this.convertDiagnostics(diagnostics)
+    const totalErrors = issues.filter((i) => i.severity === 'error').length
+    const totalWarnings = issues.filter((i) => i.severity === 'warning').length
+    const filesAffected = new Set(issues.map((i) => i.file)).size
+
+    // Format raw output similar to tsc output
+    const rawOutput = diagnostics
+      .map((diagnostic) => {
+        const file = diagnostic.file
+        const message = ts.flattenDiagnosticMessageText(diagnostic.messageText, '\n')
+
+        if (file && diagnostic.start !== undefined) {
+          const { line, character } = file.getLineAndCharacterOfPosition(diagnostic.start)
+          return `${file.fileName}(${line + 1},${character + 1}): error TS${diagnostic.code}: ${message}`
+        }
+
+        return `error TS${diagnostic.code}: ${message}`
+      })
+      .join('\n')
+
+    return {
+      timestamp: new Date().toISOString(),
+      tool: 'typescript',
+      status: totalErrors > 0 ? 'error' : totalWarnings > 0 ? 'warning' : 'success',
+      summary: {
+        totalErrors,
+        totalWarnings,
+        filesAffected,
+      },
+      details: {
+        files: this.groupIssuesByFile(issues),
+      },
+      raw: rawOutput,
+    }
+  }
+
+  /**
+   * Group issues by file for ErrorReport format
+   */
+  private groupIssuesByFile(issues: Issue[]): Array<{
+    path: string
+    errors: Array<{
+      line: number
+      column: number
+      message: string
+      ruleId?: string
+      severity: 'error' | 'warning'
+    }>
+  }> {
+    const fileGroups: Record<string, Issue[]> = {}
+
+    // Filter out 'info' severity issues since ErrorReport only accepts 'error' | 'warning'
+    const reportableIssues = issues.filter((issue) => issue.severity !== 'info')
+
+    for (const issue of reportableIssues) {
+      if (!fileGroups[issue.file]) {
+        fileGroups[issue.file] = []
+      }
+      fileGroups[issue.file].push(issue)
+    }
+
+    return Object.entries(fileGroups).map(([path, fileIssues]) => ({
+      path,
+      errors: fileIssues.map((issue) => ({
+        line: issue.line,
+        column: issue.col,
+        message: issue.message,
+        ruleId: issue.ruleId,
+        severity: issue.severity as 'error' | 'warning', // Safe cast since we filtered out 'info'
+      })),
+    }))
   }
 }

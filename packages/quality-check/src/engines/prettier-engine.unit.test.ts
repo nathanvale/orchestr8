@@ -1,7 +1,7 @@
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { PrettierEngine } from './prettier-engine'
 
 describe('PrettierEngine', () => {
@@ -119,6 +119,7 @@ export default greeting
 
       const token = {
         isCancellationRequested: true,
+        onCancellationRequested: vi.fn(),
       }
 
       const result = await engine.check({
@@ -274,6 +275,83 @@ export default greeting
       // Should handle the error gracefully
       expect(result.success).toBe(false)
       expect(result.issues[0].severity).toBe('error')
+    })
+  })
+
+  describe('should_generate_error_reports', () => {
+    it('should_generate_error_report_with_prettier_errors', async () => {
+      const testFile = path.join(tempDir, 'error-report.js')
+      fs.writeFileSync(testFile, `const   ugly="code"   ;   const   another= "value"`)
+
+      const result = await engine.check({
+        files: [testFile],
+        write: false,
+      })
+
+      expect(result.success).toBe(false)
+      expect(result.issues.length).toBeGreaterThan(0)
+
+      // Generate error report
+      const errorReport = await engine.generateErrorReport(result.issues)
+
+      expect(errorReport.tool).toBe('prettier')
+      expect(errorReport.status).toBe('warning')
+      expect(errorReport.summary.totalWarnings).toBeGreaterThan(0)
+      expect(errorReport.summary.filesAffected).toBe(1)
+      expect(errorReport.details.files).toHaveLength(1)
+      expect(errorReport.details.files[0].path).toBe(testFile)
+      expect(errorReport.raw).toContain(testFile)
+    })
+
+    it('should_generate_success_report_when_no_errors', async () => {
+      const testFile = path.join(tempDir, 'success-report.js')
+      fs.writeFileSync(testFile, `const greeting = 'Hello, World!'\nconsole.log(greeting)\n`)
+
+      const result = await engine.check({
+        files: [testFile],
+        write: false,
+      })
+
+      expect(result.success).toBe(true)
+      expect(result.issues.length).toBe(0)
+
+      // Generate error report
+      const errorReport = await engine.generateErrorReport(result.issues)
+
+      expect(errorReport.tool).toBe('prettier')
+      expect(errorReport.status).toBe('success')
+      expect(errorReport.summary.totalErrors).toBe(0)
+      expect(errorReport.summary.totalWarnings).toBe(0)
+      expect(errorReport.summary.filesAffected).toBe(0)
+      expect(errorReport.details.files).toHaveLength(0)
+    })
+
+    it('should_group_errors_by_file_in_error_report', async () => {
+      const testFile1 = path.join(tempDir, 'multi1.js')
+      const testFile2 = path.join(tempDir, 'multi2.js')
+
+      fs.writeFileSync(testFile1, `const   ugly="code"`)
+      fs.writeFileSync(testFile2, `const   another= "value"`)
+
+      const result = await engine.check({
+        files: [testFile1, testFile2],
+        write: false,
+      })
+
+      expect(result.success).toBe(false)
+      expect(result.issues.length).toBeGreaterThan(0)
+
+      // Generate error report
+      const errorReport = await engine.generateErrorReport(result.issues)
+
+      expect(errorReport.tool).toBe('prettier')
+      expect(errorReport.status).toBe('warning')
+      expect(errorReport.summary.filesAffected).toBeGreaterThan(0)
+      expect(errorReport.details.files.length).toBeGreaterThan(0)
+
+      // Check that files are properly grouped
+      const filePaths = errorReport.details.files.map((f) => f.path)
+      expect(filePaths.some((p) => p.includes('multi1.js') || p.includes('multi2.js'))).toBe(true)
     })
   })
 })

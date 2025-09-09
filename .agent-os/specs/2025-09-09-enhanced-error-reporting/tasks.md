@@ -27,31 +27,31 @@ These are the tasks to be completed for the spec detailed in
   - [x] 2.6 Add silent mode support to suppress console output when needed
   - [x] 2.7 Verify all OutputFormatter tests pass
 
-- [ ] 3. Update ESLint Facade for JSON Error Reporting
-  - [ ] 3.1 Write tests for ESLint facade with new JSON output parsing
-  - [ ] 3.2 Modify ESLint facade to parse JSON output instead of XML
-  - [ ] 3.3 Transform ESLint results to structured ErrorReport format
-  - [ ] 3.4 Integrate with enhanced Logger for dual output (JSON file + console
+- [x] 3. Update ESLint Facade for JSON Error Reporting
+  - [x] 3.1 Write tests for ESLint facade with new JSON output parsing
+  - [x] 3.2 Modify ESLint facade to parse JSON output instead of XML
+  - [x] 3.3 Transform ESLint results to structured ErrorReport format
+  - [x] 3.4 Integrate with enhanced Logger for dual output (JSON file + console
         summary)
-  - [ ] 3.5 Add error count and file affected summary calculation
-  - [ ] 3.6 Preserve raw ESLint output in JSON for debugging purposes
-  - [ ] 3.7 Verify all ESLint facade tests pass
+  - [x] 3.5 Add error count and file affected summary calculation
+  - [x] 3.6 Preserve raw ESLint output in JSON for debugging purposes
+  - [x] 3.7 Verify all ESLint facade tests pass
 
-- [ ] 4. Update TypeScript Facade for Structured Error Output
-  - [ ] 4.1 Write tests for TypeScript facade with structured error reporting
-  - [ ] 4.2 Modify TypeScript facade to transform TSC errors to ErrorReport
+- [x] 4. Update TypeScript Facade for Structured Error Output
+  - [x] 4.1 Write tests for TypeScript facade with structured error reporting
+  - [x] 4.2 Modify TypeScript facade to transform TSC errors to ErrorReport
         format
-  - [ ] 4.3 Parse TypeScript compiler output for line/column/message extraction
-  - [ ] 4.4 Integrate with enhanced Logger for JSON storage and console summary
-  - [ ] 4.5 Add TypeScript-specific error categorization and severity mapping
-  - [ ] 4.6 Handle compilation success scenarios with appropriate reporting
-  - [ ] 4.7 Verify all TypeScript facade tests pass
+  - [x] 4.3 Parse TypeScript compiler output for line/column/message extraction
+  - [x] 4.4 Integrate with enhanced Logger for JSON storage and console summary
+  - [x] 4.5 Add TypeScript-specific error categorization and severity mapping
+  - [x] 4.6 Handle compilation success scenarios with appropriate reporting
+  - [x] 4.7 Verify all TypeScript facade tests pass
 
-- [ ] 5. Update Prettier Facade and Git Hook Integration
-  - [ ] 5.1 Write tests for Prettier facade with consistent error reporting
-  - [ ] 5.2 Modify Prettier facade to use structured ErrorReport format
-  - [ ] 5.3 Update Git Hook facade to support silent/verbose mode switching
-  - [ ] 5.4 Ensure all facades work consistently with new logging system
-  - [ ] 5.5 Add CLI argument handling for output mode configuration
-  - [ ] 5.6 Test integration with Claude Code scenarios and context reduction
-  - [ ] 5.7 Verify all facade integration tests pass and system works end-to-end
+- [x] 5. Update Prettier Facade and Git Hook Integration
+  - [x] 5.1 Write tests for Prettier facade with consistent error reporting
+  - [x] 5.2 Modify Prettier facade to use structured ErrorReport format
+  - [x] 5.3 Update Git Hook facade to support silent/verbose mode switching
+  - [x] 5.4 Ensure all facades work consistently with new logging system
+  - [x] 5.5 Add CLI argument handling for output mode configuration
+  - [x] 5.6 Test integration with Claude Code scenarios and context reduction
+  - [x] 5.7 Verify all facade integration tests pass and system works end-to-end

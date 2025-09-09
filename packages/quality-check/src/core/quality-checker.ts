@@ -475,11 +475,21 @@ export class QualityChecker {
     token: CancellationToken,
   ): Promise<CheckerResult> {
     try {
-      return await this.typescriptEngine.check({
+      const result = await this.typescriptEngine.check({
         files,
         cacheDir: config.typescriptCacheDir,
         token,
       })
+
+      // Generate and log error report for enhanced logging
+      if (config.format === 'json' || result.issues.length > 0) {
+        // Get TypeScript diagnostics from the engine
+        const diagnostics = this.typescriptEngine.getLastDiagnostics()
+        const errorReport = await this.typescriptEngine.generateErrorReport(diagnostics)
+        await this.enhancedLogger.logErrorReport(errorReport)
+      }
+
+      return result
     } catch (error) {
       if (error instanceof ToolMissingError) {
         logger.warn('TypeScript not available', { skipping: true })
@@ -558,11 +568,19 @@ export class QualityChecker {
     token: CancellationToken,
   ): Promise<CheckerResult> {
     try {
-      return await this.prettierEngine.check({
+      const result = await this.prettierEngine.check({
         files,
         write: config.prettierWrite,
         token,
       })
+
+      // Generate and log error report for enhanced logging
+      if (config.format === 'json' || result.issues.length > 0) {
+        const errorReport = await this.prettierEngine.generateErrorReport(result.issues)
+        await this.enhancedLogger.logErrorReport(errorReport)
+      }
+
+      return result
     } catch (error) {
       if (error instanceof ToolMissingError) {
         logger.warn('Prettier not available', { skipping: true })
