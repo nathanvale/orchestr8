@@ -1,7 +1,5 @@
-// Only import testing-library in browser-like environments
-if (typeof window !== 'undefined') {
-  import('@testing-library/jest-dom/vitest')
-}
+// Import testing-library jest-dom matchers
+import '@testing-library/jest-dom/vitest'
 
 import type { HttpHandler } from 'msw'
 import { http, HttpResponse } from 'msw'
@@ -101,10 +99,10 @@ beforeAll(() => {
   // Use sentinel to prevent double polyfill setup
   if (
     (process.env['VITEST'] === 'true' || process.env['NODE_ENV'] === 'test') &&
-    !(globalThis as any).__TEST_POLYFILLS_SETUP__ &&
+    !(globalThis as Record<string, unknown>)['__TEST_POLYFILLS_SETUP__'] &&
     typeof window !== 'undefined'
   ) {
-    ;(globalThis as any).__TEST_POLYFILLS_SETUP__ = true
+    ;(globalThis as Record<string, unknown>)['__TEST_POLYFILLS_SETUP__'] = true
 
     // Mock matchMedia only if it doesn't exist
     if (!window.matchMedia) {
@@ -262,14 +260,21 @@ if (process.env['BUN_TEMPLATE_ESBUILD_DIAG'] === '1') {
     cb?: (err?: Error | null) => void,
   ) => {
     try {
-      const text = typeof chunk === 'string' ? chunk : ((chunk as any)?.toString?.() ?? '')
+      const text =
+        typeof chunk === 'string'
+          ? chunk
+          : ((chunk as unknown as { toString?(): string })?.toString?.() ?? '')
       if (/EPIPE|Broken pipe|esbuild|vite.*(exit|error)/i.test(text)) {
         suspicious.push({ msg: text.trim(), time: Date.now() })
       }
     } catch {
       // swallow diagnostics parsing errors
     }
-    return origWrite(chunk, encoding as any, cb as any)
+    return origWrite(
+      chunk,
+      encoding as BufferEncoding,
+      cb as ((err?: Error | null) => void) | undefined,
+    )
   }
   process.on('beforeExit', (code) => {
     if (!suspicious.length) return

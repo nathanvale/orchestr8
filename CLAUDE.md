@@ -9,8 +9,9 @@
 
 Before using any Wallaby tools (mcp**wallaby**\*), ALWAYS first verify Wallaby
 is active by calling `mcp__wallaby__wallaby_allTests`. If it returns "No data
-available", inform the user that Wallaby needs to be started in their IDE/editor
-before proceeding. Offer to use standard Bash test commands as an alternative.
+available", STOP immediately and inform the user that Wallaby MUST be started in
+their IDE/editor before any test operations can proceed. DO NOT offer
+alternatives or proceed with standard test commands.
 
 ## USE SUB-AGENTS FOR CONTEXT OPTIMIZATION
 

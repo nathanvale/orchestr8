@@ -1,5 +1,5 @@
 import { execSync } from 'node:child_process'
-import { existsSync, readFileSync } from 'node:fs'
+import { existsSync, readFileSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, test } from 'vitest'
 
@@ -181,7 +181,7 @@ describe('ADHD Monorepo Integration - Post Cleanup', () => {
 
       // Should build all packages consistently
       const packagesDir = join(PROJECT_ROOT, 'packages')
-      const packageDirs = ['utils', 'claude-hooks', 'voice-vault']
+      const packageDirs = ['utils', 'quality-check', 'voice-vault']
 
       packageDirs.forEach((packageName) => {
         const distPath = join(packagesDir, packageName, 'dist')
@@ -222,7 +222,7 @@ describe('ADHD Monorepo Integration - Post Cleanup', () => {
   describe('Package Standardization', () => {
     test('should have consistent 4-command pattern', () => {
       const packagesDir = join(PROJECT_ROOT, 'packages')
-      const packageDirs = ['utils', 'claude-hooks', 'voice-vault']
+      const packageDirs = ['utils', 'quality-check', 'voice-vault']
 
       packageDirs.forEach((packageName) => {
         const packageJsonPath = join(packagesDir, packageName, 'package.json')
@@ -247,7 +247,7 @@ describe('ADHD Monorepo Integration - Post Cleanup', () => {
       expect(result.success).toBe(true)
 
       const packagesDir = join(PROJECT_ROOT, 'packages')
-      const packageDirs = ['utils', 'claude-hooks', 'voice-vault']
+      const packageDirs = ['utils', 'quality-check', 'voice-vault']
 
       packageDirs.forEach((packageName) => {
         const distPath = join(packagesDir, packageName, 'dist')
@@ -255,9 +255,9 @@ describe('ADHD Monorepo Integration - Post Cleanup', () => {
           expect(existsSync(distPath)).toBe(true)
 
           // Should have both JS and declaration files from tsup
-          const distFiles = require('fs').readdirSync(distPath, { recursive: true })
-          const hasJs = distFiles.some((file: string) => file.endsWith('.js'))
-          const hasDts = distFiles.some((file: string) => file.endsWith('.d.ts'))
+          const distFiles = readdirSync(distPath, { recursive: true }) as string[]
+          const hasJs = distFiles.some((file) => file.endsWith('.js'))
+          const hasDts = distFiles.some((file) => file.endsWith('.d.ts'))
 
           expect(hasJs).toBe(true)
           expect(hasDts).toBe(true)

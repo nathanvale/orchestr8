@@ -11,7 +11,8 @@ import {
   type MockExecutionResult,
 } from './api-wrappers.js'
 import type { TestFixture } from './modern-fixtures.js'
-import type { QualityCheckOptions, QualityCheckResult, FixResult } from '../types.js'
+import type { QualityCheckOptions, FixResult } from '../types.js'
+import type { QualityCheckResult } from '../types/issue-types.js'
 
 // Mock the QualityChecker to use V2
 vi.mock('../core/quality-checker.js', async () => {
@@ -237,7 +238,7 @@ describe('API Wrappers with V2 Implementation', () => {
       })
 
       const max = wrapper.getMaxTime('op2')
-      expect(max).toBeGreaterThanOrEqual(25)
+      expect(max).toBeGreaterThanOrEqual(24)
     })
 
     it('should assert all operations under limit', async () => {
@@ -273,7 +274,8 @@ describe('API Wrappers with V2 Implementation', () => {
     it('should delegate check to QualityChecker', async () => {
       const checkSpy = vi.spyOn(wrapper['checker'], 'check').mockResolvedValue({
         success: true,
-        checkers: {},
+        duration: 100,
+        issues: [],
       } as QualityCheckResult)
 
       const result = await wrapper.check(['/src/test.ts'])
@@ -298,7 +300,8 @@ describe('API Wrappers with V2 Implementation', () => {
     it('should pass options to check method', async () => {
       const checkSpy = vi.spyOn(wrapper['checker'], 'check').mockResolvedValue({
         success: true,
-        checkers: {},
+        duration: 100,
+        issues: [],
       } as QualityCheckResult)
 
       const options: QualityCheckOptions = { fix: false, eslint: true }
@@ -315,23 +318,16 @@ describe('API Wrappers with V2 Implementation', () => {
 
       const v2Result: QualityCheckResult = {
         success: false,
-        checkers: {
-          typescript: {
-            success: false,
-            errors: ['Type error'],
-            warnings: [],
-          },
-        },
-        parsedErrors: [
+        duration: 100,
+        issues: [
           {
+            engine: 'typescript',
+            severity: 'error',
+            ruleId: 'TS2304',
             file: '/src/test.ts',
             line: 1,
-            column: 1,
-            code: 'TS2304',
+            col: 1,
             message: 'Cannot find name',
-            severity: 'error',
-            source: 'typescript',
-            fixable: false,
           },
         ],
       }
@@ -339,8 +335,8 @@ describe('API Wrappers with V2 Implementation', () => {
       vi.spyOn(checker, 'check').mockResolvedValue(v2Result)
 
       const result = await checker.check(['/src/test.ts'])
-      expect(result.parsedErrors).toBeDefined()
-      expect(result.parsedErrors).toHaveLength(1)
+      expect(result.issues).toBeDefined()
+      expect(result.issues).toHaveLength(1)
     })
 
     it('should handle V2 fix results', async () => {

@@ -183,7 +183,7 @@ Test changeset for validation
 
     test('should validate package dependencies for version bumping', () => {
       // Check that workspace packages can be versioned together
-      const packages = ['@template/utils', '@template/claude-hooks', '@template/voice-vault']
+      const packages = ['@template/utils', '@template/quality-check', '@template/voice-vault']
 
       packages.forEach((packageName) => {
         const packageDir = packageName.replace('@template/', 'packages/')

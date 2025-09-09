@@ -20,7 +20,7 @@ export async function runGitHook(options: GitHookOptions = {}): Promise<void> {
     // Use provided files from lint-staged or get staged files
     const filesToCheck = options.files || getStagedFiles()
 
-    // Filter for checkable files (JS/TS)
+    // Filter for checkable files (JS/TS only for git hooks)
     const checkableFiles = filesToCheck.filter((file) => /\.(js|jsx|ts|tsx)$/.test(file))
 
     if (checkableFiles.length === 0) {

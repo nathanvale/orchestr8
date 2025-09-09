@@ -531,7 +531,7 @@ function readStdin(): Promise<string> {
  * Check if file type is supported for quality checking
  */
 function isSupportedFileType(filePath: string): boolean {
-  return /\.(js|jsx|ts|tsx)$/.test(filePath)
+  return /\.(js|jsx|ts|tsx|md)$/.test(filePath)
 }
 
 /**

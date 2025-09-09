@@ -3,22 +3,27 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": ["dist/**", ".tsbuildinfo"],
-      "cache": true
+      "outputs": ["dist/**", "dist-node/**", "dist-types/**", ".tsbuildinfo"],
+      "cache": true,
+      "inputs": ["$TURBO_DEFAULT$", "!**/*.test.ts", "!**/*.spec.ts", "!tests/**"]
     },
     "test": {
       "dependsOn": ["^build"],
       "outputs": ["coverage/**"],
-      "cache": true
+      "cache": true,
+      "inputs": ["$TURBO_DEFAULT$", "vitest.config.ts"],
+      "env": ["NODE_ENV"]
     },
     "lint": {
-      "outputs": [".eslintcache/**", "../../.eslintcache/**"],
-      "cache": true
+      "outputs": [".eslintcache"],
+      "cache": true,
+      "inputs": ["$TURBO_DEFAULT$", "eslint.config.js"]
     },
     "typecheck": {
       "dependsOn": ["^typecheck"],
       "outputs": [],
-      "cache": true
+      "cache": true,
+      "inputs": ["$TURBO_DEFAULT$", "src/**/*.{ts,tsx}"]
     },
     "clean": {
       "cache": false
@@ -26,6 +31,11 @@
     "dev": {
       "cache": false,
       "persistent": true
+    },
+    "test:dist": {
+      "dependsOn": ["^build"],
+      "cache": true,
+      "inputs": ["dist/**", "dist-node/**", "dist-types/**"]
     }
   },
   "globalDependencies": [
@@ -35,7 +45,8 @@
     ".changeset/config.json",
     "eslint.config.js",
     "vitest.config.ts",
-    "turbo.json*"
+    "turbo.json*",
+    ".env*"
   ],
   "globalEnv": [
     "NODE_ENV",
@@ -53,7 +64,6 @@
     "enabled": true,
     "signature": false,
     "preflight": true,
-    "timeout": 30,
-    "uploadTimeout": 60
+    "timeout": 30
   }
 }

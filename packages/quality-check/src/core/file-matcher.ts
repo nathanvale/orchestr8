@@ -205,11 +205,11 @@ export class FileMatcher {
   }
 
   /**
-   * Check if a file is TypeScript or JavaScript
+   * Check if a file is supported (TypeScript, JavaScript, or Markdown)
    */
   private isTypeScriptOrJavaScriptFile(file: string): boolean {
     const ext = path.extname(file).toLowerCase()
-    return ['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs'].includes(ext)
+    return ['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs', '.md'].includes(ext)
   }
 
   /**
@@ -251,6 +251,13 @@ export class FileMatcher {
       .replace(/\*/g, '[^/]*')
       .replace(/\?/g, '.')
 
+    // If pattern ends with /, it's a directory pattern - match anything inside it
+    if (pattern.endsWith('/')) {
+      const regex = new RegExp(`^${regexPattern}`)
+      return regex.test(filePath)
+    }
+
+    // Otherwise, match exact file or directory
     const regex = new RegExp(`^${regexPattern}($|/)`)
     return regex.test(filePath)
   }
