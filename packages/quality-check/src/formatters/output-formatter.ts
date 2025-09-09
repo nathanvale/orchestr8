@@ -267,7 +267,7 @@ export class OutputFormatter {
 
     const lines: string[] = []
     lines.push('')
-    lines.push('🚫 BLOCKING: You must fix these issues before proceeding:')
+    lines.push('🚫 BLOCKING: You MUST employ the quality check fixer IMMEDIATELY:')
     lines.push('')
     lines.push(formattedIssues)
     lines.push('')

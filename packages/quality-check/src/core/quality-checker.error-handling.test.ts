@@ -31,7 +31,7 @@ describe('QualityChecker Error Handling', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.resetModules()
-    checker = new QualityChecker()
+    // Don't create checker here - create it in each test after mocks are set up
     consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
     consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
   })
@@ -49,6 +49,7 @@ describe('QualityChecker Error Handling', () => {
       const mockLoad = vi.fn().mockRejectedValue(new Error('Config load failed'))
       vi.mocked(ConfigLoader).prototype.load = mockLoad
 
+      checker = new QualityChecker()
       const result = await checker.check(['test.ts'], {})
 
       expect(result.success).toBe(false)
@@ -70,6 +71,7 @@ describe('QualityChecker Error Handling', () => {
       const mockResolveFiles = vi.fn().mockRejectedValue(new Error('File resolution failed'))
       vi.mocked(FileMatcher).prototype.resolveFiles = mockResolveFiles
 
+      checker = new QualityChecker()
       const result = await checker.check(['test.ts'], {})
 
       expect(result.success).toBe(false)
@@ -93,6 +95,7 @@ describe('QualityChecker Error Handling', () => {
       const mockCheck = vi.fn().mockRejectedValue(new Error('TypeScript engine failed'))
       vi.mocked(TypeScriptEngine).prototype.check = mockCheck
 
+      checker = new QualityChecker()
       const result = await checker.check(['test.ts'], {})
 
       expect(result.success).toBe(false)
@@ -125,6 +128,7 @@ describe('QualityChecker Error Handling', () => {
         fixedCount: 0,
       })
 
+      checker = new QualityChecker()
       // Run checks through the private method indirectly via check
       const result = await checker.check(['test.ts'], {})
 
@@ -135,6 +139,7 @@ describe('QualityChecker Error Handling', () => {
 
   describe('Exception Handling', () => {
     it('should handle null/undefined file arrays gracefully', async () => {
+      checker = new QualityChecker()
       const resultNull = await checker.check(null as any, {})
       expect(resultNull.success).toBe(false)
       expect(resultNull.issues.length).toBeGreaterThan(0)
@@ -157,6 +162,7 @@ describe('QualityChecker Error Handling', () => {
 
       vi.mocked(FileMatcher).prototype.resolveFiles = vi.fn().mockResolvedValue([])
 
+      checker = new QualityChecker()
       const result = await checker.check([], {})
 
       expect(result.success).toBe(true)
@@ -172,6 +178,7 @@ describe('QualityChecker Error Handling', () => {
         prettier: undefined,
       } as any
 
+      checker = new QualityChecker()
       const result = await checker.check(['test.ts'], malformedOptions)
 
       // Should not crash, should return a result
@@ -200,6 +207,7 @@ describe('QualityChecker Error Handling', () => {
       const { TypeScriptEngine } = await import('../engines/typescript-engine.js')
       vi.mocked(TypeScriptEngine).prototype.check = vi.fn().mockRejectedValue(timeoutError)
 
+      checker = new QualityChecker()
       const result = await checker.check(['test.ts'], { timeout: 1 })
 
       expect(result.success).toBe(false)
@@ -232,6 +240,7 @@ describe('QualityChecker Error Handling', () => {
         .fn()
         .mockRejectedValue(new ToolMissingError('TypeScript'))
 
+      checker = new QualityChecker()
       const result = await checker.check(['test.ts'], {})
 
       // Should handle gracefully without crashing
@@ -257,6 +266,7 @@ describe('QualityChecker Error Handling', () => {
         .fn()
         .mockRejectedValue(new ToolMissingError('ESLint'))
 
+      checker = new QualityChecker()
       const result = await checker.fix(['test.ts'])
 
       // Should not count missing tools as failures
@@ -292,6 +302,7 @@ describe('QualityChecker Error Handling', () => {
         fixedCount: 1,
       })
 
+      checker = new QualityChecker()
       const result = await checker.fix(['test.ts'])
 
       expect(result.success).toBe(true)
@@ -342,6 +353,7 @@ describe('QualityChecker Error Handling', () => {
         fixedCount: 0,
       })
 
+      checker = new QualityChecker()
       const result = await checker.check(['test.ts'], {})
 
       // Should have results from working engines
@@ -355,6 +367,7 @@ describe('QualityChecker Error Handling', () => {
       // Throw a non-Error object
       vi.mocked(ConfigLoader).prototype.load = vi.fn().mockRejectedValue('string error')
 
+      checker = new QualityChecker()
       const result = await checker.check(['test.ts'], {})
 
       expect(result.success).toBe(false)
@@ -373,6 +386,7 @@ describe('QualityChecker Error Handling', () => {
 
       vi.mocked(ConfigLoader).prototype.load = vi.fn().mockRejectedValue(error)
 
+      checker = new QualityChecker()
       const result = await checker.check(['test.ts'], {})
 
       expect(result.success).toBe(false)
@@ -411,6 +425,7 @@ describe('QualityChecker Error Handling', () => {
         .fn()
         .mockResolvedValue({ success: true, issues: [], fixedCount: 0 })
 
+      checker = new QualityChecker()
       const result = await checker.check(largeFileList, {})
 
       expect(result).toBeDefined()
@@ -444,6 +459,7 @@ describe('QualityChecker Error Handling', () => {
         .fn()
         .mockResolvedValue({ success: true, issues: [], fixedCount: 0 })
 
+      checker = new QualityChecker()
       // Run concurrent operations
       const [checkResult, fixResult] = await Promise.all([
         checker.check(['test.ts'], {}),
@@ -474,6 +490,7 @@ describe('QualityChecker Error Handling', () => {
       const { TypeScriptEngine } = await import('../engines/typescript-engine.js')
       vi.mocked(TypeScriptEngine).prototype.check = vi.fn().mockRejectedValue(memoryError)
 
+      checker = new QualityChecker()
       const result = await checker.check(['test.ts'], {})
 
       expect(result.success).toBe(false)

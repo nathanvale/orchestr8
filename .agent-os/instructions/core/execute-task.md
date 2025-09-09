@@ -30,7 +30,7 @@ VERIFY task-specific tests ☐ Step 7: Mark complete - UPDATE tasks.md
 **IMPORTANT**: All steps must be completed in order. Steps 3-4 require subagent
 invocation.
 
-🚨 **CRITICAL INTERRUPT RULE - ACTIVE DURING FILE OPERATIONS** 🚨
+🚨 **CRITICAL RULE - ACTIVE DURING FILE OPERATIONS** 🚨
 
 IF you see "🚫 BLOCKING" or error code 2 during Step 5 file modifications: →
 STOP IMMEDIATELY → INVOKE quality-check-fixer subagent  
