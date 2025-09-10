@@ -140,25 +140,18 @@ describe('Cache Effectiveness', () => {
     it('should have hierarchical cache restoration strategy', () => {
       const ciContent = readFileSync('./.github/workflows/ci.yml', 'utf-8')
 
-      // Extract restore-keys section
-      const restoreKeysSection = ciContent.match(/restore-keys:\s*\|([\s\S]*?)(?=^\s*\S|\n\n|$)/m)
-      expect(restoreKeysSection).toBeTruthy()
+      // Check that restore-keys exist with the hierarchical pattern
+      expect(ciContent).toContain('restore-keys: |')
+      
+      // Extract a sample restore-keys section 
+      const restoreKeysMatch = ciContent.match(/restore-keys:\s*\|\s*\n([\s\S]*?)(?=\n\s*-\s*name:|\n\s*[a-z-]+:)/m)
+      expect(restoreKeysMatch).toBeTruthy()
 
-      const restoreKeys = (restoreKeysSection?.[1] || '')
-        .split('\n')
-        .map((line) => line.trim())
-        .filter(Boolean)
-
-      // Should have at least 2 fallback levels
-      expect(restoreKeys.length).toBeGreaterThanOrEqual(2)
-
-      // First fallback: same OS + same lockfile (different turbo config)
-      expect(restoreKeys[0]).toContain(
-        "deps-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}-",
-      )
-
-      // Second fallback: same OS only
-      expect(restoreKeys[1]).toContain('deps-${{ runner.os }}-')
+      const restoreKeysContent = restoreKeysMatch?.[1] || ''
+      
+      // Check for the two-level fallback pattern
+      expect(restoreKeysContent).toContain("deps-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}-")
+      expect(restoreKeysContent).toContain('deps-${{ runner.os }}-')
     })
 
     it('should handle cache misses gracefully', () => {

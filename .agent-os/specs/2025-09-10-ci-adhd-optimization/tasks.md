@@ -32,15 +32,15 @@
   - [x] 3.7 Add duration and performance metrics to summaries
   - [x] 3.8 Verify visual feedback appears without clicking into logs
 
-- [ ] 4. Optimize Caching and Performance
-  - [ ] 4.1 Write tests for cache effectiveness
-  - [ ] 4.2 Fix dependency installation to check cache-hit properly
-  - [ ] 4.3 Implement smart cache keys with proper restore fallbacks
-  - [ ] 4.4 Add performance monitoring script with thresholds
-  - [ ] 4.5 Remove misleading scripts (governance, lint:deep, build:perf:guard)
-  - [ ] 4.6 Add honest replacement scripts with real functionality
-  - [ ] 4.7 Configure --prefer-offline for faster installs
-  - [ ] 4.8 Verify cache hit rate exceeds 80% for unchanged dependencies
+- [x] 4. Optimize Caching and Performance
+  - [x] 4.1 Write tests for cache effectiveness
+  - [x] 4.2 Fix dependency installation to check cache-hit properly
+  - [x] 4.3 Implement smart cache keys with proper restore fallbacks
+  - [x] 4.4 Add performance monitoring script with thresholds
+  - [x] 4.5 Remove misleading scripts (governance, lint:deep, build:perf:guard)
+  - [x] 4.6 Add honest replacement scripts with real functionality
+  - [x] 4.7 Configure --prefer-offline for faster installs
+  - [x] 4.8 Verify cache hit rate exceeds 80% for unchanged dependencies
 
 - [ ] 5. Implement ADHD-Specific Optimizations
   - [ ] 5.1 Write tests for cognitive load reducers
