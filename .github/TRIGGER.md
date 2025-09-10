@@ -1,0 +1,1 @@
+trigger: synchronize PR workflow
