@@ -160,7 +160,9 @@ describe('GitHub Actions ADHD CI Workflow Validation', () => {
     it('should_use_valid_github_context_expressions', () => {
       // Test expressions in ci-status job
       const statusJob = workflow.jobs['ci-status']
-      const checkStep = statusJob.steps.find((step) => step.name === 'Generate Enhanced Status Report')
+      const checkStep = statusJob.steps.find(
+        (step) => step.name === 'Generate Enhanced Status Report',
+      )
 
       expect(checkStep?.run).toContain('${{ needs.quick-tests.result }}')
       expect(checkStep?.run).toContain('${{ needs.focused-tests.result }}')

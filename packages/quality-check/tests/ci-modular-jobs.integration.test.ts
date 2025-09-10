@@ -194,7 +194,14 @@ describe('ADHD CI Modular Jobs Integration', () => {
 
     it('should have all quality jobs complete within 5 minutes', async () => {
       const workflow = await loadActualADHDWorkflow()
-      const fiveMinuteJobs = ['focused-tests', 'format', 'lint', 'typecheck', 'build', 'commit-lint']
+      const fiveMinuteJobs = [
+        'focused-tests',
+        'format',
+        'lint',
+        'typecheck',
+        'build',
+        'commit-lint',
+      ]
 
       for (const jobId of fiveMinuteJobs) {
         const job = workflow.jobs[jobId]
@@ -219,7 +226,9 @@ describe('ADHD CI Modular Jobs Integration', () => {
     it('should check results from all dependent jobs', async () => {
       const workflow = await loadActualADHDWorkflow()
       const ciStatusJob = workflow.jobs['ci-status']
-      const checkStatusStep = ciStatusJob.steps.find((step) => step.name === 'Generate Enhanced Status Report')
+      const checkStatusStep = ciStatusJob.steps.find(
+        (step) => step.name === 'Generate Enhanced Status Report',
+      )
 
       expect(checkStatusStep).toBeDefined()
       expect(checkStatusStep!.run).toContain('needs.quick-tests.result')
