@@ -753,3 +753,4 @@ ${statusBadge}
           # Simplified: Exit with error if pipeline failed, otherwise show success
           [[ "${{ steps.status-report.outputs.overall-status }}" == "failure" ]] && echo "::error::❌ CI pipeline failed - check the status report above" && exit 1
           echo "✅ All CI checks passed! Pipeline completed successfully."
+
