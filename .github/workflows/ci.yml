@@ -155,12 +155,9 @@ jobs:
 
       - name: Check Format
         run: |
+          # Simplified: Check changed files count and run appropriate format command
           CHANGED=$(git diff --name-only --diff-filter=ACMR origin/${{ github.base_ref }}... 2>/dev/null | wc -l | tr -d ' ')
-          if [ "$CHANGED" -gt 0 ] && [ "$CHANGED" -lt 100 ]; then
-            pnpm run format:changed || pnpm run format:check
-          else
-            pnpm run format:check
-          fi
+          [ "$CHANGED" -gt 0 ] && [ "$CHANGED" -lt 100 ] && pnpm run format:changed || pnpm run format:check
 
   typecheck:
     name: 📝 Types (5m)
@@ -391,7 +388,7 @@ jobs:
           name: codecov-${{ github.sha }}
 
   security:
-    name: Security Scan
+    name: 🔒 Security Scan (10m)
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -482,8 +479,9 @@ jobs:
           sarif_file: "trivy-results.sarif"
 
   commitlint:
-    name: Commit Lint
+    name: 📋 Commit Lint (5m)
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     if: github.event_name == 'pull_request'
     steps:
       - name: Checkout
@@ -513,8 +511,9 @@ jobs:
             --verbose
 
   bundle:
-    name: Bundle Analysis
+    name: 📦 Bundle Analysis (10m)
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     if: github.event_name == 'pull_request'
     steps:
       - name: Checkout PR
@@ -751,9 +750,6 @@ ${statusBadge}
       - name: Check Overall Pipeline Status
         if: always()
         run: |
-          if [[ "${{ steps.status-report.outputs.overall-status }}" == "failure" ]]; then
-            echo "::error::❌ CI pipeline failed - check the status report above"
-            exit 1
-          fi
-          
+          # Simplified: Exit with error if pipeline failed, otherwise show success
+          [[ "${{ steps.status-report.outputs.overall-status }}" == "failure" ]] && echo "::error::❌ CI pipeline failed - check the status report above" && exit 1
           echo "✅ All CI checks passed! Pipeline completed successfully."
