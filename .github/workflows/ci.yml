@@ -419,49 +419,49 @@ jobs:
           pnpm audit --json > audit.json 2>&1 || true
 
           # Parse JSON for accurate vulnerability detection
-          node -e "
-            const fs = require('fs');
+          node -e '
+            const fs = require("fs");
             let audit;
             try {
-              const content = fs.readFileSync('audit.json', 'utf8');
+              const content = fs.readFileSync("audit.json", "utf8");
               // Try to extract JSON from potential mixed output
-              const jsonStart = content.indexOf('{');
+              const jsonStart = content.indexOf("{");
               if (jsonStart >= 0) {
                 audit = JSON.parse(content.substring(jsonStart));
               } else {
-                console.log('No JSON output from audit, assuming no vulnerabilities');
+                console.log("No JSON output from audit, assuming no vulnerabilities");
                 process.exit(0);
               }
             } catch (e) {
-              console.log('Could not parse audit output, assuming no vulnerabilities');
+              console.log("Could not parse audit output, assuming no vulnerabilities");
               process.exit(0);
             }
             
             const vulns = audit.vulnerabilities || {};
-            const critical = Object.values(vulns).filter(v => v.severity === 'critical').length;
-            const high = Object.values(vulns).filter(v => v.severity === 'high').length;
-            const moderate = Object.values(vulns).filter(v => v.severity === 'moderate').length;
-            const low = Object.values(vulns).filter(v => v.severity === 'low').length;
+            const critical = Object.values(vulns).filter(v => v.severity === "critical").length;
+            const high = Object.values(vulns).filter(v => v.severity === "high").length;
+            const moderate = Object.values(vulns).filter(v => v.severity === "moderate").length;
+            const low = Object.values(vulns).filter(v => v.severity === "low").length;
             
-            console.log('Security Audit Results:');
-            console.log(\`  Critical: \${critical}\`);
-            console.log(\`  High: \${high}\`);
-            console.log(\`  Moderate: \${moderate}\`);
-            console.log(\`  Low: \${low}\`);
+            console.log("Security Audit Results:");
+            console.log(`  Critical: ${critical}`);
+            console.log(`  High: ${high}`);
+            console.log(`  Moderate: ${moderate}`);
+            console.log(`  Low: ${low}`);
             
             // Generate GitHub annotations
             if (critical > 0) {
-              console.log(\`::error::Found \${critical} critical vulnerabilities\`);
+              console.log(`::error::Found ${critical} critical vulnerabilities`);
             }
             if (high > 0) {
-              console.log(\`::warning::Found \${high} high severity vulnerabilities\`);
+              console.log(`::warning::Found ${high} high severity vulnerabilities`);
             }
             
             // Fail if critical or high vulnerabilities exist
             if (critical > 0 || high > 0) {
               process.exit(1);
             }
-          "
+          '
 
       - name: Run Trivy Security Scan
         uses: aquasecurity/trivy-action@0.28.0
