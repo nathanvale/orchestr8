@@ -75,7 +75,7 @@ jobs:
 
       - name: Conditional Format Check
         run: |
-          CHANGED=$(git diff --name-only --diff-filter=ACMR origin/main... 2>/dev/null | wc -l | tr -d ' ')
+          CHANGED=$(git diff --name-only --diff-filter=ACMR origin/${{ github.base_ref }}... 2>/dev/null | wc -l | tr -d ' ')
           echo "Changed files count: $CHANGED"
           # Fallback to full check if git diff fails or returns 0
           if [ "$CHANGED" -gt 0 ] && [ "$CHANGED" -lt 600 ]; then

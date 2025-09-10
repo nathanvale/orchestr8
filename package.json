@@ -54,7 +54,7 @@
     "sync:deps": "pnpm update vitest @vitest/coverage-v8 @vitest/ui",
     "version-packages": "changeset version",
     "lint:deep": "pnpm lint",
-    "format:changed": "prettier --write $(git diff --name-only --diff-filter=ACMR origin/main...)",
+    "format:changed": "git diff --name-only --diff-filter=ACMR origin/HEAD... | xargs -r prettier --check",
     "build:perf:guard": "pnpm build && echo 'Performance check passed'",
     "guardrails:quick": "pnpm test:quick",
     "guardrails": "pnpm test",
