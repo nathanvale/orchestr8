@@ -46,6 +46,7 @@ function parseWorkflowYaml(yamlContent: string): any {
           'name': '',
           'timeout-minutes': 0,
           'if': '',
+          'needs': '',
         }
         inSteps = false
         currentStepIndex = -1
@@ -63,6 +64,16 @@ function parseWorkflowYaml(yamlContent: string): any {
       } else if (trimmed.startsWith('if:')) {
         const ifValue = trimmed.split('if:')[1]?.trim()
         result.jobs[currentJob].if = ifValue || ''
+      } else if (trimmed.startsWith('needs:')) {
+        const needsValue = trimmed.split('needs:')[1]?.trim()
+        // Handle both single values and arrays
+        if (needsValue?.startsWith('[') && needsValue?.endsWith(']')) {
+          // Array format: [job1, job2, job3]
+          result.jobs[currentJob].needs = needsValue
+        } else {
+          // Single value format: job1
+          result.jobs[currentJob].needs = needsValue || ''
+        }
       } else if (trimmed === 'steps:') {
         inSteps = true
       }
@@ -75,6 +86,7 @@ function parseWorkflowYaml(yamlContent: string): any {
         name: '',
         run: '',
         if: '',
+        uses: '',
       }
 
       const stepContent = trimmed.substring(2).trim()
@@ -83,6 +95,9 @@ function parseWorkflowYaml(yamlContent: string): any {
         result.jobs[currentJob].steps[currentStepIndex].name = stepNameValue
           ? stepNameValue.replace(/['"]/g, '')
           : ''
+      } else if (stepContent.startsWith('uses:')) {
+        const usesValue = stepContent.split('uses:')[1]?.trim()
+        result.jobs[currentJob].steps[currentStepIndex].uses = usesValue || ''
       }
     }
 
@@ -98,6 +113,9 @@ function parseWorkflowYaml(yamlContent: string): any {
       } else if (trimmed.startsWith('if:')) {
         const ifValue = trimmed.split('if:')[1]?.trim()
         currentStep.if = ifValue || ''
+      } else if (trimmed.startsWith('uses:')) {
+        const usesValue = trimmed.split('uses:')[1]?.trim()
+        currentStep.uses = usesValue || ''
       }
     }
 
@@ -199,19 +217,57 @@ describe('Cognitive Load Reducers', () => {
 
   describe('5.2 Limit Each Job to Maximum 3 Steps', () => {
     it('should enforce 3-step maximum for non-setup steps', () => {
-      const jobsToValidate = ['lint', 'format', 'typecheck', 'build', 'test-quick', 'test-focused']
+      const jobsToValidate = [
+        'lint',
+        'format',
+        'typecheck',
+        'build',
+        'quick-tests',
+        'focused-tests',
+      ]
 
       jobsToValidate.forEach((jobKey) => {
         if (workflow.jobs[jobKey]) {
           const job = workflow.jobs[jobKey]
-          const nonSetupSteps = job.steps.filter(
-            (step: any) =>
-              !step.name.includes('Checkout') &&
-              !step.name.includes('Setup') &&
-              !step.name.includes('Cache') &&
-              !step.name.includes('Install') &&
-              !step.name.includes('Node.js'),
-          )
+          const nonSetupSteps = job.steps.filter((step: any) => {
+            // Check if step name indicates setup
+            if (step.name) {
+              if (
+                step.name.includes('Checkout') ||
+                step.name.includes('Setup') ||
+                step.name.includes('Cache') ||
+                step.name.includes('Install') ||
+                step.name.includes('Node.js')
+              ) {
+                return false
+              }
+            }
+
+            // Check if uses field indicates setup
+            if (step.uses) {
+              if (
+                step.uses.includes('actions/checkout') ||
+                step.uses.includes('actions/setup-node') ||
+                step.uses.includes('pnpm/action-setup') ||
+                step.uses.includes('actions/cache')
+              ) {
+                return false
+              }
+            }
+
+            // Check if run command indicates setup
+            if (step.run) {
+              if (
+                step.run.includes('pnpm install') ||
+                step.run.includes('npm install') ||
+                step.run.includes('yarn install')
+              ) {
+                return false
+              }
+            }
+
+            return true
+          })
 
           expect(
             nonSetupSteps.length,
@@ -227,9 +283,8 @@ describe('Cognitive Load Reducers', () => {
         'format': 'format',
         'typecheck': 'type',
         'build': 'build',
-        'test-quick': 'quick',
-        'test-focused': 'focused',
-        'test-full': 'full',
+        'quick-tests': 'quick',
+        'focused-tests': 'focused',
       }
 
       Object.entries(jobResponsibilities).forEach(([jobKey, responsibility]) => {
@@ -289,7 +344,7 @@ describe('Cognitive Load Reducers', () => {
 
   describe('5.4 Add Clear Timeout Limits in Job Names', () => {
     it('should include timeout duration in job names', () => {
-      const timedJobs = ['lint', 'format', 'typecheck', 'build', 'test-quick', 'test-focused']
+      const timedJobs = ['lint', 'format', 'typecheck', 'build', 'quick-tests', 'focused-tests']
 
       timedJobs.forEach((jobKey) => {
         if (workflow.jobs[jobKey]) {
@@ -314,10 +369,9 @@ describe('Cognitive Load Reducers', () => {
         'lint': { min: 3, max: 5 },
         'format': { min: 3, max: 5 },
         'typecheck': { min: 3, max: 5 },
-        'build': { min: 5, max: 10 },
-        'test-quick': { min: 1, max: 2 },
-        'test-focused': { min: 3, max: 5 },
-        'test-full': { min: 10, max: 20 },
+        'build': { min: 3, max: 5 },
+        'quick-tests': { min: 1, max: 2 },
+        'focused-tests': { min: 3, max: 5 },
       }
 
       Object.entries(expectedTimeouts).forEach(([jobKey, range]) => {
@@ -349,7 +403,7 @@ describe('Cognitive Load Reducers', () => {
     })
 
     it('should have fix command mapping in status job', () => {
-      const statusJob = workflow.jobs['status']
+      const statusJob = workflow.jobs['ci-status']
       if (statusJob) {
         const statusSteps = statusJob.steps.map((s: any) => s.name).join(' ')
 
@@ -375,7 +429,7 @@ describe('Cognitive Load Reducers', () => {
     })
 
     it('should show job dependencies clearly', () => {
-      const dependentJobs = ['test-focused', 'test-full', 'status']
+      const dependentJobs = ['focused-tests', 'ci-status']
 
       dependentJobs.forEach((jobKey) => {
         if (workflow.jobs[jobKey]) {
@@ -389,7 +443,7 @@ describe('Cognitive Load Reducers', () => {
 
   describe('5.7 Create Failure Recovery Hints', () => {
     it('should provide specific recovery commands for failures', () => {
-      const statusJob = workflow.jobs['status']
+      const statusJob = workflow.jobs['ci-status']
 
       if (statusJob) {
         const hasFailureHandling = statusJob.steps.some(
@@ -464,8 +518,8 @@ describe('Cognitive Load Reducers', () => {
         }
       })
 
-      // Check quick feedback (test-quick job with 1 minute timeout)
-      if (workflow.jobs['test-quick'] && workflow.jobs['test-quick']['timeout-minutes'] <= 2) {
+      // Check quick feedback (quick-tests job with 1 minute timeout)
+      if (workflow.jobs['quick-tests'] && workflow.jobs['quick-tests']['timeout-minutes'] <= 2) {
         metrics.quickFeedback = 10 // High weight for quick feedback
       }
 
@@ -499,7 +553,7 @@ describe('Cognitive Load Reducers', () => {
       )
 
       // Check for status aggregation job
-      instantUnderstanding.hasStatusJob = !!workflow.jobs['status']
+      instantUnderstanding.hasStatusJob = !!workflow.jobs['ci-status']
 
       // Check for clear job naming
       // Check for clear job naming (emoji + descriptive name pattern)

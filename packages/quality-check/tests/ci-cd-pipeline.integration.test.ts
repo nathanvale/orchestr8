@@ -1,422 +1,264 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import * as fs from 'node:fs/promises'
-import * as path from 'node:path'
-import { tmpdir } from 'node:os'
-import { MockEnvironmentFactory, type MockEnvironment } from '../src/test-utils/mock-factory'
+import { describe, it, expect, beforeEach } from 'vitest'
+import {
+  loadActualADHDWorkflow,
+  validateWorkflowStructure,
+  ADHD_CI_JOBS,
+  DEPENDENT_JOBS,
+  type CIWorkflow,
+} from './workflow-validation-helpers'
 
-describe('CI/CD Pipeline Integration', () => {
-  let fixtureDir: string
-  let mockEnv: MockEnvironment
+describe('GitHub Actions ADHD CI Workflow Validation', () => {
+  let workflow: CIWorkflow
 
   beforeEach(async () => {
-    fixtureDir = path.join(tmpdir(), `qc-ci-${Date.now()}`)
-    await fs.mkdir(fixtureDir, { recursive: true })
-    mockEnv = MockEnvironmentFactory.createStandard()
+    workflow = await loadActualADHDWorkflow()
   })
 
-  afterEach(async () => {
-    await fs.rm(fixtureDir, { recursive: true, force: true })
-    // Cleanup mock environment
-    mockEnv.qualityChecker.clear()
-    mockEnv.fileSystem.clear()
-    mockEnv.configLoader.clear()
-  })
-
-  describe('JSON Output Validation', () => {
-    it('should_produce_valid_json_schema_when_format_json_specified', async () => {
-      const testFile = path.join(fixtureDir, 'ci-test.ts')
-      await fs.writeFile(
-        testFile,
-        `
-        const unused: any = 'test';
-        function test() {
-          console.log('test');
-        }
-      `,
-      )
-
-      // Setup mock with mixed issues
-      mockEnv.qualityChecker.setPredefinedResult('ci-test.ts', {
-        filePath: 'ci-test.ts',
-        success: false,
-        issues: [
-          {
-            line: 2,
-            column: 14,
-            message: 'Unexpected any. Specify a different type.',
-            severity: 'error',
-            engine: 'typescript',
-            ruleId: '@typescript-eslint/no-explicit-any',
-          },
-          {
-            line: 2,
-            column: 7,
-            message: "'unused' is assigned a value but never used.",
-            severity: 'error',
-            engine: 'eslint',
-            ruleId: 'no-unused-vars',
-          },
-          {
-            line: 1,
-            column: 1,
-            message: 'File is not formatted with Prettier',
-            severity: 'warning',
-            engine: 'prettier',
-            ruleId: 'format',
-          },
-        ],
-      })
-
-      const result = await mockEnv.qualityChecker.check(['ci-test.ts'])
-
-      // Validate JSON schema structure
-      expect(result).toMatchObject({
-        success: expect.any(Boolean),
-        issues: expect.any(Array),
-        checkers: expect.any(Object),
-      })
-
-      // Should be valid JSON-serializable
-      const jsonString = JSON.stringify(result)
-      const parsed = JSON.parse(jsonString)
-      expect(parsed).toBeDefined()
-      expect(parsed.success).toBe(false)
+  describe('GitHub Actions Workflow Syntax', () => {
+    it('should_have_valid_yaml_syntax', async () => {
+      // If we can load it with js-yaml, it has valid YAML syntax
+      expect(workflow).toBeDefined()
+      expect(typeof workflow).toBe('object')
     })
 
-    it('should_provide_parseable_json_when_errors_exist', async () => {
-      const errorFile = path.join(fixtureDir, 'error-test.ts')
-      await fs.writeFile(
-        errorFile,
-        `
-        const x: unknown = 42;
-        // @ts-expect-error
-        const y: string = x;
-        const unused = 'test';
-      `,
-      )
+    it('should_have_required_root_properties', () => {
+      expect(workflow.name).toBe('ADHD CI')
+      expect(workflow.on).toBeDefined()
+      expect(workflow.jobs).toBeDefined()
+      expect(typeof workflow.jobs).toBe('object')
+    })
 
-      // Setup mock with errors
-      mockEnv.qualityChecker.setPredefinedResult('error-test.ts', {
-        filePath: 'error-test.ts',
-        success: false,
-        issues: [
-          {
-            line: 5,
-            column: 7,
-            message: "'unused' is assigned a value but never used.",
-            severity: 'error',
-            engine: 'eslint',
-            ruleId: 'no-unused-vars',
-          },
-        ],
-      })
-
-      const result = await mockEnv.qualityChecker.check(['error-test.ts'])
-
-      // Should be valid JSON-serializable
-      const jsonString = JSON.stringify(result)
-      const parsed = JSON.parse(jsonString)
-
-      expect(parsed).toMatchObject({
-        success: expect.any(Boolean),
-        issues: expect.any(Array),
-      })
-
-      // Errors should be present and parseable
-      expect(Array.isArray(parsed.issues)).toBe(true)
-      expect(parsed.issues.length).toBeGreaterThan(0)
+    it('should_have_valid_environment_variables', () => {
+      expect(workflow.env).toBeDefined()
+      expect(workflow.env?.NODE_VERSION).toMatch(/^\d+\.\d+\.\d+$/)
+      expect(workflow.env?.PNPM_VERSION).toMatch(/^\d+\.\d+\.\d+$/)
     })
   })
 
-  describe('Performance Monitoring', () => {
-    it('should_complete_check_within_performance_budget', async () => {
-      const testFile = path.join(fixtureDir, 'perf-test.ts')
-      await fs.writeFile(
-        testFile,
-        `
-        export function performanceTest() {
-          return 'fast';
-        }
-      `,
-      )
+  describe('Workflow Structure Validation', () => {
+    it('should_validate_complete_9_job_structure', () => {
+      const validation = validateWorkflowStructure(workflow)
 
-      // Setup mock with successful result
-      mockEnv.qualityChecker.setPredefinedResult('perf-test.ts', {
-        filePath: 'perf-test.ts',
-        success: true,
-        issues: [],
-      })
-
-      const startTime = Date.now()
-      const result = await mockEnv.qualityChecker.check(['perf-test.ts'])
-      const duration = Date.now() - startTime
-
-      expect(result.success).toBe(true)
-      // Mock checks should be very fast
-      expect(duration).toBeLessThan(100)
-    })
-
-    it('should_handle_multiple_files_efficiently', async () => {
-      const files: string[] = []
-
-      // Create multiple test files
-      for (let i = 0; i < 10; i++) {
-        const fileName = `file-${i}.ts`
-        const filePath = path.join(fixtureDir, fileName)
-        await fs.writeFile(filePath, `export const value${i} = ${i};`)
-        files.push(fileName)
-
-        // Setup mock for each file
-        mockEnv.qualityChecker.setPredefinedResult(fileName, {
-          filePath: fileName,
-          success: true,
-          issues: [],
-        })
+      if (!validation.valid) {
+        console.error('Workflow validation errors:', validation.errors)
       }
 
-      const startTime = Date.now()
-      const result = await mockEnv.qualityChecker.check(files)
-      const duration = Date.now() - startTime
+      expect(validation.valid).toBe(true)
+      expect(validation.errors).toHaveLength(0)
+    })
 
-      expect(result.success).toBe(true)
-      expect(result.issues).toHaveLength(0)
-      // Even 10 files should be checked quickly with mocks
-      expect(duration).toBeLessThan(200)
+    it('should_have_exactly_9_jobs_matching_adhd_structure', () => {
+      const jobIds = Object.keys(workflow.jobs)
+      const expectedJobs = Object.keys(ADHD_CI_JOBS)
+
+      expect(jobIds).toHaveLength(9)
+      expect(jobIds.sort()).toEqual(expectedJobs.sort())
+    })
+
+    it('should_have_all_jobs_with_required_github_actions_properties', () => {
+      Object.entries(workflow.jobs).forEach(([_jobId, job]) => {
+        expect(job.name).toBeDefined()
+        expect(job['runs-on']).toBe('ubuntu-latest')
+        expect(job.steps).toBeDefined()
+        expect(Array.isArray(job.steps)).toBe(true)
+        expect(job.steps.length).toBeGreaterThan(0)
+      })
     })
   })
 
-  describe('Error Aggregation', () => {
-    it('should_aggregate_errors_from_multiple_engines', async () => {
-      const testFile = path.join(fixtureDir, 'aggregate-test.ts')
-      await fs.writeFile(
-        testFile,
-        `
-        const unused: any = 'test';
-        function   badly_formatted() {
-          console.log('test')
+  describe('Job Dependencies Validation', () => {
+    it('should_have_setup_job_with_no_dependencies', () => {
+      const setupJob = workflow.jobs.setup
+      expect(setupJob).toBeDefined()
+      expect(setupJob.needs).toBeUndefined()
+    })
+
+    it('should_have_all_dependent_jobs_requiring_setup', () => {
+      DEPENDENT_JOBS.forEach((jobId) => {
+        if (jobId === 'commit-lint') {
+          // commit-lint doesn't depend on setup, it runs independently
+          return
         }
-      `,
+
+        const job = workflow.jobs[jobId]
+        expect(job).toBeDefined()
+        expect(job.needs).toBe('setup')
+      })
+    })
+
+    it('should_have_ci_status_job_depending_on_all_other_jobs', () => {
+      const statusJob = workflow.jobs['ci-status']
+      expect(statusJob).toBeDefined()
+      expect(statusJob.needs).toBeDefined()
+
+      const needs = Array.isArray(statusJob.needs) ? statusJob.needs : [statusJob.needs]
+      expect(needs.sort()).toEqual(DEPENDENT_JOBS.sort())
+    })
+
+    it('should_have_ci_status_job_with_always_condition', () => {
+      const statusJob = workflow.jobs['ci-status']
+      expect(statusJob.if).toBe('always()')
+    })
+  })
+
+  describe('Conditional Logic Validation', () => {
+    it('should_have_commit_lint_only_run_on_pull_requests', () => {
+      const commitLintJob = workflow.jobs['commit-lint']
+      expect(commitLintJob).toBeDefined()
+      expect(commitLintJob.if).toBe("github.event_name == 'pull_request'")
+    })
+
+    it('should_have_setup_job_cache_conditional_install', () => {
+      const setupJob = workflow.jobs.setup
+      const installStep = setupJob.steps.find((step) => step.name === 'Install Dependencies')
+
+      expect(installStep).toBeDefined()
+      expect(installStep?.if).toBe("steps.cache.outputs.cache-hit != 'true'")
+    })
+  })
+
+  describe('Environment Variables Validation', () => {
+    it('should_use_node_version_environment_variable', () => {
+      Object.values(workflow.jobs).forEach((job) => {
+        const setupNodeStep = job.steps.find((step) => step.uses?.startsWith('actions/setup-node@'))
+
+        if (setupNodeStep) {
+          expect(setupNodeStep.with?.['node-version']).toBe('${{ env.NODE_VERSION }}')
+        }
+      })
+    })
+
+    it('should_use_pnpm_version_environment_variable', () => {
+      Object.values(workflow.jobs).forEach((job) => {
+        const setupPnpmStep = job.steps.find((step) => step.uses?.startsWith('pnpm/action-setup@'))
+
+        if (setupPnpmStep) {
+          expect(setupPnpmStep.with?.version).toBe('${{ env.PNPM_VERSION }}')
+        }
+      })
+    })
+  })
+
+  describe('Job Outputs Validation', () => {
+    it('should_have_setup_job_produce_cache_hit_output', () => {
+      const setupJob = workflow.jobs.setup
+      expect(setupJob.outputs).toBeDefined()
+      expect(setupJob.outputs?.['cache-hit']).toBe('${{ steps.cache.outputs.cache-hit }}')
+    })
+
+    it('should_have_cache_step_with_correct_id', () => {
+      const setupJob = workflow.jobs.setup
+      const cacheStep = setupJob.steps.find((step) => step.name === 'Cache Dependencies')
+
+      expect(cacheStep).toBeDefined()
+      expect(cacheStep?.id).toBe('cache')
+      expect(cacheStep?.uses).toMatch(/^actions\/cache@/)
+    })
+  })
+
+  describe('GitHub Actions Expressions Validation', () => {
+    it('should_use_valid_github_context_expressions', () => {
+      // Test expressions in ci-status job
+      const statusJob = workflow.jobs['ci-status']
+      const checkStep = statusJob.steps.find(
+        (step) => step.name === 'Generate Enhanced Status Report',
       )
 
-      // Setup mock with multiple engine errors
-      mockEnv.qualityChecker.setPredefinedResult('aggregate-test.ts', {
-        filePath: 'aggregate-test.ts',
-        success: false,
-        issues: [
-          {
-            line: 2,
-            column: 14,
-            message: 'Unexpected any. Specify a different type.',
-            severity: 'error',
-            engine: 'typescript',
-            ruleId: '@typescript-eslint/no-explicit-any',
-          },
-          {
-            line: 2,
-            column: 7,
-            message: "'unused' is assigned a value but never used.",
-            severity: 'error',
-            engine: 'eslint',
-            ruleId: 'no-unused-vars',
-          },
-          {
-            line: 4,
-            column: 1,
-            message: 'Unexpected console statement.',
-            severity: 'warning',
-            engine: 'eslint',
-            ruleId: 'no-console',
-          },
-          {
-            line: 1,
-            column: 1,
-            message: 'File is not formatted with Prettier',
-            severity: 'warning',
-            engine: 'prettier',
-            ruleId: 'format',
-          },
-        ],
-      })
-
-      const result = await mockEnv.qualityChecker.check(['aggregate-test.ts'])
-
-      expect(result.success).toBe(false)
-
-      // Count issues by engine
-      const engineCounts = result.issues.reduce((acc: Record<string, number>, issue: any) => {
-        acc[issue.engine] = (acc[issue.engine] || 0) + 1
-        return acc
-      }, {})
-
-      expect(engineCounts.typescript).toBe(1)
-      expect(engineCounts.eslint).toBe(2)
-      expect(engineCounts.prettier).toBe(1)
+      expect(checkStep?.run).toContain('${{ needs.quick-tests.result }}')
+      expect(checkStep?.run).toContain('${{ needs.focused-tests.result }}')
+      expect(checkStep?.run).toContain('${{ needs.format.result }}')
+      expect(checkStep?.run).toContain('${{ needs.lint.result }}')
+      expect(checkStep?.run).toContain('${{ needs.typecheck.result }}')
+      expect(checkStep?.run).toContain('${{ needs.build.result }}')
+      expect(checkStep?.run).toContain('${{ needs.commit-lint.result }}')
     })
 
-    it('should_handle_empty_results_gracefully', async () => {
-      const testFile = path.join(fixtureDir, 'empty-test.ts')
-      await fs.writeFile(testFile, 'export const valid = true;')
+    it('should_use_valid_environment_expressions', () => {
+      const expressions = ['${{ env.NODE_VERSION }}', '${{ env.PNPM_VERSION }}']
 
-      // Setup mock with no issues
-      mockEnv.qualityChecker.setPredefinedResult('empty-test.ts', {
-        filePath: 'empty-test.ts',
-        success: true,
-        issues: [],
+      // Check that these expressions are used throughout the workflow
+      const workflowString = JSON.stringify(workflow)
+      expressions.forEach((expr) => {
+        expect(workflowString).toContain(expr)
       })
+    })
 
-      const result = await mockEnv.qualityChecker.check(['empty-test.ts'])
+    it('should_use_valid_cache_key_expressions', () => {
+      const setupJob = workflow.jobs.setup
+      const cacheStep = setupJob.steps.find((step) => step.name === 'Cache Dependencies')
 
-      expect(result.success).toBe(true)
-      expect(result.issues).toHaveLength(0)
-      expect(result).toHaveProperty('checkers')
+      expect(cacheStep?.with?.key).toContain('${{ runner.os }}')
+      expect(cacheStep?.with?.key).toContain("${{ hashFiles('**/pnpm-lock.yaml') }}")
+      expect(cacheStep?.with?.key).toContain("${{ hashFiles('turbo.json*', 'tsconfig*.json') }}")
     })
   })
 
-  describe('Exit Code Scenarios', () => {
-    it('should_return_appropriate_exit_codes_for_different_scenarios', async () => {
-      // Test file with no issues
-      const cleanFile = path.join(fixtureDir, 'clean.ts')
-      await fs.writeFile(cleanFile, 'export const clean = true;')
+  describe('Workflow Triggers Validation', () => {
+    it('should_trigger_on_pull_request_events', () => {
+      expect(workflow.on.pull_request).toBeDefined()
+      expect(workflow.on.pull_request.types).toEqual(['opened', 'synchronize', 'reopened'])
+    })
 
-      mockEnv.qualityChecker.setPredefinedResult('clean.ts', {
-        filePath: 'clean.ts',
-        success: true,
-        issues: [],
-      })
+    it('should_trigger_on_push_to_main_and_develop', () => {
+      expect(workflow.on.push).toBeDefined()
+      expect(workflow.on.push.branches).toEqual(['main', 'develop'])
+    })
 
-      const cleanResult = await mockEnv.qualityChecker.check(['clean.ts'])
-      expect(cleanResult.success).toBe(true)
-
-      // Test file with warnings only
-      const warningFile = path.join(fixtureDir, 'warning.ts')
-      await fs.writeFile(warningFile, 'console.log("warning");')
-
-      mockEnv.qualityChecker.setPredefinedResult('warning.ts', {
-        filePath: 'warning.ts',
-        success: true,
-        issues: [
-          {
-            line: 1,
-            column: 1,
-            message: 'Unexpected console statement.',
-            severity: 'warning',
-            engine: 'eslint',
-            ruleId: 'no-console',
-          },
-        ],
-      })
-
-      const warningResult = await mockEnv.qualityChecker.check(['warning.ts'])
-      expect(warningResult.success).toBe(true)
-
-      // Test file with errors
-      const errorFile = path.join(fixtureDir, 'error.ts')
-      await fs.writeFile(errorFile, 'const unused = 42;')
-
-      mockEnv.qualityChecker.setPredefinedResult('error.ts', {
-        filePath: 'error.ts',
-        success: false,
-        issues: [
-          {
-            line: 1,
-            column: 7,
-            message: "'unused' is assigned a value but never used.",
-            severity: 'error',
-            engine: 'eslint',
-            ruleId: 'no-unused-vars',
-          },
-        ],
-      })
-
-      const errorResult = await mockEnv.qualityChecker.check(['error.ts'])
-      expect(errorResult.success).toBe(false)
+    it('should_support_manual_workflow_dispatch', () => {
+      expect(workflow.on.workflow_dispatch).toBeDefined()
     })
   })
 
-  describe('Parallel Processing', () => {
-    it('should_handle_concurrent_checks_without_interference', async () => {
-      const files: string[] = []
-
-      // Create test files
-      for (let i = 0; i < 5; i++) {
-        const fileName = `parallel-${i}.ts`
-        const filePath = path.join(fixtureDir, fileName)
-        await fs.writeFile(filePath, `export const value${i} = ${i};`)
-        files.push(fileName)
-
-        // Setup different results for each file
-        mockEnv.qualityChecker.setPredefinedResult(fileName, {
-          filePath: fileName,
-          success: i % 2 === 0, // Alternate between success and failure
-          issues:
-            i % 2 === 0
-              ? []
-              : [
-                  {
-                    line: 1,
-                    column: 1,
-                    message: `Test issue for file ${i}`,
-                    severity: 'error',
-                    engine: 'eslint',
-                    ruleId: 'test-rule',
-                  },
-                ],
-        })
+  describe('Job Timeout Configuration', () => {
+    it('should_have_appropriate_timeout_minutes_for_each_job', () => {
+      const expectedTimeouts: Record<string, number | undefined> = {
+        'setup': undefined,
+        'quick-tests': 1,
+        'focused-tests': 5,
+        'format': 5,
+        'lint': 5,
+        'typecheck': 5,
+        'build': 5,
+        'commit-lint': 5,
+        'ci-status': undefined,
       }
 
-      // Run checks in parallel
-      const results = await Promise.all(files.map((file) => mockEnv.qualityChecker.check([file])))
+      Object.entries(expectedTimeouts).forEach(([jobId, expectedTimeout]) => {
+        const job = workflow.jobs[jobId]
+        expect(job['timeout-minutes']).toBe(expectedTimeout)
+      })
+    })
+  })
 
-      // Verify each result
-      results.forEach((result, index) => {
-        if (index % 2 === 0) {
-          expect(result.success).toBe(true)
-          expect(result.issues).toHaveLength(0)
-        } else {
-          expect(result.success).toBe(false)
-          expect(result.issues).toHaveLength(1)
-          expect(result.issues[0].message).toContain(`Test issue for file ${index}`)
-        }
+  describe('Step Configuration Validation', () => {
+    it('should_use_consistent_action_versions', () => {
+      const actionVersions: Record<string, Set<string>> = {}
+
+      Object.values(workflow.jobs).forEach((job) => {
+        job.steps.forEach((step) => {
+          if (step.uses) {
+            const [action, version] = step.uses.split('@')
+            if (!actionVersions[action]) {
+              actionVersions[action] = new Set()
+            }
+            actionVersions[action].add(version)
+          }
+        })
+      })
+
+      // Each action should use consistent versions
+      Object.entries(actionVersions).forEach(([_action, versions]) => {
+        expect(versions.size).toBe(1) // Only one version per action
       })
     })
 
-    it('should_maintain_result_isolation_between_checks', async () => {
-      const file1 = 'isolated-1.ts'
-      const file2 = 'isolated-2.ts'
+    it('should_have_commit_lint_job_with_fetch_depth_zero', () => {
+      const commitLintJob = workflow.jobs['commit-lint']
+      const checkoutStep = commitLintJob.steps.find((step) =>
+        step.uses?.startsWith('actions/checkout@'),
+      )
 
-      // Setup different results for each file
-      mockEnv.qualityChecker.setPredefinedResult(file1, {
-        filePath: file1,
-        success: true,
-        issues: [],
-      })
-
-      mockEnv.qualityChecker.setPredefinedResult(file2, {
-        filePath: file2,
-        success: false,
-        issues: [
-          {
-            line: 1,
-            column: 1,
-            message: 'Error in file 2',
-            severity: 'error',
-            engine: 'eslint',
-            ruleId: 'test-rule',
-          },
-        ],
-      })
-
-      // Check files separately
-      const result1 = await mockEnv.qualityChecker.check([file1])
-      const result2 = await mockEnv.qualityChecker.check([file2])
-
-      // Results should be independent
-      expect(result1.success).toBe(true)
-      expect(result1.issues).toHaveLength(0)
-
-      expect(result2.success).toBe(false)
-      expect(result2.issues).toHaveLength(1)
-      expect(result2.issues[0].message).toBe('Error in file 2')
+      expect(checkoutStep?.with?.['fetch-depth']).toBe(0)
     })
   })
 })

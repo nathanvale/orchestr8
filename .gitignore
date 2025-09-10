@@ -15,6 +15,7 @@ dist-node/
 dist-types/
 dist-ssr/
 build/
+!tooling/build/
 out/
 .next/
 .nuxt/
