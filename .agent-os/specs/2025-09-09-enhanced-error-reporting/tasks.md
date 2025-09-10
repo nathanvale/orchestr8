@@ -55,3 +55,15 @@ These are the tasks to be completed for the spec detailed in
   - [x] 5.5 Add CLI argument handling for output mode configuration
   - [x] 5.6 Test integration with Claude Code scenarios and context reduction
   - [x] 5.7 Verify all facade integration tests pass and system works end-to-end
+
+- [x] 6. Implement Minimal Console Error Summary
+  - [x] 6.1 Update OutputFormatter to produce clean line-by-line format
+  - [x] 6.2 Standardize minimal format across ESLint, TypeScript, and Prettier
+  - [x] 6.3 Add proper alignment for line:column numbers with consistent spacing
+  - [x] 6.4 Implement file grouping with clean file path headers
+  - [x] 6.5 Create summary line with problem counts and appropriate icons (✖,
+        ⚠)
+  - [x] 6.6 Maintain ANSI color support within minimal format
+  - [x] 6.7 Add configuration option for minimal vs verbose console output
+  - [x] 6.8 Update tests to verify new minimal format functionality
+  - [x] 6.9 Verify cross-tool consistency and edge case handling

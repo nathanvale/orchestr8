@@ -16,6 +16,7 @@ import {
   statSync,
 } from 'node:fs'
 import { dirname, join } from 'node:path'
+import { OutputFormatter } from '../services/OutputFormatter.js'
 
 // Global correlation ID for request tracing
 let globalCorrelationId: string | null = null
@@ -49,6 +50,7 @@ export interface LoggerConfig {
   file: boolean // Enable/disable file logging
   silent: boolean // Silent mode for automated tools
   colored: boolean // Enable ANSI colors for console
+  outputFormat?: 'minimal' | 'basic' // Console output format style
   logDir?: string // Directory for log files
   retentionPolicy?: {
     errorReports: number // Number of error reports to keep per tool
@@ -351,6 +353,7 @@ export class EnhancedLogger extends QualityLogger {
       file: config?.file ?? false,
       silent: config?.silent ?? process.env.CLAUDE_HOOK_SILENT === 'true',
       colored: config?.colored ?? true,
+      outputFormat: config?.outputFormat ?? 'basic',
       logDir: config?.logDir ?? '.quality-check',
       retentionPolicy: {
         errorReports:
@@ -457,7 +460,17 @@ export class EnhancedLogger extends QualityLogger {
 
   // Format summary for console output
   private formatSummary(report: ErrorReport): string {
-    // Proper capitalization for tool names
+    const options = {
+      silent: this.config.silent,
+      colored: this.config.colored,
+    }
+
+    // Use minimal format if configured, otherwise use basic format
+    if (this.config.outputFormat === 'minimal') {
+      return OutputFormatter.formatMinimalConsole(report, options)
+    }
+
+    // Basic format (legacy)
     const toolNameMap: Record<string, string> = {
       eslint: 'ESLint',
       typescript: 'TypeScript',

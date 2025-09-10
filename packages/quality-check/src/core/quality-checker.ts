@@ -47,7 +47,11 @@ export class QualityChecker {
     this.timeoutManager = new TimeoutManager()
     this.stylishFormatter = new StylishFormatter()
     this.jsonFormatter = new JsonFormatter()
-    this.enhancedLogger = new EnhancedLogger({ file: true, console: true })
+    this.enhancedLogger = new EnhancedLogger({
+      file: true,
+      console: true,
+      outputFormat: 'minimal',
+    })
   }
 
   /**

@@ -220,4 +220,68 @@ export class OutputFormatter {
 
     return `[${report.tool.toUpperCase()}] ${status} - Errors: ${totalErrors}, Warnings: ${totalWarnings}, Files: ${filesAffected}`
   }
+
+  /**
+   * Format error report in minimal console style (like standard linting tools)
+   * Produces clean, scannable output similar to ESLint/TSC format
+   */
+  static formatMinimalConsole(report: ErrorReport, options?: OutputOptions): string {
+    if (options?.silent) return ''
+    if (report.status === 'success') return this.formatSuccessSummary(report, options)
+
+    const lines: string[] = []
+    const { totalErrors, totalWarnings } = report.summary
+
+    // Process each file
+    report.details.files.forEach((file, fileIndex) => {
+      if (file.errors.length === 0) return
+
+      // Add blank line before file (except first file)
+      if (fileIndex > 0) {
+        lines.push('')
+      }
+
+      // File header
+      lines.push(options?.colored !== false ? pc.underline(file.path) : file.path)
+
+      // Format errors with proper alignment
+      file.errors.forEach((error) => {
+        const location = `${error.line}:${error.column}`.padEnd(8) // Fixed width for alignment
+        const severityColor = error.severity === 'error' ? 'red' : 'yellow'
+        const severityText = error.severity.padEnd(8) // Fixed width for alignment
+        const coloredSeverity =
+          options?.colored !== false
+            ? this.colorize(severityText, severityColor, options)
+            : severityText
+
+        const ruleIdText = error.ruleId ? `  ${pc.gray(error.ruleId)}` : ''
+        lines.push(`  ${location}  ${coloredSeverity}  ${error.message}${ruleIdText}`)
+      })
+    })
+
+    // Add summary line
+    if (lines.length > 0) {
+      lines.push('')
+      const totalProblems = totalErrors + totalWarnings
+      const problemsText = `${totalProblems} problem${totalProblems === 1 ? '' : 's'}`
+
+      const summaryParts: string[] = []
+      if (totalErrors > 0) {
+        summaryParts.push(`${totalErrors} error${totalErrors === 1 ? '' : 's'}`)
+      }
+      if (totalWarnings > 0) {
+        summaryParts.push(`${totalWarnings} warning${totalWarnings === 1 ? '' : 's'}`)
+      }
+
+      const icon = totalErrors > 0 ? '✖' : '⚠'
+      const iconColor = totalErrors > 0 ? 'red' : 'yellow'
+      const coloredIcon =
+        options?.colored !== false ? this.colorize(icon, iconColor, options) : icon
+
+      const summaryDetails = summaryParts.length > 0 ? ` (${summaryParts.join(', ')})` : ''
+      lines.push(`${coloredIcon} ${problemsText}${summaryDetails}`)
+    }
+
+    return lines.join('\n')
+  }
 }

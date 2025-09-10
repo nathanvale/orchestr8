@@ -409,4 +409,199 @@ describe('OutputFormatter Service', () => {
       expect(colored).toBe('[GREEN]Test message[/GREEN]')
     })
   })
+
+  describe('formatMinimalConsole', () => {
+    it('should format minimal console output for single file with errors', async () => {
+      const { OutputFormatter } = await import('./OutputFormatter')
+
+      const report: ErrorReport = {
+        timestamp: '2023-01-01T00:00:00.000Z',
+        tool: 'eslint',
+        status: 'error',
+        summary: {
+          totalErrors: 2,
+          totalWarnings: 1,
+          filesAffected: 1,
+        },
+        details: {
+          files: [
+            {
+              path: '/Users/test/file.ts',
+              errors: [
+                {
+                  line: 64,
+                  column: 23,
+                  message: 'Unexpected any. Specify a different type',
+                  severity: 'warning',
+                  ruleId: '@typescript-eslint/no-explicit-any',
+                },
+                {
+                  line: 70,
+                  column: 23,
+                  message: 'Unexpected any. Specify a different type',
+                  severity: 'warning',
+                  ruleId: '@typescript-eslint/no-explicit-any',
+                },
+              ],
+            },
+          ],
+        },
+        raw: 'raw output',
+      }
+
+      const formatted = OutputFormatter.formatMinimalConsole(report, { colored: false })
+
+      expect(formatted).toContain('/Users/test/file.ts')
+      expect(formatted).toContain('64:23     warning   Unexpected any. Specify a different type')
+      expect(formatted).toContain('70:23     warning   Unexpected any. Specify a different type')
+      expect(formatted).toContain('✖ 3 problems (2 errors, 1 warning)')
+    })
+
+    it('should format minimal console output for multiple files', async () => {
+      const { OutputFormatter } = await import('./OutputFormatter')
+
+      const report: ErrorReport = {
+        timestamp: '2023-01-01T00:00:00.000Z',
+        tool: 'typescript',
+        status: 'error',
+        summary: {
+          totalErrors: 1,
+          totalWarnings: 1,
+          filesAffected: 2,
+        },
+        details: {
+          files: [
+            {
+              path: '/Users/test/file1.ts',
+              errors: [
+                {
+                  line: 10,
+                  column: 5,
+                  message: 'Type error message',
+                  severity: 'error',
+                  ruleId: 'TS2339',
+                },
+              ],
+            },
+            {
+              path: '/Users/test/file2.ts',
+              errors: [
+                {
+                  line: 20,
+                  column: 10,
+                  message: 'Warning message',
+                  severity: 'warning',
+                  ruleId: 'TS2345',
+                },
+              ],
+            },
+          ],
+        },
+        raw: 'tsc output',
+      }
+
+      const formatted = OutputFormatter.formatMinimalConsole(report, { colored: false })
+
+      expect(formatted).toContain('/Users/test/file1.ts')
+      expect(formatted).toContain('/Users/test/file2.ts')
+      expect(formatted).toContain('10:5      error     Type error message')
+      expect(formatted).toContain('20:10     warning   Warning message')
+      expect(formatted).toContain('✖ 2 problems (1 error, 1 warning)')
+    })
+
+    it('should format success report in minimal style', async () => {
+      const { OutputFormatter } = await import('./OutputFormatter')
+
+      const report: ErrorReport = {
+        timestamp: '2023-01-01T00:00:00.000Z',
+        tool: 'prettier',
+        status: 'success',
+        summary: {
+          totalErrors: 0,
+          totalWarnings: 0,
+          filesAffected: 0,
+        },
+        details: {
+          files: [],
+        },
+        raw: 'no issues',
+      }
+
+      const formatted = OutputFormatter.formatMinimalConsole(report)
+
+      expect(formatted).toBe('[GREEN]✓ Prettier: No issues found[/GREEN]')
+    })
+
+    it('should handle colored output correctly', async () => {
+      const { OutputFormatter } = await import('./OutputFormatter')
+
+      const report: ErrorReport = {
+        timestamp: '2023-01-01T00:00:00.000Z',
+        tool: 'eslint',
+        status: 'error',
+        summary: {
+          totalErrors: 1,
+          totalWarnings: 0,
+          filesAffected: 1,
+        },
+        details: {
+          files: [
+            {
+              path: '/Users/test/file.ts',
+              errors: [
+                {
+                  line: 1,
+                  column: 1,
+                  message: 'Error message',
+                  severity: 'error',
+                  ruleId: 'no-unused-vars',
+                },
+              ],
+            },
+          ],
+        },
+        raw: 'eslint output',
+      }
+
+      const formatted = OutputFormatter.formatMinimalConsole(report, { colored: true })
+
+      expect(formatted).toContain('[RED]✖[/RED]')
+      expect(formatted).toContain('[RED]error   [/RED]')
+    })
+
+    it('should return empty string in silent mode', async () => {
+      const { OutputFormatter } = await import('./OutputFormatter')
+
+      const report: ErrorReport = {
+        timestamp: '2023-01-01T00:00:00.000Z',
+        tool: 'eslint',
+        status: 'error',
+        summary: {
+          totalErrors: 1,
+          totalWarnings: 0,
+          filesAffected: 1,
+        },
+        details: {
+          files: [
+            {
+              path: '/Users/test/file.ts',
+              errors: [
+                {
+                  line: 1,
+                  column: 1,
+                  message: 'Error message',
+                  severity: 'error',
+                },
+              ],
+            },
+          ],
+        },
+        raw: 'eslint output',
+      }
+
+      const formatted = OutputFormatter.formatMinimalConsole(report, { silent: true })
+
+      expect(formatted).toBe('')
+    })
+  })
 })
