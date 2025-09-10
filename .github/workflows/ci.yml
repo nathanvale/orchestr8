@@ -77,7 +77,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile
-      - run: pnpm test
+      - run: pnpm test:focused
 
   format:
     name: 💅 Format (5m)

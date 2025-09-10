@@ -97,9 +97,8 @@ class TestAuditor {
 
     // MODERATE_UPDATE: Tests needing significant changes but not complete rewrite
     if (
-      content.includes('3-tier') ||
-      content.includes('three tier') ||
-      fileName.includes('progressive-testing-tiers')
+      fileName.includes('progressive-testing-tiers') ||
+      content.includes('outdated testing approach')
     ) {
       return 'MODERATE_UPDATE'
     }
@@ -278,7 +277,7 @@ describe('Test Audit Functionality', () => {
       const testFiles: TestFile[] = [
         {
           path: '/tests/progressive-testing-tiers.test.ts',
-          content: 'describe("3-tier testing system", () => {})',
+          content: 'describe("2-tier testing system", () => {})',
         },
       ]
 
@@ -373,7 +372,7 @@ describe('Test Audit Functionality', () => {
         },
         {
           path: '/tests/moderate.test.ts',
-          content: '3-tier system',
+          content: 'outdated testing approach',
           category: 'MODERATE_UPDATE',
         },
         {
