@@ -2,7 +2,7 @@
 
 /**
  * CI Performance Check Script
- * 
+ *
  * Validates CI job execution times against defined thresholds
  * and posts warnings when thresholds are exceeded.
  */
@@ -123,7 +123,7 @@ function checkPerformance(job: string, duration: number): PerformanceResult {
 
   if (!threshold) {
     console.warn(
-      `${colors.yellow}⚠️  Warning: No threshold defined for job '${job}'${colors.reset}`
+      `${colors.yellow}⚠️  Warning: No threshold defined for job '${job}'${colors.reset}`,
     )
     return { passed: true, threshold: null, percentage: null }
   }
@@ -141,7 +141,7 @@ function generateReport(
   job: string,
   duration: number,
   result: PerformanceResult,
-  verbose: boolean
+  verbose: boolean,
 ): boolean {
   const { passed, threshold, percentage } = result
 
@@ -162,9 +162,7 @@ function generateReport(
 
     if (!passed) {
       const excess = duration - threshold
-      console.log(
-        `\n${colors.red}⚠️  Job exceeded threshold by ${excess}s${colors.reset}`
-      )
+      console.log(`\n${colors.red}⚠️  Job exceeded threshold by ${excess}s${colors.reset}`)
       console.log(`\n${colors.yellow}💡 Optimization Tips:${colors.reset}`)
 
       // Job-specific tips
@@ -257,9 +255,7 @@ function savePerformanceData(job: string, duration: number, passed: boolean): vo
       data = JSON.parse(content) as PerformanceData
     }
   } catch {
-    console.warn(
-      `${colors.yellow}Warning: Could not load existing performance data${colors.reset}`
-    )
+    console.warn(`${colors.yellow}Warning: Could not load existing performance data${colors.reset}`)
   }
 
   // Add new run
@@ -315,9 +311,7 @@ function main(): void {
   // Exit with appropriate code
   if (!passed && result.threshold !== null) {
     console.log(`\n${colors.red}❌ Performance check failed!${colors.reset}`)
-    console.log(
-      `Consider the optimization tips above to improve ${options.job} performance.\n`
-    )
+    console.log(`Consider the optimization tips above to improve ${options.job} performance.\n`)
     process.exit(1)
   } else {
     console.log(`\n${colors.green}✅ Performance check passed!${colors.reset}\n`)

@@ -142,15 +142,19 @@ describe('Cache Effectiveness', () => {
 
       // Check that restore-keys exist with the hierarchical pattern
       expect(ciContent).toContain('restore-keys: |')
-      
-      // Extract a sample restore-keys section 
-      const restoreKeysMatch = ciContent.match(/restore-keys:\s*\|\s*\n([\s\S]*?)(?=\n\s*-\s*name:|\n\s*[a-z-]+:)/m)
+
+      // Extract a sample restore-keys section
+      const restoreKeysMatch = ciContent.match(
+        /restore-keys:\s*\|\s*\n([\s\S]*?)(?=\n\s*-\s*name:|\n\s*[a-z-]+:)/m,
+      )
       expect(restoreKeysMatch).toBeTruthy()
 
       const restoreKeysContent = restoreKeysMatch?.[1] || ''
-      
+
       // Check for the two-level fallback pattern
-      expect(restoreKeysContent).toContain("deps-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}-")
+      expect(restoreKeysContent).toContain(
+        "deps-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}-",
+      )
       expect(restoreKeysContent).toContain('deps-${{ runner.os }}-')
     })
 
