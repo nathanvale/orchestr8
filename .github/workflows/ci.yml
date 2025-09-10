@@ -242,10 +242,92 @@ jobs:
           path: dist/
           retention-days: 7
 
-  test:
-    name: Test (${{ matrix.os }}, Node.js ${{ matrix.node-version }})
+  test-quick:
+    name: ⚡ Quick Tests (1m)
+    runs-on: ubuntu-latest
+    needs: setup
+    timeout-minutes: 1
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "pnpm"
+
+      - name: Restore Dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.pnpm-store
+            node_modules
+            .eslintcache
+            .prettiercache
+            .turbo
+          key: deps-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}-turbo-${{ hashFiles('turbo.json*', 'tsconfig*.json') }}
+
+      - name: Install Dependencies (if cache miss)
+        if: needs.setup.outputs.cache-hit != 'true'
+        run: pnpm install --frozen-lockfile --prefer-offline
+
+      - name: Run Quick Tests
+        run: pnpm run test:quick
+
+  test-focused:
+    name: 🎯 Focused Tests (5m)
+    runs-on: ubuntu-latest
+    needs: [setup, test-quick]
+    timeout-minutes: 5
+    if: github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, 'test:full')
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "pnpm"
+
+      - name: Restore Dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.pnpm-store
+            node_modules
+            .eslintcache
+            .prettiercache
+            .turbo
+          key: deps-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}-turbo-${{ hashFiles('turbo.json*', 'tsconfig*.json') }}
+
+      - name: Install Dependencies (if cache miss)
+        if: needs.setup.outputs.cache-hit != 'true'
+        run: pnpm install --frozen-lockfile --prefer-offline
+
+      - name: Run Focused Tests
+        run: pnpm run test:focused
+
+  test-full:
+    name: 🧪 Full Test Suite (${{ matrix.os }}, Node.js ${{ matrix.node-version }})
     runs-on: ${{ matrix.os }}
     timeout-minutes: 15
+    needs: setup
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || contains(github.event.pull_request.labels.*.name, 'test:full')
     strategy:
       fail-fast: false
       matrix:
@@ -279,8 +361,8 @@ jobs:
         env:
           NODE_ENV: development
 
-      - name: Run Tests
-        run: pnpm run test:ci
+      - name: Run Full Test Suite
+        run: pnpm run test:coverage
         env:
           NODE_ENV: test
 
@@ -485,7 +567,20 @@ jobs:
   status:
     name: 📊 CI Status
     runs-on: ubuntu-latest
-    needs: [setup, lint, format, typecheck, build, test, security, commitlint, bundle]
+    needs:
+      [
+        setup,
+        lint,
+        format,
+        typecheck,
+        build,
+        test-quick,
+        test-focused,
+        test-full,
+        security,
+        commitlint,
+        bundle,
+      ]
     if: always()
     steps:
       - name: Check Status
@@ -498,7 +593,9 @@ jobs:
           echo "| 💅 Format | ${{ needs.format.result }} |"
           echo "| 📝 Types | ${{ needs.typecheck.result }} |"
           echo "| 🔨 Build | ${{ needs.build.result }} |"
-          echo "| 🧪 Test | ${{ needs.test.result }} |"
+          echo "| ⚡ Quick Tests | ${{ needs.test-quick.result }} |"
+          echo "| 🎯 Focused Tests | ${{ needs.test-focused.result }} |"
+          echo "| 🧪 Full Tests | ${{ needs.test-full.result }} |"
           echo "| 🛡️ Security | ${{ needs.security.result }} |"
           echo "| 📝 Commitlint | ${{ needs.commitlint.result }} |"
           echo "| 📦 Bundle | ${{ needs.bundle.result }} |"
@@ -510,7 +607,9 @@ jobs:
                 "${{ needs.format.result }}" == "failure" || \
                 "${{ needs.typecheck.result }}" == "failure" || \
                 "${{ needs.build.result }}" == "failure" || \
-                "${{ needs.test.result }}" == "failure" || \
+                "${{ needs.test-quick.result }}" == "failure" || \
+                "${{ needs.test-focused.result }}" == "failure" || \
+                "${{ needs.test-full.result }}" == "failure" || \
                 "${{ needs.security.result }}" == "failure" || \
                 "${{ needs.commitlint.result }}" == "failure" || \
                 "${{ needs.bundle.result }}" == "failure" ]]; then
