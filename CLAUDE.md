@@ -15,20 +15,20 @@ alternatives or proceed with standard test commands.
 
 ## USE SUB-AGENTS FOR CONTEXT OPTIMIZATION
 
-### 1. Always use the file-analyzer sub-agent when asked to read files
+### 1. **Always** use the file-analyzer sub-agent when asked to read files
 
 The file-analyzer agent is an expert in extracting and summarizing critical
 information from files, particularly log files and verbose outputs. It provides
 concise, actionable summaries that preserve essential information while
 dramatically reducing context usage.
 
-### 2. Always use the code-analyzer sub-agent when asked to search code, analyze code, research bugs, or trace logic flow
+### 2. **Always** use the code-analyzer sub-agent when asked to search code, analyze code, research bugs, or trace logic flow
 
 The code-analyzer agent is an expert in code analysis, logic tracing, and
 vulnerability detection. It provides concise, actionable summaries that preserve
 essential information while dramatically reducing context usage.
 
-### 3. Always use the test-runner sub-agent to run tests and analyze the test results
+### 3. **Always** use the test-runner sub-agent to run tests and analyze the test results
 
 Using the test-runner agent ensures:
 
@@ -38,7 +38,7 @@ Using the test-runner agent ensures:
 - All issues are properly surfaced
 - No approval dialogs interrupt the workflow
 
-### 4. Always use the context-fetcher sub-agent to find and extract relevant Agent-OS documentation
+### 4. **Always** use the context-fetcher sub-agent to find and extract relevant Agent-OS documentation
 
 The context-fetcher agent is an expert in searching and extracting relevant
 Agent-OS documentation. It provides concise, actionable summaries that preserve
@@ -55,9 +55,9 @@ essential information while dramatically reducing context usage.
 
 ### Testing
 
-- Always use the test-runner agent to execute tests.
-- Do not use mock services for anything ever.
-- Do not move on to the next test until the current test is complete.
+- **Always** use the test-runner agent to execute tests.
+- **Do not** use mock services for anything ever.
+- **Do not** move on to the next test until the current test is complete.
 - If the test fails, consider checking if the test is structured correctly
   before deciding we need to refactor the codebase.
 - Tests to be verbose so we can use them for debugging.
@@ -81,6 +81,7 @@ essential information while dramatically reducing context usage.
 
 ## ABSOLUTE RULES
 
+- **ALWAYS** use the test-runner agent to run tests
 - NO PARTIAL IMPLEMENTATION
 - NO SIMPLIFICATION : no "//This is simplified stuff for now, complete
   implementation would blablabla"

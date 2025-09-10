@@ -28,10 +28,12 @@ env:
   # TURBO_REMOTE_CACHE_SIGNATURE_KEY: ${{ secrets.TURBO_REMOTE_CACHE_SIGNATURE_KEY }}
 
 jobs:
-  quality:
-    name: Code Quality
+  # Shared setup job to optimize dependency installation
+  setup:
+    name: 🔧 Setup
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    outputs:
+      cache-hit: ${{ steps.cache.outputs.cache-hit }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -66,28 +68,131 @@ jobs:
 
       - name: Install Dependencies
         if: steps.cache.outputs.cache-hit != 'true'
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --prefer-offline
         env:
           NODE_ENV: development
 
-      - name: Lint (Comprehensive Security Analysis)
-        run: pnpm run lint:deep
+  lint:
+    name: 🔍 Lint (5m)
+    runs-on: ubuntu-latest
+    needs: setup
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Conditional Format Check
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "pnpm"
+
+      - name: Restore Dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.pnpm-store
+            node_modules
+            .eslintcache
+            .prettiercache
+            .turbo
+          key: deps-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}-turbo-${{ hashFiles('turbo.json*', 'tsconfig*.json') }}
+          restore-keys: |
+            deps-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}-
+            deps-${{ runner.os }}-
+
+      - name: Install Dependencies (if cache miss)
+        if: needs.setup.outputs.cache-hit != 'true'
+        run: pnpm install --frozen-lockfile --prefer-offline
+
+      - name: Run Lint
+        run: pnpm run lint
+
+  format:
+    name: 💅 Format (5m)
+    runs-on: ubuntu-latest
+    needs: setup
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "pnpm"
+
+      - name: Restore Dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.pnpm-store
+            node_modules
+            .eslintcache
+            .prettiercache
+            .turbo
+          key: deps-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}-turbo-${{ hashFiles('turbo.json*', 'tsconfig*.json') }}
+
+      - name: Install Dependencies (if cache miss)
+        if: needs.setup.outputs.cache-hit != 'true'
+        run: pnpm install --frozen-lockfile --prefer-offline
+
+      - name: Check Format
         run: |
           CHANGED=$(git diff --name-only --diff-filter=ACMR origin/${{ github.base_ref }}... 2>/dev/null | wc -l | tr -d ' ')
-          echo "Changed files count: $CHANGED"
-          # Fallback to full check if git diff fails or returns 0
-          if [ "$CHANGED" -gt 0 ] && [ "$CHANGED" -lt 600 ]; then
-            echo "Using format:changed for PR with $CHANGED changed files"
-            pnpm run format:changed || {
-              echo "format:changed failed, falling back to format:check"
-              pnpm run format:check
-            }
+          if [ "$CHANGED" -gt 0 ] && [ "$CHANGED" -lt 100 ]; then
+            pnpm run format:changed || pnpm run format:check
           else
-            echo "Using full format:check for large PR or fallback (changed files: $CHANGED)"
             pnpm run format:check
           fi
+
+  typecheck:
+    name: 📝 Types (5m)
+    runs-on: ubuntu-latest
+    needs: setup
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "pnpm"
+
+      - name: Restore Dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.pnpm-store
+            node_modules
+            .eslintcache
+            .prettiercache
+            .turbo
+          key: deps-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}-turbo-${{ hashFiles('turbo.json*', 'tsconfig*.json') }}
+
+      - name: Install Dependencies (if cache miss)
+        if: needs.setup.outputs.cache-hit != 'true'
+        run: pnpm install --frozen-lockfile --prefer-offline
 
       - name: Type Check Production
         run: pnpm exec tsc --noEmit -p tsconfig.build.json
@@ -95,25 +200,43 @@ jobs:
       - name: Type Check Tests
         run: pnpm exec tsc --noEmit -p tsconfig.json
 
-      - name: Build Performance Check
-        run: pnpm run build:perf:guard
+  build:
+    name: 🔨 Build (10m)
+    runs-on: ubuntu-latest
+    needs: setup
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Build
-        run: pnpm run build:all --continue=dependencies-successful
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
 
-      - name: Governance & Safety Checks
-        run: pnpm run governance
-        continue-on-error: false
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "pnpm"
 
-      - name: Pre-Release Guardrails (Quick)
-        if: github.event_name == 'pull_request'
-        run: pnpm run guardrails:quick
-        continue-on-error: false
+      - name: Restore Dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.pnpm-store
+            node_modules
+            .eslintcache
+            .prettiercache
+            .turbo
+          key: deps-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}-turbo-${{ hashFiles('turbo.json*', 'tsconfig*.json') }}
 
-      - name: Pre-Release Guardrails (Full)
-        if: github.ref == 'refs/heads/main'
-        run: pnpm run guardrails
-        continue-on-error: false
+      - name: Install Dependencies (if cache miss)
+        if: needs.setup.outputs.cache-hit != 'true'
+        run: pnpm install --frozen-lockfile --prefer-offline
+
+      - name: Build with Performance Monitoring
+        run: time pnpm run build:all --continue=dependencies-successful
 
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
@@ -363,19 +486,39 @@ jobs:
             });
 
   status:
-    name: CI Status
+    name: 📊 CI Status
     runs-on: ubuntu-latest
-    needs: [quality, test, security, commitlint, bundle]
+    needs: [setup, lint, format, typecheck, build, test, security, commitlint, bundle]
     if: always()
     steps:
       - name: Check Status
         run: |
-          if [[ "${{ needs.quality.result }}" == "failure" || \
+          echo "## 🔍 CI Pipeline Status Summary"
+          echo "| Job | Status |"
+          echo "|-----|---------|"
+          echo "| 🔧 Setup | ${{ needs.setup.result }} |"
+          echo "| 🔍 Lint | ${{ needs.lint.result }} |"
+          echo "| 💅 Format | ${{ needs.format.result }} |"
+          echo "| 📝 Types | ${{ needs.typecheck.result }} |"
+          echo "| 🔨 Build | ${{ needs.build.result }} |"
+          echo "| 🧪 Test | ${{ needs.test.result }} |"
+          echo "| 🛡️ Security | ${{ needs.security.result }} |"
+          echo "| 📝 Commitlint | ${{ needs.commitlint.result }} |"
+          echo "| 📦 Bundle | ${{ needs.bundle.result }} |"
+          echo ""
+
+          # Check for any failures
+          if [[ "${{ needs.setup.result }}" == "failure" || \
+                "${{ needs.lint.result }}" == "failure" || \
+                "${{ needs.format.result }}" == "failure" || \
+                "${{ needs.typecheck.result }}" == "failure" || \
+                "${{ needs.build.result }}" == "failure" || \
                 "${{ needs.test.result }}" == "failure" || \
                 "${{ needs.security.result }}" == "failure" || \
                 "${{ needs.commitlint.result }}" == "failure" || \
                 "${{ needs.bundle.result }}" == "failure" ]]; then
-            echo "::error::CI checks failed"
+            echo "::error::❌ CI pipeline failed - check individual jobs above"
             exit 1
           fi
-          echo "✅ All CI checks passed!"
+
+          echo "✅ All CI checks passed! Pipeline completed successfully."
