@@ -12,15 +12,15 @@
   - [x] 1.7 Update CI status aggregator to include new jobs
   - [x] 1.8 Verify all new jobs run in parallel and pass tests
 
-- [ ] 2. Implement Progressive Testing Strategy
-  - [ ] 2.1 Write tests for progressive testing tiers
-  - [ ] 2.2 Create test:smoke script for 30-second quick tests
-  - [ ] 2.3 Implement test-quick job for PRs with bail-fast behavior
-  - [ ] 2.4 Implement test-focused job for changed files only
-  - [ ] 2.5 Configure test-full job with coverage for main branch
-  - [ ] 2.6 Add job dependencies for progressive test flow
-  - [ ] 2.7 Add label-based override for full tests on PRs
-  - [ ] 2.8 Verify progressive testing reduces feedback time to under 1 minute
+- [x] 2. Implement Progressive Testing Strategy
+  - [x] 2.1 Write tests for progressive testing tiers
+  - [x] 2.2 Create test:smoke script for 30-second quick tests
+  - [x] 2.3 Implement test-quick job for PRs with bail-fast behavior
+  - [x] 2.4 Implement test-focused job for changed files only
+  - [x] 2.5 Configure test-full job with coverage for main branch
+  - [x] 2.6 Add job dependencies for progressive test flow
+  - [x] 2.7 Add label-based override for full tests on PRs
+  - [x] 2.8 Verify progressive testing reduces feedback time to under 1 minute
 
 - [ ] 3. Add Visual Feedback and Status Reporting
   - [ ] 3.1 Write tests for GitHub step summaries generation
