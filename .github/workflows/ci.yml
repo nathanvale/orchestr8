@@ -194,11 +194,8 @@ jobs:
         if: needs.setup.outputs.cache-hit != 'true'
         run: pnpm install --frozen-lockfile --prefer-offline
 
-      - name: Type Check Production
-        run: pnpm exec tsc --noEmit -p tsconfig.build.json
-
-      - name: Type Check Tests
-        run: pnpm exec tsc --noEmit -p tsconfig.json
+      - name: Type Check
+        run: pnpm run typecheck
 
   build:
     name: 🔨 Build (10m)
