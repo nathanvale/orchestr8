@@ -583,38 +583,159 @@ jobs:
       ]
     if: always()
     steps:
-      - name: Check Status
+      - name: Checkout
+        uses: actions/checkout@v4
+        
+      - name: Generate Enhanced Status Report
+        uses: ./.github/actions/status-reporter
+        id: status-report
+        with:
+          job-results: |
+            {
+              "setup": {"result": "${{ needs.setup.result }}", "duration": null},
+              "lint": {"result": "${{ needs.lint.result }}", "duration": null},
+              "format": {"result": "${{ needs.format.result }}", "duration": null},
+              "typecheck": {"result": "${{ needs.typecheck.result }}", "duration": null},
+              "build": {"result": "${{ needs.build.result }}", "duration": null},
+              "test-quick": {"result": "${{ needs.test-quick.result }}", "duration": null},
+              "test-focused": {"result": "${{ needs.test-focused.result }}", "duration": null},
+              "test-full": {"result": "${{ needs.test-full.result }}", "duration": null},
+              "security": {"result": "${{ needs.security.result }}", "duration": null},
+              "commitlint": {"result": "${{ needs.commitlint.result }}", "duration": null},
+              "bundle": {"result": "${{ needs.bundle.result }}", "duration": null}
+            }
+          show-duration: 'true'
+          include-fix-commands: 'true'
+          report-title: '📊 CI Pipeline Status Summary'
+          
+      - name: Add Step Summary
+        if: always()
         run: |
-          echo "## 🔍 CI Pipeline Status Summary"
-          echo "| Job | Status |"
-          echo "|-----|---------|"
-          echo "| 🔧 Setup | ${{ needs.setup.result }} |"
-          echo "| 🔍 Lint | ${{ needs.lint.result }} |"
-          echo "| 💅 Format | ${{ needs.format.result }} |"
-          echo "| 📝 Types | ${{ needs.typecheck.result }} |"
-          echo "| 🔨 Build | ${{ needs.build.result }} |"
-          echo "| ⚡ Quick Tests | ${{ needs.test-quick.result }} |"
-          echo "| 🎯 Focused Tests | ${{ needs.test-focused.result }} |"
-          echo "| 🧪 Full Tests | ${{ needs.test-full.result }} |"
-          echo "| 🛡️ Security | ${{ needs.security.result }} |"
-          echo "| 📝 Commitlint | ${{ needs.commitlint.result }} |"
-          echo "| 📦 Bundle | ${{ needs.bundle.result }} |"
-          echo ""
+          echo "${{ steps.status-report.outputs.summary-report }}" >> $GITHUB_STEP_SUMMARY
+          
+      - name: Comment on PR with Status Report
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const statusReport = `${{ steps.status-report.outputs.summary-report }}`;
+            const overallStatus = '${{ steps.status-report.outputs.overall-status }}';
+            
+            // Find existing status comment
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            
+            const existingComment = comments.data.find(comment => 
+              comment.body.includes('📊 CI Pipeline Status Summary') && 
+              comment.user.login === 'github-actions[bot]'
+            );
+            
+            const commentBody = `${statusReport}
+            
+---
+*This comment is automatically updated with the latest CI status. You can safely ignore previous status comments.*
+            
+<details>
+<summary>🔄 How to interpret this report</summary>
 
-          # Check for any failures
-          if [[ "${{ needs.setup.result }}" == "failure" || \
-                "${{ needs.lint.result }}" == "failure" || \
-                "${{ needs.format.result }}" == "failure" || \
-                "${{ needs.typecheck.result }}" == "failure" || \
-                "${{ needs.build.result }}" == "failure" || \
-                "${{ needs.test-quick.result }}" == "failure" || \
-                "${{ needs.test-focused.result }}" == "failure" || \
-                "${{ needs.test-full.result }}" == "failure" || \
-                "${{ needs.security.result }}" == "failure" || \
-                "${{ needs.commitlint.result }}" == "failure" || \
-                "${{ needs.bundle.result }}" == "failure" ]]; then
-            echo "::error::❌ CI pipeline failed - check individual jobs above"
+**Status Icons:**
+- ✅ **Passed**: Job completed successfully
+- ❌ **Failed**: Job failed - action required
+- ⏭️ **Skipped**: Job was skipped (normal for certain conditions)
+- ⏹️ **Cancelled**: Job was cancelled
+
+**Quick Actions:**
+- Click on failed job names in the [Actions tab](../../actions) to see detailed logs
+- Use the fix commands shown above to resolve issues locally
+- Push changes to automatically re-run the failed jobs
+
+</details>`;
+
+            if (existingComment) {
+              // Update existing comment
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existingComment.id,
+                body: commentBody
+              });
+            } else {
+              // Create new comment
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: commentBody
+              });
+            }
+
+      - name: Update PR Description with CI Status
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Get current PR details
+            const pr = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number,
+            });
+            
+            const overallStatus = '${{ steps.status-report.outputs.overall-status }}';
+            const currentBody = pr.data.body || '';
+            
+            // Create status badge based on overall status
+            const statusBadge = overallStatus === 'success' 
+              ? '🟢 **CI Status: All checks passed**' 
+              : '🔴 **CI Status: Some checks failed**';
+            
+            // Create progress indicator
+            const jobResults = JSON.parse(`${{ steps.status-report.outputs.job-results }}`);
+            const totalJobs = Object.keys(jobResults).length;
+            const passedJobs = Object.values(jobResults).filter(job => job.result === 'success').length;
+            const progressBar = '█'.repeat(Math.floor(passedJobs / totalJobs * 10)) + 
+                               '░'.repeat(10 - Math.floor(passedJobs / totalJobs * 10));
+            
+            const statusSection = `
+## 🚀 CI Pipeline Progress
+
+${statusBadge}
+
+**Progress:** ${passedJobs}/${totalJobs} jobs completed  
+\`${progressBar}\` ${Math.round(passedJobs / totalJobs * 100)}%
+
+**Last Updated:** ${new Date().toLocaleString('en-US', { 
+  timeZone: 'UTC', 
+  dateStyle: 'short', 
+  timeStyle: 'short' 
+})} UTC
+
+---
+`;
+
+            // Remove existing CI status section if present
+            let newBody = currentBody.replace(/## 🚀 CI Pipeline Progress[\s\S]*?---\n/g, '');
+            
+            // Add new status section at the top
+            newBody = statusSection + newBody.trim();
+            
+            // Update PR description
+            await github.rest.pulls.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number,
+              body: newBody
+            });
+          
+      - name: Check Overall Pipeline Status
+        if: always()
+        run: |
+          if [[ "${{ steps.status-report.outputs.overall-status }}" == "failure" ]]; then
+            echo "::error::❌ CI pipeline failed - check the status report above"
             exit 1
           fi
-
+          
           echo "✅ All CI checks passed! Pipeline completed successfully."
