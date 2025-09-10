@@ -194,13 +194,13 @@ jobs:
         run: |
           echo "🎯 ADHD-Optimized CI Pipeline Status"
           echo "📊 CI Pipeline Status Summary"
-          echo "✅ Quick Tests: ${{ needs.quick-tests.result }}"
-          echo "✅ Focused Tests: ${{ needs.focused-tests.result }}"
-          echo "✅ Format: ${{ needs.format.result }}"
-          echo "✅ Lint: ${{ needs.lint.result }}"
-          echo "✅ Types: ${{ needs.typecheck.result }}"
-          echo "✅ Build: ${{ needs.build.result }}"
-          echo "✅ Commit Lint: ${{ needs.commit-lint.result }}"
+          echo "$([[ "${{ needs.quick-tests.result }}" == "success" ]] && echo "✅" || echo "❌") Quick Tests: ${{ needs.quick-tests.result }}"
+          echo "$([[ "${{ needs.focused-tests.result }}" == "success" ]] && echo "✅" || echo "❌") Focused Tests: ${{ needs.focused-tests.result }}"
+          echo "$([[ "${{ needs.format.result }}" == "success" ]] && echo "✅" || echo "❌") Format: ${{ needs.format.result }}"
+          echo "$([[ "${{ needs.lint.result }}" == "success" ]] && echo "✅" || echo "❌") Lint: ${{ needs.lint.result }}"
+          echo "$([[ "${{ needs.typecheck.result }}" == "success" ]] && echo "✅" || echo "❌") Types: ${{ needs.typecheck.result }}"
+          echo "$([[ "${{ needs.build.result }}" == "success" ]] && echo "✅" || echo "❌") Build: ${{ needs.build.result }}"
+          echo "$([[ "${{ needs.commit-lint.result }}" == "success" ]] && echo "✅" || echo "❌") Commit Lint: ${{ needs.commit-lint.result }}"
           
           # Add breadcrumb navigation and progress tracking
           echo "📍 Step 7/7 - Pipeline Status Check"
