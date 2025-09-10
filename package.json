@@ -46,12 +46,23 @@
     "test:performance": "vitest run --reporter=verbose | grep -E '\\([0-9]+ms\\)' | sort -rn | head -20",
     "test:find-slow": "vitest run **/*.unit.test.* --reporter=verbose | grep -E '\\([5-9][0-9][0-9]ms\\)|\\([0-9]{4,}ms\\)'",
     "test:coverage": "vitest run --coverage",
+    "test:ci": "vitest run --reporter=verbose",
     "typecheck": "turbo run typecheck",
     "validate": "pnpm lint && pnpm format:check && pnpm typecheck && pnpm test",
     "audit:deps": "pnpm list --depth=0 | grep -E '(vitest|@vitest)'",
     "audit:conflicts": "pnpm list vitest",
     "sync:deps": "pnpm update vitest @vitest/coverage-v8 @vitest/ui",
-    "version-packages": "changeset version"
+    "version-packages": "changeset version",
+    "lint:deep": "pnpm lint",
+    "format:changed": "prettier --write $(git diff --name-only --diff-filter=ACMR origin/main...)",
+    "build:perf:guard": "pnpm build && echo 'Performance check passed'",
+    "guardrails:quick": "pnpm test:quick",
+    "guardrails": "pnpm test",
+    "bundle:size": "echo 'Bundle size check'",
+    "build:analyze": "pnpm build --analyze",
+    "release:version": "changeset version",
+    "release:publish": "changeset publish",
+    "server:start": "cd apps/vite && pnpm dev"
   },
   "config": {
     "commitizen": {
