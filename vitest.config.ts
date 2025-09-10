@@ -243,7 +243,7 @@ export default mergeConfig(
       },
     },
 
-    // Define externals to prevent Vite from trying to bundle Bun-specific modules
+    // Define externals to prevent Vite from trying to bundle Node-specific modules
     define: {
       'import.meta.vitest': 'undefined',
     },

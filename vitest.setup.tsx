@@ -163,7 +163,7 @@ beforeAll(() => {
     })
   }
 
-  // Native Bun fetch is available, no polyfill needed
+  // Node.js fetch is available in Node 18+, no polyfill needed
 })
 
 beforeEach(() => {
