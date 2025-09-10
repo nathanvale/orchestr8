@@ -1,48 +1,48 @@
-name: 'CI Status Reporter'
-description: 'Generate visual status reports with emoji indicators and ADHD-friendly formatting'
-author: 'Agent OS'
+name: "CI Status Reporter"
+description: "Generate visual status reports with emoji indicators and ADHD-friendly formatting"
+author: "Agent OS"
 
 inputs:
   job-results:
-    description: 'JSON object containing job results with status and emoji'
+    description: "JSON object containing job results with status and emoji"
     required: true
   show-duration:
-    description: 'Whether to include duration metrics in the report'
+    description: "Whether to include duration metrics in the report"
     required: false
-    default: 'false'
+    default: "false"
   include-fix-commands:
-    description: 'Whether to include fix commands for failed jobs'
+    description: "Whether to include fix commands for failed jobs"
     required: false
-    default: 'false'
+    default: "false"
   report-title:
-    description: 'Title for the status report'
+    description: "Title for the status report"
     required: false
-    default: '📊 CI Pipeline Status'
+    default: "📊 CI Pipeline Status"
 
 outputs:
   status-table:
-    description: 'Generated status table in markdown format'
+    description: "Generated status table in markdown format"
   summary-report:
-    description: 'Complete summary report with fix instructions'
+    description: "Complete summary report with fix instructions"
   overall-status:
-    description: 'Overall pipeline status (success/failure)'
+    description: "Overall pipeline status (success/failure)"
   job-results:
-    description: 'Processed job results in JSON format'
+    description: "Processed job results in JSON format"
 
 runs:
-  using: 'composite'
+  using: "composite"
   steps:
     - name: Generate Status Report
       shell: bash
       run: |
         set -e
-        
+
         # Parse inputs
         JOB_RESULTS='${{ inputs.job-results }}'
         SHOW_DURATION='${{ inputs.show-duration }}'
         INCLUDE_FIX_COMMANDS='${{ inputs.include-fix-commands }}'
         REPORT_TITLE='${{ inputs.report-title }}'
-        
+
         # Use the JavaScript status generator for enhanced functionality
         REPORT=$(node ${{ github.action_path }}/status-generator.js \
           --job-results "$JOB_RESULTS" \
@@ -50,34 +50,34 @@ runs:
           --include-fix "$INCLUDE_FIX_COMMANDS" \
           --report-title "$REPORT_TITLE" \
           --show-performance "true")
-        
+
         # Determine overall status from job results
         OVERALL_STATUS="success"
         if echo "$JOB_RESULTS" | grep -q '"result":"failure"'; then
           OVERALL_STATUS="failure"
         fi
-        
+
         # Save report to file for GitHub output
         echo "$REPORT" > status_report.md
-        
+
         # Set GitHub Action outputs
         {
           echo "status-table<<EOF"
           echo "$REPORT"
           echo "EOF"
         } >> $GITHUB_OUTPUT
-        
+
         {
           echo "summary-report<<EOF" 
           echo "$REPORT"
           echo "EOF"
         } >> $GITHUB_OUTPUT
-        
+
         echo "overall-status=$OVERALL_STATUS" >> $GITHUB_OUTPUT
-        
+
         # Output job results for other steps to use
         echo "job-results=$JOB_RESULTS" >> $GITHUB_OUTPUT
-        
+
         # Display report for immediate feedback in GitHub Actions logs
         echo "📊 Generated Status Report:"
         echo "=========================="

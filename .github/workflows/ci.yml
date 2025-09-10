@@ -633,26 +633,29 @@ jobs:
               comment.user.login === 'github-actions[bot]'
             );
             
-            const commentBody = `${statusReport}
+            const helpText = [
+              '',
+              '---',
+              '_This comment is automatically updated with the latest CI status. You can safely ignore previous status comments._',
+              '',
+              '<details>',
+              '<summary>🔄 How to interpret this report</summary>',
+              '',
+              '**Status Icons:**',
+              '- ✅ **Passed**: Job completed successfully',
+              '- ❌ **Failed**: Job failed - action required',
+              '- ⏭️ **Skipped**: Job was skipped (normal for certain conditions)',
+              '- ⏹️ **Cancelled**: Job was cancelled',
+              '',
+              '**Quick Actions:**',
+              '- Click on failed job names in the [Actions tab](../../actions) to see detailed logs',
+              '- Use the fix commands shown above to resolve issues locally',
+              '- Push changes to automatically re-run the failed jobs',
+              '',
+              '</details>'
+            ].join('\\n');
             
----
-*This comment is automatically updated with the latest CI status. You can safely ignore previous status comments.*
-            
-<details>
-<summary>🔄 How to interpret this report</summary>
-
-**Status Icons:**
-- ✅ **Passed**: Job completed successfully
-- ❌ **Failed**: Job failed - action required
-- ⏭️ **Skipped**: Job was skipped (normal for certain conditions)
-- ⏹️ **Cancelled**: Job was cancelled
-
-**Quick Actions:**
-- Click on failed job names in the [Actions tab](../../actions) to see detailed logs
-- Use the fix commands shown above to resolve issues locally
-- Push changes to automatically re-run the failed jobs
-
-</details>`;
+            const commentBody = statusReport + '\\n' + helpText;
 
             if (existingComment) {
               // Update existing comment

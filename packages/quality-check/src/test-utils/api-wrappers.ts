@@ -88,7 +88,7 @@ vi.mock('node:fs', () => ({
     const file = globalMockFiles.get(filePath)
     if (!file || !file.exists) {
       const error = new Error(`ENOENT: no such file or directory, stat '${filePath}'`)
-      ;(error as any).code = 'ENOENT'
+      ;(error as NodeJS.ErrnoException).code = 'ENOENT'
       throw error
     }
     return {

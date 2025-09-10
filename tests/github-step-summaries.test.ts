@@ -47,7 +47,12 @@ function parseYaml(yamlContent: string): any {
       currentSection = 'concurrency'
     } else if (trimmed.startsWith('jobs:')) {
       currentSection = 'jobs'
-    } else if (currentSection === 'env' && indent === 2 && trimmed.includes(':') && !trimmed.startsWith('#')) {
+    } else if (
+      currentSection === 'env' &&
+      indent === 2 &&
+      trimmed.includes(':') &&
+      !trimmed.startsWith('#')
+    ) {
       const parts = trimmed.split(':')
       const key = parts[0]?.trim()
       const value = parts.slice(1).join(':').trim()
@@ -68,9 +73,16 @@ function parseYaml(yamlContent: string): any {
       const value = parts.slice(1).join(':').trim()
       if (key && value) {
         const cleanValue = value.replace(/['"]/g, '')
-        result.concurrency[key] = cleanValue === 'true' ? true : cleanValue === 'false' ? false : cleanValue
+        result.concurrency[key] =
+          cleanValue === 'true' ? true : cleanValue === 'false' ? false : cleanValue
       }
-    } else if (currentSection === 'jobs' && indent === 2 && trimmed.includes(':') && !trimmed.startsWith('#') && !trimmed.includes('}')) {
+    } else if (
+      currentSection === 'jobs' &&
+      indent === 2 &&
+      trimmed.includes(':') &&
+      !trimmed.startsWith('#') &&
+      !trimmed.includes('}')
+    ) {
       const jobName = trimmed.split(':')[0]?.trim()
       if (jobName && !jobName.includes('${{') && jobName.match(/^[a-z][a-z0-9-]*$/)) {
         currentJob = jobName
@@ -90,7 +102,12 @@ function parseYaml(yamlContent: string): any {
       } else if (key === 'steps') {
         currentSubSection = 'steps'
       }
-    } else if (currentJob && currentSubSection === 'steps' && indent === 6 && trimmed.includes(':')) {
+    } else if (
+      currentJob &&
+      currentSubSection === 'steps' &&
+      indent === 6 &&
+      trimmed.includes(':')
+    ) {
       // Basic step parsing for job step counting
       if (trimmed.startsWith('- name:')) {
         const stepName = trimmed.split('- name:')[1]?.trim().replace(/['"]/g, '')
@@ -271,7 +288,7 @@ describe('GitHub Step Summaries Generation', () => {
       expect(ciContent).toContain('timeout-minutes: 1')
 
       // test-quick should only run on PRs
-      expect(ciContent).toContain('if: github.event_name == \'pull_request\'')
+      expect(ciContent).toContain("if: github.event_name == 'pull_request'")
     })
   })
 
@@ -298,7 +315,12 @@ describe('GitHub Actions Integration Points', () => {
     it('should have necessary permissions for PR comments and step summaries', () => {
       const ciContent = readFileSync('./.github/workflows/ci.yml', 'utf-8')
 
-      const requiredPermissions = ['contents: read', 'pull-requests: write', 'checks: write', 'issues: write']
+      const requiredPermissions = [
+        'contents: read',
+        'pull-requests: write',
+        'checks: write',
+        'issues: write',
+      ]
 
       requiredPermissions.forEach((permission) => {
         expect(ciContent).toContain(permission)
