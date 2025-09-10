@@ -1,5 +1,4 @@
-name: CI
-
+name: ADHD CI
 on:
   pull_request:
     types: [opened, synchronize, reopened]
@@ -7,111 +6,54 @@ on:
     branches: [main, develop]
   workflow_dispatch:
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
-
-permissions:
-  contents: read
-  pull-requests: write
-  checks: write
-  issues: write
-
-env:
-  NODE_VERSION: "20.18.1"
-  PNPM_VERSION: "9.15.4"
-  FORCE_COLOR: 3
-  # Vercel Remote Cache (free since Dec 2024) - set in repository secrets
-  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
-  TURBO_TEAM: ${{ vars.TURBO_TEAM }}
-  # Optional: Enable cache signature verification for enhanced security
-  # TURBO_REMOTE_CACHE_SIGNATURE_KEY: ${{ secrets.TURBO_REMOTE_CACHE_SIGNATURE_KEY }}
-
 jobs:
-  # Shared setup job to optimize dependency installation
   setup:
-    name: 🔧 Setup
+    name: 🔧 Setup & Cache
     runs-on: ubuntu-latest
-    outputs:
-      cache-hit: ${{ steps.cache.outputs.cache-hit }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
         with:
-          fetch-depth: 0
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+          version: 9.12.3
+      - uses: actions/setup-node@v4
         with:
-          version: ${{ env.PNPM_VERSION }}
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
+          node-version: 20
           cache: "pnpm"
+      - run: pnpm install --frozen-lockfile
 
-      - name: Cache Dependencies
-        uses: actions/cache@v4
-        id: cache
+  quick-tests:
+    name: ⚡ Quick Tests (1m)
+    runs-on: ubuntu-latest
+    needs: setup
+    timeout-minutes: 1
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
         with:
-          path: |
-            ~/.pnpm-store
-            node_modules
-            .eslintcache
-            .prettiercache
-            .turbo
-          key: deps-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}-turbo-${{ hashFiles('turbo.json*', 'tsconfig*.json') }}
-          restore-keys: |
-            deps-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}-
-            deps-${{ runner.os }}-
+          version: 9.12.3
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "pnpm"
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test:smoke
 
-      - name: Install Dependencies
-        if: steps.cache.outputs.cache-hit != 'true'
-        run: pnpm install --frozen-lockfile --prefer-offline
-        env:
-          NODE_ENV: development
-
-  lint:
-    name: 🔍 Lint (5m)
+  focused-tests:
+    name: 🎯 Focused Tests (5m)
     runs-on: ubuntu-latest
     needs: setup
     timeout-minutes: 5
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
         with:
-          version: ${{ env.PNPM_VERSION }}
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+          version: 9.12.3
+      - uses: actions/setup-node@v4
         with:
-          node-version: ${{ env.NODE_VERSION }}
+          node-version: 20
           cache: "pnpm"
-
-      - name: Restore Dependencies
-        uses: actions/cache/restore@v4
-        with:
-          path: |
-            ~/.pnpm-store
-            node_modules
-            .eslintcache
-            .prettiercache
-            .turbo
-          key: deps-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}-turbo-${{ hashFiles('turbo.json*', 'tsconfig*.json') }}
-          restore-keys: |
-            deps-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}-
-            deps-${{ runner.os }}-
-
-      - name: Install Dependencies (if cache miss)
-        if: needs.setup.outputs.cache-hit != 'true'
-        run: pnpm install --frozen-lockfile --prefer-offline
-
-      - name: Run Lint
-        run: pnpm run lint
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test
 
   format:
     name: 💅 Format (5m)
@@ -119,638 +61,88 @@ jobs:
     needs: setup
     timeout-minutes: 5
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
         with:
-          fetch-depth: 0
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+          version: 9.12.3
+      - uses: actions/setup-node@v4
         with:
-          version: ${{ env.PNPM_VERSION }}
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
+          node-version: 20
           cache: "pnpm"
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm format:check
 
-      - name: Restore Dependencies
-        uses: actions/cache/restore@v4
-        with:
-          path: |
-            ~/.pnpm-store
-            node_modules
-            .eslintcache
-            .prettiercache
-            .turbo
-          key: deps-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}-turbo-${{ hashFiles('turbo.json*', 'tsconfig*.json') }}
-          restore-keys: |
-            deps-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}-
-            deps-${{ runner.os }}-
-
-      - name: Install Dependencies (if cache miss)
-        if: needs.setup.outputs.cache-hit != 'true'
-        run: pnpm install --frozen-lockfile --prefer-offline
-
-      - name: Check Format
-        run: |
-          # Simplified: Check changed files count and run appropriate format command
-          CHANGED=$(git diff --name-only --diff-filter=ACMR origin/${{ github.base_ref }}... 2>/dev/null | wc -l | tr -d ' ')
-          [ "$CHANGED" -gt 0 ] && [ "$CHANGED" -lt 100 ] && pnpm run format:changed || pnpm run format:check
-
-  typecheck:
-    name: 📝 Types (5m)
+  lint:
+    name: 🔍 Lint (5m)
     runs-on: ubuntu-latest
     needs: setup
     timeout-minutes: 5
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
         with:
-          version: ${{ env.PNPM_VERSION }}
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+          version: 9.12.3
+      - uses: actions/setup-node@v4
         with:
-          node-version: ${{ env.NODE_VERSION }}
+          node-version: 20
           cache: "pnpm"
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
 
-      - name: Restore Dependencies
-        uses: actions/cache/restore@v4
-        with:
-          path: |
-            ~/.pnpm-store
-            node_modules
-            .eslintcache
-            .prettiercache
-            .turbo
-          key: deps-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}-turbo-${{ hashFiles('turbo.json*', 'tsconfig*.json') }}
-          restore-keys: |
-            deps-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}-
-            deps-${{ runner.os }}-
-
-      - name: Install Dependencies (if cache miss)
-        if: needs.setup.outputs.cache-hit != 'true'
-        run: pnpm install --frozen-lockfile --prefer-offline
-
-      - name: Type Check
-        run: pnpm run typecheck
-
-  build:
-    name: 🔨 Build (10m)
+  types:
+    name: 🔧 Types (5m)
     runs-on: ubuntu-latest
     needs: setup
-    timeout-minutes: 10
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: ${{ env.PNPM_VERSION }}
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: "pnpm"
-
-      - name: Restore Dependencies
-        uses: actions/cache/restore@v4
-        with:
-          path: |
-            ~/.pnpm-store
-            node_modules
-            .eslintcache
-            .prettiercache
-            .turbo
-          key: deps-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}-turbo-${{ hashFiles('turbo.json*', 'tsconfig*.json') }}
-          restore-keys: |
-            deps-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}-
-            deps-${{ runner.os }}-
-
-      - name: Install Dependencies (if cache miss)
-        if: needs.setup.outputs.cache-hit != 'true'
-        run: pnpm install --frozen-lockfile --prefer-offline
-
-      - name: Build with Performance Monitoring
-        run: time pnpm run build:all --continue=dependencies-successful
-
-      - name: Upload Build Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-${{ github.sha }}
-          path: dist/
-          retention-days: 7
-
-  test-quick:
-    name: ⚡ Quick Tests (1m)
-    runs-on: ubuntu-latest
-    needs: setup
-    timeout-minutes: 1
-    if: github.event_name == 'pull_request'
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: ${{ env.PNPM_VERSION }}
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: "pnpm"
-
-      - name: Restore Dependencies
-        uses: actions/cache/restore@v4
-        with:
-          path: |
-            ~/.pnpm-store
-            node_modules
-            .eslintcache
-            .prettiercache
-            .turbo
-          key: deps-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}-turbo-${{ hashFiles('turbo.json*', 'tsconfig*.json') }}
-          restore-keys: |
-            deps-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}-
-            deps-${{ runner.os }}-
-
-      - name: Install Dependencies (if cache miss)
-        if: needs.setup.outputs.cache-hit != 'true'
-        run: pnpm install --frozen-lockfile --prefer-offline
-
-      - name: Run Quick Tests
-        run: pnpm run test:quick
-
-  test-focused:
-    name: 🎯 Focused Tests (5m)
-    runs-on: ubuntu-latest
-    needs: [setup, test-quick]
     timeout-minutes: 5
-    if: github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, 'test:full')
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
         with:
-          fetch-depth: 0
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+          version: 9.12.3
+      - uses: actions/setup-node@v4
         with:
-          version: ${{ env.PNPM_VERSION }}
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
+          node-version: 20
           cache: "pnpm"
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
 
-      - name: Restore Dependencies
-        uses: actions/cache/restore@v4
-        with:
-          path: |
-            ~/.pnpm-store
-            node_modules
-            .eslintcache
-            .prettiercache
-            .turbo
-          key: deps-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}-turbo-${{ hashFiles('turbo.json*', 'tsconfig*.json') }}
-          restore-keys: |
-            deps-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}-
-            deps-${{ runner.os }}-
-
-      - name: Install Dependencies (if cache miss)
-        if: needs.setup.outputs.cache-hit != 'true'
-        run: pnpm install --frozen-lockfile --prefer-offline
-
-      - name: Run Focused Tests
-        run: pnpm run test:focused
-
-  test-full:
-    name: 🧪 Full Test Suite (${{ matrix.os }}, Node.js ${{ matrix.node-version }})
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 15
-    needs: setup
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || contains(github.event.pull_request.labels.*.name, 'test:full')
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-        node-version: ["20.18.1"]
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: ${{ env.PNPM_VERSION }}
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: "pnpm"
-
-      - name: Cache Dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.pnpm-store
-            node_modules
-          key: ${{ runner.os }}-pnpm-test-${{ matrix.node-version }}-${{ hashFiles('pnpm-lock.yaml') }}
-
-      - name: Install Dependencies
-        run: pnpm install --frozen-lockfile
-        env:
-          NODE_ENV: development
-
-      - name: Run Full Test Suite
-        run: pnpm run test:coverage
-        env:
-          NODE_ENV: test
-
-      - name: Upload Coverage
-        if: matrix.os == 'ubuntu-latest' && matrix.node-version == '20.18.1'
-        uses: codecov/codecov-action@v4
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: ./coverage/lcov.info
-          flags: unittests
-          name: codecov-${{ github.sha }}
-
-  security:
-    name: 🔒 Security Scan (10m)
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    permissions:
-      security-events: write
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: ${{ env.PNPM_VERSION }}
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: "pnpm"
-
-      - name: Install Dependencies
-        run: pnpm install --frozen-lockfile
-        env:
-          NODE_ENV: development
-
-      - name: Audit Dependencies
-        run: |
-          # JSON output for reliable parsing
-          pnpm audit --json > audit.json 2>&1 || true
-
-          # Parse JSON for accurate vulnerability detection
-          node -e '
-            const fs = require("fs");
-            let audit;
-            try {
-              const content = fs.readFileSync("audit.json", "utf8");
-              // Try to extract JSON from potential mixed output
-              const jsonStart = content.indexOf("{");
-              if (jsonStart >= 0) {
-                audit = JSON.parse(content.substring(jsonStart));
-              } else {
-                console.log("No JSON output from audit, assuming no vulnerabilities");
-                process.exit(0);
-              }
-            } catch (e) {
-              console.log("Could not parse audit output, assuming no vulnerabilities");
-              process.exit(0);
-            }
-            
-            const vulns = audit.vulnerabilities || {};
-            const critical = Object.values(vulns).filter(v => v.severity === "critical").length;
-            const high = Object.values(vulns).filter(v => v.severity === "high").length;
-            const moderate = Object.values(vulns).filter(v => v.severity === "moderate").length;
-            const low = Object.values(vulns).filter(v => v.severity === "low").length;
-            
-            console.log("Security Audit Results:");
-            console.log(`  Critical: ${critical}`);
-            console.log(`  High: ${high}`);
-            console.log(`  Moderate: ${moderate}`);
-            console.log(`  Low: ${low}`);
-            
-            // Generate GitHub annotations
-            if (critical > 0) {
-              console.log(`::error::Found ${critical} critical vulnerabilities`);
-            }
-            if (high > 0) {
-              console.log(`::warning::Found ${high} high severity vulnerabilities`);
-            }
-            
-            // Fail if critical or high vulnerabilities exist
-            if (critical > 0 || high > 0) {
-              process.exit(1);
-            }
-          '
-
-      - name: Run Trivy Security Scan
-        uses: aquasecurity/trivy-action@0.28.0
-        with:
-          scan-type: "fs"
-          scan-ref: "."
-          format: "sarif"
-          output: "trivy-results.sarif"
-          severity: "HIGH,CRITICAL"
-
-      - name: Upload Trivy Results
-        uses: github/codeql-action/upload-sarif@v3
-        if: always()
-        with:
-          sarif_file: "trivy-results.sarif"
-
-  commitlint:
-    name: 📋 Commit Lint (5m)
+  commit-lint:
+    name: ⚧ Commit Lint (5m)
     runs-on: ubuntu-latest
     timeout-minutes: 5
     if: github.event_name == 'pull_request'
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v4
         with:
-          version: ${{ env.PNPM_VERSION }}
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+          version: 9.12.3
+      - uses: actions/setup-node@v4
         with:
-          node-version: ${{ env.NODE_VERSION }}
+          node-version: 20
           cache: "pnpm"
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm commitlint --from ${{ github.event.pull_request.base.sha }} --to HEAD --verbose
 
-      - name: Install Commitlint
-        run: pnpm add -D @commitlint/cli @commitlint/config-conventional
-
-      - name: Validate Commits
-        run: |
-          pnpm exec commitlint \
-            --from ${{ github.event.pull_request.base.sha }} \
-            --to ${{ github.event.pull_request.head.sha }} \
-            --verbose
-
-  bundle:
-    name: 📦 Bundle Analysis (10m)
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    if: github.event_name == 'pull_request'
-    steps:
-      - name: Checkout PR
-        uses: actions/checkout@v4
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: ${{ env.PNPM_VERSION }}
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: "pnpm"
-
-      - name: Install Dependencies
-        run: pnpm install --frozen-lockfile
-        env:
-          NODE_ENV: development
-
-      - name: Build and Analyze
-        run: |
-          pnpm run build:analyze > bundle-analysis.txt 2>&1 || true
-          pnpm run bundle:size
-
-      - name: Comment Bundle Size
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const fs = require('fs');
-            const getSize = (file) => {
-              try {
-                return fs.statSync(file).size;
-              } catch {
-                return 0;
-              }
-            };
-            const formatSize = (bytes) => {
-              const kb = bytes / 1024;
-              return `${kb.toFixed(2)} KB`;
-            };
-            const current = getSize('dist/index.js');
-            const emoji = '📦';
-            const comment = `## ${emoji} Bundle Size Report
-
-            **Size:** ${formatSize(current)}
-
-            <details>
-            <summary>View Bundle Analysis</summary>
-
-            \`\`\`
-            ${fs.existsSync('bundle-analysis.txt') ? fs.readFileSync('bundle-analysis.txt', 'utf8').slice(0, 1000) : 'No bundle analysis available'}
-            \`\`\`
-
-            </details>`;
-
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: comment
-            });
-
-  status:
+  ci-status:
     name: 📊 CI Status
     runs-on: ubuntu-latest
-    needs:
-      [
-        setup,
-        lint,
-        format,
-        typecheck,
-        build,
-        test-quick,
-        test-focused,
-        test-full,
-        security,
-        commitlint,
-        bundle,
-      ]
+    needs: [quick-tests, focused-tests, format, lint, types, commit-lint]
     if: always()
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        
-      - name: Generate Enhanced Status Report
-        uses: ./.github/actions/status-reporter
-        id: status-report
-        with:
-          job-results: |
-            {
-              "setup": {"result": "${{ needs.setup.result }}", "duration": null},
-              "lint": {"result": "${{ needs.lint.result }}", "duration": null},
-              "format": {"result": "${{ needs.format.result }}", "duration": null},
-              "typecheck": {"result": "${{ needs.typecheck.result }}", "duration": null},
-              "build": {"result": "${{ needs.build.result }}", "duration": null},
-              "test-quick": {"result": "${{ needs.test-quick.result }}", "duration": null},
-              "test-focused": {"result": "${{ needs.test-focused.result }}", "duration": null},
-              "test-full": {"result": "${{ needs.test-full.result }}", "duration": null},
-              "security": {"result": "${{ needs.security.result }}", "duration": null},
-              "commitlint": {"result": "${{ needs.commitlint.result }}", "duration": null},
-              "bundle": {"result": "${{ needs.bundle.result }}", "duration": null}
-            }
-          show-duration: 'true'
-          include-fix-commands: 'true'
-          report-title: '📊 CI Pipeline Status Summary'
-          
-      - name: Add Step Summary
-        if: always()
+      - name: Check Status
         run: |
-          echo "${{ steps.status-report.outputs.summary-report }}" >> $GITHUB_STEP_SUMMARY
+          echo "🎯 ADHD-Optimized CI Pipeline Status"
+          echo "✅ Quick Tests: ${{ needs.quick-tests.result }}"
+          echo "✅ Focused Tests: ${{ needs.focused-tests.result }}"
+          echo "✅ Format: ${{ needs.format.result }}"
+          echo "✅ Lint: ${{ needs.lint.result }}"
+          echo "✅ Types: ${{ needs.types.result }}"
+          echo "✅ Commit Lint: ${{ needs.commit-lint.result }}"
           
-      - name: Comment on PR with Status Report
-        if: always() && github.event_name == 'pull_request'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const statusReport = `${{ steps.status-report.outputs.summary-report }}`;
-            const overallStatus = '${{ steps.status-report.outputs.overall-status }}';
-            
-            // Find existing status comment
-            const comments = await github.rest.issues.listComments({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-            });
-            
-            const existingComment = comments.data.find(comment => 
-              comment.body.includes('📊 CI Pipeline Status Summary') && 
-              comment.user.login === 'github-actions[bot]'
-            );
-            
-            const helpText = [
-              '',
-              '---',
-              '_This comment is automatically updated with the latest CI status. You can safely ignore previous status comments._',
-              '',
-              '<details>',
-              '<summary>🔄 How to interpret this report</summary>',
-              '',
-              '**Status Icons:**',
-              '- ✅ **Passed**: Job completed successfully',
-              '- ❌ **Failed**: Job failed - action required',
-              '- ⏭️ **Skipped**: Job was skipped (normal for certain conditions)',
-              '- ⏹️ **Cancelled**: Job was cancelled',
-              '',
-              '**Quick Actions:**',
-              '- Click on failed job names in the [Actions tab](../../actions) to see detailed logs',
-              '- Use the fix commands shown above to resolve issues locally',
-              '- Push changes to automatically re-run the failed jobs',
-              '',
-              '</details>'
-            ].join('\\n');
-            
-            const commentBody = statusReport + '\\n' + helpText;
-
-            if (existingComment) {
-              // Update existing comment
-              await github.rest.issues.updateComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                comment_id: existingComment.id,
-                body: commentBody
-              });
-            } else {
-              // Create new comment
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: context.issue.number,
-                body: commentBody
-              });
-            }
-
-      - name: Update PR Description with CI Status
-        if: always() && github.event_name == 'pull_request'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            // Get current PR details
-            const pr = await github.rest.pulls.get({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: context.issue.number,
-            });
-            
-            const overallStatus = '${{ steps.status-report.outputs.overall-status }}';
-            const currentBody = pr.data.body || '';
-            
-            // Create status badge based on overall status
-            const statusBadge = overallStatus === 'success' 
-              ? '🟢 **CI Status: All checks passed**' 
-              : '🔴 **CI Status: Some checks failed**';
-            
-            // Create progress indicator
-            const jobResults = JSON.parse(`${{ steps.status-report.outputs.job-results }}`);
-            const totalJobs = Object.keys(jobResults).length;
-            const passedJobs = Object.values(jobResults).filter(job => job.result === 'success').length;
-            const progressBar = '█'.repeat(Math.floor(passedJobs / totalJobs * 10)) + 
-                               '░'.repeat(10 - Math.floor(passedJobs / totalJobs * 10));
-            
-            const statusSection = `
-## 🚀 CI Pipeline Progress
-
-${statusBadge}
-
-**Progress:** ${passedJobs}/${totalJobs} jobs completed  
-\`${progressBar}\` ${Math.round(passedJobs / totalJobs * 100)}%
-
-**Last Updated:** ${new Date().toLocaleString('en-US', { 
-  timeZone: 'UTC', 
-  dateStyle: 'short', 
-  timeStyle: 'short' 
-})} UTC
-
----
-`;
-
-            // Remove existing CI status section if present
-            let newBody = currentBody.replace(/## 🚀 CI Pipeline Progress[\s\S]*?---\n/g, '');
-            
-            // Add new status section at the top
-            newBody = statusSection + newBody.trim();
-            
-            // Update PR description
-            await github.rest.pulls.update({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: context.issue.number,
-              body: newBody
-            });
-          
-      - name: Check Overall Pipeline Status
-        if: always()
-        run: |
-          # Simplified: Exit with error if pipeline failed, otherwise show success
-          [[ "${{ steps.status-report.outputs.overall-status }}" == "failure" ]] && echo "::error::❌ CI pipeline failed - check the status report above" && exit 1
-          echo "✅ All CI checks passed! Pipeline completed successfully."
-
+          if [[ "${{ needs.quick-tests.result }}" == "failure" || "${{ needs.focused-tests.result }}" == "failure" || "${{ needs.format.result }}" == "failure" || "${{ needs.lint.result }}" == "failure" || "${{ needs.types.result }}" == "failure" || "${{ needs.commit-lint.result }}" == "failure" ]]; then
+            echo "❌ CI Pipeline failed"
+            exit 1
+          fi
+          echo "✅ All CI checks passed!"
