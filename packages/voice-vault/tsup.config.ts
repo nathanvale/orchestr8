@@ -1,4 +1,4 @@
-import { createTsupConfig } from '../../tooling/build/tsup.base.js'
+import { createTsupConfig } from '../../tooling/build/tsup.base'
 
 export default createTsupConfig({
   entry: [
