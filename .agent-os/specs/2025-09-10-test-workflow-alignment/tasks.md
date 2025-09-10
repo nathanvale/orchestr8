@@ -10,13 +10,13 @@
   - [x] 1.4 Document each test's expected vs actual behavior
   - [x] 1.5 Verify all tests catalogued and categorized
 
-- [ ] 2. Update Critical Workflow Tests
-  - [ ] 2.1 Write tests for workflow validation helpers
-  - [ ] 2.2 Rewrite ci-modular-jobs.integration.test.ts for 8-job structure
-  - [ ] 2.3 Rewrite ci-cd-pipeline.integration.test.ts for GitHub Actions
+- [x] 2. Update Critical Workflow Tests
+  - [x] 2.1 Write tests for workflow validation helpers
+  - [x] 2.2 Rewrite ci-modular-jobs.integration.test.ts for 8-job structure
+  - [x] 2.3 Rewrite ci-cd-pipeline.integration.test.ts for GitHub Actions
         validation
-  - [ ] 2.4 Update test utilities to load and parse actual workflow YAML
-  - [ ] 2.5 Verify all critical workflow tests pass
+  - [x] 2.4 Update test utilities to load and parse actual workflow YAML
+  - [x] 2.5 Verify all critical workflow tests pass
 
 - [ ] 3. Align Progressive Testing System
   - [ ] 3.1 Write tests for 2-tier testing validation

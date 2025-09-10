@@ -3,38 +3,25 @@ import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
 import { tmpdir } from 'node:os'
 import { dump, load } from 'js-yaml'
+import {
+  ADHD_CI_JOBS,
+  EXPECTED_JOB_COUNT,
+  DEPENDENT_JOBS,
+  validateWorkflowStructure,
+  loadActualADHDWorkflow,
+  validateJobEmoji,
+  validateJobTimeout,
+  validateJobDependencies,
+  validateStepCount,
+  type CIWorkflow,
+} from './workflow-validation-helpers'
 
-// YAML utilities using proper js-yaml library
-const yamlUtils = {
-  dump: (obj: any): string => {
-    return dump(obj, { indent: 2 })
-  },
-  load: (content: string): any => {
-    return load(content)
-  },
-}
-
-interface CIJob {
-  'name': string
-  'runs-on': string
-  'timeout-minutes': number
-  'steps': Array<{ name: string; run?: string; uses?: string }>
-  'needs'?: string[]
-  'if'?: string
-}
-
-interface CIWorkflow {
-  name: string
-  on: any
-  jobs: Record<string, CIJob>
-}
-
-describe('CI Modular Jobs', () => {
+describe('ADHD CI Modular Jobs Integration', () => {
   let fixtureDir: string
   let workflowPath: string
 
   beforeEach(async () => {
-    fixtureDir = path.join(tmpdir(), `ci-modular-${Date.now()}`)
+    fixtureDir = path.join(tmpdir(), `adhd-ci-${Date.now()}`)
     await fs.mkdir(fixtureDir, { recursive: true })
     workflowPath = path.join(fixtureDir, 'ci.yml')
   })
@@ -43,394 +30,283 @@ describe('CI Modular Jobs', () => {
     await fs.rm(fixtureDir, { recursive: true, force: true })
   })
 
-  describe('Job Splitting', () => {
-    it('should create separate lint job with 5-minute timeout and emoji indicator', () => {
-      const lintJob: CIJob = {
-        'name': '🔍 Lint (5m)',
-        'runs-on': 'ubuntu-latest',
-        'timeout-minutes': 5,
-        'steps': [
-          { name: 'Checkout', uses: 'actions/checkout@v4' },
-          { name: 'Setup pnpm', uses: 'pnpm/action-setup@v4' },
-          { name: 'Setup Node.js', uses: 'actions/setup-node@v4' },
-          { name: 'Install Dependencies', run: 'pnpm install --frozen-lockfile' },
-          { name: 'Run Lint', run: 'pnpm run lint' },
-        ],
+  describe('Actual Production Workflow Validation', () => {
+    it('should load and validate the actual ADHD CI workflow', async () => {
+      const workflow = await loadActualADHDWorkflow()
+      const validation = validateWorkflowStructure(workflow)
+
+      if (!validation.valid) {
+        console.error('Workflow validation errors:', validation.errors)
       }
 
-      expect(lintJob.name).toContain('🔍')
-      expect(lintJob['timeout-minutes']).toBe(5)
-      expect(lintJob.steps).toHaveLength(5)
-      expect(lintJob.steps[4].run).toBe('pnpm run lint')
-      expect(lintJob.name).toContain('(5m)')
+      expect(validation.valid).toBe(true)
+      expect(validation.errors).toHaveLength(0)
     })
 
-    it('should create separate format job with conditional logic for changed files', () => {
-      const formatJob: CIJob = {
-        'name': '💅 Format (5m)',
-        'runs-on': 'ubuntu-latest',
-        'timeout-minutes': 5,
-        'steps': [
-          { name: 'Checkout', uses: 'actions/checkout@v4' },
-          { name: 'Setup pnpm', uses: 'pnpm/action-setup@v4' },
-          { name: 'Setup Node.js', uses: 'actions/setup-node@v4' },
-          { name: 'Install Dependencies', run: 'pnpm install --frozen-lockfile' },
-          {
-            name: 'Check Format',
-            run: 'CHANGED=$(git diff --name-only --diff-filter=ACMR origin/${{ github.base_ref }}... 2>/dev/null | wc -l | tr -d " "); if [ "$CHANGED" -gt 0 ] && [ "$CHANGED" -lt 100 ]; then pnpm run format:changed; else pnpm run format:check; fi',
-          },
-        ],
+    it('should have exactly 9 jobs matching ADHD structure', async () => {
+      const workflow = await loadActualADHDWorkflow()
+      const jobIds = Object.keys(workflow.jobs)
+
+      expect(jobIds).toHaveLength(EXPECTED_JOB_COUNT)
+      expect(jobIds).toContain('setup')
+      expect(jobIds).toContain('quick-tests')
+      expect(jobIds).toContain('focused-tests')
+      expect(jobIds).toContain('format')
+      expect(jobIds).toContain('lint')
+      expect(jobIds).toContain('typecheck')
+      expect(jobIds).toContain('build')
+      expect(jobIds).toContain('commit-lint')
+      expect(jobIds).toContain('ci-status')
+    })
+
+    it('should have correct emoji indicators for each job', async () => {
+      const workflow = await loadActualADHDWorkflow()
+
+      for (const [jobId, expectedConfig] of Object.entries(ADHD_CI_JOBS)) {
+        const job = workflow.jobs[jobId]
+        expect(job).toBeDefined()
+        expect(validateJobEmoji(job, expectedConfig.emoji)).toBe(true)
+      }
+    })
+
+    it('should have correct timeout configurations', async () => {
+      const workflow = await loadActualADHDWorkflow()
+
+      for (const [jobId, expectedConfig] of Object.entries(ADHD_CI_JOBS)) {
+        const job = workflow.jobs[jobId]
+        expect(job).toBeDefined()
+        expect(validateJobTimeout(job, expectedConfig.timeout)).toBe(true)
+      }
+    })
+
+    it('should have ci-status depend on all 6 quality jobs', async () => {
+      const workflow = await loadActualADHDWorkflow()
+      const ciStatusJob = workflow.jobs['ci-status']
+
+      expect(ciStatusJob).toBeDefined()
+      expect(validateJobDependencies(ciStatusJob, DEPENDENT_JOBS)).toBe(true)
+
+      const actualDeps = Array.isArray(ciStatusJob.needs) ? ciStatusJob.needs : [ciStatusJob.needs]
+      expect(actualDeps).toHaveLength(DEPENDENT_JOBS.length)
+      expect(actualDeps).toEqual(expect.arrayContaining(DEPENDENT_JOBS))
+    })
+  })
+
+  describe('ADHD Job Structure Tests', () => {
+    it('should validate setup job has no timeout and correct emoji', () => {
+      const setupConfig = ADHD_CI_JOBS.setup
+      expect(setupConfig.name).toBe('🔧 Setup & Cache')
+      expect(setupConfig.emoji).toBe('🔧')
+      expect(setupConfig.timeout).toBeUndefined()
+    })
+
+    it('should validate quick-tests job has 1-minute timeout', () => {
+      const quickTestsConfig = ADHD_CI_JOBS['quick-tests']
+      expect(quickTestsConfig.name).toBe('⚡ Quick Tests (1m)')
+      expect(quickTestsConfig.emoji).toBe('⚡')
+      expect(quickTestsConfig.timeout).toBe(1)
+    })
+
+    it('should validate focused-tests job has 5-minute timeout', () => {
+      const focusedTestsConfig = ADHD_CI_JOBS['focused-tests']
+      expect(focusedTestsConfig.name).toBe('🎯 Focused Tests (5m)')
+      expect(focusedTestsConfig.emoji).toBe('🎯')
+      expect(focusedTestsConfig.timeout).toBe(5)
+    })
+
+    it('should validate format job configuration', () => {
+      const formatConfig = ADHD_CI_JOBS.format
+      expect(formatConfig.name).toBe('💅 Format (5m)')
+      expect(formatConfig.emoji).toBe('💅')
+      expect(formatConfig.timeout).toBe(5)
+    })
+
+    it('should validate lint job configuration', () => {
+      const lintConfig = ADHD_CI_JOBS.lint
+      expect(lintConfig.name).toBe('🔍 Lint (5m)')
+      expect(lintConfig.emoji).toBe('🔍')
+      expect(lintConfig.timeout).toBe(5)
+    })
+
+    it('should validate typecheck job configuration', () => {
+      const typecheckConfig = ADHD_CI_JOBS.typecheck
+      expect(typecheckConfig.name).toBe('🔧 Types (5m)')
+      expect(typecheckConfig.emoji).toBe('🔧')
+      expect(typecheckConfig.timeout).toBe(5)
+    })
+
+    it('should validate build job configuration', () => {
+      const buildConfig = ADHD_CI_JOBS.build
+      expect(buildConfig.name).toBe('🏗️ Build (5m)')
+      expect(buildConfig.emoji).toBe('🏗️')
+      expect(buildConfig.timeout).toBe(5)
+    })
+
+    it('should validate commit-lint job configuration', () => {
+      const commitLintConfig = ADHD_CI_JOBS['commit-lint']
+      expect(commitLintConfig.name).toBe('⚧ Commit Lint (5m)')
+      expect(commitLintConfig.emoji).toBe('⚧')
+      expect(commitLintConfig.timeout).toBe(5)
+    })
+
+    it('should validate ci-status job configuration', () => {
+      const ciStatusConfig = ADHD_CI_JOBS['ci-status']
+      expect(ciStatusConfig.name).toBe('📊 CI Status')
+      expect(ciStatusConfig.emoji).toBe('📊')
+      expect(ciStatusConfig.timeout).toBeUndefined()
+    })
+  })
+
+  describe('Dependency Structure', () => {
+    it('should have quality jobs depend on setup but not each other', async () => {
+      const workflow = await loadActualADHDWorkflow()
+
+      // Quality jobs should depend on setup
+      const qualityJobs = ['quick-tests', 'focused-tests', 'format', 'lint', 'types']
+      for (const jobId of qualityJobs) {
+        const job = workflow.jobs[jobId]
+        expect(job.needs).toBe('setup')
       }
 
-      expect(formatJob.name).toContain('💅')
-      expect(formatJob['timeout-minutes']).toBe(5)
-      expect(formatJob.steps[4].run).toContain('format:changed')
-      expect(formatJob.steps[4].run).toContain('format:check')
-      expect(formatJob.name).toContain('(5m)')
+      // Commit-lint should not depend on setup (it runs independently)
+      const commitLintJob = workflow.jobs['commit-lint']
+      expect(commitLintJob.needs).toBeUndefined()
     })
 
-    it('should create separate typecheck job for production and test configs', () => {
-      const typecheckJob: CIJob = {
-        'name': '📝 Types (5m)',
-        'runs-on': 'ubuntu-latest',
-        'timeout-minutes': 5,
-        'steps': [
-          { name: 'Checkout', uses: 'actions/checkout@v4' },
-          { name: 'Setup pnpm', uses: 'pnpm/action-setup@v4' },
-          { name: 'Setup Node.js', uses: 'actions/setup-node@v4' },
-          { name: 'Install Dependencies', run: 'pnpm install --frozen-lockfile' },
-          { name: 'Type Check Production', run: 'pnpm exec tsc --noEmit -p tsconfig.build.json' },
-          { name: 'Type Check Tests', run: 'pnpm exec tsc --noEmit -p tsconfig.json' },
-        ],
+    it('should have ci-status depend on all quality jobs but not setup', async () => {
+      const workflow = await loadActualADHDWorkflow()
+      const ciStatusJob = workflow.jobs['ci-status']
+
+      expect(ciStatusJob.needs).toEqual(DEPENDENT_JOBS)
+      expect(ciStatusJob.needs).not.toContain('setup')
+      expect(ciStatusJob.needs).not.toContain('ci-status')
+    })
+  })
+
+  describe('Performance Optimization', () => {
+    it('should have quick smoke tests complete within 1 minute', async () => {
+      const workflow = await loadActualADHDWorkflow()
+      const quickTestsJob = workflow.jobs['quick-tests']
+
+      expect(quickTestsJob['timeout-minutes']).toBe(1)
+      expect(quickTestsJob.name).toContain('(1m)')
+    })
+
+    it('should have all quality jobs complete within 5 minutes', async () => {
+      const workflow = await loadActualADHDWorkflow()
+      const fiveMinuteJobs = ['focused-tests', 'format', 'lint', 'types', 'commit-lint']
+
+      for (const jobId of fiveMinuteJobs) {
+        const job = workflow.jobs[jobId]
+        expect(job['timeout-minutes']).toBe(5)
+        expect(job.name).toContain('(5m)')
       }
-
-      expect(typecheckJob.name).toContain('📝')
-      expect(typecheckJob['timeout-minutes']).toBe(5)
-      expect(typecheckJob.steps).toHaveLength(6)
-      expect(typecheckJob.steps[4].run).toContain('tsconfig.build.json')
-      expect(typecheckJob.steps[5].run).toContain('tsconfig.json')
     })
 
-    it('should create separate build job with performance monitoring', () => {
-      const buildJob: CIJob = {
-        'name': '🔨 Build (10m)',
-        'runs-on': 'ubuntu-latest',
-        'timeout-minutes': 10,
-        'steps': [
-          { name: 'Checkout', uses: 'actions/checkout@v4' },
-          { name: 'Setup pnpm', uses: 'pnpm/action-setup@v4' },
-          { name: 'Setup Node.js', uses: 'actions/setup-node@v4' },
-          { name: 'Install Dependencies', run: 'pnpm install --frozen-lockfile' },
-          {
-            name: 'Build with Performance Monitoring',
-            run: 'time pnpm run build:all --continue=dependencies-successful',
-          },
-          {
-            name: 'Upload Build Artifacts',
-            uses: 'actions/upload-artifact@v4',
-          },
-        ],
+    it('should enable parallel execution for maximum performance', async () => {
+      const workflow = await loadActualADHDWorkflow()
+
+      // All quality jobs should run in parallel (all depend only on setup)
+      const parallelJobs = ['quick-tests', 'focused-tests', 'format', 'lint', 'types']
+      for (const jobId of parallelJobs) {
+        const job = workflow.jobs[jobId]
+        expect(job.needs).toBe('setup') // Only dependency is setup
       }
+    })
+  })
 
-      expect(buildJob.name).toContain('🔨')
-      expect(buildJob['timeout-minutes']).toBe(10)
-      expect(buildJob.steps[4].run).toContain('time')
-      expect(buildJob.steps[4].run).toContain('build:all')
+  describe('CI Status Aggregation', () => {
+    it('should check results from all dependent jobs', async () => {
+      const workflow = await loadActualADHDWorkflow()
+      const ciStatusJob = workflow.jobs['ci-status']
+      const checkStatusStep = ciStatusJob.steps.find((step) => step.name === 'Check Status')
+
+      expect(checkStatusStep).toBeDefined()
+      expect(checkStatusStep!.run).toContain('needs.quick-tests.result')
+      expect(checkStatusStep!.run).toContain('needs.focused-tests.result')
+      expect(checkStatusStep!.run).toContain('needs.format.result')
+      expect(checkStatusStep!.run).toContain('needs.lint.result')
+      expect(checkStatusStep!.run).toContain('needs.types.result')
+      expect(checkStatusStep!.run).toContain('needs.commit-lint.result')
     })
 
-    it('should ensure all jobs run in parallel without dependencies', async () => {
+    it('should run always to report final status', async () => {
+      const workflow = await loadActualADHDWorkflow()
+      const ciStatusJob = workflow.jobs['ci-status']
+
+      expect(ciStatusJob.if).toBe('always()')
+    })
+  })
+
+  describe('Test Workflow Creation', () => {
+    it('should create valid ADHD-style workflow structure', async () => {
       const workflow: CIWorkflow = {
-        name: 'CI',
+        name: 'ADHD CI',
         on: {
-          pull_request: { types: ['opened', 'synchronize', 'reopened'] },
-          push: { branches: ['main', 'develop'] },
+          pull_request: {
+            types: ['opened', 'synchronize', 'reopened'],
+          },
+          push: {
+            branches: ['main', 'develop'],
+          },
+        },
+        env: {
+          NODE_VERSION: '20.18.1',
+          PNPM_VERSION: '9.15.4',
         },
         jobs: {
-          lint: {
-            'name': '🔍 Lint (5m)',
+          'setup': {
+            'name': '🔧 Setup & Cache',
             'runs-on': 'ubuntu-latest',
-            'timeout-minutes': 5,
-            'steps': [{ name: 'Run Lint', run: 'pnpm run lint' }],
+            'steps': [
+              { uses: 'actions/checkout@v4' },
+              { name: 'Install Dependencies', run: 'pnpm install --frozen-lockfile' },
+            ],
           },
-          format: {
-            'name': '💅 Format (5m)',
+          'quick-tests': {
+            'name': '⚡ Quick Tests (1m)',
             'runs-on': 'ubuntu-latest',
-            'timeout-minutes': 5,
-            'steps': [{ name: 'Check Format', run: 'pnpm run format:check' }],
+            'needs': 'setup',
+            'timeout-minutes': 1,
+            'steps': [{ uses: 'actions/checkout@v4' }, { run: 'pnpm test:smoke' }],
           },
-          typecheck: {
-            'name': '📝 Types (5m)',
+          'ci-status': {
+            'name': '📊 CI Status',
             'runs-on': 'ubuntu-latest',
-            'timeout-minutes': 5,
-            'steps': [{ name: 'Type Check', run: 'pnpm run typecheck' }],
-          },
-          build: {
-            'name': '🔨 Build (10m)',
-            'runs-on': 'ubuntu-latest',
-            'timeout-minutes': 10,
-            'steps': [{ name: 'Build', run: 'pnpm run build' }],
-          },
-        },
-      }
-
-      await fs.writeFile(workflowPath, yamlUtils.dump(workflow))
-      const content = await fs.readFile(workflowPath, 'utf-8')
-      const parsedWorkflow = yamlUtils.load(content) as CIWorkflow
-
-      // Check that no job has dependencies
-      expect(parsedWorkflow.jobs.lint.needs).toBeUndefined()
-      expect(parsedWorkflow.jobs.format.needs).toBeUndefined()
-      expect(parsedWorkflow.jobs.typecheck.needs).toBeUndefined()
-      expect(parsedWorkflow.jobs.build.needs).toBeUndefined()
-    })
-
-    it('should update CI status aggregator to include new modular jobs', async () => {
-      const workflow: CIWorkflow = {
-        name: 'CI',
-        on: {
-          pull_request: { types: ['opened', 'synchronize', 'reopened'] },
-          push: { branches: ['main', 'develop'] },
-        },
-        jobs: {
-          lint: {
-            'name': '🔍 Lint (5m)',
-            'runs-on': 'ubuntu-latest',
-            'timeout-minutes': 5,
-            'steps': [{ name: 'Run Lint', run: 'pnpm run lint' }],
-          },
-          format: {
-            'name': '💅 Format (5m)',
-            'runs-on': 'ubuntu-latest',
-            'timeout-minutes': 5,
-            'steps': [{ name: 'Check Format', run: 'pnpm run format:check' }],
-          },
-          typecheck: {
-            'name': '📝 Types (5m)',
-            'runs-on': 'ubuntu-latest',
-            'timeout-minutes': 5,
-            'steps': [{ name: 'Type Check', run: 'pnpm run typecheck' }],
-          },
-          build: {
-            'name': '🔨 Build (10m)',
-            'runs-on': 'ubuntu-latest',
-            'timeout-minutes': 10,
-            'steps': [{ name: 'Build', run: 'pnpm run build' }],
-          },
-          status: {
-            'name': 'CI Status',
-            'runs-on': 'ubuntu-latest',
-            'timeout-minutes': 5,
-            'needs': ['lint', 'format', 'typecheck', 'build'],
+            'needs': ['quick-tests'],
             'if': 'always()',
             'steps': [
               {
                 name: 'Check Status',
-                run: `if [[ "\${{ needs.lint.result }}" == "failure" || \\
-      "\${{ needs.format.result }}" == "failure" || \\
-      "\${{ needs.typecheck.result }}" == "failure" || \\
-      "\${{ needs.build.result }}" == "failure" ]]; then
-  echo "::error::CI checks failed"
-  exit 1
-fi
-echo "✅ All CI checks passed!"`,
+                run: 'echo "CI Status check"',
               },
             ],
           },
         },
       }
 
-      await fs.writeFile(workflowPath, yamlUtils.dump(workflow))
+      await fs.writeFile(workflowPath, dump(workflow, { indent: 2 }))
       const content = await fs.readFile(workflowPath, 'utf-8')
-      const parsedWorkflow = yamlUtils.load(content) as CIWorkflow
+      const parsedWorkflow = load(content) as CIWorkflow
 
-      expect(parsedWorkflow.jobs.status).toBeDefined()
-      expect(parsedWorkflow.jobs.status.needs).toEqual(['lint', 'format', 'typecheck', 'build'])
-      expect(parsedWorkflow.jobs.status.if).toBe('always()')
-      expect(parsedWorkflow.jobs.status.steps[0].run).toContain('needs.lint.result')
-      expect(parsedWorkflow.jobs.status.steps[0].run).toContain('needs.format.result')
-      expect(parsedWorkflow.jobs.status.steps[0].run).toContain('needs.typecheck.result')
-      expect(parsedWorkflow.jobs.status.steps[0].run).toContain('needs.build.result')
+      expect(parsedWorkflow.name).toBe('ADHD CI')
+      expect(parsedWorkflow.jobs.setup).toBeDefined()
+      expect(parsedWorkflow.jobs['quick-tests']).toBeDefined()
+      expect(parsedWorkflow.jobs['ci-status']).toBeDefined()
     })
-  })
 
-  describe('Job Configuration', () => {
-    it('should limit each job to maximum 3 steps (excluding setup)', () => {
-      const workflow: CIWorkflow = {
-        name: 'CI',
-        on: {
-          pull_request: { types: ['opened', 'synchronize', 'reopened'] },
-          push: { branches: ['main', 'develop'] },
-        },
-        jobs: {
-          lint: {
-            'name': '🔍 Lint (5m)',
-            'runs-on': 'ubuntu-latest',
-            'timeout-minutes': 5,
-            'steps': [
-              { name: 'Setup', uses: 'actions/setup-composite@v1' },
-              { name: 'Run Lint', run: 'pnpm run lint' },
-              { name: 'Generate Report', run: 'pnpm run lint:report' },
-              { name: 'Upload Results', uses: 'actions/upload-artifact@v4' },
-            ],
-          },
-        },
+    it('should validate step count limits for focused execution', async () => {
+      const workflow = await loadActualADHDWorkflow()
+
+      for (const [jobId, job] of Object.entries(workflow.jobs)) {
+        // Skip setup and status jobs from step count validation
+        if (jobId === 'setup' || jobId === 'ci-status') {
+          continue
+        }
+
+        const isValidStepCount = validateStepCount(job, 3)
+        expect(isValidStepCount).toBe(true)
       }
-
-      // Count non-setup steps
-      const nonSetupSteps = workflow.jobs.lint.steps.filter(
-        (step) =>
-          !step.name.toLowerCase().includes('setup') &&
-          !step.name.toLowerCase().includes('checkout'),
-      )
-
-      expect(nonSetupSteps.length).toBeLessThanOrEqual(3)
-    })
-
-    it('should include clear timeout limits in job names', () => {
-      const jobNames = ['🔍 Lint (5m)', '💅 Format (5m)', '📝 Types (5m)', '🔨 Build (10m)']
-
-      jobNames.forEach((name) => {
-        const timeoutMatch = name.match(/\((\d+)m\)/)
-        expect(timeoutMatch).toBeTruthy()
-        expect(timeoutMatch![1]).toMatch(/^\d+$/)
-      })
-    })
-
-    it('should use emoji indicators for each job type', () => {
-      const jobConfigs = [
-        { name: '🔍 Lint (5m)', emoji: '🔍', type: 'lint' },
-        { name: '💅 Format (5m)', emoji: '💅', type: 'format' },
-        { name: '📝 Types (5m)', emoji: '📝', type: 'typecheck' },
-        { name: '🔨 Build (10m)', emoji: '🔨', type: 'build' },
-      ]
-
-      jobConfigs.forEach((config) => {
-        expect(config.name).toContain(config.emoji)
-        expect(config.name.toLowerCase()).toContain(config.type.toLowerCase().substring(0, 4))
-      })
-    })
-  })
-
-  describe('Performance Validation', () => {
-    it('should complete all quality jobs within 5 minutes each', () => {
-      const qualityJobs = [
-        { name: 'lint', timeout: 5 },
-        { name: 'format', timeout: 5 },
-        { name: 'typecheck', timeout: 5 },
-      ]
-
-      qualityJobs.forEach((job) => {
-        expect(job.timeout).toBeLessThanOrEqual(5)
-      })
-    })
-
-    it('should complete build job within 10 minutes', () => {
-      const buildJob = { name: 'build', timeout: 10 }
-      expect(buildJob.timeout).toBeLessThanOrEqual(10)
-    })
-
-    it('should ensure parallel execution reduces total pipeline time', () => {
-      const sequentialTime = 5 + 5 + 5 + 10 // All jobs run sequentially
-      const parallelTime = Math.max(5, 5, 5, 10) // All jobs run in parallel
-
-      expect(parallelTime).toBeLessThan(sequentialTime)
-      expect(parallelTime).toBe(10) // Maximum of all job times
-    })
-  })
-
-  describe('Migration Validation', () => {
-    it('should preserve all quality checks from monolithic job', () => {
-      const monolithicChecks = ['lint', 'format', 'typecheck', 'build']
-      const modularJobs = ['lint', 'format', 'typecheck', 'build']
-
-      monolithicChecks.forEach((check) => {
-        expect(modularJobs).toContain(check)
-      })
-    })
-
-    it('should not have old monolithic quality job after migration', async () => {
-      const workflow: CIWorkflow = {
-        name: 'CI',
-        on: {
-          pull_request: { types: ['opened', 'synchronize', 'reopened'] },
-          push: { branches: ['main', 'develop'] },
-        },
-        jobs: {
-          lint: {
-            'name': '🔍 Lint (5m)',
-            'runs-on': 'ubuntu-latest',
-            'timeout-minutes': 5,
-            'steps': [{ name: 'Run Lint', run: 'pnpm run lint' }],
-          },
-          format: {
-            'name': '💅 Format (5m)',
-            'runs-on': 'ubuntu-latest',
-            'timeout-minutes': 5,
-            'steps': [{ name: 'Check Format', run: 'pnpm run format:check' }],
-          },
-          typecheck: {
-            'name': '📝 Types (5m)',
-            'runs-on': 'ubuntu-latest',
-            'timeout-minutes': 5,
-            'steps': [{ name: 'Type Check', run: 'pnpm run typecheck' }],
-          },
-          build: {
-            'name': '🔨 Build (10m)',
-            'runs-on': 'ubuntu-latest',
-            'timeout-minutes': 10,
-            'steps': [{ name: 'Build', run: 'pnpm run build' }],
-          },
-        },
-      }
-
-      await fs.writeFile(workflowPath, yamlUtils.dump(workflow))
-      const content = await fs.readFile(workflowPath, 'utf-8')
-      const parsedWorkflow = yamlUtils.load(content) as CIWorkflow
-
-      expect(parsedWorkflow.jobs.quality).toBeUndefined()
-      expect(Object.keys(parsedWorkflow.jobs)).not.toContain('quality')
-    })
-  })
-
-  describe('GitHub Actions Integration', () => {
-    it('should generate valid GitHub Actions workflow syntax', async () => {
-      const workflow: CIWorkflow = {
-        name: 'CI',
-        on: {
-          pull_request: { types: ['opened', 'synchronize', 'reopened'] },
-          push: { branches: ['main', 'develop'] },
-        },
-        jobs: {
-          lint: {
-            'name': '🔍 Lint (5m)',
-            'runs-on': 'ubuntu-latest',
-            'timeout-minutes': 5,
-            'steps': [
-              { name: 'Checkout', uses: 'actions/checkout@v4' },
-              { name: 'Run Lint', run: 'pnpm run lint' },
-            ],
-          },
-        },
-      }
-
-      const yamlContent = yamlUtils.dump(workflow)
-      expect(yamlContent).toContain('name: CI')
-      expect(yamlContent).toContain('on:')
-      expect(yamlContent).toContain('jobs:')
-      expect(yamlContent).toContain('runs-on: ubuntu-latest')
-      expect(yamlContent).toContain('timeout-minutes: 5')
-    })
-
-    it('should use proper GitHub Actions expressions in conditionals', () => {
-      const statusCheck = `if [[ "\${{ needs.lint.result }}" == "failure" ]]; then exit 1; fi`
-      expect(statusCheck).toContain('${{ needs.lint.result }}')
-      expect(statusCheck).toContain('failure')
-    })
-
-    it('should properly escape GitHub Actions variables', () => {
-      const gitDiffCommand = 'git diff --name-only origin/${{ github.base_ref }}...'
-      expect(gitDiffCommand).toContain('${{ github.base_ref }}')
-      expect(gitDiffCommand).not.toContain('${github.base_ref}') // Should not use shell syntax
     })
   })
 })
