@@ -4,12 +4,7 @@
  */
 
 // Import types and functions from @orchestr8/logger
-import type {
-  Logger,
-  LogFields,
-  LogLevel,
-  LoggerOptions,
-} from '@orchestr8/logger'
+import type { Logger, LogFields, LogLevel, LoggerOptions } from '@orchestr8/logger'
 
 // Conditionally import based on Node.js version to maintain CI compatibility
 let createLogger: (options?: LoggerOptions) => Promise<Logger>
