@@ -36,7 +36,7 @@ describe('GitHub Actions ADHD CI Workflow Validation', () => {
   })
 
   describe('Workflow Structure Validation', () => {
-    it('should_validate_complete_8_job_structure', () => {
+    it('should_validate_complete_9_job_structure', () => {
       const validation = validateWorkflowStructure(workflow)
 
       if (!validation.valid) {
@@ -47,11 +47,11 @@ describe('GitHub Actions ADHD CI Workflow Validation', () => {
       expect(validation.errors).toHaveLength(0)
     })
 
-    it('should_have_exactly_8_jobs_matching_adhd_structure', () => {
+    it('should_have_exactly_9_jobs_matching_adhd_structure', () => {
       const jobIds = Object.keys(workflow.jobs)
       const expectedJobs = Object.keys(ADHD_CI_JOBS)
 
-      expect(jobIds).toHaveLength(8)
+      expect(jobIds).toHaveLength(9)
       expect(jobIds.sort()).toEqual(expectedJobs.sort())
     })
 
@@ -160,13 +160,14 @@ describe('GitHub Actions ADHD CI Workflow Validation', () => {
     it('should_use_valid_github_context_expressions', () => {
       // Test expressions in ci-status job
       const statusJob = workflow.jobs['ci-status']
-      const checkStep = statusJob.steps.find((step) => step.name === 'Check Status')
+      const checkStep = statusJob.steps.find((step) => step.name === 'Generate Enhanced Status Report')
 
       expect(checkStep?.run).toContain('${{ needs.quick-tests.result }}')
       expect(checkStep?.run).toContain('${{ needs.focused-tests.result }}')
       expect(checkStep?.run).toContain('${{ needs.format.result }}')
       expect(checkStep?.run).toContain('${{ needs.lint.result }}')
-      expect(checkStep?.run).toContain('${{ needs.types.result }}')
+      expect(checkStep?.run).toContain('${{ needs.typecheck.result }}')
+      expect(checkStep?.run).toContain('${{ needs.build.result }}')
       expect(checkStep?.run).toContain('${{ needs.commit-lint.result }}')
     })
 
@@ -214,7 +215,8 @@ describe('GitHub Actions ADHD CI Workflow Validation', () => {
         'focused-tests': 5,
         'format': 5,
         'lint': 5,
-        'types': 5,
+        'typecheck': 5,
+        'build': 5,
         'commit-lint': 5,
         'ci-status': undefined,
       }

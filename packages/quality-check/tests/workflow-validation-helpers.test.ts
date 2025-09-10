@@ -188,8 +188,14 @@ describe('Workflow Validation Helpers', () => {
             'timeout-minutes': 5,
             'steps': [],
           },
-          'types': {
+          'typecheck': {
             'name': '🔧 Types (5m)',
+            'runs-on': 'ubuntu-latest',
+            'timeout-minutes': 5,
+            'steps': [],
+          },
+          'build': {
+            'name': '🏗️ Build (5m)',
             'runs-on': 'ubuntu-latest',
             'timeout-minutes': 5,
             'steps': [],
@@ -203,7 +209,7 @@ describe('Workflow Validation Helpers', () => {
           'ci-status': {
             'name': '📊 CI Status',
             'runs-on': 'ubuntu-latest',
-            'needs': ['quick-tests', 'focused-tests', 'format', 'lint', 'types', 'commit-lint'],
+            'needs': ['quick-tests', 'focused-tests', 'format', 'lint', 'typecheck', 'build', 'commit-lint'],
             'steps': [],
           },
         },
@@ -267,8 +273,14 @@ describe('Workflow Validation Helpers', () => {
             'timeout-minutes': 5,
             'steps': [],
           },
-          'types': {
+          'typecheck': {
             'name': '🔧 Types (5m)',
+            'runs-on': 'ubuntu-latest',
+            'timeout-minutes': 5,
+            'steps': [],
+          },
+          'build': {
+            'name': '🏗️ Build (5m)',
             'runs-on': 'ubuntu-latest',
             'timeout-minutes': 5,
             'steps': [],
@@ -282,7 +294,7 @@ describe('Workflow Validation Helpers', () => {
           'ci-status': {
             'name': '📊 CI Status',
             'runs-on': 'ubuntu-latest',
-            'needs': ['quick-tests', 'focused-tests', 'format', 'lint', 'types', 'commit-lint'],
+            'needs': ['quick-tests', 'focused-tests', 'format', 'lint', 'typecheck', 'build', 'commit-lint'],
             'steps': [],
           },
         },
@@ -327,8 +339,14 @@ describe('Workflow Validation Helpers', () => {
             'timeout-minutes': 5,
             'steps': [],
           },
-          'types': {
+          'typecheck': {
             'name': '🔧 Types (5m)',
+            'runs-on': 'ubuntu-latest',
+            'timeout-minutes': 5,
+            'steps': [],
+          },
+          'build': {
+            'name': '🏗️ Build (5m)',
             'runs-on': 'ubuntu-latest',
             'timeout-minutes': 5,
             'steps': [],
@@ -342,7 +360,7 @@ describe('Workflow Validation Helpers', () => {
           'ci-status': {
             'name': '📊 CI Status',
             'runs-on': 'ubuntu-latest',
-            'needs': ['quick-tests', 'focused-tests', 'format', 'lint', 'types', 'commit-lint'],
+            'needs': ['quick-tests', 'focused-tests', 'format', 'lint', 'typecheck', 'build', 'commit-lint'],
             'steps': [],
           },
         },
@@ -356,14 +374,15 @@ describe('Workflow Validation Helpers', () => {
 
   describe('DEPENDENT_JOBS constant', () => {
     it('should list all jobs that CI status depends on', () => {
-      expect(DEPENDENT_JOBS).toHaveLength(6)
+      expect(DEPENDENT_JOBS).toHaveLength(7)
       expect(DEPENDENT_JOBS).not.toContain('setup')
       expect(DEPENDENT_JOBS).not.toContain('ci-status')
       expect(DEPENDENT_JOBS).toContain('quick-tests')
       expect(DEPENDENT_JOBS).toContain('focused-tests')
       expect(DEPENDENT_JOBS).toContain('format')
       expect(DEPENDENT_JOBS).toContain('lint')
-      expect(DEPENDENT_JOBS).toContain('types')
+      expect(DEPENDENT_JOBS).toContain('typecheck')
+      expect(DEPENDENT_JOBS).toContain('build')
       expect(DEPENDENT_JOBS).toContain('commit-lint')
     })
   })

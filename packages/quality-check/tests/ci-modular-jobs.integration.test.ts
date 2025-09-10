@@ -79,7 +79,7 @@ describe('ADHD CI Modular Jobs Integration', () => {
       }
     })
 
-    it('should have ci-status depend on all 6 quality jobs', async () => {
+    it('should have ci-status depend on all 7 quality jobs', async () => {
       const workflow = await loadActualADHDWorkflow()
       const ciStatusJob = workflow.jobs['ci-status']
 
@@ -162,7 +162,7 @@ describe('ADHD CI Modular Jobs Integration', () => {
       const workflow = await loadActualADHDWorkflow()
 
       // Quality jobs should depend on setup
-      const qualityJobs = ['quick-tests', 'focused-tests', 'format', 'lint', 'types']
+      const qualityJobs = ['quick-tests', 'focused-tests', 'format', 'lint', 'typecheck', 'build']
       for (const jobId of qualityJobs) {
         const job = workflow.jobs[jobId]
         expect(job.needs).toBe('setup')
@@ -194,7 +194,7 @@ describe('ADHD CI Modular Jobs Integration', () => {
 
     it('should have all quality jobs complete within 5 minutes', async () => {
       const workflow = await loadActualADHDWorkflow()
-      const fiveMinuteJobs = ['focused-tests', 'format', 'lint', 'types', 'commit-lint']
+      const fiveMinuteJobs = ['focused-tests', 'format', 'lint', 'typecheck', 'build', 'commit-lint']
 
       for (const jobId of fiveMinuteJobs) {
         const job = workflow.jobs[jobId]
@@ -207,7 +207,7 @@ describe('ADHD CI Modular Jobs Integration', () => {
       const workflow = await loadActualADHDWorkflow()
 
       // All quality jobs should run in parallel (all depend only on setup)
-      const parallelJobs = ['quick-tests', 'focused-tests', 'format', 'lint', 'types']
+      const parallelJobs = ['quick-tests', 'focused-tests', 'format', 'lint', 'typecheck', 'build']
       for (const jobId of parallelJobs) {
         const job = workflow.jobs[jobId]
         expect(job.needs).toBe('setup') // Only dependency is setup
@@ -219,14 +219,15 @@ describe('ADHD CI Modular Jobs Integration', () => {
     it('should check results from all dependent jobs', async () => {
       const workflow = await loadActualADHDWorkflow()
       const ciStatusJob = workflow.jobs['ci-status']
-      const checkStatusStep = ciStatusJob.steps.find((step) => step.name === 'Check Status')
+      const checkStatusStep = ciStatusJob.steps.find((step) => step.name === 'Generate Enhanced Status Report')
 
       expect(checkStatusStep).toBeDefined()
       expect(checkStatusStep!.run).toContain('needs.quick-tests.result')
       expect(checkStatusStep!.run).toContain('needs.focused-tests.result')
       expect(checkStatusStep!.run).toContain('needs.format.result')
       expect(checkStatusStep!.run).toContain('needs.lint.result')
-      expect(checkStatusStep!.run).toContain('needs.types.result')
+      expect(checkStatusStep!.run).toContain('needs.typecheck.result')
+      expect(checkStatusStep!.run).toContain('needs.build.result')
       expect(checkStatusStep!.run).toContain('needs.commit-lint.result')
     })
 

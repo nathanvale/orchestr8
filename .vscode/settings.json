@@ -80,5 +80,6 @@
     "runningTestCountThreshold": 3
   },
   "vitest.enable": true,
-  "vitest.commandLine": "npx vitest"
+  "vitest.commandLine": "npx vitest",
+  "wallaby.compactStatus": false
 }
