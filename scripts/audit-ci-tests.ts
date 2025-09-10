@@ -187,7 +187,11 @@ class CITestAuditor {
     }
 
     // REMOVE: Obsolete tests for features that no longer exist
-    if (content.includes('obsolete') || content.includes('deprecated') || content.includes('legacy')) {
+    if (
+      content.includes('obsolete') ||
+      content.includes('deprecated') ||
+      content.includes('legacy')
+    ) {
       return 'REMOVE'
     }
 
@@ -305,7 +309,9 @@ class CITestAuditor {
 
           if (file.expectedBehavior) {
             const expected = file.expectedBehavior.split(';').slice(0, 3).join(';')
-            console.log(`   Expected: ${expected}${file.expectedBehavior.split(';').length > 3 ? '...' : ''}`)
+            console.log(
+              `   Expected: ${expected}${file.expectedBehavior.split(';').length > 3 ? '...' : ''}`,
+            )
           }
 
           if (file.actualBehavior) {

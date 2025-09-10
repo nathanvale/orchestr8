@@ -5,14 +5,16 @@
 - [x] 1. Audit and Categorize Existing CI Tests
   - [x] 1.1 Write tests for test audit functionality
   - [x] 1.2 Inventory all CI-related test files using grep/find
-  - [x] 1.3 Create categorization matrix (MAJOR REWRITE, MODERATE UPDATE, MINOR ALIGNMENT, REMOVE)
+  - [x] 1.3 Create categorization matrix (MAJOR REWRITE, MODERATE UPDATE, MINOR
+        ALIGNMENT, REMOVE)
   - [x] 1.4 Document each test's expected vs actual behavior
   - [x] 1.5 Verify all tests catalogued and categorized
 
 - [ ] 2. Update Critical Workflow Tests
   - [ ] 2.1 Write tests for workflow validation helpers
   - [ ] 2.2 Rewrite ci-modular-jobs.integration.test.ts for 8-job structure
-  - [ ] 2.3 Rewrite ci-cd-pipeline.integration.test.ts for GitHub Actions validation
+  - [ ] 2.3 Rewrite ci-cd-pipeline.integration.test.ts for GitHub Actions
+        validation
   - [ ] 2.4 Update test utilities to load and parse actual workflow YAML
   - [ ] 2.5 Verify all critical workflow tests pass
 

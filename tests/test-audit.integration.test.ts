@@ -13,12 +13,7 @@ import { tmpdir } from 'node:os'
 interface TestFile {
   path: string
   content: string
-  category?:
-    | 'MAJOR_REWRITE'
-    | 'MODERATE_UPDATE'
-    | 'MINOR_ALIGNMENT'
-    | 'REMOVE'
-    | undefined
+  category?: 'MAJOR_REWRITE' | 'MODERATE_UPDATE' | 'MINOR_ALIGNMENT' | 'REMOVE' | undefined
   expectedBehavior?: string
   actualBehavior?: string
 }
@@ -61,11 +56,7 @@ class TestAuditor {
       for (const entry of entries) {
         const fullPath = path.join(dir, entry.name)
 
-        if (
-          entry.isDirectory() &&
-          !entry.name.startsWith('.') &&
-          entry.name !== 'node_modules'
-        ) {
+        if (entry.isDirectory() && !entry.name.startsWith('.') && entry.name !== 'node_modules') {
           const subFiles = await this.findTestFiles(fullPath)
           testFiles.push(...subFiles)
         } else if (entry.isFile() && entry.name.endsWith('.test.ts')) {
@@ -123,11 +114,7 @@ class TestAuditor {
     }
 
     // MINOR_ALIGNMENT: Tests needing small adjustments
-    if (
-      content.includes('emoji') ||
-      content.includes('timeout') ||
-      content.includes('adhd')
-    ) {
+    if (content.includes('emoji') || content.includes('timeout') || content.includes('adhd')) {
       return 'MINOR_ALIGNMENT'
     }
 
@@ -155,7 +142,7 @@ class TestAuditor {
     const descriptions: string[] = []
     const describeRegex = /describe\(['"`](.*?)['"`]/g
     const itRegex = /it\(['"`](.*?)['"`]/g
-    
+
     let match
     while ((match = describeRegex.exec(content)) !== null) {
       if (match[1] !== undefined) {
@@ -167,7 +154,7 @@ class TestAuditor {
         descriptions.push(match[1])
       }
     }
-    
+
     return descriptions
   }
 
@@ -181,20 +168,12 @@ class TestAuditor {
     }
 
     // Check for tier expectations
-    if (
-      content.includes('tier-1') ||
-      content.includes('tier-2') ||
-      content.includes('tier-3')
-    ) {
+    if (content.includes('tier-1') || content.includes('tier-2') || content.includes('tier-3')) {
       behaviors.push('Tests multi-tier system')
     }
 
     // Check for emoji validation
-    if (
-      content.includes('emoji') ||
-      content.includes('🔧') ||
-      content.includes('⚡')
-    ) {
+    if (content.includes('emoji') || content.includes('🔧') || content.includes('⚡')) {
       behaviors.push('Validates emoji indicators')
     }
 
@@ -243,25 +222,21 @@ describe('Test Audit Functionality', () => {
       // Create test structure
       const testsDir = path.join(fixtureDir, 'tests')
       await fs.mkdir(testsDir, { recursive: true })
-      
+
       await fs.writeFile(
         path.join(testsDir, 'ci-pipeline.test.ts'),
-        'describe("CI Pipeline", () => { it("should run", () => {}) })'
+        'describe("CI Pipeline", () => { it("should run", () => {}) })',
       )
       await fs.writeFile(
         path.join(testsDir, 'workflow.test.ts'),
-        'describe("Workflow", () => { it("should validate", () => {}) })'
+        'describe("Workflow", () => { it("should validate", () => {}) })',
       )
-      
+
       const files = await auditor.discoverTestFiles(fixtureDir)
-      
+
       expect(files).toHaveLength(2)
-      expect(files.map((f) => path.basename(f.path))).toContain(
-        'ci-pipeline.test.ts'
-      )
-      expect(files.map((f) => path.basename(f.path))).toContain(
-        'workflow.test.ts'
-      )
+      expect(files.map((f) => path.basename(f.path))).toContain('ci-pipeline.test.ts')
+      expect(files.map((f) => path.basename(f.path))).toContain('workflow.test.ts')
     })
 
     it('should_exclude_node_modules_and_hidden_directories', async () => {
@@ -269,23 +244,17 @@ describe('Test Audit Functionality', () => {
       const testsDir = path.join(fixtureDir, 'tests')
       const nodeModulesDir = path.join(fixtureDir, 'node_modules')
       const hiddenDir = path.join(fixtureDir, '.hidden')
-      
+
       await fs.mkdir(testsDir, { recursive: true })
       await fs.mkdir(nodeModulesDir, { recursive: true })
       await fs.mkdir(hiddenDir, { recursive: true })
-      
-      await fs.writeFile(
-        path.join(testsDir, 'valid.test.ts'),
-        'test content'
-      )
-      await fs.writeFile(
-        path.join(nodeModulesDir, 'ignored.test.ts'),
-        'ignored'
-      )
+
+      await fs.writeFile(path.join(testsDir, 'valid.test.ts'), 'test content')
+      await fs.writeFile(path.join(nodeModulesDir, 'ignored.test.ts'), 'ignored')
       await fs.writeFile(path.join(hiddenDir, 'hidden.test.ts'), 'hidden')
-      
+
       const files = await auditor.discoverTestFiles(fixtureDir)
-      
+
       expect(files).toHaveLength(1)
       expect(files[0] && path.basename(files[0].path)).toBe('valid.test.ts')
     })
@@ -297,11 +266,11 @@ describe('Test Audit Functionality', () => {
         {
           path: '/tests/ci-modular-jobs.test.ts',
           content: 'expect(jobs.length).toBe(11); // Expects 11 jobs in workflow',
-        }
+        },
       ]
-      
+
       const categorized = auditor.categorizeTests(testFiles)
-      
+
       expect(categorized[0] && categorized[0].category).toBe('MAJOR_REWRITE')
     })
 
@@ -310,11 +279,11 @@ describe('Test Audit Functionality', () => {
         {
           path: '/tests/progressive-testing-tiers.test.ts',
           content: 'describe("3-tier testing system", () => {})',
-        }
+        },
       ]
-      
+
       const categorized = auditor.categorizeTests(testFiles)
-      
+
       expect(categorized[0] && categorized[0].category).toBe('MODERATE_UPDATE')
     })
 
@@ -323,11 +292,11 @@ describe('Test Audit Functionality', () => {
         {
           path: '/tests/emoji-validation.test.ts',
           content: 'expect(jobName).toContain("🔧"); // Check emoji',
-        }
+        },
       ]
-      
+
       const categorized = auditor.categorizeTests(testFiles)
-      
+
       expect(categorized[0] && categorized[0].category).toBe('MINOR_ALIGNMENT')
     })
 
@@ -336,11 +305,11 @@ describe('Test Audit Functionality', () => {
         {
           path: '/tests/legacy-workflow.test.ts',
           content: '// This tests deprecated legacy workflow features',
-        }
+        },
       ]
-      
+
       const categorized = auditor.categorizeTests(testFiles)
-      
+
       expect(categorized[0] && categorized[0].category).toBe('REMOVE')
     })
   })
@@ -356,9 +325,9 @@ describe('Test Audit Functionality', () => {
           })
         `,
       }
-      
+
       const analyzed = auditor.analyzeExpectedVsActual(testFile)
-      
+
       expect(analyzed.expectedBehavior).toContain('CI Workflow')
       expect(analyzed.expectedBehavior).toContain('should run 8 parallel jobs')
       expect(analyzed.expectedBehavior).toContain('should complete within 5 minutes')
@@ -372,9 +341,9 @@ describe('Test Audit Functionality', () => {
           expect(jobs.length).toBe(11);
         `,
       }
-      
+
       const analyzed = auditor.analyzeExpectedVsActual(testFile)
-      
+
       expect(analyzed.actualBehavior).toContain('Expects 11 jobs')
     })
 
@@ -386,9 +355,9 @@ describe('Test Audit Functionality', () => {
           expect(job['timeout-minutes']).toBe(5);
         `,
       }
-      
+
       const analyzed = auditor.analyzeExpectedVsActual(testFile)
-      
+
       expect(analyzed.actualBehavior).toContain('Validates emoji indicators')
       expect(analyzed.actualBehavior).toContain('Validates timeout limits')
     })
@@ -421,11 +390,11 @@ describe('Test Audit Functionality', () => {
           path: '/tests/obsolete.test.ts',
           content: 'deprecated',
           category: 'REMOVE',
-        }
+        },
       ]
-      
+
       const report = auditor.generateAuditReport(testFiles)
-      
+
       expect(report.totalFiles).toBe(5)
       expect(report.categorized.majorRewrite).toHaveLength(1)
       expect(report.categorized.moderateUpdate).toHaveLength(1)
@@ -440,11 +409,11 @@ describe('Test Audit Functionality', () => {
           path: '/tests/unknown.test.ts',
           content: 'some test content',
           // No category assigned
-        }
+        },
       ]
-      
+
       const report = auditor.generateAuditReport(testFiles)
-      
+
       expect(report.uncategorized).toHaveLength(1)
       expect(report.uncategorized[0] && report.uncategorized[0].path).toContain('unknown.test.ts')
     })
@@ -455,16 +424,16 @@ describe('Test Audit Functionality', () => {
       // This test would run against real test files if they exist
       const projectRoot = process.cwd()
       const testsDir = path.join(projectRoot, 'tests')
-      
+
       // Check if tests directory exists
       try {
         await fs.access(testsDir)
         const files = await auditor.discoverTestFiles(testsDir)
-        
+
         if (files.length > 0) {
           const categorized = auditor.categorizeTests(files)
           const report = auditor.generateAuditReport(categorized)
-          
+
           // Basic validation that audit works on real files
           expect(report.totalFiles).toBeGreaterThan(0)
           expect(report.totalFiles).toBe(
@@ -472,7 +441,7 @@ describe('Test Audit Functionality', () => {
               report.categorized.moderateUpdate.length +
               report.categorized.minorAlignment.length +
               report.categorized.remove.length +
-              report.uncategorized.length
+              report.uncategorized.length,
           )
         }
       } catch {
