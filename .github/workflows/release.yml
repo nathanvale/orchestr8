@@ -1,14 +1,9 @@
 name: Release
 
-# Disabled for private repositories
-# Uncomment the 'on' section below when ready to publish to npm
-# on:
-#   push:
-#     branches: [main]
-#   workflow_dispatch:
-
-# Temporary: Only allow manual workflow dispatch for testing
+# Automatic release workflow triggered on push to main
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
