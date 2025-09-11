@@ -18,6 +18,8 @@ export interface QualityCheckOptions {
   preCommit?: boolean
   cacheDir?: string
   correlationId?: string
+  fixFirst?: boolean
+  autoStage?: boolean
 }
 
 export interface CheckerResult {
@@ -55,6 +57,11 @@ export interface FixResult {
   count: number
   fixed: string[]
   error?: string
+  fixedCount?: number
+  autoStaged?: string[]
+  stagingErrors?: string[]
+  modifiedFiles?: string[]
+  performanceGain?: number
 }
 
 // Autopilot-specific types

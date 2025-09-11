@@ -118,4 +118,7 @@ export interface CheckerResult {
 
   /** Number of fixed issues */
   fixedCount?: number
+
+  /** Files that were modified during fix operations */
+  modifiedFiles?: string[]
 }
