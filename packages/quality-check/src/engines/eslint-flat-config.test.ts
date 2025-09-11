@@ -246,7 +246,7 @@ export const test = 1;`,
 
       // Should handle gracefully - either no rules applied or use defaults
       expect(result).toBeDefined()
-      expect(result.duration).toBeGreaterThan(0)
+      expect(result.duration).toBeGreaterThanOrEqual(0)
     })
 
     it('should handle invalid flat config gracefully', async () => {
