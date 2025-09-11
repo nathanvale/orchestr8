@@ -13,7 +13,18 @@ function parseJsonc(content: string): any {
 const TURBO_DEFAULT = '$TURBO_DEFAULT$'
 
 // Common test constants
-const rootDir = join(process.cwd(), '../../') // Go up to project root from packages/quality-check
+const findProjectRoot = () => {
+  let current = process.cwd()
+  while (current !== '/') {
+    if (existsSync(join(current, 'package.json')) && existsSync(join(current, 'turbo.json'))) {
+      return current
+    }
+    current = join(current, '..')
+  }
+  return join(process.cwd(), '../../') // Fallback
+}
+
+const rootDir = findProjectRoot()
 const turboConfigPath = join(rootDir, 'turbo.json')
 const turboConfigPathJsonc = join(rootDir, 'turbo.jsonc')
 
