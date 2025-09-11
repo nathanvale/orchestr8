@@ -336,6 +336,73 @@ export class QualityChecker {
   }
 
   /**
+   * Check files with fix-first architecture
+   * Runs fixable engines with fix enabled, then check-only engines
+   */
+  async checkFixFirst(
+    files: string[],
+    options: QualityCheckOptions & { autoStage?: boolean },
+  ): Promise<QualityCheckResult & { modifiedFiles?: string[]; stagingError?: string }> {
+    const timer = createTimer('quality-check-fix-first')
+    const correlationId = this.generateCorrelationId()
+    const modifiedFiles = new Set<string>()
+
+    // Input validation
+    if (!Array.isArray(files) || files.length === 0) {
+      return {
+        success: true,
+        duration: 0,
+        issues: [],
+        correlationId,
+        modifiedFiles: [],
+      }
+    }
+
+    logger.debug('Starting fix-first quality check', {
+      files: files.length,
+      options,
+      correlationId,
+      phase: 'fix-first-start',
+    })
+
+    try {
+      const config = await this.loadFixFirstConfig(files, options)
+      const targetFiles = await this.resolveTargetFiles(config, files)
+
+      if (targetFiles.length === 0) {
+        return this.createEmptyResult(correlationId)
+      }
+
+      const results = new Map<string, CheckerResult>()
+
+      // Run engines based on fix mode
+      if (options.fix) {
+        await this.runFixableEngines(config, targetFiles, results, modifiedFiles)
+      } else {
+        await this.runCheckOnlyEngines(config, targetFiles, results)
+      }
+
+      // Always run TypeScript check (non-fixable)
+      await this.runTypeScriptEngine(config, targetFiles, results)
+
+      // Handle auto-staging
+      const stagingError = await this.handleAutoStaging(options, modifiedFiles)
+
+      // Aggregate and return results
+      return this.aggregateFixFirstResults(
+        results,
+        modifiedFiles,
+        stagingError,
+        timer,
+        correlationId,
+        options,
+      )
+    } catch (error) {
+      return this.handleFixFirstError(error, files, timer, correlationId, modifiedFiles)
+    }
+  }
+
+  /**
    * Run checks with the enabled engines
    */
   private async runChecks(
@@ -604,6 +671,327 @@ export class QualityChecker {
         }
       }
       throw error
+    }
+  }
+
+  /**
+   * Load configuration for fix-first mode
+   */
+  private async loadFixFirstConfig(
+    files: string[],
+    options: QualityCheckOptions & { autoStage?: boolean; format?: 'stylish' | 'json' },
+  ) {
+    return await this.configLoader.load({
+      files,
+      fix: options.fix,
+      format: options.format,
+      engines: {
+        typescript: options.typescript !== false,
+        eslint: options.eslint !== false,
+        prettier: options.prettier !== false,
+      },
+    })
+  }
+
+  /**
+   * Resolve target files for processing
+   */
+  private async resolveTargetFiles(config: ResolvedConfig, files: string[]) {
+    return await this.fileMatcher.resolveFiles({
+      files: config.files || files,
+      staged: config.staged,
+      since: config.since,
+    })
+  }
+
+  /**
+   * Create empty result for no files case
+   */
+  private createEmptyResult(correlationId: string) {
+    return {
+      success: true,
+      duration: 0,
+      issues: [],
+      correlationId,
+      modifiedFiles: [],
+    }
+  }
+
+  /**
+   * Run fixable engines (ESLint, Prettier) with fix enabled
+   */
+  private async runFixableEngines(
+    config: ResolvedConfig,
+    targetFiles: string[],
+    results: Map<string, CheckerResult>,
+    modifiedFiles: Set<string>,
+  ) {
+    if (config.engines.eslint) {
+      await this.runESLintWithFix(targetFiles, results, modifiedFiles)
+    }
+
+    if (config.engines.prettier) {
+      await this.runPrettierWithFix(targetFiles, results, modifiedFiles)
+    }
+  }
+
+  /**
+   * Run engines in check-only mode
+   */
+  private async runCheckOnlyEngines(
+    config: ResolvedConfig,
+    targetFiles: string[],
+    results: Map<string, CheckerResult>,
+  ) {
+    if (config.engines.eslint) {
+      await this.runESLintCheckOnly(targetFiles, results)
+    }
+
+    if (config.engines.prettier) {
+      await this.runPrettierCheckOnly(targetFiles, results)
+    }
+  }
+
+  /**
+   * Run ESLint with fix enabled
+   */
+  private async runESLintWithFix(
+    targetFiles: string[],
+    results: Map<string, CheckerResult>,
+    modifiedFiles: Set<string>,
+  ) {
+    try {
+      const result = await this.eslintEngine.check({
+        files: targetFiles,
+        fix: true,
+      })
+      results.set('eslint', result)
+      this.trackModifiedFiles(result, targetFiles, modifiedFiles)
+    } catch (error) {
+      this.handleEngineError('eslint', error, targetFiles, results)
+    }
+  }
+
+  /**
+   * Run Prettier with fix enabled
+   */
+  private async runPrettierWithFix(
+    targetFiles: string[],
+    results: Map<string, CheckerResult>,
+    modifiedFiles: Set<string>,
+  ) {
+    try {
+      const result = await this.prettierEngine.check({
+        files: targetFiles,
+        write: true,
+      })
+      results.set('prettier', result)
+      this.trackModifiedFiles(result, targetFiles, modifiedFiles)
+    } catch (error) {
+      this.handleEngineError('prettier', error, targetFiles, results)
+    }
+  }
+
+  /**
+   * Run ESLint in check-only mode
+   */
+  private async runESLintCheckOnly(targetFiles: string[], results: Map<string, CheckerResult>) {
+    try {
+      const result = await this.eslintEngine.check({
+        files: targetFiles,
+        fix: false,
+      })
+      results.set('eslint', result)
+    } catch (error) {
+      if (!(error instanceof ToolMissingError)) {
+        logger.warn('ESLint check failed', { error: (error as Error).message })
+      }
+    }
+  }
+
+  /**
+   * Run Prettier in check-only mode
+   */
+  private async runPrettierCheckOnly(targetFiles: string[], results: Map<string, CheckerResult>) {
+    try {
+      const result = await this.prettierEngine.check({
+        files: targetFiles,
+        write: false,
+      })
+      results.set('prettier', result)
+    } catch (error) {
+      if (!(error instanceof ToolMissingError)) {
+        logger.warn('Prettier check failed', { error: (error as Error).message })
+      }
+    }
+  }
+
+  /**
+   * Run TypeScript engine (always check-only)
+   */
+  private async runTypeScriptEngine(
+    config: ResolvedConfig,
+    targetFiles: string[],
+    results: Map<string, CheckerResult>,
+  ) {
+    if (config.engines.typescript) {
+      try {
+        const result = await this.typescriptEngine.check({
+          files: targetFiles,
+          cacheDir: config.typescriptCacheDir,
+        })
+        results.set('typescript', result)
+      } catch (error) {
+        this.handleEngineError('typescript', error, targetFiles, results)
+      }
+    }
+  }
+
+  /**
+   * Track modified files from engine results
+   */
+  private trackModifiedFiles(
+    result: CheckerResult & { modifiedFiles?: string[] },
+    targetFiles: string[],
+    modifiedFiles: Set<string>,
+  ) {
+    if (result.modifiedFiles) {
+      result.modifiedFiles.forEach((f) => modifiedFiles.add(f))
+    } else if (result.fixedCount && result.fixedCount > 0) {
+      // If modifiedFiles not provided, assume all input files were modified
+      targetFiles.forEach((f) => modifiedFiles.add(f))
+    }
+  }
+
+  /**
+   * Handle engine errors
+   */
+  private handleEngineError(
+    engineName: 'typescript' | 'eslint' | 'prettier',
+    error: unknown,
+    targetFiles: string[],
+    results: Map<string, CheckerResult>,
+  ) {
+    if (!(error instanceof ToolMissingError)) {
+      logger.warn(`${engineName} fix-first failed`, { error: (error as Error).message })
+    }
+    results.set(engineName, {
+      success: false,
+      issues: [
+        {
+          engine: engineName,
+          severity: 'error' as const,
+          file: targetFiles[0] ?? process.cwd(),
+          line: 1,
+          col: 1,
+          message: error instanceof Error ? error.message : String(error),
+        },
+      ],
+    })
+  }
+
+  /**
+   * Handle auto-staging of modified files
+   */
+  private async handleAutoStaging(
+    options: { autoStage?: boolean; cwd?: string },
+    modifiedFiles: Set<string>,
+  ): Promise<string | undefined> {
+    if (!options.autoStage || modifiedFiles.size === 0) {
+      return undefined
+    }
+
+    try {
+      const { execSync } = await import('child_process')
+      const filesToStage = Array.from(modifiedFiles).join(' ')
+      execSync(`git add ${filesToStage}`, {
+        cwd: options.cwd || process.cwd(),
+        encoding: 'utf-8',
+      })
+      logger.debug('Auto-staged files', {
+        count: modifiedFiles.size,
+        files: Array.from(modifiedFiles),
+      })
+      return undefined
+    } catch (error) {
+      const stagingError = error instanceof Error ? error.message : String(error)
+      logger.warn('Auto-staging failed', { error: stagingError })
+      return stagingError
+    }
+  }
+
+  /**
+   * Aggregate fix-first results
+   */
+  private aggregateFixFirstResults(
+    results: Map<string, CheckerResult>,
+    modifiedFiles: Set<string>,
+    stagingError: string | undefined,
+    timer: ReturnType<typeof createTimer>,
+    correlationId: string,
+    options: { fix?: boolean },
+  ) {
+    const duration = timer.end()
+    const aggregated = this.aggregator.aggregate(results, {
+      duration,
+      correlationId,
+      trackMetrics: process.env.QC_TRACK_METRICS === 'true',
+    })
+
+    // Filter out fixed issues if fix was enabled
+    if (options.fix) {
+      aggregated.issues = aggregated.issues.filter((issue) => !(issue as { fixed?: boolean }).fixed)
+    }
+
+    logger.debug('Fix-first quality check completed', {
+      success: aggregated.success,
+      issueCount: aggregated.issues.length,
+      modifiedFiles: modifiedFiles.size,
+      duration,
+      correlationId,
+      phase: 'fix-first-complete',
+    })
+
+    return {
+      ...aggregated,
+      modifiedFiles: Array.from(modifiedFiles),
+      ...(stagingError && { stagingError }),
+    }
+  }
+
+  /**
+   * Handle fix-first errors
+   */
+  private handleFixFirstError(
+    error: unknown,
+    files: string[],
+    timer: ReturnType<typeof createTimer>,
+    correlationId: string,
+    modifiedFiles: Set<string>,
+  ) {
+    const duration = timer.end()
+
+    logger.error('Fix-first quality check failed', error as Error, {
+      files: files.length,
+      duration,
+      correlationId,
+    })
+
+    return {
+      success: false,
+      duration,
+      issues: [
+        {
+          engine: 'typescript' as const,
+          severity: 'error' as const,
+          file: files[0] ?? process.cwd(),
+          line: 1,
+          col: 1,
+          message: error instanceof Error ? error.message : 'Unknown error',
+        },
+      ],
+      correlationId,
+      modifiedFiles: Array.from(modifiedFiles),
     }
   }
 
