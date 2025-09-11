@@ -204,7 +204,7 @@ export class Autopilot {
   }
 
   /**
-   * Map new Issue structure to legacy rule format for backward compatibility
+   * Map Issue structure to rule format for autopilot integration
    */
   private mapIssueToRule(issue: Issue): string {
     // Handle new Issue structure

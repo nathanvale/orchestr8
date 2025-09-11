@@ -470,7 +470,7 @@ export class EnhancedLogger extends QualityLogger {
       return OutputFormatter.formatMinimalConsole(report, options)
     }
 
-    // Basic format (legacy)
+    // Basic format
     const toolNameMap: Record<string, string> = {
       eslint: 'ESLint',
       typescript: 'TypeScript',
@@ -515,7 +515,7 @@ export function validateErrorReport(report: unknown): report is ErrorReport {
   )
 }
 
-// Export singleton instance (backward compatibility)
+// Export singleton instance
 export const logger = new QualityLogger()
 
 // Export timer utility for performance measurement

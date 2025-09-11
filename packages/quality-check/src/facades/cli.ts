@@ -1,5 +1,5 @@
 /**
- * CLI Facade v2 - Entry point for command-line usage with new engine architecture
+ * CLI Facade - Entry point for command-line usage with modern engine architecture
  */
 
 import { Autopilot } from '../adapters/autopilot.js'
@@ -197,7 +197,7 @@ function parseArgs(args: string[]): CLIOptions {
 
 function showHelp(): void {
   console.log(`
-Quality Check v2 - Fast code quality enforcement with incremental compilation
+Quality Check - Fast code quality enforcement with incremental compilation
 
 Usage: quality-check [options]
 

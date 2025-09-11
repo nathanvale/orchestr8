@@ -4,7 +4,8 @@
  */
 
 import { execSync } from 'node:child_process'
-import type { QualityCheckResult, FixResult } from '../types.js'
+import type { FixResult } from '../types.js'
+import type { QualityCheckResult } from '../types/issue-types.js'
 
 export class Fixer {
   /**
@@ -15,15 +16,17 @@ export class Fixer {
     const fixed: string[] = []
 
     try {
-      // Fix ESLint issues if present
-      if (result.checkers.eslint && !result.checkers.eslint.success) {
+      // Check if there are ESLint issues that can be fixed
+      const hasESLintIssues = result.issues.some(issue => issue.engine === 'eslint')
+      if (hasESLintIssues) {
         execSync(`npx eslint --fix "${path}"`, { stdio: 'pipe' })
         fixed.push('ESLint')
         fixCount++
       }
 
-      // Fix Prettier issues if present
-      if (result.checkers.prettier && !result.checkers.prettier.success) {
+      // Check if there are Prettier issues that can be fixed
+      const hasPrettierIssues = result.issues.some(issue => issue.engine === 'prettier')
+      if (hasPrettierIssues) {
         execSync(`npx prettier --write "${path}"`, { stdio: 'pipe' })
         fixed.push('Prettier')
         fixCount++
