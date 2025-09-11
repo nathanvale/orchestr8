@@ -4,7 +4,7 @@
  *
  * @example Simple usage (with console logging)
  * ```typescript
- * import { createAudioPlayerWithConsoleLogger } from '@template/voice-vault/audio'
+ * import { createAudioPlayerWithConsoleLogger } from '@claude-hooks/voice-vault/audio'
  *
  * const player = createAudioPlayerWithConsoleLogger()
  * const result = await player.playAudio('/path/to/audio.mp3')

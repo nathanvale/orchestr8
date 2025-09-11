@@ -1,6 +1,6 @@
 ---
-'@template/quality-check': patch
-'@template/voice-vault': patch
+'@claude-hooks/quality-check': patch
+'@claude-hooks/voice-vault': patch
 ---
 
 feat: CI-ADHD optimization - reduce cognitive load by 40%
