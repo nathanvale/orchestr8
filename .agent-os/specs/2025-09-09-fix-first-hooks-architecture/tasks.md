@@ -7,43 +7,115 @@ These are the tasks to be completed for the spec detailed in
 
 ## Tasks
 
-### Task 1: Core QualityChecker Architecture Restructure
+  
 
-**Objective:** Restructure QualityChecker from check-then-fix to fix-first
-orchestration pattern
+- [x] 1. Fix Error Message Transformation Issues
 
-**Dependencies:** None (foundational)
+  - [x] 1.1 Write tests to verify error message preservation
 
-1. **Write comprehensive tests for fix-first QualityChecker behavior**
-   - Test fix-first execution flow with ESLint and Prettier engines
-   - Test auto-staging of successfully fixed files
-   - Test error reporting only includes unfixable issues
-   - Test performance characteristics (single vs double execution)
-   - Test backward compatibility with existing hook interfaces
+  - [x] 1.2 Fix error handling in quality-checker.ts lines 159-176 to preserve
 
-2. **Modify QualityChecker.execute() for fix-first mode**
-   - Add fix mode parameter to engine execution calls
-   - Restructure execution order: fixable engines first, then check-only engines
-   - Update result collection to track fixed vs unfixed issues
-   - Maintain existing interface contracts for backward compatibility
+        original error messages
 
-3. **Implement auto-staging logic within QualityChecker**
-   - Detect which files were modified by fix operations
-   - Integrate git add commands for successfully fixed files
-   - Handle git staging failures gracefully
-   - Ensure staging only occurs after successful fixes
+  - [x] 1.3 Ensure 'File resolution failed' errors are not transformed to
 
-4. **Update result filtering and reporting logic**
-   - Filter out successfully fixed issues from final reports
-   - Preserve unfixable issues for user attention
-   - Maintain existing error format structure
-   - Update issue categorization (fixed vs unfixable)
+        'Config load failed'
 
-5. **Verify all QualityChecker tests pass and performance targets met**
-   - Confirm 50% execution time reduction achieved
-   - Validate error reporting noise reduction (99%+ fixed issues filtered)
-   - Ensure no regression in existing functionality
-   - Verify clean git history with atomic commits
+  - [x] 1.4 Fix handling of non-Error objects and circular references
+
+  - [x] 1.5 Verify all error transformation tests pass
+
+  
+
+- [ ] 2. Implement Timeout and Resource Management
+
+  - [ ] 2.1 Write tests for timeout detection mechanisms
+
+  - [ ] 2.2 Implement proper timeout handling that causes check failures when
+
+        expected
+
+  - [ ] 2.3 Add memory pressure detection and handling
+
+  - [ ] 2.4 Implement graceful handling of large file lists
+
+  - [ ] 2.5 Verify all timeout and resource management tests pass
+
+  
+
+- [ ] 3. Implement Graceful Degradation for Missing Tools
+
+  - [ ] 3.1 Write tests for graceful degradation scenarios
+
+  - [ ] 3.2 Modify quality-checker to continue with available tools when some
+
+        are missing
+
+  - [ ] 3.3 Ensure missing tools don't cause complete failures
+
+  - [ ] 3.4 Verify all graceful degradation tests pass
+
+  
+
+- [ ] 4. Final Integration and Validation
+
+  - [ ] 4.1 Run all quality-check tests to ensure no regressions
+
+  - [ ] 4.2 Verify all 9 failing tests now pass
+
+  - [ ] 4.3 Run full test suite to ensure no other tests broken
+
+  - [ ] 4.4 Commit the fixes with appropriate message
+
+  
+
+- [ ] 5. Address Remaining Integration Test Issues
+
+  - [ ] 5.1 Analyze the 2 remaining facade integration test failures
+
+  - [ ] 5.2 Fix git hook exit code handling for failure scenarios
+
+  - [ ] 5.3 Fix console error message formatting in error handling tests
+
+  - [ ] 5.4 Ensure proper mock setup for cross-facade testing
+
+  - [ ] 5.5 Verify all integration tests pass or document acceptable limitations
+
+  
+
+- [ ] 6. Documentation and Cleanup
+
+  - [ ] 6.1 Update package documentation with error handling improvements ⚠️ Not
+
+        applicable - no new error handling features added, only test fixes
+
+  - [ ] 6.2 Document timeout and resource management features ⚠️ Not
+
+        applicable - existing features, no changes made
+
+  - [ ] 6.3 Add examples of graceful degradation scenarios ⚠️ Not applicable -
+
+        existing features, no changes made
+
+  - [ ] 6.4 Clean up any temporary debug code or comments
+
+  - [ ] 6.5 Verify code follows project style guidelines
+
+  
+
+- [ ] 7. Final Validation and Delivery
+
+  - [ ] 7.1 Run comprehensive test suite one final time
+
+  - [ ] 7.2 Validate performance hasn't degraded
+
+  - [ ] 7.3 Test edge cases manually if needed ⚠️ Not applicable - all test
+
+        cases automated
+
+  - [ ] 7.4 Create pull request with detailed description
+
+  - [ ] 7.5 Mark spec as complete and ready for review
 
 ### Task 2: Engine Integration Updates (ESLint/Prettier)
 
