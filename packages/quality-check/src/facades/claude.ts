@@ -9,7 +9,13 @@ import { Fixer } from '../adapters/fixer.js'
 import { ExitCodes } from '../core/exit-codes.js'
 import { IssueReporter } from '../core/issue-reporter.js'
 import { QualityChecker } from '../core/quality-checker.js'
-import { OutputFormatter, OutputMode } from '../formatters/output-formatter.js'
+import {
+  OutputFormatter as OldOutputFormatter,
+  OutputMode,
+} from '../formatters/output-formatter.js'
+import { OutputFormatter as NewOutputFormatter } from '../services/OutputFormatter.js'
+import type { ErrorReport } from '../utils/logger.js'
+import type { Issue } from '../types/issue-types.js'
 import { createTimer, logger } from '../utils/logger.js'
 
 // Claude Code payload format - matches actual Claude Code structure
@@ -215,12 +221,12 @@ async function runClaudeHookWithPayload(
     const reporter = new IssueReporter()
     const autopilot = new Autopilot()
     const fixer = new Fixer()
-    const formatter = new OutputFormatter()
+    const formatter = new OldOutputFormatter()
 
     // Log formatter selection
     const outputMode = formatter.getOutputMode()
     logger.debug('Formatter selected', {
-      formatter: 'OutputFormatter',
+      formatter: 'OldOutputFormatter',
       defaultMode: outputMode,
       envMode: process.env.QUALITY_CHECK_OUTPUT_MODE,
       correlationId,
@@ -344,11 +350,9 @@ async function runClaudeHookWithPayload(
 
         // Even on failure, stay silent in FIX_SILENTLY mode
         // But still need to report to Claude via exit code
-        const blockingOutput = formatter.formatForBlockingOutput(issues, {
-          context: 'Auto-fix failed, quality issues need attention',
-        })
-        if (blockingOutput) {
-          outputClaudeBlocking(blockingOutput)
+        if (issues.length > 0) {
+          // Use new colored formatter directly
+          outputClaudeBlocking('', issues)
           logger.hookCompleted(
             payload.tool_name,
             payload.tool_input.file_path,
@@ -383,10 +387,8 @@ async function runClaudeHookWithPayload(
             issueCount: decision.issues.length,
           })
 
-          const blockingOutput = formatter.formatForBlockingOutput(decision.issues, {
-            context: 'Quality issues require manual intervention',
-          })
-          outputClaudeBlocking(blockingOutput)
+          // Use new colored formatter directly, no need for old XML format
+          outputClaudeBlocking('', decision.issues)
           logger.hookCompleted(
             payload.tool_name,
             payload.tool_input.file_path,
@@ -425,10 +427,8 @@ async function runClaudeHookWithPayload(
           })
 
           if (xmlOutput) {
-            const blockingOutput = formatter.formatForBlockingOutput(decision.issues, {
-              context: 'Some issues remain after auto-fix',
-            })
-            outputClaudeBlocking(blockingOutput)
+            // Use new colored formatter directly
+            outputClaudeBlocking('', decision.issues)
             logger.hookCompleted(
               payload.tool_name,
               payload.tool_input.file_path,
@@ -536,9 +536,72 @@ function shouldProcessOperation(operation: string): boolean {
 }
 
 /**
- * Output formatted text to stderr for Claude Code PostToolUse hooks with blocking behavior
+ * Convert issues to ErrorReport format for new OutputFormatter
  */
-function outputClaudeBlocking(formattedOutput: string): void {
-  // Output formatted issues to stderr for Claude to process (PostToolUse with exit code 2)
+function issuesToErrorReport(issues: Issue[]): ErrorReport {
+  const errors = issues.filter((i) => i.severity === 'error')
+  const warnings = issues.filter((i) => i.severity === 'warning')
+
+  // Group issues by file
+  const fileMap = new Map<string, Issue[]>()
+  for (const issue of issues) {
+    if (!fileMap.has(issue.file)) {
+      fileMap.set(issue.file, [])
+    }
+    fileMap.get(issue.file)!.push(issue)
+  }
+
+  const files = Array.from(fileMap.entries()).map(([path, fileIssues]) => ({
+    path,
+    errors: fileIssues.map((issue) => ({
+      line: issue.line,
+      column: issue.col,
+      message: issue.message,
+      ruleId: issue.ruleId,
+      severity: issue.severity as 'error' | 'warning',
+    })),
+  }))
+
+  return {
+    timestamp: new Date().toISOString(),
+    tool: 'quality-check' as 'eslint' | 'typescript' | 'prettier',
+    status: errors.length > 0 ? 'error' : warnings.length > 0 ? 'warning' : 'success',
+    summary: {
+      totalErrors: errors.length,
+      totalWarnings: warnings.length,
+      filesAffected: fileMap.size,
+    },
+    details: { files },
+    raw: '',
+  }
+}
+
+/**
+ * Output formatted text to stderr for Claude Code PostToolUse hooks with blocking behavior
+ * Now uses new ANSI-colored formatter for concise output when possible
+ */
+function outputClaudeBlocking(formattedOutput: string, issues?: Issue[]): void {
+  // If we have issues, use the new formatter for colored concise output
+  if (issues && issues.length > 0) {
+    const errorReport = issuesToErrorReport(issues)
+    const conciseSummary = NewOutputFormatter.formatMinimalConsole(errorReport, {
+      colored: true,
+    })
+
+    console.error('')
+    console.error('🚫 BLOCKING: Quality issues detected')
+    console.error('')
+    console.error(conciseSummary)
+    console.error('')
+    console.error('❌ DO NOT PROCEED until these issues are resolved.')
+    console.error('')
+    console.error(
+      'To fix these issues automatically, Claude will use the quality-check-fixer agent.',
+    )
+    console.error('')
+    return
+  }
+
+  // Fallback to old format if no issues provided (shouldn't happen anymore)
   console.error(formattedOutput)
 }
