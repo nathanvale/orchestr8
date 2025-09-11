@@ -51,92 +51,16 @@ export async function runGitHook(options: GitHookOptions = {}): Promise<void> {
       const decision = autopilot.decide(checkResult)
 
       if (options.fix && decision.action === 'FIX_SILENTLY') {
-        // Apply safe fixes - convert issues to checkers format for fixer
-        const fixerResult = {
-          success: result.success,
-          checkers: {
-            eslint: {
-              success: !result.issues?.some((i) => i.engine === 'eslint'),
-              errors:
-                result.issues
-                  ?.filter((i) => i.engine === 'eslint' && i.severity === 'error')
-                  .map((i) => i.message) || [],
-              warnings:
-                result.issues
-                  ?.filter((i) => i.engine === 'eslint' && i.severity === 'warning')
-                  .map((i) => i.message) || [],
-            },
-            typescript: {
-              success: !result.issues?.some((i) => i.engine === 'typescript'),
-              errors:
-                result.issues
-                  ?.filter((i) => i.engine === 'typescript' && i.severity === 'error')
-                  .map((i) => i.message) || [],
-              warnings:
-                result.issues
-                  ?.filter((i) => i.engine === 'typescript' && i.severity === 'warning')
-                  .map((i) => i.message) || [],
-            },
-            prettier: {
-              success: !result.issues?.some((i) => i.engine === 'prettier'),
-              errors:
-                result.issues
-                  ?.filter((i) => i.engine === 'prettier' && i.severity === 'error')
-                  .map((i) => i.message) || [],
-              warnings:
-                result.issues
-                  ?.filter((i) => i.engine === 'prettier' && i.severity === 'warning')
-                  .map((i) => i.message) || [],
-            },
-          },
-        }
-        const fixResult = await fixer.autoFix(checkableFiles[0], fixerResult)
+        // Apply safe fixes using the QualityCheckResult format
+        const fixResult = await fixer.autoFix(checkableFiles[0], result)
         if (fixResult.success) {
           console.log('✅ Auto-fixed safe issues')
           process.exit(0)
         }
       }
 
-      // Show detailed errors - convert issues to checkers format for reporter
-      const reporterResult = {
-        success: result.success,
-        checkers: {
-          eslint: {
-            success: !result.issues?.some((i) => i.engine === 'eslint'),
-            errors:
-              result.issues
-                ?.filter((i) => i.engine === 'eslint' && i.severity === 'error')
-                .map((i) => i.message) || [],
-            warnings:
-              result.issues
-                ?.filter((i) => i.engine === 'eslint' && i.severity === 'warning')
-                .map((i) => i.message) || [],
-          },
-          typescript: {
-            success: !result.issues?.some((i) => i.engine === 'typescript'),
-            errors:
-              result.issues
-                ?.filter((i) => i.engine === 'typescript' && i.severity === 'error')
-                .map((i) => i.message) || [],
-            warnings:
-              result.issues
-                ?.filter((i) => i.engine === 'typescript' && i.severity === 'warning')
-                .map((i) => i.message) || [],
-          },
-          prettier: {
-            success: !result.issues?.some((i) => i.engine === 'prettier'),
-            errors:
-              result.issues
-                ?.filter((i) => i.engine === 'prettier' && i.severity === 'error')
-                .map((i) => i.message) || [],
-            warnings:
-              result.issues
-                ?.filter((i) => i.engine === 'prettier' && i.severity === 'warning')
-                .map((i) => i.message) || [],
-          },
-        },
-      }
-      const output = reporter.formatForCLI(reporterResult)
+      // Show detailed errors using the QualityCheckResult format
+      const output = reporter.formatForCLI(result)
       console.error(output)
       console.error('\n❌ Quality check failed')
       console.error('Fix the issues above and try again')
