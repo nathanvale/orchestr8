@@ -137,14 +137,14 @@ export class ClaudeFormatter {
         summary.push(`${errors} TypeScript error${errors === 1 ? '' : 's'}`)
       }
     }
-    
+
     if (grouped.eslint.length > 0) {
       const errors = grouped.eslint.filter((i) => i.severity === 'error').length
       if (errors > 0) {
         summary.push(`${errors} ESLint error${errors === 1 ? '' : 's'}`)
       }
     }
-    
+
     if (grouped.prettier.length > 0) {
       const errors = grouped.prettier.filter((i) => i.severity === 'error').length
       if (errors > 0) {
