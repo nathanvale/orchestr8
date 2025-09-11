@@ -1,5 +1,5 @@
 /**
- * Main entry point for @template/quality-check
+ * Main entry point for @claude-hooks/quality-check
  * ~10 lines - just exports
  */
 

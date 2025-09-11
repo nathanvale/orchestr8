@@ -71,7 +71,7 @@
       // Removed unused @types, @utils and @config paths (can reintroduce when directories exist)
     }
   },
-  "include": ["packages/*/src/**/*", "apps/*/src/**/*", "tests/**/*", "vitest.config.ts"],
+  "include": ["packages/*/src/**/*", "apps/*/src/**/*", "tests/**/*", "scripts/**/*", "vitest.config.ts"],
   "exclude": [
     "node_modules",
     "dist",

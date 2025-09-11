@@ -76,6 +76,28 @@ vi.mock('node:fs', () => ({
       })
     }
   }),
+  readdirSync: vi.fn((_dirPath: string) => {
+    // Return empty array for directory listing
+    return []
+  }),
+  unlinkSync: vi.fn((_filePath: string) => {
+    // Mock file deletion
+    return undefined
+  }),
+  statSync: vi.fn((filePath: string) => {
+    const file = globalMockFiles.get(filePath)
+    if (!file || !file.exists) {
+      const error = new Error(`ENOENT: no such file or directory, stat '${filePath}'`)
+      ;(error as NodeJS.ErrnoException).code = 'ENOENT'
+      throw error
+    }
+    return {
+      isFile: () => true,
+      isDirectory: () => false,
+      size: file.content.length,
+      mtime: new Date(),
+    }
+  }),
 }))
 
 // Mock child_process operations

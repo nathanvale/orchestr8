@@ -19,6 +19,7 @@ describe('FileMatcher', () => {
     // Default mock implementations
     vi.mocked(fs.existsSync).mockReturnValue(false)
     vi.mocked(fs.readFileSync).mockReturnValue('')
+    vi.mocked(fs.readdirSync).mockReturnValue([])
     vi.mocked(path.resolve).mockImplementation((base, file) =>
       file?.startsWith('/') ? file : `${base}/${file}`,
     )

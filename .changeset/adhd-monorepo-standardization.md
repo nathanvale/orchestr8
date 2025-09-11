@@ -1,6 +1,6 @@
 ---
 '@template/utils': minor
-'@template/voice-vault': minor
+'@claude-hooks/voice-vault': minor
 ---
 
 feat: ADHD-optimized monorepo standardization and build system unification

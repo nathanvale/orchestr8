@@ -1,6 +1,7 @@
 {
   "name": "@template/utils",
   "version": "0.1.0",
+  "private": true,
   "repository": {
     "type": "git",
     "url": "https://github.com/nathanvale/bun-changesets-template.git",

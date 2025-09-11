@@ -15,6 +15,7 @@ dist-node/
 dist-types/
 dist-ssr/
 build/
+!tooling/build/
 out/
 .next/
 .nuxt/
@@ -88,6 +89,10 @@ lerna-debug.log*
 *.pid
 *.seed
 *.pid.lock
+
+# Performance data files (generated)
+.ci-performance-data.json
+.cache-performance.json
 
 # Temporary files
 tmp/

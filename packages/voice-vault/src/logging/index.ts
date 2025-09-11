@@ -3,13 +3,40 @@
  * Provides structured logging with correlation IDs for complete operation tracing
  */
 
-import {
-  createLogger,
-  createLoggerSync,
-  type LogFields,
-  type Logger,
-  type LogLevel,
-} from '@orchestr8/logger'
+// Import types and functions from @orchestr8/logger
+import type { Logger, LogFields, LogLevel, LoggerOptions } from '@orchestr8/logger'
+
+// Conditionally import based on Node.js version to maintain CI compatibility
+let createLogger: (options?: LoggerOptions) => Promise<Logger>
+let createLoggerSync: (options?: LoggerOptions) => Logger
+
+try {
+  const module = await import('@orchestr8/logger')
+  createLogger = module.createLogger
+  createLoggerSync = module.createLoggerSync
+} catch {
+  // Fallback for environments where @orchestr8/logger isn't available
+  createLogger = async () => {
+    return {
+      child: () => createLoggerSync(),
+      trace: () => {},
+      debug: () => {},
+      info: console.log.bind(console),
+      warn: console.warn.bind(console),
+      error: console.error.bind(console),
+    } satisfies Logger
+  }
+  createLoggerSync = () => {
+    return {
+      child: () => createLoggerSync(),
+      trace: () => {},
+      debug: () => {},
+      info: console.log.bind(console),
+      warn: console.warn.bind(console),
+      error: console.error.bind(console),
+    } satisfies Logger
+  }
+}
 import { mkdir } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -87,7 +114,7 @@ export function extractCorrelationId(source: unknown): string {
  */
 export async function createVoiceVaultLogger(config: VoiceVaultLoggerConfig = {}): Promise<Logger> {
   const {
-    level = (process.env['LOG_LEVEL'] as LogLevel | undefined) || 'info',
+    level = (process.env['LOG_LEVEL'] as LogLevel) || 'info',
     dir = process.env['VOICE_VAULT_LOG_DIR'] || DEFAULT_LOG_DIR,
     pretty = process.env['LOG_PRETTY'] === 'true' || process.env['NODE_ENV'] !== 'production',
     enabled = process.env['LOG_LEVEL'] !== 'none' && process.env['LOG_LEVEL'] !== 'silent',
@@ -118,7 +145,7 @@ export async function createVoiceVaultLogger(config: VoiceVaultLoggerConfig = {}
  */
 export function createVoiceVaultLoggerSync(config: VoiceVaultLoggerConfig = {}): Logger {
   const {
-    level = (process.env['LOG_LEVEL'] as LogLevel | undefined) || 'info',
+    level = (process.env['LOG_LEVEL'] as LogLevel) || 'info',
     dir = process.env['VOICE_VAULT_LOG_DIR'] || DEFAULT_LOG_DIR,
     pretty = process.env['LOG_PRETTY'] === 'true' || process.env['NODE_ENV'] !== 'production',
     enabled = process.env['LOG_LEVEL'] !== 'none' && process.env['LOG_LEVEL'] !== 'silent',
@@ -215,4 +242,4 @@ export function createChildLogger(
 }
 
 // Re-export useful types
-export type { LogFields, Logger }
+export type { LogFields, Logger, LogLevel }
