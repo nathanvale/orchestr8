@@ -3,11 +3,13 @@
 These are the tasks to be completed for the spec detailed in
 @.agent-os/specs/2025-09-09-fix-first-hooks-architecture/spec.md
 
-> Created: 2025-09-09 Status: Ready for Implementation
+> Created: 2025-09-09 Status: MOSTLY COMPLETE (4/5 tasks completed, 1 blocked)
 
 ## Tasks
 
-### Task 1: Core QualityChecker Architecture Restructure
+### Task 1: Core QualityChecker Architecture Restructure ✅
+
+**Status:** COMPLETED
 
 **Objective:** Restructure QualityChecker from check-then-fix to fix-first
 orchestration pattern
@@ -45,7 +47,9 @@ orchestration pattern
    - Ensure no regression in existing functionality
    - Verify clean git history with atomic commits
 
-### Task 2: Engine Integration Updates (ESLint/Prettier)
+### Task 2: Engine Integration Updates (ESLint/Prettier) ✅
+
+**Status:** COMPLETED
 
 **Objective:** Enable built-in fix capabilities in ESLint and Prettier engines
 
@@ -84,12 +88,17 @@ orchestration pattern
    - Ensure performance improvements from eliminating execSync
    - Test error handling for various fix scenarios
 
-### Task 3: Fixer Adapter Simplification and Elimination
+### Task 3: Fixer Adapter Simplification and Elimination ⚠️
+
+**Status:** PARTIALLY COMPLETED - Blockers identified
 
 **Objective:** Remove or simplify the Fixer adapter by leveraging engine
 built-in fixes
 
 **Dependencies:** Task 2 (Engine updates)
+
+**BLOCKER:** Facades (git-hook.ts, claude.ts) still use old Fixer pattern - need
+update to use fix-first architecture
 
 1. **Write tests for simplified or eliminated Fixer functionality**
    - Test scenarios that previously required Fixer adapter
@@ -121,7 +130,9 @@ built-in fixes
    - Ensure simplified implementation maintains performance gains
    - Test edge cases that previously relied on Fixer
 
-### Task 4: Git Integration and Auto-staging Implementation
+### Task 4: Git Integration and Auto-staging Implementation ✅
+
+**Status:** COMPLETED
 
 **Objective:** Implement automatic staging of fixed files to create atomic
 commits
@@ -159,7 +170,9 @@ commits
    - Test various git workflow scenarios (rebase, merge, etc.)
    - Ensure staging doesn't interfere with user git operations
 
-### Task 5: Error Reporting Optimization and Performance Validation
+### Task 5: Error Reporting Optimization and Performance Validation ✅
+
+**Status:** COMPLETED
 
 **Objective:** Optimize error reporting to surface only unfixable issues and
 validate performance targets
