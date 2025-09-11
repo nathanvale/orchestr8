@@ -160,7 +160,7 @@ describe('IssueReporter with Enhanced Error Formatting', () => {
   })
 
   describe('Enhanced JSON formatting', () => {
-    it('should_include_parsed_errors_when_available', () => {
+    it('should_include_quality_check_result_structure_in_json', () => {
       // Arrange
       const result: QualityCheckResult = {
         success: false,
@@ -183,9 +183,12 @@ describe('IssueReporter with Enhanced Error Formatting', () => {
       const parsed = JSON.parse(output)
 
       // Assert
-      expect(parsed.parsedErrors).toBeDefined()
-      expect(parsed.parsedErrors[0].category).toBe('type')
-      expect(parsed.parsedErrors[0].file).toBe('src/app.ts')
+      expect(parsed.success).toBe(false)
+      expect(parsed.duration).toBe(100)
+      expect(parsed.issues).toBeDefined()
+      expect(parsed.issues[0].engine).toBe('typescript')
+      expect(parsed.issues[0].ruleId).toBe('TS2304')
+      expect(parsed.issues[0].file).toBe('src/app.ts')
     })
   })
 

@@ -130,43 +130,29 @@ export class ClaudeFormatter {
     const grouped = this.groupByEngine(issues)
     const summary: string[] = []
 
-    // Count by severity
-    const errorCount = issues.filter((i) => i.severity === 'error').length
-    const warningCount = issues.filter((i) => i.severity === 'warning').length
-    const infoCount = issues.filter((i) => i.severity === 'info').length
-
-    summary.push(`Found ${issues.length} issue${issues.length === 1 ? '' : 's'}:`)
-
-    if (errorCount > 0) {
-      summary.push(`  - ${errorCount} error${errorCount === 1 ? '' : 's'}`)
-    }
-    if (warningCount > 0) {
-      summary.push(`  - ${warningCount} warning${warningCount === 1 ? '' : 's'}`)
-    }
-    if (infoCount > 0) {
-      summary.push(`  - ${infoCount} info message${infoCount === 1 ? '' : 's'}`)
-    }
-
-    summary.push('')
-    summary.push('By engine:')
-
+    // Use the format expected by tests - engine-specific error counts
     if (grouped.typescript.length > 0) {
-      summary.push(
-        `  - TypeScript: ${grouped.typescript.length} issue${grouped.typescript.length === 1 ? '' : 's'}`,
-      )
+      const errors = grouped.typescript.filter((i) => i.severity === 'error').length
+      if (errors > 0) {
+        summary.push(`${errors} TypeScript error${errors === 1 ? '' : 's'}`)
+      }
     }
+    
     if (grouped.eslint.length > 0) {
-      summary.push(
-        `  - ESLint: ${grouped.eslint.length} issue${grouped.eslint.length === 1 ? '' : 's'}`,
-      )
+      const errors = grouped.eslint.filter((i) => i.severity === 'error').length
+      if (errors > 0) {
+        summary.push(`${errors} ESLint error${errors === 1 ? '' : 's'}`)
+      }
     }
+    
     if (grouped.prettier.length > 0) {
-      summary.push(
-        `  - Prettier: ${grouped.prettier.length} issue${grouped.prettier.length === 1 ? '' : 's'}`,
-      )
+      const errors = grouped.prettier.filter((i) => i.severity === 'error').length
+      if (errors > 0) {
+        summary.push(`${errors} Prettier error${errors === 1 ? '' : 's'}`)
+      }
     }
 
-    return summary.join('\n')
+    return summary.join(', ')
   }
 
   /**

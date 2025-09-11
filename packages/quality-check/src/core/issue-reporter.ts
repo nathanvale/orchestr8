@@ -162,7 +162,7 @@ export class IssueReporter {
   private formatIssuesSummary(issues: Issue[]): string {
     return (
       issues
-        .map((issue) => `  ${issue.file}:${issue.line}:${issue.col} - ${issue.message}`)
+        .map((issue) => `  ${issue.file}:${issue.line}:${issue.col} - ${issue.message}${issue.ruleId ? ` (${issue.ruleId})` : ''}`)
         .join('\n') || '  No issues'
     )
   }
