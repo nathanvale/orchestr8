@@ -273,7 +273,7 @@ export class Autopilot {
     const hasCriticalIssues = this.hasCriticalBlockingIssues(result.issues)
 
     // Debug logging
-    if (process.env.DEBUG_AUTOPILOT) {
+    if (process.env.CLAUDE_HOOK_DEBUG) {
       console.error('DEBUG: hasCriticalIssues =', hasCriticalIssues)
       console.error(
         'DEBUG: issues =',
