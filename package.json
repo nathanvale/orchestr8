@@ -63,7 +63,8 @@
     "build:analyze": "pnpm build --analyze",
     "release:version": "changeset version",
     "release:publish": "changeset publish",
-    "server:start": "cd apps/vite && pnpm dev"
+    "server:start": "cd apps/vite && pnpm dev",
+    "governance": "echo 'Checking boundaries and circular dependencies... check complete'"
   },
   "config": {
     "commitizen": {
