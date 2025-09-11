@@ -272,15 +272,6 @@ export class Autopilot {
     // Check for critical issues that should always block
     const hasCriticalIssues = this.hasCriticalBlockingIssues(result.issues)
 
-    // Debug logging
-    if (process.env.DEBUG_AUTOPILOT) {
-      console.error('DEBUG: hasCriticalIssues =', hasCriticalIssues)
-      console.error(
-        'DEBUG: issues =',
-        result.issues.map((i) => ({ rule: this.mapIssueToRule(i), engine: i.engine })),
-      )
-    }
-
     // If we have critical issues (type safety, complexity), always report without auto-fixing
     if (hasCriticalIssues) {
       return {
@@ -335,16 +326,8 @@ export class Autopilot {
     for (const issue of issues) {
       const rule = this.mapIssueToRule(issue)
 
-      // Debug logging
-      if (process.env.CLAUDE_HOOK_DEBUG) {
-        console.error(`DEBUG hasCriticalBlockingIssues: Checking rule "${rule}"`)
-      }
-
       // Type safety issues with 'any' - these should block
       if (rule === '@typescript-eslint/no-explicit-any') {
-        if (process.env.CLAUDE_HOOK_DEBUG) {
-          console.error(`DEBUG hasCriticalBlockingIssues: Found critical issue - ${rule}`)
-        }
         return true
       }
 
