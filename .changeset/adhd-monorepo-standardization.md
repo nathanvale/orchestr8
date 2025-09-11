@@ -1,5 +1,4 @@
 ---
-'@template/utils': minor
 '@claude-hooks/voice-vault': minor
 ---
 
