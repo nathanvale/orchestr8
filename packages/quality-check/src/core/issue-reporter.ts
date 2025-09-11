@@ -3,10 +3,7 @@
  * Enhanced with error parsing and facade-specific formatting
  */
 
-import type {
-  Issue,
-  QualityCheckResult,
-} from '../types/issue-types.js'
+import type { Issue, QualityCheckResult } from '../types/issue-types.js'
 import { ExitCodes } from './exit-codes.js'
 import { ClaudeFormatter } from '../formatters/claude-formatter.js'
 
@@ -34,15 +31,17 @@ export class IssueReporter {
 
     // Group issues by engine
     const issuesByEngine = {
-      eslint: result.issues.filter(issue => issue.engine === 'eslint'),
-      prettier: result.issues.filter(issue => issue.engine === 'prettier'),
-      typescript: result.issues.filter(issue => issue.engine === 'typescript'),
+      eslint: result.issues.filter((issue) => issue.engine === 'eslint'),
+      prettier: result.issues.filter((issue) => issue.engine === 'prettier'),
+      typescript: result.issues.filter((issue) => issue.engine === 'typescript'),
     }
 
     // ESLint results
     if (issuesByEngine.eslint.length > 0) {
       lines.push('📝 ESLint issues:')
-      const displayIssues = options.maxErrors ? issuesByEngine.eslint.slice(0, options.maxErrors) : issuesByEngine.eslint
+      const displayIssues = options.maxErrors
+        ? issuesByEngine.eslint.slice(0, options.maxErrors)
+        : issuesByEngine.eslint
       if (options.verbose) {
         lines.push(this.formatDetailedIssues(displayIssues))
       } else {
@@ -56,7 +55,9 @@ export class IssueReporter {
     // Prettier results
     if (issuesByEngine.prettier.length > 0) {
       lines.push('🎨 Prettier issues:')
-      const displayIssues = options.maxErrors ? issuesByEngine.prettier.slice(0, options.maxErrors) : issuesByEngine.prettier
+      const displayIssues = options.maxErrors
+        ? issuesByEngine.prettier.slice(0, options.maxErrors)
+        : issuesByEngine.prettier
       if (options.verbose) {
         lines.push(this.formatDetailedIssues(displayIssues))
       } else {
@@ -70,7 +71,9 @@ export class IssueReporter {
     // TypeScript results
     if (issuesByEngine.typescript.length > 0) {
       lines.push('🔍 TypeScript issues:')
-      const displayIssues = options.maxErrors ? issuesByEngine.typescript.slice(0, options.maxErrors) : issuesByEngine.typescript
+      const displayIssues = options.maxErrors
+        ? issuesByEngine.typescript.slice(0, options.maxErrors)
+        : issuesByEngine.typescript
       if (options.verbose) {
         lines.push(this.formatDetailedIssues(displayIssues))
       } else {
@@ -141,7 +144,6 @@ export class IssueReporter {
     }
   }
 
-
   /**
    * Get appropriate exit code based on results
    */
@@ -158,7 +160,11 @@ export class IssueReporter {
   }
 
   private formatIssuesSummary(issues: Issue[]): string {
-    return issues.map(issue => `  ${issue.file}:${issue.line}:${issue.col} - ${issue.message}`).join('\n') || '  No issues'
+    return (
+      issues
+        .map((issue) => `  ${issue.file}:${issue.line}:${issue.col} - ${issue.message}`)
+        .join('\n') || '  No issues'
+    )
   }
 
   private formatDetailedIssues(issues: Issue[]): string {
@@ -170,8 +176,4 @@ export class IssueReporter {
       })
       .join('\n')
   }
-
-
-
-
 }

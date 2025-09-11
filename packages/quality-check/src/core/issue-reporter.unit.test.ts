@@ -221,15 +221,17 @@ describe('IssueReporter with Enhanced Error Formatting', () => {
       const result: QualityCheckResult = {
         success: false,
         duration: 100,
-        issues: Array(10).fill(null).map((_, i) => ({
-          engine: 'typescript' as const,
-          severity: 'error' as const,
-          ruleId: `TS${i}`,
-          file: 'src/app.ts',
-          line: i + 1,
-          col: 1,
-          message: `error ${i}`,
-        })),
+        issues: Array(10)
+          .fill(null)
+          .map((_, i) => ({
+            engine: 'typescript' as const,
+            severity: 'error' as const,
+            ruleId: `TS${i}`,
+            file: 'src/app.ts',
+            line: i + 1,
+            col: 1,
+            message: `error ${i}`,
+          })),
       }
 
       // Act

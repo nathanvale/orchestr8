@@ -17,7 +17,7 @@ export class Fixer {
 
     try {
       // Check if there are ESLint issues that can be fixed
-      const hasESLintIssues = result.issues.some(issue => issue.engine === 'eslint')
+      const hasESLintIssues = result.issues.some((issue) => issue.engine === 'eslint')
       if (hasESLintIssues) {
         execSync(`npx eslint --fix "${path}"`, { stdio: 'pipe' })
         fixed.push('ESLint')
@@ -25,7 +25,7 @@ export class Fixer {
       }
 
       // Check if there are Prettier issues that can be fixed
-      const hasPrettierIssues = result.issues.some(issue => issue.engine === 'prettier')
+      const hasPrettierIssues = result.issues.some((issue) => issue.engine === 'prettier')
       if (hasPrettierIssues) {
         execSync(`npx prettier --write "${path}"`, { stdio: 'pipe' })
         fixed.push('Prettier')
