@@ -374,16 +374,28 @@ export class QualityChecker {
       }
 
       const results = new Map<string, CheckerResult>()
+      const source = new CancellationTokenSource()
 
-      // Run engines based on fix mode
-      if (options.fix) {
-        await this.runFixableEngines(config, targetFiles, results, modifiedFiles)
-      } else {
-        await this.runCheckOnlyEngines(config, targetFiles, results)
+      try {
+        // Run engines with timeout protection
+        await this.timeoutManager.runWithTimeout(
+          async (token) => {
+            // Run engines based on fix mode
+            if (options.fix) {
+              await this.runFixableEngines(config, targetFiles, results, modifiedFiles, token)
+            } else {
+              await this.runCheckOnlyEngines(config, targetFiles, results, token)
+            }
+
+            // Always run TypeScript check (non-fixable)
+            await this.runTypeScriptEngine(config, targetFiles, results, token)
+          },
+          config.timeoutMs,
+          'quality-check-fix-first',
+        )
+      } finally {
+        source.cancel()
       }
-
-      // Always run TypeScript check (non-fixable)
-      await this.runTypeScriptEngine(config, targetFiles, results)
 
       // Handle auto-staging
       const stagingError = await this.handleAutoStaging(options, modifiedFiles)
@@ -725,13 +737,14 @@ export class QualityChecker {
     targetFiles: string[],
     results: Map<string, CheckerResult>,
     modifiedFiles: Set<string>,
+    token: CancellationToken,
   ) {
     if (config.engines.eslint) {
-      await this.runESLintWithFix(targetFiles, results, modifiedFiles)
+      await this.runESLintWithFix(targetFiles, results, modifiedFiles, token, config.eslintCacheDir)
     }
 
     if (config.engines.prettier) {
-      await this.runPrettierWithFix(targetFiles, results, modifiedFiles)
+      await this.runPrettierWithFix(targetFiles, results, modifiedFiles, token)
     }
   }
 
@@ -742,13 +755,14 @@ export class QualityChecker {
     config: ResolvedConfig,
     targetFiles: string[],
     results: Map<string, CheckerResult>,
+    token: CancellationToken,
   ) {
     if (config.engines.eslint) {
-      await this.runESLintCheckOnly(targetFiles, results)
+      await this.runESLintCheckOnly(targetFiles, results, token, config.eslintCacheDir)
     }
 
     if (config.engines.prettier) {
-      await this.runPrettierCheckOnly(targetFiles, results)
+      await this.runPrettierCheckOnly(targetFiles, results, token)
     }
   }
 
@@ -759,11 +773,15 @@ export class QualityChecker {
     targetFiles: string[],
     results: Map<string, CheckerResult>,
     modifiedFiles: Set<string>,
+    token: CancellationToken,
+    cacheDir?: string,
   ) {
     try {
       const result = await this.eslintEngine.check({
         files: targetFiles,
         fix: true,
+        cacheDir,
+        token,
       })
       results.set('eslint', result)
       this.trackModifiedFiles(result, targetFiles, modifiedFiles)
@@ -779,11 +797,13 @@ export class QualityChecker {
     targetFiles: string[],
     results: Map<string, CheckerResult>,
     modifiedFiles: Set<string>,
+    token: CancellationToken,
   ) {
     try {
       const result = await this.prettierEngine.check({
         files: targetFiles,
         write: true,
+        token,
       })
       results.set('prettier', result)
       this.trackModifiedFiles(result, targetFiles, modifiedFiles)
@@ -795,11 +815,18 @@ export class QualityChecker {
   /**
    * Run ESLint in check-only mode
    */
-  private async runESLintCheckOnly(targetFiles: string[], results: Map<string, CheckerResult>) {
+  private async runESLintCheckOnly(
+    targetFiles: string[],
+    results: Map<string, CheckerResult>,
+    token: CancellationToken,
+    cacheDir?: string,
+  ) {
     try {
       const result = await this.eslintEngine.check({
         files: targetFiles,
         fix: false,
+        cacheDir,
+        token,
       })
       results.set('eslint', result)
     } catch (error) {
@@ -812,11 +839,16 @@ export class QualityChecker {
   /**
    * Run Prettier in check-only mode
    */
-  private async runPrettierCheckOnly(targetFiles: string[], results: Map<string, CheckerResult>) {
+  private async runPrettierCheckOnly(
+    targetFiles: string[],
+    results: Map<string, CheckerResult>,
+    token: CancellationToken,
+  ) {
     try {
       const result = await this.prettierEngine.check({
         files: targetFiles,
         write: false,
+        token,
       })
       results.set('prettier', result)
     } catch (error) {
@@ -833,12 +865,14 @@ export class QualityChecker {
     config: ResolvedConfig,
     targetFiles: string[],
     results: Map<string, CheckerResult>,
+    token: CancellationToken,
   ) {
     if (config.engines.typescript) {
       try {
         const result = await this.typescriptEngine.check({
           files: targetFiles,
           cacheDir: config.typescriptCacheDir,
+          token,
         })
         results.set('typescript', result)
       } catch (error) {
