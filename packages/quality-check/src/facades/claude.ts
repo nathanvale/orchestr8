@@ -302,6 +302,13 @@ async function runClaudeHookWithPayload(
           issueCount: issues.length,
         }),
       )
+
+      // Debug output to stderr to see which decision path is taken
+      if (process.env.CLAUDE_HOOK_DEBUG) {
+        console.error(
+          `DEBUG: Autopilot decision = ${decision.action}, issues count = ${issues.length}`,
+        )
+      }
     }
 
     switch (decision.action) {
