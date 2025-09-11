@@ -34,6 +34,9 @@ export class IssueReporter {
       eslint: result.issues.filter((issue) => issue.engine === 'eslint'),
       prettier: result.issues.filter((issue) => issue.engine === 'prettier'),
       typescript: result.issues.filter((issue) => issue.engine === 'typescript'),
+      other: result.issues.filter(
+        (issue) => !['eslint', 'prettier', 'typescript'].includes(issue.engine),
+      ),
     }
 
     // ESLint results
@@ -81,6 +84,22 @@ export class IssueReporter {
       }
       if (options.maxErrors && issuesByEngine.typescript.length > options.maxErrors) {
         lines.push(`  ... and ${issuesByEngine.typescript.length - options.maxErrors} more`)
+      }
+    }
+
+    // Other engine results
+    if (issuesByEngine.other.length > 0) {
+      lines.push('⚠️ Other issues:')
+      const displayIssues = options.maxErrors
+        ? issuesByEngine.other.slice(0, options.maxErrors)
+        : issuesByEngine.other
+      if (options.verbose) {
+        lines.push(this.formatDetailedIssues(displayIssues))
+      } else {
+        lines.push(this.formatIssuesSummary(displayIssues))
+      }
+      if (options.maxErrors && issuesByEngine.other.length > options.maxErrors) {
+        lines.push(`  ... and ${issuesByEngine.other.length - options.maxErrors} more`)
       }
     }
 
