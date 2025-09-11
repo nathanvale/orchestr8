@@ -13,7 +13,7 @@ function parseJsonc(content: string): any {
 const TURBO_DEFAULT = '$TURBO_DEFAULT$'
 
 // Common test constants
-const rootDir = process.cwd()
+const rootDir = join(process.cwd(), '../../') // Go up to project root from packages/quality-check
 const turboConfigPath = join(rootDir, 'turbo.json')
 const turboConfigPathJsonc = join(rootDir, 'turbo.jsonc')
 
@@ -418,7 +418,7 @@ describe('Governance Scripts Validation', () => {
   describe('Governance Integration', () => {
     test('should execute governance check script successfully', () => {
       try {
-        execSync('pnpm run governance', { stdio: 'pipe' })
+        execSync('pnpm -w run governance', { stdio: 'pipe' })
         // If we get here, the script executed without throwing
         expect(true).toBe(true)
       } catch (error) {

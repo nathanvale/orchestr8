@@ -1,5 +1,5 @@
 /**
- * API Wrappers V2 Compatibility Tests
+ * API Wrappers Compatibility Tests
  * Tests for test utilities using QualityChecker implementation
  */
 
@@ -14,7 +14,7 @@ import type { TestFixture } from './modern-fixtures.js'
 import type { QualityCheckOptions, FixResult } from '../types.js'
 import type { QualityCheckResult } from '../types/issue-types.js'
 
-// Mock the QualityChecker to use V2
+// Mock the QualityChecker to use current
 vi.mock('../core/quality-checker.js', async () => {
   const module = await vi.importActual('../core/quality-checker.js')
   return {
@@ -22,7 +22,7 @@ vi.mock('../core/quality-checker.js', async () => {
   }
 })
 
-describe('API Wrappers with V2 Implementation', () => {
+describe('API Wrappers with current Implementation', () => {
   describe('MockedQualityChecker', () => {
     let checker: MockedQualityChecker
 
@@ -147,7 +147,7 @@ describe('API Wrappers with V2 Implementation', () => {
       })
     })
 
-    describe('V2 Check and Fix Methods', () => {
+    describe('current Check and Fix Methods', () => {
       it('should use QualityChecker for check operations', async () => {
         checker.addMockFile('/src/test.ts', 'const x = 1;', true)
 
@@ -311,12 +311,12 @@ describe('API Wrappers with V2 Implementation', () => {
     })
   })
 
-  describe('V2 Compatibility', () => {
-    it('should work with V2 result formats', async () => {
+  describe('current Compatibility', () => {
+    it('should work with current result formats', async () => {
       const checker = new MockedQualityChecker()
       checker.addMockFile('/src/test.ts', 'const x = 1', true)
 
-      const v2Result: QualityCheckResult = {
+      const result: QualityCheckResult = {
         success: false,
         duration: 100,
         issues: [
@@ -332,41 +332,41 @@ describe('API Wrappers with V2 Implementation', () => {
         ],
       }
 
-      vi.spyOn(checker, 'check').mockResolvedValue(v2Result)
+      vi.spyOn(checker, 'check').mockResolvedValue(result)
 
-      const result = await checker.check(['/src/test.ts'])
-      expect(result.issues).toBeDefined()
-      expect(result.issues).toHaveLength(1)
+      const checkResult = await checker.check(['/src/test.ts'])
+      expect(checkResult.issues).toBeDefined()
+      expect(checkResult.issues).toHaveLength(1)
     })
 
-    it('should handle V2 fix results', async () => {
+    it('should handle current fix results', async () => {
       const wrapper = new DirectAPIWrapper()
 
-      const v2FixResult: FixResult = {
+      const fixResult: FixResult = {
         success: true,
         count: 2,
         fixed: ['/src/a.ts', '/src/b.ts'],
       }
 
-      vi.spyOn(wrapper['checker'], 'fix').mockResolvedValue(v2FixResult)
+      vi.spyOn(wrapper['checker'], 'fix').mockResolvedValue(fixResult)
 
       const result = await wrapper.fix(['/src/a.ts', '/src/b.ts'])
       expect(result.count).toBe(2)
       expect(result.fixed).toHaveLength(2)
     })
 
-    it('should maintain performance targets with V2', async () => {
+    it('should maintain performance targets with current', async () => {
       const wrapper = new PerformanceWrapper()
       const checker = new MockedQualityChecker()
 
       checker.addMockFile('/src/test.ts', 'const x = 1;', true)
 
-      const result = await wrapper.track('v2-check', async () => {
+      const result = await wrapper.track('quality-check', async () => {
         return await checker.check(['/src/test.ts'])
       })
 
       expect(result).toBeDefined()
-      expect(wrapper.getMaxTime('v2-check')).toBeLessThan(300) // V2 performance target
+      expect(wrapper.getMaxTime('quality-check')).toBeLessThan(300) // current performance target
     })
   })
 })
