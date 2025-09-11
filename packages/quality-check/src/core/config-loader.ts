@@ -63,7 +63,7 @@ const DEFAULT_CONFIG: ResolvedConfig = {
   },
   format: 'stylish',
   timeoutMs: 3000,
-  typescriptCacheDir: '',
+  typescriptCacheDir: '.cache/typescript',
   eslintCacheDir: '.cache/eslint',
   prettierWrite: false,
   fix: false,
