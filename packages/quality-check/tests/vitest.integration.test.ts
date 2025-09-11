@@ -64,7 +64,7 @@ describe('Vitest Integration Test', () => {
     const handlers = server.listHandlers()
     expect(handlers).toHaveLength(1)
 
-    // MSW v2 doesn't expose handler.info directly
+    // MSW current doesn't expose handler.info directly
     // Just verify we have handlers registered
     expect(handlers[0]).toBeDefined()
   })

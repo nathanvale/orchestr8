@@ -1,5 +1,5 @@
 /**
- * V2 Error Handling Test Suite
+ * Current Error Handling Test Suite
  * Tests error boundary, exception handling, and error recovery for QualityChecker
  */
 

@@ -348,7 +348,7 @@ describe('IssueReporter with Enhanced Error Formatting', () => {
 
   describe('Enhanced formatForClaude with ClaudeFormatter integration', () => {
     it('should_format_issues_using_claude_formatter_when_new_method_is_added', () => {
-      // Arrange - Test data for the new formatForClaudeV2 method we'll create
+      // Arrange - Test data for the new formatForClaudeCurrent method we'll create
       const issues: Issue[] = [
         {
           engine: 'typescript',
@@ -371,7 +371,7 @@ describe('IssueReporter with Enhanced Error Formatting', () => {
       ]
 
       // Act - This test will be enabled when we add the new method
-      // const output = reporter.formatForClaudeV2(issues)
+      // const output = reporter.formatForClaudeCurrent(issues)
 
       // Assert - Expected behavior for XML output
       // expect(output).toContain('<quality-check-result>')
@@ -407,7 +407,7 @@ describe('IssueReporter with Enhanced Error Formatting', () => {
       ]
 
       // Act - This test will be enabled when we add the new method
-      // const output = reporter.formatForClaudeV2(issues)
+      // const output = reporter.formatForClaudeCurrent(issues)
 
       // Assert - Expected behavior for metadata preservation
       // expect(output).toContain('file="/absolute/path/to/file.ts"')

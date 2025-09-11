@@ -1,5 +1,5 @@
 /**
- * Git Hook Facade V2 Compatibility Tests
+ * Git Hook Facade Current Compatibility Tests
  * Tests for runGitHook using QualityChecker implementation
  */
 
@@ -40,7 +40,7 @@ import { Fixer } from '../adapters/fixer.js'
 import { IssueReporter } from '../core/issue-reporter.js'
 import { QualityChecker } from '../core/quality-checker.js'
 
-describe('Git Hook with V2 Implementation', () => {
+describe('Git Hook with Current Implementation', () => {
   let mockExecSync: ReturnType<typeof vi.fn>
   let mockCheck: ReturnType<typeof vi.fn>
   let mockDecide: ReturnType<typeof vi.fn>
@@ -188,26 +188,21 @@ describe('Git Hook with V2 Implementation', () => {
       mockCheck.mockResolvedValue(failResult)
       mockDecide.mockReturnValue({ action: 'REPORT_ONLY' })
 
-      // Expected V2 format that formatForCLI receives
-      const expectedV2Format = {
+      // Expected Current format that formatForCLI receives
+      const expectedCurrentFormat = {
         success: false,
-        checkers: {
-          eslint: {
-            success: true,
-            errors: [],
-            warnings: [],
+        duration: 100,
+        issues: [
+          {
+            engine: 'typescript',
+            severity: 'error',
+            ruleId: 'typescript-error',
+            file: 'src/file.ts',
+            line: 10,
+            col: 1,
+            message: 'Type error at line 10',
           },
-          typescript: {
-            success: false,
-            errors: ['Type error at line 10'],
-            warnings: [],
-          },
-          prettier: {
-            success: true,
-            errors: [],
-            warnings: [],
-          },
-        },
+        ],
       }
 
       try {
@@ -216,7 +211,7 @@ describe('Git Hook with V2 Implementation', () => {
         expect(e.message).toContain('Process exited with code 1')
       }
 
-      expect(mockFormatForCLI).toHaveBeenCalledWith(expectedV2Format)
+      expect(mockFormatForCLI).toHaveBeenCalledWith(expectedCurrentFormat)
       expect(console.error).toHaveBeenCalledWith('Formatted errors')
       expect(console.error).toHaveBeenCalledWith('\n❌ Quality check failed')
       expect(exitCode).toBe(1)
@@ -276,26 +271,21 @@ describe('Git Hook with V2 Implementation', () => {
       mockDecide.mockReturnValue({ action: 'FIX_SILENTLY' })
       mockAutoFix.mockResolvedValue({ success: false })
 
-      // Expected V2 format that formatForCLI receives
-      const expectedV2Format = {
+      // Expected Current format that formatForCLI receives
+      const expectedCurrentFormat = {
         success: false,
-        checkers: {
-          eslint: {
-            success: false,
-            errors: ['Complex error'],
-            warnings: [],
+        duration: 100,
+        issues: [
+          {
+            engine: 'eslint',
+            severity: 'error',
+            ruleId: 'complex',
+            file: 'src/file.ts',
+            line: 1,
+            col: 1,
+            message: 'Complex error',
           },
-          typescript: {
-            success: true,
-            errors: [],
-            warnings: [],
-          },
-          prettier: {
-            success: true,
-            errors: [],
-            warnings: [],
-          },
-        },
+        ],
       }
 
       try {
@@ -305,7 +295,7 @@ describe('Git Hook with V2 Implementation', () => {
       }
 
       expect(mockAutoFix).toHaveBeenCalled()
-      expect(mockFormatForCLI).toHaveBeenCalledWith(expectedV2Format)
+      expect(mockFormatForCLI).toHaveBeenCalledWith(expectedCurrentFormat)
       expect(exitCode).toBe(1)
     })
 
@@ -435,8 +425,8 @@ describe('Git Hook with V2 Implementation', () => {
     })
   })
 
-  describe('V2 Compatibility', () => {
-    it('should work with V2 QualityChecker instance', async () => {
+  describe('Current Compatibility', () => {
+    it('should work with Current QualityChecker instance', async () => {
       mockExecSync.mockReturnValue('src/file.ts\n')
       mockCheck.mockResolvedValue({ success: true, duration: 100, issues: [] })
 
@@ -451,9 +441,9 @@ describe('Git Hook with V2 Implementation', () => {
       expect(mockCheck).toHaveBeenCalled()
     })
 
-    it('should handle V2-specific error formats', async () => {
+    it('should handle Current-specific error formats', async () => {
       mockExecSync.mockReturnValue('src/file.ts\n')
-      const v2Result = {
+      const currentResult = {
         success: false,
         duration: 100,
         issues: [
@@ -468,29 +458,24 @@ describe('Git Hook with V2 Implementation', () => {
           },
         ],
       }
-      mockCheck.mockResolvedValue(v2Result)
+      mockCheck.mockResolvedValue(currentResult)
       mockDecide.mockReturnValue({ action: 'REPORT_ONLY' })
 
-      // Expected V2 format that formatForCLI receives
-      const expectedV2Format = {
+      // Expected Current format that formatForCLI receives
+      const expectedCurrentFormat = {
         success: false,
-        checkers: {
-          eslint: {
-            success: true,
-            errors: [],
-            warnings: [],
+        duration: 100,
+        issues: [
+          {
+            engine: 'typescript',
+            severity: 'error',
+            ruleId: 'TS2304',
+            file: 'src/file.ts',
+            line: 10,
+            col: 5,
+            message: 'Cannot find name "foo"',
           },
-          typescript: {
-            success: false,
-            errors: ['Cannot find name "foo"'],
-            warnings: [],
-          },
-          prettier: {
-            success: true,
-            errors: [],
-            warnings: [],
-          },
-        },
+        ],
       }
 
       try {
@@ -499,7 +484,7 @@ describe('Git Hook with V2 Implementation', () => {
         expect(e.message).toContain('Process exited with code 1')
       }
 
-      expect(mockFormatForCLI).toHaveBeenCalledWith(expectedV2Format)
+      expect(mockFormatForCLI).toHaveBeenCalledWith(expectedCurrentFormat)
       expect(exitCode).toBe(1)
     })
   })

@@ -1,5 +1,5 @@
 /**
- * TypeScript Error Enhancement Tests for V2
+ * TypeScript Error Enhancement Tests for Current
  * Tests TypeScript error formatting, compilation errors, and tsconfig validation
  */
 
