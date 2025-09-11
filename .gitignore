@@ -90,6 +90,10 @@ lerna-debug.log*
 *.seed
 *.pid.lock
 
+# Performance data files (generated)
+.ci-performance-data.json
+.cache-performance.json
+
 # Temporary files
 tmp/
 temp/
