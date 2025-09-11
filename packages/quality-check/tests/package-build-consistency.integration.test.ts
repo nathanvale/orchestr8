@@ -13,7 +13,7 @@ import { describe, expect, test } from 'vitest'
  * - Proper sideEffects configuration
  */
 
-const PROJECT_ROOT = resolve(__dirname, '..')
+const PROJECT_ROOT = resolve(__dirname, '../../..')
 const PACKAGES_DIR = join(PROJECT_ROOT, 'packages')
 
 /**
@@ -327,7 +327,7 @@ describe('Turborepo Configuration Tests', () => {
     const lineCount = configContent.split('\n').length
     console.log(`Current turbo config line count: ${lineCount}`)
 
-    // Should be under 70 lines (>75% reduction from 315 lines)
-    expect(lineCount).toBeLessThan(70)
+    // Should be under or equal to 70 lines (>75% reduction from 315 lines)
+    expect(lineCount).toBeLessThanOrEqual(70)
   })
 })

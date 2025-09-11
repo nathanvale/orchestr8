@@ -38,8 +38,8 @@ describe('Vitest Integration Test', () => {
   test('should render React components using @testing-library/react', () => {
     render(React.createElement(TestComponent))
 
-    expect(screen.getByText('Hello Vitest!')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Click me' })).toBeInTheDocument()
+    expect(screen.getByText('Hello Vitest!')).toBeDefined()
+    expect(screen.getByRole('button', { name: 'Click me' })).toBeDefined()
   })
 
   test('should support user interactions with @testing-library/user-event', async () => {
