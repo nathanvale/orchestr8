@@ -7,13 +7,8 @@
 import { Autopilot } from '../adapters/autopilot.js'
 import { Fixer } from '../adapters/fixer.js'
 import { ExitCodes } from '../core/exit-codes.js'
-import { IssueReporter } from '../core/issue-reporter.js'
 import { QualityChecker } from '../core/quality-checker.js'
-import {
-  OutputFormatter as OldOutputFormatter,
-  OutputMode,
-} from '../formatters/output-formatter.js'
-import { OutputFormatter as NewOutputFormatter } from '../services/OutputFormatter.js'
+import { OutputFormatter } from '../services/OutputFormatter.js'
 import type { ErrorReport } from '../utils/logger.js'
 import type { Issue } from '../types/issue-types.js'
 import { createTimer, logger } from '../utils/logger.js'
@@ -218,19 +213,9 @@ async function runClaudeHookWithPayload(
     // Initialize components
     logger.debug('Initializing quality check components')
     const checker = new QualityChecker()
-    const reporter = new IssueReporter()
     const autopilot = new Autopilot()
     const fixer = new Fixer()
-    const formatter = new OldOutputFormatter()
-
-    // Log formatter selection
-    const outputMode = formatter.getOutputMode()
-    logger.debug('Formatter selected', {
-      formatter: 'OldOutputFormatter',
-      defaultMode: outputMode,
-      envMode: process.env.QUALITY_CHECK_OUTPUT_MODE,
-      correlationId,
-    })
+    // We use the new OutputFormatter directly in outputClaudeBlocking for all error output
 
     // Run quality check with timing
     logger.qualityCheckStarted(payload.tool_input.file_path)
@@ -411,27 +396,21 @@ async function runClaudeHookWithPayload(
         logger.autoFixCompleted(payload.tool_input.file_path, fixedCount, remainingCount)
 
         if (decision.issues && decision.issues.length > 0) {
-          const xmlOutput = formatter.formatIssuesForOutput(decision.issues, {
-            mode: OutputMode.XML,
-          })
-
           logger.warn('Some issues remain after auto-fix', {
             filePath: payload.tool_input.file_path,
             remainingIssueMessages: decision.issues.map((i) => i.message),
             remainingCount: decision.issues.length,
           })
 
-          if (xmlOutput) {
-            // Use new colored formatter directly
-            outputClaudeBlocking('', decision.issues)
-            logger.hookCompleted(
-              payload.tool_name,
-              payload.tool_input.file_path,
-              hookTimer.end(),
-              false,
-            )
-            process.exit(ExitCodes.QUALITY_ISSUES)
-          }
+          // Use new colored formatter directly
+          outputClaudeBlocking('', decision.issues)
+          logger.hookCompleted(
+            payload.tool_name,
+            payload.tool_input.file_path,
+            hookTimer.end(),
+            false,
+          )
+          process.exit(ExitCodes.QUALITY_ISSUES)
         }
 
         if (fixResult.success) {
@@ -460,20 +439,9 @@ async function runClaudeHookWithPayload(
 
     // If we reach here with errors, report quality issues using formatted text
     const success = result.success
-    if (!success) {
-      console.error('')
-      console.error('🚫 QUALITY CHECK FAILED - Issues Found')
-      console.error('='.repeat(60))
-
-      const output = reporter.formatForClaude(result)
-      if (output) {
-        console.error('')
-        console.error(output)
-        console.error('')
-        console.error('Please fix these issues before proceeding.')
-        console.error('='.repeat(60))
-      }
-
+    if (!success && result.issues && result.issues.length > 0) {
+      // Use new colored formatter directly
+      outputClaudeBlocking('', result.issues)
       logger.hookCompleted(payload.tool_name, payload.tool_input.file_path, hookTimer.end(), false)
       process.exit(ExitCodes.QUALITY_ISSUES)
     }
@@ -579,7 +547,7 @@ function outputClaudeBlocking(formattedOutput: string, issues?: Issue[]): void {
   // If we have issues, use the new formatter for colored concise output
   if (issues && issues.length > 0) {
     const errorReport = issuesToErrorReport(issues)
-    const conciseSummary = NewOutputFormatter.formatMinimalConsole(errorReport, {
+    const conciseSummary = OutputFormatter.formatMinimalConsole(errorReport, {
       colored: true,
     })
 
