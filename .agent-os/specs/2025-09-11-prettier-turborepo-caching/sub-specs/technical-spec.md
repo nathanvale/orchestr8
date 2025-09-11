@@ -95,16 +95,24 @@ Key design principles:
 
 **Turborepo** - Version 2.1+ required for --affected flag support
 **Justification:** Core requirement for caching infrastructure and incremental
-build capabilities
+build capabilities **Example CLI Usage:**
 
-**Prettier** - Version 3.3+ (3.6+ recommended for OXC plugin support)
-**Justification:** Latest version provides best performance and compatibility
-with Turborepo caching
+- `turbo run <tasks> --affected` - Run tasks only for changed packages
+- `turbo ls --affected` - List affected packages based on git changes
 
-**@vercel/remote-cache** - Optional for remote caching setup **Justification:**
-Provides zero-configuration remote cache with free tier for initial
-implementation
+**Prettier** - Version 3.6+ recommended (minimum 3.3+ if backward compatibility
+needed) **Justification:** Version 3.6.2 (stable as of 2025-09-11) provides best
+performance and compatibility with Turborepo caching
+
+**Vercel Remote Cache** - Managed service (no npm package required)
+**Configuration:** Use Turbo CLI (`turbo login` / `turbo link`) or enable in
+Vercel dashboard **Required Environment Variables:**
+
+- `TURBO_TOKEN` - Authentication token for remote cache access
+- `TURBO_TEAM` - Team identifier for cache scoping **Optional Environment
+  Variables:**
+- `TURBO_REMOTE_CACHE_SIGNATURE_KEY` - For cache signature verification
 
 Note: No new dependencies are required for basic implementation as the project
 already uses pnpm, TypeScript, and has Prettier installed. Remote caching can be
-added incrementally.
+configured incrementally through Vercel's managed service.

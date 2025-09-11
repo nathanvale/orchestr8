@@ -509,16 +509,24 @@ function shouldProcessOperation(operation: string): boolean {
  * Convert issues to ErrorReport format for new OutputFormatter
  */
 function issuesToErrorReport(issues: Issue[]): ErrorReport {
-  const errors = issues.filter((i) => i.severity === 'error')
-  const warnings = issues.filter((i) => i.severity === 'warning')
+  // Normalize severities - treat 'info' as 'warning'
+  const normalizedIssues = issues.map((issue) => ({
+    ...issue,
+    severity: issue.severity === 'info' ? 'warning' : issue.severity,
+  }))
 
-  // Group issues by file
+  const errors = normalizedIssues.filter((i) => i.severity === 'error')
+  const warnings = normalizedIssues.filter((i) => i.severity === 'warning')
+
+  // Group issues by file, handling potential undefined files
   const fileMap = new Map<string, Issue[]>()
-  for (const issue of issues) {
-    if (!fileMap.has(issue.file)) {
-      fileMap.set(issue.file, [])
+  for (const issue of normalizedIssues) {
+    // Use '<unknown>' as key for issues without a file
+    const fileKey = issue.file || '<unknown>'
+    if (!fileMap.has(fileKey)) {
+      fileMap.set(fileKey, [])
     }
-    fileMap.get(issue.file)!.push(issue)
+    fileMap.get(fileKey)!.push(issue)
   }
 
   const files = Array.from(fileMap.entries()).map(([path, fileIssues]) => ({
@@ -528,13 +536,16 @@ function issuesToErrorReport(issues: Issue[]): ErrorReport {
       column: issue.col,
       message: issue.message,
       ruleId: issue.ruleId,
-      severity: issue.severity as 'error' | 'warning',
+      severity: (issue.severity === 'info' ? 'warning' : issue.severity) as 'error' | 'warning',
     })),
   }))
 
+  // Derive tool from the first issue's engine, defaulting to 'eslint'
+  const tool = issues.length > 0 ? issues[0].engine : 'eslint'
+
   return {
     timestamp: new Date().toISOString(),
-    tool: 'quality-check' as 'eslint' | 'typescript' | 'prettier',
+    tool: tool as 'eslint' | 'typescript' | 'prettier',
     status: errors.length > 0 ? 'error' : warnings.length > 0 ? 'warning' : 'success',
     summary: {
       totalErrors: errors.length,
