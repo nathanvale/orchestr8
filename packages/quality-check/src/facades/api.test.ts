@@ -1,5 +1,5 @@
 /**
- * API Facade V2 Compatibility Tests
+ * API Facade Current Compatibility Tests
  * Tests for QualityCheckAPI using QualityChecker implementation
  */
 
@@ -7,7 +7,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { QualityCheckAPI } from './api.js'
 import type { QualityCheckOptions, FixResult, QualityCheckResult } from '../types.js'
 
-// Mock the QualityChecker import to use V2
+// Mock the QualityChecker import to use Current
 vi.mock('../core/quality-checker.js', async () => {
   const module = await vi.importActual('../core/quality-checker.js')
   return {
@@ -15,7 +15,7 @@ vi.mock('../core/quality-checker.js', async () => {
   }
 })
 
-describe('QualityCheckAPI with V2 Implementation', () => {
+describe('QualityCheckAPI with Current Implementation', () => {
   let api: QualityCheckAPI
   let mockCheckResult: QualityCheckResult
   let mockFixResult: FixResult
@@ -175,8 +175,8 @@ describe('QualityCheckAPI with V2 Implementation', () => {
     })
   })
 
-  describe('V2 Compatibility', () => {
-    it('should maintain backward compatibility with V1 API surface', () => {
+  describe('Current Compatibility', () => {
+    it('should maintain backward compatibility with Legacy API surface', () => {
       // Verify all expected methods exist
       expect(api.check).toBeDefined()
       expect(api.fix).toBeDefined()
@@ -190,8 +190,8 @@ describe('QualityCheckAPI with V2 Implementation', () => {
       expect(typeof api.fixFile).toBe('function')
     })
 
-    it('should handle V2-specific result format', async () => {
-      const v2Result: QualityCheckResult = {
+    it('should handle Current-specific result format', async () => {
+      const currentResult: QualityCheckResult = {
         success: false,
         checkers: {
           typescript: {
@@ -214,27 +214,27 @@ describe('QualityCheckAPI with V2 Implementation', () => {
         ],
       }
 
-      vi.spyOn(api['checker'], 'check').mockResolvedValue(v2Result)
+      vi.spyOn(api['checker'], 'check').mockResolvedValue(currentResult)
 
       const result = await api.check(['src/test.ts'])
 
-      expect(result).toEqual(v2Result)
+      expect(result).toEqual(currentResult)
       expect(result.parsedErrors).toBeDefined()
       expect(result.parsedErrors).toHaveLength(1)
     })
 
-    it('should handle V2 enhanced fix results', async () => {
-      const v2FixResult: FixResult = {
+    it('should handle Current enhanced fix results', async () => {
+      const currentFixResult: FixResult = {
         success: true,
         count: 3,
         fixed: ['src/test1.ts', 'src/test2.ts', 'src/test3.ts'],
       }
 
-      vi.spyOn(api['checker'], 'fix').mockResolvedValue(v2FixResult)
+      vi.spyOn(api['checker'], 'fix').mockResolvedValue(currentFixResult)
 
       const result = await api.fix(['src/test1.ts', 'src/test2.ts', 'src/test3.ts'])
 
-      expect(result).toEqual(v2FixResult)
+      expect(result).toEqual(currentFixResult)
       expect(result.count).toBe(3)
       expect(result.fixed).toHaveLength(3)
     })
@@ -245,7 +245,7 @@ describe('QualityCheckAPI with V2 Implementation', () => {
       const startTime = Date.now()
 
       vi.spyOn(api['checker'], 'check').mockImplementation(async () => {
-        // Simulate V2 fast execution
+        // Simulate Current fast execution
         await new Promise((resolve) => setTimeout(resolve, 50))
         return mockCheckResult
       })
@@ -253,7 +253,7 @@ describe('QualityCheckAPI with V2 Implementation', () => {
       await api.check(['src/test.ts'])
 
       const duration = Date.now() - startTime
-      expect(duration).toBeLessThan(300) // V2 performance target
+      expect(duration).toBeLessThan(300) // Current performance target
     })
   })
 

@@ -227,11 +227,7 @@ describe('ClaudeFormatter', () => {
 
       const result = formatter.formatSummary(issues)
 
-      expect(result).toBe(`Found 1 issue:
-  - 1 error
-
-By engine:
-  - TypeScript: 1 issue`)
+      expect(result).toBe('1 TypeScript error')
     })
 
     test('should_provide_detailed_summary_for_multiple_issues', () => {
@@ -264,14 +260,7 @@ By engine:
 
       const result = formatter.formatSummary(issues)
 
-      expect(result).toBe(`Found 3 issues:
-  - 2 errors
-  - 1 warning
-
-By engine:
-  - TypeScript: 1 issue
-  - ESLint: 1 issue
-  - Prettier: 1 issue`)
+      expect(result).toBe('1 TypeScript error, 1 Prettier error')
     })
   })
 

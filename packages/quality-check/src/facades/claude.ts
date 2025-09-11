@@ -323,12 +323,7 @@ async function runClaudeHookWithPayload(
         // Operate completely silently - no console output at all
         logger.autoFixStarted(payload.tool_input.file_path)
         const fixTimer = createTimer('auto-fix')
-        // Convert V2 result to V1 format for fixer
-        const v1Result = {
-          success: result.success,
-          checkers: {},
-        }
-        const fixResult = await fixer.autoFix(payload.tool_input.file_path, v1Result)
+        const fixResult = await fixer.autoFix(payload.tool_input.file_path, result)
         fixTimer.end()
 
         if (fixResult.success) {
@@ -410,12 +405,7 @@ async function runClaudeHookWithPayload(
       case 'FIX_AND_REPORT': {
         logger.autoFixStarted(payload.tool_input.file_path)
         const fixTimer = createTimer('fix-and-report')
-        // Convert V2 result to V1 format for fixer
-        const v1Result = {
-          success: result.success,
-          checkers: {},
-        }
-        const fixResult = await fixer.autoFix(payload.tool_input.file_path, v1Result)
+        const fixResult = await fixer.autoFix(payload.tool_input.file_path, result)
         fixTimer.end()
 
         const fixedCount = issues.length - (decision.issues?.length || 0)

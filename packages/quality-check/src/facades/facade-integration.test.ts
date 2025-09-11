@@ -1,5 +1,5 @@
 /**
- * V2 Facade Integration Tests
+ * Current Facade Integration Tests
  * Tests interactions between different facades using QualityChecker
  */
 
@@ -43,7 +43,7 @@ vi.mock('../adapters/fixer.js', () => ({
 
 import { execSync } from 'node:child_process'
 
-describe('V2 Facade Integration', () => {
+describe('Current Facade Integration', () => {
   let originalExit: typeof process.exit
   let exitCode: number | undefined
   let consoleErrorSpy: ReturnType<typeof vi.spyOn>
@@ -76,7 +76,7 @@ describe('V2 Facade Integration', () => {
   })
 
   describe('API and Git Hook Integration', () => {
-    it('should share same V2 instance type between facades', async () => {
+    it('should share same Current instance type between facades', async () => {
       // Mock git staged files
       vi.mocked(execSync).mockReturnValue('src/test.ts\n')
 
@@ -90,7 +90,7 @@ describe('V2 Facade Integration', () => {
     })
 
     it('should produce compatible results between API and git-hook', async () => {
-      const v2Result: QualityCheckResult = {
+      const currentResult: QualityCheckResult = {
         success: false,
         duration: 100,
         issues: [
@@ -110,7 +110,7 @@ describe('V2 Facade Integration', () => {
       vi.mocked(QualityChecker).mockImplementation(
         () =>
           ({
-            check: vi.fn().mockResolvedValue(v2Result),
+            check: vi.fn().mockResolvedValue(currentResult),
             fix: vi.fn(),
           }) as any,
       )
@@ -119,7 +119,7 @@ describe('V2 Facade Integration', () => {
       const api = new QualityCheckAPI()
 
       const apiResult = await api.check(['src/test.ts'])
-      expect(apiResult).toEqual(v2Result)
+      expect(apiResult).toEqual(currentResult)
 
       // Git hook should handle the same result format
       // Pass files directly to avoid execSync issues in tests
@@ -157,41 +157,41 @@ describe('V2 Facade Integration', () => {
       // Setup mock file
       mocker.addMockFile('/src/test.ts', 'const x = 1;', true)
 
-      // Both should handle V2 result format
-      const v2Result: QualityCheckResult = {
+      // Both should handle Current result format
+      const currentResult: QualityCheckResult = {
         success: true,
         duration: 50,
         issues: [],
       }
 
-      vi.spyOn(api['checker'], 'check').mockResolvedValue(v2Result)
-      vi.spyOn(mocker, 'check').mockResolvedValue(v2Result)
+      vi.spyOn(api['checker'], 'check').mockResolvedValue(currentResult)
+      vi.spyOn(mocker, 'check').mockResolvedValue(currentResult)
 
       const apiResult = await api.check(['/src/test.ts'])
       const mockResult = await mocker.check(['/src/test.ts'])
 
-      expect(apiResult).toEqual(v2Result)
-      expect(mockResult).toEqual(v2Result)
+      expect(apiResult).toEqual(currentResult)
+      expect(mockResult).toEqual(currentResult)
     })
 
     it('should work with DirectAPIWrapper', async () => {
       const api = new QualityCheckAPI()
       const direct = new DirectAPIWrapper()
 
-      const v2Result: QualityCheckResult = {
+      const currentResult: QualityCheckResult = {
         success: true,
         duration: 50,
         issues: [],
       }
 
-      vi.spyOn(api['checker'], 'check').mockResolvedValue(v2Result)
-      vi.spyOn(direct['checker'], 'check').mockResolvedValue(v2Result)
+      vi.spyOn(api['checker'], 'check').mockResolvedValue(currentResult)
+      vi.spyOn(direct['checker'], 'check').mockResolvedValue(currentResult)
 
       const apiResult = await api.check(['test.ts'])
       const directResult = await direct.check(['test.ts'])
 
-      expect(apiResult).toEqual(v2Result)
-      expect(directResult).toEqual(v2Result)
+      expect(apiResult).toEqual(currentResult)
+      expect(directResult).toEqual(currentResult)
     })
   })
 
@@ -268,11 +268,11 @@ describe('V2 Facade Integration', () => {
   })
 
   describe('Performance Across Facades', () => {
-    it('should maintain V2 performance targets', async () => {
+    it('should maintain Current performance targets', async () => {
       const api = new QualityCheckAPI()
       const direct = new DirectAPIWrapper()
 
-      // Mock fast V2 responses
+      // Mock fast Current responses
       const fastResult: QualityCheckResult = {
         success: true,
         duration: 50,
@@ -297,7 +297,7 @@ describe('V2 Facade Integration', () => {
       await direct.check(['test.ts'])
       const directTime = Date.now() - start2
 
-      // Both should complete under V2 target
+      // Both should complete under Current target
       expect(apiTime).toBeLessThan(300)
       expect(directTime).toBeLessThan(300)
     })
@@ -337,10 +337,10 @@ describe('V2 Facade Integration', () => {
       expect(exitCode).toBe(1)
     })
 
-    it('should handle V2-specific errors', async () => {
+    it('should handle Current-specific errors', async () => {
       const api = new QualityCheckAPI()
 
-      const v2ErrorResult: QualityCheckResult = {
+      const currentErrorResult: QualityCheckResult = {
         success: false,
         duration: 150,
         issues: [
@@ -356,7 +356,7 @@ describe('V2 Facade Integration', () => {
         ],
       }
 
-      vi.spyOn(api['checker'], 'check').mockResolvedValue(v2ErrorResult)
+      vi.spyOn(api['checker'], 'check').mockResolvedValue(currentErrorResult)
 
       const result = await api.check(['src/test.ts'])
 

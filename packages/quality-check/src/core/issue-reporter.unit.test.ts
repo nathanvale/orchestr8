@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { IssueReporter } from './issue-reporter.js'
-import type { QualityCheckResult } from '../types.js'
+import type { QualityCheckResult } from '../types/issue-types.js'
 import type { Issue } from '../types/issue-types.js'
 
 describe('IssueReporter with Enhanced Error Formatting', () => {
@@ -15,24 +15,45 @@ describe('IssueReporter with Enhanced Error Formatting', () => {
       // Arrange
       const result: QualityCheckResult = {
         success: false,
-        checkers: {
-          typescript: {
-            success: false,
-            errors: [
-              "src/app.ts:10:5 - Cannot find name 'unknownVariable' (TS2304)",
-              "src/app.ts:15:10 - Type 'string' is not assignable to type 'number' (TS2322)",
-            ],
-            fixable: false,
+        duration: 100,
+        issues: [
+          {
+            engine: 'typescript',
+            severity: 'error',
+            ruleId: 'TS2304',
+            file: 'src/app.ts',
+            line: 10,
+            col: 5,
+            message: "Cannot find name 'unknownVariable'",
           },
-          eslint: {
-            success: false,
-            errors: [
-              'src/app.ts:20:25 - Missing semicolon (semi)',
-              "src/app.ts:5:7 - 'config' is defined but never used (no-unused-vars)",
-            ],
-            fixable: true,
+          {
+            engine: 'typescript',
+            severity: 'error',
+            ruleId: 'TS2322',
+            file: 'src/app.ts',
+            line: 15,
+            col: 10,
+            message: "Type 'string' is not assignable to type 'number'",
           },
-        },
+          {
+            engine: 'eslint',
+            severity: 'error',
+            ruleId: 'semi',
+            file: 'src/app.ts',
+            line: 20,
+            col: 25,
+            message: 'Missing semicolon',
+          },
+          {
+            engine: 'eslint',
+            severity: 'error',
+            ruleId: 'no-unused-vars',
+            file: 'src/app.ts',
+            line: 5,
+            col: 7,
+            message: "'config' is defined but never used",
+          },
+        ],
       }
 
       // Act
@@ -52,13 +73,36 @@ describe('IssueReporter with Enhanced Error Formatting', () => {
       // Arrange
       const result: QualityCheckResult = {
         success: false,
-        checkers: {
-          eslint: {
-            success: false,
-            errors: ['error1', 'error2', 'error3'],
-            fixable: true,
+        duration: 100,
+        issues: [
+          {
+            engine: 'eslint',
+            severity: 'error',
+            ruleId: 'rule1',
+            file: 'src/test.ts',
+            line: 1,
+            col: 1,
+            message: 'error1',
           },
-        },
+          {
+            engine: 'eslint',
+            severity: 'error',
+            ruleId: 'rule2',
+            file: 'src/test.ts',
+            line: 2,
+            col: 1,
+            message: 'error2',
+          },
+          {
+            engine: 'eslint',
+            severity: 'error',
+            ruleId: 'rule3',
+            file: 'src/test.ts',
+            line: 3,
+            col: 1,
+            message: 'error3',
+          },
+        ],
       }
 
       // Act
@@ -75,28 +119,16 @@ describe('IssueReporter with Enhanced Error Formatting', () => {
       // Arrange
       const result: QualityCheckResult = {
         success: false,
-        checkers: {
-          typescript: {
-            success: false,
-            errors: ["src/app.ts:10:5 - Cannot find name 'unknownVariable' (TS2304)"],
-            fixable: false,
-          },
-          prettier: {
-            success: false,
-            errors: ['src/app.ts - File needs formatting'],
-            fixable: true,
-          },
-        },
-        parsedErrors: [
+        duration: 100,
+        issues: [
           {
+            engine: 'typescript',
+            severity: 'error',
+            ruleId: 'TS2304',
             file: 'src/app.ts',
             line: 10,
-            column: 5,
-            code: 'TS2304',
+            col: 5,
             message: "Cannot find name 'unknownVariable'",
-            severity: 'error',
-            source: 'typescript',
-            fixable: false,
           },
         ],
       }
@@ -115,18 +147,8 @@ describe('IssueReporter with Enhanced Error Formatting', () => {
       // Arrange
       const result: QualityCheckResult = {
         success: false,
-        checkers: {
-          prettier: {
-            success: false,
-            errors: ['src/app.ts - File needs formatting'],
-            fixable: true,
-          },
-          eslint: {
-            success: false,
-            errors: ['src/app.ts:10:25 - Missing semicolon (semi)'],
-            fixable: true,
-          },
-        },
+        duration: 100,
+        issues: [],
       }
 
       // Act
@@ -138,28 +160,20 @@ describe('IssueReporter with Enhanced Error Formatting', () => {
   })
 
   describe('Enhanced JSON formatting', () => {
-    it('should_include_parsed_errors_when_available', () => {
+    it('should_include_quality_check_result_structure_in_json', () => {
       // Arrange
       const result: QualityCheckResult = {
         success: false,
-        checkers: {
-          typescript: {
-            success: false,
-            errors: ['src/app.ts:10:5 - Error (TS2304)'],
-            fixable: false,
-          },
-        },
-        parsedErrors: [
+        duration: 100,
+        issues: [
           {
+            engine: 'typescript',
+            severity: 'error',
+            ruleId: 'TS2304',
             file: 'src/app.ts',
             line: 10,
-            column: 5,
-            code: 'TS2304',
+            col: 5,
             message: "Cannot find name 'unknownVariable'",
-            severity: 'error',
-            source: 'typescript',
-            fixable: false,
-            category: 'type',
           },
         ],
       }
@@ -169,9 +183,12 @@ describe('IssueReporter with Enhanced Error Formatting', () => {
       const parsed = JSON.parse(output)
 
       // Assert
-      expect(parsed.parsedErrors).toBeDefined()
-      expect(parsed.parsedErrors[0].category).toBe('type')
-      expect(parsed.parsedErrors[0].file).toBe('src/app.ts')
+      expect(parsed.success).toBe(false)
+      expect(parsed.duration).toBe(100)
+      expect(parsed.issues).toBeDefined()
+      expect(parsed.issues[0].engine).toBe('typescript')
+      expect(parsed.issues[0].ruleId).toBe('TS2304')
+      expect(parsed.issues[0].file).toBe('src/app.ts')
     })
   })
 
@@ -180,13 +197,18 @@ describe('IssueReporter with Enhanced Error Formatting', () => {
       // Arrange
       const result: QualityCheckResult = {
         success: false,
-        checkers: {
-          eslint: {
-            success: false,
-            errors: ["src/app.ts:10:5 - 'x' is defined but never used (no-unused-vars)"],
-            fixable: false,
+        duration: 100,
+        issues: [
+          {
+            engine: 'eslint',
+            severity: 'error',
+            ruleId: 'no-unused-vars',
+            file: 'src/app.ts',
+            line: 10,
+            col: 5,
+            message: "'x' is defined but never used",
           },
-        },
+        ],
       }
 
       // Act
@@ -201,13 +223,18 @@ describe('IssueReporter with Enhanced Error Formatting', () => {
       // Arrange
       const result: QualityCheckResult = {
         success: false,
-        checkers: {
-          typescript: {
-            success: false,
-            errors: Array(10).fill('error'),
-            fixable: false,
-          },
-        },
+        duration: 100,
+        issues: Array(10)
+          .fill(null)
+          .map((_, i) => ({
+            engine: 'typescript' as const,
+            severity: 'error' as const,
+            ruleId: `TS${i}`,
+            file: 'src/app.ts',
+            line: i + 1,
+            col: 1,
+            message: `error ${i}`,
+          })),
       }
 
       // Act
@@ -224,23 +251,16 @@ describe('IssueReporter with Enhanced Error Formatting', () => {
       // Arrange
       const result: QualityCheckResult = {
         success: false,
-        checkers: {
-          eslint: {
-            success: false,
-            errors: ['Missing semicolon (semi)'],
-            fixable: true,
-          },
-        },
-        parsedErrors: [
+        duration: 100,
+        issues: [
           {
+            engine: 'eslint',
+            severity: 'error',
+            ruleId: 'semi',
             file: 'src/app.ts',
             line: 10,
-            column: 25,
-            code: 'semi',
+            col: 25,
             message: 'Missing semicolon',
-            severity: 'error',
-            source: 'eslint',
-            fixable: true,
           },
         ],
       }
@@ -256,13 +276,18 @@ describe('IssueReporter with Enhanced Error Formatting', () => {
       // Arrange
       const result: QualityCheckResult = {
         success: false,
-        checkers: {
-          typescript: {
-            success: false,
-            errors: ['Cannot find name (TS2304)'],
-            fixable: false,
+        duration: 100,
+        issues: [
+          {
+            engine: 'typescript',
+            severity: 'error',
+            ruleId: 'TS2304',
+            file: 'src/app.ts',
+            line: 1,
+            col: 1,
+            message: 'Cannot find name',
           },
-        },
+        ],
       }
 
       // Act
@@ -278,7 +303,8 @@ describe('IssueReporter with Enhanced Error Formatting', () => {
       // Arrange
       const result: QualityCheckResult = {
         success: true,
-        checkers: {},
+        duration: 5,
+        issues: [],
       }
 
       // Act
@@ -299,13 +325,16 @@ describe('IssueReporter with Enhanced Error Formatting', () => {
 
       const result: QualityCheckResult = {
         success: false,
-        checkers: {
-          eslint: {
-            success: false,
-            errors: manyErrors,
-            fixable: false,
-          },
-        },
+        duration: 100,
+        issues: manyErrors.map((_, i) => ({
+          engine: 'eslint' as const,
+          severity: 'error' as const,
+          ruleId: `CODE${i}`,
+          file: `src/file${i}.ts`,
+          line: i,
+          col: 5,
+          message: `Error ${i}`,
+        })),
       }
 
       // Act
@@ -319,7 +348,7 @@ describe('IssueReporter with Enhanced Error Formatting', () => {
 
   describe('Enhanced formatForClaude with ClaudeFormatter integration', () => {
     it('should_format_issues_using_claude_formatter_when_new_method_is_added', () => {
-      // Arrange - Test data for the new formatForClaudeV2 method we'll create
+      // Arrange - Test data for the new formatForClaudeCurrent method we'll create
       const issues: Issue[] = [
         {
           engine: 'typescript',
@@ -342,7 +371,7 @@ describe('IssueReporter with Enhanced Error Formatting', () => {
       ]
 
       // Act - This test will be enabled when we add the new method
-      // const output = reporter.formatForClaudeV2(issues)
+      // const output = reporter.formatForClaudeCurrent(issues)
 
       // Assert - Expected behavior for XML output
       // expect(output).toContain('<quality-check-result>')
@@ -378,7 +407,7 @@ describe('IssueReporter with Enhanced Error Formatting', () => {
       ]
 
       // Act - This test will be enabled when we add the new method
-      // const output = reporter.formatForClaudeV2(issues)
+      // const output = reporter.formatForClaudeCurrent(issues)
 
       // Assert - Expected behavior for metadata preservation
       // expect(output).toContain('file="/absolute/path/to/file.ts"')

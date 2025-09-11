@@ -1,7 +1,7 @@
 import JSON5 from 'json5'
 import { execSync } from 'node:child_process'
 import { existsSync, readFileSync, writeFileSync } from 'node:fs'
-import { join } from 'node:path'
+import { dirname, join, parse } from 'node:path'
 import { describe, expect, test } from 'vitest'
 
 // Helper to parse JSONC (JSON with comments)
@@ -13,7 +13,32 @@ function parseJsonc(content: string): any {
 const TURBO_DEFAULT = '$TURBO_DEFAULT$'
 
 // Common test constants
-const rootDir = process.cwd()
+const findProjectRoot = () => {
+  let current = process.cwd()
+  const root = parse(current).root
+
+  while (current !== root) {
+    // Check for package.json and either turbo.json or turbo.jsonc
+    if (
+      existsSync(join(current, 'package.json')) &&
+      (existsSync(join(current, 'turbo.json')) || existsSync(join(current, 'turbo.jsonc')))
+    ) {
+      return current
+    }
+
+    const parent = dirname(current)
+    // Break if we can't go up anymore
+    if (parent === current) {
+      break
+    }
+    current = parent
+  }
+
+  // If not found, throw an error for clarity
+  throw new Error('Could not find project root with package.json and turbo.json/turbo.jsonc')
+}
+
+const rootDir = findProjectRoot()
 const turboConfigPath = join(rootDir, 'turbo.json')
 const turboConfigPathJsonc = join(rootDir, 'turbo.jsonc')
 
@@ -418,7 +443,7 @@ describe('Governance Scripts Validation', () => {
   describe('Governance Integration', () => {
     test('should execute governance check script successfully', () => {
       try {
-        execSync('pnpm run governance', { stdio: 'pipe' })
+        execSync('pnpm -w run governance', { stdio: 'pipe' })
         // If we get here, the script executed without throwing
         expect(true).toBe(true)
       } catch (error) {
