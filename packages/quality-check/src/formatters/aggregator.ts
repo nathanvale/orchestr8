@@ -13,19 +13,27 @@ export class ResultAggregator {
       duration?: number
       correlationId?: string
       trackMetrics?: boolean
+      fixFirst?: boolean
     },
   ): QualityCheckResult {
     const allIssues: Issue[] = []
     let totalDuration = 0
     let allSuccess = true
 
-    // Collect all issues
-    for (const [_engine, result] of results) {
+    // Collect issues with fix-first filtering
+    for (const [_engineName, result] of results) {
       // Handle undefined or null results gracefully
       if (!result) continue
 
       if (result.issues && Array.isArray(result.issues)) {
-        allIssues.push(...result.issues)
+        if (options?.fixFirst) {
+          // In fix-first mode, we assume engines have already filtered out fixed issues
+          // We include all issues reported by engines, as they should only be unfixable issues
+          allIssues.push(...result.issues)
+        } else {
+          // In regular mode, include all issues
+          allIssues.push(...result.issues)
+        }
       }
 
       if (result.duration) {

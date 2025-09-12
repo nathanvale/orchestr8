@@ -130,6 +130,10 @@ class MockTypeScriptEngine {
 class MockGitOperations {
   modifiedFiles: string[] = []
 
+  captureFileStates(_files: string[]): void {
+    // Mock implementation - just capture that it was called
+  }
+
   async stageFiles(files: string[]): Promise<{ success: boolean; stagedFiles: string[] }> {
     this.modifiedFiles.push(...files)
     return {
@@ -138,8 +142,11 @@ class MockGitOperations {
     }
   }
 
-  async detectModifiedFiles(): Promise<string[]> {
-    return this.modifiedFiles
+  detectModifiedFiles(): { modifiedFiles: string[]; errors: string[] } {
+    return {
+      modifiedFiles: this.modifiedFiles,
+      errors: [],
+    }
   }
 
   clear(): void {

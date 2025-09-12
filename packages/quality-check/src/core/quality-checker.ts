@@ -192,6 +192,7 @@ export class QualityChecker {
         duration,
         correlationId,
         trackMetrics: process.env.QC_TRACK_METRICS === 'true',
+        fixFirst: options.fixFirst,
       })
 
       // Add fix-first specific metadata if this was a fix-first run
@@ -585,15 +586,18 @@ export class QualityChecker {
     try {
       await this.timeoutManager.runWithTimeout(
         async (token) => {
+          // Phase 0: Capture file states for modification detection
+          this.gitOperations.captureFileStates(files)
+
           // Phase 1: Run fixable engines with fix=true
           await this.runFixableEngines(files, config, token, results, modifiedFiles)
 
           // Phase 2: Detect additional modified files and merge with engine results
-          const detectedFiles = await this.gitOperations.detectModifiedFiles()
-          detectedFiles.forEach((file) => modifiedFiles.add(file))
+          const detectedResult = this.gitOperations.detectModifiedFiles()
+          detectedResult.modifiedFiles.forEach((file: string) => modifiedFiles.add(file))
 
           // Phase 3: Auto-stage fixed files if requested
-          stagingWarnings = await this.autoStageFiles(options, modifiedFiles, correlationId)
+          stagingWarnings = this.autoStageFiles(options, modifiedFiles, correlationId)
 
           // Phase 4: Run check-only engines
           await this.runCheckOnlyEngines(files, config, token, results)
@@ -695,11 +699,11 @@ export class QualityChecker {
   /**
    * Auto-stage files that were modified by fixes
    */
-  private async autoStageFiles(
+  private autoStageFiles(
     options: QualityCheckOptions & { format?: 'stylish' | 'json' },
     modifiedFiles: Set<string>,
     correlationId: string,
-  ): Promise<string[]> {
+  ): string[] {
     const warnings: string[] = []
 
     // Auto-stage is enabled by default in fix-first mode or when explicitly requested
@@ -713,7 +717,7 @@ export class QualityChecker {
     }
 
     try {
-      const result = await this.gitOperations.stageFiles(Array.from(modifiedFiles))
+      const result = this.gitOperations.stageFiles(Array.from(modifiedFiles))
 
       if (result.success) {
         logger.debug('Auto-staged fixed files', {
@@ -840,8 +844,15 @@ export class QualityChecker {
       if (config.format === 'json' || result.issues.length > 0) {
         // Get TypeScript diagnostics from the engine
         const diagnostics = this.typescriptEngine.getLastDiagnostics()
-        const errorReport = await this.typescriptEngine.generateErrorReport(diagnostics)
-        await this.enhancedLogger.logErrorReport(errorReport)
+        try {
+          const errorReport = await this.typescriptEngine.generateErrorReport(diagnostics)
+          await this.enhancedLogger.logErrorReport(errorReport)
+        } catch (error) {
+          // Gracefully handle error report generation failures
+          logger.debug('Failed to generate TypeScript error report', {
+            error: (error as Error).message,
+          })
+        }
       }
 
       return result
@@ -877,19 +888,35 @@ export class QualityChecker {
 
       // Generate and log error report for enhanced logging
       if (config.format === 'json' || result.issues.length > 0) {
-        const eslintResults = (await this.eslintEngine['eslint']?.lintFiles(files)) || []
-        const errorReport = await this.eslintEngine.generateErrorReport(eslintResults)
-        await this.enhancedLogger.logErrorReport(errorReport)
+        try {
+          const eslintResults = (await this.eslintEngine['eslint']?.lintFiles(files)) || []
+          const errorReport = await this.eslintEngine.generateErrorReport(eslintResults)
+          await this.enhancedLogger.logErrorReport(errorReport)
+        } catch (error) {
+          // Gracefully handle error report generation failures
+          logger.debug('Failed to generate ESLint error report', {
+            error: (error as Error).message,
+          })
+        }
       }
 
       return result
     } catch (error) {
       if (error instanceof ToolMissingError) {
         logger.warn('ESLint not available', { skipping: true })
-        // Return empty result for missing tools (graceful degradation)
+        // Return result with informational issue about missing tool (graceful degradation)
         return {
           success: true,
-          issues: [],
+          issues: [
+            {
+              engine: 'eslint',
+              severity: 'info',
+              file: files[0] ?? process.cwd(),
+              line: 1,
+              col: 1,
+              message: 'ESLint is not available - skipping ESLint checks',
+            },
+          ],
         }
       }
       throw error
@@ -913,8 +940,15 @@ export class QualityChecker {
 
       // Generate and log error report for enhanced logging
       if (config.format === 'json' || result.issues.length > 0) {
-        const errorReport = await this.prettierEngine.generateErrorReport(result.issues)
-        await this.enhancedLogger.logErrorReport(errorReport)
+        try {
+          const errorReport = await this.prettierEngine.generateErrorReport(result.issues)
+          await this.enhancedLogger.logErrorReport(errorReport)
+        } catch (error) {
+          // Gracefully handle error report generation failures
+          logger.debug('Failed to generate Prettier error report', {
+            error: (error as Error).message,
+          })
+        }
       }
 
       return result
