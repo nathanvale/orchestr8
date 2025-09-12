@@ -28,11 +28,11 @@ orchestration pattern
   - [x] Update result collection to track fixed vs unfixed issues
   - [x] Maintain existing interface contracts for backward compatibility
 
-- [ ] Implement auto-staging logic within QualityChecker
-  - [ ] Detect which files were modified by fix operations
-  - [ ] Integrate git add commands for successfully fixed files
-  - [ ] Handle git staging failures gracefully
-  - [ ] Ensure staging only occurs after successful fixes
+- [x] Implement auto-staging logic within QualityChecker
+  - [x] Detect which files were modified by fix operations
+  - [x] Integrate git add commands for successfully fixed files
+  - [x] Handle git staging failures gracefully
+  - [x] Ensure staging only occurs after successful fixes
 
 - [ ] Update result filtering and reporting logic
   - [ ] Filter out successfully fixed issues from final reports

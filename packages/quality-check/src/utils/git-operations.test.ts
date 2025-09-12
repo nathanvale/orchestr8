@@ -4,7 +4,7 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import fs from 'node:fs'
+import { existsSync, readFileSync, statSync, openSync, closeSync } from 'node:fs'
 import { GitOperations } from './git-operations.js'
 
 // Mock node modules
@@ -13,15 +13,11 @@ vi.mock('node:child_process', () => ({
 }))
 
 vi.mock('node:fs', () => ({
-  default: {
-    existsSync: vi.fn(),
-    readFileSync: vi.fn(),
-    statSync: vi.fn(),
-    accessSync: vi.fn(),
-    openSync: vi.fn(),
-    closeSync: vi.fn(),
-    constants: { R_OK: 4 },
-  },
+  existsSync: vi.fn(),
+  readFileSync: vi.fn(),
+  statSync: vi.fn(),
+  openSync: vi.fn(),
+  closeSync: vi.fn(),
 }))
 
 import { execSync } from 'node:child_process'
@@ -32,19 +28,17 @@ describe('GitOperations', () => {
   let mockExistsSync: ReturnType<typeof vi.fn>
   let mockReadFileSync: ReturnType<typeof vi.fn>
   let mockStatSync: ReturnType<typeof vi.fn>
-  let mockAccessSync: ReturnType<typeof vi.fn>
   let mockOpenSync: ReturnType<typeof vi.fn>
   let mockCloseSync: ReturnType<typeof vi.fn>
 
   beforeEach(() => {
     gitOps = new GitOperations()
     mockExecSync = vi.mocked(execSync)
-    mockExistsSync = vi.mocked(fs.existsSync)
-    mockReadFileSync = vi.mocked(fs.readFileSync)
-    mockStatSync = vi.mocked(fs.statSync)
-    mockAccessSync = vi.mocked(fs.accessSync)
-    mockOpenSync = vi.mocked(fs.openSync)
-    mockCloseSync = vi.mocked(fs.closeSync)
+    mockExistsSync = vi.mocked(existsSync)
+    mockReadFileSync = vi.mocked(readFileSync)
+    mockStatSync = vi.mocked(statSync)
+    mockOpenSync = vi.mocked(openSync)
+    mockCloseSync = vi.mocked(closeSync)
 
     // Reset all mocks
     vi.clearAllMocks()
@@ -300,7 +294,6 @@ describe('GitOperations', () => {
   describe('handleEdgeCases', () => {
     it('should filter out non-existent files', () => {
       mockExistsSync.mockImplementation((file) => file === 'exists.ts')
-      mockAccessSync.mockReturnValue(undefined)
       mockStatSync.mockReturnValue({ isDirectory: () => false })
       mockOpenSync.mockReturnValue(1)
       mockCloseSync.mockReturnValue(undefined)
@@ -314,7 +307,6 @@ describe('GitOperations', () => {
 
     it('should filter out directories', () => {
       mockExistsSync.mockReturnValue(true)
-      mockAccessSync.mockReturnValue(undefined)
       mockStatSync.mockReturnValue({ isDirectory: () => true })
 
       const result = gitOps.handleEdgeCases(['some-dir'])
@@ -326,7 +318,6 @@ describe('GitOperations', () => {
 
     it('should detect locked files', () => {
       mockExistsSync.mockReturnValue(true)
-      mockAccessSync.mockReturnValue(undefined)
       mockStatSync.mockReturnValue({ isDirectory: () => false })
       mockOpenSync.mockImplementation(() => {
         throw new Error('EACCES')
