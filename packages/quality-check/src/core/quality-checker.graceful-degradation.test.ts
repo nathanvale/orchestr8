@@ -398,7 +398,8 @@ describe('QualityChecker - Graceful Degradation', () => {
     expect(
       result.issues.some(
         (issue) =>
-          issue.message.toLowerCase().includes('timeout') &&
+          (issue.message.toLowerCase().includes('timeout') ||
+            issue.message.toLowerCase().includes('timed out')) &&
           issue.message.toLowerCase().includes('typescript'),
       ),
     ).toBe(true)
