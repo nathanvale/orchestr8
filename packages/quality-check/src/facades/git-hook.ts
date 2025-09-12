@@ -61,17 +61,19 @@ export async function runGitHook(options: GitHookOptions = {}): Promise<void> {
         const fixResult = await fixer.autoFix(checkableFiles[0], result)
         if (fixResult.success) {
           // Detect which files were actually modified by the fixes
-          const modifiedFiles = await gitOps.detectModifiedFiles()
+          const modifiedFilesResult = await gitOps.detectModifiedFiles()
 
-          if (modifiedFiles.length > 0) {
+          if (modifiedFilesResult.modifiedFiles.length > 0) {
             // Auto-stage the fixed files for atomic commit
-            const stagingResult = await gitOps.stageFiles(modifiedFiles)
+            const stagingResult = await gitOps.stageFiles(modifiedFilesResult.modifiedFiles)
 
             if (!stagingResult.success) {
               console.warn(`⚠️  Fixed files but couldn't stage them: ${stagingResult.error}`)
               console.warn('You may need to manually stage the fixed files')
             } else {
-              console.log(`✅ Auto-fixed and staged ${modifiedFiles.length} file(s)`)
+              console.log(
+                `✅ Auto-fixed and staged ${modifiedFilesResult.modifiedFiles.length} file(s)`,
+              )
             }
           } else {
             console.log('✅ Auto-fixed safe issues')
