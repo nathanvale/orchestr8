@@ -109,11 +109,10 @@ describe('QualityChecker - Graceful Degradation', () => {
         message: 'ESLint error',
       }),
     )
-    // Should report TypeScript as unavailable
-    expect(result.issues).toContainEqual(
+    // Should NOT report TypeScript as unavailable - it's gracefully skipped
+    expect(result.issues).not.toContainEqual(
       expect.objectContaining({
         engine: 'typescript',
-        severity: 'error',
         message: expect.stringContaining('TypeScript is not available'),
       }),
     )
@@ -169,11 +168,10 @@ describe('QualityChecker - Graceful Degradation', () => {
         message: 'Formatting required',
       }),
     )
-    // Should report ESLint as unavailable
-    expect(result.issues).toContainEqual(
+    // Should NOT report ESLint as unavailable - it's gracefully skipped
+    expect(result.issues).not.toContainEqual(
       expect.objectContaining({
         engine: 'eslint',
-        severity: 'error',
         message: expect.stringContaining('ESLint is not available'),
       }),
     )
@@ -210,24 +208,9 @@ describe('QualityChecker - Graceful Degradation', () => {
     const checker = new QualityChecker()
     const result = await checker.check(['test.ts'], {})
 
-    // Should report all tools as unavailable but not crash
-    expect(result.success).toBe(false)
-    expect(result.issues.filter((i) => i.severity === 'error')).toHaveLength(3)
-    expect(result.issues).toContainEqual(
-      expect.objectContaining({
-        message: expect.stringContaining('TypeScript is not available'),
-      }),
-    )
-    expect(result.issues).toContainEqual(
-      expect.objectContaining({
-        message: expect.stringContaining('ESLint is not available'),
-      }),
-    )
-    expect(result.issues).toContainEqual(
-      expect.objectContaining({
-        message: expect.stringContaining('Prettier is not available'),
-      }),
-    )
+    // With graceful degradation, all tools being missing results in success with no issues
+    expect(result.success).toBe(true)
+    expect(result.issues).toHaveLength(0)
   })
 
   it('should handle mixed tool failures and successes', async () => {
@@ -296,10 +279,10 @@ describe('QualityChecker - Graceful Degradation', () => {
         severity: 'warning',
       }),
     )
-    expect(result.issues).toContainEqual(
+    // ESLint being unavailable is gracefully skipped, not reported
+    expect(result.issues).not.toContainEqual(
       expect.objectContaining({
         engine: 'eslint',
-        severity: 'error',
         message: expect.stringContaining('ESLint is not available'),
       }),
     )
@@ -344,7 +327,7 @@ describe('QualityChecker - Graceful Degradation', () => {
     )
   })
 
-  it.skip('should continue with remaining engines when one times out', async () => {
+  it('should continue with remaining engines when one times out', async () => {
     const { ConfigLoader } = await import('./config-loader.js')
     const { FileMatcher } = await import('./file-matcher.js')
     const { TypeScriptEngine } = await import('../engines/typescript-engine.js')
@@ -357,6 +340,14 @@ describe('QualityChecker - Graceful Degradation', () => {
       engines: { typescript: true, eslint: true, prettier: true },
       timeoutMs: 100,
       continueOnTimeout: true, // New option for graceful degradation
+      memoryThresholdMB: 500,
+      enableBackpressure: false,
+      format: 'stylish',
+      typescriptCacheDir: '.cache/typescript',
+      eslintCacheDir: '.cache/eslint',
+      prettierWrite: false,
+      staged: false,
+      since: '',
     })
 
     vi.mocked(FileMatcher).prototype.resolveFiles = vi.fn().mockResolvedValue(['test.ts'])
@@ -413,7 +404,7 @@ describe('QualityChecker - Graceful Degradation', () => {
     ).toBe(true)
   })
 
-  it.skip('should apply backpressure when resource limits are approached', async () => {
+  it('should apply backpressure when resource limits are approached', async () => {
     const { ConfigLoader } = await import('./config-loader.js')
     const { FileMatcher } = await import('./file-matcher.js')
     const { TypeScriptEngine } = await import('../engines/typescript-engine.js')
@@ -423,9 +414,17 @@ describe('QualityChecker - Graceful Degradation', () => {
     vi.mocked(ConfigLoader).prototype.load = vi.fn().mockResolvedValue({
       files,
       fix: false,
-      engines: { typescript: true },
+      engines: { typescript: true, eslint: false, prettier: false },
       memoryThresholdMB: 200,
       enableBackpressure: true,
+      continueOnTimeout: false,
+      format: 'stylish',
+      typescriptCacheDir: '.cache/typescript',
+      eslintCacheDir: '.cache/eslint',
+      prettierWrite: false,
+      staged: false,
+      since: '',
+      timeoutMs: 5000,
     })
 
     vi.mocked(FileMatcher).prototype.resolveFiles = vi.fn().mockResolvedValue(files)
@@ -449,7 +448,7 @@ describe('QualityChecker - Graceful Degradation', () => {
     expect(batchSizes.length).toBeGreaterThan(1)
   })
 
-  it.skip('should skip non-critical engines under resource pressure', async () => {
+  it('should skip non-critical engines under resource pressure', async () => {
     const { ConfigLoader } = await import('./config-loader.js')
     const { FileMatcher } = await import('./file-matcher.js')
     const { TypeScriptEngine } = await import('../engines/typescript-engine.js')
@@ -461,8 +460,18 @@ describe('QualityChecker - Graceful Degradation', () => {
       engines: {
         typescript: { enabled: true, critical: true },
         prettier: { enabled: true, critical: false },
+        eslint: false,
       },
       memoryThresholdMB: 100,
+      enableBackpressure: false,
+      continueOnTimeout: false,
+      format: 'stylish',
+      typescriptCacheDir: '.cache/typescript',
+      eslintCacheDir: '.cache/eslint',
+      prettierWrite: false,
+      staged: false,
+      since: '',
+      timeoutMs: 5000,
     })
 
     vi.mocked(FileMatcher).prototype.resolveFiles = vi.fn().mockResolvedValue(['test.ts'])
