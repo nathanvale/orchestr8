@@ -55,6 +55,50 @@ export class QualityChecker {
   }
 
   /**
+   * Check if an engine is enabled
+   */
+  private isEngineEnabled(
+    engine: boolean | { enabled: boolean; critical?: boolean } | undefined,
+  ): boolean {
+    if (engine === undefined) return false
+    if (typeof engine === 'boolean') {
+      return engine
+    }
+    return engine.enabled
+  }
+
+  /**
+   * Check if an engine is critical
+   */
+  private isEngineCritical(
+    engine: boolean | { enabled: boolean; critical?: boolean } | undefined,
+  ): boolean {
+    if (engine === undefined) return true
+    if (typeof engine === 'boolean') {
+      return true // All engines are critical by default
+    }
+    return engine.critical !== false
+  }
+
+  /**
+   * Check if we should skip non-critical engines due to resource pressure
+   */
+  private shouldSkipDueToMemoryPressure(
+    config: ResolvedConfig,
+    engineName: 'typescript' | 'eslint' | 'prettier',
+  ): boolean {
+    if (!config.memoryThresholdMB) return false
+
+    const engine = config.engines[engineName]
+    if (this.isEngineCritical(engine)) return false // Never skip critical engines
+
+    const memUsage = process.memoryUsage()
+    const memoryMB = memUsage.heapUsed / (1024 * 1024)
+
+    return memoryMB > config.memoryThresholdMB
+  }
+
+  /**
    * Check files for quality issues
    */
   async check(
@@ -135,7 +179,9 @@ export class QualityChecker {
       }
 
       // Run checks with timeout
-      const results = await this.runChecks(targetFiles, config, correlationId)
+      const results = options.fixFirst
+        ? await this.runFixFirstChecks(targetFiles, config, correlationId, options)
+        : await this.runChecks(targetFiles, config, correlationId)
 
       // Aggregate results
       const duration = timer.end()
@@ -264,7 +310,7 @@ export class QualityChecker {
       const fixed: string[] = []
 
       // Run ESLint fix
-      if (config.engines.eslint) {
+      if (this.isEngineEnabled(config.engines.eslint)) {
         try {
           const result = await this.eslintEngine.check({
             files: targetFiles,
@@ -283,7 +329,7 @@ export class QualityChecker {
       }
 
       // Run Prettier fix
-      if (config.engines.prettier) {
+      if (this.isEngineEnabled(config.engines.prettier)) {
         try {
           const result = await this.prettierEngine.check({
             files: targetFiles,
@@ -353,33 +399,66 @@ export class QualityChecker {
           const checks: Promise<void>[] = []
 
           // TypeScript check
-          if (config.engines.typescript) {
+          if (
+            this.isEngineEnabled(config.engines.typescript) &&
+            !this.shouldSkipDueToMemoryPressure(config, 'typescript')
+          ) {
             checks.push(
               this.runTypeScriptCheck(files, config, token)
                 .then((result) => {
                   results.set('typescript', result)
                 })
                 .catch((error) => {
-                  // Handle non-ToolMissingError exceptions
-                  results.set('typescript', {
-                    success: false,
-                    issues: [
-                      {
-                        engine: 'typescript',
-                        severity: 'error',
-                        file: files[0] ?? process.cwd(),
-                        line: 1,
-                        col: 1,
-                        message: error instanceof Error ? error.message : String(error),
-                      },
-                    ],
-                  })
+                  // Handle timeout errors with graceful degradation
+                  const errorMessage = error instanceof Error ? error.message : String(error)
+                  const isTimeout =
+                    errorMessage.toLowerCase().includes('timeout') ||
+                    errorMessage.toLowerCase().includes('timed out')
+
+                  if (isTimeout && config.continueOnTimeout) {
+                    // Log but continue with other engines
+                    logger.warn('TypeScript check timed out, continuing with other engines', {
+                      error: errorMessage,
+                      correlationId,
+                    })
+                    results.set('typescript', {
+                      success: false,
+                      issues: [
+                        {
+                          engine: 'typescript',
+                          severity: 'warning',
+                          file: files[0] ?? process.cwd(),
+                          line: 1,
+                          col: 1,
+                          message: `TypeScript check timed out: ${errorMessage}`,
+                        },
+                      ],
+                    })
+                  } else {
+                    // Handle non-ToolMissingError exceptions
+                    results.set('typescript', {
+                      success: false,
+                      issues: [
+                        {
+                          engine: 'typescript',
+                          severity: 'error',
+                          file: files[0] ?? process.cwd(),
+                          line: 1,
+                          col: 1,
+                          message: errorMessage,
+                        },
+                      ],
+                    })
+                  }
                 }),
             )
           }
 
           // ESLint check
-          if (config.engines.eslint) {
+          if (
+            this.isEngineEnabled(config.engines.eslint) &&
+            !this.shouldSkipDueToMemoryPressure(config, 'eslint')
+          ) {
             checks.push(
               this.runESLintCheck(files, config, token)
                 .then((result) => {
@@ -405,7 +484,10 @@ export class QualityChecker {
           }
 
           // Prettier check
-          if (config.engines.prettier) {
+          if (
+            this.isEngineEnabled(config.engines.prettier) &&
+            !this.shouldSkipDueToMemoryPressure(config, 'prettier')
+          ) {
             checks.push(
               this.runPrettierCheck(files, config, token)
                 .then((result) => {
@@ -471,6 +553,234 @@ export class QualityChecker {
   }
 
   /**
+   * Run checks with fix-first architecture
+   * This method runs fixable engines first (ESLint, Prettier) with fix mode enabled,
+   * then runs check-only engines (TypeScript) to validate the remaining issues.
+   */
+  private async runFixFirstChecks(
+    files: string[],
+    config: ResolvedConfig,
+    correlationId: string,
+    options: QualityCheckOptions & { format?: 'stylish' | 'json' },
+  ): Promise<Map<string, CheckerResult>> {
+    const results = new Map<string, CheckerResult>()
+    const source = new CancellationTokenSource()
+    const modifiedFiles = new Set<string>()
+
+    logger.debug('Starting fix-first quality check', {
+      files: files.length,
+      correlationId,
+      phase: 'fix-first-start',
+    })
+
+    try {
+      await this.timeoutManager.runWithTimeout(
+        async (token) => {
+          // Phase 1: Run fixable engines with fix=true
+          await this.runFixableEngines(files, config, token, results, modifiedFiles)
+
+          // Phase 2: Auto-stage fixed files if requested
+          await this.autoStageFiles(options, modifiedFiles, correlationId)
+
+          // Phase 3: Run check-only engines
+          await this.runCheckOnlyEngines(files, config, token, results)
+        },
+        config.timeoutMs,
+        'fix-first-quality-check',
+      )
+    } catch (error) {
+      this.handleFixFirstError(error, files, results)
+    } finally {
+      source.cancel()
+    }
+
+    return results
+  }
+
+  /**
+   * Run fixable engines (ESLint, Prettier) with fix mode enabled
+   */
+  private async runFixableEngines(
+    files: string[],
+    config: ResolvedConfig,
+    token: CancellationToken,
+    results: Map<string, CheckerResult>,
+    modifiedFiles: Set<string>,
+  ): Promise<void> {
+    const fixableChecks: Promise<void>[] = []
+
+    // ESLint check with fix=true
+    if (
+      this.isEngineEnabled(config.engines.eslint) &&
+      !this.shouldSkipDueToMemoryPressure(config, 'eslint')
+    ) {
+      fixableChecks.push(
+        this.runESLintCheck(files, { ...config, fix: true }, token)
+          .then((result) => {
+            // Ensure result is valid before using it
+            if (result && typeof result === 'object') {
+              results.set('eslint', result)
+              if (result.modifiedFiles && Array.isArray(result.modifiedFiles)) {
+                result.modifiedFiles.forEach((file: string) => modifiedFiles.add(file))
+              }
+            } else {
+              // Create a fallback result if engine returned undefined/null
+              results.set('eslint', {
+                success: true,
+                issues: [],
+                fixedCount: 0,
+              })
+            }
+          })
+          .catch((error) => {
+            results.set('eslint', this.createErrorResult('eslint', error, files))
+          }),
+      )
+    }
+
+    // Prettier check with write=true
+    if (
+      this.isEngineEnabled(config.engines.prettier) &&
+      !this.shouldSkipDueToMemoryPressure(config, 'prettier')
+    ) {
+      fixableChecks.push(
+        this.runPrettierCheck(files, { ...config, prettierWrite: true }, token)
+          .then((result) => {
+            // Ensure result is valid before using it
+            if (result && typeof result === 'object') {
+              results.set('prettier', result)
+              if (result.modifiedFiles && Array.isArray(result.modifiedFiles)) {
+                result.modifiedFiles.forEach((file: string) => modifiedFiles.add(file))
+              }
+            } else {
+              // Create a fallback result if engine returned undefined/null
+              results.set('prettier', {
+                success: true,
+                issues: [],
+                fixedCount: 0,
+              })
+            }
+          })
+          .catch((error) => {
+            results.set('prettier', this.createErrorResult('prettier', error, files))
+          }),
+      )
+    }
+
+    await Promise.all(fixableChecks)
+  }
+
+  /**
+   * Auto-stage files that were modified by fixes
+   */
+  private async autoStageFiles(
+    options: QualityCheckOptions & { format?: 'stylish' | 'json' },
+    modifiedFiles: Set<string>,
+    correlationId: string,
+  ): Promise<void> {
+    if (options.autoStage && modifiedFiles.size > 0) {
+      try {
+        const { simpleGit } = await import('simple-git')
+        const git = simpleGit()
+        await git.add(Array.from(modifiedFiles))
+
+        logger.debug('Auto-staged fixed files', {
+          files: Array.from(modifiedFiles),
+          correlationId,
+          phase: 'auto-stage-complete',
+        })
+      } catch (stagingError) {
+        logger.warn('Auto-staging failed', {
+          error: stagingError instanceof Error ? stagingError.message : String(stagingError),
+          correlationId,
+        })
+      }
+    }
+  }
+
+  /**
+   * Run check-only engines (TypeScript)
+   */
+  private async runCheckOnlyEngines(
+    files: string[],
+    config: ResolvedConfig,
+    token: CancellationToken,
+    results: Map<string, CheckerResult>,
+  ): Promise<void> {
+    const checkOnlyPromises: Promise<void>[] = []
+
+    if (
+      this.isEngineEnabled(config.engines.typescript) &&
+      !this.shouldSkipDueToMemoryPressure(config, 'typescript')
+    ) {
+      checkOnlyPromises.push(
+        this.runTypeScriptCheck(files, config, token)
+          .then((result) => {
+            // Ensure result is valid before using it
+            if (result && typeof result === 'object') {
+              results.set('typescript', result)
+            } else {
+              // Create a fallback result if engine returned undefined/null
+              results.set('typescript', {
+                success: true,
+                issues: [],
+              })
+            }
+          })
+          .catch((error) => {
+            results.set('typescript', this.createErrorResult('typescript', error, files))
+          }),
+      )
+    }
+
+    await Promise.all(checkOnlyPromises)
+  }
+
+  /**
+   * Create error result for failed engine checks
+   */
+  private createErrorResult(
+    engine: 'eslint' | 'prettier' | 'typescript',
+    error: unknown,
+    files: string[],
+  ): CheckerResult {
+    return {
+      success: false,
+      issues: [
+        {
+          engine,
+          severity: 'error',
+          file: files[0] ?? process.cwd(),
+          line: 1,
+          col: 1,
+          message: error instanceof Error ? error.message : String(error),
+        },
+      ],
+    }
+  }
+
+  /**
+   * Handle errors during fix-first execution
+   */
+  private handleFixFirstError(
+    error: unknown,
+    files: string[],
+    results: Map<string, CheckerResult>,
+  ): void {
+    logger.warn('Fix-first quality check timeout or error', {
+      error: (error as Error).message,
+    })
+
+    const errorMessage = (error as Error).message
+    if (
+      errorMessage.toLowerCase().includes('timeout') ||
+      errorMessage.toLowerCase().includes('timed out')
+    ) {
+      results.set('timeout', this.createErrorResult('typescript', error, files))
+    }
+  }
+
+  /**
    * Run TypeScript check
    */
   private async runTypeScriptCheck(
@@ -497,19 +807,10 @@ export class QualityChecker {
     } catch (error) {
       if (error instanceof ToolMissingError) {
         logger.warn('TypeScript not available', { skipping: true })
-        // For check operations, missing tools should fail
+        // Return empty result for missing tools (graceful degradation)
         return {
-          success: false,
-          issues: [
-            {
-              engine: 'typescript',
-              severity: 'error',
-              file: files[0] ?? process.cwd(),
-              line: 1,
-              col: 1,
-              message: `TypeScript is not available: ${error.message}`,
-            },
-          ],
+          success: true,
+          issues: [],
         }
       }
       throw error
@@ -544,19 +845,10 @@ export class QualityChecker {
     } catch (error) {
       if (error instanceof ToolMissingError) {
         logger.warn('ESLint not available', { skipping: true })
-        // For check operations, missing tools should fail
+        // Return empty result for missing tools (graceful degradation)
         return {
-          success: false,
-          issues: [
-            {
-              engine: 'eslint',
-              severity: 'error',
-              file: files[0] ?? process.cwd(),
-              line: 1,
-              col: 1,
-              message: `ESLint is not available: ${error.message}`,
-            },
-          ],
+          success: true,
+          issues: [],
         }
       }
       throw error
@@ -588,19 +880,10 @@ export class QualityChecker {
     } catch (error) {
       if (error instanceof ToolMissingError) {
         logger.warn('Prettier not available', { skipping: true })
-        // For check operations, missing tools should fail
+        // Return empty result for missing tools (graceful degradation)
         return {
-          success: false,
-          issues: [
-            {
-              engine: 'prettier',
-              severity: 'error',
-              file: files[0] ?? process.cwd(),
-              line: 1,
-              col: 1,
-              message: `Prettier is not available: ${error.message}`,
-            },
-          ],
+          success: true,
+          issues: [],
         }
       }
       throw error

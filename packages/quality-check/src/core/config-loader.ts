@@ -8,9 +8,9 @@ import { ConfigError } from './errors.js'
 export interface QualityCheckConfig {
   /** Engines to enable */
   engines?: {
-    typescript?: boolean
-    eslint?: boolean
-    prettier?: boolean
+    typescript?: boolean | { enabled: boolean; critical?: boolean }
+    eslint?: boolean | { enabled: boolean; critical?: boolean }
+    prettier?: boolean | { enabled: boolean; critical?: boolean }
   }
 
   /** Output format */
@@ -39,6 +39,15 @@ export interface QualityCheckConfig {
 
   /** Check files changed since a git ref */
   since?: string
+
+  /** Continue with remaining engines when one times out */
+  continueOnTimeout?: boolean
+
+  /** Memory threshold in MB for applying backpressure */
+  memoryThresholdMB?: number
+
+  /** Enable backpressure when approaching resource limits */
+  enableBackpressure?: boolean
 }
 
 /**
@@ -46,9 +55,9 @@ export interface QualityCheckConfig {
  */
 export interface ResolvedConfig extends Omit<Required<QualityCheckConfig>, 'engines'> {
   engines: {
-    typescript: boolean
-    eslint: boolean
-    prettier: boolean
+    typescript: boolean | { enabled: boolean; critical: boolean }
+    eslint: boolean | { enabled: boolean; critical: boolean }
+    prettier: boolean | { enabled: boolean; critical: boolean }
   }
 }
 
@@ -70,6 +79,9 @@ const DEFAULT_CONFIG: ResolvedConfig = {
   files: [],
   staged: false,
   since: '',
+  continueOnTimeout: false,
+  memoryThresholdMB: 500,
+  enableBackpressure: false,
 }
 
 /**
@@ -237,6 +249,9 @@ export class ConfigLoader {
         files: config.files?.length ? config.files : result.files,
         staged: config.staged ?? result.staged,
         since: config.since ?? result.since,
+        continueOnTimeout: config.continueOnTimeout ?? result.continueOnTimeout,
+        memoryThresholdMB: config.memoryThresholdMB ?? result.memoryThresholdMB,
+        enableBackpressure: config.enableBackpressure ?? result.enableBackpressure,
       })
 
       // Merge engines object
