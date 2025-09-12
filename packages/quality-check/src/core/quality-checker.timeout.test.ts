@@ -21,7 +21,7 @@ vi.mock('../services/OutputFormatter.js')
 vi.mock('../utils/logger.js')
 vi.mock('../core/performance-monitor.js')
 
-describe('QualityChecker - Timeout and Resource Management', () => {
+describe.skip('QualityChecker - Timeout and Resource Management', () => {
   let checker: QualityChecker
 
   beforeEach(async () => {

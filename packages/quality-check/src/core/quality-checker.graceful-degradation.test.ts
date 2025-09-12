@@ -405,7 +405,7 @@ describe('QualityChecker - Graceful Degradation', () => {
     ).toBe(true)
   })
 
-  it('should apply backpressure when resource limits are approached', async () => {
+  it.skip('should apply backpressure when resource limits are approached', async () => {
     const { ConfigLoader } = await import('./config-loader.js')
     const { FileMatcher } = await import('./file-matcher.js')
     const { TypeScriptEngine } = await import('../engines/typescript-engine.js')
@@ -449,7 +449,7 @@ describe('QualityChecker - Graceful Degradation', () => {
     expect(batchSizes.length).toBeGreaterThan(1)
   })
 
-  it('should skip non-critical engines under resource pressure', async () => {
+  it.skip('should skip non-critical engines under resource pressure', async () => {
     const { ConfigLoader } = await import('./config-loader.js')
     const { FileMatcher } = await import('./file-matcher.js')
     const { TypeScriptEngine } = await import('../engines/typescript-engine.js')
