@@ -358,6 +358,7 @@ async function runClaudeHookWithPayload(
         })
         logger.hookCompleted(payload.tool_name, payload.tool_input.file_path, hookTimer.end(), true)
         process.exit(ExitCodes.SUCCESS)
+        break
 
       case 'REPORT_ONLY': {
         logger.info('Reporting unfixable issues', {
@@ -386,6 +387,7 @@ async function runClaudeHookWithPayload(
         // No issues to report
         logger.hookCompleted(payload.tool_name, payload.tool_input.file_path, hookTimer.end(), true)
         process.exit(ExitCodes.SUCCESS)
+        break
       }
 
       case 'FIX_AND_REPORT': {
