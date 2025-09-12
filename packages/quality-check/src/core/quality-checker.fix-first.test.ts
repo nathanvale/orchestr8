@@ -13,7 +13,13 @@ import { ToolMissingError } from './errors.js'
  * Mock implementations for testing fix-first behavior
  */
 class MockESLintEngine {
-  async check(config: { files: string[]; fix?: boolean }): Promise<any> {
+  async check(config: {
+    files: string[]
+    fix?: boolean
+    format?: string
+    cacheDir?: string
+    token?: any
+  }): Promise<any> {
     if (config.fix) {
       // Simulate fix-first mode - applies fixes and returns only unfixable issues
       return {
@@ -50,7 +56,13 @@ class MockESLintEngine {
 }
 
 class MockPrettierEngine {
-  async check(config: { files: string[]; write?: boolean; fix?: boolean }): Promise<any> {
+  async check(config: {
+    files: string[]
+    write?: boolean
+    fix?: boolean
+    cwd?: string
+    token?: any
+  }): Promise<any> {
     if (config.fix || config.write) {
       // Simulate fix-first mode - applies formatting and returns only unfixable issues
       return {
@@ -193,7 +205,7 @@ describe('QualityChecker Fix-First Architecture', () => {
       expect(prettierSpy).toHaveBeenCalledWith(
         expect.objectContaining({
           files,
-          fix: true,
+          write: true,
         }),
       )
     })
@@ -353,7 +365,7 @@ describe('QualityChecker Fix-First Architecture', () => {
 
       // Verify they were called with fix enabled
       expect(eslintSpy).toHaveBeenCalledWith(expect.objectContaining({ fix: true }))
-      expect(prettierSpy).toHaveBeenCalledWith(expect.objectContaining({ fix: true }))
+      expect(prettierSpy).toHaveBeenCalledWith(expect.objectContaining({ write: true }))
     })
 
     test('should_complete_significantly_faster_than_check_then_fix_approach', async () => {

@@ -21,6 +21,7 @@ import {
 } from './timeout-manager.js'
 import { logger, createTimer } from '../utils/logger.js'
 import { ToolMissingError } from './errors.js'
+import { GitOperations } from '../utils/git-operations.js'
 
 /**
  * Quality checker using modern engine architecture
@@ -36,6 +37,7 @@ export class QualityChecker {
   private stylishFormatter: StylishFormatter
   private jsonFormatter: JsonFormatter
   private enhancedLogger: EnhancedLogger
+  private gitOperations: GitOperations
 
   constructor() {
     this.typescriptEngine = new TypeScriptEngine()
@@ -52,6 +54,7 @@ export class QualityChecker {
       console: true,
       outputFormat: 'minimal',
     })
+    this.gitOperations = new GitOperations()
   }
 
   /**
@@ -190,6 +193,11 @@ export class QualityChecker {
         correlationId,
         trackMetrics: process.env.QC_TRACK_METRICS === 'true',
       })
+
+      // Add fix-first specific metadata if this was a fix-first run
+      if (options.fixFirst) {
+        this.addFixFirstMetadata(aggregated, results)
+      }
 
       // Format output if needed
       if (config.format === 'json') {
@@ -566,6 +574,7 @@ export class QualityChecker {
     const results = new Map<string, CheckerResult>()
     const source = new CancellationTokenSource()
     const modifiedFiles = new Set<string>()
+    let stagingWarnings: string[] = []
 
     logger.debug('Starting fix-first quality check', {
       files: files.length,
@@ -579,10 +588,14 @@ export class QualityChecker {
           // Phase 1: Run fixable engines with fix=true
           await this.runFixableEngines(files, config, token, results, modifiedFiles)
 
-          // Phase 2: Auto-stage fixed files if requested
-          await this.autoStageFiles(options, modifiedFiles, correlationId)
+          // Phase 2: Detect additional modified files and merge with engine results
+          const detectedFiles = await this.gitOperations.detectModifiedFiles()
+          detectedFiles.forEach((file) => modifiedFiles.add(file))
 
-          // Phase 3: Run check-only engines
+          // Phase 3: Auto-stage fixed files if requested
+          stagingWarnings = await this.autoStageFiles(options, modifiedFiles, correlationId)
+
+          // Phase 4: Run check-only engines
           await this.runCheckOnlyEngines(files, config, token, results)
         },
         config.timeoutMs,
@@ -592,6 +605,15 @@ export class QualityChecker {
       this.handleFixFirstError(error, files, results)
     } finally {
       source.cancel()
+    }
+
+    // Store staging warnings in a special result for later processing
+    if (stagingWarnings.length > 0) {
+      results.set('staging-warnings', {
+        success: true,
+        issues: [],
+        stagingWarnings,
+      } as CheckerResult & { stagingWarnings: string[] })
     }
 
     return results
@@ -677,25 +699,44 @@ export class QualityChecker {
     options: QualityCheckOptions & { format?: 'stylish' | 'json' },
     modifiedFiles: Set<string>,
     correlationId: string,
-  ): Promise<void> {
-    if (options.autoStage && modifiedFiles.size > 0) {
-      try {
-        const { simpleGit } = await import('simple-git')
-        const git = simpleGit()
-        await git.add(Array.from(modifiedFiles))
+  ): Promise<string[]> {
+    const warnings: string[] = []
 
+    // Auto-stage is enabled by default in fix-first mode or when explicitly requested
+    const shouldAutoStage = options.autoStage || options.fixFirst
+    if (!shouldAutoStage) {
+      return warnings
+    }
+
+    if (modifiedFiles.size === 0) {
+      return warnings
+    }
+
+    try {
+      const result = await this.gitOperations.stageFiles(Array.from(modifiedFiles))
+
+      if (result.success) {
         logger.debug('Auto-staged fixed files', {
-          files: Array.from(modifiedFiles),
+          files: result.stagedFiles,
           correlationId,
           phase: 'auto-stage-complete',
         })
-      } catch (stagingError) {
+      } else {
+        warnings.push('Auto-staging failed for some files')
         logger.warn('Auto-staging failed', {
-          error: stagingError instanceof Error ? stagingError.message : String(stagingError),
+          error: result.error,
           correlationId,
         })
       }
+    } catch (stagingError) {
+      warnings.push('Auto-staging failed for some files')
+      logger.warn('Auto-staging failed', {
+        error: stagingError instanceof Error ? stagingError.message : String(stagingError),
+        correlationId,
+      })
     }
+
+    return warnings
   }
 
   /**
@@ -895,6 +936,76 @@ export class QualityChecker {
    */
   private generateCorrelationId(): string {
     return `qc-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`
+  }
+
+  /**
+   * Add fix-first specific metadata to the aggregated result
+   */
+  private addFixFirstMetadata(
+    aggregated: QualityCheckResult,
+    results: Map<string, CheckerResult>,
+  ): void {
+    // Initialize fix-first metadata
+    aggregated.fixesApplied = []
+    aggregated.performanceOptimizations = ['fix-first-single-execution']
+    aggregated.warnings = []
+    aggregated.fallbackUsed = false
+
+    // Extract fixes applied from each engine result
+    for (const [engineName, result] of results.entries()) {
+      // Handle staging warnings
+      if (engineName === 'staging-warnings' && 'stagingWarnings' in result) {
+        aggregated.warnings.push(...(result.stagingWarnings as string[]))
+        continue
+      }
+
+      // Skip non-engine results like 'timeout'
+      if (!['eslint', 'prettier', 'typescript'].includes(engineName)) {
+        continue
+      }
+
+      const engine = engineName as 'eslint' | 'prettier' | 'typescript'
+
+      // Only add fix metadata if fixes were actually applied
+      if (result.fixedCount && result.fixedCount > 0) {
+        aggregated.fixesApplied.push({
+          engine,
+          fixedCount: result.fixedCount,
+          modifiedFiles: result.modifiedFiles || [],
+        })
+      }
+
+      // Check for warnings in the result
+      if (result.issues) {
+        const warnings = result.issues
+          .filter((issue) => issue.severity === 'warning')
+          .map((issue) => `${issue.engine}: ${issue.message}`)
+        aggregated.warnings.push(...warnings)
+      }
+
+      // Detect fallback usage (when an engine failed but we continued)
+      if (!result.success && result.issues) {
+        const hasTimeoutOrError = result.issues.some(
+          (issue) =>
+            issue.message.toLowerCase().includes('timeout') ||
+            issue.message.toLowerCase().includes('timed out') ||
+            issue.message.toLowerCase().includes('failed'),
+        )
+        if (hasTimeoutOrError) {
+          aggregated.fallbackUsed = true
+        }
+      }
+    }
+
+    // Add additional performance optimizations based on what was executed
+    if (aggregated.fixesApplied.length > 0) {
+      aggregated.performanceOptimizations.push('auto-fix-applied')
+    }
+
+    // Add warning if fallback was used
+    if (aggregated.fallbackUsed) {
+      aggregated.warnings.push('Some engines failed - results may be incomplete')
+    }
   }
 
   /**

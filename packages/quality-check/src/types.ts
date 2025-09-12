@@ -22,6 +22,7 @@ export interface QualityCheckOptions {
   fixFirst?: boolean
   fallbackToCheckThenFix?: boolean
   format?: 'stylish' | 'json'
+  autoStage?: boolean
 }
 
 export interface CheckerResult {

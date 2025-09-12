@@ -38,6 +38,7 @@ export class ESLintEngine {
    */
   async check(config: ESLintEngineConfig): Promise<CheckerResult> {
     const startTime = Date.now()
+    const modifiedFiles: string[] = []
 
     try {
       // Check if ESLint is available
@@ -61,6 +62,7 @@ export class ESLintEngine {
           success: true,
           issues: [],
           duration: Date.now() - startTime,
+          modifiedFiles,
         }
       }
 
@@ -73,12 +75,19 @@ export class ESLintEngine {
           success: true,
           issues: [],
           duration: Date.now() - startTime,
+          modifiedFiles,
         }
       }
 
       // Apply fixes if requested
       if (config.fix) {
         await ESLint.outputFixes(results)
+        // Collect files that were modified during fix operation
+        for (const result of results) {
+          if (result.output) {
+            modifiedFiles.push(result.filePath)
+          }
+        }
       }
 
       // Convert results to issues
@@ -92,6 +101,7 @@ export class ESLintEngine {
         duration,
         fixable: this.hasFixableIssues(results),
         fixedCount: this.getFixedCount(results),
+        modifiedFiles,
       }
     } catch (error) {
       if (error instanceof ToolMissingError) {
@@ -113,6 +123,7 @@ export class ESLintEngine {
         ],
         duration,
         fixable: false,
+        modifiedFiles,
       }
     }
   }
