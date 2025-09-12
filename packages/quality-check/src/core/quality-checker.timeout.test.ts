@@ -94,6 +94,7 @@ describe('QualityChecker - Timeout and Resource Management', () => {
           // Simulate a long-running operation that respects cancellation
           await new Promise((resolve, reject) => {
             let checkInterval: NodeJS.Timeout | undefined
+            // eslint-disable-next-line prefer-const
             let completionTimeout: NodeJS.Timeout | undefined
 
             if (token) {
