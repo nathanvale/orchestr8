@@ -38,8 +38,7 @@ export async function runGitHook(options: GitHookOptions = {}): Promise<void> {
     const autopilot = new Autopilot()
     const fixer = new Fixer()
 
-    // Capture file states before any modifications
-    gitOps.captureFileStates(checkableFiles)
+    // Initialize git operations for potential auto-staging
 
     const result = await checker.check(checkableFiles, { fix: false })
 
@@ -62,11 +61,11 @@ export async function runGitHook(options: GitHookOptions = {}): Promise<void> {
         const fixResult = await fixer.autoFix(checkableFiles[0], result)
         if (fixResult.success) {
           // Detect which files were actually modified by the fixes
-          const { modifiedFiles } = gitOps.detectModifiedFiles(checkableFiles)
+          const modifiedFiles = await gitOps.detectModifiedFiles()
 
           if (modifiedFiles.length > 0) {
             // Auto-stage the fixed files for atomic commit
-            const stagingResult = gitOps.stageFiles(modifiedFiles)
+            const stagingResult = await gitOps.stageFiles(modifiedFiles)
 
             if (!stagingResult.success) {
               console.warn(`⚠️  Fixed files but couldn't stage them: ${stagingResult.error}`)
