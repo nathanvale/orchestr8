@@ -5,7 +5,6 @@
  */
 
 import { Autopilot } from '../adapters/autopilot.js'
-import { Fixer } from '../adapters/fixer.js'
 import { ExitCodes } from '../core/exit-codes.js'
 import { QualityChecker } from '../core/quality-checker.js'
 import { OutputFormatter } from '../services/OutputFormatter.js'
@@ -206,7 +205,6 @@ async function runClaudeHookWithPayload(
     logger.debug('Initializing quality check components')
     const checker = new QualityChecker()
     const autopilot = new Autopilot()
-    const fixer = new Fixer()
     // We use the new OutputFormatter directly in outputClaudeBlocking for all error output
 
     // Run quality check with timing
@@ -308,11 +306,18 @@ async function runClaudeHookWithPayload(
         // Operate completely silently - no console output at all
         logger.autoFixStarted(payload.tool_input.file_path)
         const fixTimer = createTimer('auto-fix')
-        const fixResult = await fixer.autoFix(payload.tool_input.file_path, result)
+
+        // Use fix-first mode to automatically fix and stage changes
+        const fixFirstResult = await checker.check([payload.tool_input.file_path], {
+          fixFirst: true,
+          autoStage: true,
+        })
         fixTimer.end()
 
-        if (fixResult.success) {
-          logger.autoFixCompleted(payload.tool_input.file_path, issues.length, 0)
+        if (fixFirstResult.success) {
+          const fixedCount =
+            fixFirstResult.fixesApplied?.reduce((sum, fix) => sum + fix.fixedCount, 0) || 0
+          logger.autoFixCompleted(payload.tool_input.file_path, fixedCount, 0)
           logger.hookCompleted(
             payload.tool_name,
             payload.tool_input.file_path,
@@ -324,14 +329,16 @@ async function runClaudeHookWithPayload(
           process.exit(ExitCodes.SUCCESS)
         }
 
-        // If auto-fix failed, report the issues using XML format for Claude
-        logger.error('Auto-fix failed', undefined, { filePath: payload.tool_input.file_path })
+        // If fix-first still has issues, report them
+        const remainingIssues = fixFirstResult.issues || []
+        if (remainingIssues.length > 0) {
+          logger.error('Some issues could not be auto-fixed', undefined, {
+            filePath: payload.tool_input.file_path,
+            remainingCount: remainingIssues.length,
+          })
 
-        // Even on failure, stay silent in FIX_SILENTLY mode
-        // But still need to report to Claude via exit code
-        if (issues.length > 0) {
           // Use new colored formatter directly
-          outputClaudeBlocking('', issues)
+          outputClaudeBlocking('', remainingIssues)
           logger.hookCompleted(
             payload.tool_name,
             payload.tool_input.file_path,
@@ -351,7 +358,6 @@ async function runClaudeHookWithPayload(
         })
         logger.hookCompleted(payload.tool_name, payload.tool_input.file_path, hookTimer.end(), true)
         process.exit(ExitCodes.SUCCESS)
-        break
 
       case 'REPORT_ONLY': {
         logger.info('Reporting unfixable issues', {
@@ -380,29 +386,35 @@ async function runClaudeHookWithPayload(
         // No issues to report
         logger.hookCompleted(payload.tool_name, payload.tool_input.file_path, hookTimer.end(), true)
         process.exit(ExitCodes.SUCCESS)
-        break
       }
 
       case 'FIX_AND_REPORT': {
         logger.autoFixStarted(payload.tool_input.file_path)
         const fixTimer = createTimer('fix-and-report')
-        const fixResult = await fixer.autoFix(payload.tool_input.file_path, result)
+
+        // Use fix-first mode to automatically fix and stage changes
+        const fixFirstResult = await checker.check([payload.tool_input.file_path], {
+          fixFirst: true,
+          autoStage: true,
+        })
         fixTimer.end()
 
-        const fixedCount = issues.length - (decision.issues?.length || 0)
-        const remainingCount = decision.issues?.length || 0
+        const fixedCount =
+          fixFirstResult.fixesApplied?.reduce((sum, fix) => sum + fix.fixedCount, 0) || 0
+        const remainingIssues = fixFirstResult.issues || []
+        const remainingCount = remainingIssues.length
 
         logger.autoFixCompleted(payload.tool_input.file_path, fixedCount, remainingCount)
 
-        if (decision.issues && decision.issues.length > 0) {
+        if (remainingIssues.length > 0) {
           logger.warn('Some issues remain after auto-fix', {
             filePath: payload.tool_input.file_path,
-            remainingIssueMessages: decision.issues.map((i) => i.message),
-            remainingCount: decision.issues.length,
+            remainingIssueMessages: remainingIssues.map((i) => i.message),
+            remainingCount: remainingIssues.length,
           })
 
           // Use new colored formatter directly
-          outputClaudeBlocking('', decision.issues)
+          outputClaudeBlocking('', remainingIssues)
           logger.hookCompleted(
             payload.tool_name,
             payload.tool_input.file_path,
@@ -412,27 +424,10 @@ async function runClaudeHookWithPayload(
           process.exit(ExitCodes.QUALITY_ISSUES)
         }
 
-        if (fixResult.success) {
-          logger.info('All issues successfully fixed', { filePath: payload.tool_input.file_path })
-          logger.hookCompleted(
-            payload.tool_name,
-            payload.tool_input.file_path,
-            hookTimer.end(),
-            true,
-          )
-          process.exit(ExitCodes.SUCCESS)
-        }
-
-        logger.error('Fixes partially failed', undefined, {
-          filePath: payload.tool_input.file_path,
-        })
-        logger.hookCompleted(
-          payload.tool_name,
-          payload.tool_input.file_path,
-          hookTimer.end(),
-          false,
-        )
-        process.exit(ExitCodes.QUALITY_ISSUES)
+        // All issues fixed successfully
+        logger.info('All issues successfully fixed', { filePath: payload.tool_input.file_path })
+        logger.hookCompleted(payload.tool_name, payload.tool_input.file_path, hookTimer.end(), true)
+        process.exit(ExitCodes.SUCCESS)
       }
     }
 
@@ -568,7 +563,7 @@ function outputClaudeBlocking(formattedOutput: string, issues?: Issue[]): void {
     console.error('')
     console.error('❌ DO NOT PROCEED until these issues are resolved.')
     console.error('')
-    console.error('Employ the quality check fixer IMMEDIATELY to fix these issues.')
+    console.error('Employ the quality check fixer agent IMMEDIATELY to fix these issues.')
     console.error('')
     return
   }

@@ -2,14 +2,13 @@
  * Git Hook Facade - Entry point for pre-commit hooks
  * Supports both direct usage and lint-staged integration
  * With automatic staging of fixed files for atomic commits
+ * Uses fix-first architecture to eliminate separate Fixer adapter
  */
 
 import { execSync } from 'node:child_process'
 import { QualityChecker } from '../core/quality-checker.js'
 import { IssueReporter } from '../core/issue-reporter.js'
 import { Autopilot } from '../adapters/autopilot.js'
-import { Fixer } from '../adapters/fixer.js'
-import { GitOperations } from '../utils/git-operations.js'
 
 interface GitHookOptions {
   fix?: boolean
@@ -29,17 +28,12 @@ export async function runGitHook(options: GitHookOptions = {}): Promise<void> {
       process.exit(0)
     }
 
-    // Initialize git operations for auto-staging
-    const gitOps = new GitOperations()
-
     // Run quality check
     const checker = new QualityChecker()
     const reporter = new IssueReporter()
     const autopilot = new Autopilot()
-    const fixer = new Fixer()
 
-    // Initialize git operations for potential auto-staging
-
+    // First run a check to see if there are issues
     const result = await checker.check(checkableFiles, { fix: false })
 
     if (!result.success) {
@@ -57,29 +51,35 @@ export async function runGitHook(options: GitHookOptions = {}): Promise<void> {
       const decision = autopilot.decide(checkResult)
 
       if (options.fix && decision.action === 'FIX_SILENTLY') {
-        // Apply safe fixes using the QualityCheckResult format
-        const fixResult = await fixer.autoFix(checkableFiles[0], result)
-        if (fixResult.success) {
-          // Detect which files were actually modified by the fixes
-          const modifiedFilesResult = await gitOps.detectModifiedFiles()
+        // Use fix-first mode which automatically fixes and stages files
+        const fixFirstResult = await checker.check(checkableFiles, {
+          fixFirst: true,
+          autoStage: true,
+        })
 
-          if (modifiedFilesResult.modifiedFiles.length > 0) {
-            // Auto-stage the fixed files for atomic commit
-            const stagingResult = await gitOps.stageFiles(modifiedFilesResult.modifiedFiles)
-
-            if (!stagingResult.success) {
-              console.warn(`⚠️  Fixed files but couldn't stage them: ${stagingResult.error}`)
-              console.warn('You may need to manually stage the fixed files')
-            } else {
-              console.log(
-                `✅ Auto-fixed and staged ${modifiedFilesResult.modifiedFiles.length} file(s)`,
-              )
-            }
+        if (fixFirstResult.success) {
+          // Check if any fixes were applied
+          const fixesApplied = fixFirstResult.fixesApplied && fixFirstResult.fixesApplied.length > 0
+          if (fixesApplied) {
+            const totalFiles =
+              fixFirstResult.fixesApplied?.reduce(
+                (sum, fix) => sum + fix.modifiedFiles.length,
+                0,
+              ) || 0
+            console.log(`✅ Auto-fixed and staged ${totalFiles} file(s)`)
           } else {
-            console.log('✅ Auto-fixed safe issues')
+            console.log('✅ No fixable issues found')
           }
-
           process.exit(0)
+        }
+
+        // If fix-first still has issues, show them
+        if (fixFirstResult.issues && fixFirstResult.issues.length > 0) {
+          const output = reporter.formatForCLI(fixFirstResult)
+          console.error(output)
+          console.error('\n❌ Quality check failed - unfixable issues remain')
+          console.error('Fix the issues above and try again')
+          process.exit(1)
         }
       }
 
