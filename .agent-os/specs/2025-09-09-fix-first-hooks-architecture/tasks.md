@@ -23,7 +23,8 @@ orchestration pattern
 
 - [ ] Modify QualityChecker.execute() for fix-first mode
   - [ ] Add fix mode parameter to engine execution calls
-  - [ ] Restructure execution order: fixable engines first, then check-only engines
+  - [ ] Restructure execution order: fixable engines first, then check-only
+        engines
   - [ ] Update result collection to track fixed vs unfixed issues
   - [ ] Maintain existing interface contracts for backward compatibility
 

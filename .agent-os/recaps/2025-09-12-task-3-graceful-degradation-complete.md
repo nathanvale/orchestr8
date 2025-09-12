@@ -8,8 +8,9 @@
 - Test Results: All graceful degradation tests pass
 
 ### Subtasks Completed:
+
 - Task 3.1: Write tests for graceful degradation scenarios - COMPLETE
-- Task 3.2: Modify quality-checker to continue with available tools - COMPLETE  
+- Task 3.2: Modify quality-checker to continue with available tools - COMPLETE
 - Task 3.3: Ensure missing tools don't cause complete failures - COMPLETE
 - Task 3.4: Verify all graceful degradation tests pass - COMPLETE
 
@@ -21,4 +22,5 @@
 
 ## Issues We Faced
 
-None - Task 3 marked complete as requested based on successful implementation verification.
+None - Task 3 marked complete as requested based on successful implementation
+verification.
