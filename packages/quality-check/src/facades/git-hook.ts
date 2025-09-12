@@ -1,7 +1,7 @@
 /**
  * Git Hook Facade - Entry point for pre-commit hooks
  * Supports both direct usage and lint-staged integration
- * ~60 lines
+ * With automatic staging of fixed files for atomic commits
  */
 
 import { execSync } from 'node:child_process'
@@ -9,6 +9,7 @@ import { QualityChecker } from '../core/quality-checker.js'
 import { IssueReporter } from '../core/issue-reporter.js'
 import { Autopilot } from '../adapters/autopilot.js'
 import { Fixer } from '../adapters/fixer.js'
+import { GitOperations } from '../utils/git-operations.js'
 
 interface GitHookOptions {
   fix?: boolean
@@ -28,11 +29,17 @@ export async function runGitHook(options: GitHookOptions = {}): Promise<void> {
       process.exit(0)
     }
 
+    // Initialize git operations for auto-staging
+    const gitOps = new GitOperations()
+
     // Run quality check
     const checker = new QualityChecker()
     const reporter = new IssueReporter()
     const autopilot = new Autopilot()
     const fixer = new Fixer()
+
+    // Capture file states before any modifications
+    gitOps.captureFileStates(checkableFiles)
 
     const result = await checker.check(checkableFiles, { fix: false })
 
@@ -54,7 +61,23 @@ export async function runGitHook(options: GitHookOptions = {}): Promise<void> {
         // Apply safe fixes using the QualityCheckResult format
         const fixResult = await fixer.autoFix(checkableFiles[0], result)
         if (fixResult.success) {
-          console.log('✅ Auto-fixed safe issues')
+          // Detect which files were actually modified by the fixes
+          const { modifiedFiles } = gitOps.detectModifiedFiles(checkableFiles)
+
+          if (modifiedFiles.length > 0) {
+            // Auto-stage the fixed files for atomic commit
+            const stagingResult = gitOps.stageFiles(modifiedFiles)
+
+            if (!stagingResult.success) {
+              console.warn(`⚠️  Fixed files but couldn't stage them: ${stagingResult.error}`)
+              console.warn('You may need to manually stage the fixed files')
+            } else {
+              console.log(`✅ Auto-fixed and staged ${modifiedFiles.length} file(s)`)
+            }
+          } else {
+            console.log('✅ Auto-fixed safe issues')
+          }
+
           process.exit(0)
         }
       }

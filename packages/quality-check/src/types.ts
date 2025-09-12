@@ -18,6 +18,10 @@ export interface QualityCheckOptions {
   preCommit?: boolean
   cacheDir?: string
   correlationId?: string
+  // Fix-first architecture options
+  fixFirst?: boolean
+  fallbackToCheckThenFix?: boolean
+  format?: 'stylish' | 'json'
 }
 
 export interface CheckerResult {

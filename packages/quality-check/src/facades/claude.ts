@@ -9,8 +9,8 @@ import { Fixer } from '../adapters/fixer.js'
 import { ExitCodes } from '../core/exit-codes.js'
 import { QualityChecker } from '../core/quality-checker.js'
 import { OutputFormatter } from '../services/OutputFormatter.js'
-import type { ErrorReport } from '../utils/logger.js'
 import type { Issue } from '../types/issue-types.js'
+import type { ErrorReport } from '../utils/logger.js'
 import { createTimer, logger } from '../utils/logger.js'
 
 // Claude Code payload format - matches actual Claude Code structure
@@ -33,7 +33,6 @@ export async function runClaudeHook(): Promise<void> {
   // Early exit if hook is disabled
   if (process.env.CLAUDE_HOOK_DISABLED === 'true') {
     process.exit(ExitCodes.SUCCESS)
-    return
   }
 
   const input = await readStdin()
@@ -110,7 +109,6 @@ async function runClaudeHookWithPayload(
   // Early exit if hook is disabled (but allow in test environment)
   if (process.env.NODE_ENV !== 'test' && process.env.CLAUDE_HOOK_DISABLED === 'true') {
     process.exit(ExitCodes.SUCCESS)
-    return
   }
 
   const hookTimer = createTimer('hook-execution')
@@ -129,7 +127,6 @@ async function runClaudeHookWithPayload(
       if (!input || input.trim() === '') {
         logger.warn('Empty input payload, exiting gracefully')
         process.exit(ExitCodes.SUCCESS)
-        return
       }
 
       const parsed = JSON.parse(input)
@@ -137,7 +134,6 @@ async function runClaudeHookWithPayload(
       if (parsed === null || parsed === undefined) {
         logger.warn('Null/undefined payload after parsing, exiting gracefully')
         process.exit(ExitCodes.SUCCESS)
-        return
       }
 
       payload = parsed as ClaudeCodePayload
@@ -148,7 +144,6 @@ async function runClaudeHookWithPayload(
       logger.warn('Malformed JSON payload, exiting gracefully')
       // Silent exit for malformed payloads
       process.exit(ExitCodes.SUCCESS)
-      return
     }
 
     // Validate required fields (only if we have a valid payload)
@@ -162,7 +157,6 @@ async function runClaudeHookWithPayload(
         })
       }
       process.exit(ExitCodes.SUCCESS)
-      return // Additional safety return to satisfy TypeScript and prevent further execution
     }
 
     // Only process supported operations
@@ -172,7 +166,6 @@ async function runClaudeHookWithPayload(
         supportedOps: ['Write', 'Edit', 'MultiEdit'],
       })
       process.exit(ExitCodes.SUCCESS)
-      return // Additional safety return
     }
 
     // Skip non-code files
@@ -182,7 +175,6 @@ async function runClaudeHookWithPayload(
         fileExtension: payload.tool_input.file_path.split('.').pop(),
       })
       process.exit(ExitCodes.SUCCESS)
-      return // Additional safety return
     }
 
     // Log hook started only after all skip checks pass
@@ -359,7 +351,6 @@ async function runClaudeHookWithPayload(
         })
         logger.hookCompleted(payload.tool_name, payload.tool_input.file_path, hookTimer.end(), true)
         process.exit(ExitCodes.SUCCESS)
-        break
 
       case 'REPORT_ONLY': {
         logger.info('Reporting unfixable issues', {
@@ -388,7 +379,6 @@ async function runClaudeHookWithPayload(
         // No issues to report
         logger.hookCompleted(payload.tool_name, payload.tool_input.file_path, hookTimer.end(), true)
         process.exit(ExitCodes.SUCCESS)
-        break
       }
 
       case 'FIX_AND_REPORT': {
@@ -576,9 +566,7 @@ function outputClaudeBlocking(formattedOutput: string, issues?: Issue[]): void {
     console.error('')
     console.error('❌ DO NOT PROCEED until these issues are resolved.')
     console.error('')
-    console.error(
-      'To fix these issues automatically, Claude will use the quality-check-fixer agent.',
-    )
+    console.error('Employ the quality check fixer IMMEDIATELY to fix these issues.')
     console.error('')
     return
   }
