@@ -100,7 +100,8 @@ built-in fixes
 
 - [x] Analyze Fixer adapter usage patterns
   - [x] Identify all current Fixer adapter usage points (git-hook.ts, claude.ts)
-  - [x] Determine which functionality can be eliminated vs simplified (all eliminated)
+  - [x] Determine which functionality can be eliminated vs simplified (all
+        eliminated)
   - [x] Map Fixer capabilities to engine built-in equivalents (fixFirst mode)
   - [x] Document any remaining Fixer use cases (none)
 
@@ -111,7 +112,8 @@ built-in fixes
   - [x] Remove unnecessary abstraction layers (deleted fixer.ts)
 
 - [x] Update all Fixer adapter consumers
-  - [x] Replace Fixer calls with direct engine interactions (using fixFirst in QualityChecker)
+  - [x] Replace Fixer calls with direct engine interactions (using fixFirst in
+        QualityChecker)
   - [x] Update result handling to work with engine responses
   - [x] Maintain existing external interfaces where required
   - [x] Remove unused Fixer imports and references
