@@ -20,8 +20,8 @@ describe('Local Cache Integration', () => {
         .filter(([_, config]: [string, any]) => config.cache === true)
         .map(([name]) => name)
 
-      expect(cacheableTasks).toContain('format')
-      expect(cacheableTasks).toContain('format:check')
+      expect(cacheableTasks).toContain('//#format:root')
+      expect(cacheableTasks).toContain('//#format:check:root')
     })
 
     it('should ensure cache directory is properly configured', () => {

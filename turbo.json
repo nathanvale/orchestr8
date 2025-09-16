@@ -15,12 +15,12 @@
       "env": ["NODE_ENV"]
     },
     "lint": {
-      "dependsOn": ["format"],
+      "dependsOn": ["//#format:root"],
       "outputs": [".eslintcache"],
       "cache": true,
       "inputs": ["$TURBO_DEFAULT$", "eslint.config.js"]
     },
-    "format": {
+    "//#format:root": {
       "outputs": [".prettierrcache"],
       "cache": true,
       "inputs": [
@@ -28,16 +28,15 @@
         ".prettierrc*",
         "prettier.config.*",
         "**/.prettierrc*",
-        "src/**/*.{ts,tsx,js,jsx,json,md}",
-        "apps/**/*.{ts,tsx,js,jsx,json,md}",
-        "packages/**/*.{ts,tsx,js,jsx,json,md}",
+        "**/*.{ts,tsx,js,jsx,json,md,mjs,cjs,yml,yaml}",
         "!**/node_modules/**",
         "!**/dist/**",
-        "!**/coverage/**"
+        "!**/coverage/**",
+        "!**/.turbo/**"
       ],
       "outputLogs": "new-only"
     },
-    "format:check": {
+    "//#format:check:root": {
       "outputs": [".prettierrcache"],
       "cache": true,
       "inputs": [
@@ -45,12 +44,11 @@
         ".prettierrc*",
         "prettier.config.*",
         "**/.prettierrc*",
-        "src/**/*.{ts,tsx,js,jsx,json,md}",
-        "apps/**/*.{ts,tsx,js,jsx,json,md}",
-        "packages/**/*.{ts,tsx,js,jsx,json,md}",
+        "**/*.{ts,tsx,js,jsx,json,md,mjs,cjs,yml,yaml}",
         "!**/node_modules/**",
         "!**/dist/**",
-        "!**/coverage/**"
+        "!**/coverage/**",
+        "!**/.turbo/**"
       ],
       "outputLogs": "errors-only"
     },

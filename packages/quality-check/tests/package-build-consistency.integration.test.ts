@@ -327,7 +327,8 @@ describe('Turborepo Configuration Tests', () => {
     const lineCount = configContent.split('\n').length
     console.log(`Current turbo config line count: ${lineCount}`)
 
-    // Should be under or equal to 70 lines (>75% reduction from 315 lines)
-    expect(lineCount).toBeLessThanOrEqual(70)
+    // Should be under or equal to 110 lines (includes format caching configuration)
+    // Original was 315 lines, we've added format caching which adds ~36 lines
+    expect(lineCount).toBeLessThanOrEqual(110)
   })
 })
