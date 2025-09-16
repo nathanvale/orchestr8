@@ -32,6 +32,7 @@
     "release": "pnpm build:all && changeset publish",
     "test": "vitest run",
     "test:ui": "vitest --ui",
+    "cache:monitor": "tsx scripts/cache-monitor.ts",
     "test:focus": "vitest watch --changed HEAD~1",
     "test:unit": "vitest run **/*.unit.test.*",
     "test:unit:watch": "vitest watch **/*.unit.test.*",

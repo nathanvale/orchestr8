@@ -24,10 +24,16 @@ describe('Local Cache LRU Eviction', () => {
     }
 
     set(key: string, value: T): void {
-      if (this.cache.size >= this.maxSize) {
-        this.evictLRU()
+      if (this.cache.has(key)) {
+        // Update existing entry
+        this.cache.set(key, { value, lastAccessed: Date.now() })
+      } else {
+        // Add new entry, evict if necessary
+        if (this.cache.size >= this.maxSize) {
+          this.evictLRU()
+        }
+        this.cache.set(key, { value, lastAccessed: Date.now() })
       }
-      this.cache.set(key, { value, lastAccessed: Date.now() })
     }
 
     private evictLRU(): void {
@@ -74,14 +80,17 @@ describe('Local Cache LRU Eviction', () => {
       expect(cache.get('key4')).toBe('value4')
     })
 
-    it('should update access time when cache entry is accessed', () => {
+    it('should update access time when cache entry is accessed', async () => {
       const cache = new LRUCache<string>(3)
 
       cache.set('key1', 'value1')
+      await new Promise<void>((resolve) => setTimeout(resolve, 1))
       cache.set('key2', 'value2')
+      await new Promise<void>((resolve) => setTimeout(resolve, 1))
       cache.set('key3', 'value3')
 
       // Access key1 to make it recently used
+      await new Promise<void>((resolve) => setTimeout(resolve, 1))
       cache.get('key1')
 
       // Add new entry, should evict key2 (oldest unaccessed)

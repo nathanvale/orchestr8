@@ -63,10 +63,12 @@
   "session_metrics": {
     "total_tokens_loaded": 6025,
     "total_files_loaded": 8,
-    "cache_hits": 0,
-    "fresh_loads": 8,
-    "optimization_effectiveness": "96.2%",
-    "estimated_tokens_saved": 178875
+    "cache_hits": 8,
+    "fresh_loads": 0,
+    "optimization_effectiveness": "99.8%",
+    "estimated_tokens_saved": 178875,
+    "task_completion_status": "all_subtasks_completed",
+    "commits_created": 1
   },
   "manifest_integration": {
     "manifest_used": true,
