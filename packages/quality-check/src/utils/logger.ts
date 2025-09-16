@@ -482,6 +482,11 @@ export class EnhancedLogger extends QualityLogger {
       return `${toolName}: ✓ No issues found`
     }
 
+    // Handle case where summary might be undefined (e.g., in tests)
+    if (!report.summary) {
+      return `${toolName}: Error occurred (summary unavailable)`
+    }
+
     const { totalErrors, totalWarnings, filesAffected } = report.summary
     return `${toolName}: ${totalErrors} errors, ${totalWarnings} warnings in ${filesAffected} files`
   }

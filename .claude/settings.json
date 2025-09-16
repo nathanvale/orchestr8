@@ -17,7 +17,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "CLAUDE_HOOK_DEBUG=true CLAUDE_HOOK_LOG_FILE=$HOME/.claude/quality-check.log $CLAUDE_PROJECT_DIR/packages/quality-check/bin/claude-hook",
+            "command": "CLAUDE_HOOK_LOG_FILE=$HOME/.claude/quality-check.log $CLAUDE_PROJECT_DIR/packages/quality-check/bin/claude-hook",
 
             "timeout": 10,
             "description": "Quality check enforcement",

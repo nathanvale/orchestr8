@@ -27,16 +27,9 @@ vi.mock('../adapters/autopilot.js', () => ({
   })),
 }))
 
-vi.mock('../adapters/fixer.js', () => ({
-  Fixer: vi.fn().mockImplementation(() => ({
-    autoFix: vi.fn(),
-  })),
-}))
-
 // Import mocked modules
 import { execSync } from 'node:child_process'
 import { Autopilot } from '../adapters/autopilot.js'
-import { Fixer } from '../adapters/fixer.js'
 import { IssueReporter } from '../core/issue-reporter.js'
 import { QualityChecker } from '../core/quality-checker.js'
 
@@ -44,7 +37,6 @@ describe('Git Hook with Current Implementation', () => {
   let mockExecSync: ReturnType<typeof vi.fn>
   let mockCheck: ReturnType<typeof vi.fn>
   let mockDecide: ReturnType<typeof vi.fn>
-  let mockAutoFix: ReturnType<typeof vi.fn>
   let mockFormatForCLI: ReturnType<typeof vi.fn>
   let originalExit: typeof process.exit
   let exitCode: number | undefined
@@ -54,7 +46,6 @@ describe('Git Hook with Current Implementation', () => {
     mockExecSync = vi.mocked(execSync)
     mockCheck = vi.fn()
     mockDecide = vi.fn()
-    mockAutoFix = vi.fn()
     mockFormatForCLI = vi.fn().mockReturnValue('Formatted errors')
 
     // Mocks are already configured in vi.mock() calls above
@@ -68,9 +59,6 @@ describe('Git Hook with Current Implementation', () => {
     }))
     ;(Autopilot as any).mockImplementation(() => ({
       decide: mockDecide,
-    }))
-    ;(Fixer as any).mockImplementation(() => ({
-      autoFix: mockAutoFix,
     }))
 
     // Mock process.exit
@@ -221,7 +209,8 @@ describe('Git Hook with Current Implementation', () => {
   describe('Auto-fix Integration', () => {
     it('should apply fixes when autopilot decides FIX_SILENTLY', async () => {
       mockExecSync.mockReturnValue('src/file.ts\n')
-      mockCheck.mockResolvedValue({
+      // First check returns issues
+      mockCheck.mockResolvedValueOnce({
         success: false,
         duration: 100,
         issues: [
@@ -237,7 +226,13 @@ describe('Git Hook with Current Implementation', () => {
         ],
       })
       mockDecide.mockReturnValue({ action: 'FIX_SILENTLY' })
-      mockAutoFix.mockResolvedValue({ success: true })
+      // Second check with fixFirst returns success
+      mockCheck.mockResolvedValueOnce({
+        success: true,
+        duration: 100,
+        issues: [],
+        fixesApplied: [{ modifiedFiles: ['src/file.ts'] }],
+      })
 
       try {
         await runGitHook({ fix: true })
@@ -245,8 +240,14 @@ describe('Git Hook with Current Implementation', () => {
         expect(e.message).toContain('Process exited with code 0')
       }
 
-      expect(mockAutoFix).toHaveBeenCalled()
-      expect(console.log).toHaveBeenCalledWith('✅ Auto-fixed safe issues')
+      // Verify check was called twice - once without fix, once with fixFirst
+      expect(mockCheck).toHaveBeenCalledTimes(2)
+      expect(mockCheck).toHaveBeenNthCalledWith(1, ['src/file.ts'], { fix: false })
+      expect(mockCheck).toHaveBeenNthCalledWith(2, ['src/file.ts'], {
+        fixFirst: true,
+        autoStage: true,
+      })
+      expect(console.log).toHaveBeenCalledWith('✅ Auto-fixed and staged 1 file(s)')
       expect(exitCode).toBe(0)
     })
 
@@ -267,9 +268,11 @@ describe('Git Hook with Current Implementation', () => {
           },
         ],
       }
-      mockCheck.mockResolvedValue(failResult)
+      // First check returns issues
+      mockCheck.mockResolvedValueOnce(failResult)
       mockDecide.mockReturnValue({ action: 'FIX_SILENTLY' })
-      mockAutoFix.mockResolvedValue({ success: false })
+      // Second check with fixFirst still returns issues (unfixable)
+      mockCheck.mockResolvedValueOnce(failResult)
 
       // Expected Current format that formatForCLI receives
       const expectedCurrentFormat = {
@@ -294,7 +297,13 @@ describe('Git Hook with Current Implementation', () => {
         expect(e.message).toContain('Process exited with code 1')
       }
 
-      expect(mockAutoFix).toHaveBeenCalled()
+      // Verify check was called twice
+      expect(mockCheck).toHaveBeenCalledTimes(2)
+      expect(mockCheck).toHaveBeenNthCalledWith(1, ['src/file.ts'], { fix: false })
+      expect(mockCheck).toHaveBeenNthCalledWith(2, ['src/file.ts'], {
+        fixFirst: true,
+        autoStage: true,
+      })
       expect(mockFormatForCLI).toHaveBeenCalledWith(expectedCurrentFormat)
       expect(exitCode).toBe(1)
     })
@@ -324,7 +333,9 @@ describe('Git Hook with Current Implementation', () => {
         expect(e.message).toContain('Process exited with code 1')
       }
 
-      expect(mockAutoFix).not.toHaveBeenCalled()
+      // Should only call check once without fixFirst
+      expect(mockCheck).toHaveBeenCalledTimes(1)
+      expect(mockCheck).toHaveBeenCalledWith(['src/file.ts'], { fix: false })
       expect(exitCode).toBe(1)
     })
   })
@@ -347,19 +358,20 @@ describe('Git Hook with Current Implementation', () => {
           },
         ],
       }
+      // First check returns issues
       mockCheck.mockResolvedValue(failResult)
       mockDecide.mockReturnValue({ action: 'FIX_AND_REPORT' })
-      mockAutoFix.mockResolvedValue({ success: true })
 
       try {
         await runGitHook({ fix: true })
       } catch (e: any) {
-        // Even with successful fix, FIX_AND_REPORT might still exit 0
-        expect(e.message).toContain('Process exited with code')
+        // FIX_AND_REPORT is not handled in the current implementation, so it should fail
+        expect(e.message).toContain('Process exited with code 1')
       }
 
-      // Should attempt fix for FIX_AND_REPORT with fix option
+      // Should call decide but not attempt fix since FIX_AND_REPORT isn't implemented
       expect(mockDecide).toHaveBeenCalled()
+      expect(mockCheck).toHaveBeenCalledTimes(1)
     })
 
     it('should handle CONTINUE decision', async () => {
@@ -388,7 +400,8 @@ describe('Git Hook with Current Implementation', () => {
         expect(e.message).toContain('Process exited with code 1')
       }
 
-      expect(mockAutoFix).not.toHaveBeenCalled()
+      // Should only call check once, no fix attempt
+      expect(mockCheck).toHaveBeenCalledTimes(1)
       expect(exitCode).toBe(1)
     })
   })

@@ -3,7 +3,7 @@ import { mkdirSync } from 'node:fs'
 import { cpus } from 'node:os'
 import path from 'node:path'
 import { defineConfig, mergeConfig } from 'vitest/config'
-import { vitestSharedConfig } from './vitest.shared'
+import { vitestSharedConfig } from './vitest.shared.js'
 
 /**
  * Modern Vitest Configuration (2025)
@@ -51,7 +51,7 @@ export default mergeConfig(
             // Wallaby detection: When running in Wallaby, exclude slow tests
             // Otherwise use TEST_MODE environment variable
             include:
-              process.env.WALLABY_WORKER || process.env.WALLABY_WORKER_ID
+              process.env['WALLABY_WORKER'] || process.env['WALLABY_WORKER_ID']
                 ? [
                     'tests/**/*.unit.{test,spec}.{ts,tsx}',
                     'tests/**/*.{test,spec}.{ts,tsx}',
@@ -59,11 +59,11 @@ export default mergeConfig(
                     '!tests/**/*.e2e.{test,spec}.{ts,tsx}',
                     '!tests/**/*.slow.{test,spec}.{ts,tsx}',
                   ]
-                : process.env.TEST_MODE === 'integration'
+                : process.env['TEST_MODE'] === 'integration'
                   ? ['tests/**/*.integration.{test,spec}.{ts,tsx}']
-                  : process.env.TEST_MODE === 'e2e'
+                  : process.env['TEST_MODE'] === 'e2e'
                     ? ['tests/**/*.e2e.{test,spec}.{ts,tsx}']
-                    : process.env.TEST_MODE === 'all'
+                    : process.env['TEST_MODE'] === 'all'
                       ? ['tests/**/*.{test,spec}.{ts,tsx}']
                       : [
                           'tests/**/*.unit.{test,spec}.{ts,tsx}',
@@ -94,14 +94,17 @@ export default mergeConfig(
 
       // Include pattern for different modes - ADHD-optimized test classification
       include:
-        process.env.TEST_MODE === 'integration'
+        process.env['TEST_MODE'] === 'integration'
           ? ['**/*.integration.test.{ts,tsx}']
-          : process.env.TEST_MODE === 'e2e'
+          : process.env['TEST_MODE'] === 'e2e'
             ? ['**/*.e2e.test.{ts,tsx}']
             : ['**/*.unit.test.{ts,tsx}', '**/*.test.{ts,tsx}'],
 
-      // Setup files
-      setupFiles: ['./vitest.setup.tsx'],
+      // Setup files - includes memory monitoring for all tests
+      setupFiles: [
+        './vitest.setup.tsx',
+        './tests/setup/memory-cleanup.ts', // Memory monitoring hooks
+      ],
 
       // Modern 2025: threads pool for optimal performance
       // Threads provide better performance and memory efficiency
@@ -119,12 +122,7 @@ export default mergeConfig(
       isolate: true,
 
       // ADHD-optimized watch configuration - instant feedback
-      watch: {
-        // Only rerun tests for changed files
-        mode: 'typecheck',
-        useFsEvents: true,
-        ignorePermissionErrors: true,
-      },
+      watch: true,
 
       // Test organization for predictable order
       sequence: {
@@ -137,7 +135,7 @@ export default mergeConfig(
       passWithNoTests: true, // Don't fail on empty suites
 
       // Smart retries (CI only, not during dev)
-      retry: process.env.CI ? 2 : 0,
+      retry: process.env['CI'] ? 2 : 0,
 
       // Module resolution
       deps: {
@@ -221,7 +219,7 @@ export default mergeConfig(
 
       // Advanced options for ADHD-optimized feedback
       // passWithNoTests: true, // Already set above in focus helpers
-      logHeapUsage: process.env.NODE_ENV === 'development', // Memory debugging in dev only
+      logHeapUsage: process.env['NODE_ENV'] === 'development', // Memory debugging in dev only
       // Use built-in unstub support instead of manual teardown calls
       unstubEnvs: true,
       unstubGlobals: true,

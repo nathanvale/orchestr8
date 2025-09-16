@@ -19,8 +19,7 @@ export default [
       '**/out/**',
       '**/node_modules/**',
       '**/.pnpm-store/**',
-      '**/*.config.{js,mjs,cjs,ts}', // Ignore all config files
-      '**/vite.config.ts',
+      '**/*.config.{js,mjs,cjs}', // Ignore JS config files but allow TS configs
       '**/next.config.mjs',
       '**/wallaby.cjs', // Ignore Wallaby.js config
       '**/*.generated.*',
