@@ -32,7 +32,7 @@ describe('MemoryProfiler', () => {
         heapUsed: 60,
         external: 10,
         arrayBuffers: 5,
-        totalAllocated: 155, // rss + external + arrayBuffers
+        totalAllocated: 115, // rss + external + arrayBuffers
       })
     })
 
