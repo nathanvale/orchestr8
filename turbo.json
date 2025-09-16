@@ -15,9 +15,44 @@
       "env": ["NODE_ENV"]
     },
     "lint": {
+      "dependsOn": ["format"],
       "outputs": [".eslintcache"],
       "cache": true,
       "inputs": ["$TURBO_DEFAULT$", "eslint.config.js"]
+    },
+    "format": {
+      "outputs": [".prettierrcache"],
+      "cache": true,
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        ".prettierrc*",
+        "prettier.config.*",
+        "**/.prettierrc*",
+        "src/**/*.{ts,tsx,js,jsx,json,md}",
+        "apps/**/*.{ts,tsx,js,jsx,json,md}",
+        "packages/**/*.{ts,tsx,js,jsx,json,md}",
+        "!**/node_modules/**",
+        "!**/dist/**",
+        "!**/coverage/**"
+      ],
+      "outputLogs": "new-only"
+    },
+    "format:check": {
+      "outputs": [".prettierrcache"],
+      "cache": true,
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        ".prettierrc*",
+        "prettier.config.*",
+        "**/.prettierrc*",
+        "src/**/*.{ts,tsx,js,jsx,json,md}",
+        "apps/**/*.{ts,tsx,js,jsx,json,md}",
+        "packages/**/*.{ts,tsx,js,jsx,json,md}",
+        "!**/node_modules/**",
+        "!**/dist/**",
+        "!**/coverage/**"
+      ],
+      "outputLogs": "errors-only"
     },
     "typecheck": {
       "dependsOn": ["^typecheck"],
@@ -45,6 +80,8 @@
     ".changeset/config.json",
     "eslint.config.js",
     "vitest.config.ts",
+    ".prettierrc*",
+    "prettier.config.*",
     "turbo.json*",
     ".env*"
   ],
@@ -62,7 +99,7 @@
   ],
   "remoteCache": {
     "enabled": true,
-    "signature": false,
+    "signature": true,
     "preflight": true,
     "timeout": 30
   }

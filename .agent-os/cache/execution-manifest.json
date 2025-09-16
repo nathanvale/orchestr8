@@ -1,0 +1,305 @@
+{
+  "version": "1.0",
+  "created_at": "2025-09-16T10:00:00Z",
+  "spec": "2025-09-11-prettier-turborepo-caching",
+  "tasks_analyzed": 40,
+  "optimization_strategy": "pre_load_high_frequency_contexts",
+
+  "core_context": {
+    "mission": {
+      "path": "/Users/nathanvale/code/bun-changesets-template/.agent-os/product/mission-lite.md",
+      "exists": true,
+      "size_bytes": 775,
+      "estimated_tokens": 200,
+      "always_loaded": true,
+      "usage_percentage": 100,
+      "description": "Product vision and mission context"
+    },
+    "spec": {
+      "path": "/Users/nathanvale/code/bun-changesets-template/.agent-os/specs/2025-09-11-prettier-turborepo-caching/spec-lite.md",
+      "exists": true,
+      "size_bytes": 964,
+      "estimated_tokens": 250,
+      "always_loaded": true,
+      "usage_percentage": 100,
+      "description": "Spec overview and requirements"
+    }
+  },
+
+  "context_references": {
+    "/Users/nathanvale/code/bun-changesets-template/.agent-os/specs/2025-09-11-prettier-turborepo-caching/sub-specs/technical-spec.md": {
+      "exists": true,
+      "size_bytes": 4822,
+      "estimated_tokens": 1205,
+      "usage_percentage": 100,
+      "usage_count": 40,
+      "tasks_using": ["Task 1", "Task 2", "Task 3", "Task 4", "Task 5"],
+      "context_type": "technical_specifications",
+      "sections_needed": {
+        "turborepo_config": {
+          "title": "Turborepo Configuration",
+          "tasks": ["Task 1", "Task 2", "Task 3"],
+          "estimated_tokens": 400
+        },
+        "cache_strategy": {
+          "title": "Cache Strategy",
+          "tasks": ["Task 2", "Task 3"],
+          "estimated_tokens": 300
+        },
+        "performance_metrics": {
+          "title": "Performance Requirements",
+          "tasks": ["Task 5"],
+          "estimated_tokens": 200
+        }
+      },
+      "full_load_needed": true,
+      "priority": "high"
+    },
+
+    "/Users/nathanvale/code/bun-changesets-template/.agent-os/standards/code-style/javascript-style.md": {
+      "exists": true,
+      "size_bytes": 5885,
+      "estimated_tokens": 1470,
+      "usage_percentage": 100,
+      "usage_count": 40,
+      "tasks_using": ["Task 1", "Task 2", "Task 3", "Task 4", "Task 5"],
+      "context_type": "code_style",
+      "sections_needed": {
+        "configuration_files": {
+          "title": "Configuration File Standards",
+          "tasks": ["Task 1", "Task 2", "Task 3"],
+          "estimated_tokens": 300
+        },
+        "testing_patterns": {
+          "title": "Testing Code Style",
+          "tasks": ["Task 1", "Task 2", "Task 3", "Task 4", "Task 5"],
+          "estimated_tokens": 400
+        },
+        "async_patterns": {
+          "title": "Async/Await Patterns",
+          "tasks": ["Task 3", "Task 4"],
+          "estimated_tokens": 200
+        }
+      },
+      "full_load_needed": true,
+      "priority": "high"
+    },
+
+    "/Users/nathanvale/code/bun-changesets-template/.agent-os/standards/best-practices.md": {
+      "exists": true,
+      "size_bytes": 1900,
+      "estimated_tokens": 500,
+      "usage_percentage": 100,
+      "usage_count": 40,
+      "tasks_using": ["Task 1", "Task 2", "Task 3", "Task 4", "Task 5"],
+      "context_type": "best_practices",
+      "sections_needed": {
+        "configuration_management": {
+          "title": "Configuration Best Practices",
+          "tasks": ["Task 1", "Task 2", "Task 3"],
+          "estimated_tokens": 150
+        },
+        "performance_optimization": {
+          "title": "Performance Patterns",
+          "tasks": ["Task 2", "Task 5"],
+          "estimated_tokens": 120
+        },
+        "security_patterns": {
+          "title": "Security Best Practices",
+          "tasks": ["Task 3"],
+          "estimated_tokens": 100
+        }
+      },
+      "full_load_needed": false,
+      "priority": "high"
+    },
+
+    "/Users/nathanvale/code/bun-changesets-template/docs/guides/Claude Code ADHD-Optimized Testing Instructions.md": {
+      "exists": true,
+      "size_bytes": 0,
+      "estimated_tokens": 800,
+      "usage_percentage": 100,
+      "usage_count": 40,
+      "tasks_using": ["Task 1", "Task 2", "Task 3", "Task 4", "Task 5"],
+      "context_type": "testing_guidelines",
+      "sections_needed": {
+        "unit_testing": {
+          "title": "Unit Testing Patterns",
+          "tasks": ["Task 1", "Task 2", "Task 3", "Task 4", "Task 5"],
+          "estimated_tokens": 300
+        },
+        "integration_testing": {
+          "title": "Integration Testing",
+          "tasks": ["Task 2", "Task 3", "Task 4"],
+          "estimated_tokens": 250
+        },
+        "performance_testing": {
+          "title": "Performance Testing",
+          "tasks": ["Task 5"],
+          "estimated_tokens": 150
+        }
+      },
+      "full_load_needed": true,
+      "priority": "high"
+    },
+
+    "/Users/nathanvale/code/bun-changesets-template/turbo.json": {
+      "exists": true,
+      "size_bytes": 1594,
+      "estimated_tokens": 400,
+      "usage_percentage": 87.5,
+      "usage_count": 35,
+      "tasks_using": ["Task 1", "Task 2", "Task 3", "Task 4", "Task 5"],
+      "context_type": "configuration_files",
+      "full_load_needed": true,
+      "priority": "high",
+      "description": "Current Turborepo configuration"
+    },
+
+    "/Users/nathanvale/code/bun-changesets-template/package.json": {
+      "exists": true,
+      "size_bytes": 4796,
+      "estimated_tokens": 1200,
+      "usage_percentage": 100,
+      "usage_count": 40,
+      "tasks_using": ["Task 1", "Task 2", "Task 3", "Task 4", "Task 5"],
+      "context_type": "configuration_files",
+      "full_load_needed": true,
+      "priority": "high",
+      "description": "Root package.json with workspace configuration"
+    },
+
+    "/Users/nathanvale/code/bun-changesets-template/.prettierrc.json": {
+      "exists": true,
+      "size_bytes": 0,
+      "estimated_tokens": 50,
+      "usage_percentage": 50,
+      "usage_count": 20,
+      "tasks_using": ["Task 1", "Task 4", "Task 5"],
+      "context_type": "configuration_files",
+      "full_load_needed": true,
+      "priority": "medium",
+      "description": "Prettier configuration"
+    }
+  },
+
+  "optimization_plan": {
+    "pre_load_contexts": [
+      "/Users/nathanvale/code/bun-changesets-template/.agent-os/product/mission-lite.md",
+      "/Users/nathanvale/code/bun-changesets-template/.agent-os/specs/2025-09-11-prettier-turborepo-caching/spec-lite.md",
+      "/Users/nathanvale/code/bun-changesets-template/.agent-os/specs/2025-09-11-prettier-turborepo-caching/sub-specs/technical-spec.md",
+      "/Users/nathanvale/code/bun-changesets-template/.agent-os/standards/code-style/javascript-style.md",
+      "/Users/nathanvale/code/bun-changesets-template/.agent-os/standards/best-practices.md",
+      "/Users/nathanvale/code/bun-changesets-template/docs/guides/Claude Code ADHD-Optimized Testing Instructions.md",
+      "/Users/nathanvale/code/bun-changesets-template/turbo.json",
+      "/Users/nathanvale/code/bun-changesets-template/package.json"
+    ],
+    "on_demand_contexts": [
+      "/Users/nathanvale/code/bun-changesets-template/.prettierrc.json"
+    ],
+    "threshold_percentage": 30,
+    "section_based_loading": false
+  },
+
+  "context_registry": {
+    "loaded_files": {},
+    "loading_status": {},
+    "last_updated": null
+  },
+
+  "token_calculations": {
+    "traditional_loading": {
+      "per_task_tokens": 4650,
+      "total_tasks": 40,
+      "total_tokens": 186000,
+      "description": "Full reload of all contexts per task"
+    },
+    "optimized_loading": {
+      "pre_load_tokens": 5125,
+      "on_demand_per_task": 50,
+      "total_on_demand": 2000,
+      "total_optimized": 7125,
+      "savings_tokens": 178875,
+      "savings_percentage": 96.2,
+      "description": "Pre-load common contexts once, minimal on-demand loading"
+    }
+  },
+
+  "helper_functions": {
+    "GET_COMMON_CONTEXTS": {
+      "description": "Returns list of file paths that should be pre-loaded",
+      "returns": "Array<string>",
+      "implementation": "Return optimization_plan.pre_load_contexts"
+    },
+    "SHOULD_PRELOAD": {
+      "description": "Check if a specific file should be pre-loaded based on usage threshold",
+      "parameters": "file_path: string",
+      "returns": "boolean",
+      "implementation": "Check if file usage_percentage >= threshold_percentage"
+    },
+    "UPDATE_REGISTRY": {
+      "description": "Track file loading status in the context registry",
+      "parameters": "file_path: string, status: string",
+      "returns": "void",
+      "implementation": "Update context_registry.loaded_files[file_path] = status"
+    },
+    "GET_FILE_PATH": {
+      "description": "Map abstract context name to actual file path",
+      "parameters": "context_name: string",
+      "returns": "string",
+      "implementation": "Map context types to file paths from context_references"
+    },
+    "GET_SECTION_RANGE": {
+      "description": "Get line range for specific section (not implemented for this spec)",
+      "parameters": "file_path: string, section_id: string",
+      "returns": "object",
+      "implementation": "Return {start: number, end: number} for section"
+    }
+  },
+
+  "usage_analysis": {
+    "high_usage_contexts": {
+      "technical_specifications": 100,
+      "code_style": 100,
+      "testing_guidelines": 100,
+      "best_practices": 100,
+      "configuration_files": 100
+    },
+    "medium_usage_contexts": {
+      "prettier_config": 50
+    },
+    "task_breakdown": {
+      "Task 1": {
+        "contexts_needed": ["technical_specifications", "code_style", "testing_guidelines", "configuration_files"],
+        "estimated_tokens": 3350
+      },
+      "Task 2": {
+        "contexts_needed": ["technical_specifications", "code_style", "testing_guidelines", "best_practices", "configuration_files"],
+        "estimated_tokens": 3850
+      },
+      "Task 3": {
+        "contexts_needed": ["technical_specifications", "code_style", "testing_guidelines", "best_practices", "configuration_files"],
+        "estimated_tokens": 3850
+      },
+      "Task 4": {
+        "contexts_needed": ["technical_specifications", "code_style", "testing_guidelines", "configuration_files", "prettier_config"],
+        "estimated_tokens": 3400
+      },
+      "Task 5": {
+        "contexts_needed": ["technical_specifications", "code_style", "testing_guidelines", "best_practices", "configuration_files", "prettier_config"],
+        "estimated_tokens": 3900
+      }
+    }
+  },
+
+  "missing_contexts": [],
+
+  "recommendations": [
+    "All high-usage contexts (>30%) should be pre-loaded at execution start",
+    "Prettier config can be loaded on-demand for relevant tasks only",
+    "Consider creating a dedicated testing guidelines file for this spec if testing patterns become complex",
+    "Monitor cache performance metrics to validate optimization effectiveness"
+  ],
+
+  "expiry": "2025-09-16T11:00:00Z"
+}
