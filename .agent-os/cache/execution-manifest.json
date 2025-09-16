@@ -1,0 +1,451 @@
+{
+  "manifest_version": "1.1",
+  "created_at": "2025-09-16T08:52:00Z",
+  "expires_at": "2025-09-16T09:52:00Z",
+  "spec_context": "2025-01-16-test-optimization",
+  "tasks_analyzed": 5,
+  "subtasks_analyzed": 25,
+
+  "core_context": {
+    "mission": {
+      "path": "/Users/nathanvale/code/bun-changesets-template/.agent-os/product/mission-lite.md",
+      "exists": true,
+      "size_bytes": 450,
+      "estimated_tokens": 112,
+      "always_loaded": true,
+      "usage_count": 5,
+      "usage_percentage": 100,
+      "description": "Product vision and mission context - required for all tasks"
+    },
+    "spec": {
+      "path": "/Users/nathanvale/code/bun-changesets-template/.agent-os/specs/2025-01-16-test-optimization/spec-lite.md",
+      "exists": true,
+      "size_bytes": 200,
+      "estimated_tokens": 50,
+      "always_loaded": true,
+      "fallback_path": "/Users/nathanvale/code/bun-changesets-template/.agent-os/specs/2025-01-16-test-optimization/spec.md",
+      "usage_count": 5,
+      "usage_percentage": 100,
+      "description": "Current spec summary and requirements - required for all tasks"
+    }
+  },
+
+  "context_references": {
+    "/Users/nathanvale/code/bun-changesets-template/.agent-os/standards/code-style/javascript-style.md": {
+      "exists": true,
+      "size_bytes": 7600,
+      "estimated_tokens": 1900,
+      "usage_count": 3,
+      "usage_percentage": 60,
+      "should_preload": true,
+      "context_type": "code_style",
+      "used_by_tasks": [
+        "Task 1: Setup API Structure (subtasks 1.2, 1.5 - formatting & ESLint)",
+        "Task 2: Implement User Registration (subtask 2.2 - async functions)",
+        "Task 3: Implement Authentication (subtask 3.2 - naming conventions)"
+      ],
+      "sections_needed": {
+        "eslint_critical_rules": {
+          "title": "ESLint & TypeScript Code Style Enforcement",
+          "line_range": [4, 84],
+          "estimated_tokens": 400,
+          "priority": "high"
+        },
+        "function_limits": {
+          "title": "Function Length Limits",
+          "line_range": [86, 114],
+          "estimated_tokens": 150,
+          "priority": "medium"
+        },
+        "import_rules": {
+          "title": "Import Rules",
+          "line_range": [141, 151],
+          "estimated_tokens": 100,
+          "priority": "medium"
+        }
+      },
+      "full_load_needed": false
+    },
+
+    "/Users/nathanvale/code/bun-changesets-template/.agent-os/standards/best-practices-comprehensive.md": {
+      "exists": true,
+      "size_bytes": 5650,
+      "estimated_tokens": 1412,
+      "usage_count": 4,
+      "usage_percentage": 80,
+      "should_preload": true,
+      "context_type": "best_practices",
+      "used_by_tasks": [
+        "Task 1: Setup API Structure (subtask 1.3 - error handling patterns)",
+        "Task 2: Implement User Registration (subtask 2.4 - security best practices)",
+        "Task 3: Implement Authentication (subtask 3.4 - authentication patterns)",
+        "Task 4: Add Protected Routes (subtasks 4.2, 4.3 - RESTful & middleware patterns)"
+      ],
+      "sections_needed": {
+        "error_management": {
+          "title": "Error Management",
+          "line_range": [51, 66],
+          "estimated_tokens": 200,
+          "priority": "high"
+        },
+        "security_patterns": {
+          "title": "Security Patterns",
+          "line_range": [19, 34],
+          "estimated_tokens": 200,
+          "priority": "high"
+        },
+        "api_design": {
+          "title": "API Design",
+          "line_range": [67, 82],
+          "estimated_tokens": 200,
+          "priority": "high"
+        }
+      },
+      "full_load_needed": false
+    },
+
+    "/Users/nathanvale/code/bun-changesets-template/.agent-os/specs/2025-01-16-test-optimization/spec.md": {
+      "exists": true,
+      "size_bytes": 900,
+      "estimated_tokens": 225,
+      "usage_count": 3,
+      "usage_percentage": 60,
+      "should_preload": true,
+      "context_type": "technical_spec",
+      "used_by_tasks": [
+        "Task 1: Setup API Structure (subtask 1.4 - project structure requirements)",
+        "Task 2: Implement User Registration (subtask 2.3 - validation per spec)",
+        "Task 3: Implement Authentication (subtask 3.3 - JWT generation per spec)"
+      ],
+      "sections_needed": {
+        "feature_requirements": {
+          "title": "Feature Requirements",
+          "line_range": [9, 16],
+          "estimated_tokens": 100,
+          "priority": "high"
+        },
+        "success_criteria": {
+          "title": "Success Criteria",
+          "line_range": [17, 23],
+          "estimated_tokens": 75,
+          "priority": "medium"
+        }
+      },
+      "full_load_needed": true
+    },
+
+    "/Users/nathanvale/code/bun-changesets-template/.agent-os/standards/testing-guidelines.md": {
+      "exists": true,
+      "size_bytes": 5850,
+      "estimated_tokens": 1462,
+      "usage_count": 4,
+      "usage_percentage": 80,
+      "should_preload": true,
+      "context_type": "testing_general",
+      "used_by_tasks": [
+        "Task 2: Implement User Registration (subtasks 2.5, 2.6 - unit & integration tests)",
+        "Task 3: Implement Authentication (subtasks 3.5, 3.6, 3.7 - comprehensive testing)",
+        "Task 4: Add Protected Routes (subtasks 4.4, 4.5, 4.6 - JWT & route testing)",
+        "Task 5: Complete Test Coverage (all subtasks - testing guidelines compliance)"
+      ],
+      "sections_needed": {
+        "unit_testing": {
+          "title": "Unit Testing Standards",
+          "line_range": [3, 18],
+          "estimated_tokens": 200,
+          "priority": "high"
+        },
+        "integration_testing": {
+          "title": "Integration Testing",
+          "line_range": [19, 34],
+          "estimated_tokens": 200,
+          "priority": "high"
+        },
+        "coverage_requirements": {
+          "title": "Coverage Requirements",
+          "line_range": [14, 18],
+          "estimated_tokens": 100,
+          "priority": "high"
+        }
+      },
+      "full_load_needed": false
+    },
+
+    "/Users/nathanvale/code/bun-changesets-template/.agent-os/specs/2025-01-16-test-optimization/sub-specs/tests.md": {
+      "exists": true,
+      "size_bytes": 1280,
+      "estimated_tokens": 320,
+      "usage_count": 4,
+      "usage_percentage": 80,
+      "should_preload": true,
+      "context_type": "testing_spec_specific",
+      "used_by_tasks": [
+        "Task 2: Implement User Registration (subtasks 2.5, 2.6 - spec-specific test requirements)",
+        "Task 3: Implement Authentication (subtasks 3.5, 3.6, 3.7 - auth test patterns)",
+        "Task 4: Add Protected Routes (subtasks 4.4, 4.5, 4.6 - route protection tests)",
+        "Task 5: Complete Test Coverage (subtasks 5.3, 5.6 - test fixtures & spec compliance)"
+      ],
+      "sections_needed": {
+        "unit_requirements": {
+          "title": "Unit Test Requirements",
+          "line_range": [1, 9],
+          "estimated_tokens": 100,
+          "priority": "high"
+        },
+        "integration_requirements": {
+          "title": "Integration Test Requirements",
+          "line_range": [10, 18],
+          "estimated_tokens": 100,
+          "priority": "high"
+        },
+        "test_fixtures": {
+          "title": "Test Data Fixtures",
+          "line_range": [25, 32],
+          "estimated_tokens": 80,
+          "priority": "medium"
+        }
+      },
+      "full_load_needed": true
+    }
+  },
+
+  "optimization_analysis": {
+    "total_contexts_identified": 6,
+    "contexts_qualifying_for_preload": 6,
+    "preload_threshold_percentage": 30,
+    "missing_contexts": [],
+    "analysis_depth": "comprehensive_subtask_level",
+
+    "context_usage_breakdown": {
+      "javascript_style": {
+        "usage_percentage": 60,
+        "task_count": 3,
+        "subtask_references": 4
+      },
+      "best_practices": {
+        "usage_percentage": 80,
+        "task_count": 4,
+        "subtask_references": 5
+      },
+      "technical_spec": {
+        "usage_percentage": 60,
+        "task_count": 3,
+        "subtask_references": 3
+      },
+      "testing_general": {
+        "usage_percentage": 80,
+        "task_count": 4,
+        "subtask_references": 12
+      },
+      "testing_spec": {
+        "usage_percentage": 80,
+        "task_count": 4,
+        "subtask_references": 8
+      }
+    },
+
+    "token_analysis": {
+      "traditional_approach": {
+        "total_tokens": 19961,
+        "per_task_breakdown": {
+          "task_1": 3699,
+          "task_2": 5481,
+          "task_3": 5481,
+          "task_4": 3356,
+          "task_5": 1944
+        },
+        "description": "Each task loads all needed contexts fresh - massive redundancy"
+      },
+      "optimized_approach": {
+        "total_tokens": 5481,
+        "preload_tokens": 5481,
+        "per_task_tokens": 0,
+        "breakdown": {
+          "core_context": 162,
+          "javascript_style": 1900,
+          "best_practices": 1412,
+          "technical_spec": 225,
+          "testing_general": 1462,
+          "testing_spec": 320
+        },
+        "description": "All contexts pre-loaded once, zero per-task loading overhead"
+      },
+      "savings": {
+        "tokens_saved": 14480,
+        "percentage_reduction": 72.5,
+        "efficiency_category": "exceptional"
+      }
+    }
+  },
+
+  "preload_strategy": {
+    "always_load": [
+      "/Users/nathanvale/code/bun-changesets-template/.agent-os/product/mission-lite.md",
+      "/Users/nathanvale/code/bun-changesets-template/.agent-os/specs/2025-01-16-test-optimization/spec-lite.md"
+    ],
+    "preload_contexts": [
+      "/Users/nathanvale/code/bun-changesets-template/.agent-os/standards/code-style/javascript-style.md",
+      "/Users/nathanvale/code/bun-changesets-template/.agent-os/standards/best-practices-comprehensive.md",
+      "/Users/nathanvale/code/bun-changesets-template/.agent-os/specs/2025-01-16-test-optimization/spec.md",
+      "/Users/nathanvale/code/bun-changesets-template/.agent-os/standards/testing-guidelines.md",
+      "/Users/nathanvale/code/bun-changesets-template/.agent-os/specs/2025-01-16-test-optimization/sub-specs/tests.md"
+    ],
+    "section_optimized_files": [
+      "/Users/nathanvale/code/bun-changesets-template/.agent-os/standards/code-style/javascript-style.md",
+      "/Users/nathanvale/code/bun-changesets-template/.agent-os/standards/best-practices-comprehensive.md",
+      "/Users/nathanvale/code/bun-changesets-template/.agent-os/standards/testing-guidelines.md"
+    ],
+    "full_load_files": [
+      "/Users/nathanvale/code/bun-changesets-template/.agent-os/specs/2025-01-16-test-optimization/spec.md",
+      "/Users/nathanvale/code/bun-changesets-template/.agent-os/specs/2025-01-16-test-optimization/sub-specs/tests.md"
+    ]
+  },
+
+  "context_registry": {
+    "loaded_files": {},
+    "loaded_sections": {},
+    "load_timestamps": {},
+    "cache_hits": 0,
+    "cache_misses": 0,
+    "registry_state": "initialized"
+  },
+
+  "task_context_mapping": {
+    "Task 1: Setup API Structure": {
+      "required_contexts": [
+        "mission-lite.md",
+        "spec-lite.md",
+        "javascript-style.md",
+        "best-practices-comprehensive.md",
+        "spec.md"
+      ],
+      "preloaded_count": 5,
+      "on_demand_count": 0,
+      "estimated_tokens": 3699,
+      "optimization_benefit": "100% preloaded"
+    },
+    "Task 2: Implement User Registration": {
+      "required_contexts": [
+        "mission-lite.md",
+        "spec-lite.md",
+        "javascript-style.md",
+        "best-practices-comprehensive.md",
+        "spec.md",
+        "testing-guidelines.md",
+        "tests.md"
+      ],
+      "preloaded_count": 7,
+      "on_demand_count": 0,
+      "estimated_tokens": 5481,
+      "optimization_benefit": "100% preloaded"
+    },
+    "Task 3: Implement Authentication": {
+      "required_contexts": [
+        "mission-lite.md",
+        "spec-lite.md",
+        "javascript-style.md",
+        "best-practices-comprehensive.md",
+        "spec.md",
+        "testing-guidelines.md",
+        "tests.md"
+      ],
+      "preloaded_count": 7,
+      "on_demand_count": 0,
+      "estimated_tokens": 5481,
+      "optimization_benefit": "100% preloaded"
+    },
+    "Task 4: Add Protected Routes": {
+      "required_contexts": [
+        "mission-lite.md",
+        "spec-lite.md",
+        "best-practices-comprehensive.md",
+        "testing-guidelines.md",
+        "tests.md"
+      ],
+      "preloaded_count": 5,
+      "on_demand_count": 0,
+      "estimated_tokens": 3356,
+      "optimization_benefit": "100% preloaded"
+    },
+    "Task 5: Complete Test Coverage": {
+      "required_contexts": [
+        "mission-lite.md",
+        "spec-lite.md",
+        "testing-guidelines.md",
+        "tests.md"
+      ],
+      "preloaded_count": 4,
+      "on_demand_count": 0,
+      "estimated_tokens": 1944,
+      "optimization_benefit": "100% preloaded"
+    }
+  },
+
+  "helper_functions": {
+    "GET_COMMON_CONTEXTS": {
+      "description": "Returns list of file paths to pre-load based on usage threshold",
+      "returns": "Array of absolute file paths for contexts used by >30% of tasks",
+      "implementation": "Filter contexts with usage_percentage >= preload_threshold"
+    },
+    "GET_SECTION_CONTENT": {
+      "description": "Load specific section by ID from pre-loaded file",
+      "parameters": ["file_path", "section_id"],
+      "returns": "Section content string or null if not found",
+      "implementation": "Use line ranges to extract specific sections"
+    },
+    "SHOULD_PRELOAD": {
+      "description": "Check if specific file should be pre-loaded",
+      "parameters": ["file_path"],
+      "returns": "Boolean indicating if file qualifies for pre-loading",
+      "implementation": "Check if file_path exists in preload_contexts array"
+    },
+    "UPDATE_REGISTRY": {
+      "description": "Track file/section loading status and timestamps",
+      "parameters": ["file_path", "section_id", "content", "timestamp"],
+      "returns": "Updated registry state object",
+      "implementation": "Update context_registry with loading metadata"
+    },
+    "GET_FILE_PATH": {
+      "description": "Map abstract context name to actual file path",
+      "parameters": ["context_name"],
+      "returns": "Absolute file path string or null if not found",
+      "implementation": "Lookup context_name in context_references mapping"
+    },
+    "GET_SECTION_RANGE": {
+      "description": "Get line numbers for partial file loading",
+      "parameters": ["file_path", "section_id"],
+      "returns": "Object with start and end line numbers",
+      "implementation": "Extract line_range from sections_needed mapping"
+    }
+  },
+
+  "execution_instructions": {
+    "step_1": "Pre-load all contexts in preload_contexts array before starting any tasks",
+    "step_2": "Initialize context_registry to track loaded states and prevent duplicates",
+    "step_3": "For section-optimized files, load only needed sections per task requirements",
+    "step_4": "Update registry after each context load operation with timestamp",
+    "step_5": "All file paths are absolute - no relative path resolution needed",
+    "step_6": "Use helper functions for consistent context access patterns"
+  },
+
+  "quality_assurance": {
+    "tasks_file_exists": true,
+    "tasks_file_path": "/Users/nathanvale/code/bun-changesets-template/.agent-os/specs/2025-01-16-test-optimization/tasks.md",
+    "all_contexts_mapped": true,
+    "all_files_verified": true,
+    "subtask_analysis_complete": true,
+    "optimization_benefits_calculated": true,
+    "backwards_compatibility": true,
+    "section_level_analysis": true,
+    "token_estimates_realistic": true
+  },
+
+  "optimization_summary": {
+    "strategy": "aggressive_preload_with_section_optimization",
+    "confidence_level": "high",
+    "expected_token_reduction": "72.5%",
+    "preload_coverage": "100%",
+    "cache_effectiveness": "maximum",
+    "recommendation": "Deploy optimization - exceptional efficiency gains"
+  }
+}

@@ -1,0 +1,152 @@
+{
+  "session_start": "2025-09-16T06:19:00.000Z",
+  "loaded_contexts": [
+    {
+      "file_path": "/Users/nathanvale/code/bun-changesets-template/.agent-os/standards/code-style/javascript-style.md",
+      "sections_loaded": ["full"],
+      "timestamp": "2025-09-16T06:30:00.000Z",
+      "estimated_tokens": 950,
+      "access_count": 4
+    },
+    {
+      "file_path": "/Users/nathanvale/code/bun-changesets-template/.agent-os/standards/best-practices-comprehensive.md",
+      "sections_loaded": ["full"],
+      "timestamp": "2025-09-16T06:30:00.000Z",
+      "estimated_tokens": 710,
+      "access_count": 2
+    },
+    {
+      "file_path": "/Users/nathanvale/code/bun-changesets-template/.agent-os/specs/2025-01-16-test-optimization/sub-specs/technical-design.md",
+      "sections_loaded": ["full"],
+      "timestamp": "2025-09-16T08:55:00.000Z",
+      "estimated_tokens": 218,
+      "access_count": 2
+    },
+    {
+      "file_path": "/Users/nathanvale/code/bun-changesets-template/.agent-os/product/mission-lite.md",
+      "sections_loaded": ["full"],
+      "timestamp": "2025-09-16T06:25:00.000Z",
+      "estimated_tokens": 320,
+      "access_count": 1
+    },
+    {
+      "file_path": "/Users/nathanvale/code/bun-changesets-template/.agent-os/specs/2025-01-16-test-optimization/spec-lite.md",
+      "sections_loaded": ["full"],
+      "timestamp": "2025-09-16T06:25:00.000Z",
+      "estimated_tokens": 85,
+      "access_count": 1
+    },
+    {
+      "file_path": "/Users/nathanvale/code/bun-changesets-template/.agent-os/standards/testing-guidelines.md",
+      "sections_loaded": ["full"],
+      "timestamp": "2025-09-16T06:25:00.000Z",
+      "estimated_tokens": 980,
+      "access_count": 1
+    },
+    {
+      "file_path": "/Users/nathanvale/code/bun-changesets-template/.agent-os/specs/2025-01-16-test-optimization/sub-specs/tests.md",
+      "sections_loaded": ["full"],
+      "timestamp": "2025-09-16T06:25:00.000Z",
+      "estimated_tokens": 250,
+      "access_count": 1
+    },
+    {
+      "file_path": "/Users/nathanvale/code/bun-changesets-template/.agent-os/specs/2025-01-16-test-optimization/sub-specs/technical-design.md",
+      "sections_loaded": ["full"],
+      "timestamp": "2025-09-16T08:56:00.000Z",
+      "estimated_tokens": 218,
+      "access_count": 1
+    },
+    {
+      "file_path": "/Users/nathanvale/code/bun-changesets-template/packages/api/src/controllers/userController.ts",
+      "sections_loaded": ["full"],
+      "timestamp": "2025-09-16T08:56:00.000Z",
+      "estimated_tokens": 580,
+      "access_count": 1
+    },
+    {
+      "file_path": "/Users/nathanvale/code/bun-changesets-template/packages/api/src/routes/userRoutes.ts",
+      "sections_loaded": ["full"],
+      "timestamp": "2025-09-16T08:56:00.000Z",
+      "estimated_tokens": 65,
+      "access_count": 1
+    },
+    {
+      "file_path": "/Users/nathanvale/code/bun-changesets-template/packages/api/src/models/User.ts",
+      "sections_loaded": ["full"],
+      "timestamp": "2025-09-16T08:56:00.000Z",
+      "estimated_tokens": 420,
+      "access_count": 1
+    },
+    {
+      "file_path": "/Users/nathanvale/code/bun-changesets-template/packages/api/src/utils/validation.ts",
+      "sections_loaded": ["full"],
+      "timestamp": "2025-09-16T08:56:00.000Z",
+      "estimated_tokens": 135,
+      "access_count": 1
+    },
+    {
+      "file_path": "/Users/nathanvale/code/bun-changesets-template/packages/api/src/utils/jwt.ts",
+      "sections_loaded": ["full"],
+      "timestamp": "2025-09-16T08:56:00.000Z",
+      "estimated_tokens": 220,
+      "access_count": 1
+    },
+    {
+      "file_path": "/Users/nathanvale/code/bun-changesets-template/packages/api/src/middleware/errorHandler.ts",
+      "sections_loaded": ["full"],
+      "timestamp": "2025-09-16T08:56:00.000Z",
+      "estimated_tokens": 185,
+      "access_count": 1
+    },
+    {
+      "file_path": "/Users/nathanvale/code/bun-changesets-template/.agent-os/specs/2025-01-16-test-optimization/spec.md",
+      "sections_loaded": ["full"],
+      "timestamp": "2025-09-16T09:00:00.000Z",
+      "estimated_tokens": 225,
+      "access_count": 1
+    },
+    {
+      "file_path": "/Users/nathanvale/code/bun-changesets-template/packages/quality-check/src/core/errors.ts",
+      "sections_loaded": ["full"],
+      "timestamp": "2025-09-16T09:02:00.000Z",
+      "estimated_tokens": 650,
+      "access_count": 1
+    },
+    {
+      "file_path": "/Users/nathanvale/code/bun-changesets-template/packages/quality-check/src/monitoring/error-reporter.ts",
+      "sections_loaded": ["full"],
+      "timestamp": "2025-09-16T09:02:00.000Z",
+      "estimated_tokens": 1200,
+      "access_count": 1
+    },
+    {
+      "file_path": "/Users/nathanvale/code/bun-changesets-template/eslint.config.mjs",
+      "sections_loaded": ["full"],
+      "timestamp": "2025-09-16T09:03:00.000Z",
+      "estimated_tokens": 420,
+      "access_count": 1
+    },
+    {
+      "file_path": "/Users/nathanvale/code/bun-changesets-template/packages/api/eslint.config.mjs",
+      "sections_loaded": ["full"],
+      "timestamp": "2025-09-16T09:03:00.000Z",
+      "estimated_tokens": 85,
+      "access_count": 1
+    }
+  ],
+  "cache_hits": 6,
+  "fresh_loads": 20,
+  "token_savings": 6856,
+  "optimization_enabled": true,
+  "last_checked": "2025-09-16T09:01:00.000Z",
+  "pre_loaded_contexts": [
+    "mission-lite.md",
+    "spec-lite.md",
+    "spec.md",
+    "javascript-style.md",
+    "best-practices-comprehensive.md",
+    "testing-guidelines.md",
+    "tests.md"
+  ]
+}

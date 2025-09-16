@@ -1,0 +1,26 @@
+# Common Contexts for 2025-01-16-test-optimization
+# Generated: 2025-09-16T08:52:00Z
+# Expires: 2025-09-16T09:52:00Z
+
+# CORE CONTEXT (Always loaded - 100% usage)
+/Users/nathanvale/code/bun-changesets-template/.agent-os/product/mission-lite.md
+/Users/nathanvale/code/bun-changesets-template/.agent-os/specs/2025-01-16-test-optimization/spec-lite.md
+
+# PRELOAD CONTEXTS (>30% usage threshold)
+/Users/nathanvale/code/bun-changesets-template/.agent-os/standards/code-style/javascript-style.md  # 60% usage (3/5 tasks)
+/Users/nathanvale/code/bun-changesets-template/.agent-os/standards/best-practices-comprehensive.md  # 80% usage (4/5 tasks)
+/Users/nathanvale/code/bun-changesets-template/.agent-os/specs/2025-01-16-test-optimization/spec.md  # 60% usage (3/5 tasks)
+/Users/nathanvale/code/bun-changesets-template/.agent-os/standards/testing-guidelines.md  # 80% usage (4/5 tasks)
+/Users/nathanvale/code/bun-changesets-template/.agent-os/specs/2025-01-16-test-optimization/sub-specs/tests.md  # 80% usage (4/5 tasks)
+
+# SECTION OPTIMIZATION CANDIDATES
+# These files support partial loading for even greater efficiency:
+# - javascript-style.md: ESLint rules (400 tokens), function limits (150 tokens), imports (100 tokens)
+# - best-practices-comprehensive.md: Error management (200 tokens), security (200 tokens), API design (200 tokens)
+# - testing-guidelines.md: Unit testing (200 tokens), integration (200 tokens), coverage (100 tokens)
+
+# OPTIMIZATION SUMMARY
+# Traditional loading: ~19,961 tokens total
+# Optimized loading: ~5,481 tokens total
+# Token savings: 72.5% (14,480 tokens saved)
+# Strategy: Aggressive preload with section optimization

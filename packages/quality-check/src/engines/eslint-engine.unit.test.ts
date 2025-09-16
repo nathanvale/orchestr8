@@ -111,6 +111,62 @@ module.exports = greeting`,
       expect(content).not.toContain(';')
     })
 
+    it('should populate modifiedFiles when fixes are applied', async () => {
+      const testFile = path.join(tempDir, 'fixable-modified.js')
+      fs.writeFileSync(
+        testFile,
+        `const greeting = 'Hello';
+module.exports = greeting`,
+      )
+
+      const result = await engine.check({
+        files: [testFile],
+        fix: true,
+        cwd: tempDir,
+      })
+
+      expect(result.success).toBe(true)
+      expect(result.modifiedFiles).toBeDefined()
+      expect(result.modifiedFiles).toContain(testFile)
+    })
+
+    it('should not populate modifiedFiles when no fixes are applied', async () => {
+      const testFile = path.join(tempDir, 'no-fixes.js')
+      fs.writeFileSync(
+        testFile,
+        `const greeting = 'Hello'
+module.exports = greeting`,
+      )
+
+      const result = await engine.check({
+        files: [testFile],
+        fix: true,
+        cwd: tempDir,
+      })
+
+      expect(result.success).toBe(true)
+      expect(result.modifiedFiles).toBeDefined()
+      expect(result.modifiedFiles).toHaveLength(0)
+    })
+
+    it('should return empty modifiedFiles when fix is disabled', async () => {
+      const testFile = path.join(tempDir, 'no-fix-mode.js')
+      fs.writeFileSync(
+        testFile,
+        `const greeting = 'Hello';
+module.exports = greeting`,
+      )
+
+      const result = await engine.check({
+        files: [testFile],
+        fix: false,
+        cwd: tempDir,
+      })
+
+      expect(result.modifiedFiles).toBeDefined()
+      expect(result.modifiedFiles).toHaveLength(0)
+    })
+
     it('should respect cache directory option', async () => {
       const customCacheDir = path.join(tempDir, 'custom-cache')
       const testFile = path.join(tempDir, 'cached.js')

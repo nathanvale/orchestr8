@@ -38,6 +38,7 @@ export class ESLintEngine {
    */
   async check(config: ESLintEngineConfig): Promise<CheckerResult> {
     const startTime = Date.now()
+    const modifiedFiles: string[] = []
 
     try {
       // Check if ESLint is available
@@ -61,6 +62,7 @@ export class ESLintEngine {
           success: true,
           issues: [],
           duration: Date.now() - startTime,
+          modifiedFiles,
         }
       }
 
@@ -73,15 +75,38 @@ export class ESLintEngine {
           success: true,
           issues: [],
           duration: Date.now() - startTime,
+          modifiedFiles,
         }
       }
 
       // Apply fixes if requested
       if (config.fix) {
         await ESLint.outputFixes(results)
+        // Collect files that were modified during fix operation
+        for (const result of results) {
+          if (result.output) {
+            modifiedFiles.push(result.filePath)
+          }
+        }
+
+        // Re-lint to get only unfixed issues after applying fixes
+        const postFixResults = await this.eslint.lintFiles(config.files)
+        // Convert only remaining issues after fixes
+        const issues = this.convertResults(postFixResults)
+
+        const duration = Date.now() - startTime
+
+        return {
+          success: issues.length === 0,
+          issues,
+          duration,
+          fixable: this.hasFixableIssues(postFixResults),
+          fixedCount: this.getFixedCount(results),
+          modifiedFiles,
+        }
       }
 
-      // Convert results to issues
+      // Convert results to issues (no fix mode)
       const issues = this.convertResults(results)
 
       const duration = Date.now() - startTime
@@ -92,6 +117,7 @@ export class ESLintEngine {
         duration,
         fixable: this.hasFixableIssues(results),
         fixedCount: this.getFixedCount(results),
+        modifiedFiles,
       }
     } catch (error) {
       if (error instanceof ToolMissingError) {
@@ -113,6 +139,7 @@ export class ESLintEngine {
         ],
         duration,
         fixable: false,
+        modifiedFiles,
       }
     }
   }

@@ -1,5 +1,13 @@
 import { describe, expect, test } from 'vitest'
-import { average, isApproximately, median, percentile, sum, summarize } from './number-utils'
+import {
+  average,
+  isApproximately,
+  median,
+  percentile,
+  sum,
+  summarize,
+  multiply,
+} from './number-utils'
 
 // Comprehensive test suite with edge cases, extreme values, and regression locks
 describe('number-utils', () => {
