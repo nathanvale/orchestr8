@@ -9,6 +9,9 @@ on:
 env:
   NODE_VERSION: "20.18.1"
   PNPM_VERSION: "9.15.4"
+  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+  TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
+  TURBO_REMOTE_CACHE_SIGNATURE_KEY: ${{ secrets.TURBO_REMOTE_CACHE_SIGNATURE_KEY }}
 
 jobs:
   setup:
@@ -36,6 +39,7 @@ jobs:
             .eslintcache
             .prettiercache
             .turbo
+            **/.turbo
           key: deps-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}-turbo-${{ hashFiles('turbo.json*', 'tsconfig*.json') }}
           restore-keys: |
             deps-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}-

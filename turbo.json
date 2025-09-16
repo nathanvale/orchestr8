@@ -95,21 +95,13 @@
     "WALLABY_WORKER_ID",
     "ELEVENLABS_API_KEY",
     "OPENAI_API_KEY",
-    "DEBUG"
+    "DEBUG",
+    "TURBO_TOKEN",
+    "TURBO_TEAM",
+    "TURBO_REMOTE_CACHE_SIGNATURE_KEY",
+    "TURBO_SCM_BASE"
   ],
   "remoteCache": {
-    "enabled": true,
-    "signature": true,
-    "preflight": true,
-    "timeout": 30
-  },
-  "localCache": {
-    "enabled": true,
-    "directory": ".turbo/cache",
-    "compression": "gzip",
-    "maxSize": "5GB",
-    "evictionPolicy": "lru",
-    "retentionDays": 30
-  },
-  "parallelism": "auto"
+    "signature": true
+  }
 }
