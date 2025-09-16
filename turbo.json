@@ -102,5 +102,14 @@
     "signature": true,
     "preflight": true,
     "timeout": 30
-  }
+  },
+  "localCache": {
+    "enabled": true,
+    "directory": ".turbo/cache",
+    "compression": "gzip",
+    "maxSize": "5GB",
+    "evictionPolicy": "lru",
+    "retentionDays": 30
+  },
+  "parallelism": "auto"
 }
