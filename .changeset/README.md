@@ -11,4 +11,3 @@
 
 - Use Conventional Commits (`bun run commit` / `git cz`).
 - Monorepos are supported; list multiple packages in one changeset if needed.
-
