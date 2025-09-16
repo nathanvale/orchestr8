@@ -194,9 +194,7 @@
       "/Users/nathanvale/code/bun-changesets-template/turbo.json",
       "/Users/nathanvale/code/bun-changesets-template/package.json"
     ],
-    "on_demand_contexts": [
-      "/Users/nathanvale/code/bun-changesets-template/.prettierrc.json"
-    ],
+    "on_demand_contexts": ["/Users/nathanvale/code/bun-changesets-template/.prettierrc.json"],
     "threshold_percentage": 30,
     "section_based_loading": false
   },
@@ -274,19 +272,44 @@
         "estimated_tokens": 3350
       },
       "Task 2": {
-        "contexts_needed": ["technical_specifications", "code_style", "testing_guidelines", "best_practices", "configuration_files"],
+        "contexts_needed": [
+          "technical_specifications",
+          "code_style",
+          "testing_guidelines",
+          "best_practices",
+          "configuration_files"
+        ],
         "estimated_tokens": 3850
       },
       "Task 3": {
-        "contexts_needed": ["technical_specifications", "code_style", "testing_guidelines", "best_practices", "configuration_files"],
+        "contexts_needed": [
+          "technical_specifications",
+          "code_style",
+          "testing_guidelines",
+          "best_practices",
+          "configuration_files"
+        ],
         "estimated_tokens": 3850
       },
       "Task 4": {
-        "contexts_needed": ["technical_specifications", "code_style", "testing_guidelines", "configuration_files", "prettier_config"],
+        "contexts_needed": [
+          "technical_specifications",
+          "code_style",
+          "testing_guidelines",
+          "configuration_files",
+          "prettier_config"
+        ],
         "estimated_tokens": 3400
       },
       "Task 5": {
-        "contexts_needed": ["technical_specifications", "code_style", "testing_guidelines", "best_practices", "configuration_files", "prettier_config"],
+        "contexts_needed": [
+          "technical_specifications",
+          "code_style",
+          "testing_guidelines",
+          "best_practices",
+          "configuration_files",
+          "prettier_config"
+        ],
         "estimated_tokens": 3900
       }
     }
