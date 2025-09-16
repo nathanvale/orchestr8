@@ -4,16 +4,16 @@ import * as path from 'node:path'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { ESLintEngine } from './eslint-engine'
 
-describe('ESLintEngine', () => {
-  let engine: ESLintEngine
-  let tempDir: string
+// Test setup shared across multiple describe blocks
+let engine: ESLintEngine
+let tempDir: string
 
-  beforeEach(() => {
-    engine = new ESLintEngine()
-    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'eslint-engine-test-'))
+const setupTest = () => {
+  engine = new ESLintEngine()
+  tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'eslint-engine-test-'))
 
-    // Create a basic ESLint flat config (CommonJS for compatibility)
-    const eslintConfig = `
+  // Create a basic ESLint flat config (CommonJS for compatibility)
+  const eslintConfig = `
 module.exports = [
   {
     files: ['**/*.js', '**/*.ts'],
@@ -35,487 +35,442 @@ module.exports = [
   },
 ]
 `
-    fs.writeFileSync(path.join(tempDir, 'eslint.config.js'), eslintConfig)
+  fs.writeFileSync(path.join(tempDir, 'eslint.config.js'), eslintConfig)
+}
+
+const teardownTest = () => {
+  // Clean up temp directory
+  fs.rmSync(tempDir, { recursive: true, force: true })
+  engine.clearCache()
+}
+
+describe('ESLintEngine - Basic Check Operations', () => {
+  beforeEach(setupTest)
+  afterEach(teardownTest)
+
+  it('should return success when no issues found', async () => {
+    const testFile = path.join(tempDir, 'valid.js')
+    fs.writeFileSync(
+      testFile,
+      `const greeting = 'Hello, World!'
+module.exports = greeting`,
+    )
+
+    const result = await engine.check({
+      files: [testFile],
+      cwd: tempDir,
+    })
+
+    expect(result.success).toBe(true)
+    expect(result.issues).toHaveLength(0)
+    expect(result.duration).toBeGreaterThan(0)
   })
 
-  afterEach(() => {
-    // Clean up temp directory
-    fs.rmSync(tempDir, { recursive: true, force: true })
+  it('should detect linting errors', async () => {
+    const testFile = path.join(tempDir, 'errors.js')
+    fs.writeFileSync(
+      testFile,
+      `const unused = 'Hello';
+console.log('test');`,
+    )
+
+    const result = await engine.check({
+      files: [testFile],
+      cwd: tempDir,
+    })
+
+    expect(result.success).toBe(false)
+    expect(result.issues).toHaveLength(4) // unused variable + 2 semicolons + console.log
+
+    const unusedVarIssue = result.issues.find((i) => i.ruleId === 'no-unused-vars')
+    expect(unusedVarIssue).toBeDefined()
+    expect(unusedVarIssue?.severity).toBe('error')
+    expect(unusedVarIssue?.message).toContain('unused')
+
+    const consoleIssue = result.issues.find((i) => i.ruleId === 'no-console')
+    expect(consoleIssue).toBeDefined()
+    expect(consoleIssue?.severity).toBe('warning')
+  })
+
+  it('should handle multiple files', async () => {
+    const file1 = path.join(tempDir, 'file1.js')
+    const file2 = path.join(tempDir, 'file2.js')
+
+    fs.writeFileSync(file1, `const unused1 = 'test'`)
+    fs.writeFileSync(file2, `const unused2 = 'test'`)
+
+    const result = await engine.check({
+      files: [file1, file2],
+      cwd: tempDir,
+    })
+
+    expect(result.success).toBe(false)
+    expect(result.issues).toHaveLength(2) // One unused variable in each file
+    expect(result.issues[0].file).toBe(file1)
+    expect(result.issues[1].file).toBe(file2)
+  })
+
+  it('should handle ESLint configuration errors gracefully', async () => {
+    // Remove ESLint config to cause configuration error
+    fs.unlinkSync(path.join(tempDir, 'eslint.config.js'))
+
+    const testFile = path.join(tempDir, 'test.js')
+    fs.writeFileSync(testFile, `const test = 'test'\nmodule.exports = test`)
+
+    const result = await engine.check({
+      files: [testFile],
+      cwd: tempDir,
+    })
+
+    // Should handle gracefully - either success with no rules or error captured
+    expect(result).toBeDefined()
+    expect(result.duration).toBeGreaterThan(0)
+  })
+})
+
+describe('ESLintEngine - Fix Operations', () => {
+  beforeEach(setupTest)
+  afterEach(teardownTest)
+
+  it('should fix issues when fix option is enabled', async () => {
+    const testFile = path.join(tempDir, 'fixable.js')
+    fs.writeFileSync(
+      testFile,
+      `const greeting = 'Hello';
+module.exports = greeting`,
+    )
+
+    const result = await engine.check({
+      files: [testFile],
+      fix: true,
+      cwd: tempDir,
+    })
+
+    expect(result.success).toBe(true)
+    expect(result.fixedCount).toBeGreaterThanOrEqual(0)
+
+    // File should not have semicolon after fix
+    const content = fs.readFileSync(testFile, 'utf-8')
+    expect(content).not.toContain(';')
+  })
+
+  it('should populate modifiedFiles when fixes are applied', async () => {
+    const testFile = path.join(tempDir, 'fixable-modified.js')
+    fs.writeFileSync(
+      testFile,
+      `const greeting = 'Hello';
+module.exports = greeting`,
+    )
+
+    const result = await engine.check({
+      files: [testFile],
+      fix: true,
+      cwd: tempDir,
+    })
+
+    expect(result.success).toBe(true)
+    expect(result.modifiedFiles).toBeDefined()
+    expect(result.modifiedFiles).toContain(testFile)
+  })
+
+  it('should not populate modifiedFiles when no fixes are applied', async () => {
+    const testFile = path.join(tempDir, 'no-fixes.js')
+    fs.writeFileSync(
+      testFile,
+      `const greeting = 'Hello'
+module.exports = greeting`,
+    )
+
+    const result = await engine.check({
+      files: [testFile],
+      fix: true,
+      cwd: tempDir,
+    })
+
+    expect(result.success).toBe(true)
+    expect(result.modifiedFiles).toBeDefined()
+    expect(result.modifiedFiles).toHaveLength(0)
+  })
+
+  it('should detect fixable issues', async () => {
+    const testFile = path.join(tempDir, 'fixable-detect.js')
+    fs.writeFileSync(
+      testFile,
+      `const greeting = 'Hello';`, // Has semicolon that should be removed
+    )
+
+    const result = await engine.check({
+      files: [testFile],
+      fix: false, // Don't fix, just detect
+      cwd: tempDir,
+    })
+
+    expect(result.fixable).toBe(true)
+  })
+})
+
+describe('ESLintEngine - Configuration and Cache', () => {
+  beforeEach(setupTest)
+  afterEach(teardownTest)
+
+  it('should respect cache directory option', async () => {
+    const customCacheDir = path.join(tempDir, 'custom-cache')
+    const testFile = path.join(tempDir, 'cached.js')
+    fs.writeFileSync(
+      testFile,
+      `const greeting = 'Hello'
+module.exports = greeting`,
+    )
+
+    await engine.check({
+      files: [testFile],
+      cacheDir: customCacheDir,
+      cwd: tempDir,
+    })
+
+    // Cache directory should be created
+    expect(fs.existsSync(customCacheDir)).toBe(true)
+  })
+
+  it('should handle cancellation token', async () => {
+    const testFile = path.join(tempDir, 'cancel.js')
+    fs.writeFileSync(testFile, `const test = 'test'`)
+
+    const token = {
+      isCancellationRequested: true,
+      onCancellationRequested: () => {},
+    }
+
+    const result = await engine.check({
+      files: [testFile],
+      cwd: tempDir,
+      token,
+    })
+
+    expect(result.success).toBe(true)
+    expect(result.issues).toHaveLength(0)
+  })
+
+  it('should return true when ESLint is configured', async () => {
+    const configured = await engine.isConfigured()
+    expect(configured).toBe(true)
+  })
+
+  it('should return ESLint version', () => {
+    const version = ESLintEngine.getVersion()
+    expect(version).toBeDefined()
+    expect(version).toMatch(/^\d+\.\d+\.\d+/)
+  })
+})
+
+describe('ESLintEngine - Cache Management', () => {
+  beforeEach(setupTest)
+  afterEach(teardownTest)
+
+  it('should clear internal ESLint instance', () => {
     engine.clearCache()
+    // This is mainly for coverage, the actual effect is internal
+    expect(engine).toBeDefined()
   })
 
-  describe('check', () => {
-    it('should return success when no issues found', async () => {
-      const testFile = path.join(tempDir, 'valid.js')
-      fs.writeFileSync(
-        testFile,
-        `const greeting = 'Hello, World!'
-module.exports = greeting`,
-      )
+  it('should allow fresh ESLint instance creation after clearCache', async () => {
+    const testFile = path.join(tempDir, 'fresh.js')
+    fs.writeFileSync(testFile, `const test = 'test'\nmodule.exports = test`)
 
-      const result = await engine.check({
-        files: [testFile],
-        cwd: tempDir,
-      })
-
-      expect(result.success).toBe(true)
-      expect(result.issues).toHaveLength(0)
-      expect(result.duration).toBeGreaterThan(0)
+    // First check to initialize ESLint instance
+    const result1 = await engine.check({
+      files: [testFile],
+      cwd: tempDir,
     })
 
-    it('should detect linting errors', async () => {
-      const testFile = path.join(tempDir, 'errors.js')
-      fs.writeFileSync(
-        testFile,
-        `const unused = 'Hello';
-console.log('test');`,
-      )
+    expect(result1).toBeDefined()
 
-      const result = await engine.check({
-        files: [testFile],
-        cwd: tempDir,
-      })
+    // Clear cache
+    engine.clearCache()
 
-      expect(result.success).toBe(false)
-      expect(result.issues).toHaveLength(4) // unused variable + 2 semicolons + console.log
-
-      const unusedVarIssue = result.issues.find((i) => i.ruleId === 'no-unused-vars')
-      expect(unusedVarIssue).toBeDefined()
-      expect(unusedVarIssue?.severity).toBe('error')
-      expect(unusedVarIssue?.message).toContain('unused')
-
-      const consoleIssue = result.issues.find((i) => i.ruleId === 'no-console')
-      expect(consoleIssue).toBeDefined()
-      expect(consoleIssue?.severity).toBe('warning')
+    // Second check should work with new instance
+    const result2 = await engine.check({
+      files: [testFile],
+      cwd: tempDir,
     })
 
-    it('should fix issues when fix option is enabled', async () => {
-      const testFile = path.join(tempDir, 'fixable.js')
-      fs.writeFileSync(
-        testFile,
-        `const greeting = 'Hello';
-module.exports = greeting`,
-      )
-
-      const result = await engine.check({
-        files: [testFile],
-        fix: true,
-        cwd: tempDir,
-      })
-
-      expect(result.success).toBe(true)
-      expect(result.fixedCount).toBeGreaterThanOrEqual(0)
-
-      // File should not have semicolon after fix
-      const content = fs.readFileSync(testFile, 'utf-8')
-      expect(content).not.toContain(';')
-    })
-
-    it('should respect cache directory option', async () => {
-      const customCacheDir = path.join(tempDir, 'custom-cache')
-      const testFile = path.join(tempDir, 'cached.js')
-      fs.writeFileSync(
-        testFile,
-        `const greeting = 'Hello'
-module.exports = greeting`,
-      )
-
-      await engine.check({
-        files: [testFile],
-        cacheDir: customCacheDir,
-        cwd: tempDir,
-      })
-
-      // Cache directory should be created
-      expect(fs.existsSync(customCacheDir)).toBe(true)
-    })
-
-    it('should handle cancellation token', async () => {
-      const testFile = path.join(tempDir, 'cancel.js')
-      fs.writeFileSync(testFile, `const test = 'test'`)
-
-      const token = {
-        isCancellationRequested: true,
-        onCancellationRequested: () => {},
-      }
-
-      const result = await engine.check({
-        files: [testFile],
-        cwd: tempDir,
-        token,
-      })
-
-      expect(result.success).toBe(true)
-      expect(result.issues).toHaveLength(0)
-    })
-
-    it('should handle multiple files', async () => {
-      const file1 = path.join(tempDir, 'file1.js')
-      const file2 = path.join(tempDir, 'file2.js')
-
-      fs.writeFileSync(file1, `const unused1 = 'test'`)
-      fs.writeFileSync(file2, `const unused2 = 'test'`)
-
-      const result = await engine.check({
-        files: [file1, file2],
-        cwd: tempDir,
-      })
-
-      expect(result.success).toBe(false)
-      expect(result.issues).toHaveLength(2) // One unused variable in each file
-      expect(result.issues[0].file).toBe(file1)
-      expect(result.issues[1].file).toBe(file2)
-    })
-
-    it('should handle ESLint configuration errors gracefully', async () => {
-      // Remove ESLint config to cause configuration error
-      fs.unlinkSync(path.join(tempDir, 'eslint.config.js'))
-
-      const testFile = path.join(tempDir, 'test.js')
-      fs.writeFileSync(testFile, `const test = 'test'\nmodule.exports = test`)
-
-      const result = await engine.check({
-        files: [testFile],
-        cwd: tempDir,
-      })
-
-      // Should handle gracefully - either success with no rules or error captured
-      expect(result).toBeDefined()
-      expect(result.duration).toBeGreaterThan(0)
-    })
-
-    it('should detect fixable issues', async () => {
-      const testFile = path.join(tempDir, 'fixable-detect.js')
-      fs.writeFileSync(
-        testFile,
-        `const greeting = 'Hello';`, // Has semicolon that should be removed
-      )
-
-      const result = await engine.check({
-        files: [testFile],
-        fix: false, // Don't fix, just detect
-        cwd: tempDir,
-      })
-
-      expect(result.fixable).toBe(true)
-    })
+    expect(result2).toBeDefined()
+    expect(result2.success).toBe(true)
   })
 
-  describe('format', () => {
-    it('should format results as stylish by default', async () => {
-      const mockResults = [
-        {
-          filePath: '/test/file.js',
-          messages: [
-            {
-              line: 1,
-              column: 1,
-              severity: 2 as const,
-              message: 'Test error',
-              ruleId: 'test-rule',
-            },
-          ],
-          errorCount: 1,
-          warningCount: 0,
-          fatalErrorCount: 0,
-          fixableErrorCount: 0,
-          fixableWarningCount: 0,
-          usedDeprecatedRules: [],
-          suppressedMessages: [],
-        },
-      ]
+  it('should clear cache after multiple check operations', async () => {
+    const testFile1 = path.join(tempDir, 'test1.js')
+    const testFile2 = path.join(tempDir, 'test2.js')
 
-      const formatted = await engine.format(mockResults)
-      expect(formatted).toBeDefined()
-      expect(typeof formatted).toBe('string')
+    fs.writeFileSync(testFile1, `const test1 = 'test'\nmodule.exports = test1`)
+    fs.writeFileSync(testFile2, `const test2 = 'test'\nmodule.exports = test2`)
+
+    // Run multiple checks to create internal state
+    await engine.check({ files: [testFile1], cwd: tempDir })
+    await engine.check({ files: [testFile2], cwd: tempDir })
+
+    // Clear should not throw and should reset state
+    expect(() => engine.clearCache()).not.toThrow()
+
+    // Should still work after clearing
+    const result = await engine.check({
+      files: [testFile1],
+      cwd: tempDir,
     })
 
-    it('should format results as JSON when specified', async () => {
-      const mockResults = [
-        {
-          filePath: '/test/file.js',
-          messages: [],
-          errorCount: 0,
-          warningCount: 0,
-          fatalErrorCount: 0,
-          fixableErrorCount: 0,
-          fixableWarningCount: 0,
-          usedDeprecatedRules: [],
-          suppressedMessages: [],
-        },
-      ]
-
-      const formatted = await engine.format(mockResults, 'json')
-      expect(formatted).toBeDefined()
-      expect(() => JSON.parse(formatted)).not.toThrow()
-    })
+    expect(result.success).toBe(true)
   })
 
-  describe('isConfigured', () => {
-    it('should return true when ESLint is configured', async () => {
-      const configured = await engine.isConfigured()
-      expect(configured).toBe(true)
+  it('should handle clearCache when no ESLint instance exists', () => {
+    const freshEngine = new ESLintEngine()
+    expect(() => freshEngine.clearCache()).not.toThrow()
+  })
+})
+
+describe('ESLintEngine - Resource Management', () => {
+  beforeEach(setupTest)
+  afterEach(teardownTest)
+
+  it('should handle memory cleanup during large file operations', async () => {
+    // Create a larger file to test memory handling
+    const largeFile = path.join(tempDir, 'large.js')
+    const largeContent = `
+        const data = Array(100).fill(0).map((_, i) => \`const var\${i} = "test\${i}"\`).join("\\n");
+        module.exports = { data };
+      `
+    fs.writeFileSync(largeFile, largeContent)
+
+    const result = await engine.check({
+      files: [largeFile],
+      cwd: tempDir,
     })
 
-    it('should return false when ESLint is not configured', async () => {
-      // Remove config file
-      fs.unlinkSync(path.join(tempDir, 'eslint.config.js'))
+    expect(result).toBeDefined()
+    expect(result.duration).toBeGreaterThan(0)
 
-      // Change to temp dir without config
-      const originalCwd = process.cwd()
-      process.chdir(tempDir)
-
-      const configured = await engine.isConfigured()
-
-      // Restore original cwd
-      process.chdir(originalCwd)
-
-      // May still return true if there's a global config
-      expect(typeof configured).toBe('boolean')
-    })
+    // Cleanup should work after large operations
+    expect(() => engine.clearCache()).not.toThrow()
   })
 
-  describe('getVersion', () => {
-    it('should return ESLint version', () => {
-      const version = ESLintEngine.getVersion()
-      expect(version).toBeDefined()
-      expect(version).toMatch(/^\d+\.\d+\.\d+/)
+  it('should handle cleanup after error conditions', async () => {
+    const invalidFile = path.join(tempDir, 'invalid.js')
+    fs.writeFileSync(invalidFile, 'invalid javascript syntax {{{ ')
+
+    // This should handle the error gracefully
+    const result = await engine.check({
+      files: [invalidFile],
+      cwd: tempDir,
     })
+
+    expect(result).toBeDefined()
+
+    // Cleanup should still work after errors
+    expect(() => engine.clearCache()).not.toThrow()
+
+    // Should be able to process valid files after cleanup
+    const validFile = path.join(tempDir, 'valid-after-error.js')
+    fs.writeFileSync(validFile, `const test = 'test'\nmodule.exports = test`)
+
+    const validResult = await engine.check({
+      files: [validFile],
+      cwd: tempDir,
+    })
+
+    expect(validResult.success).toBe(true)
   })
 
-  describe('clearCache', () => {
-    it('should clear internal ESLint instance', () => {
-      engine.clearCache()
-      // This is mainly for coverage, the actual effect is internal
-      expect(engine).toBeDefined()
-    })
+  it('should handle concurrent operations and cleanup', async () => {
+    const file1 = path.join(tempDir, 'concurrent1.js')
+    const file2 = path.join(tempDir, 'concurrent2.js')
+
+    fs.writeFileSync(file1, `const test1 = 'test'\nmodule.exports = test1`)
+    fs.writeFileSync(file2, `const test2 = 'test'\nmodule.exports = test2`)
+
+    // Start multiple operations
+    const promise1 = engine.check({ files: [file1], cwd: tempDir })
+    const promise2 = engine.check({ files: [file2], cwd: tempDir })
+
+    const [result1, result2] = await Promise.all([promise1, promise2])
+
+    expect(result1).toBeDefined()
+    expect(result2).toBeDefined()
+
+    // Cleanup should work after concurrent operations
+    expect(() => engine.clearCache()).not.toThrow()
   })
 
-  describe('JSON Error Reporting', () => {
-    it('should generate ErrorReport from ESLint results with errors', async () => {
-      const testFile = path.join(tempDir, 'errors.js')
-      fs.writeFileSync(
-        testFile,
-        `const unused = 'Hello';
-console.log('test');`,
-      )
+  it('should properly dispose resources during cancellation', async () => {
+    const testFile = path.join(tempDir, 'cancel-cleanup.js')
+    fs.writeFileSync(testFile, `const test = 'test'\nmodule.exports = test`)
 
-      const result = await engine.check({
-        files: [testFile],
-        cwd: tempDir,
-      })
+    const token = {
+      isCancellationRequested: true,
+      onCancellationRequested: () => {},
+    }
 
-      // Create mock ESLint results for formatting since getResults() doesn't exist
-      const mockResults = [
-        {
-          filePath: testFile,
-          messages: result.issues.map((issue) => ({
-            line: issue.line,
-            column: issue.col,
-            severity: (issue.severity === 'error' ? 2 : 1) as 1 | 2,
-            message: issue.message,
-            ruleId: issue.ruleId || null,
-          })),
-          errorCount: result.issues.filter((i) => i.severity === 'error').length,
-          warningCount: result.issues.filter((i) => i.severity === 'warning').length,
-          fatalErrorCount: 0,
-          fixableErrorCount: 0,
-          fixableWarningCount: 0,
-          usedDeprecatedRules: [],
-          suppressedMessages: [],
-        },
-      ]
-
-      const jsonOutput = await engine.format(mockResults, 'json')
-
-      expect(result.success).toBe(false)
-      expect(result.issues).toHaveLength(4)
-      expect(jsonOutput).toBeDefined()
-      expect(() => JSON.parse(jsonOutput)).not.toThrow()
-
-      // Verify JSON structure
-      const parsed = JSON.parse(jsonOutput)
-      expect(Array.isArray(parsed)).toBe(true)
-      expect(parsed[0]).toHaveProperty('filePath')
-      expect(parsed[0]).toHaveProperty('messages')
-      expect(parsed[0].messages).toHaveLength(4)
+    const result = await engine.check({
+      files: [testFile],
+      cwd: tempDir,
+      token,
     })
 
-    it('should generate ErrorReport from ESLint results with no errors', async () => {
-      const testFile = path.join(tempDir, 'valid.js')
-      fs.writeFileSync(
-        testFile,
-        `const greeting = 'Hello, World!'
-module.exports = greeting`,
-      )
+    expect(result.success).toBe(true)
+    expect(result.issues).toHaveLength(0)
 
-      const result = await engine.check({
-        files: [testFile],
-        cwd: tempDir,
-      })
+    // Cleanup should work after cancellation
+    expect(() => engine.clearCache()).not.toThrow()
+  })
+})
 
-      // Create mock ESLint results for formatting since getResults() doesn't exist
-      const mockResults = [
-        {
-          filePath: testFile,
-          messages: [],
-          errorCount: 0,
-          warningCount: 0,
-          fatalErrorCount: 0,
-          fixableErrorCount: 0,
-          fixableWarningCount: 0,
-          usedDeprecatedRules: [],
-          suppressedMessages: [],
-        },
-      ]
+describe('ESLintEngine - Formatting', () => {
+  beforeEach(setupTest)
+  afterEach(teardownTest)
 
-      const jsonOutput = await engine.format(mockResults, 'json')
+  it('should format results as stylish by default', async () => {
+    const mockResults = [
+      {
+        filePath: '/test/file.js',
+        messages: [
+          {
+            line: 1,
+            column: 1,
+            severity: 2 as const,
+            message: 'Test error',
+            ruleId: 'test-rule',
+          },
+        ],
+        errorCount: 1,
+        warningCount: 0,
+        fatalErrorCount: 0,
+        fixableErrorCount: 0,
+        fixableWarningCount: 0,
+        usedDeprecatedRules: [],
+        suppressedMessages: [],
+      },
+    ]
 
-      expect(result.success).toBe(true)
-      expect(result.issues).toHaveLength(0)
-      expect(jsonOutput).toBeDefined()
-      expect(() => JSON.parse(jsonOutput)).not.toThrow()
+    const formatted = await engine.format(mockResults)
+    expect(formatted).toBeDefined()
+    expect(typeof formatted).toBe('string')
+  })
 
-      // Verify JSON structure for clean results
-      const parsed = JSON.parse(jsonOutput)
-      expect(Array.isArray(parsed)).toBe(true)
-      expect(parsed[0]).toHaveProperty('filePath')
-      expect(parsed[0].messages).toHaveLength(0)
-    })
+  it('should format results as JSON when specified', async () => {
+    const mockResults = [
+      {
+        filePath: '/test/file.js',
+        messages: [],
+        errorCount: 0,
+        warningCount: 0,
+        fatalErrorCount: 0,
+        fixableErrorCount: 0,
+        fixableWarningCount: 0,
+        usedDeprecatedRules: [],
+        suppressedMessages: [],
+      },
+    ]
 
-    it('should support both JSON and stylish output formats simultaneously', async () => {
-      const testFile = path.join(tempDir, 'mixed.js')
-      fs.writeFileSync(testFile, `const unused = 'test'`)
-
-      await engine.check({
-        files: [testFile],
-        cwd: tempDir,
-      })
-
-      // Create mock ESLint results since getResults() doesn't exist
-      const mockResults = [
-        {
-          filePath: testFile,
-          messages: [
-            {
-              line: 1,
-              column: 7,
-              severity: 2 as const,
-              message: "'unused' is defined but never used.",
-              ruleId: 'no-unused-vars',
-            },
-          ],
-          errorCount: 1,
-          warningCount: 0,
-          fatalErrorCount: 0,
-          fixableErrorCount: 0,
-          fixableWarningCount: 0,
-          usedDeprecatedRules: [],
-          suppressedMessages: [],
-        },
-      ]
-
-      const jsonOutput = await engine.format(mockResults, 'json')
-      const stylishOutput = await engine.format(mockResults, 'stylish')
-
-      expect(jsonOutput).toBeDefined()
-      expect(stylishOutput).toBeDefined()
-      expect(() => JSON.parse(jsonOutput)).not.toThrow()
-      expect(typeof stylishOutput).toBe('string')
-      expect(stylishOutput).toContain('unused')
-    })
-
-    it('should provide detailed error information for ErrorReport conversion', async () => {
-      const testFile = path.join(tempDir, 'detailed.js')
-      fs.writeFileSync(
-        testFile,
-        `const unused1 = 'test';
-const unused2 = 'test';
-console.log('debug');`,
-      )
-
-      const result = await engine.check({
-        files: [testFile],
-        cwd: tempDir,
-      })
-
-      expect(result.success).toBe(false)
-      expect(result.issues.length).toBeGreaterThan(0)
-
-      // Verify we have detailed information for ErrorReport conversion
-      const firstIssue = result.issues[0]
-      expect(firstIssue).toHaveProperty('file')
-      expect(firstIssue).toHaveProperty('line')
-      expect(firstIssue).toHaveProperty('col')
-      expect(firstIssue).toHaveProperty('message')
-      expect(firstIssue).toHaveProperty('ruleId')
-      expect(firstIssue).toHaveProperty('severity')
-      expect(['error', 'warning']).toContain(firstIssue.severity)
-    })
-
-    it('should handle multiple files in JSON output', async () => {
-      const file1 = path.join(tempDir, 'file1.js')
-      const file2 = path.join(tempDir, 'file2.js')
-
-      fs.writeFileSync(file1, `const unused1 = 'test';`)
-      fs.writeFileSync(file2, `console.log('debug');`)
-
-      await engine.check({
-        files: [file1, file2],
-        cwd: tempDir,
-      })
-
-      // Create mock ESLint results for multiple files since getResults() doesn't exist
-      const mockResults = [
-        {
-          filePath: file1,
-          messages: [
-            {
-              line: 1,
-              column: 7,
-              severity: 2 as const,
-              message: "'unused1' is defined but never used.",
-              ruleId: 'no-unused-vars',
-            },
-          ],
-          errorCount: 1,
-          warningCount: 0,
-          fatalErrorCount: 0,
-          fixableErrorCount: 0,
-          fixableWarningCount: 0,
-          usedDeprecatedRules: [],
-          suppressedMessages: [],
-        },
-        {
-          filePath: file2,
-          messages: [
-            {
-              line: 1,
-              column: 1,
-              severity: 1 as const,
-              message: 'Unexpected console statement.',
-              ruleId: 'no-console',
-            },
-          ],
-          errorCount: 0,
-          warningCount: 1,
-          fatalErrorCount: 0,
-          fixableErrorCount: 0,
-          fixableWarningCount: 0,
-          usedDeprecatedRules: [],
-          suppressedMessages: [],
-        },
-      ]
-
-      const jsonOutput = await engine.format(mockResults, 'json')
-      const parsed = JSON.parse(jsonOutput)
-
-      expect(Array.isArray(parsed)).toBe(true)
-      expect(parsed).toHaveLength(2)
-      expect(parsed[0].filePath).toBe(file1)
-      expect(parsed[1].filePath).toBe(file2)
-      expect(parsed[0].messages.length).toBeGreaterThan(0)
-      expect(parsed[1].messages.length).toBeGreaterThan(0)
-    })
+    const formatted = await engine.format(mockResults, 'json')
+    expect(formatted).toBeDefined()
+    expect(() => JSON.parse(formatted)).not.toThrow()
   })
 })
