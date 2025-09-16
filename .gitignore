@@ -89,6 +89,7 @@ lerna-debug.log*
 *.pid
 *.seed
 *.pid.lock
+.agent-os/cache/
 
 # Performance data files (generated)
 .ci-performance-data.json

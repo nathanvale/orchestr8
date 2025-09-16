@@ -1,4 +1,4 @@
-.agent-os/.obsidian/
+.agent-os/**
 pnpm-lock.yaml
 .github/workflows/ci.yml
 sbom.json
