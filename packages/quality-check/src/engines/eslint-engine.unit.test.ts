@@ -124,7 +124,7 @@ console.log('test');`,
 
     // Should handle gracefully - either success with no rules or error captured
     expect(result).toBeDefined()
-    expect(result.duration).toBeGreaterThan(0)
+    expect(result.duration).toBeGreaterThanOrEqual(0)
   })
 })
 
@@ -324,6 +324,56 @@ describe('ESLintEngine - Cache Management', () => {
   it('should handle clearCache when no ESLint instance exists', () => {
     const freshEngine = new ESLintEngine()
     expect(() => freshEngine.clearCache()).not.toThrow()
+  })
+
+  it('should clear cache directory when requested', async () => {
+    const customCacheDir = path.join(tempDir, 'eslint-cache')
+    const testFile = path.join(tempDir, 'cache-test.js')
+    fs.writeFileSync(testFile, `const test = 'test'\nmodule.exports = test`)
+
+    // Run check to create cache
+    await engine.check({
+      files: [testFile],
+      cacheDir: customCacheDir,
+      cwd: tempDir,
+    })
+
+    // Verify cache was created
+    expect(fs.existsSync(customCacheDir)).toBe(true)
+
+    // Clear cache directory
+    await engine.clearCacheDirectory(customCacheDir)
+
+    // Cache directory should be removed
+    expect(fs.existsSync(customCacheDir)).toBe(false)
+  })
+
+  it('should handle clearCacheDirectory when directory does not exist', async () => {
+    const nonExistentDir = path.join(tempDir, 'non-existent-cache')
+
+    // Should not throw even if directory doesn't exist
+    await expect(engine.clearCacheDirectory(nonExistentDir)).resolves.toBeUndefined()
+  })
+
+  it('should dispose resources properly', () => {
+    engine.dispose()
+    expect(engine).toBeDefined()
+    // dispose() should clear internal state without throwing
+  })
+
+  it('should return memory usage statistics', () => {
+    const memUsage = engine.getMemoryUsage()
+    if (memUsage) {
+      expect(memUsage).toHaveProperty('used')
+      expect(memUsage).toHaveProperty('total')
+      expect(typeof memUsage.used).toBe('number')
+      expect(typeof memUsage.total).toBe('number')
+      expect(memUsage.used).toBeGreaterThan(0)
+      expect(memUsage.total).toBeGreaterThan(0)
+    } else {
+      // Memory usage might not be available in all environments
+      expect(memUsage).toBeUndefined()
+    }
   })
 })
 

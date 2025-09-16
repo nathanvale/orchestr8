@@ -40,6 +40,7 @@ export class PrettierEngine {
     const startTime = Date.now()
     const issues: Issue[] = []
     let fixedCount = 0
+    const modifiedFiles: string[] = []
 
     try {
       // Check if Prettier is available
@@ -86,6 +87,7 @@ export class PrettierEngine {
 
               await this.safeWriteFile(file, formatted)
               fixedCount++
+              modifiedFiles.push(file)
             } else {
               // Add issue for unformatted file
               issues.push({
@@ -129,6 +131,7 @@ export class PrettierEngine {
         duration,
         fixable: issues.length > 0,
         fixedCount,
+        modifiedFiles,
       }
     } catch (error) {
       if (error instanceof ToolMissingError) {
@@ -150,6 +153,7 @@ export class PrettierEngine {
         ],
         duration,
         fixable: false,
+        modifiedFiles,
       }
     }
   }

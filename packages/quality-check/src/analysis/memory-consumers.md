@@ -3,6 +3,7 @@
 ## Analysis Results
 
 ### 1. TypeScript Engine - AST Processing (HIGHEST IMPACT)
+
 - **Memory Usage**: ~150-200MB per 100 files
 - **Location**: `typescript-engine.ts:200-250`
 - **Root Cause**: Full TypeScript AST and type checker retained
@@ -13,6 +14,7 @@
   - Incremental program holds previous state
 
 ### 2. ESLint Engine - Rule Processing (HIGH IMPACT)
+
 - **Memory Usage**: ~100-150MB per 100 files
 - **Location**: `eslint-engine.ts:33-50`
 - **Root Cause**: New ESLint instances per check cycle
@@ -22,6 +24,7 @@
   - Rule context accumulation
 
 ### 3. Quality Checker - Engine State (MEDIUM-HIGH IMPACT)
+
 - **Memory Usage**: ~50-75MB baseline
 - **Location**: `quality-checker.ts:29-58`
 - **Root Cause**: All engines initialized simultaneously
@@ -31,6 +34,7 @@
   - No disposal between operations
 
 ### 4. Prettier Engine - File Buffers (MEDIUM IMPACT)
+
 - **Memory Usage**: ~30-50MB per 100 files
 - **Location**: `prettier-engine.ts:50-150`
 - **Root Cause**: File content buffering
@@ -40,6 +44,7 @@
   - Sequential processing holds buffers
 
 ### 5. Cache Accumulation (MEDIUM IMPACT)
+
 - **Memory Usage**: Grows unbounded over time
 - **Location**: `quality-checker.ts:1047-1056`
 - **Root Cause**: Caches not cleared between runs

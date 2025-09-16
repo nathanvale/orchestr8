@@ -6,6 +6,8 @@ module.exports = function (_wallaby) {
       'src/**/*.js',
       '!src/**/*.test.ts',
       '!src/**/*.spec.ts',
+      'bin/**/*',
+      'dist/**/*.js',
       'vitest.config.ts',
       'tsconfig.json',
       'package.json',

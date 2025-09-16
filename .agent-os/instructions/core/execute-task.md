@@ -33,7 +33,7 @@ FOR each subtask in current_parent_task:
   
 # Step 1: Context Check for THIS Subtask
 
-  USE: @agent:context-fetcher
+  USE: Task tool to launch context-fetcher agent
   REQUEST: "Check registry and load contexts needed for subtask [SUBTASK_NUMBER]: [SUBTASK_DESCRIPTION]"
   
 # Context-fetcher will
@@ -60,9 +60,8 @@ FOR each subtask in current_parent_task:
 # Step 3: Test if Required
 
   IF subtask_requires_testing:
-    USE: @agent:test-runner-chooser
+    USE: Task tool to launch context-fetcher
     PROVIDE: Subtask description and test requirements
-    EXECUTE: Tests via delegated runner
     VERIFY: Tests pass
   
 # Step 4: Update Progress
@@ -72,7 +71,7 @@ FOR each subtask in current_parent_task:
 # Step 5: Auto-Commit Subtask Changes
 
   IF implementation_created_changes:
-    USE: @agent:git-workflow
+    USE: Task tool to launch git-workflow agent
     PROVIDE: {
       "action": "subtask_commit",
       "use_cached_session": true,
@@ -375,7 +374,7 @@ Each commit contains only the changes for that specific subtask, making code rev
 ### Required Agents
 
 - @agent:context-fetcher - For smart context loading
-- @agent:test-runner-chooser - For test execution
+- @agent:wallaby-runner - For test execution
 - @agent:git-workflow - For auto-commits
 
 ### Session Dependencies

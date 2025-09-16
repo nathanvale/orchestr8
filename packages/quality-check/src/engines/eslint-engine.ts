@@ -32,6 +32,7 @@ export interface ESLintEngineConfig {
  */
 export class ESLintEngine {
   private eslint: ESLint | undefined
+  private lastConfig: { cwd: string; fix: boolean; cacheLocation: string } | undefined
 
   /**
    * Check files with ESLint
@@ -46,15 +47,29 @@ export class ESLintEngine {
         throw new ToolMissingError('eslint')
       }
 
-      // Initialize ESLint with v9 flat config
-      this.eslint = new ESLint({
+      // Prepare configuration
+      const eslintConfig = {
         cwd: config.cwd ?? process.cwd(),
         fix: config.fix ?? false,
-        cache: true,
         cacheLocation: config.cacheDir ?? '.cache/eslint',
-        errorOnUnmatchedPattern: false,
-        // Flat config is default in v9
-      })
+      }
+
+      // Only create new ESLint instance if configuration changed or doesn't exist
+      if (
+        !this.eslint ||
+        !this.lastConfig ||
+        this.lastConfig.cwd !== eslintConfig.cwd ||
+        this.lastConfig.fix !== eslintConfig.fix ||
+        this.lastConfig.cacheLocation !== eslintConfig.cacheLocation
+      ) {
+        this.eslint = new ESLint({
+          ...eslintConfig,
+          cache: true,
+          errorOnUnmatchedPattern: false,
+          // Flat config is default in v9
+        })
+        this.lastConfig = eslintConfig
+      }
 
       // Check for cancellation
       if (config.token?.isCancellationRequested) {
@@ -313,6 +328,7 @@ export class ESLintEngine {
    */
   clearCache(): void {
     this.eslint = undefined
+    this.lastConfig = undefined
 
     // Force garbage collection of potentially large ESLint objects
     if (global.gc) {

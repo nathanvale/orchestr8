@@ -81,6 +81,15 @@ export interface PerfMetrics {
 }
 
 /**
+ * Fix application metadata
+ */
+export interface FixMetadata {
+  engine: 'eslint' | 'prettier' | 'typescript'
+  fixedCount: number
+  modifiedFiles: string[]
+}
+
+/**
  * Aggregated result from all quality checkers
  */
 export interface QualityCheckResult {
@@ -98,6 +107,12 @@ export interface QualityCheckResult {
 
   /** Correlation ID for tracking */
   correlationId?: string
+
+  /** Fix-first architecture extensions */
+  fixesApplied?: FixMetadata[]
+  performanceOptimizations?: string[]
+  fallbackUsed?: boolean
+  warnings?: string[]
 }
 
 /**
@@ -118,4 +133,7 @@ export interface CheckerResult {
 
   /** Number of fixed issues */
   fixedCount?: number
+
+  /** Files that were modified during fix operations */
+  modifiedFiles?: string[]
 }

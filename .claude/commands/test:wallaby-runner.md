@@ -1,2 +1,2 @@
-Use the Use Task tool with subagent_type: wallaby-runner to create a simple
-failing tst and then fix it
+Use the Use Task tool with subagent_type: wallaby-runner to fix the failing test
+suite.

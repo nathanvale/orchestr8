@@ -9,6 +9,7 @@ on:
 env:
   NODE_VERSION: "20.18.1"
   PNPM_VERSION: "9.15.4"
+  NODE_OPTIONS: "--max-old-space-size=4096"
 
 jobs:
   setup:

@@ -43,6 +43,16 @@ essential information while dramatically reducing context usage.
 - **Graceful degradation** when external services unavailable
 - **User-friendly messages** through resilience layer
 
+### Memory Management
+
+- **Monitor continuously** - Use MemoryProfiler to track usage
+- **Set limits** - Enforce per-test memory limits (500MB default)
+- **Dispose resources** - Always clean up engines and caches
+- **Pool buffers** - Reuse buffers for file operations
+- **Stream large files** - Process files >10MB in chunks
+- **Apply backpressure** - Reduce batch sizes under memory pressure
+- **Detect leaks** - Use trend analysis to identify memory growth
+
 ### Testing
 
 - **Always** use the test-runner agent to execute tests.

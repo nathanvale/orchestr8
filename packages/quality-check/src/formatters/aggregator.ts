@@ -13,15 +13,28 @@ export class ResultAggregator {
       duration?: number
       correlationId?: string
       trackMetrics?: boolean
+      fixFirst?: boolean
     },
   ): QualityCheckResult {
     const allIssues: Issue[] = []
     let totalDuration = 0
     let allSuccess = true
 
-    // Collect all issues
-    for (const [_engine, result] of results) {
-      allIssues.push(...result.issues)
+    // Collect issues with fix-first filtering
+    for (const [_engineName, result] of results) {
+      // Handle undefined or null results gracefully
+      if (!result) continue
+
+      if (result.issues && Array.isArray(result.issues)) {
+        if (options?.fixFirst) {
+          // In fix-first mode, we assume engines have already filtered out fixed issues
+          // We include all issues reported by engines, as they should only be unfixable issues
+          allIssues.push(...result.issues)
+        } else {
+          // In regular mode, include all issues
+          allIssues.push(...result.issues)
+        }
+      }
 
       if (result.duration) {
         totalDuration += result.duration
@@ -71,18 +84,23 @@ export class ResultAggregator {
     for (const [engine, result] of results) {
       const engineKey = engine.toLowerCase() as 'typescript' | 'eslint' | 'prettier'
 
+      // Handle undefined or null results gracefully
+      if (!result) continue
+
       metrics.engines![engineKey] = {
         enabled: true,
         durationMs: result.duration ?? 0,
-        issueCount: result.issues.length,
+        issueCount: result.issues?.length ?? 0,
       }
 
       // Count issues
-      totalIssues += result.issues.length
+      totalIssues += result.issues?.length ?? 0
 
       // Count unique files
-      for (const issue of result.issues) {
-        fileSet.add(issue.file)
+      if (result.issues && Array.isArray(result.issues)) {
+        for (const issue of result.issues) {
+          fileSet.add(issue.file)
+        }
       }
     }
 

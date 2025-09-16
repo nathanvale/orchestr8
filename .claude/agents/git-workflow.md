@@ -39,10 +39,8 @@ DETECT_AND_CACHE_BRANCH() {
 
 # Extract from spec folder (cached for entire session)
 
-local
-spec_folder=$(ls -d .agent-os/specs/2* 2>/dev/null | head -1)
-  local feature_name="${spec_folder##_/}"
-| sed 's/^[0-9-]_-//'
+local spec*folder=$(ls -d .agent-os/specs/2* 2>/dev/null | head -1) local
+feature_name="${spec_folder##\*/}" | sed 's/^[0-9-]\_-//'
 
 # Cache for session
 
@@ -76,9 +74,9 @@ desc=$(echo "$subtask_info" | jq -r '.description')
 
 # Smart commit type detection
 
-local commit_type="feat" case "$desc" in _test_|_Test_) commit_type="test" ;;
-_fix_|_Fix_) commit_type="fix" ;; _style_|_format_|_lint_) commit_type="style"
-;; _doc_|_Doc_) commit_type="docs" ;; _refactor_|_Refactor_)
+local commit*type="feat" case "$desc" in \_test*|_Test_) commit*type="test" ;;
+\_fix*|_Fix_) commit*type="fix" ;; \_style*|_format_|_lint_) commit*type="style"
+;; \_doc*|_Doc_) commit*type="docs" ;; \_refactor*|_Refactor_)
 commit_type="refactor" ;; esac
 
 local commit_msg="$commit_type: Task $parent.$subtask - $desc"
@@ -180,7 +178,8 @@ local branch=$(jq -r '.branch_name' "$session_file") local
 commits=$(jq '.commit_count // 0' "$session_file") local
 subtasks=$(jq '.subtask_commits | length' "$session_file")
 
-echo "🚀 Finalizing Git Workflow" echo " Branch: $branch" echo " Commits:
+echo "🚀 Finalizing Git Workflow" echo " Branch:
+$branch" echo " Commits:
 $commits" echo " Subtasks: $subtasks"
 
 # Single push for all commits

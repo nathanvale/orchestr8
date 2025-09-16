@@ -16,33 +16,6 @@ describe('TypeScriptEngine - Resource Disposal', () => {
     }
   })
 
-  // TODO: dispose() tests - skipped until dispose() method is implemented
-  describe.skip('dispose()', () => {
-    it('should clear the incremental program', () => {
-      // Will implement after dispose() method is added to TypeScriptEngine
-    })
-
-    it('should clear the compiler host', () => {
-      // Will implement after dispose() method is added to TypeScriptEngine
-    })
-
-    it('should clear cached diagnostics', () => {
-      // Will implement after dispose() method is added to TypeScriptEngine
-    })
-
-    it('should be safe to call dispose multiple times', () => {
-      // Will implement after dispose() method is added to TypeScriptEngine
-    })
-
-    it('should allow checking files after disposal', () => {
-      // Will implement after dispose() method is added to TypeScriptEngine
-    })
-
-    it('should properly clean up memory references', () => {
-      // Will implement after dispose() method is added to TypeScriptEngine
-    })
-  })
-
   describe('clearCache()', () => {
     it('should clear the TypeScript compiler cache', async () => {
       const testFiles = ['test.ts']
@@ -58,7 +31,7 @@ describe('TypeScriptEngine - Resource Disposal', () => {
       expect(program).toBeUndefined()
     })
 
-    it('should be compatible with clearCache()', async () => {
+    it('should be compatible with multiple clearCache() calls', async () => {
       const testFiles = ['test.ts']
 
       // Initialize engine

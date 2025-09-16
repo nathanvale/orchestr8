@@ -190,7 +190,7 @@ describe('ResourceMonitor', () => {
         heapUsed: 80 * 1024 * 1024, // 80% usage
         external: 0,
         arrayBuffers: 0,
-      })
+      }) as unknown as typeof process.memoryUsage
 
       const monitor = new ResourceMonitor({
         memoryThresholdMB: 1000, // High threshold, not triggered
@@ -232,7 +232,7 @@ describe('ResourceMonitor', () => {
         heapUsed: 90 * 1024 * 1024, // 90% usage
         external: 0,
         arrayBuffers: 0,
-      })
+      }) as unknown as typeof process.memoryUsage
 
       const monitor = new ResourceMonitor({
         memoryThresholdMB: 1000, // High threshold, not triggered directly
@@ -308,7 +308,7 @@ describe('ResourceMonitor', () => {
     it('should handle memory usage exceptions gracefully', () => {
       process.memoryUsage = vi.fn().mockImplementation(() => {
         throw new Error('Memory info unavailable')
-      })
+      }) as unknown as typeof process.memoryUsage
 
       expect(() => monitor.getStatus()).toThrow()
       // In a real implementation, you might want to handle this gracefully
@@ -321,7 +321,7 @@ describe('ResourceMonitor', () => {
         heapUsed: 999,
         external: 0,
         arrayBuffers: 0,
-      })
+      }) as unknown as typeof process.memoryUsage
 
       const status = monitor.getStatus()
       expect(status.memoryPercent).toBeLessThanOrEqual(100)
@@ -335,7 +335,7 @@ describe('ResourceMonitor', () => {
         heapUsed: 0,
         external: 0,
         arrayBuffers: 0,
-      })
+      }) as unknown as typeof process.memoryUsage
 
       const status = monitor.getStatus()
       expect(status.memoryPercent).toBe(0)

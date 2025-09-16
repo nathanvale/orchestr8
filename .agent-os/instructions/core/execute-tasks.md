@@ -313,7 +313,7 @@ REPORT: "Optimization efficiency: {(RUNNING_TOKEN_SAVINGS / estimated_baseline) 
   ACTION: Execute remaining post-execution steps
   
   INCLUDE:
-    - Running full test suite
+    - Running full test suite using the test-runner agent
     - Verifying all tasks completed
     - Updating roadmap (if applicable)
     - Creating recap document with optimization metrics

@@ -22,11 +22,11 @@ export class BufferPool {
   private static readonly DEFAULT_MAX_POOL_SIZE = 50
   private static readonly DEFAULT_INITIAL_POOL_SIZE = 5
 
-  private readonly bufferSize: number
+  protected readonly bufferSize: number
   private readonly maxPoolSize: number
   private readonly autoGrow: boolean
   private readonly pool: Buffer[] = []
-  private readonly inUse = new Set<Buffer>()
+  protected readonly inUse = new Set<Buffer>()
   private totalAllocated = 0
   private totalReused = 0
   private peakUsage = 0
@@ -72,7 +72,7 @@ export class BufferPool {
   /**
    * Release a buffer back to the pool
    */
-  private release(buffer: Buffer): void {
+  protected release(buffer: Buffer): void {
     if (!this.inUse.has(buffer)) {
       return // Already released or not from this pool
     }
@@ -286,8 +286,8 @@ export function createBufferPool(options?: BufferPoolOptions): BufferPool {
  */
 export function withBufferPool(poolOrSize?: BufferPool | number) {
   return function <T extends unknown[], R>(
-    target: unknown,
-    propertyKey: string | symbol,
+    _target: unknown,
+    _propertyKey: string | symbol,
     descriptor: TypedPropertyDescriptor<(...args: T) => Promise<R>>,
   ): TypedPropertyDescriptor<(...args: T) => Promise<R>> {
     const originalMethod = descriptor.value!
@@ -372,7 +372,7 @@ export class StreamBufferPool extends BufferPool {
   /**
    * Clear readahead buffers
    */
-  clear(): void {
+  override clear(): void {
     super.clear()
     this.readaheadBuffers.length = 0
   }

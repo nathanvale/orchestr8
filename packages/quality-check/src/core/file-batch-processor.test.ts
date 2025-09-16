@@ -36,7 +36,7 @@ describe('FileBatchProcessor', () => {
       expect(result.errors).toHaveLength(0)
       expect(result.skipped).toBe(0)
       expect(result.results).toHaveLength(1) // Default batch size should handle all files in one batch
-      expect(mockProcessor).toHaveBeenCalledWith(testFiles)
+      expect(mockProcessor).toHaveBeenCalledWith(testFiles, undefined)
     })
 
     it('should handle batch processing with custom batch size', async () => {
@@ -188,7 +188,7 @@ describe('FileBatchProcessor', () => {
       const nonCriticalFiles = testFiles.slice(3)
       const processedOrder: boolean[] = []
 
-      const mockProcessor = vi.fn().mockImplementation(async (batch, critical) => {
+      const mockProcessor = vi.fn().mockImplementation(async (_batch, critical) => {
         processedOrder.push(critical)
         return `${critical ? 'critical' : 'normal'}`
       })

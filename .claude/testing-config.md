@@ -1,56 +1,45 @@
 ---
 framework: vitest
 test_command: pnpm test
-created: 2025-09-15T04:18:33Z
+created: 2025-09-16T07:43:59Z
 ---
 
 # Testing Configuration
 
 ## Framework
+
 - Type: Vitest
 - Version: 3.2.4
-- Config File: vitest.config.ts
+- Config File: ./vitest.config.ts
 
 ## Test Structure
-- Test Directory: tests/, packages/*/tests/, packages/*/spec/
-- Test Files: 65 files found
-- Naming Pattern: *.test.ts, *.integration.test.ts, *.unit.test.ts, *.e2e.test.ts, *.slow.test.ts
+
+- Test Directory: packages/_, apps/_, tests/, tooling/
+- Test Files: 61 files found
+- Naming Pattern: _.test.ts, _.test.tsx, _.spec.ts, _.spec.tsx
 
 ## Commands
+
 - Run All Tests: `pnpm test`
-- Run Specific Test: `pnpm test {file_pattern}`
-- Run with Debugging: `pnpm test --reporter=verbose`
-- Run Integration Tests: `TEST_MODE=integration pnpm test`
-- Run E2E Tests: `TEST_MODE=e2e pnpm test`
-- Run Unit Tests Only: `pnpm test` (default excludes integration/e2e/slow)
+- Run Specific Test: `pnpm test {test_file}`
+- Run with Debugging: `pnpm test:debug`
+- Run Unit Tests: `pnpm test:unit`
+- Run Integration Tests: `pnpm test:integration`
+- Run E2E Tests: `pnpm test:e2e`
+- Run Failed Tests: `pnpm test:failed`
+- Run Coverage: `pnpm test:coverage`
+- Run in Watch Mode: `vitest watch`
 
 ## Environment
-- Required ENV vars: TEST_MODE (optional: integration|e2e|all)
-- Test Database: N/A
-- Test Servers: N/A
+
+- Required ENV vars: NODE_ENV, TEST_MODE (optional)
+- Test Database: Not applicable
+- Test Servers: MSW for API mocking
 
 ## Test Runner Agent Configuration
+
 - Use verbose output for debugging
 - Run tests sequentially (no parallel)
 - Capture full stack traces
 - No mocking - use real implementations
 - Wait for each test to complete
-
-## Test Classification (ADHD-Optimized)
-- `.unit.test.ts` - Fast unit tests (default mode)
-- `.test.ts` - General tests (default mode)
-- `.integration.test.ts` - Integration tests (excluded by default)
-- `.e2e.test.ts` - End-to-end tests (excluded by default)
-- `.slow.test.ts` - Slow tests (excluded by default)
-
-## Wallaby Integration
-- Wallaby MCP tools available for `.unit.test.ts` and `.test.ts` files
-- HALT protocol enforced when Wallaby inactive
-- Real-time debugging with runtime values
-- Coverage analysis available
-
-## Coverage Configuration
-- Provider: v8
-- Threshold: 70% (branches, functions, lines, statements)
-- Reports: text-summary (local), comprehensive (CI)
-- Directory: ./test-results/coverage
