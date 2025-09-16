@@ -313,6 +313,30 @@ export class TypeScriptEngine {
   }
 
   /**
+   * Dispose of all resources held by the TypeScript engine.
+   * This should be called when the engine is no longer needed
+   * to free up memory and clean up file handles.
+   */
+  dispose(): void {
+    // Clear the incremental program
+    this.program = undefined
+
+    // Clear the compiler host
+    this.host = undefined
+
+    // Clear cached diagnostics
+    this.lastDiagnostics = []
+
+    // Clean up cache files
+    this.clearCache()
+
+    // Force garbage collection if available (for Node.js with --expose-gc)
+    if (global.gc) {
+      global.gc()
+    }
+  }
+
+  /**
    * Update root files for existing program
    */
   private updateRootFiles(
