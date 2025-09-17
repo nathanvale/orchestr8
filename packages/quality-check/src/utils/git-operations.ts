@@ -142,10 +142,13 @@ export class GitOperations {
           logger.debug('Skipping non-existent file', { file })
         }
       } catch (error) {
-        logger.warn('Failed to capture file state', {
-          file,
-          error: (error as Error).message,
-        })
+        // Only log in debug mode to reduce noise
+        if (process.env['DEBUG'] === 'true') {
+          logger.warn('Failed to capture file state', {
+            file,
+            error: (error as Error).message,
+          })
+        }
       }
     }
   }
@@ -183,10 +186,13 @@ export class GitOperations {
       } catch (error) {
         const errorMsg = `Error checking ${file}: ${(error as Error).message}`
         errors.push(errorMsg)
-        logger.warn('Failed to check file modification', {
-          file,
-          error: (error as Error).message,
-        })
+        // Only log in debug mode to reduce noise
+        if (process.env['DEBUG'] === 'true') {
+          logger.warn('Failed to check file modification', {
+            file,
+            error: (error as Error).message,
+          })
+        }
       }
     }
 
@@ -216,14 +222,14 @@ export class GitOperations {
       // Check if file is in the index (staged)
       const stagedOutput = execSync(`git diff --cached --name-only`, {
         encoding: 'utf8',
-        stdio: 'pipe',
+        stdio: ['pipe', 'pipe', 'ignore'], // Suppress stderr
       })
       const isStaged = stagedOutput.includes(file)
 
       // Check if file has unstaged changes
       const unstagedOutput = execSync(`git diff --name-only`, {
         encoding: 'utf8',
-        stdio: 'pipe',
+        stdio: ['pipe', 'pipe', 'ignore'], // Suppress stderr
       })
       const hasUnstagedChanges = unstagedOutput.includes(file)
 
@@ -237,10 +243,13 @@ export class GitOperations {
 
       return hasPartial
     } catch (error) {
-      logger.warn('Failed to check partial staging', {
-        file,
-        error: (error as Error).message,
-      })
+      // Only log in debug mode to reduce noise in non-git environments
+      if (process.env['DEBUG'] === 'true') {
+        logger.warn('Failed to check partial staging', {
+          file,
+          error: (error as Error).message,
+        })
+      }
       return false
     }
   }
@@ -261,7 +270,7 @@ export class GitOperations {
       // Get git directory path
       const gitDir = execSync('git rev-parse --git-dir', {
         encoding: 'utf8',
-        stdio: 'pipe',
+        stdio: ['pipe', 'pipe', 'ignore'], // Suppress stderr
       }).trim()
 
       // Check for rebase state
@@ -273,7 +282,7 @@ export class GitOperations {
       // Check for conflicts in git status
       const statusOutput = execSync('git status --porcelain', {
         encoding: 'utf8',
-        stdio: 'pipe',
+        stdio: ['pipe', 'pipe', 'ignore'], // Suppress stderr
       })
       state.hasConflicts = statusOutput.includes('UU ') || statusOutput.includes('AA ')
 
@@ -356,7 +365,7 @@ export class GitOperations {
   isGitRepository(): boolean {
     try {
       execSync('git rev-parse --git-dir', {
-        stdio: 'pipe',
+        stdio: ['pipe', 'pipe', 'ignore'], // Suppress stderr
         encoding: 'utf8',
       })
       return true
@@ -380,7 +389,7 @@ export class GitOperations {
     try {
       const output = execSync('git status --porcelain', {
         encoding: 'utf8',
-        stdio: 'pipe',
+        stdio: ['pipe', 'pipe', 'ignore'], // Suppress stderr
       })
 
       const statusLines = output.split('\n').filter((line) => line.trim())
