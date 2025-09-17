@@ -15,9 +15,42 @@
       "env": ["NODE_ENV"]
     },
     "lint": {
+      "dependsOn": ["//#format:root"],
       "outputs": [".eslintcache"],
       "cache": true,
       "inputs": ["$TURBO_DEFAULT$", "eslint.config.js"]
+    },
+    "//#format:root": {
+      "outputs": [".prettierrcache"],
+      "cache": true,
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        ".prettierrc*",
+        "prettier.config.*",
+        "**/.prettierrc*",
+        "**/*.{ts,tsx,js,jsx,json,md,mjs,cjs,yml,yaml}",
+        "!**/node_modules/**",
+        "!**/dist/**",
+        "!**/coverage/**",
+        "!**/.turbo/**"
+      ],
+      "outputLogs": "new-only"
+    },
+    "//#format:check:root": {
+      "outputs": [".prettierrcache"],
+      "cache": true,
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        ".prettierrc*",
+        "prettier.config.*",
+        "**/.prettierrc*",
+        "**/*.{ts,tsx,js,jsx,json,md,mjs,cjs,yml,yaml}",
+        "!**/node_modules/**",
+        "!**/dist/**",
+        "!**/coverage/**",
+        "!**/.turbo/**"
+      ],
+      "outputLogs": "errors-only"
     },
     "typecheck": {
       "dependsOn": ["^typecheck"],
@@ -45,6 +78,8 @@
     ".changeset/config.json",
     "eslint.config.js",
     "vitest.config.ts",
+    ".prettierrc*",
+    "prettier.config.*",
     "turbo.json*",
     ".env*"
   ],
@@ -58,12 +93,13 @@
     "WALLABY_WORKER_ID",
     "ELEVENLABS_API_KEY",
     "OPENAI_API_KEY",
-    "DEBUG"
+    "DEBUG",
+    "TURBO_TOKEN",
+    "TURBO_TEAM",
+    "TURBO_REMOTE_CACHE_SIGNATURE_KEY",
+    "TURBO_SCM_BASE"
   ],
   "remoteCache": {
-    "enabled": true,
-    "signature": false,
-    "preflight": true,
-    "timeout": 30
+    "signature": true
   }
 }

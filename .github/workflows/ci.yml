@@ -10,6 +10,15 @@ env:
   NODE_VERSION: "20.18.1"
   PNPM_VERSION: "9.15.4"
   NODE_OPTIONS: "--max-old-space-size=4096"
+  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+  TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
+  TURBO_REMOTE_CACHE_SIGNATURE_KEY: ${{ secrets.TURBO_REMOTE_CACHE_SIGNATURE_KEY }}
+  TURBO_SCM_BASE: origin/main  # Base branch for incremental change detection
+
+permissions:
+  contents: read
+  actions: read
+  checks: read
 
 jobs:
   setup:
@@ -19,6 +28,8 @@ jobs:
       cache-hit: ${{ steps.cache.outputs.cache-hit }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
       - uses: pnpm/action-setup@v4
         with:
           version: ${{ env.PNPM_VERSION }}
@@ -36,7 +47,7 @@ jobs:
             node_modules
             .eslintcache
             .prettiercache
-            .turbo
+            **/.turbo
           key: deps-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}-turbo-${{ hashFiles('turbo.json*', 'tsconfig*.json') }}
           restore-keys: |
             deps-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}-

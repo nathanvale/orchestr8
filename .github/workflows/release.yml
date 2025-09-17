@@ -21,6 +21,7 @@ env:
   # Vercel Remote Cache for faster builds during release
   TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
   TURBO_TEAM: ${{ vars.TURBO_TEAM }}
+  TURBO_REMOTE_CACHE_SIGNATURE_KEY: ${{ secrets.TURBO_REMOTE_CACHE_SIGNATURE_KEY }}
 
 jobs:
   release:
@@ -68,7 +69,7 @@ jobs:
 
       - name: Generate SBOM
         run: |
-          pnpx @cyclonedx/cdxgen@latest -o sbom.json -t js .
+          pnpx @cyclonedx/cdxgen@10.6.0 -o sbom.json -t js .
           echo "SBOM generated with $(jq '.components | length' sbom.json) components"
 
       - name: Create Release PR or Publish
