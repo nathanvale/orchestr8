@@ -90,7 +90,7 @@ describe('Turborepo Pipeline Configuration', () => {
         const config = parseJsonc(readFileSync(configPath, 'utf8'))
         expect(config.tasks.test.dependsOn).toContain('^build')
         expect(config.tasks.test.outputs).toContain('coverage/**')
-        expect(config.tasks.test.cache).toBe(true)
+        expect(config.tasks.test.cache).toBe(false) // Tests should not be cached
       }
     })
 

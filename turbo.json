@@ -10,9 +10,9 @@
     "test": {
       "dependsOn": ["^build"],
       "outputs": ["coverage/**"],
-      "cache": true,
+      "cache": false,
       "inputs": ["$TURBO_DEFAULT$", "vitest.config.ts"],
-      "env": ["NODE_ENV"],
+      "env": ["NODE_ENV", "VITEST_SILENT", "MEMORY_DEBUG", "CI"],
       "outputLogs": "new-only"
     },
     "lint": {

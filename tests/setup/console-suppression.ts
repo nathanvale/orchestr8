@@ -20,6 +20,17 @@ const originalConsole = {
 function isActualTestFailure(args: unknown[]): boolean {
   const errorString = args.map((arg) => String(arg)).join(' ')
 
+  // Patterns to suppress (known noise)
+  const noisePatterns = [
+    /fatal: not a git repository/i,
+    /Error during memory monitor cleanup/i, // Expected from cleanup error tests
+  ]
+
+  // Skip noise patterns
+  if (noisePatterns.some((pattern) => pattern.test(errorString))) {
+    return false
+  }
+
   // Patterns that indicate actual test failures
   const testFailurePatterns = [
     /AssertionError/i,
