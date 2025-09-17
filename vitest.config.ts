@@ -38,7 +38,7 @@ const isVitestSilent = process.env['VITEST_SILENT'] === 'true'
 const isDebugMode = process.env['DEBUG'] === 'true' || process.env['VERBOSE'] === 'true'
 
 // Determine silent mode based on environment
-const silentMode = isDebugMode ? false : isCI ? true : isVitestSilent ? 'passed-only' : false
+const silentMode = isDebugMode ? false : isCI ? true : isVitestSilent ? true : false
 
 export default mergeConfig(
   vitestSharedConfig,
