@@ -1,5 +1,5 @@
 ---
-"@claude-hooks/quality-check": minor
+'@claude-hooks/quality-check': minor
 ---
 
 Implement test noise reduction spec
@@ -11,4 +11,5 @@ Implement test noise reduction spec
 - Fixed test infrastructure with git error suppression
 - Created comprehensive documentation
 
-This significantly reduces test output noise while maintaining full functionality and debugging capabilities when needed.
+This significantly reduces test output noise while maintaining full
+functionality and debugging capabilities when needed.
