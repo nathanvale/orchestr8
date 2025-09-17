@@ -69,7 +69,7 @@ Identify tasks to execute, leveraging optimization for batch processing.
 Create optimization manifest for ALL tasks, then pre-load common contexts.
 
 <instructions>
-  ACTION: Use task-optimizer subagent:
+  ACTION: You *MUST* use task-optimizer subagent:
     - REQUEST: "Analyze [SPEC_FOLDER]/tasks.md and create optimization manifest for all tasks"
     - RECEIVE:
       - Manifest at .agent-os/cache/execution-manifest.json

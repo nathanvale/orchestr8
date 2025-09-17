@@ -42,13 +42,17 @@ export class MemoryMonitor {
   private config: Required<MemoryMonitorConfig>
   private testData: Map<string, TestMemoryData>
   private testOptions: Map<string, TestOptions>
+  private debugMode: boolean
 
   constructor(config: MemoryMonitorConfig = {}) {
+    // Only enable memory monitoring when MEMORY_DEBUG is set
+    this.debugMode = process.env['MEMORY_DEBUG'] === 'true'
+
     this.config = {
       maxMemoryMB: config.maxMemoryMB ?? 500,
       warningThresholdPercent: config.warningThresholdPercent ?? 80,
-      enableTracking: config.enableTracking ?? true,
-      enableWarnings: config.enableWarnings ?? true,
+      enableTracking: config.enableTracking ?? this.debugMode,
+      enableWarnings: config.enableWarnings ?? this.debugMode,
       enableTrendReporting: config.enableTrendReporting ?? false,
     }
     this.profiler = new MemoryProfiler()
@@ -132,7 +136,7 @@ export class MemoryMonitor {
     const currentUsage = data.before.memory.heapUsed
     const percentage = (currentUsage / limit) * 100
 
-    if (currentUsage > limit * threshold) {
+    if (currentUsage > limit * threshold && this.debugMode) {
       console.warn(
         `Memory usage warning: ${currentUsage}MB (${Math.round(percentage)}% of ${limit}MB limit)`,
       )
@@ -217,6 +221,7 @@ export class MemoryMonitor {
   }
 
   async exportTrendReport(filePath: string): Promise<void> {
+    if (!this.debugMode) return // Skip report generation unless debugging
     const report = this.generateTrendReport()
     const fs = await import('fs/promises')
     await fs.writeFile(filePath, JSON.stringify(report, null, 2))
