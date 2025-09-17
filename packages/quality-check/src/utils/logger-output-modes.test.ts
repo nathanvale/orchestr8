@@ -61,7 +61,7 @@ afterEach(() => {
 
 describe('Dual Output Modes', () => {
   it('should write to both console and file when both enabled', async () => {
-    const consoleSpy = vi.spyOn(console, 'log')
+    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
 
     const { EnhancedLogger } = await import('./logger')
     const logger = new EnhancedLogger({
