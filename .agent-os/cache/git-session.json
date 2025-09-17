@@ -1,18 +1,25 @@
 {
-  "session_id": "prettier-turborepo-caching-20250916",
-  "branch_name": "prettier-turborepo-caching",
-  "spec_folder": "2025-09-11-prettier-turborepo-caching",
-  "created_at": "2025-09-16T11:37:00.000Z",
+  "session_id": "2025-09-17-test-noise-reduction",
+  "branch_name": "test-noise-reduction",
+  "spec_folder": "2025-09-17-test-noise-reduction",
+  "feature_name": "test-noise-reduction",
+  "created_at": "2025-09-17T13:02:00Z",
+  "commit_count": 1,
+  "subtask_commits": [
+    {
+      "task": "1",
+      "message": "feat: task 1 - configure turborepo output control for noise reduction",
+      "sha": "fb15dcba8a2c341b43e6466b2c2dd0484fd33a17",
+      "timestamp": "2025-09-17T13:02:00Z"
+    }
+  ],
+  "session_active": true,
   "base_branch": "main",
-  "commit_count": 0,
-  "subtask_commits": [],
-  "session_loaded": true,
-  "auto_commit_enabled": true,
-  "tasks": {
-    "total_tasks": 5,
-    "total_subtasks": 40,
-    "completed_tasks": 0,
-    "completed_subtasks": 0
-  },
-  "last_updated": "2025-09-16T11:37:00.000Z"
+  "initial_state": {
+    "branch_existed": false,
+    "had_uncommitted_changes": true,
+    "uncommitted_files": [
+      ".agent-os/recaps/2025-09-16-memory-optimization-complete.md"
+    ]
+  }
 }

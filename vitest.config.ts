@@ -32,6 +32,14 @@ try {
   // Directory might already exist, ignore error
 }
 
+// Environment detection for test output control
+const isCI = process.env['CI'] === 'true'
+const isVitestSilent = process.env['VITEST_SILENT'] === 'true'
+const isDebugMode = process.env['DEBUG'] === 'true' || process.env['VERBOSE'] === 'true'
+
+// Determine silent mode based on environment
+const silentMode = isDebugMode ? false : isCI ? true : isVitestSilent ? 'passed-only' : false
+
 export default mergeConfig(
   vitestSharedConfig,
   defineConfig({
@@ -200,14 +208,16 @@ export default mergeConfig(
       hookTimeout: 10000, // 10s for setup/teardown
       teardownTimeout: 15000, // MSW cleanup and worker termination need extra time
 
-      // ADHD-friendly reporter configuration: minimal cognitive load
+      // Environment-aware reporter configuration for noise reduction
       reporters: process.env['GITHUB_ACTIONS']
-        ? ['dot', 'github-actions', 'junit']
-        : process.env['CI']
-          ? ['dot', 'junit']
-          : process.env['VERBOSE'] === 'true'
-            ? ['verbose']
-            : [['default', { summary: false }]], // ADHD-friendly: minimal noise
+        ? ['github-actions', 'junit'] // GitHub Actions reporter for CI
+        : isCI
+          ? ['dot', 'junit'] // Minimal CI output
+          : isDebugMode
+            ? ['verbose'] // Full output in debug mode
+            : isVitestSilent
+              ? [['default', { summary: false, hideSkipped: true }]] // Silent mode: minimal output
+              : [['default', { summary: false }]], // ADHD-friendly: minimal noise
       outputFile: {
         junit: `${coverageDirectory}/junit.xml`,
       },
@@ -219,7 +229,10 @@ export default mergeConfig(
 
       // Advanced options for ADHD-optimized feedback
       // passWithNoTests: true, // Already set above in focus helpers
-      logHeapUsage: process.env['NODE_ENV'] === 'development', // Memory debugging in dev only
+      logHeapUsage: process.env['MEMORY_DEBUG'] === 'true', // Only log heap when explicitly debugging memory
+
+      // Silent mode configuration
+      silent: silentMode,
       // Use built-in unstub support instead of manual teardown calls
       unstubEnvs: true,
       unstubGlobals: true,
