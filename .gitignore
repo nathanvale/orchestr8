@@ -59,6 +59,7 @@ PROJECT_INDEX.json
 
 # Agent OS
 .agentos/
+.agent-os/**
 
 # System files
 .DS_Store

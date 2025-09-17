@@ -15,6 +15,11 @@ env:
   TURBO_REMOTE_CACHE_SIGNATURE_KEY: ${{ secrets.TURBO_REMOTE_CACHE_SIGNATURE_KEY }}
   TURBO_SCM_BASE: origin/main  # Base branch for incremental change detection
 
+permissions:
+  contents: read
+  actions: read
+  checks: read
+
 jobs:
   setup:
     name: 🔧 Setup & Cache
@@ -23,6 +28,8 @@ jobs:
       cache-hit: ${{ steps.cache.outputs.cache-hit }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
       - uses: pnpm/action-setup@v4
         with:
           version: ${{ env.PNPM_VERSION }}
@@ -40,7 +47,6 @@ jobs:
             node_modules
             .eslintcache
             .prettiercache
-            .turbo
             **/.turbo
           key: deps-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}-turbo-${{ hashFiles('turbo.json*', 'tsconfig*.json') }}
           restore-keys: |
