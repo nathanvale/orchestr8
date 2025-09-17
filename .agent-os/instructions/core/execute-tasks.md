@@ -170,7 +170,15 @@ Initialize git session ONCE for entire spec execution with branch creation and s
 
 ### Step 4: Optimized Task Execution Loop with Auto-Commits
 
-Execute ALL selected tasks with continuous optimization and automatic git commits.
+**CRITICAL**: Execute all selected tasks continuously using optimization and git
+session.
+You MUST follow execute-task.md EXACTLY:
+
+- For EACH subtask: context-fetch → implement → test → commit → update
+- Complete ALL subtasks before moving on
+- Run Phase 3 post-execution ONLY after ALL tasks done
+
+Execute ALL selected tasks with continuous optimization and automatic git commits
 
 <execution_flow>
 
