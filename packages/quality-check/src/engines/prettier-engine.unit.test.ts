@@ -45,6 +45,7 @@ export default greeting
       expect(result.success).toBe(true)
       expect(result.issues).toHaveLength(0)
       expect(result.duration).toBeGreaterThan(0)
+      expect(result.modifiedFiles).toEqual([])
     })
 
     it('should_detect_formatting_issues_when_file_not_formatted', async () => {
@@ -70,6 +71,7 @@ export default greeting
         message: 'File is not formatted with Prettier',
       })
       expect(result.fixable).toBe(true)
+      expect(result.modifiedFiles).toEqual([])
     })
 
     it('should_fix_formatting_when_write_option_enabled', async () => {
@@ -87,6 +89,7 @@ export default greeting
       expect(result.success).toBe(true)
       expect(result.issues).toHaveLength(0)
       expect(result.fixedCount).toBe(1)
+      expect(result.modifiedFiles).toEqual([testFile])
 
       // Check file was actually formatted
       const content = fs.readFileSync(testFile, 'utf-8')
@@ -192,6 +195,7 @@ export default greeting
 
       expect(result.success).toBe(true)
       expect(result.fixedCount).toBe(2)
+      expect(result.modifiedFiles).toEqual([file1, file2])
 
       // Verify both files are formatted
       const content1 = fs.readFileSync(file1, 'utf-8')

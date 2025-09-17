@@ -32,6 +32,7 @@ export class TypeScriptEngine {
   private host: ts.CompilerHost | undefined
   private cacheDir: string
   private lastDiagnostics: readonly ts.Diagnostic[] = []
+  private isClearing: boolean = false
 
   constructor() {
     // Set default cache directory
@@ -65,16 +66,27 @@ export class TypeScriptEngine {
         config.files[0],
       )
 
-      // Create or reuse incremental program
-      if (!this.program) {
-        this.createIncrementalProgram(config.files, parsedConfig, configPath)
-      } else {
-        // Reuse existing program for warm cache performance
-        // Just update the root files if needed
-        this.updateRootFiles(config.files, parsedConfig, configPath)
+      // Create incremental program if needed
+      // We maintain a single program instance for the entire session to leverage
+      // TypeScript's incremental compilation cache
+      // Don't recreate if we're in the process of clearing
+      if (!this.program && !this.isClearing) {
+        this.createIncrementalProgram(parsedConfig, configPath)
       }
 
-      // Get diagnostics
+      // If clearing is in progress, just return empty results
+      if (this.isClearing) {
+        const duration = Date.now() - startTime
+        return {
+          success: true,
+          issues: [],
+          duration,
+          fixable: false,
+        }
+      }
+
+      // Get diagnostics for the specific files being checked
+      // The incremental program will handle file changes internally
       const issues = this.getDiagnostics(config.files, config.token)
 
       const duration = Date.now() - startTime
@@ -169,11 +181,7 @@ export class TypeScriptEngine {
   /**
    * Create incremental program
    */
-  private createIncrementalProgram(
-    files: string[],
-    parsedConfig: ts.ParsedCommandLine,
-    _configPath: string,
-  ): void {
+  private createIncrementalProgram(parsedConfig: ts.ParsedCommandLine, _configPath: string): void {
     // Set up compiler options - preserve all options from tsconfig
     const options: ts.CompilerOptions = {
       ...parsedConfig.options,
@@ -187,9 +195,10 @@ export class TypeScriptEngine {
     // Create compiler host
     this.host = ts.createIncrementalCompilerHost(options)
 
-    // Create incremental program with only target files as root names
+    // Create incremental program with ALL files from the parsed config
+    // This ensures proper incremental compilation across all project files
     this.program = ts.createIncrementalProgram({
-      rootNames: files.map((f) => path.resolve(f)),
+      rootNames: parsedConfig.fileNames, // Use all files from tsconfig
       options,
       host: this.host,
       projectReferences: parsedConfig.projectReferences,
@@ -298,8 +307,13 @@ export class TypeScriptEngine {
    * Clear the incremental program cache
    */
   clearCache(): void {
+    // Set clearing flag to prevent recreation during concurrent operations
+    this.isClearing = true
+
+    // Clear the program and host references
     this.program = undefined
     this.host = undefined
+    this.lastDiagnostics = []
 
     // Clear tsBuildInfo file
     const buildInfoPath = path.join(this.cacheDir, 'qc.tsbuildinfo')
@@ -310,31 +324,48 @@ export class TypeScriptEngine {
         // Ignore errors when clearing cache
       }
     }
+
+    // Reset clearing flag after a microtask to ensure any ongoing operations complete
+    Promise.resolve().then(() => {
+      this.isClearing = false
+    })
   }
 
   /**
-   * Update root files for existing program
+   * Dispose of all resources held by the TypeScript engine.
+   * This should be called when the engine is no longer needed
+   * to free up memory and clean up file handles.
    */
-  private updateRootFiles(
-    files: string[],
-    parsedConfig: ts.ParsedCommandLine,
-    _configPath: string,
-  ): void {
-    // If the files are the same as last check, no need to recreate
-    const newRootNames = files.map((f) => path.resolve(f))
-    const oldProgram = this.program?.getProgram()
-    const oldRootNames = oldProgram?.getRootFileNames() ?? []
+  dispose(): void {
+    // Set clearing flag to prevent recreation
+    this.isClearing = true
 
-    // Check if root files have changed
-    const filesChanged =
-      newRootNames.length !== oldRootNames.length ||
-      !newRootNames.every((f) => oldRootNames.includes(f))
+    // Clear the incremental program
+    this.program = undefined
 
-    if (filesChanged) {
-      // Files changed, need to recreate program
-      this.createIncrementalProgram(files, parsedConfig, _configPath)
+    // Clear the compiler host
+    this.host = undefined
+
+    // Clear cached diagnostics
+    this.lastDiagnostics = []
+
+    // Clear tsBuildInfo file
+    const buildInfoPath = path.join(this.cacheDir, 'qc.tsbuildinfo')
+    if (fs.existsSync(buildInfoPath)) {
+      try {
+        fs.unlinkSync(buildInfoPath)
+      } catch {
+        // Ignore errors when clearing cache
+      }
     }
-    // Otherwise reuse existing program for maximum performance
+
+    // Reset clearing flag
+    this.isClearing = false
+
+    // Force garbage collection if available (for Node.js with --expose-gc)
+    if (global.gc) {
+      global.gc()
+    }
   }
 
   /**

@@ -3,16 +3,6 @@
 > Think carefully and implement the most concise solution that changes as little
 > code as possible.
 
-## PRE-FLIGHT CHECKS
-
-### Wallaby Test Runner Status
-
-Before using any Wallaby tools (mcp**wallaby**\*), ALWAYS first verify Wallaby
-is active by calling `mcp__wallaby__wallaby_allTests`. If it returns "No data
-available", STOP immediately and inform the user that Wallaby MUST be started in
-their IDE/editor before any test operations can proceed. DO NOT offer
-alternatives or proceed with standard test commands.
-
 ## USE SUB-AGENTS FOR CONTEXT OPTIMIZATION
 
 ### 1. **Always** use the file-analyzer sub-agent when asked to read files
@@ -52,6 +42,16 @@ essential information while dramatically reducing context usage.
 - **Log and continue** for optional features (extraction model)
 - **Graceful degradation** when external services unavailable
 - **User-friendly messages** through resilience layer
+
+### Memory Management
+
+- **Monitor continuously** - Use MemoryProfiler to track usage
+- **Set limits** - Enforce per-test memory limits (500MB default)
+- **Dispose resources** - Always clean up engines and caches
+- **Pool buffers** - Reuse buffers for file operations
+- **Stream large files** - Process files >10MB in chunks
+- **Apply backpressure** - Reduce batch sizes under memory pressure
+- **Detect leaks** - Use trend analysis to identify memory growth
 
 ### Testing
 

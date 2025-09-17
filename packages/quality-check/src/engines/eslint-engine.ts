@@ -32,12 +32,14 @@ export interface ESLintEngineConfig {
  */
 export class ESLintEngine {
   private eslint: ESLint | undefined
+  private lastConfig: { cwd: string; fix: boolean; cacheLocation: string } | undefined
 
   /**
    * Check files with ESLint
    */
   async check(config: ESLintEngineConfig): Promise<CheckerResult> {
     const startTime = Date.now()
+    const modifiedFiles: string[] = []
 
     try {
       // Check if ESLint is available
@@ -45,15 +47,29 @@ export class ESLintEngine {
         throw new ToolMissingError('eslint')
       }
 
-      // Initialize ESLint with v9 flat config
-      this.eslint = new ESLint({
+      // Prepare configuration
+      const eslintConfig = {
         cwd: config.cwd ?? process.cwd(),
         fix: config.fix ?? false,
-        cache: true,
         cacheLocation: config.cacheDir ?? '.cache/eslint',
-        errorOnUnmatchedPattern: false,
-        // Flat config is default in v9
-      })
+      }
+
+      // Only create new ESLint instance if configuration changed or doesn't exist
+      if (
+        !this.eslint ||
+        !this.lastConfig ||
+        this.lastConfig.cwd !== eslintConfig.cwd ||
+        this.lastConfig.fix !== eslintConfig.fix ||
+        this.lastConfig.cacheLocation !== eslintConfig.cacheLocation
+      ) {
+        this.eslint = new ESLint({
+          ...eslintConfig,
+          cache: true,
+          errorOnUnmatchedPattern: false,
+          // Flat config is default in v9
+        })
+        this.lastConfig = eslintConfig
+      }
 
       // Check for cancellation
       if (config.token?.isCancellationRequested) {
@@ -61,6 +77,7 @@ export class ESLintEngine {
           success: true,
           issues: [],
           duration: Date.now() - startTime,
+          modifiedFiles,
         }
       }
 
@@ -73,15 +90,38 @@ export class ESLintEngine {
           success: true,
           issues: [],
           duration: Date.now() - startTime,
+          modifiedFiles,
         }
       }
 
       // Apply fixes if requested
       if (config.fix) {
         await ESLint.outputFixes(results)
+        // Collect files that were modified during fix operation
+        for (const result of results) {
+          if (result.output) {
+            modifiedFiles.push(result.filePath)
+          }
+        }
+
+        // Re-lint to get only unfixed issues after applying fixes
+        const postFixResults = await this.eslint.lintFiles(config.files)
+        // Convert only remaining issues after fixes
+        const issues = this.convertResults(postFixResults)
+
+        const duration = Date.now() - startTime
+
+        return {
+          success: issues.length === 0,
+          issues,
+          duration,
+          fixable: this.hasFixableIssues(postFixResults),
+          fixedCount: this.getFixedCount(results),
+          modifiedFiles,
+        }
       }
 
-      // Convert results to issues
+      // Convert results to issues (no fix mode)
       const issues = this.convertResults(results)
 
       const duration = Date.now() - startTime
@@ -92,6 +132,7 @@ export class ESLintEngine {
         duration,
         fixable: this.hasFixableIssues(results),
         fixedCount: this.getFixedCount(results),
+        modifiedFiles,
       }
     } catch (error) {
       if (error instanceof ToolMissingError) {
@@ -113,6 +154,7 @@ export class ESLintEngine {
         ],
         duration,
         fixable: false,
+        modifiedFiles,
       }
     }
   }
@@ -282,9 +324,67 @@ export class ESLintEngine {
   }
 
   /**
-   * Clear cache
+   * Clear cache and dispose resources
    */
   clearCache(): void {
     this.eslint = undefined
+    this.lastConfig = undefined
+
+    // Force garbage collection of potentially large ESLint objects
+    if (global.gc) {
+      global.gc()
+    }
+  }
+
+  /**
+   * Dispose of ESLint instance and clear AST caches
+   */
+  dispose(): void {
+    this.clearCache()
+  }
+
+  /**
+   * Clear ESLint internal cache directory
+   */
+  async clearCacheDirectory(cacheDir?: string): Promise<void> {
+    if (!cacheDir) {
+      cacheDir = '.cache/eslint'
+    }
+
+    try {
+      const fs = await import('node:fs/promises')
+      const path = await import('node:path')
+
+      const fullCacheDir = path.resolve(cacheDir)
+
+      // Check if cache directory exists
+      try {
+        await fs.access(fullCacheDir)
+        // Remove cache directory and all its contents
+        await fs.rm(fullCacheDir, { recursive: true, force: true })
+      } catch {
+        // Cache directory doesn't exist, nothing to clean
+      }
+    } catch (error) {
+      // Log error but don't throw - cache clearing is not critical
+      console.warn(
+        `Failed to clear ESLint cache directory: ${error instanceof Error ? error.message : String(error)}`,
+      )
+    }
+  }
+
+  /**
+   * Get memory usage statistics for ESLint operations
+   */
+  getMemoryUsage(): { used: number; total: number } | undefined {
+    try {
+      const usage = process.memoryUsage()
+      return {
+        used: usage.heapUsed,
+        total: usage.heapTotal,
+      }
+    } catch {
+      return undefined
+    }
   }
 }
