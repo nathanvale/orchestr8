@@ -92,10 +92,22 @@ class QualityLogger {
     this.debugMode = process.env.CLAUDE_HOOK_DEBUG === 'true'
     this.logFile = process.env.CLAUDE_HOOK_LOG_FILE
 
+    // Enhanced environment detection for noise reduction
+    const isCI = process.env.CI === 'true'
+    const isVitestSilent = process.env.VITEST_SILENT === 'true'
+    const isNodeTest = process.env.NODE_ENV === 'test'
+    const isClaudeSilent = process.env.CLAUDE_HOOK_SILENT === 'true'
+
+    // Automatic silencing based on environment
+    const shouldBeSilent =
+      isClaudeSilent ||
+      isVitestSilent ||
+      (isNodeTest && !this.debugMode) ||
+      (isCI && !this.debugMode)
+
     // Configure pino with simple setup
     const pinoConfig: pino.LoggerOptions = {
-      level:
-        process.env.CLAUDE_HOOK_SILENT === 'true' ? 'silent' : this.debugMode ? 'debug' : 'info',
+      level: shouldBeSilent ? 'silent' : this.debugMode ? 'debug' : 'info',
       timestamp: pino.stdTimeFunctions.isoTime,
       formatters: {
         level: (label) => ({ level: label }),
@@ -351,7 +363,7 @@ export class EnhancedLogger extends QualityLogger {
     this.config = {
       console: config?.console ?? true,
       file: config?.file ?? false,
-      silent: config?.silent ?? process.env.CLAUDE_HOOK_SILENT === 'true',
+      silent: config?.silent ?? this.isEnvironmentSilent(),
       colored: config?.colored ?? true,
       outputFormat: config?.outputFormat ?? 'basic',
       logDir: config?.logDir ?? '.quality-check',
@@ -453,9 +465,25 @@ export class EnhancedLogger extends QualityLogger {
 
     // Write to console if enabled and not in silent mode
     if (this.config.console && !this.config.silent) {
+      // Additional check for CI - only show errors
+      if (process.env.CI === 'true' && report.status === 'success') {
+        return // Skip successful reports in CI
+      }
       const summary = this.formatSummary(report)
       console.log(summary)
     }
+  }
+
+  // Helper to detect if environment should be silent
+  private isEnvironmentSilent(): boolean {
+    const isCI = process.env.CI === 'true'
+    const isVitestSilent = process.env.VITEST_SILENT === 'true'
+    const isNodeTest = process.env.NODE_ENV === 'test'
+    const isClaudeSilent = process.env.CLAUDE_HOOK_SILENT === 'true'
+    const isDebug = process.env.CLAUDE_HOOK_DEBUG === 'true' || process.env.DEBUG === 'true'
+
+    // Automatic silencing based on environment (unless debug mode)
+    return isClaudeSilent || isVitestSilent || (isNodeTest && !isDebug) || (isCI && !isDebug)
   }
 
   // Format summary for console output
