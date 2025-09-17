@@ -177,6 +177,15 @@ describe('Memory Monitoring Hooks', () => {
 
   describe('Memory Warnings', () => {
     it('should warn at 80% memory threshold', () => {
+      // Create a monitor with debug mode enabled for warning tests
+      const debugMonitor = new MemoryMonitor({
+        maxMemoryMB: 500,
+        warningThresholdPercent: 80,
+        enableTracking: true,
+        enableWarnings: true,
+        debugMode: true,
+      })
+
       const warningSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
 
       const warningUsage = {
@@ -189,14 +198,15 @@ describe('Memory Monitoring Hooks', () => {
 
       process.memoryUsage = vi.fn().mockReturnValue(warningUsage) as any
 
-      monitor.beforeTest('test-warning')
-      monitor.checkMemoryWarning('test-warning')
+      debugMonitor.beforeTest('test-warning')
+      debugMonitor.checkMemoryWarning('test-warning')
 
       expect(warningSpy).toHaveBeenCalledWith(
         expect.stringContaining('Memory usage warning: 410MB (82% of 500MB limit)'),
       )
 
       warningSpy.mockRestore()
+      debugMonitor.cleanup()
     })
 
     it('should not warn below threshold', () => {
@@ -225,6 +235,7 @@ describe('Memory Monitoring Hooks', () => {
         maxMemoryMB: 500,
         warningThresholdPercent: 50, // Lower threshold
         enableWarnings: true,
+        debugMode: true, // Enable debug mode for warning tests
       })
 
       const warningSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
@@ -248,6 +259,72 @@ describe('Memory Monitoring Hooks', () => {
 
       warningSpy.mockRestore()
       customMonitor.cleanup()
+    })
+
+    describe('Non-Debug Mode Behavior', () => {
+      it('should not warn when debug mode is disabled', () => {
+        const nonDebugMonitor = new MemoryMonitor({
+          maxMemoryMB: 500,
+          warningThresholdPercent: 80,
+          enableTracking: true,
+          enableWarnings: true,
+          debugMode: false, // Explicitly disable debug mode
+        })
+
+        const warningSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+
+        const warningUsage = {
+          rss: 450 * 1024 * 1024,
+          heapTotal: 420 * 1024 * 1024,
+          heapUsed: 410 * 1024 * 1024, // 410MB is 82% of 500MB
+          external: 10 * 1024 * 1024,
+          arrayBuffers: 5 * 1024 * 1024,
+        }
+
+        process.memoryUsage = vi.fn().mockReturnValue(warningUsage) as any
+
+        nonDebugMonitor.beforeTest('test-no-debug-warning')
+        nonDebugMonitor.checkMemoryWarning('test-no-debug-warning')
+
+        // Should not warn when debug mode is disabled
+        expect(warningSpy).not.toHaveBeenCalled()
+
+        warningSpy.mockRestore()
+        nonDebugMonitor.cleanup()
+      })
+
+      it('should not export report when debug mode is disabled', async () => {
+        const nonDebugMonitor = new MemoryMonitor({
+          maxMemoryMB: 500,
+          enableTrendReporting: true,
+          debugMode: false, // Explicitly disable debug mode
+        })
+
+        const mockWriteFile = vi.fn()
+        vi.doMock('fs/promises', () => ({
+          writeFile: mockWriteFile,
+        }))
+
+        const usage = {
+          rss: 100 * 1024 * 1024,
+          heapTotal: 80 * 1024 * 1024,
+          heapUsed: 60 * 1024 * 1024,
+          external: 10 * 1024 * 1024,
+          arrayBuffers: 5 * 1024 * 1024,
+        }
+
+        process.memoryUsage = vi.fn().mockReturnValue(usage) as any
+
+        nonDebugMonitor.beforeTest('export-test-no-debug')
+        nonDebugMonitor.afterTest('export-test-no-debug')
+
+        await nonDebugMonitor.exportTrendReport('./no-debug-report.json')
+
+        // Should not export when debug mode is disabled
+        expect(mockWriteFile).not.toHaveBeenCalled()
+
+        nonDebugMonitor.cleanup()
+      })
     })
   })
 
@@ -369,6 +446,15 @@ describe('Memory Monitoring Hooks', () => {
     })
 
     it('should export trend report to file', async () => {
+      // Create a monitor with debug mode enabled for export tests
+      const exportMonitor = new MemoryMonitor({
+        maxMemoryMB: 500,
+        warningThresholdPercent: 80,
+        enableTracking: true,
+        enableTrendReporting: true,
+        debugMode: true, // Enable debug mode for export functionality
+      })
+
       const mockWriteFile = vi.fn()
       vi.doMock('fs/promises', () => ({
         writeFile: mockWriteFile,
@@ -384,15 +470,17 @@ describe('Memory Monitoring Hooks', () => {
 
       process.memoryUsage = vi.fn().mockReturnValue(usage) as any
 
-      monitor.beforeTest('export-test')
-      monitor.afterTest('export-test')
+      exportMonitor.beforeTest('export-test')
+      exportMonitor.afterTest('export-test')
 
-      await monitor.exportTrendReport('./memory-trend-report.json')
+      await exportMonitor.exportTrendReport('./memory-trend-report.json')
 
       expect(mockWriteFile).toHaveBeenCalledWith(
         './memory-trend-report.json',
         expect.stringContaining('"totalTests": 1'),
       )
+
+      exportMonitor.cleanup()
     })
   })
 

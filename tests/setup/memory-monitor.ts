@@ -7,6 +7,7 @@ export interface MemoryMonitorConfig {
   enableTracking?: boolean
   enableWarnings?: boolean
   enableTrendReporting?: boolean
+  debugMode?: boolean
 }
 
 export interface TestMemoryData {
@@ -45,8 +46,9 @@ export class MemoryMonitor {
   private debugMode: boolean
 
   constructor(config: MemoryMonitorConfig = {}) {
-    // Only enable memory monitoring when MEMORY_DEBUG is set
-    this.debugMode = process.env['MEMORY_DEBUG'] === 'true'
+    // Use debugMode from config if provided, otherwise fall back to environment variable
+    const envDebugMode = process.env['MEMORY_DEBUG'] === 'true'
+    this.debugMode = config.debugMode ?? envDebugMode
 
     this.config = {
       maxMemoryMB: config.maxMemoryMB ?? 500,
@@ -54,6 +56,7 @@ export class MemoryMonitor {
       enableTracking: config.enableTracking ?? this.debugMode,
       enableWarnings: config.enableWarnings ?? this.debugMode,
       enableTrendReporting: config.enableTrendReporting ?? false,
+      debugMode: this.debugMode,
     }
     this.profiler = new MemoryProfiler()
     this.testData = new Map()
