@@ -36,7 +36,8 @@ PREVENT: Common dropout scenarios:
 
 INITIALIZE_LOOP_GUARDIAN() {
   CREATE: .agent-os/cache/loop-guardian.json
-  \`\`\`json
+
+  ```json
   {
     "session_id": "exec-[timestamp]",
     "loop_active": true,
@@ -49,7 +50,7 @@ INITIALIZE_LOOP_GUARDIAN() {
     "current_task": null,
     "loop_health": "optimal"
   }
-  \`\`\`
+  ```
   
   ESTABLISH: Loop invariants
 
@@ -683,11 +684,12 @@ DISPLAY_HEALTH_DASHBOARD(metrics) {
 ### How to Use This Reliable Controller
 
 1. **Replace current execute-tasks.md** with this version
-   - Backup: \`cp execute-tasks.md execute-tasks-old.md\`
-   - Replace: \`cp execute-tasks-reliable.md execute-tasks.md\`
+   - Backup:`cp execute-tasks.md execute-tasks-old.md`
+   - Replace:`cp execute-tasks-reliable.md execute-tasks.md`
 
 2. **Update your Claude.md** with:
-\`\`\`markdown
+
+```markdown
 
 ## Reliability Rules
 
@@ -697,10 +699,11 @@ DISPLAY_HEALTH_DASHBOARD(metrics) {
 - CREATE checkpoints after each parent task
 - MONITOR health metrics continuously
 - PREVENT dropouts with recovery mechanisms
-\`\`\`
+```
 
 3. **Invoke with confidence**:
-\`\`\`
+
+```
 /execute-tasks
 
 The system will:
@@ -710,10 +713,11 @@ The system will:
 ✅ Handle git failures gracefully
 ✅ Continue through test failures
 ✅ Create checkpoints for resumption
-\`\`\`
+```
 
 4. **Resume if interrupted**:
-\`\`\`
+
+```
 /resume-tasks
 
 Will automatically:
@@ -722,7 +726,8 @@ Will automatically:
 - Restore context state
 - Continue from last completed task
 - Maintain optimization benefits
-\`\`\`
+```
+
 </usage_instructions>
 
 ## Critical Success Factors

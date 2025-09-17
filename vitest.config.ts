@@ -111,6 +111,7 @@ export default mergeConfig(
       // Setup files - includes memory monitoring for all tests
       setupFiles: [
         './vitest.setup.tsx',
+        './tests/setup/console-suppression.ts', // Console noise suppression
         './tests/setup/memory-cleanup.ts', // Memory monitoring hooks
       ],
 

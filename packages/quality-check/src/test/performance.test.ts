@@ -97,9 +97,11 @@ export { processUsers, testData }
 
     // Assert
     expect(medianTime).toBeLessThan(300) // Sub-300ms target
-    console.log(
-      `Performance: Cold=${coldTime.toFixed(2)}ms, Median Warm=${medianTime.toFixed(2)}ms`,
-    )
+    if (!process.env['VITEST_SILENT']) {
+      console.log(
+        `Performance: Cold=${coldTime.toFixed(2)}ms, Median Warm=${medianTime.toFixed(2)}ms`,
+      )
+    }
   })
 
   test('should_handle_large_file_sets_efficiently', async () => {
@@ -123,9 +125,11 @@ export { processUsers, testData }
 
     // Assert
     expect(avgTimePerFile).toBeLessThan(100) // Less than 100ms per file average
-    console.log(
-      `Batch Performance: Total=${totalTime.toFixed(2)}ms, Avg=${avgTimePerFile.toFixed(2)}ms/file`,
-    )
+    if (!process.env['VITEST_SILENT']) {
+      console.log(
+        `Batch Performance: Total=${totalTime.toFixed(2)}ms, Avg=${avgTimePerFile.toFixed(2)}ms/file`,
+      )
+    }
   })
 
   test('should_maintain_performance_with_complex_errors', async () => {
@@ -189,9 +193,11 @@ const config: Config = {
     // Assert
     expect(variance).toBeLessThan(50) // Less than 50ms variance
     expect(maxTime).toBeLessThan(200) // Still fast with errors
-    console.log(
-      `Error Processing: Min=${minTime.toFixed(2)}ms, Max=${maxTime.toFixed(2)}ms, Variance=${variance.toFixed(2)}ms`,
-    )
+    if (!process.env['VITEST_SILENT']) {
+      console.log(
+        `Error Processing: Min=${minTime.toFixed(2)}ms, Max=${maxTime.toFixed(2)}ms, Variance=${variance.toFixed(2)}ms`,
+      )
+    }
   })
 
   test('should_not_degrade_with_cache_operations', async () => {
@@ -235,8 +241,10 @@ const config: Config = {
 
     // Assert - cache operations shouldn't add more than 20ms overhead
     expect(overhead).toBeLessThan(20)
-    console.log(
-      `Cache Overhead: Without=${avgWithout.toFixed(2)}ms, With=${avgWith.toFixed(2)}ms, Overhead=${overhead.toFixed(2)}ms`,
-    )
+    if (!process.env['VITEST_SILENT']) {
+      console.log(
+        `Cache Overhead: Without=${avgWithout.toFixed(2)}ms, With=${avgWith.toFixed(2)}ms, Overhead=${overhead.toFixed(2)}ms`,
+      )
+    }
   })
 })

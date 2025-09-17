@@ -200,13 +200,16 @@ export class QualityChecker {
         this.addFixFirstMetadata(aggregated, results)
       }
 
-      // Format output if needed
-      if (config.format === 'json') {
-        const output = this.jsonFormatter.format(aggregated.issues)
-        process.stdout.write(output + '\n')
-      } else if (aggregated.issues.length > 0) {
-        const output = this.stylishFormatter.format(aggregated.issues)
-        process.stderr.write(output + '\n')
+      // Format output if needed (suppress in test environment)
+      const isTestEnvironment = process.env.NODE_ENV === 'test' || process.env.VITEST
+      if (!isTestEnvironment) {
+        if (config.format === 'json') {
+          const output = this.jsonFormatter.format(aggregated.issues)
+          process.stdout.write(output + '\n')
+        } else if (aggregated.issues.length > 0) {
+          const output = this.stylishFormatter.format(aggregated.issues)
+          process.stderr.write(output + '\n')
+        }
       }
 
       logger.debug('Quality check completed', {
