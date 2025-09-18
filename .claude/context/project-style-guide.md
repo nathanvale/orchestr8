@@ -8,11 +8,15 @@ author: Claude Code PM System
 # Project Style Guide
 
 ## Code Style Philosophy
-Write code that is immediately understandable, requires minimal cognitive load to parse, and maintains consistency across the entire codebase. Optimize for readability over cleverness.
+
+Write code that is immediately understandable, requires minimal cognitive load
+to parse, and maintains consistency across the entire codebase. Optimize for
+readability over cleverness.
 
 ## TypeScript Conventions
 
 ### General Rules
+
 - Use TypeScript strict mode always
 - Prefer explicit types over inference for public APIs
 - Avoid `any` - use `unknown` when type is truly unknown
@@ -21,6 +25,7 @@ Write code that is immediately understandable, requires minimal cognitive load t
 ### Naming Conventions
 
 #### Files
+
 - Components: `PascalCase.tsx` (e.g., `UserProfile.tsx`)
 - Utilities: `kebab-case.ts` (e.g., `format-date.ts`)
 - Types: `*.types.ts` (e.g., `user.types.ts`)
@@ -29,6 +34,7 @@ Write code that is immediately understandable, requires minimal cognitive load t
 - Integration tests: `*.integration.test.ts`
 
 #### Variables & Functions
+
 ```typescript
 // Constants: UPPER_SNAKE_CASE
 const MAX_RETRY_COUNT = 3
@@ -49,6 +55,7 @@ const shouldUpdate = true
 ```
 
 #### Types & Interfaces
+
 ```typescript
 // Interfaces: PascalCase, prefer Interface suffix for clarity
 interface UserInterface {
@@ -63,11 +70,12 @@ type UserRole = 'admin' | 'user' | 'guest'
 enum Status {
   PENDING = 'pending',
   ACTIVE = 'active',
-  INACTIVE = 'inactive'
+  INACTIVE = 'inactive',
 }
 ```
 
 ### Import Organization
+
 ```typescript
 // Order: External → Internal → Types → Styles
 // 1. Node built-ins
@@ -95,6 +103,7 @@ import styles from './styles.module.css'
 ## Function Patterns
 
 ### Pure Functions Preferred
+
 ```typescript
 // Good: Pure, predictable, testable
 function addTax(price: number, taxRate: number): number {
@@ -110,6 +119,7 @@ function addTaxAndLog(price: number, taxRate: number): number {
 ```
 
 ### Async/Await Over Promises
+
 ```typescript
 // Good: Clear, linear flow
 async function fetchUserWithPosts(userId: string) {
@@ -120,13 +130,14 @@ async function fetchUserWithPosts(userId: string) {
 
 // Avoid: Promise chains
 function fetchUserWithPosts(userId: string) {
-  return fetchUser(userId)
-    .then(user => fetchPosts(user.id)
-    .then(posts => ({ user, posts })))
+  return fetchUser(userId).then((user) =>
+    fetchPosts(user.id).then((posts) => ({ user, posts })),
+  )
 }
 ```
 
 ### Error Handling
+
 ```typescript
 // Good: Explicit error handling
 async function safeApiCall<T>(url: string): Promise<T | null> {
@@ -152,6 +163,7 @@ type Result<T, E = Error> =
 ## Testing Conventions
 
 ### Test Structure
+
 ```typescript
 // Describe blocks for logical grouping
 describe('UserService', () => {
@@ -170,15 +182,16 @@ describe('UserService', () => {
 
     it('should throw error for invalid email', async () => {
       // Test error cases explicitly
-      await expect(createUser({ email: 'invalid' }))
-        .rejects
-        .toThrow('Invalid email')
+      await expect(createUser({ email: 'invalid' })).rejects.toThrow(
+        'Invalid email',
+      )
     })
   })
 })
 ```
 
 ### Test Naming
+
 - Use descriptive test names that explain the scenario
 - Start with "should" for behavior descriptions
 - Include the condition being tested
@@ -187,10 +200,11 @@ describe('UserService', () => {
 ## Comments & Documentation
 
 ### When to Comment
+
 ```typescript
 // Good: Explain WHY, not WHAT
 // Use 4GB heap to prevent OOM during large builds
-NODE_OPTIONS='--max-old-space-size=4096'
+NODE_OPTIONS = '--max-old-space-size=4096'
 
 // Good: Complex business logic
 // Calculate compound interest using daily compounding
@@ -205,6 +219,7 @@ user.name = 'John' // Unnecessary
 ```
 
 ### JSDoc for Public APIs
+
 ```typescript
 /**
  * Formats a number as currency with proper locale support
@@ -221,11 +236,11 @@ user.name = 'John' // Unnecessary
 export function formatCurrency(
   amount: number,
   currency = 'USD',
-  locale = 'en-US'
+  locale = 'en-US',
 ): string {
   return new Intl.NumberFormat(locale, {
     style: 'currency',
-    currency
+    currency,
   }).format(amount)
 }
 ```
@@ -233,7 +248,9 @@ export function formatCurrency(
 ## Git Conventions
 
 ### Commit Messages
+
 Follow Conventional Commits:
+
 ```
 type(scope): description
 
@@ -243,6 +260,7 @@ type(scope): description
 ```
 
 Types:
+
 - `feat`: New feature
 - `fix`: Bug fix
 - `docs`: Documentation only
@@ -253,6 +271,7 @@ Types:
 - `perf`: Performance improvements
 
 Examples:
+
 ```bash
 feat(auth): add OAuth2 login support
 fix(build): resolve TypeScript compilation error in utils
@@ -261,6 +280,7 @@ test(user): add integration tests for user service
 ```
 
 ### Branch Naming
+
 ```
 feature/description-of-feature
 fix/description-of-bug
@@ -271,6 +291,7 @@ release/version-number
 ## File Structure
 
 ### Component Structure
+
 ```typescript
 // UserCard.tsx
 import React from 'react'
@@ -292,6 +313,7 @@ export function UserCard({ user, onClick }: UserCardProps) {
 ```
 
 ### Barrel Exports
+
 ```typescript
 // packages/utils/src/index.ts
 export * from './number'
@@ -303,6 +325,7 @@ export { formatCurrency as default } from './currency'
 ## Performance Patterns
 
 ### Lazy Loading
+
 ```typescript
 // Dynamic imports for code splitting
 const HeavyComponent = lazy(() => import('./HeavyComponent'))
@@ -315,34 +338,35 @@ if (process.env.NODE_ENV === 'development') {
 ```
 
 ### Memoization
+
 ```typescript
 // Use when appropriate, not by default
 const expensiveValue = useMemo(
   () => calculateExpensiveValue(props.data),
-  [props.data]
+  [props.data],
 )
 
-const memoizedCallback = useCallback(
-  () => doSomething(value),
-  [value]
-)
+const memoizedCallback = useCallback(() => doSomething(value), [value])
 ```
 
 ## ADHD-Optimized Patterns
 
 ### Reduce Visual Noise
+
 - Keep files under 200 lines
 - Use consistent spacing (2 spaces)
 - Group related code together
 - Avoid deep nesting (max 3 levels)
 
 ### Clear Code Organization
+
 - One concept per file
 - Explicit naming over brevity
 - Consistent patterns throughout
 - Early returns to reduce complexity
 
 ### Minimal Configuration
+
 - Use defaults where possible
 - Document any deviations clearly
 - Keep config files small
@@ -351,6 +375,7 @@ const memoizedCallback = useCallback(
 ## Forbidden Patterns
 
 ### Never Do This
+
 ```typescript
 // ❌ No console.log in production code
 console.log('Debug:', data) // Use proper logging
@@ -359,25 +384,29 @@ console.log('Debug:', data) // Use proper logging
 let data: any = fetchData() // Use unknown or specific type
 
 // ❌ No magic numbers
-if (retries > 3) { } // Use named constant
+if (retries > 3) {
+} // Use named constant
 
 // ❌ No implicit any
-function process(data) { } // Add types
+function process(data) {} // Add types
 
 // ❌ No var keyword
 var oldStyle = true // Use const/let
 
 // ❌ No == comparison
-if (value == null) { } // Use ===
+if (value == null) {
+} // Use ===
 ```
 
 ## Enforcement
 
 These conventions are enforced through:
+
 - TypeScript compiler settings
 - ESLint rules
 - Prettier formatting
 - Pre-commit hooks
 - Code review guidelines
 
-Follow the existing patterns in the codebase. When in doubt, optimize for readability and maintainability over cleverness or brevity.
+Follow the existing patterns in the codebase. When in doubt, optimize for
+readability and maintainability over cleverness or brevity.

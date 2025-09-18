@@ -2,7 +2,9 @@
 
 ## Getting Current Date and Time
 
-When any command requires the current date/time (for frontmatter, timestamps, or logs), you MUST obtain the REAL current date/time from the system rather than estimating or using placeholder values.
+When any command requires the current date/time (for frontmatter, timestamps, or
+logs), you MUST obtain the REAL current date/time from the system rather than
+estimating or using placeholder values.
 
 ### How to Get Current DateTime
 
@@ -22,18 +24,20 @@ Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ"
 ### Required Format
 
 All dates in frontmatter MUST use ISO 8601 format with UTC timezone:
+
 - Format: `YYYY-MM-DDTHH:MM:SSZ`
 - Example: `2024-01-15T14:30:45Z`
 
 ### Usage in Frontmatter
 
-When creating or updating frontmatter in any file (PRD, Epic, Task, Progress), always use the real current datetime:
+When creating or updating frontmatter in any file (PRD, Epic, Task, Progress),
+always use the real current datetime:
 
 ```yaml
 ---
 name: feature-name
-created: 2024-01-15T14:30:45Z  # Use actual output from date command
-updated: 2024-01-15T14:30:45Z  # Use actual output from date command
+created: 2024-01-15T14:30:45Z # Use actual output from date command
+updated: 2024-01-15T14:30:45Z # Use actual output from date command
 ---
 ```
 
@@ -58,6 +62,7 @@ updated: 2024-01-15T14:30:45Z  # Use actual output from date command
 ### Examples
 
 **Creating a new PRD:**
+
 ```bash
 # First, get current datetime
 CURRENT_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
@@ -73,6 +78,7 @@ created: 2024-01-15T14:30:45Z  # Use the actual $CURRENT_DATE value
 ```
 
 **Updating an existing task:**
+
 ```bash
 # Get current datetime for update
 UPDATE_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
@@ -110,9 +116,11 @@ python -c "from datetime import datetime; print(datetime.utcnow().strftime('%Y-%
 ## Rule Priority
 
 This rule has **HIGHEST PRIORITY** and must be followed by all commands that:
+
 - Create new files with frontmatter
 - Update existing files with frontmatter
 - Track timestamps or progress
 - Log any time-based information
 
-Commands affected: prd-new, prd-parse, epic-decompose, epic-sync, issue-start, issue-sync, and any other command that writes timestamps.
+Commands affected: prd-new, prd-parse, epic-decompose, epic-sync, issue-start,
+issue-sync, and any other command that writes timestamps.

@@ -7,22 +7,29 @@ allowed-tools: Bash, Read, LS
 Display issue and sub-issues with detailed information.
 
 ## Usage
+
 ```
 /pm:issue-show <issue_number>
 ```
 
 ## Instructions
 
-You are displaying comprehensive information about a GitHub issue and related sub-issues for: **Issue #$ARGUMENTS**
+You are displaying comprehensive information about a GitHub issue and related
+sub-issues for: **Issue #$ARGUMENTS**
 
 ### 1. Fetch Issue Data
+
 - Use `gh issue view #$ARGUMENTS` to get GitHub issue details
-- Look for local task file: first check `.claude/epics/*/$ARGUMENTS.md` (new naming)
-- If not found, search for file with `github:.*issues/$ARGUMENTS` in frontmatter (old naming)
+- Look for local task file: first check `.claude/epics/*/$ARGUMENTS.md` (new
+  naming)
+- If not found, search for file with `github:.*issues/$ARGUMENTS` in frontmatter
+  (old naming)
 - Check for related issues and sub-tasks
 
 ### 2. Issue Overview
+
 Display issue header:
+
 ```
 🎫 Issue #$ARGUMENTS: {Issue Title}
    Status: {open/closed}
@@ -30,13 +37,15 @@ Display issue header:
    Assignee: {assignee}
    Created: {creation_date}
    Updated: {last_update}
-   
+
 📝 Description:
 {issue_description}
 ```
 
 ### 3. Local File Mapping
+
 If local task file exists:
+
 ```
 📁 Local Files:
    Task file: .claude/epics/{epic_name}/{task_file}
@@ -45,7 +54,9 @@ If local task file exists:
 ```
 
 ### 4. Sub-Issues and Dependencies
+
 Show related issues:
+
 ```
 🔗 Related Issues:
    Parent Epic: #{epic_issue_number}
@@ -55,17 +66,21 @@ Show related issues:
 ```
 
 ### 5. Recent Activity
+
 Display recent comments and updates:
+
 ```
 💬 Recent Activity:
    {timestamp} - {author}: {comment_preview}
    {timestamp} - {author}: {comment_preview}
-   
+
    View full thread: gh issue view #$ARGUMENTS --comments
 ```
 
 ### 6. Progress Tracking
+
 If task file exists, show progress:
+
 ```
 ✅ Acceptance Criteria:
    ✅ Criterion 1 (completed)
@@ -75,6 +90,7 @@ If task file exists, show progress:
 ```
 
 ### 7. Quick Actions
+
 ```
 🚀 Quick Actions:
    Start work: /pm:issue-start $ARGUMENTS
@@ -84,8 +100,10 @@ If task file exists, show progress:
 ```
 
 ### 8. Error Handling
+
 - Handle invalid issue numbers gracefully
 - Check for network/authentication issues
 - Provide helpful error messages and alternatives
 
-Provide comprehensive issue information to help developers understand context and current status for Issue #$ARGUMENTS.
+Provide comprehensive issue information to help developers understand context
+and current status for Issue #$ARGUMENTS.

@@ -4,25 +4,32 @@ allowed-tools: Bash, Read, LS
 
 # Prime Context
 
-This command loads essential context for a new agent session by reading the project context documentation and understanding the codebase structure.
+This command loads essential context for a new agent session by reading the
+project context documentation and understanding the codebase structure.
 
 ## Preflight Checklist
 
-Before proceeding, complete these validation steps.
-Do not bother the user with preflight checks progress ("I'm not going to ..."). Just do them and move on.
+Before proceeding, complete these validation steps. Do not bother the user with
+preflight checks progress ("I'm not going to ..."). Just do them and move on.
 
 ### 1. Context Availability Check
+
 - Run: `ls -la .claude/context/ 2>/dev/null`
 - If directory doesn't exist or is empty:
-  - Tell user: "❌ No context found. Please run /context:create first to establish project context."
+  - Tell user: "❌ No context found. Please run /context:create first to
+    establish project context."
   - Exit gracefully
-- Count available context files: `ls -1 .claude/context/*.md 2>/dev/null | wc -l`
+- Count available context files:
+  `ls -1 .claude/context/*.md 2>/dev/null | wc -l`
 - Report: "📁 Found {count} context files to load"
 
 ### 2. File Integrity Check
+
 - For each context file found:
-  - Verify file is readable: `test -r ".claude/context/{file}" && echo "readable"`
-  - Check file has content: `test -s ".claude/context/{file}" && echo "has content"`
+  - Verify file is readable:
+    `test -r ".claude/context/{file}" && echo "readable"`
+  - Check file has content:
+    `test -s ".claude/context/{file}" && echo "has content"`
   - Check for valid frontmatter (should start with `---`)
 - Report any issues:
   - Empty files: "⚠️ {filename} is empty (skipping)"
@@ -30,6 +37,7 @@ Do not bother the user with preflight checks progress ("I'm not going to ..."). 
   - Missing frontmatter: "⚠️ {filename} missing frontmatter (may be corrupted)"
 
 ### 3. Project State Check
+
 - Run: `git status --short 2>/dev/null` to see current state
 - Run: `git branch --show-current 2>/dev/null` to get current branch
 - Note if not in git repository (context may be less complete)
@@ -41,23 +49,23 @@ Do not bother the user with preflight checks progress ("I'm not going to ..."). 
 Load context files in priority order for optimal understanding:
 
 **Priority 1 - Essential Context (load first):**
+
 1. `project-overview.md` - High-level understanding of the project
 2. `project-brief.md` - Core purpose and goals
 3. `tech-context.md` - Technical stack and dependencies
 
-**Priority 2 - Current State (load second):**
-4. `progress.md` - Current status and recent work
-5. `project-structure.md` - Directory and file organization
+**Priority 2 - Current State (load second):** 4. `progress.md` - Current status
+and recent work 5. `project-structure.md` - Directory and file organization
 
-**Priority 3 - Deep Context (load third):**
-6. `system-patterns.md` - Architecture and design patterns
-7. `product-context.md` - User needs and requirements
-8. `project-style-guide.md` - Coding conventions
-9. `project-vision.md` - Long-term direction
+**Priority 3 - Deep Context (load third):** 6. `system-patterns.md` -
+Architecture and design patterns 7. `product-context.md` - User needs and
+requirements 8. `project-style-guide.md` - Coding conventions 9.
+`project-vision.md` - Long-term direction
 
 ### 2. Validation During Loading
 
 For each file loaded:
+
 - Check frontmatter exists and parse:
   - `created` date should be valid
   - `last_updated` should be ≥ created date
@@ -68,18 +76,22 @@ For each file loaded:
 ### 3. Supplementary Information
 
 After loading context files:
-- Run: `git ls-files --others --exclude-standard | head -20` to see untracked files
+
+- Run: `git ls-files --others --exclude-standard | head -20` to see untracked
+  files
 - Read `README.md` if it exists for additional project information
 - Check for `.env.example` or similar for environment setup needs
 
 ### 4. Error Recovery
 
 **If critical files are missing:**
+
 - `project-overview.md` missing: Try to understand from README.md
 - `tech-context.md` missing: Analyze package.json/requirements.txt directly
 - `progress.md` missing: Check recent git commits for status
 
 **If context is incomplete:**
+
 - Inform user which files are missing
 - Suggest running `/context:update` to refresh context
 - Continue with partial context but note limitations
@@ -123,6 +135,7 @@ Provide comprehensive summary after priming:
 ### 6. Partial Context Handling
 
 If some files fail to load:
+
 - Continue with available context
 - Clearly note what's missing
 - Suggest remediation:
@@ -132,6 +145,7 @@ If some files fail to load:
 ### 7. Performance Optimization
 
 For large contexts:
+
 - Load files in parallel when possible
 - Show progress indicator: "Loading context files... {current}/{total}"
 - Skip extremely large files (>10000 lines) with warning

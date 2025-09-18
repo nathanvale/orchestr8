@@ -7,6 +7,7 @@ allowed-tools: Read, Write, LS
 Update epic progress based on task states.
 
 ## Usage
+
 ```
 /pm:epic-refresh <epic_name>
 ```
@@ -16,6 +17,7 @@ Update epic progress based on task states.
 ### 1. Count Task Status
 
 Scan all task files in `.claude/epics/$ARGUMENTS/`:
+
 - Count total tasks
 - Count tasks with `status: closed`
 - Count tasks with `status: open`
@@ -40,12 +42,12 @@ epic_issue={extract_from_github_field}
 if [ ! -z "$epic_issue" ]; then
   # Get current epic body
   gh issue view $epic_issue --json body -q .body > /tmp/epic-body.md
-  
+
   # For each task, check its status and update checkbox
   for task_file in .claude/epics/$ARGUMENTS/[0-9]*.md; do
     task_issue=$(grep 'github:' $task_file | grep -oE '[0-9]+$')
     task_status=$(grep 'status:' $task_file | cut -d: -f2 | tr -d ' ')
-    
+
     if [ "$task_status" = "closed" ]; then
       # Mark as checked
       sed -i "s/- \[ \] #$task_issue/- [x] #$task_issue/" /tmp/epic-body.md
@@ -54,7 +56,7 @@ if [ ! -z "$epic_issue" ]; then
       sed -i "s/- \[x\] #$task_issue/- [ ] #$task_issue/" /tmp/epic-body.md
     fi
   done
-  
+
   # Update epic issue
   gh issue edit $epic_issue --body-file /tmp/epic-body.md
 fi
@@ -71,6 +73,7 @@ fi
 Get current datetime: `date -u +"%Y-%m-%dT%H:%M:%SZ"`
 
 Update epic.md frontmatter:
+
 ```yaml
 status: {calculated_status}
 progress: {calculated_progress}%
@@ -86,7 +89,7 @@ Tasks:
   Closed: {closed_count}
   Open: {open_count}
   Total: {total_count}
-  
+
 Progress: {old_progress}% → {new_progress}%
 Status: {old_status} → {new_status}
 GitHub: Task list updated ✓
@@ -97,6 +100,5 @@ GitHub: Task list updated ✓
 
 ## Important Notes
 
-This is useful after manual task edits or GitHub sync.
-Don't modify task files, only epic status.
-Preserve all other frontmatter fields.
+This is useful after manual task edits or GitHub sync. Don't modify task files,
+only epic status. Preserve all other frontmatter fields.

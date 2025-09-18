@@ -36,6 +36,7 @@ bun-changesets-template/
 ## Key Files
 
 ### Root Configuration
+
 - `package.json` - Root package configuration and scripts
 - `pnpm-workspace.yaml` - Monorepo workspace configuration
 - `turbo.json` - Turborepo build orchestration
@@ -47,13 +48,16 @@ bun-changesets-template/
 - `commitlint.config.js` - Commit message linting
 
 ### Documentation
+
 - `README.md` - Project overview and quick start
 - `STATUS.md` - Current project status
 - `ENVIRONMENT_VARIABLES.md` - Environment configuration guide
 - `.env.example` - Example environment variables
 
 ### Package Structure Pattern
+
 Each package follows this structure:
+
 ```
 packages/[package-name]/
 ├── src/              # Source code
@@ -69,6 +73,7 @@ packages/[package-name]/
 ## File Naming Conventions
 
 ### Source Files
+
 - TypeScript files: `*.ts`, `*.tsx`
 - React components: `PascalCase.tsx`
 - Utilities: `kebab-case.ts`
@@ -76,6 +81,7 @@ packages/[package-name]/
 - Constants: `*.constants.ts`
 
 ### Test Files
+
 - Unit tests: `*.test.ts`
 - Integration tests: `*.integration.test.ts`
 - E2E tests: `*.e2e.test.ts`
@@ -83,6 +89,7 @@ packages/[package-name]/
 - Spec tests: `*.spec.ts`
 
 ### Configuration
+
 - Config files: `*.config.{ts,js,mjs}`
 - RC files: `.{tool}rc`
 - Environment: `.env`, `.env.{environment}`
@@ -90,12 +97,14 @@ packages/[package-name]/
 ## Module Organization
 
 ### @template/utils
+
 - Number utilities
 - Path utilities
 - Test utilities
 - Common helpers
 
 ### @claude-hooks/quality-check
+
 - ESLint validation
 - Prettier formatting
 - TypeScript checking
@@ -103,18 +112,21 @@ packages/[package-name]/
 - CLI tools
 
 ### @claude-hooks/voice-vault
+
 - TTS providers (OpenAI, ElevenLabs, System)
 - Audio caching system
 - Provider management
 - Logging utilities
 
 ## Build Outputs
+
 - TypeScript compilation: `dist/`
 - Test coverage: `test-results/coverage/`
 - Turborepo cache: `.turbo/`
 - Vitest cache: `.vitest/`
 
 ## Special Directories
+
 - `.git/` - Git repository data
 - `.husky/` - Git hooks for quality control
 - `.changeset/` - Version management

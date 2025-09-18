@@ -2,7 +2,8 @@
 allowed-tools: Bash
 ---
 
-Run `bash .claude/scripts/pm/init.sh` using a sub-agent and show me the complete output.
+Run `bash .claude/scripts/pm/init.sh` using a sub-agent and show me the complete
+output.
 
 - DO NOT truncate.
 - DO NOT collapse.
