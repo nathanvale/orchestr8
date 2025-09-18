@@ -1,7 +1,7 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
-import { execSync } from 'node:child_process'
 import { FileError } from './errors.js'
+import { SecureGitOperations } from '../utils/secure-git-operations.js'
 
 /**
  * Options for file matching
@@ -43,10 +43,10 @@ export class FileMatcher {
 
     if (options.staged) {
       // Get staged files from git
-      files = this.getStagedFiles()
+      files = await this.getStagedFiles()
     } else if (options.since) {
       // Get files changed since a git ref
-      files = this.getChangedFiles(options.since)
+      files = await this.getChangedFiles(options.since)
     } else if (options.files && options.files.length > 0) {
       // Use provided files
       files = options.files.map((file) => this.resolveFilePath(file))
@@ -155,42 +155,48 @@ export class FileMatcher {
   /**
    * Get staged files from git
    */
-  private getStagedFiles(): string[] {
+  private async getStagedFiles(): Promise<string[]> {
     try {
-      const output = execSync('git diff --cached --name-only --diff-filter=ACM', {
-        cwd: this.cwd,
-        encoding: 'utf-8',
-      })
+      const result = await SecureGitOperations.getStagedFiles({ cwd: this.cwd })
 
-      return output
+      if (!result.success) {
+        throw new Error(result.stderr || 'Git command failed')
+      }
+
+      return result.stdout
         .trim()
         .split('\n')
         .filter(Boolean)
         .map((file) => path.resolve(this.cwd, file))
         .filter((file) => this.isTypeScriptOrJavaScriptFile(file))
-    } catch {
-      throw new FileError('Failed to get staged files from git')
+    } catch (error) {
+      throw new FileError(
+        `Failed to get staged files from git: ${error instanceof Error ? error.message : String(error)}`,
+      )
     }
   }
 
   /**
    * Get files changed since a git ref
    */
-  private getChangedFiles(since: string): string[] {
+  private async getChangedFiles(since: string): Promise<string[]> {
     try {
-      const output = execSync(`git diff ${since}...HEAD --name-only --diff-filter=ACM`, {
-        cwd: this.cwd,
-        encoding: 'utf-8',
-      })
+      const result = await SecureGitOperations.getChangedFiles(since, { cwd: this.cwd })
 
-      return output
+      if (!result.success) {
+        throw new Error(result.stderr || 'Git command failed')
+      }
+
+      return result.stdout
         .trim()
         .split('\n')
         .filter(Boolean)
         .map((file) => path.resolve(this.cwd, file))
         .filter((file) => this.isTypeScriptOrJavaScriptFile(file))
-    } catch {
-      throw new FileError(`Failed to get files changed since ${since}`)
+    } catch (error) {
+      throw new FileError(
+        `Failed to get files changed since ${since}: ${error instanceof Error ? error.message : String(error)}`,
+      )
     }
   }
 
