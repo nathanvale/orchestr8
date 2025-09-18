@@ -4,7 +4,7 @@ status: backlog
 created: 2025-09-18T09:24:15Z
 progress: 0%
 prd: .claude/prds/quality-check-improvements.md
-github: [Will be updated when synced to GitHub]
+github: https://github.com/nathanvale/bun-changesets-template/issues/46
 ---
 
 # Epic: quality-check-improvements
@@ -165,13 +165,15 @@ High-level task categories (limited to essential work):
 
 ## Tasks Created
 
-- [ ] 001.md - Fix Compilation Errors (parallel: true)
-- [ ] 002.md - Clean Test Files Directory (parallel: true)
-- [ ] 003.md - Reorganize Log Directory (parallel: true)
-- [ ] 004.md - Validate CLI Documentation (parallel: true)
-- [ ] 005.md - Standardize Package Manager (parallel: false)
-- [ ] 006.md - Improve Fix Safety (parallel: true)
-- [ ] 007.md - Harden Git Operations (parallel: true)
+- [ ] #47 - Fix Compilation Errors (parallel: true)
+- [ ] #48 - Clean Test Files Directory (parallel: true)
+- [ ] #49 - Reorganize Log Directory (parallel: true)
+- [ ] #50 - Validate CLI Documentation (parallel: true)
+- [ ] #51 - Standardize Package Manager (parallel: false)
+- [ ] #52 - Improve Fix Safety (parallel: true)
+- [ ] #53 - Harden Git Operations (parallel: true)
 
-Total tasks: 7 Parallel tasks: 6 Sequential tasks: 1 Estimated total effort:
-23-32 hours
+Total tasks: 7
+Parallel tasks: 6
+Sequential tasks: 1
+Estimated total effort: 23-32 hours
