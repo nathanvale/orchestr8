@@ -1,14 +1,18 @@
 # CLAUDE.md
 
-> Think carefully and implement the most concise solution that changes as little code as possible.
+> Think carefully and implement the most concise solution that changes as little
+> code as possible.
 
 ## Project Overview
 
-This is a monorepo template using Bun, Changesets, and Turborepo with an ADHD-optimized development workflow. It includes a sophisticated `quality-check` package that implements a "fix-first" pipeline for code quality enforcement.
+This is a monorepo template using Bun, Changesets, and Turborepo with an
+ADHD-optimized development workflow. It includes a sophisticated `quality-check`
+package that implements a "fix-first" pipeline for code quality enforcement.
 
 ## Essential Commands
 
 ### Development
+
 ```bash
 # Build all packages
 npm run build
@@ -30,6 +34,7 @@ npm run clean
 ```
 
 ### Quality Check
+
 ```bash
 # Check specific files
 npx quality-check check file1.ts file2.ts
@@ -42,6 +47,7 @@ npx quality-check pre-commit --fix file1.ts
 ```
 
 ### PM Tooling (Project Management)
+
 ```bash
 # Initialize PM system
 /pm:init
@@ -66,6 +72,7 @@ npx quality-check pre-commit --fix file1.ts
 ## Architecture
 
 ### Monorepo Structure
+
 ```
 packages/
 ├── quality-check/    # Code quality enforcement with fix-first pipeline
@@ -78,11 +85,14 @@ packages/
 The quality-check package implements a sophisticated code quality pipeline:
 
 1. **Fix-First Pipeline**: Automatically fixes issues before reporting failures
-2. **Autopilot Classification**: Smart file type detection for appropriate processing
+2. **Autopilot Classification**: Smart file type detection for appropriate
+   processing
 3. **Integrated Tools**: ESLint, Prettier, TypeScript all in one pipeline
-4. **Environment-Aware**: Different configurations for CI, Wallaby, and local development
+4. **Environment-Aware**: Different configurations for CI, Wallaby, and local
+   development
 
 Key components:
+
 - `src/pipeline/` - Core pipeline implementation
 - `src/quality-checker/` - Main orchestration layer
 - `src/config/` - Environment detection and configuration
@@ -92,6 +102,9 @@ Key components:
 
 - **Always use the test-runner agent** to execute tests
 - **No mock services** - use real implementations
+- **Do not move on to the next test until the current test is complete**
+- **If test fails, check if test is structured correctly before refactoring
+  codebase**
 - **Verbose test output** for debugging
 - **Test coverage**: Currently at 72% (target: 80%+)
 - **Environment-aware timeouts**: Automatically adjusts for CI/Wallaby/local
@@ -99,22 +112,31 @@ Key components:
 ## USE SUB-AGENTS FOR CONTEXT OPTIMIZATION
 
 ### 1. Always use the file-analyzer sub-agent when asked to read files
-The file-analyzer agent is an expert in extracting and summarizing critical information from files, particularly log files and verbose outputs.
+
+The file-analyzer agent is an expert in extracting and summarizing critical
+information from files, particularly log files and verbose outputs.
 
 ### 2. Always use the code-analyzer sub-agent when asked to search code, analyze code, research bugs, or trace logic flow
-The code-analyzer agent is an expert in code analysis, logic tracing, and vulnerability detection.
+
+The code-analyzer agent is an expert in code analysis, logic tracing, and
+vulnerability detection.
 
 ### 3. Always use the test-runner sub-agent to run tests and analyze the test results
+
 Using the test-runner agent ensures:
+
 - Full test output is captured for debugging
 - Main conversation stays clean and focused
 - Context usage is optimized
 - All issues are properly surfaced
+- No approval dialogs interrupt the workflow
 
 ## Git Workflow
 
 ### Pre-commit Hook
+
 The repository uses husky and lint-staged for pre-commit checks:
+
 - Automatically runs quality-check on staged files
 - Auto-fixes and re-stages formatted files
 - Prevents commits with linting/formatting issues
@@ -122,7 +144,9 @@ The repository uses husky and lint-staged for pre-commit checks:
 To bypass if needed: `HUSKY=0 git commit -m "your message"`
 
 ### Commit Messages
+
 Follow conventional commits:
+
 - `feat:` - New features
 - `fix:` - Bug fixes
 - `chore:` - Maintenance tasks
@@ -133,15 +157,24 @@ Follow conventional commits:
 ## ABSOLUTE RULES
 
 - **NO PARTIAL IMPLEMENTATION** - Complete every feature fully
-- **NO SIMPLIFICATION** - No placeholder code or "simplified for now" comments
-- **NO CODE DUPLICATION** - Always check for existing functions before writing new ones
+- **NO SIMPLIFICATION** - No placeholder code or "//This is simplified stuff for
+  now, complete implementation would blablabla"
+- **NO CODE DUPLICATION** - Check existing codebase to reuse functions and
+  constants. Read files before writing new functions. Use common sense function
+  name to find them easily
 - **NO DEAD CODE** - Either use it or delete it completely
 - **IMPLEMENT TEST FOR EVERY FUNCTION** - No exceptions
-- **NO CHEATER TESTS** - Tests must reflect real usage and reveal flaws
-- **NO INCONSISTENT NAMING** - Follow existing patterns
-- **NO OVER-ENGINEERING** - Simple working solutions over enterprise abstractions
-- **NO MIXED CONCERNS** - Proper separation of concerns
-- **NO RESOURCE LEAKS** - Clean up all resources properly
+- **NO CHEATER TESTS** - Test must be accurate, reflect real usage and be
+  designed to reveal flaws. No useless tests! Design tests to be verbose so we
+  can use them for debugging
+- **NO INCONSISTENT NAMING** - Read existing codebase naming patterns
+- **NO OVER-ENGINEERING** - Don't add unnecessary abstractions, factory
+  patterns, or middleware when simple functions would work. Don't think
+  "enterprise" when you need "working"
+- **NO MIXED CONCERNS** - Don't put validation logic inside API handlers,
+  database queries inside UI components, etc. instead of proper separation
+- **NO RESOURCE LEAKS** - Don't forget to close database connections, clear
+  timeouts, remove event listeners, or clean up file handles
 
 ## Error Handling Philosophy
 
@@ -153,27 +186,41 @@ Follow conventional commits:
 ## Performance Considerations
 
 ### Memory Management
+
 - Memory limits configured per test type (unit: 500MB, integration: 750MB)
 - Environment-aware memory monitoring
 - CI gets +25% buffer for memory limits
 
 ### Test Timeouts
+
 - Unit tests: 5s (10s in CI)
 - Integration tests: 15s (22.5s in CI)
 - Disposal tests: 20s (25s in CI)
 
 ## Known Issues & Workarounds
 
-1. **TypeScript strict mode**: Some legacy code may need `@ts-ignore` during migration
+1. **TypeScript strict mode**: Some legacy code may need `@ts-ignore` during
+   migration
 2. **Wallaby integration**: Use `WALLABY_WORKER` env var for detection
-3. **CI memory**: Set `NODE_OPTIONS='--max-old-space-size=4096'` for memory-intensive tests
+3. **CI memory**: Set `NODE_OPTIONS='--max-old-space-size=4096'` for
+   memory-intensive tests
 
 ## Tone and Behavior
 
-- **Be skeptical and critical** - Point out mistakes and better approaches
-- **Be concise** - Short summaries unless planning details needed
-- **No flattery** - Skip compliments unless specifically requested
-- **Ask questions** - Don't guess intent, ask for clarification
+- **Criticism is welcome** - Tell me when I am wrong or mistaken, or even when
+  you think I might be
+- **Point out better approaches** - Tell me if there is a better approach than
+  the one I am taking
+- **Mention relevant standards** - Tell me if there is a relevant standard or
+  convention that I appear to be unaware of
+- **Be skeptical**
+- **Be concise** - Short summaries are OK, but don't give an extended breakdown
+  unless working through plan details
+- **No flattery** - Do not flatter, and do not give compliments unless I am
+  specifically asking for your judgement
+- **Occasional pleasantries are fine**
+- **Ask questions** - Feel free to ask many questions. If you are in doubt of my
+  intent, don't guess. Ask
 
 ## Important Reminders
 
