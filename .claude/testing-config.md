@@ -1,45 +1,46 @@
 ---
 framework: vitest
-test_command: pnpm test
-created: 2025-09-16T07:43:59Z
+test_command: npm test
+created: 2025-01-18T10:45:00Z
 ---
 
 # Testing Configuration
 
 ## Framework
-
 - Type: Vitest
 - Version: 3.2.4
-- Config File: ./vitest.config.ts
+- Config File: vitest.config.ts
 
 ## Test Structure
-
-- Test Directory: packages/_, apps/_, tests/, tooling/
-- Test Files: 61 files found
-- Naming Pattern: _.test.ts, _.test.tsx, _.spec.ts, _.spec.tsx
+- Test Directory: ./tests, ./packages/quality-check/tests, ./packages/quality-check/spec
+- Test Files: 113 files found
+- Naming Pattern: *.test.ts, *.spec.ts
 
 ## Commands
-
-- Run All Tests: `pnpm test`
-- Run Specific Test: `pnpm test {test_file}`
-- Run with Debugging: `pnpm test:debug`
-- Run Unit Tests: `pnpm test:unit`
-- Run Integration Tests: `pnpm test:integration`
-- Run E2E Tests: `pnpm test:e2e`
-- Run Failed Tests: `pnpm test:failed`
-- Run Coverage: `pnpm test:coverage`
-- Run in Watch Mode: `vitest watch`
+- Run All Tests: `npm test`
+- Run Specific Test: `npm test -- {file_path}`
+- Run with Debugging: `DEBUG=true npm test`
+- Run with Watch Mode: `npm test -- --watch`
+- Run with Pattern: `npm test -- --grep "{pattern}"`
 
 ## Environment
-
-- Required ENV vars: NODE_ENV, TEST_MODE (optional)
-- Test Database: Not applicable
-- Test Servers: MSW for API mocking
+- Required ENV vars: NODE_OPTIONS='--max-old-space-size=4096'
+- Test Database: N/A
+- Test Servers: N/A
 
 ## Test Runner Agent Configuration
-
 - Use verbose output for debugging
-- Run tests sequentially (no parallel)
+- Run tests sequentially (no parallel) when debugging
 - Capture full stack traces
 - No mocking - use real implementations
 - Wait for each test to complete
+
+## Memory Configuration
+- NODE_OPTIONS includes --max-old-space-size=4096 for memory-intensive tests
+- Coverage directory: ./test-results/coverage
+- Test results directory: ./test-results
+
+## Silent Mode Configuration
+- CI: Automatically silent
+- Local: Set VITEST_SILENT=true for reduced noise
+- Debug: Set DEBUG=true or VERBOSE=true to override silent mode
