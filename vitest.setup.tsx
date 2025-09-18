@@ -1,6 +1,20 @@
 // Import testing-library jest-dom matchers
 import '@testing-library/jest-dom/vitest'
 
+// Suppress console output in tests when VITEST_SILENT is set
+import { vi } from 'vitest'
+if (process.env['VITEST_SILENT'] === 'true' || process.env['CI'] === 'true') {
+  // Mock console methods to reduce noise in test output
+  global.console = {
+    ...console,
+    log: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    info: vi.fn(),
+    debug: vi.fn(),
+  } as Console
+}
+
 import type { HttpHandler } from 'msw'
 import { http, HttpResponse } from 'msw'
 import { setupServer } from 'msw/node'

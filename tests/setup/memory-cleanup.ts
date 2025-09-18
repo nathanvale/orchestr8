@@ -18,7 +18,7 @@ beforeAll(() => {
   // Start global monitoring
   globalMemoryMonitor.getProfiler().reset()
 
-  if (process.env['MEMORY_DEBUG'] === 'true') {
+  if (process.env['MEMORY_DEBUG'] === 'true' && !process.env['VITEST_SILENT']) {
     console.log('Memory monitoring enabled for test suite')
   }
 })
@@ -46,7 +46,7 @@ afterEach(({ task }) => {
   // Get memory data for this test
   const memoryData = globalMemoryMonitor.getTestData(currentTestName)
 
-  if (memoryData && process.env['MEMORY_DEBUG'] === 'true') {
+  if (memoryData && process.env['MEMORY_DEBUG'] === 'true' && !process.env['VITEST_SILENT']) {
     const deltaHeap = (memoryData.delta.heapUsed / 1024 / 1024).toFixed(2)
     const afterHeap = (memoryData.after.memory.heapUsed / 1024 / 1024).toFixed(2)
     console.log(`Memory after ${task.name}: ${afterHeap}MB (delta: ${deltaHeap}MB)`)
@@ -56,8 +56,10 @@ afterEach(({ task }) => {
   try {
     globalMemoryMonitor.checkMemoryLimit(currentTestName)
   } catch (error) {
-    // Log the error but don't fail the test
-    console.error(`Memory limit exceeded in test "${currentTestName}":`, error)
+    // Log the error but don't fail the test (unless silent mode)
+    if (!process.env['VITEST_SILENT']) {
+      console.error(`Memory limit exceeded in test "${currentTestName}":`, error)
+    }
 
     if (process.env['FAIL_ON_MEMORY_LIMIT'] === 'true') {
       throw error
@@ -77,27 +79,30 @@ afterAll(async () => {
   if (process.env['MEMORY_TREND_REPORT'] === 'true') {
     const report = globalMemoryMonitor.generateTrendReport()
 
-    console.log('\n=== Memory Usage Report ===')
-    console.log(`Total tests: ${report.totalTests}`)
-    console.log(`Average memory: ${report.averageMemoryUsage.toFixed(2)}MB`)
-    console.log(`Peak memory: ${report.peakMemoryUsage.toFixed(2)}MB`)
-    console.log(`Memory growth: ${report.memoryGrowthTrend.toFixed(2)}MB`)
+    // Only show memory report if not in silent mode (unless MEMORY_DEBUG overrides)
+    if (!process.env['VITEST_SILENT'] || process.env['MEMORY_DEBUG'] === 'true') {
+      console.log('\n=== Memory Usage Report ===')
+      console.log(`Total tests: ${report.totalTests}`)
+      console.log(`Average memory: ${report.averageMemoryUsage.toFixed(2)}MB`)
+      console.log(`Peak memory: ${report.peakMemoryUsage.toFixed(2)}MB`)
+      console.log(`Memory growth: ${report.memoryGrowthTrend.toFixed(2)}MB`)
 
-    if (report.testsExceedingWarning.length > 0) {
-      console.log(
-        `\nTests exceeding warning threshold (${globalMemoryMonitor['config'].warningThresholdPercent}%):`,
-      )
-      report.testsExceedingWarning.forEach((test) => console.log(`  - ${test}`))
-    }
+      if (report.testsExceedingWarning.length > 0) {
+        console.log(
+          `\nTests exceeding warning threshold (${globalMemoryMonitor['config'].warningThresholdPercent}%):`,
+        )
+        report.testsExceedingWarning.forEach((test) => console.log(`  - ${test}`))
+      }
 
-    if (report.testsExceedingLimit.length > 0) {
-      console.log('\nTests exceeding memory limit:')
-      report.testsExceedingLimit.forEach((test) => console.log(`  - ${test}`))
-    }
+      if (report.testsExceedingLimit.length > 0) {
+        console.log('\nTests exceeding memory limit:')
+        report.testsExceedingLimit.forEach((test) => console.log(`  - ${test}`))
+      }
 
-    if (report.potentialLeak) {
-      console.warn(`\n⚠️  ${report.leakReason}`)
-      console.warn(`Memory growth rate: ${report.memoryGrowthRate?.toFixed(2)}%`)
+      if (report.potentialLeak) {
+        console.warn(`\n⚠️  ${report.leakReason}`)
+        console.warn(`Memory growth rate: ${report.memoryGrowthRate?.toFixed(2)}%`)
+      }
     }
 
     // Export report to file if path provided
@@ -105,9 +110,13 @@ afterAll(async () => {
     if (reportPath) {
       try {
         await globalMemoryMonitor.exportTrendReport(reportPath)
-        console.log(`\nMemory report exported to: ${reportPath}`)
+        if (!process.env['VITEST_SILENT']) {
+          console.log(`\nMemory report exported to: ${reportPath}`)
+        }
       } catch (error) {
-        console.error('Failed to export memory report:', error)
+        if (!process.env['VITEST_SILENT']) {
+          console.error('Failed to export memory report:', error)
+        }
       }
     }
   }
@@ -115,9 +124,11 @@ afterAll(async () => {
   // Check for memory leaks
   const leaks = globalMemoryMonitor.detectMemoryLeaks()
   if (leaks.potentialLeak) {
-    console.warn('\n⚠️  Potential memory leaks detected:')
-    console.warn(`  Reason: ${leaks.reason}`)
-    console.warn(`  Growth rate: ${leaks.growthRate?.toFixed(2)}%`)
+    if (!process.env['VITEST_SILENT']) {
+      console.warn('\n⚠️  Potential memory leaks detected:')
+      console.warn(`  Reason: ${leaks.reason}`)
+      console.warn(`  Growth rate: ${leaks.growthRate?.toFixed(2)}%`)
+    }
 
     if (process.env['FAIL_ON_MEMORY_LEAK'] === 'true') {
       throw new Error(`Memory leak detected: ${leaks.reason}`)

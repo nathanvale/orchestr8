@@ -1,0 +1,153 @@
+.agent-os/specs/hello-world-test/docs/IMPLEMENTATION-GUIDE.md:3:      19: >  >  > ## Getting Started:## Getting Started
+.agent-os/specs/hello-world-test/docs/IMPLEMENTATION-GUIDE.md:7:      35: >  >  > ## Greeting Service Implementation:## Greeting Service Implementation
+.agent-os/specs/hello-world-test/docs/IMPLEMENTATION-GUIDE.md:9:      25: >  >  > ### Basic Implementation:### Basic Implementation
+.agent-os/specs/hello-world-test/docs/IMPLEMENTATION-GUIDE.md:37:      19: >  >  > ### Error Handling:### Error Handling
+.agent-os/specs/hello-world-test/docs/IMPLEMENTATION-GUIDE.md:51:      29: >  >  > ## Middleware Implementation:## Middleware Implementation
+.agent-os/specs/hello-world-test/docs/IMPLEMENTATION-GUIDE.md:53:      30: >  >  > ### Custom Middleware Pattern:### Custom Middleware Pattern
+.agent-os/specs/hello-world-test/docs/IMPLEMENTATION-GUIDE.md:73:      26: >  >  > ## Testing Implementation:## Testing Implementation
+.agent-os/specs/hello-world-test/docs/IMPLEMENTATION-GUIDE.md:75:      15: >  >  > ### Unit Tests:### Unit Tests
+.agent-os/specs/hello-world-test/docs/IMPLEMENTATION-GUIDE.md:96:      22: >  >  > ### Integration Tests:### Integration Tests
+.agent-os/specs/hello-world-test/docs/IMPLEMENTATION-GUIDE.md:114:      30: >  >  > ## Performance Considerations:## Performance Considerations
+.agent-os/specs/hello-world-test/docs/IMPLEMENTATION-GUIDE.md:123:      14: >  >  > ## Deployment:## Deployment
+.agent-os/specs/hello-world-test/docs/IMPLEMENTATION-GUIDE.md:132:      17: >  >  > ## Documentation:## Documentation
+.agent-os/specs/hello-world-test/docs/LOGGING-GUIDE.md:3:      12: >  >  > ## Overview:## Overview
+.agent-os/specs/hello-world-test/docs/LOGGING-GUIDE.md:7:      29: >  >  > ## Structured Logging Format:## Structured Logging Format
+.agent-os/specs/hello-world-test/docs/LOGGING-GUIDE.md:9:      23: >  >  > ### JSON Output Schema:### JSON Output Schema
+.agent-os/specs/hello-world-test/docs/LOGGING-GUIDE.md:27:      15: >  >  > ### Log Levels:### Log Levels
+.agent-os/specs/hello-world-test/docs/LOGGING-GUIDE.md:35:      26: >  >  > ## Log Aggregation System:## Log Aggregation System
+.agent-os/specs/hello-world-test/docs/LOGGING-GUIDE.md:37:      27: >  >  > ### Centralized Collection:### Centralized Collection
+.agent-os/specs/hello-world-test/docs/LOGGING-GUIDE.md:41:      16: >  >  > #### Components:#### Components
+.agent-os/specs/hello-world-test/docs/LOGGING-GUIDE.md:47:      24: >  >  > ### Collection Patterns:### Collection Patterns
+.agent-os/specs/hello-world-test/docs/LOGGING-GUIDE.md:56:      31: >  >  > ## Performance Metrics Logging:## Performance Metrics Logging
+.agent-os/specs/hello-world-test/docs/LOGGING-GUIDE.md:58:      19: >  >  > ### Timing Metrics:### Timing Metrics
+.agent-os/specs/hello-world-test/docs/LOGGING-GUIDE.md:62:      17: >  >  > #### Key Metrics:#### Key Metrics
+.agent-os/specs/hello-world-test/docs/LOGGING-GUIDE.md:69:      20: >  >  > ### Memory Tracking:### Memory Tracking
+.agent-os/specs/hello-world-test/docs/LOGGING-GUIDE.md:82:      26: >  >  > ## Error Logging Pipeline:## Error Logging Pipeline
+.agent-os/specs/hello-world-test/docs/LOGGING-GUIDE.md:84:      29: >  >  > ### Stack Trace Preservation:### Stack Trace Preservation
+.agent-os/specs/hello-world-test/docs/LOGGING-GUIDE.md:88:      19: >  >  > #### Error Context:#### Error Context
+.agent-os/specs/hello-world-test/docs/LOGGING-GUIDE.md:95:      25: >  >  > ### Error Classification:### Error Classification
+.agent-os/specs/hello-world-test/docs/LOGGING-GUIDE.md:99:      23: >  >  > ## Request Correlation:## Request Correlation
+.agent-os/specs/hello-world-test/docs/LOGGING-GUIDE.md:101:      30: >  >  > ### Correlation ID Generation:### Correlation ID Generation
+.agent-os/specs/hello-world-test/docs/LOGGING-GUIDE.md:111:      24: >  >  > ### Distributed Tracing:### Distributed Tracing
+.agent-os/specs/hello-world-test/docs/LOGGING-GUIDE.md:115:      22: >  >  > #### Trace Components:#### Trace Components
+.agent-os/specs/hello-world-test/docs/LOGGING-GUIDE.md:121:      30: >  >  > ## Log Rotation and Retention:## Log Rotation and Retention
+.agent-os/specs/hello-world-test/docs/LOGGING-GUIDE.md:123:      23: >  >  > ### Storage Management:### Storage Management
+.agent-os/specs/hello-world-test/docs/LOGGING-GUIDE.md:127:      25: >  >  > #### Rotation Strategies:#### Rotation Strategies
+.agent-os/specs/hello-world-test/docs/LOGGING-GUIDE.md:132:      23: >  >  > ### Retention Policies:### Retention Policies
+.agent-os/specs/hello-world-test/docs/LOGGING-GUIDE.md:139:      28: >  >  > ## Log Filtering and Search:## Log Filtering and Search
+.agent-os/specs/hello-world-test/docs/LOGGING-GUIDE.md:141:      24: >  >  > ### Search Capabilities:### Search Capabilities
+.agent-os/specs/hello-world-test/docs/LOGGING-GUIDE.md:145:      21: >  >  > #### Search Features:#### Search Features
+.agent-os/specs/hello-world-test/docs/LOGGING-GUIDE.md:152:      23: >  >  > ### Query Optimization:### Query Optimization
+.agent-os/specs/hello-world-test/docs/LOGGING-GUIDE.md:156:      27: >  >  > ## Real-time Log Streaming:## Real-time Log Streaming
+.agent-os/specs/hello-world-test/docs/LOGGING-GUIDE.md:158:      26: >  >  > ### Monitoring Dashboards:### Monitoring Dashboards
+.agent-os/specs/hello-world-test/docs/LOGGING-GUIDE.md:162:      21: >  >  > #### Stream Features:#### Stream Features
+.agent-os/specs/hello-world-test/docs/LOGGING-GUIDE.md:168:      26: >  >  > ### Dashboard Integration:### Dashboard Integration
+.agent-os/specs/hello-world-test/docs/LOGGING-GUIDE.md:172:      33: >  >  > ## Implementation Best Practices:## Implementation Best Practices
+.agent-os/specs/hello-world-test/docs/LOGGING-GUIDE.md:174:      31: >  >  > ### Performance Considerations:### Performance Considerations
+.agent-os/specs/hello-world-test/docs/LOGGING-GUIDE.md:181:      24: >  >  > ### Security Guidelines:### Security Guidelines
+.agent-os/specs/hello-world-test/docs/LOGGING-GUIDE.md:188:      27: >  >  > ### Operational Guidelines:### Operational Guidelines
+.agent-os/specs/hello-world-test/docs/LOGGING-GUIDE.md:195:      25: >  >  > ## Related Documentation:## Related Documentation
+.agent-os/specs/hello-world-test/docs/I18N-GUIDE.md:3:      12: >  >  > ## Overview:## Overview
+.agent-os/specs/hello-world-test/docs/I18N-GUIDE.md:7:      23: >  >  > ## Supported Languages:## Supported Languages
+.agent-os/specs/hello-world-test/docs/I18N-GUIDE.md:18:      17: >  >  > ## Configuration:## Configuration
+.agent-os/specs/hello-world-test/docs/I18N-GUIDE.md:34:      18: >  >  > ## Implementation:## Implementation
+.agent-os/specs/hello-world-test/docs/I18N-GUIDE.md:36:      16: >  >  > ### Basic Usage:### Basic Usage
+.agent-os/specs/hello-world-test/docs/I18N-GUIDE.md:54:      23: >  >  > ### Language Detection:### Language Detection
+.agent-os/specs/hello-world-test/docs/I18N-GUIDE.md:65:      21: >  >  > ## Translation Files:## Translation Files
+.agent-os/specs/hello-world-test/docs/I18N-GUIDE.md:67:      14: >  >  > ### Structure:### Structure
+.agent-os/specs/hello-world-test/docs/I18N-GUIDE.md:81:      29: >  >  > ### Example Translation File:### Example Translation File
+.agent-os/specs/hello-world-test/docs/I18N-GUIDE.md:94:      23: >  >  > ## Template Formatting:## Template Formatting
+.agent-os/specs/hello-world-test/docs/I18N-GUIDE.md:96:      18: >  >  > ### Interpolation:### Interpolation
+.agent-os/specs/hello-world-test/docs/I18N-GUIDE.md:106:      18: >  >  > ### Pluralization:### Pluralization
+.agent-os/specs/hello-world-test/docs/I18N-GUIDE.md:118:      28: >  >  > ## Date and Time Formatting:## Date and Time Formatting
+.agent-os/specs/hello-world-test/docs/I18N-GUIDE.md:130:      34: >  >  > ## Number and Currency Formatting:## Number and Currency Formatting
+.agent-os/specs/hello-world-test/docs/I18N-GUIDE.md:145:      16: >  >  > ## Testing i18n:## Testing i18n
+.agent-os/specs/hello-world-test/docs/I18N-GUIDE.md:163:      28: >  >  > ## Performance Optimization:## Performance Optimization
+.agent-os/specs/hello-world-test/docs/I18N-GUIDE.md:172:      18: >  >  > ## Error Handling:## Error Handling
+.agent-os/specs/hello-world-test/docs/I18N-GUIDE.md:180:      18: >  >  > ## Best Practices:## Best Practices
+.agent-os/specs/hello-world-test/docs/I18N-GUIDE.md:190:      25: >  >  > ## Related Documentation:## Related Documentation
+.agent-os/specs/hello-world-test/docs/CONFIG-REFERENCE.md:3:      23: >  >  > ## Configuration Files:## Configuration Files
+.agent-os/specs/hello-world-test/docs/CONFIG-REFERENCE.md:7:      19: >  >  > ### File Structure:### File Structure
+.agent-os/specs/hello-world-test/docs/CONFIG-REFERENCE.md:18:      24: >  >  > ## Configuration Schema:## Configuration Schema
+.agent-os/specs/hello-world-test/docs/CONFIG-REFERENCE.md:20:      34: >  >  > ### Complete Configuration Object:### Complete Configuration Object
+.agent-os/specs/hello-world-test/docs/CONFIG-REFERENCE.md:102:      25: >  >  > ## Environment Variables:## Environment Variables
+.agent-os/specs/hello-world-test/docs/CONFIG-REFERENCE.md:117:      25: >  >  > ## Loading Configuration:## Loading Configuration
+.agent-os/specs/hello-world-test/docs/CONFIG-REFERENCE.md:134:      28: >  >  > ## Configuration Validation:## Configuration Validation
+.agent-os/specs/hello-world-test/docs/CONFIG-REFERENCE.md:158:      17: >  >  > ## Feature Flags:## Feature Flags
+.agent-os/specs/hello-world-test/docs/CONFIG-REFERENCE.md:179:      22: >  >  > ## Performance Tuning:## Performance Tuning
+.agent-os/specs/hello-world-test/docs/CONFIG-REFERENCE.md:202:      26: >  >  > ## Security Configuration:## Security Configuration
+.agent-os/specs/hello-world-test/docs/CONFIG-REFERENCE.md:223:      25: >  >  > ## Testing Configuration:## Testing Configuration
+.agent-os/specs/hello-world-test/docs/CONFIG-REFERENCE.md:243:      25: >  >  > ## Related Documentation:## Related Documentation
+.agent-os/specs/hello-world-test/docs/ERROR-HANDLING.md:3:      25: >  >  > ## Error Types and Codes:## Error Types and Codes
+.agent-os/specs/hello-world-test/docs/ERROR-HANDLING.md:5:      23: >  >  > ### Application Errors:### Application Errors
+.agent-os/specs/hello-world-test/docs/ERROR-HANDLING.md:14:      18: >  >  > ### System Errors:### System Errors
+.agent-os/specs/hello-world-test/docs/ERROR-HANDLING.md:22:      27: >  >  > ## Error Handling Patterns:## Error Handling Patterns
+.agent-os/specs/hello-world-test/docs/ERROR-HANDLING.md:24:      27: >  >  > ### Try-Catch with Context:### Try-Catch with Context
+.agent-os/specs/hello-world-test/docs/ERROR-HANDLING.md:42:      21: >  >  > ### Error Boundaries:### Error Boundaries
+.agent-os/specs/hello-world-test/docs/ERROR-HANDLING.md:58:      30: >  >  > ### Middleware Error Handling:### Middleware Error Handling
+.agent-os/specs/hello-world-test/docs/ERROR-HANDLING.md:84:      27: >  >  > ## Testing Error Scenarios:## Testing Error Scenarios
+.agent-os/specs/hello-world-test/docs/ERROR-HANDLING.md:106:      27: >  >  > ## Monitoring and Alerting:## Monitoring and Alerting
+.agent-os/specs/hello-world-test/docs/ERROR-HANDLING.md:114:      23: >  >  > ## Recovery Strategies:## Recovery Strategies
+.agent-os/specs/hello-world-test/docs/ERROR-HANDLING.md:123:      18: >  >  > ## Best Practices:## Best Practices
+.agent-os/specs/hello-world-test/docs/TESTING-GUIDE.md:3:      20: >  >  > ## Testing Strategy:## Testing Strategy
+.agent-os/specs/hello-world-test/docs/TESTING-GUIDE.md:7:      14: >  >  > ## Test Types:## Test Types
+.agent-os/specs/hello-world-test/docs/TESTING-GUIDE.md:9:      15: >  >  > ### Unit Tests:### Unit Tests
+.agent-os/specs/hello-world-test/docs/TESTING-GUIDE.md:38:      22: >  >  > ### Integration Tests:### Integration Tests
+.agent-os/specs/hello-world-test/docs/TESTING-GUIDE.md:62:      14: >  >  > ### E2E Tests:### E2E Tests
+.agent-os/specs/hello-world-test/docs/TESTING-GUIDE.md:86:      20: >  >  > ## Testing Patterns:## Testing Patterns
+.agent-os/specs/hello-world-test/docs/TESTING-GUIDE.md:88:      37: >  >  > ### AAA Pattern (Arrange-Act-Assert):### AAA Pattern (Arrange-Act-Assert)
+.agent-os/specs/hello-world-test/docs/TESTING-GUIDE.md:104:      26: >  >  > ### Given-When-Then (BDD):### Given-When-Then (BDD)
+.agent-os/specs/hello-world-test/docs/TESTING-GUIDE.md:126:      22: >  >  > ## Mocking Strategies:## Mocking Strategies
+.agent-os/specs/hello-world-test/docs/TESTING-GUIDE.md:130:      18: >  >  > ### Service Mocks:### Service Mocks
+.agent-os/specs/hello-world-test/docs/TESTING-GUIDE.md:140:      14: >  >  > ### API Mocks:### API Mocks
+.agent-os/specs/hello-world-test/docs/TESTING-GUIDE.md:149:      24: >  >  > ## Test Data Management:## Test Data Management
+.agent-os/specs/hello-world-test/docs/TESTING-GUIDE.md:151:      13: >  >  > ### Fixtures:### Fixtures
+.agent-os/specs/hello-world-test/docs/TESTING-GUIDE.md:162:      14: >  >  > ### Factories:### Factories
+.agent-os/specs/hello-world-test/docs/TESTING-GUIDE.md:174:      23: >  >  > ## Performance Testing:## Performance Testing
+.agent-os/specs/hello-world-test/docs/TESTING-GUIDE.md:199:      25: >  >  > ## Coverage Requirements:## Coverage Requirements
+.agent-os/specs/hello-world-test/docs/TESTING-GUIDE.md:207:      21: >  >  > ## Test Organization:## Test Organization
+.agent-os/specs/hello-world-test/docs/TESTING-GUIDE.md:229:      17: >  >  > ## Running Tests:## Running Tests
+.agent-os/specs/hello-world-test/docs/TESTING-GUIDE.md:251:      21: >  >  > ## CI/CD Integration:## CI/CD Integration
+.agent-os/specs/hello-world-test/docs/TESTING-GUIDE.md:261:      18: >  >  > ## Best Practices:## Best Practices
+.agent-os/specs/hello-world-test/docs/TECHNICAL-ARCHITECTURE.md:3:      19: >  >  > ## System Overview:## System Overview
+.agent-os/specs/hello-world-test/docs/TECHNICAL-ARCHITECTURE.md:7:      24: >  >  > ### Architecture Layers:### Architecture Layers
+.agent-os/specs/hello-world-test/docs/TECHNICAL-ARCHITECTURE.md:25:      19: >  >  > ## Core Components:## Core Components
+.agent-os/specs/hello-world-test/docs/TECHNICAL-ARCHITECTURE.md:27:      24: >  >  > ### 1. Greeting Service:### 1. Greeting Service
+.agent-os/specs/hello-world-test/docs/TECHNICAL-ARCHITECTURE.md:33:      20: >  >  > ### 2. I18N Service:### 2. I18N Service
+.agent-os/specs/hello-world-test/docs/TECHNICAL-ARCHITECTURE.md:39:      24: >  >  > ### 3. Middleware Stack:### 3. Middleware Stack
+.agent-os/specs/hello-world-test/docs/TECHNICAL-ARCHITECTURE.md:47:      13: >  >  > ## Data Flow:## Data Flow
+.agent-os/specs/hello-world-test/docs/TECHNICAL-ARCHITECTURE.md:55:      30: >  >  > ## Scalability Considerations:## Scalability Considerations
+.agent-os/specs/hello-world-test/docs/TECHNICAL-ARCHITECTURE.md:62:      25: >  >  > ## Security Architecture:## Security Architecture
+.agent-os/specs/hello-world-test/docs/API-REFERENCE.md:3:      13: >  >  > ## Core APIs:## Core APIs
+.agent-os/specs/hello-world-test/docs/API-REFERENCE.md:5:      25: >  >  > ### Greeting Service API:### Greeting Service API
+.agent-os/specs/hello-world-test/docs/API-REFERENCE.md:9:      68: >  >  > #### `greet(name: string, options?: GreetOptions): Promise<string>`:#### `greet(name: string, options?: GreetOptions): Promise<string>`
+.agent-os/specs/hello-world-test/docs/API-REFERENCE.md:30:      22: >  >  > ### Configuration API:### Configuration API
+.agent-os/specs/hello-world-test/docs/API-REFERENCE.md:34:      16: >  >  > ### Error Codes:### Error Codes
+.agent-os/specs/hello-world-test/docs/API-REFERENCE.md:38:      18: >  >  > ## REST Endpoints:## REST Endpoints
+.agent-os/specs/hello-world-test/docs/API-REFERENCE.md:40:      20: >  >  > ### POST /api/greet:### POST /api/greet
+.agent-os/specs/hello-world-test/docs/API-REFERENCE.md:60:      20: >  >  > ## WebSocket Events:## WebSocket Events
+.agent-os/specs/hello-world-test/docs/API-REFERENCE.md:62:      23: >  >  > ### `greeting:request`:### `greeting:request`
+.agent-os/specs/hello-world-test/docs/API-REFERENCE.md:65:      24: >  >  > ### `greeting:response`:### `greeting:response`
+.agent-os/specs/hello-world-test/README.md:5:      11: >  >  > ## Purpose:## Purpose
+.agent-os/specs/hello-world-test/README.md:12:      13: >  >  > ## Structure:## Structure
+.agent-os/specs/hello-world-test/README.md:30:      20: >  >  > ## Running the Test:## Running the Test
+.agent-os/specs/hello-world-test/README.md:32:      36: >  >  > ### Method 1: Using the Test Script:### Method 1: Using the Test Script
+.agent-os/specs/hello-world-test/README.md:46:      46: >  >  > ### Method 2: Using the Execute-Tasks Command:### Method 2: Using the Execute-Tasks Command
+.agent-os/specs/hello-world-test/README.md:53:      19: >  >  > ## Context Logging:## Context Logging
+.agent-os/specs/hello-world-test/README.md:62:      34: >  >  > ## Documentation Cross-References:## Documentation Cross-References
+.agent-os/specs/hello-world-test/README.md:74:      12: >  >  > ## Analysis:## Analysis
+.agent-os/specs/hello-world-test/README.md:81:       9: >  >  > ## Notes:## Notes
+.agent-os/specs/hello-world-test/spec.md:3:      12: >  >  > ## Overview:## Overview
+.agent-os/specs/hello-world-test/spec.md:7:      14: >  >  > ## Objectives:## Objectives
+.agent-os/specs/hello-world-test/spec.md:15:       9: >  >  > ## Scope:## Scope
+.agent-os/specs/hello-world-test/spec.md:17:      13: >  >  > ### In Scope:### In Scope
+.agent-os/specs/hello-world-test/spec.md:24:      17: >  >  > ### Out of Scope:### Out of Scope
+.agent-os/specs/hello-world-test/spec.md:31:      26: >  >  > ## Technical Requirements:## Technical Requirements
+.agent-os/specs/hello-world-test/spec.md:33:      23: >  >  > ### Context Management:### Context Management
+.agent-os/specs/hello-world-test/spec.md:40:      19: >  >  > ### Task Execution:### Task Execution
+.agent-os/specs/hello-world-test/spec.md:47:      12: >  >  > ### Logging:### Logging
+.agent-os/specs/hello-world-test/spec.md:54:      20: >  >  > ## Success Criteria:## Success Criteria
+.agent-os/specs/hello-world-test/spec.md:62:      27: >  >  > ## Documentation Structure:## Documentation Structure
+.agent-os/specs/hello-world-test/spec.md:79:      21: >  >  > ## Testing Procedure:## Testing Procedure
+.agent-os/specs/hello-world-test/spec.md:89:      21: >  >  > ## Expected Outcomes:## Expected Outcomes
+.agent-os/specs/hello-world-test/spec.md:97:      12: >  >  > ## Analysis:## Analysis

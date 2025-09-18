@@ -7,6 +7,7 @@ export interface MemoryMonitorConfig {
   enableTracking?: boolean
   enableWarnings?: boolean
   enableTrendReporting?: boolean
+  debugMode?: boolean
 }
 
 export interface TestMemoryData {
@@ -42,14 +43,20 @@ export class MemoryMonitor {
   private config: Required<MemoryMonitorConfig>
   private testData: Map<string, TestMemoryData>
   private testOptions: Map<string, TestOptions>
+  private debugMode: boolean
 
   constructor(config: MemoryMonitorConfig = {}) {
+    // Use debugMode from config if provided, otherwise fall back to environment variable
+    const envDebugMode = process.env['MEMORY_DEBUG'] === 'true'
+    this.debugMode = config.debugMode ?? envDebugMode
+
     this.config = {
       maxMemoryMB: config.maxMemoryMB ?? 500,
       warningThresholdPercent: config.warningThresholdPercent ?? 80,
-      enableTracking: config.enableTracking ?? true,
-      enableWarnings: config.enableWarnings ?? true,
+      enableTracking: config.enableTracking ?? this.debugMode,
+      enableWarnings: config.enableWarnings ?? this.debugMode,
       enableTrendReporting: config.enableTrendReporting ?? false,
+      debugMode: this.debugMode,
     }
     this.profiler = new MemoryProfiler()
     this.testData = new Map()
@@ -132,7 +139,7 @@ export class MemoryMonitor {
     const currentUsage = data.before.memory.heapUsed
     const percentage = (currentUsage / limit) * 100
 
-    if (currentUsage > limit * threshold) {
+    if (currentUsage > limit * threshold && this.debugMode) {
       console.warn(
         `Memory usage warning: ${currentUsage}MB (${Math.round(percentage)}% of ${limit}MB limit)`,
       )
@@ -217,6 +224,7 @@ export class MemoryMonitor {
   }
 
   async exportTrendReport(filePath: string): Promise<void> {
+    if (!this.debugMode) return // Skip report generation unless debugging
     const report = this.generateTrendReport()
     const fs = await import('fs/promises')
     await fs.writeFile(filePath, JSON.stringify(report, null, 2))
