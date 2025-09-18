@@ -135,6 +135,7 @@ For each context file, determine if updates are needed:
    ```
 4. **Make targeted updates** - don't rewrite entire file
 5. **Add update notes** at the bottom if significant:
+
    ```markdown
    ## Update History
 
