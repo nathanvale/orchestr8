@@ -37,13 +37,18 @@ npm run clean
 
 ```bash
 # Check specific files
-npx quality-check check file1.ts file2.ts
+npx quality-check --file file1.ts
+npx quality-check --file file2.ts
 
-# Format specific files
-npx quality-check format file1.ts file2.ts
+# Format specific files (auto-fix)
+npx quality-check --file file1.ts --fix
+npx quality-check --file file2.ts --fix
 
-# Pre-commit mode (auto-fix and stage)
-npx quality-check pre-commit --fix file1.ts
+# Check staged files
+npx quality-check --staged
+
+# Check files changed since git ref
+npx quality-check --since main
 ```
 
 ### PM Tooling (Project Management)
