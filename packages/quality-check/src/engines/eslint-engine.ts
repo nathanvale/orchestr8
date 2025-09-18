@@ -5,6 +5,16 @@ import { ToolMissingError } from '../core/errors.js'
 import type { CancellationToken } from '../core/timeout-manager.js'
 
 /**
+ * ESLint fix types for controlling which fixes are applied
+ */
+export type ESLintFixType = 'directive' | 'problem' | 'suggestion' | 'layout'
+
+/**
+ * ESLint fix modes for safety control
+ */
+export type ESLintFixMode = 'safe' | 'full'
+
+/**
  * ESLint engine configuration
  */
 export interface ESLintEngineConfig {
@@ -13,6 +23,12 @@ export interface ESLintEngineConfig {
 
   /** Whether to fix issues */
   fix?: boolean
+
+  /** Fix mode - controls which types of fixes are applied */
+  fixMode?: ESLintFixMode
+
+  /** Specific fix types to apply (overrides fixMode) */
+  fixTypes?: ESLintFixType[]
 
   /** Output format */
   format?: 'stylish' | 'json'
@@ -32,7 +48,14 @@ export interface ESLintEngineConfig {
  */
 export class ESLintEngine {
   private eslint: ESLint | undefined
-  private lastConfig: { cwd: string; fix: boolean; cacheLocation: string } | undefined
+  private lastConfig:
+    | {
+        cwd: string
+        fix: boolean
+        fixTypes: ESLintFixType[] | undefined
+        cacheLocation: string
+      }
+    | undefined
 
   /**
    * Check files with ESLint
@@ -51,6 +74,7 @@ export class ESLintEngine {
       const eslintConfig = {
         cwd: config.cwd ?? process.cwd(),
         fix: config.fix ?? false,
+        fixTypes: this.getFixTypes(config),
         cacheLocation: config.cacheDir ?? '.cache/eslint',
       }
 
@@ -60,6 +84,7 @@ export class ESLintEngine {
         !this.lastConfig ||
         this.lastConfig.cwd !== eslintConfig.cwd ||
         this.lastConfig.fix !== eslintConfig.fix ||
+        !this.areFixTypesEqual(this.lastConfig.fixTypes, eslintConfig.fixTypes) ||
         this.lastConfig.cacheLocation !== eslintConfig.cacheLocation
       ) {
         this.eslint = new ESLint({
@@ -341,6 +366,65 @@ export class ESLintEngine {
    */
   dispose(): void {
     this.clearCache()
+  }
+
+  /**
+   * Get fix types based on configuration
+   */
+  private getFixTypes(config: ESLintEngineConfig): ESLintFixType[] | undefined {
+    // If specific fixTypes are provided, use them directly
+    if (config.fixTypes) {
+      return config.fixTypes
+    }
+
+    // If fixMode is specified, convert to appropriate fixTypes
+    if (config.fixMode === 'safe') {
+      // Safe mode: only layout and suggestion fixes (no behavior-changing fixes)
+      return ['layout', 'suggestion']
+    }
+
+    if (config.fixMode === 'full') {
+      // Full mode: all fix types
+      return ['directive', 'problem', 'suggestion', 'layout']
+    }
+
+    // If neither fixTypes nor fixMode is specified, use ESLint default (all types)
+    return undefined
+  }
+
+  /**
+   * Compare two fixTypes arrays for equality
+   */
+  private areFixTypesEqual(
+    a: ESLintFixType[] | undefined,
+    b: ESLintFixType[] | undefined,
+  ): boolean {
+    // If both are undefined, they are equal
+    if (a === undefined && b === undefined) {
+      return true
+    }
+
+    // If one is undefined and the other is not, they are not equal
+    if (a === undefined || b === undefined) {
+      return false
+    }
+
+    // If arrays have different lengths, they are not equal
+    if (a.length !== b.length) {
+      return false
+    }
+
+    // Sort both arrays and compare element by element
+    const sortedA = [...a].sort()
+    const sortedB = [...b].sort()
+
+    for (let i = 0; i < sortedA.length; i++) {
+      if (sortedA[i] !== sortedB[i]) {
+        return false
+      }
+    }
+
+    return true
   }
 
   /**

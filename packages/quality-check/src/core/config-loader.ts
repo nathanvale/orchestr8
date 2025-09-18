@@ -31,6 +31,9 @@ export interface QualityCheckConfig {
   /** Whether to fix issues automatically */
   fix?: boolean
 
+  /** Fix mode - controls which types of fixes are applied */
+  fixMode?: 'safe' | 'full'
+
   /** Files to check */
   files?: string[]
 
@@ -76,6 +79,7 @@ const DEFAULT_CONFIG: ResolvedConfig = {
   eslintCacheDir: '.cache/eslint',
   prettierWrite: false,
   fix: false,
+  fixMode: 'full',
   files: [],
   staged: false,
   since: '',

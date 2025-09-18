@@ -8,10 +8,12 @@ import { QualityChecker } from '../core/quality-checker.js'
 import type { QualityCheckOptions } from '../types.js'
 import type { Issue as AutopilotIssue } from '../types.js'
 import type { Issue } from '../types/issue-types.js'
+import { getDefaultFixMode } from '../utils/environment.js'
 
 interface CLIOptions extends QualityCheckOptions {
   help?: boolean
   autopilot?: boolean
+  safe?: boolean
   format?: 'stylish' | 'json'
   typescriptCacheDir?: string
   eslintCacheDir?: string
@@ -43,9 +45,13 @@ export async function runCLI(args: string[]): Promise<void> {
     // Prepare files array
     const files = options.file ? [options.file] : []
 
+    // Determine fix mode based on CLI options and environment
+    const fixMode = options.safe ? 'safe' : options.fixMode || getDefaultFixMode()
+
     // Run quality check with new engines
     const result = await checker.check(files, {
       ...options,
+      fixMode,
       format: options.format,
     })
 
@@ -97,9 +103,11 @@ export async function runCLI(args: string[]): Promise<void> {
 
     // Apply fixes if requested
     if (options.fix && !result.success) {
-      const fixed = await checker.fix(files, { safe: true })
+      const fixed = await checker.fix(files, { safe: fixMode === 'safe' })
       if (fixed.count > 0 && options.format !== 'json') {
-        console.log(`\n✨ Fixed ${fixed.count} issue${fixed.count > 1 ? 's' : ''}`)
+        console.log(
+          `\n✨ Fixed ${fixed.count} issue${fixed.count > 1 ? 's' : ''} (${fixMode} mode)`,
+        )
       }
     }
 
@@ -131,6 +139,10 @@ function parseArgs(args: string[]): CLIOptions {
 
       case '--fix':
         options.fix = true
+        break
+
+      case '--safe':
+        options.safe = true
         break
 
       case '--autopilot':
@@ -206,6 +218,7 @@ Options:
   --staged                   Check staged files
   --since <ref>              Check files changed since git ref
   --fix                      Auto-fix issues
+  --safe                     Use safe fix mode (layout + suggestions only)
   --format <stylish|json>    Output format (default: stylish)
   --autopilot                Use autopilot for smart decision making
   --timeout <ms>             Timeout in milliseconds (default: 3000)
@@ -221,16 +234,22 @@ Engine Options:
   
   --help, -h                 Show this help
 
+Fix Modes:
+  --safe                     Safe mode: only layout and suggestion fixes (default in CI)
+  (no flag)                  Full mode: all fix types including behavior changes (default locally)
+
 Examples:
   quality-check --file src/index.ts
-  quality-check --staged --fix
+  quality-check --staged --fix --safe
   quality-check --since main --format json
   quality-check --file src/app.ts --autopilot --fix
+  quality-check --file src/app.ts --fix --safe  # CI-safe fixes only
 
 Performance Tips:
   - TypeScript uses incremental compilation for fast warm checks
   - ESLint uses built-in caching for improved performance
   - Median warm check time: ≤300ms for single files
+  - Safe mode automatically detected in CI environments
 `)
 }
 

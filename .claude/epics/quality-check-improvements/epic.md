@@ -173,7 +173,5 @@ High-level task categories (limited to essential work):
 - [ ] #52 - Improve Fix Safety (parallel: true)
 - [ ] #53 - Harden Git Operations (parallel: true)
 
-Total tasks: 7
-Parallel tasks: 6
-Sequential tasks: 1
-Estimated total effort: 23-32 hours
+Total tasks: 7 Parallel tasks: 6 Sequential tasks: 1 Estimated total effort:
+23-32 hours

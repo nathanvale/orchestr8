@@ -152,6 +152,7 @@ export class QualityChecker {
       const config = await this.configLoader.load({
         files,
         fix: options.fix,
+        fixMode: options.fixMode,
         format: options.format,
         engines: {
           typescript: options.typescript !== false,
@@ -291,9 +292,13 @@ export class QualityChecker {
       }
     }
 
+    // Determine fix mode based on options or environment
+    const fixMode = options.fixMode || (options.safe ? 'safe' : 'full')
+
     logger.debug('Starting quality fix', {
       files: files.length,
       options,
+      fixMode,
       correlationId,
       phase: 'fix-start',
     })
@@ -330,6 +335,7 @@ export class QualityChecker {
           const result = await this.eslintEngine.check({
             files: targetFiles,
             fix: true,
+            fixMode,
           })
 
           if (result.fixedCount && result.fixedCount > 0) {
@@ -608,7 +614,7 @@ export class QualityChecker {
           detectedResult.modifiedFiles.forEach((file: string) => modifiedFiles.add(file))
 
           // Phase 3: Auto-stage fixed files if requested
-          stagingWarnings = this.autoStageFiles(options, modifiedFiles, correlationId)
+          stagingWarnings = await this.autoStageFiles(options, modifiedFiles, correlationId)
 
           // Phase 4: Run check-only engines (TypeScript only gets single execution)
           await this.runCheckOnlyEnginesOptimized(files, config, token, results)
@@ -712,11 +718,11 @@ export class QualityChecker {
   /**
    * Auto-stage files that were modified by fixes
    */
-  private autoStageFiles(
+  private async autoStageFiles(
     options: QualityCheckOptions & { format?: 'stylish' | 'json' },
     modifiedFiles: Set<string>,
     correlationId: string,
-  ): string[] {
+  ): Promise<string[]> {
     const warnings: string[] = []
 
     // Auto-stage is enabled by default in fix-first mode or when explicitly requested
@@ -730,7 +736,7 @@ export class QualityChecker {
     }
 
     try {
-      const result = this.gitOperations.stageFiles(Array.from(modifiedFiles))
+      const result = await this.gitOperations.stageFiles(Array.from(modifiedFiles))
 
       if (result.success) {
         logger.debug('Auto-staged fixed files', {
@@ -897,6 +903,7 @@ export class QualityChecker {
       const result = await this.eslintEngine.check({
         files,
         fix: config.fix,
+        fixMode: config.fixMode,
         format: config.format,
         cacheDir: config.eslintCacheDir,
         token,
