@@ -10,7 +10,7 @@ _A TTS package with intelligent caching to maximize free tier usage_
 
 - **Correlation-based logging**: Every log entry includes correlation ID for
   tracing operations
-- **Zero-config default**: Works immediately with `npm install`
+- **Zero-config default**: Works immediately with `pnpm install`
 - **Observable operations**: All operations logged to `logs/voice-vault/` with
   correlation IDs
 - **Smart caching**: Maximize free tier usage with intelligent audio caching

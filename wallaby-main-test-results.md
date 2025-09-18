@@ -67,7 +67,7 @@ scripts/wallaby/main.sh command test
 
 - Runs TDD cycle workflow
 - Falls back to manual guidance
-- Provides npm test commands
+- Provides pnpm test commands
 
 ### Coverage Command
 

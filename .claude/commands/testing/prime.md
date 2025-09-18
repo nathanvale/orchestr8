@@ -56,7 +56,7 @@ preflight checks progress ("I'm not going to ..."). Just do them and move on.
 If no test framework detected:
 
 - Tell user: "⚠️ No test framework detected. Please specify your testing setup."
-- Ask: "What test command should I use? (e.g., npm test, pytest, cargo test)"
+- Ask: "What test command should I use? (e.g., pnpm test, pytest, cargo test)"
 - Store response for future use
 
 ### 3. Dependency Check
@@ -64,14 +64,14 @@ If no test framework detected:
 **For detected framework:**
 
 - Node.js: Run
-  `npm list --depth=0 2>/dev/null | grep -E "jest|mocha|chai|jasmine"`
+  `pnpm list --depth=0 2>/dev/null | grep -E "jest|mocha|chai|jasmine"`
 - Python: Run `pip list 2>/dev/null | grep -E "pytest|unittest|nose"`
 - Verify test dependencies are installed
 
 If dependencies missing:
 
 - Tell user: "❌ Test dependencies not installed"
-- Suggest: "Run: npm install (or pip install -r requirements.txt)"
+- Suggest: "Run: pnpm install (or pip install -r requirements.txt)"
 
 ## Instructions
 
@@ -83,7 +83,7 @@ Based on detected framework, create test configuration:
 
 ```yaml
 framework: jest
-test_command: npm test
+test_command: pnpm test
 test_directory: __tests__
 config_file: jest.config.js
 options:
@@ -98,7 +98,7 @@ environment:
 
 ```yaml
 framework: mocha
-test_command: npm test
+test_command: pnpm test
 test_directory: test
 config_file: .mocharc.js
 options:
@@ -306,7 +306,7 @@ After configuration:
 **Missing Dependencies:**
 
 - Message: "❌ Test framework not installed"
-- Solution: "Install dependencies first: npm install / pip install -r
+- Solution: "Install dependencies first: pnpm install / pip install -r
   requirements.txt"
 
 **No Test Files:**

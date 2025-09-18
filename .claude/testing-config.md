@@ -1,6 +1,6 @@
 ---
 framework: vitest
-test_command: npm test
+test_command: pnpm test
 created: 2025-01-18T10:45:00Z
 ---
 
@@ -21,11 +21,11 @@ created: 2025-01-18T10:45:00Z
 
 ## Commands
 
-- Run All Tests: `npm test`
-- Run Specific Test: `npm test -- {file_path}`
-- Run with Debugging: `DEBUG=true npm test`
-- Run with Watch Mode: `npm test -- --watch`
-- Run with Pattern: `npm test -- --grep "{pattern}"`
+- Run All Tests: `pnpm test`
+- Run Specific Test: `pnpm test -- {file_path}`
+- Run with Debugging: `DEBUG=true pnpm test`
+- Run with Watch Mode: `pnpm test -- --watch`
+- Run with Pattern: `pnpm test -- --grep "{pattern}"`
 
 ## Environment
 

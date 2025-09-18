@@ -275,7 +275,10 @@ export class QualityChecker {
   /**
    * Fix quality issues in files
    */
-  async fix(files: string[], options: { safe?: boolean } = {}): Promise<FixResult> {
+  async fix(
+    files: string[],
+    options: { safe?: boolean; fixMode?: 'safe' | 'full' } = {},
+  ): Promise<FixResult> {
     const timer = createTimer('quality-fix')
     const correlationId = this.generateCorrelationId()
 

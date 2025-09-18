@@ -5,7 +5,7 @@
 
 ## Project Overview
 
-This is a monorepo template using Bun, Changesets, and Turborepo with an
+This is a monorepo template using pnpm, Changesets, and Turborepo with an
 ADHD-optimized development workflow. It includes a sophisticated `quality-check`
 package that implements a "fix-first" pipeline for code quality enforcement.
 
@@ -15,22 +15,22 @@ package that implements a "fix-first" pipeline for code quality enforcement.
 
 ```bash
 # Build all packages
-npm run build
+pnpm build
 
 # Run all tests
-npm test
+pnpm test
 
 # Type checking
-npm run typecheck
+pnpm typecheck
 
 # Linting
-npm run lint
+pnpm lint
 
 # Validate everything (lint + typecheck + build + test)
-npm run validate
+pnpm validate
 
 # Clean build artifacts
-npm run clean
+pnpm clean
 ```
 
 ### Quality Check
