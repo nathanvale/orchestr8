@@ -1,4 +1,4 @@
 {
   "*.{ts,tsx,js,jsx}": ["./packages/quality-check/bin/pre-commit --fix"],
-  "*.{json,md,yml,yaml}": ["prettier --write", "git add"]
+  "*.{json,md,yml,yaml}": ["prettier --write"]
 }
