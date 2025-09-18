@@ -75,7 +75,8 @@ export class ESLintEngine {
         cwd: config.cwd ?? process.cwd(),
         fix: config.fix ?? false,
         fixTypes: this.getFixTypes(config),
-        cacheLocation: config.cacheDir ?? '.cache/eslint',
+        // ESLint expects a file path for cacheLocation, not a directory
+        cacheLocation: config.cacheDir ? `${config.cacheDir}/.eslintcache` : '.cache/eslint',
       }
 
       // Only create new ESLint instance if configuration changed or doesn't exist

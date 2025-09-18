@@ -12,13 +12,9 @@ vi.mock('../core/quality-checker.js')
 vi.mock('../utils/environment.js')
 
 // Mock process.exit to prevent tests from actually exiting
-const _mockExit = vi.spyOn(process, 'exit').mockImplementation(() => {
+const _mockExit = vi.spyOn(process, 'exit').mockImplementation((() => {
   throw new Error('process.exit called')
-})
-
-// Mock console methods to prevent noise in test output
-const mockConsoleLog = vi.spyOn(console, 'log').mockImplementation(() => {})
-const mockConsoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
+}) as any)
 
 describe('CLI Fix Modes', () => {
   let mockQualityChecker: MockedFunction<typeof QualityChecker>
@@ -27,10 +23,16 @@ describe('CLI Fix Modes', () => {
     fix: MockedFunction<any>
   }
   let mockGetDefaultFixMode: MockedFunction<typeof getDefaultFixMode>
+  let mockConsoleLog: MockedFunction<any>
+  let mockConsoleError: MockedFunction<any>
 
   beforeEach(() => {
     // Reset all mocks
     vi.clearAllMocks()
+
+    // Create fresh console mocks for each test
+    mockConsoleLog = vi.spyOn(console, 'log').mockImplementation(() => {})
+    mockConsoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
 
     // Mock QualityChecker instance
     mockChecker = {
@@ -60,6 +62,9 @@ describe('CLI Fix Modes', () => {
   })
 
   afterEach(() => {
+    // Restore console methods
+    mockConsoleLog?.mockRestore()
+    mockConsoleError?.mockRestore()
     vi.clearAllMocks()
   })
 
@@ -311,7 +316,7 @@ describe('CLI Fix Modes', () => {
         expect(error.message).toBe('process.exit called')
       }
 
-      expect(mockConsoleError).toHaveBeenCalledWith('Error:', 'Quality check failed')
+      expect(mockConsoleError).toHaveBeenCalledWith('❌ Error:', 'Quality check failed')
     })
 
     it('should handle fix errors gracefully', async () => {
@@ -341,7 +346,7 @@ describe('CLI Fix Modes', () => {
         expect(error.message).toBe('process.exit called')
       }
 
-      expect(mockConsoleError).toHaveBeenCalledWith('Error:', 'Fix failed')
+      expect(mockConsoleError).toHaveBeenCalledWith('❌ Error:', 'Fix failed')
     })
   })
 

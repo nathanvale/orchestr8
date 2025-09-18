@@ -136,6 +136,13 @@ Using the test-runner agent ensures:
 - All issues are properly surfaced
 - No approval dialogs interrupt the workflow
 
+### 4. Always use the wallaby-tdd sub-agent for TDD and debugging support
+
+The wallaby-tdd agent integrates with Wallaby's MCP tools to provide real-time
+feedback on test failures, runtime values, and code coverage. It supports the
+inner development loop of writing tests, verifying failures, writing code, and
+refactoring safely.
+
 ## Git Workflow
 
 ### Pre-commit Hook

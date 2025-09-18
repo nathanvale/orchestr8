@@ -5,20 +5,20 @@
 
 ## USE SUB-AGENTS FOR CONTEXT OPTIMIZATION
 
-### 1. Always use the file-analyzer sub-agent when asked to read files.
+### 1. Always use the file-analyzer sub-agent when asked to read files
 
 The file-analyzer agent is an expert in extracting and summarizing critical
 information from files, particularly log files and verbose outputs. It provides
 concise, actionable summaries that preserve essential information while
 dramatically reducing context usage.
 
-### 2. Always use the code-analyzer sub-agent when asked to search code, analyze code, research bugs, or trace logic flow.
+### 2. Always use the code-analyzer sub-agent when asked to search code, analyze code, research bugs, or trace logic flow
 
 The code-analyzer agent is an expert in code analysis, logic tracing, and
 vulnerability detection. It provides concise, actionable summaries that preserve
 essential information while dramatically reducing context usage.
 
-### 3. Always use the test-runner sub-agent to run tests and analyze the test results.
+### 3. Always use the test-runner sub-agent to run tests and analyze the test results
 
 Using the test-runner agent ensures:
 
@@ -27,6 +27,13 @@ Using the test-runner agent ensures:
 - Context usage is optimized
 - All issues are properly surfaced
 - No approval dialogs interrupt the workflow
+
+### 4. Always use the wallaby-tdd sub-agent for TDD and debugging support
+
+The wallaby-tdd agent integrates with Wallaby's MCP tools to provide real-time
+feedback on test failures, runtime values, and code coverage. It supports the
+inner development loop of writing tests, verifying failures, writing code, and
+refactoring safely.
 
 ## Philosophy
 
@@ -63,7 +70,7 @@ Using the test-runner agent ensures:
 - Feel free to ask many questions. If you are in doubt of my intent, don't
   guess. Ask.
 
-## ABSOLUTE RULES:
+## ABSOLUTE RULES
 
 - NO PARTIAL IMPLEMENTATION
 - NO SIMPLIFICATION : no "//This is simplified stuff for now, complete
