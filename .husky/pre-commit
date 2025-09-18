@@ -5,12 +5,12 @@ echo "🚀 Running pre-commit checks..."
 echo "💡 Tip: Use 'HUSKY=0 git commit' to bypass if needed"
 
 # Run lint-staged which will call quality-check for JS/TS files
-# pnpm exec lint-staged
+pnpm exec lint-staged
 
-# if [ $? -eq 0 ]; then
-#   echo "✅ Pre-commit checks passed!"
-# else
-#   echo "❌ Pre-commit checks failed"
-#   echo "🔧 Fix issues above or bypass with: HUSKY=0 git commit -m 'your message'"
-#   exit 1
-# fi
+if [ $? -eq 0 ]; then
+  echo "✅ Pre-commit checks passed!"
+else
+  echo "❌ Pre-commit checks failed"
+  echo "🔧 Fix issues above or bypass with: HUSKY=0 git commit -m 'your message'"
+  exit 1
+fi
