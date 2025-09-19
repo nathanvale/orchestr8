@@ -277,7 +277,7 @@ class MemoryBaselineCapture {
 }
 
 // CLI interface
-if (require.main === module) {
+if (import.meta.url === `file://${process.argv[1]}`) {
   const capture = new MemoryBaselineCapture()
   capture.captureBaseline().catch((error) => {
     console.error('Failed to capture memory baseline:', error)

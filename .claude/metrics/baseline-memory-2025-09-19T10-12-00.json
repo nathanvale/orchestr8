@@ -1,0 +1,473 @@
+{
+  "timestamp": "2025-09-19T10:11:47.224Z",
+  "summary": {
+    "peak_memory_mb": 65,
+    "avg_memory_mb": 63,
+    "total_tests": 956,
+    "duration_ms": 13534,
+    "test_files": 63
+  },
+  "detailed_metrics": {
+    "heap_used": [
+      7,
+      7,
+      7,
+      7,
+      7,
+      7,
+      7,
+      7,
+      5,
+      5,
+      5,
+      5,
+      5
+    ],
+    "heap_total": [
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      7,
+      7,
+      7,
+      7,
+      7
+    ],
+    "external": [
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
+    ],
+    "rss": [
+      64,
+      64,
+      65,
+      65,
+      65,
+      65,
+      65,
+      65,
+      59,
+      59,
+      59,
+      59,
+      59
+    ],
+    "timestamps": [
+      "2025-09-19T10:11:48.228Z",
+      "2025-09-19T10:11:49.233Z",
+      "2025-09-19T10:11:50.235Z",
+      "2025-09-19T10:11:51.236Z",
+      "2025-09-19T10:11:52.237Z",
+      "2025-09-19T10:11:53.238Z",
+      "2025-09-19T10:11:54.239Z",
+      "2025-09-19T10:11:55.241Z",
+      "2025-09-19T10:11:56.242Z",
+      "2025-09-19T10:11:57.242Z",
+      "2025-09-19T10:11:58.243Z",
+      "2025-09-19T10:11:59.244Z",
+      "2025-09-19T10:12:00.245Z"
+    ]
+  },
+  "test_file_metrics": [
+    {
+      "file": "src/engines/prettier-engine.unit.test.ts",
+      "memory_before_mb": 0,
+      "memory_after_mb": 0,
+      "memory_delta_mb": 0
+    },
+    {
+      "file": "src/core/resource-monitor.test.ts",
+      "memory_before_mb": 0,
+      "memory_after_mb": 0,
+      "memory_delta_mb": 0
+    },
+    {
+      "file": "tests/turborepo-validation.integration.test.ts",
+      "memory_before_mb": 0,
+      "memory_after_mb": 0,
+      "memory_delta_mb": 0
+    },
+    {
+      "file": "src/integration/claude-hook-workflow-mocked.integration.test.ts",
+      "memory_before_mb": 0,
+      "memory_after_mb": 0,
+      "memory_delta_mb": 0
+    },
+    {
+      "file": "src/engines/eslint-engine.unit.test.ts",
+      "memory_before_mb": 0,
+      "memory_after_mb": 0,
+      "memory_delta_mb": 0
+    },
+    {
+      "file": "src/integration/config-variations.integration.test.ts",
+      "memory_before_mb": 0,
+      "memory_after_mb": 0,
+      "memory_delta_mb": 0
+    },
+    {
+      "file": "src/engines/eslint-engine.fix-modes.test.ts",
+      "memory_before_mb": 0,
+      "memory_after_mb": 0,
+      "memory_delta_mb": 0
+    },
+    {
+      "file": "src/facades/facade-integration.test.ts",
+      "memory_before_mb": 0,
+      "memory_after_mb": 0,
+      "memory_delta_mb": 0
+    },
+    {
+      "file": "src/test-utils/api-wrappers.test.ts",
+      "memory_before_mb": 0,
+      "memory_after_mb": 0,
+      "memory_delta_mb": 0
+    },
+    {
+      "file": "src/utils/logger-output-modes.test.ts",
+      "memory_before_mb": 0,
+      "memory_after_mb": 0,
+      "memory_delta_mb": 0
+    },
+    {
+      "file": "src/utils/logger.test.ts",
+      "memory_before_mb": 0,
+      "memory_after_mb": 0,
+      "memory_delta_mb": 0
+    },
+    {
+      "file": "src/engines/eslint-flat-config.test.ts",
+      "memory_before_mb": 0,
+      "memory_after_mb": 0,
+      "memory_delta_mb": 0
+    },
+    {
+      "file": "tests/quality-checker-full.integration.test.ts",
+      "memory_before_mb": 0,
+      "memory_after_mb": 0,
+      "memory_delta_mb": 0
+    },
+    {
+      "file": "src/utils/logger-cleanup.test.ts",
+      "memory_before_mb": 0,
+      "memory_after_mb": 0,
+      "memory_delta_mb": 0
+    },
+    {
+      "file": "src/utils/streaming-file-reader.test.ts",
+      "memory_before_mb": 0,
+      "memory_after_mb": 0,
+      "memory_delta_mb": 0
+    },
+    {
+      "file": "src/utils/logger-file-operations.test.ts",
+      "memory_before_mb": 0,
+      "memory_after_mb": 0,
+      "memory_delta_mb": 0
+    },
+    {
+      "file": "src/services/OutputFormatter.unit.test.ts",
+      "memory_before_mb": 0,
+      "memory_after_mb": 0,
+      "memory_delta_mb": 0
+    },
+    {
+      "file": "src/facades/api.test.ts",
+      "memory_before_mb": 0,
+      "memory_after_mb": 0,
+      "memory_delta_mb": 0
+    },
+    {
+      "file": "src/test/performance.test.ts",
+      "memory_before_mb": 0,
+      "memory_after_mb": 0,
+      "memory_delta_mb": 0
+    },
+    {
+      "file": "src/utils/secure-git-operations.test.ts",
+      "memory_before_mb": 0,
+      "memory_after_mb": 0,
+      "memory_delta_mb": 0
+    },
+    {
+      "file": "src/integration/claude-hook-workflow.integration.test.ts",
+      "memory_before_mb": 0,
+      "memory_after_mb": 0,
+      "memory_delta_mb": 0
+    },
+    {
+      "file": "src/engines/eslint-engine.disposal.test.ts",
+      "memory_before_mb": 0,
+      "memory_after_mb": 0,
+      "memory_delta_mb": 0
+    },
+    {
+      "file": "src/core/quality-checker.error-handling.test.ts",
+      "memory_before_mb": 0,
+      "memory_after_mb": 0,
+      "memory_delta_mb": 0
+    },
+    {
+      "file": "src/utils/buffer-pool.test.ts",
+      "memory_before_mb": 0,
+      "memory_after_mb": 0,
+      "memory_delta_mb": 0
+    },
+    {
+      "file": "tests/setup/memory-monitoring-hooks.test.ts",
+      "memory_before_mb": 0,
+      "memory_after_mb": 0,
+      "memory_delta_mb": 0
+    },
+    {
+      "file": "src/core/performance-monitor.unit.test.ts",
+      "memory_before_mb": 0,
+      "memory_after_mb": 0,
+      "memory_delta_mb": 0
+    },
+    {
+      "file": "src/core/error-parser.performance.test.ts",
+      "memory_before_mb": 0,
+      "memory_after_mb": 0,
+      "memory_delta_mb": 0
+    },
+    {
+      "file": "src/core/quality-checker.graceful-degradation.test.ts",
+      "memory_before_mb": 0,
+      "memory_after_mb": 0,
+      "memory_delta_mb": 0
+    },
+    {
+      "file": "tests/cache-effectiveness.test.ts",
+      "memory_before_mb": 0,
+      "memory_after_mb": 0,
+      "memory_delta_mb": 0
+    },
+    {
+      "file": "src/engines/typescript-engine.test.ts",
+      "memory_before_mb": 0,
+      "memory_after_mb": 0,
+      "memory_delta_mb": 0
+    },
+    {
+      "file": "src/test-utils/test-environment.test.ts",
+      "memory_before_mb": 0,
+      "memory_after_mb": 0,
+      "memory_delta_mb": 0
+    },
+    {
+      "file": "src/core/quality-checker.fix-first.test.ts",
+      "memory_before_mb": 0,
+      "memory_after_mb": 0,
+      "memory_delta_mb": 0
+    },
+    {
+      "file": "src/core/file-matcher.test.ts",
+      "memory_before_mb": 0,
+      "memory_after_mb": 0,
+      "memory_delta_mb": 0
+    },
+    {
+      "file": "src/config/claude-settings.unit.test.ts",
+      "memory_before_mb": 0,
+      "memory_after_mb": 0,
+      "memory_delta_mb": 0
+    },
+    {
+      "file": "src/utils/environment.unit.test.ts",
+      "memory_before_mb": 0,
+      "memory_after_mb": 0,
+      "memory_delta_mb": 0
+    },
+    {
+      "file": "src/facades/git-hook.test.ts",
+      "memory_before_mb": 0,
+      "memory_after_mb": 0,
+      "memory_delta_mb": 0
+    },
+    {
+      "file": "src/utils/git-operations.test.ts",
+      "memory_before_mb": 0,
+      "memory_after_mb": 0,
+      "memory_delta_mb": 0
+    },
+    {
+      "file": "src/adapters/autopilot.unit.test.ts",
+      "memory_before_mb": 0,
+      "memory_after_mb": 0,
+      "memory_delta_mb": 0
+    },
+    {
+      "file": "src/core/file-batch-processor.test.ts",
+      "memory_before_mb": 0,
+      "memory_after_mb": 0,
+      "memory_delta_mb": 0
+    },
+    {
+      "file": "src/number-utils.test.ts",
+      "memory_before_mb": 0,
+      "memory_after_mb": 0,
+      "memory_delta_mb": 0
+    },
+    {
+      "file": "tests/workflow-validation-helpers.test.ts",
+      "memory_before_mb": 0,
+      "memory_after_mb": 0,
+      "memory_delta_mb": 0
+    },
+    {
+      "file": "src/facades/git-hook.auto-staging-basic.test.ts",
+      "memory_before_mb": 0,
+      "memory_after_mb": 0,
+      "memory_delta_mb": 0
+    },
+    {
+      "file": "src/utils/memory-profiler.test.ts",
+      "memory_before_mb": 0,
+      "memory_after_mb": 0,
+      "memory_delta_mb": 0
+    },
+    {
+      "file": "src/core/issue-reporter.unit.test.ts",
+      "memory_before_mb": 0,
+      "memory_after_mb": 0,
+      "memory_delta_mb": 0
+    },
+    {
+      "file": "src/path-utils.test.ts",
+      "memory_before_mb": 0,
+      "memory_after_mb": 0,
+      "memory_delta_mb": 0
+    },
+    {
+      "file": "src/bin/claude-hook.unit.test.ts",
+      "memory_before_mb": 0,
+      "memory_after_mb": 0,
+      "memory_delta_mb": 0
+    },
+    {
+      "file": "src/formatters/stylish-formatter.unit.test.ts",
+      "memory_before_mb": 0,
+      "memory_after_mb": 0,
+      "memory_delta_mb": 0
+    },
+    {
+      "file": "src/facades/cli.fix-modes.test.ts",
+      "memory_before_mb": 0,
+      "memory_after_mb": 0,
+      "memory_delta_mb": 0
+    },
+    {
+      "file": "src/formatters/json-formatter.unit.test.ts",
+      "memory_before_mb": 0,
+      "memory_after_mb": 0,
+      "memory_delta_mb": 0
+    },
+    {
+      "file": "src/adapters/autopilot.edge-cases-part2.unit.test.ts",
+      "memory_before_mb": 0,
+      "memory_after_mb": 0,
+      "memory_delta_mb": 0
+    },
+    {
+      "file": "src/facades/git-hook.auto-staging-advanced.test.ts",
+      "memory_before_mb": 0,
+      "memory_after_mb": 0,
+      "memory_delta_mb": 0
+    },
+    {
+      "file": "src/formatters/aggregator.unit.test.ts",
+      "memory_before_mb": 0,
+      "memory_after_mb": 0,
+      "memory_delta_mb": 0
+    },
+    {
+      "file": "tests/progressive-testing-tiers.test.ts",
+      "memory_before_mb": 0,
+      "memory_after_mb": 0,
+      "memory_delta_mb": 0
+    },
+    {
+      "file": "src/adapters/autopilot.edge-cases-part1.unit.test.ts",
+      "memory_before_mb": 0,
+      "memory_after_mb": 0,
+      "memory_delta_mb": 0
+    },
+    {
+      "file": "src/core/error-parser.unit.test.ts",
+      "memory_before_mb": 0,
+      "memory_after_mb": 0,
+      "memory_delta_mb": 0
+    },
+    {
+      "file": "src/formatters/claude-formatter.unit.test.ts",
+      "memory_before_mb": 0,
+      "memory_after_mb": 0,
+      "memory_delta_mb": 0
+    },
+    {
+      "file": "tests/critical-path.smoke.test.ts",
+      "memory_before_mb": 0,
+      "memory_after_mb": 0,
+      "memory_delta_mb": 0
+    },
+    {
+      "file": "tests/setup/dom-mocks.test.ts",
+      "memory_before_mb": 0,
+      "memory_after_mb": 0,
+      "memory_delta_mb": 0
+    },
+    {
+      "file": "tests/setup/vitest-setup-activation.test.ts",
+      "memory_before_mb": 0,
+      "memory_after_mb": 0,
+      "memory_delta_mb": 0
+    },
+    {
+      "file": "tests/vitest.integration.test.ts",
+      "memory_before_mb": 0,
+      "memory_after_mb": 0,
+      "memory_delta_mb": 0
+    },
+    {
+      "file": "src/facades/claude.unit.test.ts",
+      "memory_before_mb": 0,
+      "memory_after_mb": 0,
+      "memory_delta_mb": 0
+    },
+    {
+      "file": "src/engines/typescript-engine.unit.test.ts",
+      "memory_before_mb": 0,
+      "memory_after_mb": 0,
+      "memory_delta_mb": 0
+    },
+    {
+      "file": "src/engines/typescript-engine.disposal.test.ts",
+      "memory_before_mb": 0,
+      "memory_after_mb": 0,
+      "memory_delta_mb": 0
+    }
+  ],
+  "analysis": {
+    "memory_growth_trend": "decreasing",
+    "potential_leaks": [],
+    "high_memory_tests": [],
+    "recommendations": []
+  }
+}
