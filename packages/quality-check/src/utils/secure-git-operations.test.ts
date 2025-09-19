@@ -26,12 +26,12 @@ class MockChildProcess extends EventEmitter {
   stderr = new EventEmitter()
   killed = false
   exitCode: number | null = 0
-
-  kill(_signal?: string) {
+  pid = 12345
+  kill = vi.fn((_signal?: string) => {
     this.killed = true
     this.emit('close', this.exitCode)
     return true
-  }
+  })
 }
 
 describe('SecureGitOperations', () => {
