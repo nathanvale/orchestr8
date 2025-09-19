@@ -3,9 +3,13 @@
  * ~30 lines total
  */
 
+// Re-export fix types from ESLint engine
+export type { ESLintFixMode, ESLintFixType } from './engines/eslint-engine.js'
+
 export interface QualityCheckOptions {
   file?: string
   fix?: boolean
+  fixMode?: 'safe' | 'full'
   eslint?: boolean
   prettier?: boolean
   typescript?: boolean

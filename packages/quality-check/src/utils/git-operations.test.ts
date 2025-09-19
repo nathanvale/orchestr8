@@ -6,10 +6,18 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { existsSync, readFileSync, statSync, openSync, closeSync } from 'node:fs'
 import { GitOperations } from './git-operations.js'
+import { SecureGitOperations } from './secure-git-operations.js'
 
-// Mock node modules
-vi.mock('node:child_process', () => ({
-  execSync: vi.fn(),
+// Mock SecureGitOperations
+vi.mock('./secure-git-operations.js', () => ({
+  SecureGitOperations: {
+    addFiles: vi.fn(),
+    getDiffCached: vi.fn(),
+    getDiff: vi.fn(),
+    getGitDir: vi.fn(),
+    getStatus: vi.fn(),
+    isGitRepository: vi.fn(),
+  },
 }))
 
 vi.mock('node:fs', () => ({
@@ -20,11 +28,8 @@ vi.mock('node:fs', () => ({
   closeSync: vi.fn(),
 }))
 
-import { execSync } from 'node:child_process'
-
 describe('GitOperations', () => {
   let gitOps: GitOperations
-  let mockExecSync: ReturnType<typeof vi.fn>
   let mockExistsSync: ReturnType<typeof vi.fn>
   let mockReadFileSync: ReturnType<typeof vi.fn>
   let mockStatSync: ReturnType<typeof vi.fn>
@@ -33,7 +38,6 @@ describe('GitOperations', () => {
 
   beforeEach(() => {
     gitOps = new GitOperations()
-    mockExecSync = vi.mocked(execSync)
     mockExistsSync = vi.mocked(existsSync)
     mockReadFileSync = vi.mocked(readFileSync)
     mockStatSync = vi.mocked(statSync)
@@ -42,6 +46,14 @@ describe('GitOperations', () => {
 
     // Reset all mocks
     vi.clearAllMocks()
+
+    // Reset SecureGitOperations mocks
+    vi.mocked(SecureGitOperations.addFiles).mockReset()
+    vi.mocked(SecureGitOperations.getDiffCached).mockReset()
+    vi.mocked(SecureGitOperations.getDiff).mockReset()
+    vi.mocked(SecureGitOperations.getGitDir).mockReset()
+    vi.mocked(SecureGitOperations.getStatus).mockReset()
+    vi.mocked(SecureGitOperations.isGitRepository).mockReset()
   })
 
   afterEach(() => {
@@ -135,60 +147,80 @@ describe('GitOperations', () => {
   })
 
   describe('stageFiles', () => {
-    it('should stage files successfully', () => {
-      mockExecSync.mockReturnValue('')
-
-      const result = gitOps.stageFiles(['file1.ts', 'file2.ts'])
-
-      expect(result.success).toBe(true)
-      expect(mockExecSync).toHaveBeenCalledWith('git add "file1.ts" "file2.ts"', {
-        encoding: 'utf-8',
+    it('should stage files successfully', async () => {
+      vi.mocked(SecureGitOperations.addFiles).mockResolvedValue({
+        success: true,
+        stdout: '',
+        stderr: '',
+        exitCode: 0,
+        timedOut: false,
       })
-    })
 
-    it('should handle empty file list', () => {
-      const result = gitOps.stageFiles([])
+      const result = await gitOps.stageFiles(['file1.ts', 'file2.ts'])
 
       expect(result.success).toBe(true)
-      expect(mockExecSync).not.toHaveBeenCalled()
+      expect(vi.mocked(SecureGitOperations.addFiles)).toHaveBeenCalledWith(['file1.ts', 'file2.ts'])
     })
 
-    it('should retry on index.lock error', () => {
+    it('should handle empty file list', async () => {
+      const result = await gitOps.stageFiles([])
+
+      expect(result.success).toBe(true)
+    })
+
+    it('should retry on index.lock error', async () => {
       let attempts = 0
-      mockExecSync.mockImplementation(() => {
+      vi.mocked(SecureGitOperations.addFiles).mockImplementation(() => {
         attempts++
         if (attempts === 1) {
-          const error = new Error('fatal: Unable to create .git/index.lock')
-          throw error
+          return Promise.resolve({
+            success: false,
+            stderr: 'fatal: Unable to create .git/index.lock',
+            exitCode: 1,
+            timedOut: false,
+          })
         }
-        return ''
+        return Promise.resolve({
+          success: true,
+          stdout: '',
+          stderr: '',
+          exitCode: 0,
+          timedOut: false,
+        })
       })
 
       vi.useFakeTimers()
-      const result = gitOps.stageFiles(['file.ts'])
+      const result = await gitOps.stageFiles(['file.ts'])
       vi.runAllTimers()
       vi.useRealTimers()
 
       expect(result.success).toBe(true)
+      expect(vi.mocked(SecureGitOperations.addFiles)).toHaveBeenCalledTimes(2)
     })
 
-    it('should provide helpful error for permission denied', () => {
-      mockExecSync.mockImplementation(() => {
-        throw new Error('Permission denied')
+    it('should provide helpful error for permission denied', async () => {
+      vi.mocked(SecureGitOperations.addFiles).mockResolvedValue({
+        success: false,
+        stderr: 'Permission denied',
+        exitCode: 1,
+        timedOut: false,
       })
 
-      const result = gitOps.stageFiles(['file.ts'])
+      const result = await gitOps.stageFiles(['file.ts'])
 
       expect(result.success).toBe(false)
       expect(result.error).toContain('Permission denied')
     })
 
-    it('should handle pathspec errors', () => {
-      mockExecSync.mockImplementation(() => {
-        throw new Error("pathspec 'nonexistent.ts' did not match any files")
+    it('should handle pathspec errors', async () => {
+      vi.mocked(SecureGitOperations.addFiles).mockResolvedValue({
+        success: false,
+        stderr: "pathspec 'nonexistent.ts' did not match any files",
+        exitCode: 1,
+        timedOut: false,
       })
 
-      const result = gitOps.stageFiles(['nonexistent.ts'])
+      const result = await gitOps.stageFiles(['nonexistent.ts'])
 
       expect(result.success).toBe(false)
       expect(result.error).toContain('Some files could not be found')
@@ -196,94 +228,143 @@ describe('GitOperations', () => {
   })
 
   describe('hasPartialStaging', () => {
-    it('should detect partial staging', () => {
-      mockExecSync.mockImplementation((cmd) => {
-        if (cmd.includes('--cached')) {
-          return 'file.ts\n'
-        }
-        if (cmd.includes('git diff --name-only')) {
-          return 'file.ts\nother.ts\n'
-        }
-        return ''
+    it('should detect partial staging', async () => {
+      vi.mocked(SecureGitOperations.getDiffCached).mockResolvedValue({
+        success: true,
+        stdout: 'file.ts\n',
+        stderr: '',
+        exitCode: 0,
+        timedOut: false,
+      })
+      vi.mocked(SecureGitOperations.getDiff).mockResolvedValue({
+        success: true,
+        stdout: 'file.ts\nother.ts\n',
+        stderr: '',
+        exitCode: 0,
+        timedOut: false,
       })
 
-      const result = gitOps.hasPartialStaging('file.ts')
+      const result = await gitOps.hasPartialStaging('file.ts')
 
       expect(result).toBe(true)
+      expect(vi.mocked(SecureGitOperations.getDiffCached)).toHaveBeenCalledWith(['file.ts'])
+      expect(vi.mocked(SecureGitOperations.getDiff)).toHaveBeenCalledWith(['file.ts'])
     })
 
-    it('should return false for fully staged files', () => {
-      mockExecSync.mockImplementation((cmd) => {
-        if (cmd.includes('--cached')) {
-          return 'file.ts\n'
-        }
-        return ''
+    it('should return false for fully staged files', async () => {
+      vi.mocked(SecureGitOperations.getDiffCached).mockResolvedValue({
+        success: true,
+        stdout: 'file.ts\n',
+        stderr: '',
+        exitCode: 0,
+        timedOut: false,
+      })
+      vi.mocked(SecureGitOperations.getDiff).mockResolvedValue({
+        success: true,
+        stdout: '',
+        stderr: '',
+        exitCode: 0,
+        timedOut: false,
       })
 
-      const result = gitOps.hasPartialStaging('file.ts')
+      const result = await gitOps.hasPartialStaging('file.ts')
 
       expect(result).toBe(false)
     })
 
-    it('should handle git command errors', () => {
-      mockExecSync.mockImplementation(() => {
-        throw new Error('Not a git repository')
+    it('should handle git command errors', async () => {
+      vi.mocked(SecureGitOperations.getDiffCached).mockResolvedValue({
+        success: false,
+        stderr: 'Not a git repository',
+        exitCode: 128,
+        timedOut: false,
+      })
+      vi.mocked(SecureGitOperations.getDiff).mockResolvedValue({
+        success: false,
+        stderr: 'Not a git repository',
+        exitCode: 128,
+        timedOut: false,
       })
 
-      const result = gitOps.hasPartialStaging('file.ts')
+      const result = await gitOps.hasPartialStaging('file.ts')
 
       expect(result).toBe(false)
     })
   })
 
   describe('getRepositoryState', () => {
-    it('should detect rebase state', () => {
-      mockExecSync.mockImplementation((cmd) => {
-        if (cmd.includes('git status')) return ''
-        if (cmd.includes('git rev-parse')) return '/path/to/.git'
-        return ''
+    it('should detect rebase state', async () => {
+      vi.mocked(SecureGitOperations.getGitDir).mockResolvedValue({
+        success: true,
+        stdout: '/path/to/.git',
+        stderr: '',
+        exitCode: 0,
+        timedOut: false,
+      })
+      vi.mocked(SecureGitOperations.getStatus).mockResolvedValue({
+        success: true,
+        stdout: '',
+        stderr: '',
+        exitCode: 0,
+        timedOut: false,
       })
       mockExistsSync.mockImplementation((path) => path.includes('rebase-merge'))
 
-      const state = gitOps.getRepositoryState()
+      const state = await gitOps.getRepositoryState()
 
       expect(state.inRebase).toBe(true)
       expect(state.hasConflicts).toBe(false)
       expect(state.isMerging).toBe(false)
     })
 
-    it('should detect merge conflicts', () => {
-      mockExecSync.mockImplementation((cmd) => {
-        if (cmd.includes('git status')) return 'UU file.ts'
-        if (cmd.includes('git rev-parse')) return '/path/to/.git'
-        return ''
+    it('should detect merge conflicts', async () => {
+      vi.mocked(SecureGitOperations.getGitDir).mockResolvedValue({
+        success: true,
+        stdout: '/path/to/.git',
+        stderr: '',
+        exitCode: 0,
+        timedOut: false,
+      })
+      vi.mocked(SecureGitOperations.getStatus).mockResolvedValue({
+        success: true,
+        stdout: 'UU file.ts',
+        stderr: '',
+        exitCode: 0,
+        timedOut: false,
       })
       mockExistsSync.mockReturnValue(false)
 
-      const state = gitOps.getRepositoryState()
+      const state = await gitOps.getRepositoryState()
 
       expect(state.hasConflicts).toBe(true)
     })
 
-    it('should detect merge state', () => {
-      mockExecSync.mockImplementation((cmd) => {
-        if (cmd.includes('git status')) return ''
-        if (cmd.includes('git rev-parse')) return '/path/to/.git'
-        return ''
+    it('should detect merge state', async () => {
+      vi.mocked(SecureGitOperations.getGitDir).mockResolvedValue({
+        success: true,
+        stdout: '/path/to/.git',
+        stderr: '',
+        exitCode: 0,
+        timedOut: false,
+      })
+      vi.mocked(SecureGitOperations.getStatus).mockResolvedValue({
+        success: true,
+        stdout: '',
+        stderr: '',
+        exitCode: 0,
+        timedOut: false,
       })
       mockExistsSync.mockImplementation((path) => path.includes('MERGE_HEAD'))
 
-      const state = gitOps.getRepositoryState()
+      const state = await gitOps.getRepositoryState()
 
       expect(state.isMerging).toBe(true)
     })
 
-    it('should handle non-git directories', () => {
-      mockExecSync.mockImplementation(() => {
-        throw new Error('Not a git repository')
-      })
+    it('should handle non-git directories', async () => {
+      vi.mocked(SecureGitOperations.getGitDir).mockRejectedValue(new Error('Not a git repository'))
 
-      const state = gitOps.getRepositoryState()
+      const state = await gitOps.getRepositoryState()
 
       expect(state.inRebase).toBe(false)
       expect(state.hasConflicts).toBe(false)

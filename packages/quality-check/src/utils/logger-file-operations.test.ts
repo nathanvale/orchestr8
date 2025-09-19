@@ -157,8 +157,8 @@ describe('JSON File Writing', () => {
 })
 
 describe('Log Directory Management', () => {
-  it('should create .quality-check/logs directory structure', async () => {
-    const logDir = path.join(tempDir, '.quality-check')
+  it('should create logs directory structure', async () => {
+    const logDir = tempDir
     const { EnhancedLogger } = await import('./logger')
     const logger = new EnhancedLogger({
       console: false,
@@ -175,7 +175,7 @@ describe('Log Directory Management', () => {
   })
 
   it('should handle existing directories gracefully', async () => {
-    const logDir = path.join(tempDir, '.quality-check')
+    const logDir = tempDir
     fs.mkdirSync(path.join(logDir, 'logs', 'errors'), { recursive: true })
 
     const { EnhancedLogger } = await import('./logger')

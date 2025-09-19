@@ -51,7 +51,7 @@ git status -sb
 ```bash
 # Look for test commands
 if [ -f package.json ]; then
-  npm test || echo "⚠️ Tests failed. Continue anyway? (yes/no)"
+  pnpm test || echo "⚠️ Tests failed. Continue anyway? (yes/no)"
 elif [ -f Makefile ]; then
   make test || echo "⚠️ Tests failed. Continue anyway? (yes/no)"
 fi

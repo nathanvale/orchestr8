@@ -366,7 +366,7 @@ export class EnhancedLogger extends QualityLogger {
       silent: config?.silent ?? this.isEnvironmentSilent(),
       colored: config?.colored ?? true,
       outputFormat: config?.outputFormat ?? 'basic',
-      logDir: config?.logDir ?? '.quality-check',
+      logDir: config?.logDir ?? join(process.cwd(), 'packages', 'quality-check'),
       retentionPolicy: {
         errorReports:
           config?.retentionPolicy?.errorReports ??

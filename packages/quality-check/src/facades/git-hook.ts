@@ -5,10 +5,10 @@
  * Uses fix-first architecture to eliminate separate Fixer adapter
  */
 
-import { execSync } from 'node:child_process'
 import { QualityChecker } from '../core/quality-checker.js'
 import { IssueReporter } from '../core/issue-reporter.js'
 import { Autopilot } from '../adapters/autopilot.js'
+import { SecureGitOperations } from '../utils/secure-git-operations.js'
 
 interface GitHookOptions {
   fix?: boolean
@@ -18,7 +18,7 @@ interface GitHookOptions {
 export async function runGitHook(options: GitHookOptions = {}): Promise<void> {
   try {
     // Use provided files from lint-staged or get staged files
-    const filesToCheck = options.files || getStagedFiles()
+    const filesToCheck = options.files || (await getStagedFiles())
 
     // Filter for checkable files (JS/TS only for git hooks)
     const checkableFiles = filesToCheck.filter((file) => /\.(js|jsx|ts|tsx)$/.test(file))
@@ -105,12 +105,13 @@ export async function runGitHook(options: GitHookOptions = {}): Promise<void> {
   }
 }
 
-function getStagedFiles(): string[] {
+async function getStagedFiles(): Promise<string[]> {
   try {
-    const output = execSync('git diff --cached --name-only --diff-filter=ACM', {
-      encoding: 'utf-8',
-    })
-    return output.trim().split('\n').filter(Boolean)
+    const result = await SecureGitOperations.getStagedFiles()
+    if (!result.success) {
+      return []
+    }
+    return result.stdout.trim().split('\n').filter(Boolean)
   } catch {
     return []
   }

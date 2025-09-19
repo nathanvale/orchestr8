@@ -7,8 +7,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { runGitHook } from './git-hook.js'
 
 // Mock dependencies
-vi.mock('node:child_process', () => ({
-  execSync: vi.fn(),
+vi.mock('../utils/secure-git-operations.js', () => ({
+  SecureGitOperations: {
+    getStagedFiles: vi.fn(),
+  },
 }))
 
 vi.mock('../core/quality-checker.js', () => ({
@@ -28,13 +30,13 @@ vi.mock('../adapters/autopilot.js', () => ({
 }))
 
 // Import mocked modules
-import { execSync } from 'node:child_process'
+import { SecureGitOperations } from '../utils/secure-git-operations.js'
 import { Autopilot } from '../adapters/autopilot.js'
 import { IssueReporter } from '../core/issue-reporter.js'
 import { QualityChecker } from '../core/quality-checker.js'
 
 describe('Git Hook Auto-staging - Basic Functionality', () => {
-  let mockExecSync: ReturnType<typeof vi.fn>
+  let mockGetStagedFiles: ReturnType<typeof vi.fn>
   let mockCheck: ReturnType<typeof vi.fn>
   let mockDecide: ReturnType<typeof vi.fn>
   let mockFormatForCLI: ReturnType<typeof vi.fn>
@@ -44,7 +46,7 @@ describe('Git Hook Auto-staging - Basic Functionality', () => {
 
   beforeEach(() => {
     // Setup mocks
-    mockExecSync = vi.mocked(execSync)
+    mockGetStagedFiles = vi.mocked(SecureGitOperations.getStagedFiles)
     mockCheck = vi.fn()
     mockDecide = vi.fn()
     mockFormatForCLI = vi.fn().mockReturnValue('Formatted errors')
@@ -82,7 +84,13 @@ describe('Git Hook Auto-staging - Basic Functionality', () => {
   describe('Automatic staging of files after successful fixes', () => {
     it('should stage fixed files automatically when fixes are successful', async () => {
       const filesToFix = ['src/file1.ts', 'src/file2.ts']
-      mockExecSync.mockReturnValueOnce(filesToFix.join('\n'))
+      mockGetStagedFiles.mockResolvedValueOnce({
+        success: true,
+        stdout: filesToFix.join('\n'),
+        stderr: '',
+        exitCode: 0,
+        timedOut: false,
+      })
 
       // Mock check: first call returns issues, second call (fix-first) returns success
       mockCheck
@@ -148,7 +156,13 @@ describe('Git Hook Auto-staging - Basic Functionality', () => {
       const allFiles = ['src/file1.ts', 'src/file2.ts', 'src/file3.ts']
       const modifiedFiles = ['src/file1.ts', 'src/file3.ts'] // Only 2 of 3 modified
 
-      mockExecSync.mockReturnValueOnce(allFiles.join('\n'))
+      mockGetStagedFiles.mockResolvedValueOnce({
+        success: true,
+        stdout: allFiles.join('\n'),
+        stderr: '',
+        exitCode: 0,
+        timedOut: false,
+      })
 
       // Mock check: first call returns issues, second call (fix-first) returns success
       mockCheck
@@ -205,7 +219,13 @@ describe('Git Hook Auto-staging - Basic Functionality', () => {
     })
 
     it('should not stage files when fix option is false', async () => {
-      mockExecSync.mockReturnValueOnce('src/file.ts')
+      mockGetStagedFiles.mockResolvedValueOnce({
+        success: true,
+        stdout: 'src/file.ts',
+        stderr: '',
+        exitCode: 0,
+        timedOut: false,
+      })
 
       mockCheck.mockResolvedValue({
         success: false,
@@ -242,7 +262,13 @@ describe('Git Hook Auto-staging - Basic Functionality', () => {
   describe('Atomic commit behavior with fixes included', () => {
     it('should ensure fixes are included in the same commit', async () => {
       const files = ['src/feature.ts', 'src/utils.ts']
-      mockExecSync.mockReturnValueOnce(files.join('\n'))
+      mockGetStagedFiles.mockResolvedValueOnce({
+        success: true,
+        stdout: files.join('\n'),
+        stderr: '',
+        exitCode: 0,
+        timedOut: false,
+      })
 
       // Mock check: first call returns issues, second call (fix-first) returns success
       mockCheck
@@ -309,7 +335,13 @@ describe('Git Hook Auto-staging - Basic Functionality', () => {
       const allFiles = ['src/file1.ts', 'src/file2.ts', 'src/file3.ts']
       const fixedFiles = ['src/file1.ts', 'src/file2.ts'] // file3 couldn't be fixed
 
-      mockExecSync.mockReturnValueOnce(allFiles.join('\n'))
+      mockGetStagedFiles.mockResolvedValueOnce({
+        success: true,
+        stdout: allFiles.join('\n'),
+        stderr: '',
+        exitCode: 0,
+        timedOut: false,
+      })
 
       // Mock check: first call returns issues, second call still has unfixable issues
       mockCheck
@@ -389,7 +421,13 @@ describe('Git Hook Auto-staging - Basic Functionality', () => {
   describe('Git history cleanliness (no separate style commits)', () => {
     it('should eliminate need for separate style commits', async () => {
       const files = ['src/feature.ts']
-      mockExecSync.mockReturnValueOnce(files.join('\n'))
+      mockGetStagedFiles.mockResolvedValueOnce({
+        success: true,
+        stdout: files.join('\n'),
+        stderr: '',
+        exitCode: 0,
+        timedOut: false,
+      })
 
       // Simulate a formatting issue that would normally require a separate commit
       // Mock check: first call returns issues, second call (fix-first) returns success
@@ -440,7 +478,13 @@ describe('Git Hook Auto-staging - Basic Functionality', () => {
 
     it('should handle multiple formatting fixes in one atomic operation', async () => {
       const files = ['src/feature.ts', 'src/component.tsx', 'src/utils.ts']
-      mockExecSync.mockReturnValueOnce(files.join('\n'))
+      mockGetStagedFiles.mockResolvedValueOnce({
+        success: true,
+        stdout: files.join('\n'),
+        stderr: '',
+        exitCode: 0,
+        timedOut: false,
+      })
 
       // Multiple formatting issues across files
       // Mock check: first call returns issues, second call (fix-first) returns success

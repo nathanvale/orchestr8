@@ -7,8 +7,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { runGitHook } from './git-hook.js'
 
 // Mock dependencies
-vi.mock('node:child_process', () => ({
-  execSync: vi.fn(),
+vi.mock('../utils/secure-git-operations.js', () => ({
+  SecureGitOperations: {
+    getStagedFiles: vi.fn(),
+  },
 }))
 
 vi.mock('../core/quality-checker.js', () => ({
@@ -28,13 +30,13 @@ vi.mock('../adapters/autopilot.js', () => ({
 }))
 
 // Import mocked modules
-import { execSync } from 'node:child_process'
+import { SecureGitOperations } from '../utils/secure-git-operations.js'
 import { Autopilot } from '../adapters/autopilot.js'
 import { IssueReporter } from '../core/issue-reporter.js'
 import { QualityChecker } from '../core/quality-checker.js'
 
 describe('Git Hook with Current Implementation', () => {
-  let mockExecSync: ReturnType<typeof vi.fn>
+  let mockGetStagedFiles: ReturnType<typeof vi.fn>
   let mockCheck: ReturnType<typeof vi.fn>
   let mockDecide: ReturnType<typeof vi.fn>
   let mockFormatForCLI: ReturnType<typeof vi.fn>
@@ -43,7 +45,7 @@ describe('Git Hook with Current Implementation', () => {
 
   beforeEach(() => {
     // Setup mocks
-    mockExecSync = vi.mocked(execSync)
+    mockGetStagedFiles = vi.mocked(SecureGitOperations.getStagedFiles)
     mockCheck = vi.fn()
     mockDecide = vi.fn()
     mockFormatForCLI = vi.fn().mockReturnValue('Formatted errors')
@@ -81,7 +83,13 @@ describe('Git Hook with Current Implementation', () => {
 
   describe('Staged Files Detection', () => {
     it('should get staged files from git when no files provided', async () => {
-      mockExecSync.mockReturnValue('src/file1.ts\nsrc/file2.js\n')
+      mockGetStagedFiles.mockResolvedValue({
+        success: true,
+        stdout: 'src/file1.ts\nsrc/file2.js',
+        stderr: '',
+        exitCode: 0,
+        timedOut: false,
+      })
       mockCheck.mockResolvedValue({ success: true, duration: 100, issues: [] })
 
       try {
@@ -90,9 +98,7 @@ describe('Git Hook with Current Implementation', () => {
         // Expected to throw due to process.exit mock
       }
 
-      expect(mockExecSync).toHaveBeenCalledWith('git diff --cached --name-only --diff-filter=ACM', {
-        encoding: 'utf-8',
-      })
+      expect(mockGetStagedFiles).toHaveBeenCalled()
       expect(mockCheck).toHaveBeenCalledWith(['src/file1.ts', 'src/file2.js'], { fix: false })
     })
 
@@ -106,12 +112,18 @@ describe('Git Hook with Current Implementation', () => {
         // Expected to throw due to process.exit mock
       }
 
-      expect(mockExecSync).not.toHaveBeenCalled()
+      expect(mockGetStagedFiles).not.toHaveBeenCalled()
       expect(mockCheck).toHaveBeenCalledWith(files, { fix: false })
     })
 
     it('should filter for JS/TS files only', async () => {
-      mockExecSync.mockReturnValue('src/file.ts\nREADME.md\npackage.json\nsrc/test.js\n')
+      mockGetStagedFiles.mockResolvedValue({
+        success: true,
+        stdout: 'src/file.ts\nREADME.md\npackage.json\nsrc/test.js',
+        stderr: '',
+        exitCode: 0,
+        timedOut: false,
+      })
       mockCheck.mockResolvedValue({ success: true, duration: 100, issues: [] })
 
       try {
@@ -124,7 +136,13 @@ describe('Git Hook with Current Implementation', () => {
     })
 
     it('should exit silently when no checkable files', async () => {
-      mockExecSync.mockReturnValue('README.md\npackage.json\n')
+      mockGetStagedFiles.mockResolvedValue({
+        success: true,
+        stdout: 'README.md\npackage.json',
+        stderr: '',
+        exitCode: 0,
+        timedOut: false,
+      })
 
       try {
         await runGitHook()
@@ -139,7 +157,13 @@ describe('Git Hook with Current Implementation', () => {
 
   describe('Quality Check Integration', () => {
     it('should pass when QualityChecker returns success', async () => {
-      mockExecSync.mockReturnValue('src/file.ts\n')
+      mockGetStagedFiles.mockResolvedValue({
+        success: true,
+        stdout: 'src/file.ts',
+        stderr: '',
+        exitCode: 0,
+        timedOut: false,
+      })
       mockCheck.mockResolvedValue({
         success: true,
         duration: 100,
@@ -157,7 +181,13 @@ describe('Git Hook with Current Implementation', () => {
     })
 
     it('should fail and show errors when QualityChecker finds issues', async () => {
-      mockExecSync.mockReturnValue('src/file.ts\n')
+      mockGetStagedFiles.mockResolvedValue({
+        success: true,
+        stdout: 'src/file.ts',
+        stderr: '',
+        exitCode: 0,
+        timedOut: false,
+      })
       const failResult = {
         success: false,
         duration: 100,
@@ -208,7 +238,13 @@ describe('Git Hook with Current Implementation', () => {
 
   describe('Auto-fix Integration', () => {
     it('should apply fixes when autopilot decides FIX_SILENTLY', async () => {
-      mockExecSync.mockReturnValue('src/file.ts\n')
+      mockGetStagedFiles.mockResolvedValue({
+        success: true,
+        stdout: 'src/file.ts',
+        stderr: '',
+        exitCode: 0,
+        timedOut: false,
+      })
       // First check returns issues
       mockCheck.mockResolvedValueOnce({
         success: false,
@@ -252,7 +288,13 @@ describe('Git Hook with Current Implementation', () => {
     })
 
     it('should report errors when auto-fix fails', async () => {
-      mockExecSync.mockReturnValue('src/file.ts\n')
+      mockGetStagedFiles.mockResolvedValue({
+        success: true,
+        stdout: 'src/file.ts',
+        stderr: '',
+        exitCode: 0,
+        timedOut: false,
+      })
       const failResult = {
         success: false,
         duration: 100,
@@ -309,7 +351,13 @@ describe('Git Hook with Current Implementation', () => {
     })
 
     it('should not attempt fix when fix option is false', async () => {
-      mockExecSync.mockReturnValue('src/file.ts\n')
+      mockGetStagedFiles.mockResolvedValue({
+        success: true,
+        stdout: 'src/file.ts',
+        stderr: '',
+        exitCode: 0,
+        timedOut: false,
+      })
       mockCheck.mockResolvedValue({
         success: false,
         duration: 100,
@@ -342,7 +390,13 @@ describe('Git Hook with Current Implementation', () => {
 
   describe('Autopilot Decision Making', () => {
     it('should respect FIX_AND_REPORT decision', async () => {
-      mockExecSync.mockReturnValue('src/file.ts\n')
+      mockGetStagedFiles.mockResolvedValue({
+        success: true,
+        stdout: 'src/file.ts',
+        stderr: '',
+        exitCode: 0,
+        timedOut: false,
+      })
       const failResult = {
         success: false,
         duration: 100,
@@ -375,7 +429,13 @@ describe('Git Hook with Current Implementation', () => {
     })
 
     it('should handle CONTINUE decision', async () => {
-      mockExecSync.mockReturnValue('src/file.ts\n')
+      mockGetStagedFiles.mockResolvedValue({
+        success: true,
+        stdout: 'src/file.ts',
+        stderr: '',
+        exitCode: 0,
+        timedOut: false,
+      })
       mockCheck.mockResolvedValue({
         success: false,
         duration: 100,
@@ -408,7 +468,13 @@ describe('Git Hook with Current Implementation', () => {
 
   describe('Error Handling', () => {
     it('should handle check errors gracefully', async () => {
-      mockExecSync.mockReturnValue('src/file.ts\n')
+      mockGetStagedFiles.mockResolvedValue({
+        success: true,
+        stdout: 'src/file.ts',
+        stderr: '',
+        exitCode: 0,
+        timedOut: false,
+      })
       mockCheck.mockRejectedValue(new Error('Check failed'))
 
       try {
@@ -422,8 +488,12 @@ describe('Git Hook with Current Implementation', () => {
     })
 
     it('should handle git command failures', async () => {
-      mockExecSync.mockImplementation(() => {
-        throw new Error('Git command failed')
+      mockGetStagedFiles.mockResolvedValue({
+        success: false,
+        stdout: '',
+        stderr: 'Git command failed',
+        exitCode: 1,
+        timedOut: false,
       })
 
       try {
@@ -440,7 +510,13 @@ describe('Git Hook with Current Implementation', () => {
 
   describe('Current Compatibility', () => {
     it('should work with Current QualityChecker instance', async () => {
-      mockExecSync.mockReturnValue('src/file.ts\n')
+      mockGetStagedFiles.mockResolvedValue({
+        success: true,
+        stdout: 'src/file.ts',
+        stderr: '',
+        exitCode: 0,
+        timedOut: false,
+      })
       mockCheck.mockResolvedValue({ success: true, duration: 100, issues: [] })
 
       try {
@@ -455,7 +531,13 @@ describe('Git Hook with Current Implementation', () => {
     })
 
     it('should handle Current-specific error formats', async () => {
-      mockExecSync.mockReturnValue('src/file.ts\n')
+      mockGetStagedFiles.mockResolvedValue({
+        success: true,
+        stdout: 'src/file.ts',
+        stderr: '',
+        exitCode: 0,
+        timedOut: false,
+      })
       const currentResult = {
         success: false,
         duration: 100,

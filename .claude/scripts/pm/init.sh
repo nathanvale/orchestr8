@@ -130,7 +130,7 @@ Add your project-specific instructions here.
 ## Testing
 
 Always run tests before committing:
-- `npm test` or equivalent for your stack
+- `pnpm test` or equivalent for your stack
 
 ## Code Style
 

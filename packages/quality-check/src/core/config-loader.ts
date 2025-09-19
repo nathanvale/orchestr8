@@ -31,6 +31,9 @@ export interface QualityCheckConfig {
   /** Whether to fix issues automatically */
   fix?: boolean
 
+  /** Fix mode - controls which types of fixes are applied */
+  fixMode?: 'safe' | 'full'
+
   /** Files to check */
   files?: string[]
 
@@ -76,6 +79,7 @@ const DEFAULT_CONFIG: ResolvedConfig = {
   eslintCacheDir: '.cache/eslint',
   prettierWrite: false,
   fix: false,
+  fixMode: 'full',
   files: [],
   staged: false,
   since: '',
@@ -246,6 +250,7 @@ export class ConfigLoader {
         eslintCacheDir: config.eslintCacheDir ?? result.eslintCacheDir,
         prettierWrite: config.prettierWrite ?? result.prettierWrite,
         fix: config.fix ?? result.fix,
+        fixMode: config.fixMode !== undefined ? config.fixMode : result.fixMode,
         files: config.files?.length ? config.files : result.files,
         staged: config.staged ?? result.staged,
         since: config.since ?? result.since,

@@ -3,9 +3,9 @@
  * Handles automatic staging of fixed files
  */
 
-import { execSync } from 'node:child_process'
 import { readFileSync, existsSync, statSync, openSync, closeSync } from 'node:fs'
 import { logger } from './logger.js'
+import { SecureGitOperations } from './secure-git-operations.js'
 
 export interface GitStageResult {
   success: boolean
@@ -36,7 +36,7 @@ export class GitOperations {
   /**
    * Stage files that have been successfully fixed
    */
-  stageFiles(files: string[]): GitStageResult {
+  async stageFiles(files: string[]): Promise<GitStageResult> {
     if (!files || files.length === 0) {
       return {
         success: true,
@@ -52,13 +52,14 @@ export class GitOperations {
       const maxRetries = 3
       const retryDelay = 100
 
-      const stageWithRetry = (): GitStageResult => {
+      const stageWithRetry = async (): Promise<GitStageResult> => {
         try {
-          // Stage all files at once for efficiency
-          const quotedFiles = files.map((file) => `"${file}"`).join(' ')
-          execSync(`git add ${quotedFiles}`, {
-            encoding: 'utf-8',
-          })
+          // Stage all files at once for efficiency using secure operations
+          const result = await SecureGitOperations.addFiles(files)
+
+          if (!result.success) {
+            throw new Error(result.stderr || 'Git add failed')
+          }
 
           logger.debug('Git staging completed successfully', {
             stagedCount: files.length,
@@ -76,7 +77,7 @@ export class GitOperations {
             retryCount++
             logger.debug('Index locked, retrying', { attempt: retryCount })
             setTimeout(() => {}, retryDelay) // Simple delay
-            return stageWithRetry()
+            return await stageWithRetry()
           }
 
           if (errorMessage.includes('Permission denied')) {
@@ -110,7 +111,7 @@ export class GitOperations {
         }
       }
 
-      return stageWithRetry()
+      return await stageWithRetry()
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error)
 
@@ -215,23 +216,17 @@ export class GitOperations {
   /**
    * Check if a file has partial staging (some hunks staged, some not)
    */
-  hasPartialStaging(file: string): boolean {
+  async hasPartialStaging(file: string): Promise<boolean> {
     try {
       logger.debug('Checking partial staging', { file })
 
       // Check if file is in the index (staged)
-      const stagedOutput = execSync(`git diff --cached --name-only`, {
-        encoding: 'utf8',
-        stdio: ['pipe', 'pipe', 'ignore'], // Suppress stderr
-      })
-      const isStaged = stagedOutput.includes(file)
+      const stagedResult = await SecureGitOperations.getDiffCached([file])
+      const isStaged = stagedResult.success && stagedResult.stdout.includes(file)
 
       // Check if file has unstaged changes
-      const unstagedOutput = execSync(`git diff --name-only`, {
-        encoding: 'utf8',
-        stdio: ['pipe', 'pipe', 'ignore'], // Suppress stderr
-      })
-      const hasUnstagedChanges = unstagedOutput.includes(file)
+      const unstagedResult = await SecureGitOperations.getDiff([file])
+      const hasUnstagedChanges = unstagedResult.success && unstagedResult.stdout.includes(file)
 
       const hasPartial = isStaged && hasUnstagedChanges
       logger.debug('Partial staging check result', {
@@ -257,7 +252,7 @@ export class GitOperations {
   /**
    * Get the current repository state (rebase, merge, etc.)
    */
-  getRepositoryState(): RepositoryState {
+  async getRepositoryState(): Promise<RepositoryState> {
     const state: RepositoryState = {
       inRebase: false,
       hasConflicts: false,
@@ -268,10 +263,11 @@ export class GitOperations {
       logger.debug('Getting repository state')
 
       // Get git directory path
-      const gitDir = execSync('git rev-parse --git-dir', {
-        encoding: 'utf8',
-        stdio: ['pipe', 'pipe', 'ignore'], // Suppress stderr
-      }).trim()
+      const gitDirResult = await SecureGitOperations.getGitDir()
+      if (!gitDirResult.success) {
+        throw new Error('Failed to get git directory')
+      }
+      const gitDir = gitDirResult.stdout.trim()
 
       // Check for rebase state
       state.inRebase = existsSync(`${gitDir}/rebase-merge`) || existsSync(`${gitDir}/rebase-apply`)
@@ -280,11 +276,11 @@ export class GitOperations {
       state.isMerging = existsSync(`${gitDir}/MERGE_HEAD`)
 
       // Check for conflicts in git status
-      const statusOutput = execSync('git status --porcelain', {
-        encoding: 'utf8',
-        stdio: ['pipe', 'pipe', 'ignore'], // Suppress stderr
-      })
-      state.hasConflicts = statusOutput.includes('UU ') || statusOutput.includes('AA ')
+      const statusResult = await SecureGitOperations.getStatus()
+      if (statusResult.success) {
+        state.hasConflicts =
+          statusResult.stdout.includes('UU ') || statusResult.stdout.includes('AA ')
+      }
 
       logger.debug('Repository state determined', {
         inRebase: state.inRebase,
@@ -362,16 +358,8 @@ export class GitOperations {
   /**
    * Check if we're in a git repository
    */
-  isGitRepository(): boolean {
-    try {
-      execSync('git rev-parse --git-dir', {
-        stdio: ['pipe', 'pipe', 'ignore'], // Suppress stderr
-        encoding: 'utf8',
-      })
-      return true
-    } catch {
-      return false
-    }
+  async isGitRepository(): Promise<boolean> {
+    return await SecureGitOperations.isGitRepository()
   }
 
   /**
@@ -382,15 +370,16 @@ export class GitOperations {
   ): Promise<Map<string, 'modified' | 'staged' | 'untracked' | 'clean'>> {
     const statusMap = new Map<string, 'modified' | 'staged' | 'untracked' | 'clean'>()
 
-    if (!files.length || !this.isGitRepository()) {
+    if (!files.length || !(await this.isGitRepository())) {
       return statusMap
     }
 
     try {
-      const output = execSync('git status --porcelain', {
-        encoding: 'utf8',
-        stdio: ['pipe', 'pipe', 'ignore'], // Suppress stderr
-      })
+      const result = await SecureGitOperations.getStatus()
+      if (!result.success) {
+        throw new Error(result.stderr || 'Failed to get git status')
+      }
+      const output = result.stdout
 
       const statusLines = output.split('\n').filter((line) => line.trim())
 

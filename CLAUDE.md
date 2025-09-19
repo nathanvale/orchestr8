@@ -5,7 +5,7 @@
 
 ## Project Overview
 
-This is a monorepo template using Bun, Changesets, and Turborepo with an
+This is a monorepo template using pnpm, Changesets, and Turborepo with an
 ADHD-optimized development workflow. It includes a sophisticated `quality-check`
 package that implements a "fix-first" pipeline for code quality enforcement.
 
@@ -15,35 +15,40 @@ package that implements a "fix-first" pipeline for code quality enforcement.
 
 ```bash
 # Build all packages
-npm run build
+pnpm build
 
 # Run all tests
-npm test
+pnpm test
 
 # Type checking
-npm run typecheck
+pnpm typecheck
 
 # Linting
-npm run lint
+pnpm lint
 
 # Validate everything (lint + typecheck + build + test)
-npm run validate
+pnpm validate
 
 # Clean build artifacts
-npm run clean
+pnpm clean
 ```
 
 ### Quality Check
 
 ```bash
 # Check specific files
-npx quality-check check file1.ts file2.ts
+npx quality-check --file file1.ts
+npx quality-check --file file2.ts
 
-# Format specific files
-npx quality-check format file1.ts file2.ts
+# Format specific files (auto-fix)
+npx quality-check --file file1.ts --fix
+npx quality-check --file file2.ts --fix
 
-# Pre-commit mode (auto-fix and stage)
-npx quality-check pre-commit --fix file1.ts
+# Check staged files
+npx quality-check --staged
+
+# Check files changed since git ref
+npx quality-check --since main
 ```
 
 ### PM Tooling (Project Management)
@@ -130,6 +135,13 @@ Using the test-runner agent ensures:
 - Context usage is optimized
 - All issues are properly surfaced
 - No approval dialogs interrupt the workflow
+
+### 4. Always use the wallaby-tdd sub-agent for TDD and debugging support
+
+The wallaby-tdd agent integrates with Wallaby's MCP tools to provide real-time
+feedback on test failures, runtime values, and code coverage. It supports the
+inner development loop of writing tests, verifying failures, writing code, and
+refactoring safely.
 
 ## Git Workflow
 

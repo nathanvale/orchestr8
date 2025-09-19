@@ -1,12 +1,17 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import * as fs from 'node:fs'
 import * as path from 'node:path'
-import { execSync } from 'node:child_process'
 import { FileMatcher } from './file-matcher.js'
+import { SecureGitOperations } from '../utils/secure-git-operations.js'
 
 vi.mock('node:fs')
 vi.mock('node:path')
-vi.mock('node:child_process')
+vi.mock('../utils/secure-git-operations.js', () => ({
+  SecureGitOperations: {
+    getStagedFiles: vi.fn(),
+    getChangedFiles: vi.fn(),
+  },
+}))
 
 describe('FileMatcher', () => {
   let fileMatcher: FileMatcher
@@ -54,48 +59,66 @@ describe('FileMatcher', () => {
 
   describe('isTypeScriptOrJavaScriptFile', () => {
     it('should recognize JavaScript files', async () => {
-      const testFiles = ['/test/file.js', '/test/file.jsx', '/test/file.mjs', '/test/file.cjs']
+      const testFiles = ['file.js', 'file.jsx', 'file.mjs', 'file.cjs']
 
       for (const file of testFiles) {
-        vi.mocked(execSync).mockReturnValue(file + '\n')
+        vi.mocked(SecureGitOperations.getStagedFiles).mockResolvedValue({
+          success: true,
+          stdout: file,
+          stderr: '',
+          exitCode: 0,
+          timedOut: false,
+        })
         const files = await fileMatcher.resolveFiles({ staged: true })
-        expect(files).toContain(file)
+        expect(files).toContain(`${mockCwd}/${file}`)
       }
     })
 
     it('should recognize TypeScript files', async () => {
-      const testFiles = ['/test/file.ts', '/test/file.tsx']
+      const testFiles = ['file.ts', 'file.tsx']
 
       for (const file of testFiles) {
-        vi.mocked(execSync).mockReturnValue(file + '\n')
+        vi.mocked(SecureGitOperations.getStagedFiles).mockResolvedValue({
+          success: true,
+          stdout: file,
+          stderr: '',
+          exitCode: 0,
+          timedOut: false,
+        })
         const files = await fileMatcher.resolveFiles({ staged: true })
-        expect(files).toContain(file)
+        expect(files).toContain(`${mockCwd}/${file}`)
       }
     })
 
     it('should recognize Markdown files', async () => {
-      const testFiles = ['/test/README.md', '/test/docs/guide.md', '/test/CHANGELOG.md']
+      const testFiles = ['README.md', 'docs/guide.md', 'CHANGELOG.md']
 
       for (const file of testFiles) {
-        vi.mocked(execSync).mockReturnValue(file + '\n')
+        vi.mocked(SecureGitOperations.getStagedFiles).mockResolvedValue({
+          success: true,
+          stdout: file,
+          stderr: '',
+          exitCode: 0,
+          timedOut: false,
+        })
         const files = await fileMatcher.resolveFiles({ staged: true })
-        expect(files).toContain(file)
+        expect(files).toContain(`${mockCwd}/${file}`)
       }
     })
 
     it('should filter out non-supported files', async () => {
-      const unsupportedFiles = [
-        '/test/file.txt',
-        '/test/file.json',
-        '/test/file.yaml',
-        '/test/file.css',
-        '/test/file.html',
-      ]
+      const unsupportedFiles = ['file.txt', 'file.json', 'file.yaml', 'file.css', 'file.html']
 
       for (const file of unsupportedFiles) {
-        vi.mocked(execSync).mockReturnValue(file + '\n')
+        vi.mocked(SecureGitOperations.getStagedFiles).mockResolvedValue({
+          success: true,
+          stdout: file,
+          stderr: '',
+          exitCode: 0,
+          timedOut: false,
+        })
         const files = await fileMatcher.resolveFiles({ staged: true })
-        expect(files).not.toContain(file)
+        expect(files).not.toContain(`${mockCwd}/${file}`)
       }
     })
   })
@@ -107,17 +130,19 @@ src/utils.ts
 src/component.tsx
 src/helper.jsx`
 
-      vi.mocked(execSync).mockReturnValue(stagedFiles)
+      vi.mocked(SecureGitOperations.getStagedFiles).mockResolvedValue({
+        success: true,
+        stdout: stagedFiles,
+        stderr: '',
+        exitCode: 0,
+        timedOut: false,
+      })
 
       const files = await fileMatcher.resolveFiles({ staged: true })
 
-      expect(execSync).toHaveBeenCalledWith(
-        'git diff --cached --name-only --diff-filter=ACM',
-        expect.objectContaining({
-          cwd: mockCwd,
-          encoding: 'utf-8',
-        }),
-      )
+      expect(SecureGitOperations.getStagedFiles).toHaveBeenCalledWith({
+        cwd: mockCwd,
+      })
 
       expect(files).toHaveLength(4)
       expect(files).toContain(`${mockCwd}/src/index.js`)
@@ -132,7 +157,13 @@ docs/guide.md
 CHANGELOG.md
 .agent-os/specs/spec.md`
 
-      vi.mocked(execSync).mockReturnValue(stagedFiles)
+      vi.mocked(SecureGitOperations.getStagedFiles).mockResolvedValue({
+        success: true,
+        stdout: stagedFiles,
+        stderr: '',
+        exitCode: 0,
+        timedOut: false,
+      })
 
       const files = await fileMatcher.resolveFiles({ staged: true })
 
@@ -150,7 +181,13 @@ README.md
 package.json
 src/component.tsx`
 
-      vi.mocked(execSync).mockReturnValue(stagedFiles)
+      vi.mocked(SecureGitOperations.getStagedFiles).mockResolvedValue({
+        success: true,
+        stdout: stagedFiles,
+        stderr: '',
+        exitCode: 0,
+        timedOut: false,
+      })
 
       const files = await fileMatcher.resolveFiles({ staged: true })
 
@@ -170,17 +207,19 @@ README.md
 docs/api.md
 src/utils.js`
 
-      vi.mocked(execSync).mockReturnValue(changedFiles)
+      vi.mocked(SecureGitOperations.getChangedFiles).mockResolvedValue({
+        success: true,
+        stdout: changedFiles,
+        stderr: '',
+        exitCode: 0,
+        timedOut: false,
+      })
 
       const files = await fileMatcher.resolveFiles({ since: 'main' })
 
-      expect(execSync).toHaveBeenCalledWith(
-        'git diff main...HEAD --name-only --diff-filter=ACM',
-        expect.objectContaining({
-          cwd: mockCwd,
-          encoding: 'utf-8',
-        }),
-      )
+      expect(SecureGitOperations.getChangedFiles).toHaveBeenCalledWith('main', {
+        cwd: mockCwd,
+      })
 
       expect(files).toHaveLength(4)
       expect(files).toContain(`${mockCwd}/src/index.ts`)
@@ -301,7 +340,13 @@ src/component.tsx
 CHANGELOG.md
 test.jsx`
 
-      vi.mocked(execSync).mockReturnValue(stagedFiles)
+      vi.mocked(SecureGitOperations.getStagedFiles).mockResolvedValue({
+        success: true,
+        stdout: stagedFiles,
+        stderr: '',
+        exitCode: 0,
+        timedOut: false,
+      })
 
       const files = await fileMatcher.resolveFiles({ staged: true })
 
