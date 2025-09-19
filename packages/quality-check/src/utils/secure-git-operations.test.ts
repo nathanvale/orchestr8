@@ -183,7 +183,8 @@ describe('SecureGitOperations', () => {
 
       expect(result.success).toBe(false)
       expect(result.timedOut).toBe(true)
-      expect(mockChild.killed).toBe(true)
+      // Note: mockChild.killed may not be true due to new PID-based kill logic
+      expect(mockChild.kill).toHaveBeenCalledWith('SIGTERM')
 
       vi.useRealTimers()
     })
@@ -517,7 +518,9 @@ describe('SecureGitOperations', () => {
         'git',
         expect.any(Array),
         expect.objectContaining({
-          stdio: ['ignore', 'pipe', 'pipe'],
+          stdio: ['ignore', 'ignore', 'pipe'],
+          shell: false,
+          windowsHide: true,
         }),
       )
     })
