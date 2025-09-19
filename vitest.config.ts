@@ -119,15 +119,24 @@ export default mergeConfig(
         './tests/setup/zombie-prevention.ts', // Zombie process prevention
       ],
 
-      // Use forks pool for better process isolation and zombie prevention
-      // Forks provide better isolation and cleanup capabilities
-      pool: 'forks',
+      // Environment-aware pool configuration for optimal zombie prevention
+      // Wallaby: Use threads with singleThread for better instrumentation
+      // Regular: Use forks with controlled workers to prevent zombies
+      pool: process.env['WALLABY_WORKER'] ? 'threads' : 'forks',
       poolOptions: {
+        threads: {
+          // Single thread for Wallaby's real-time feedback and instrumentation
+          singleThread: !!process.env['WALLABY_WORKER'],
+          isolate: true,
+          useAtomics: false, // Avoid segfaults in older Node versions
+        },
         forks: {
+          // Controlled multi-process execution for regular tests
           singleFork: false,
           // Optimize for available CPUs, leaving some for system
-          maxForks: Math.max(1, cpus().length - 1),
+          maxForks: isCI ? 2 : Math.max(1, cpus().length - 1),
           minForks: 1,
+          isolate: true,
         },
       },
 
