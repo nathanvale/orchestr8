@@ -15,7 +15,16 @@ module.exports = function (wallaby) {
     workers: {
       initial: 1,
       regular: 1,
+      // Restart workers periodically to prevent memory leaks and zombies
+      restart: true,
+      // Kill workers after 30 seconds of inactivity
+      recycle: true,
     },
+
+    // Prevent zombie processes
+    runMode: 'onsave',
+    slowTestThreshold: 5000, // Mark tests as slow after 5s
+    testTimeout: 10000, // Kill tests after 10s
 
     // Increase console message limits for noisy tests
     maxConsoleMessagesPerTest: 1000,

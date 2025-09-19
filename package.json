@@ -43,6 +43,8 @@
     "perf": "tsx scripts/performance-monitor.ts",
     "profile": "tsx scripts/memory-baseline.ts",
     "zombies": "tsx scripts/emergency-cleanup.ts",
+    "zombies:kill": "./scripts/kill-all-zombies.sh",
+    "test:safe": "./scripts/test-with-cleanup.sh",
     "governance": "echo 'Checking boundaries and circular dependencies... check complete'",
     "memory:baseline": "NODE_OPTIONS='--max-old-space-size=4096' tsx scripts/memory-baseline.ts",
     "memory:profile": "NODE_OPTIONS='--max-old-space-size=4096 --expose-gc' tsx scripts/memory-baseline.ts --profile",
