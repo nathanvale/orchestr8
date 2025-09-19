@@ -83,6 +83,8 @@ export class SecureGitOperations {
       let stdout = ''
       let stderr = ''
       let timedOut = false
+      let processExited = false
+      let forceKillTimer: NodeJS.Timeout | null = null
 
       logger.debug('Executing git command', {
         args: args.join(' '),
@@ -93,20 +95,28 @@ export class SecureGitOperations {
       const child = spawn(this.GIT_COMMAND, args, {
         cwd,
         env: { ...process.env, ...env },
-        stdio: captureOutput ? ['pipe', 'pipe', 'pipe'] : ['ignore', 'pipe', 'pipe'],
+        stdio: captureOutput ? ['pipe', 'pipe', 'pipe'] : ['ignore', 'ignore', 'pipe'],
+        shell: false,
+        windowsHide: true,
       })
 
       // Set up timeout
       const timeoutHandle = setTimeout(() => {
         timedOut = true
-        child.kill('SIGTERM')
+        if (!processExited && child.pid) {
+          child.kill('SIGTERM')
 
-        // Force kill after additional 5 seconds
-        setTimeout(() => {
-          if (!child.killed) {
-            child.kill('SIGKILL')
-          }
-        }, 5000)
+          // Force kill after additional 5 seconds
+          forceKillTimer = setTimeout(() => {
+            if (!processExited && child.pid) {
+              try {
+                process.kill(child.pid, 'SIGKILL')
+              } catch {
+                // Process may have already exited
+              }
+            }
+          }, 5000)
+        }
       }, timeout)
 
       if (captureOutput && child.stdout) {
@@ -122,7 +132,11 @@ export class SecureGitOperations {
       }
 
       child.on('close', (exitCode) => {
+        processExited = true
         clearTimeout(timeoutHandle)
+        if (forceKillTimer) {
+          clearTimeout(forceKillTimer)
+        }
 
         const result: GitCommandResult = {
           success: exitCode === 0 && !timedOut,
@@ -143,7 +157,11 @@ export class SecureGitOperations {
       })
 
       child.on('error', (error) => {
+        processExited = true
         clearTimeout(timeoutHandle)
+        if (forceKillTimer) {
+          clearTimeout(forceKillTimer)
+        }
 
         logger.error('Git command error', error, { args: args.join(' ') })
 

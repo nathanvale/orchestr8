@@ -10,6 +10,8 @@ import { runGitHook } from './git-hook.js'
 vi.mock('../utils/secure-git-operations.js', () => ({
   SecureGitOperations: {
     getStagedFiles: vi.fn(),
+    addFiles: vi.fn(),
+    getStatus: vi.fn(),
   },
 }))
 
@@ -37,6 +39,8 @@ import { QualityChecker } from '../core/quality-checker.js'
 
 describe('Git Hook Auto-staging - Error Handling & Repository States', () => {
   let mockGetStagedFiles: ReturnType<typeof vi.fn>
+  let mockAddFiles: ReturnType<typeof vi.fn>
+  let mockGetStatus: ReturnType<typeof vi.fn>
   let mockCheck: ReturnType<typeof vi.fn>
   let mockDecide: ReturnType<typeof vi.fn>
   let mockFormatForCLI: ReturnType<typeof vi.fn>
@@ -46,6 +50,8 @@ describe('Git Hook Auto-staging - Error Handling & Repository States', () => {
   beforeEach(() => {
     // Setup mocks
     mockGetStagedFiles = vi.mocked(SecureGitOperations.getStagedFiles)
+    mockAddFiles = vi.mocked(SecureGitOperations.addFiles)
+    mockGetStatus = vi.mocked(SecureGitOperations.getStatus)
     mockCheck = vi.fn()
     mockDecide = vi.fn()
     mockFormatForCLI = vi.fn().mockReturnValue('Formatted errors')
@@ -115,13 +121,17 @@ describe('Git Hook Auto-staging - Error Handling & Repository States', () => {
         fixesApplied: [{ modifiedFiles: ['src/file.ts'] }],
       })
 
-      // Mock git add to fail
-      mockGetStagedFiles.mockImplementation((cmd: string) => {
-        if (cmd.includes('git add')) {
-          throw new Error('fatal: Unable to create index.lock')
-        }
-        return 'src/file.ts'
+      // Mock git staged files to return a file
+      mockGetStagedFiles.mockResolvedValue({
+        success: true,
+        stdout: 'src/file.ts',
+        stderr: '',
+        exitCode: 0,
+        timedOut: false,
       })
+
+      // Mock git add to fail
+      mockAddFiles.mockRejectedValue(new Error('fatal: Unable to create index.lock'))
 
       try {
         await runGitHook({ fix: true })
@@ -171,16 +181,27 @@ describe('Git Hook Auto-staging - Error Handling & Repository States', () => {
         fixesApplied: [{ modifiedFiles: ['src/file.ts'] }],
       })
 
+      mockGetStagedFiles.mockResolvedValue({
+        success: true,
+        stdout: 'src/file.ts',
+        stderr: '',
+        exitCode: 0,
+        timedOut: false,
+      })
+
       let gitAddAttempts = 0
-      mockGetStagedFiles.mockImplementation((cmd: string) => {
-        if (cmd.includes('git add')) {
-          gitAddAttempts++
-          if (gitAddAttempts === 1) {
-            throw new Error('.git/index.lock exists')
-          }
-          return '' // Success on retry
+      mockAddFiles.mockImplementation(async () => {
+        gitAddAttempts++
+        if (gitAddAttempts === 1) {
+          throw new Error('.git/index.lock exists')
         }
-        return 'src/file.ts'
+        return {
+          success: true,
+          stdout: '',
+          stderr: '',
+          exitCode: 0,
+          timedOut: false,
+        }
       })
 
       try {
@@ -228,12 +249,15 @@ describe('Git Hook Auto-staging - Error Handling & Repository States', () => {
         fixesApplied: [{ modifiedFiles: ['src/file.ts'] }],
       })
 
-      mockGetStagedFiles.mockImplementation((cmd: string) => {
-        if (cmd.includes('git add')) {
-          throw new Error('Permission denied')
-        }
-        return 'src/file.ts'
+      mockGetStagedFiles.mockResolvedValue({
+        success: true,
+        stdout: 'src/file.ts',
+        stderr: '',
+        exitCode: 0,
+        timedOut: false,
       })
+
+      mockAddFiles.mockRejectedValue(new Error('Permission denied'))
 
       try {
         await runGitHook({ fix: true })
@@ -252,8 +276,20 @@ describe('Git Hook Auto-staging - Error Handling & Repository States', () => {
   describe('Staging behavior with various git repository states', () => {
     it('should handle staging in clean repository state', async () => {
       mockGetStagedFiles
-        .mockReturnValueOnce('src/file.ts') // Staged files
-        .mockReturnValueOnce('') // No unstaged changes
+        .mockResolvedValueOnce({
+          success: true,
+          stdout: 'src/file.ts',
+          stderr: '',
+          exitCode: 0,
+          timedOut: false,
+        }) // Staged files
+        .mockResolvedValueOnce({
+          success: true,
+          stdout: '',
+          stderr: '',
+          exitCode: 0,
+          timedOut: false,
+        }) // No unstaged changes
 
       mockCheck.mockResolvedValue({
         success: false,
@@ -336,16 +372,28 @@ describe('Git Hook Auto-staging - Error Handling & Repository States', () => {
     it('should handle staging during interactive rebase', async () => {
       mockGetStagedFiles
         .mockReturnValueOnce('src/file.ts')
-        .mockReturnValueOnce('') // Simulate rebase state check
-        .mockImplementation((cmd: string) => {
-          if (cmd.includes('git rev-parse')) {
-            return 'refs/heads/feature-branch'
-          }
-          if (cmd.includes('git status')) {
-            return 'interactive rebase in progress'
-          }
-          return ''
+        .mockResolvedValueOnce({
+          success: true,
+          stdout: '',
+          stderr: '',
+          exitCode: 0,
+          timedOut: false,
+        }) // Simulate rebase state check
+        .mockResolvedValueOnce({
+          success: true,
+          stdout: 'refs/heads/feature-branch',
+          stderr: '',
+          exitCode: 0,
+          timedOut: false,
         })
+
+      mockGetStatus.mockResolvedValue({
+        success: true,
+        stdout: 'interactive rebase in progress',
+        stderr: '',
+        exitCode: 0,
+        timedOut: false,
+      })
 
       mockCheck.mockResolvedValue({
         success: false,
@@ -383,23 +431,22 @@ describe('Git Hook Auto-staging - Error Handling & Repository States', () => {
     })
 
     it('should handle staging with merge conflicts present', async () => {
-      mockGetStagedFiles
-        .mockResolvedValueOnce({
-          success: true,
-          stdout: 'src/file.ts',
-          stderr: '',
-          exitCode: 0,
-          timedOut: false,
-        })
-        .mockImplementation((cmd: string) => {
-          if (cmd.includes('git add')) {
-            throw new Error('error: cannot add conflicted file')
-          }
-          if (cmd.includes('git status')) {
-            return 'You have unmerged paths'
-          }
-          return 'src/file.ts'
-        })
+      mockGetStagedFiles.mockResolvedValueOnce({
+        success: true,
+        stdout: 'src/file.ts',
+        stderr: '',
+        exitCode: 0,
+        timedOut: false,
+      })
+
+      mockAddFiles.mockRejectedValue(new Error('error: cannot add conflicted file'))
+      mockGetStatus.mockResolvedValue({
+        success: true,
+        stdout: 'You have unmerged paths',
+        stderr: '',
+        exitCode: 0,
+        timedOut: false,
+      })
 
       mockCheck.mockResolvedValue({
         success: false,
@@ -443,16 +490,28 @@ describe('Git Hook Auto-staging - Error Handling & Repository States', () => {
     it('should respect user workflow and not interfere with partial staging', async () => {
       // User has partially staged a file (some hunks staged, some not)
       mockGetStagedFiles
-        .mockReturnValueOnce('src/complex-file.ts') // File with partial staging
-        .mockImplementation((cmd: string) => {
-          if (cmd.includes('git diff --cached')) {
-            return '+ staged line'
-          }
-          if (cmd.includes('git diff src/complex-file.ts')) {
-            return '+ unstaged line'
-          }
-          return 'src/complex-file.ts'
+        .mockResolvedValueOnce({
+          success: true,
+          stdout: 'src/complex-file.ts',
+          stderr: '',
+          exitCode: 0,
+          timedOut: false,
+        }) // File with partial staging
+        .mockResolvedValue({
+          success: true,
+          stdout: 'src/complex-file.ts',
+          stderr: '',
+          exitCode: 0,
+          timedOut: false,
         })
+
+      mockGetStatus.mockResolvedValue({
+        success: true,
+        stdout: '+ staged line\n+ unstaged line',
+        stderr: '',
+        exitCode: 0,
+        timedOut: false,
+      })
 
       mockCheck.mockResolvedValue({
         success: false,
