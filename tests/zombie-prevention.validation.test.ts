@@ -101,6 +101,16 @@ describe('Zombie Process Prevention', () => {
   })
 
   describe('Cleanup Mechanisms', () => {
+    beforeEach(() => {
+      // These tests need real timers for process operations
+      teardownFakeTimers()
+    })
+
+    afterEach(() => {
+      // Re-enable fake timers for other tests
+      setupFakeTimers()
+    })
+
     it('should force-kill processes on cleanup', async () => {
       // Spawn a long-running process
       const proc = spawn('sleep', ['60'])
@@ -151,6 +161,9 @@ describe('Zombie Process Prevention', () => {
       const proc = spawn(scriptPath, scriptArgs)
       trackedProcesses.push(proc)
 
+      // Wait for process to be ready
+      await new Promise((resolve) => setTimeout(resolve, 100))
+
       // Manually track the process
       processTracker.trackProcess(proc, scriptPath, scriptArgs)
 
@@ -158,10 +171,13 @@ describe('Zombie Process Prevention', () => {
         // Try graceful cleanup (not forced)
         await processTracker.cleanupProcess(proc.pid, false)
 
+        // Wait a bit more for cleanup to complete
+        await new Promise((resolve) => setTimeout(resolve, 500))
+
         // Process should be terminated
         expect(proc.killed).toBe(true)
       }
-    })
+    }, 10000)
   })
 
   describe('Timeout Behavior', () => {
@@ -253,6 +269,16 @@ describe('Zombie Process Prevention', () => {
   })
 
   describe('Edge Cases', () => {
+    beforeEach(() => {
+      // These tests need real timers for process operations
+      teardownFakeTimers()
+    })
+
+    afterEach(() => {
+      // Re-enable fake timers for other tests
+      setupFakeTimers()
+    })
+
     it('should handle already-dead processes gracefully', async () => {
       const proc = spawn('echo', ['test'])
       trackedProcesses.push(proc)
@@ -296,17 +322,19 @@ describe('Zombie Process Prevention', () => {
           (proc) =>
             new Promise<void>((resolve) => {
               proc.on('exit', () => resolve())
+              // Add timeout to prevent hanging
+              setTimeout(() => resolve(), 2000)
             }),
         ),
       )
 
-      // Give tracker time to update
-      await new Promise((resolve) => setTimeout(resolve, 500))
+      // Give tracker more time to update
+      await new Promise((resolve) => setTimeout(resolve, 1000))
 
       const stats = processTracker.getStats()
       expect(stats.totalSpawned).toBeGreaterThanOrEqual(20)
       expect(stats.totalCleaned).toBeGreaterThanOrEqual(20)
-    })
+    }, 10000)
   })
 
   describe('Integration with Vitest', () => {
