@@ -176,14 +176,19 @@ describe('SecureGitOperations', () => {
 
       const promise = SecureGitOperations.getStagedFiles({ timeout: 100 })
 
+      // Don't emit close event to simulate a long-running command
       // Advance timers to trigger timeout
       vi.advanceTimersByTime(150)
+
+      // Now emit close to complete the promise after timeout
+      process.nextTick(() => mockChild.emit('close', 0))
+
+      await vi.runAllTimersAsync()
 
       const result = await promise
 
       expect(result.success).toBe(false)
       expect(result.timedOut).toBe(true)
-      // Note: mockChild.killed may not be true due to new PID-based kill logic
       expect(mockChild.kill).toHaveBeenCalledWith('SIGTERM')
 
       vi.useRealTimers()
