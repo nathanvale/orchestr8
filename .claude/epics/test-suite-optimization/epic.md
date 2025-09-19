@@ -6,7 +6,7 @@ description:
 status: in-progress
 prd: test-suite-optimization
 created: 2025-09-19T09:21:14Z
-updated: 2025-09-19T21:30:06Z
+updated: 2025-09-19T23:36:50Z
 priority: high
 estimated_effort: large
 labels:
@@ -85,19 +85,21 @@ maintenance burden and confusion.
 3. Validate all tests pass after migration
 4. Update gitignore patterns if needed
 
-## Current Status (Updated)
+## Current Status (Updated 2025-09-20)
 
 ### Implementation Progress
-- **Actual**: ~76% implemented (16/21 tasks)
-- **Phase 1 COMPLETED**: All zombie prevention mechanisms now implemented
+- **Actual**: ~90% implemented (19/21 tasks)
+- **Phase 5 COMPLETED**: Test quality improvements (Tasks #019, #020, #021)
 - **Immediate solutions working**: Emergency scripts provide protection now
-- **Long-term architecture needed**: For automatic prevention without manual intervention
+- **Vitest worker issue identified**: Internal worker processes not automatically tracked
 
 ### What's Working Now
 1. **Emergency cleanup scripts** - `pnpm zombies:kill` instantly kills all zombies
 2. **Safe test wrapper** - `pnpm test:safe` runs tests with automatic cleanup
-3. **ProcessTracker class** - Implemented but requires manual tracking
-4. **Wallaby configuration** - Updated with worker recycling and timeouts
+3. **ProcessTracker class** - Implemented and tested, tracking user-spawned processes
+4. **TestResourceGuard** - Comprehensive cleanup guards for integration tests
+5. **Wallaby configuration** - Updated with worker recycling and timeouts
+6. **Mock reduction** - Eliminated 202 mocks in typescript-engine tests
 
 ## Implementation Tasks
 
@@ -134,11 +136,11 @@ maintenance burden and confusion.
 - [ ] 017: Create comparison reporting (NOT IMPLEMENTED)
 - [x] 018: Add CLI commands for profiling (partial)
 
-### Phase 5: Test Quality Improvements
+### Phase 5: Test Quality Improvements [COMPLETED]
 
-- [ ] 019: Fix timing-dependent tests
-- [ ] 020: Reduce excessive mocking
-- [ ] 021: Add cleanup guards to integration tests
+- [x] 019: Fix timing-dependent tests (Fixed with timing-test-utils.ts)
+- [x] 020: Reduce excessive mocking (Eliminated 202 mocks, exceeded 50% target)
+- [x] 021: Add cleanup guards to integration tests (TestResourceGuard implemented)
 
 ## Dependencies
 
@@ -192,6 +194,77 @@ Given single developer and no time constraints:
 - Phase 5: 3-4 days (quality improvements)
 
 **Total: 11-16 days of focused work**
+
+## Zombie Prevention Status (Updated 2025-09-20)
+
+### ✅ What's Working
+- Manual cleanup scripts (`pnpm zombies:kill`) work perfectly
+- Safe test wrapper (`pnpm test:safe`) provides protection
+- ProcessTracker class is implemented and tested
+- Setup file for zombie prevention is now in place
+
+### ⚠️ Root Cause Analysis: Why Zombies Are Created
+
+**The Core Issue**: Vitest's `forks` pool configuration with multiple workers.
+
+When Vitest runs with:
+```typescript
+pool: 'forks',
+poolOptions: {
+  forks: {
+    singleFork: false,  // <-- This creates multiple worker processes
+    maxForks: Math.max(1, cpus().length - 1),  // <-- Up to CPU count - 1 workers
+  }
+}
+```
+
+**What happens:**
+1. Vitest spawns multiple worker processes (node vitest 1, node vitest 2, etc.)
+2. Each worker runs tests in isolation
+3. When tests complete or timeout, workers don't always clean up properly
+4. Workers become zombie processes that accumulate over time
+
+**Contributing Factors:**
+- `isolate: true` - Each test file gets fresh environment (more process churn)
+- `watch: true` - Keeps processes alive for file watching
+- Test timeouts or failures can leave workers in bad state
+- Our tests that spawn processes (`spawn('sleep', ['60'])`) can timeout
+
+### 🔧 Current Workarounds
+1. **Use `pnpm test:safe`** - Runs tests with automatic cleanup afterward
+2. **Use `pnpm zombies:kill`** - Manual cleanup when zombies accumulate
+3. **Monitor with Activity Monitor** - Watch for `node (vitest)` processes
+
+### 📋 Potential Solutions
+
+#### Option 1: Single Worker Mode (Trade-off: Slower tests)
+```typescript
+poolOptions: {
+  forks: {
+    singleFork: true,  // Only one worker process
+  }
+}
+```
+
+#### Option 2: Threads Pool (Trade-off: Less isolation)
+```typescript
+pool: 'threads',  // Use worker threads instead of forks
+```
+
+#### Option 3: Disable Watch Mode (Trade-off: No auto-rerun)
+```typescript
+watch: false,  // Don't keep processes alive for watching
+```
+
+#### Option 4: Aggressive Termination (Current approach)
+- Keep current config but use `pnpm test:safe` wrapper
+- Kills all processes after test completion
+
+### 🎯 Why This Is Hard to Fix Completely
+1. **Vitest's internal architecture** - Worker management is deeply embedded
+2. **Process isolation benefits** - Forks provide better test isolation
+3. **Performance vs safety trade-off** - Multiple workers = faster tests
+4. **Watch mode complexity** - File watching needs persistent processes
 
 ## Immediate Solutions (Implemented)
 
