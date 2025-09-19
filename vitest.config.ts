@@ -47,7 +47,8 @@ export default mergeConfig(
     cacheDir: '.vitest',
 
     test: {
-      // Note: Global setup/teardown temporarily disabled due to compatibility issues
+      // Note: Global setup/teardown temporarily disabled due to Vitest v3 compatibility issues
+      // TODO: Find alternative approach for zombie prevention
       // globalSetup: './vitest.globalSetup.ts',
       // globalTeardown: './vitest.globalTeardown.ts',
       // Modern 2025 workspace pattern for automatic package discovery
@@ -110,11 +111,12 @@ export default mergeConfig(
             ? ['**/*.e2e.test.{ts,tsx}']
             : ['**/*.test.{ts,tsx}'],
 
-      // Setup files - includes memory monitoring for all tests
+      // Setup files - includes memory monitoring and zombie prevention for all tests
       setupFiles: [
         './vitest.setup.tsx',
         './tests/setup/console-suppression.ts', // Console noise suppression
         './tests/setup/memory-cleanup.ts', // Memory monitoring hooks
+        './tests/setup/zombie-prevention.ts', // Zombie process prevention
       ],
 
       // Use forks pool for better process isolation and zombie prevention
