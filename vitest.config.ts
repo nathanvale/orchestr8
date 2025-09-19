@@ -114,15 +114,15 @@ export default mergeConfig(
         './tests/setup/memory-cleanup.ts', // Memory monitoring hooks
       ],
 
-      // Modern 2025: threads pool for optimal performance
-      // Threads provide better performance and memory efficiency
-      pool: 'threads',
+      // Use forks pool for better process isolation and zombie prevention
+      // Forks provide better isolation and cleanup capabilities
+      pool: 'forks',
       poolOptions: {
-        threads: {
-          singleThread: false,
+        forks: {
+          singleFork: false,
           // Optimize for available CPUs, leaving some for system
-          maxThreads: Math.max(1, cpus().length - 1),
-          minThreads: 1,
+          maxForks: Math.max(1, cpus().length - 1),
+          minForks: 1,
         },
       },
 
@@ -203,10 +203,10 @@ export default mergeConfig(
         skipFull: false,
       },
 
-      // Timeouts that respect ADHD time blindness
+      // Timeouts for zombie process prevention (more aggressive)
       testTimeout: 5000, // 5s max for unit tests
       hookTimeout: 10000, // 10s for setup/teardown
-      teardownTimeout: 15000, // MSW cleanup and worker termination need extra time
+      teardownTimeout: 5000, // 5s for teardown (aggressive to prevent zombies)
 
       // Environment-aware reporter configuration for noise reduction
       reporters: process.env['GITHUB_ACTIONS']
