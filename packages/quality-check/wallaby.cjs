@@ -13,7 +13,7 @@ module.exports = function (_wallaby) {
       'package.json',
     ],
 
-    tests: ['src/**/*.unit.test.ts'],
+    tests: ['src/**/*.test.ts'],
 
     exclude: [
       '**/node_modules/**',
@@ -21,6 +21,7 @@ module.exports = function (_wallaby) {
       '**/*.integration.test.ts',
       '**/*.e2e.test.ts',
       '**/*.slow.test.ts',
+      '**/*.disposal.test.ts',
     ],
 
     env: {

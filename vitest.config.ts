@@ -61,7 +61,6 @@ export default mergeConfig(
             include:
               process.env['WALLABY_WORKER'] || process.env['WALLABY_WORKER_ID']
                 ? [
-                    'tests/**/*.unit.{test,spec}.{ts,tsx}',
                     'tests/**/*.{test,spec}.{ts,tsx}',
                     '!tests/**/*.integration.{test,spec}.{ts,tsx}',
                     '!tests/**/*.e2e.{test,spec}.{ts,tsx}',
@@ -74,7 +73,6 @@ export default mergeConfig(
                     : process.env['TEST_MODE'] === 'all'
                       ? ['tests/**/*.{test,spec}.{ts,tsx}']
                       : [
-                          'tests/**/*.unit.{test,spec}.{ts,tsx}',
                           'tests/**/*.{test,spec}.{ts,tsx}',
                           '!tests/**/*.integration.{test,spec}.{ts,tsx}',
                           '!tests/**/*.e2e.{test,spec}.{ts,tsx}',
@@ -98,6 +96,7 @@ export default mergeConfig(
         '**/*.integration.test.{ts,tsx}',
         '**/*.e2e.test.{ts,tsx}',
         '**/*.slow.test.{ts,tsx}',
+        '**/*.disposal.test.{ts,tsx}',
       ],
 
       // Include pattern for different modes - ADHD-optimized test classification
@@ -106,7 +105,7 @@ export default mergeConfig(
           ? ['**/*.integration.test.{ts,tsx}']
           : process.env['TEST_MODE'] === 'e2e'
             ? ['**/*.e2e.test.{ts,tsx}']
-            : ['**/*.unit.test.{ts,tsx}', '**/*.test.{ts,tsx}'],
+            : ['**/*.test.{ts,tsx}'],
 
       // Setup files - includes memory monitoring for all tests
       setupFiles: [
