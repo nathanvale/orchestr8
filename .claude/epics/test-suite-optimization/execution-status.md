@@ -170,20 +170,22 @@ The code analyzer identified critical discrepancies in the reported completion s
   - `packages/quality-check/src/test-utils/timing-test-utils.ts` (created)
   - `tests/zombie-prevention.validation.test.ts`
 
-**Task #020 - Reduce excessive mocking** ⚠️
+**Task #020 - Reduce excessive mocking** 🔄
 
-- Status: **ANALYSIS COMPLETE**
+- Status: **IN PROGRESS** (Started: 2025-09-20T11:15:00Z)
+- Agent: general-purpose (parallel execution)
 - Finding: QualityCheckerTestBuilder already exists but underutilized
 - Current: 1495 mock calls (target: <750)
 - Analysis: `.claude/epics/test-suite-optimization/020-analysis.md` created
-- Next: Migrate tests to use existing builder pattern
+- Active: Creating enhanced QualityCheckerTestBuilder and migrating tests
 
-**Task #021 - Add cleanup guards to integration tests** ⚠️
+**Task #021 - Add cleanup guards to integration tests** 🔄
 
-- Status: **ANALYSIS COMPLETE**
+- Status: **IN PROGRESS** (Started: 2025-09-20T11:15:00Z)
+- Agent: general-purpose (parallel execution)
 - Issues Found: Timer leaks, missing process timeouts, no cleanup guards
 - Analysis: `.claude/epics/test-suite-optimization/021-analysis.md` created
-- Next: Implement TestResourceGuard utility and fix identified issues
+- Active: Implementing TestResourceGuard utility and fixing identified issues
 
 ## Epic Progress
 

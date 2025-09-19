@@ -1,21 +1,17 @@
 import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { runClaudeHookForTesting } from '../facades/claude.js'
+import { setupFileSystemIntegrationTest } from '../test-utils/integration-test-base.js'
 
 describe('Claude Hook End-to-End Integration (Real - Strategic)', () => {
   let testProjectDir: string
   let originalCwd: string
-  let cleanupPaths: string[]
+  let guard: ReturnType<typeof setupFileSystemIntegrationTest>
 
   beforeEach(async () => {
-    vi.clearAllMocks()
-    cleanupPaths = []
     originalCwd = process.cwd()
-
-    // Disable ESLint for integration tests since config discovery doesn't work in temp dirs
-    process.env.QC_DISABLE_ESLINT = 'true'
 
     // Create temporary test project directory in OS temp location
     // Uses os.tmpdir() to avoid polluting project root with test artifacts
@@ -26,43 +22,43 @@ describe('Claude Hook End-to-End Integration (Real - Strategic)', () => {
       `claude-test-${process.pid}-${Date.now()}`,
     )
     await fs.mkdir(testProjectDir, { recursive: true })
-    cleanupPaths.push(testProjectDir)
+
+    // Setup integration test utilities with resource guards
+    guard = setupFileSystemIntegrationTest([testProjectDir])
+
+    // Disable ESLint for integration tests since config discovery doesn't work in temp dirs
+    process.env.QC_DISABLE_ESLINT = 'true'
+
+    // Change to test directory
     process.chdir(testProjectDir)
+
+    // Register cleanup to restore working directory
+    guard.registerCleanup(
+      'restore-cwd',
+      () => {
+        process.chdir(originalCwd)
+      },
+      100,
+    ) // High priority
+
+    // Register cleanup for environment variable
+    guard.registerCleanup(
+      'env-cleanup',
+      () => {
+        delete process.env.QC_DISABLE_ESLINT
+      },
+      90,
+    )
   })
 
   afterEach(async () => {
-    // IMPORTANT: Restore original working directory first
-    // This prevents issues with removing the current working directory
-    process.chdir(originalCwd)
-
-    // Clean up environment variable
-    delete process.env.QC_DISABLE_ESLINT
-
-    // Robust cleanup mechanism with multiple fallback strategies
-    // Ensures temp directories are cleaned even if tests fail
-    for (const cleanupPath of cleanupPaths) {
-      try {
-        await fs.rm(cleanupPath, { recursive: true, force: true })
-      } catch {
-        // Fallback to sync removal if async fails
-        try {
-          const fsSync = await import('node:fs')
-          fsSync.rmSync(cleanupPath, { recursive: true, force: true })
-        } catch {
-          // Ignore cleanup errors - OS will eventually clean temp files
-        }
-      }
-    }
-
-    // Verify cleanup completed (helps detect cleanup issues)
-    for (const cleanupPath of cleanupPaths) {
-      try {
-        await fs.access(cleanupPath)
-        console.warn(`Warning: Failed to clean up test directory: ${cleanupPath}`)
-      } catch {
-        // Good - directory doesn't exist
-      }
-    }
+    // TestResourceGuard handles all cleanup automatically through setupFileSystemIntegrationTest
+    // This includes:
+    // - Restoring working directory
+    // - Cleaning environment variables
+    // - Removing temp directories with fallback strategies
+    // - Mock restoration
+    // - Timer cleanup
   })
 
   describe('Complete hook workflow integration', () => {
