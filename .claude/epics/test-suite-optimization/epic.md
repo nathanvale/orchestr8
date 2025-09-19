@@ -235,36 +235,96 @@ poolOptions: {
 2. **Use `pnpm zombies:kill`** - Manual cleanup when zombies accumulate
 3. **Monitor with Activity Monitor** - Watch for `node (vitest)` processes
 
-### 📋 Potential Solutions
+### 📋 Production Solutions Research
 
-#### Option 1: Single Worker Mode (Trade-off: Slower tests)
+After researching Firecrawl, Tavily, Context7, and Vitest documentation, here are proven solutions:
+
+#### Option 1: Single Worker Mode (Most Reliable - Cloudflare Workers SDK)
 ```typescript
 poolOptions: {
   forks: {
-    singleFork: true,  // Only one worker process
+    singleFork: true,    // Run all tests in one process
+    isolate: false       // Disable isolation for performance
+  }
+}
+```
+**Used by**: Cloudflare Workers SDK, NestJS projects
+**Trade-off**: Slower tests, no parallelism, but **zero zombies**
+
+#### Option 2: Memory-Based Worker Recycling (Balanced Approach)
+```typescript
+poolOptions: {
+  vmForks: {
+    memoryLimit: '100MB',   // Recycle workers at memory limit
+    singleFork: false       // Keep parallelism
+  }
+}
+```
+**Purpose**: Prevents workers from becoming zombies due to memory leaks
+
+#### Option 3: Switch to Threads Pool (Better Cleanup)
+```typescript
+pool: 'threads',           // Use worker threads instead of forks
+poolOptions: {
+  threads: {
+    singleThread: true     // Single-threaded execution
+  }
+}
+```
+**Benefit**: Threads have better cleanup behavior than child processes
+
+#### Option 4: Disable File Parallelism (Simple Fix)
+```typescript
+fileParallelism: false,    // Forces workers to 1
+```
+**Effect**: Single-threaded execution, eliminates worker management
+
+#### Option 5: Hanging Process Detection (Vitest Built-in)
+```bash
+npx vitest --reporter=hanging-process
+```
+**Use**: Identifies which processes prevent clean exit
+
+#### Option 6: Explicit Resource Management (Vitest 3.2+)
+```typescript
+// Automatic cleanup when scope exits
+using spy = vi.spyOn(console, 'log').mockImplementation(() => {})
+```
+
+#### Option 7: Current Approach (Wrapper-based)
+- Keep current config but use `pnpm test:safe` wrapper
+- Kills all processes after test completion
+
+### 🎯 Recommended Solution
+
+Based on production examples and research, the **recommended approach** is:
+
+**Phase 1: Immediate Fix (Option 1)**
+```typescript
+// vitest.config.ts
+poolOptions: {
+  forks: {
+    singleFork: true,    // Eliminate zombies completely
+    isolate: false       // Improve performance
   }
 }
 ```
 
-#### Option 2: Threads Pool (Trade-off: Less isolation)
-```typescript
-pool: 'threads',  // Use worker threads instead of forks
-```
+**Phase 2: Monitor and Optimize**
+- Use `--reporter=hanging-process` to identify any remaining issues
+- Consider memory limits if tests grow: `memoryLimit: '100MB'`
+- Implement explicit resource management for new tests
 
-#### Option 3: Disable Watch Mode (Trade-off: No auto-rerun)
-```typescript
-watch: false,  // Don't keep processes alive for watching
-```
-
-#### Option 4: Aggressive Termination (Current approach)
-- Keep current config but use `pnpm test:safe` wrapper
-- Kills all processes after test completion
+**Phase 3: Advanced (If performance becomes critical)**
+- Switch to `pool: 'threads'` with `singleThread: true`
+- Use worker-scoped fixtures for expensive setup/teardown
 
 ### 🎯 Why This Is Hard to Fix Completely
 1. **Vitest's internal architecture** - Worker management is deeply embedded
 2. **Process isolation benefits** - Forks provide better test isolation
 3. **Performance vs safety trade-off** - Multiple workers = faster tests
 4. **Watch mode complexity** - File watching needs persistent processes
+5. **Node.js process model** - Child processes don't always clean up properly
 
 ## Immediate Solutions (Implemented)
 
