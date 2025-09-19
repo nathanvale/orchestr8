@@ -35,6 +35,7 @@
     "test:integration": "NODE_OPTIONS='--max-old-space-size=4096' TEST_MODE=integration vitest run",
     "test:e2e": "TEST_MODE=e2e vitest run",
     "test:smoke": "vitest run --bail=1 --no-coverage **/*.smoke.test.*",
+    "test:quick": "vitest run --bail=1 --no-coverage --pool=threads",
     "test:focused": "vitest run --changed HEAD~1 --no-coverage",
     "test:debug": "vitest --inspect-brk --pool=threads --poolOptions.threads.singleThread",
     "typecheck": "turbo run typecheck --output-logs=errors-only",

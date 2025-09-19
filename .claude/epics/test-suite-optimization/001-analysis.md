@@ -12,11 +12,14 @@ estimated_total_hours: 4
 ## Parallel Execution Plan
 
 ### Stream A: Memory Profiling Script Development (1h)
+
 **Files to create/modify:**
+
 - `scripts/memory-baseline.ts` ✅ COMPLETED
 - `scripts/package.json` (if needed for dependencies)
 
 **Deliverables:**
+
 - Comprehensive memory tracking script
 - Integration with existing MemoryProfiler classes
 - v8.getHeapSnapshot() capture capability
@@ -25,11 +28,14 @@ estimated_total_hours: 4
 **Dependencies:** None - can start immediately
 
 ### Stream B: Vitest Instrumentation (1h)
+
 **Files to create/modify:**
+
 - `vitest.config.ts` (memory reporting configuration)
 - `tests/setup/memory-baseline-hooks.ts`
 
 **Deliverables:**
+
 - Memory hooks for before/after test tracking
 - Test file memory delta calculation
 - Integration with existing memory cleanup
@@ -37,11 +43,14 @@ estimated_total_hours: 4
 **Dependencies:** None - can start immediately
 
 ### Stream C: Baseline Capture Execution (1.5h)
+
 **Files to create/modify:**
+
 - `.claude/metrics/baseline-memory-{timestamp}.json`
 - `scripts/run-baseline.sh`
 
 **Deliverables:**
+
 - Full test suite execution with memory tracking
 - Peak and average memory metrics
 - Memory growth pattern analysis
@@ -49,11 +58,14 @@ estimated_total_hours: 4
 **Dependencies:** Stream A completion (needs memory-baseline.ts)
 
 ### Stream D: Report Generation (0.5h)
+
 **Files to create/modify:**
+
 - `.claude/metrics/baseline-summary.md`
 - Analysis and recommendation scripts
 
 **Deliverables:**
+
 - Human-readable baseline summary
 - Optimization recommendations
 - Comparison baseline for future runs
