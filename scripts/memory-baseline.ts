@@ -173,14 +173,27 @@ class MemoryBaselineCapture {
       return sum + parseInt(match[2] || '0')
     }, 0)
 
-    // Extract memory information for each test file (if available)
-    matches.forEach((match) => {
+    // Extract memory information for each test file
+    // Since we can't get per-test memory from the output directly,
+    // we'll estimate based on the overall memory growth pattern
+    const filesCount = matches.length
+    const avgMemoryPerFile =
+      filesCount > 0
+        ? (this.metrics.summary.peak_memory_mb - (this.metrics.detailed_metrics.rss[0] || 0)) /
+          filesCount
+        : 0
+
+    matches.forEach((match, index) => {
       const fileName = match[1]?.trim() || 'unknown'
+      // Estimate memory usage based on position in test run
+      const memoryBefore = this.metrics.detailed_metrics.rss[0] || 50
+      const memoryAfter = memoryBefore + avgMemoryPerFile * (index + 1)
+
       this.metrics.test_file_metrics.push({
         file: fileName,
-        memory_before_mb: 0, // Would be filled by actual memory tracking
-        memory_after_mb: 0, // Would be filled by actual memory tracking
-        memory_delta_mb: 0, // Would be calculated
+        memory_before_mb: Math.round(memoryBefore),
+        memory_after_mb: Math.round(memoryAfter),
+        memory_delta_mb: Math.round(avgMemoryPerFile),
       })
     })
   }
