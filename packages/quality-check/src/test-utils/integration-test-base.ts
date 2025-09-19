@@ -126,5 +126,8 @@ export function setupFileSystemIntegrationTest(tempDirs: string[] = []) {
     addTempDir: (dir: string) => {
       guard.trackTempDir(dir)
     },
+    registerCleanup: (name: string, fn: () => Promise<void> | void, priority?: number) => {
+      guard.registerCleanup(name, fn, priority)
+    },
   }
 }
