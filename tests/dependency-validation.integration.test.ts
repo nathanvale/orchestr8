@@ -1,6 +1,13 @@
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test, afterEach, afterAll, vi } from 'vitest'
 
 describe('Vitest Migration Dependency Validation', () => {
+  afterEach(() => {
+    vi.clearAllMocks()
+  })
+
+  afterAll(() => {
+    vi.restoreAllMocks()
+  })
   describe('Core Vitest packages', () => {
     test('should import vitest core functions', async () => {
       const {
@@ -20,6 +27,7 @@ describe('Vitest Migration Dependency Validation', () => {
       // Note: This will only work if @vitest/ui is properly installed
       // We're testing the import resolution, not running the actual UI
       try {
+        // @ts-expect-error - Testing dynamic import resolution
         const vitestUI = await import('@vitest/ui')
         expect(vitestUI).toBeDefined()
       } catch (error) {

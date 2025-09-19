@@ -42,7 +42,11 @@
     "perf": "tsx scripts/performance-monitor.ts",
     "profile": "tsx scripts/memory-baseline.ts",
     "zombies": "tsx scripts/emergency-cleanup.ts",
-    "governance": "echo 'Checking boundaries and circular dependencies... check complete'"
+    "governance": "echo 'Checking boundaries and circular dependencies... check complete'",
+    "memory:baseline": "NODE_OPTIONS='--max-old-space-size=4096' tsx scripts/memory-baseline.ts",
+    "memory:profile": "NODE_OPTIONS='--max-old-space-size=4096 --expose-gc' tsx scripts/memory-baseline.ts --profile",
+    "memory:compare": "tsx scripts/memory-baseline.ts --compare",
+    "memory:report": "tsx scripts/memory-baseline.ts --report"
   },
   "config": {
     "commitizen": {
