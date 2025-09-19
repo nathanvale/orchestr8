@@ -45,6 +45,9 @@ describe('Zombie Process Prevention', () => {
       const proc = spawn('echo', ['test'])
       trackedProcesses.push(proc)
 
+      // Manually track the process since auto-interception is disabled
+      processTracker.trackProcess(proc, 'echo', ['test'])
+
       // Give it a moment to register
       const stats = processTracker.getStats()
       expect(stats.totalSpawned).toBeGreaterThan(0)
@@ -54,6 +57,9 @@ describe('Zombie Process Prevention', () => {
       // Spawn a process that exits quickly
       const proc = spawn('echo', ['test'])
       trackedProcesses.push(proc)
+
+      // Manually track the process
+      processTracker.trackProcess(proc, 'echo', ['test'])
 
       // Wait for natural exit
       await new Promise<void>((resolve) => {
@@ -75,6 +81,8 @@ describe('Zombie Process Prevention', () => {
         const proc = spawn('sleep', ['0.1'])
         processes.push(proc)
         trackedProcesses.push(proc)
+        // Manually track each process
+        processTracker.trackProcess(proc, 'sleep', ['0.1'])
       }
 
       const activeProcs = processTracker.getActiveProcesses()
@@ -87,6 +95,9 @@ describe('Zombie Process Prevention', () => {
       // Spawn a long-running process
       const proc = spawn('sleep', ['60'])
       trackedProcesses.push(proc)
+
+      // Manually track the process
+      processTracker.trackProcess(proc, 'sleep', ['60'])
 
       expect(proc.killed).toBe(false)
 
@@ -103,6 +114,8 @@ describe('Zombie Process Prevention', () => {
       for (let i = 0; i < 3; i++) {
         const proc = spawn('sleep', ['60'])
         trackedProcesses.push(proc)
+        // Manually track each process
+        processTracker.trackProcess(proc, 'sleep', ['60'])
       }
 
       // Cleanup all
@@ -128,6 +141,9 @@ describe('Zombie Process Prevention', () => {
       const proc = spawn(scriptPath, scriptArgs)
       trackedProcesses.push(proc)
 
+      // Manually track the process
+      processTracker.trackProcess(proc, scriptPath, scriptArgs)
+
       if (proc.pid) {
         // Try graceful cleanup (not forced)
         await processTracker.cleanupProcess(proc.pid, false)
@@ -144,6 +160,9 @@ describe('Zombie Process Prevention', () => {
       // For testing, we'll verify the timeout is set
       const proc = spawn('sleep', ['60'])
       trackedProcesses.push(proc)
+
+      // Manually track the process
+      processTracker.trackProcess(proc, 'sleep', ['60'])
 
       // The process should have a timeout set
       // We can't directly access the timeout, but we can verify
@@ -165,6 +184,10 @@ describe('Zombie Process Prevention', () => {
       const proc2 = spawn('sleep', ['60'])
       trackedProcesses.push(proc1, proc2)
 
+      // Manually track the processes
+      processTracker.trackProcess(proc1, 'sleep', ['60'])
+      processTracker.trackProcess(proc2, 'sleep', ['60'])
+
       // Force kill them
       await processTracker.cleanupAll(true)
 
@@ -180,6 +203,9 @@ describe('Zombie Process Prevention', () => {
       // Spawn a test process
       const proc = spawn('echo', ['test'])
       trackedProcesses.push(proc)
+
+      // Manually track the process
+      processTracker.trackProcess(proc, 'echo', ['test'])
 
       // Wait for it to complete
       await new Promise<void>((resolve) => {
@@ -199,6 +225,7 @@ describe('Zombie Process Prevention', () => {
 
       const proc1 = spawn('echo', ['test1'])
       trackedProcesses.push(proc1)
+      processTracker.trackProcess(proc1, 'echo', ['test1'])
 
       processTracker.popTestFile()
 
@@ -206,6 +233,7 @@ describe('Zombie Process Prevention', () => {
 
       const proc2 = spawn('echo', ['test2'])
       trackedProcesses.push(proc2)
+      processTracker.trackProcess(proc2, 'echo', ['test2'])
 
       processTracker.popTestFile()
 
@@ -218,6 +246,9 @@ describe('Zombie Process Prevention', () => {
     it('should handle already-dead processes gracefully', async () => {
       const proc = spawn('echo', ['test'])
       trackedProcesses.push(proc)
+
+      // Manually track the process
+      processTracker.trackProcess(proc, 'echo', ['test'])
 
       // Wait for natural exit
       await new Promise<void>((resolve) => {
@@ -245,6 +276,8 @@ describe('Zombie Process Prevention', () => {
         const proc = spawn('echo', [`test${i}`])
         processes.push(proc)
         trackedProcesses.push(proc)
+        // Manually track each process
+        processTracker.trackProcess(proc, 'echo', [`test${i}`])
       }
 
       // Wait for all to complete
@@ -279,6 +312,8 @@ describe('Zombie Process Prevention', () => {
       const result = await new Promise<string>((resolve) => {
         const proc = spawn('echo', ['success'])
         trackedProcesses.push(proc)
+        // Manually track the process
+        processTracker.trackProcess(proc, 'echo', ['success'])
 
         let output = ''
         proc.stdout.on('data', (data) => {

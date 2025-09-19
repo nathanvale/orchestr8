@@ -47,6 +47,9 @@ export default mergeConfig(
     cacheDir: '.vitest',
 
     test: {
+      // Note: Global setup/teardown temporarily disabled due to compatibility issues
+      // globalSetup: './vitest.globalSetup.ts',
+      // globalTeardown: './vitest.globalTeardown.ts',
       // Modern 2025 workspace pattern for automatic package discovery
       projects: [
         // Auto-discover all packages with their own configs

@@ -5,7 +5,7 @@
  * they are properly terminated to prevent zombie accumulation.
  */
 
-import { ChildProcess, spawn, exec, fork, execFile } from 'child_process'
+import { ChildProcess } from 'child_process'
 import * as path from 'path'
 
 interface TrackedProcess {
@@ -56,63 +56,9 @@ export class ProcessTracker {
    * Intercept all process spawning methods to track child processes
    */
   private setupProcessInterception(): void {
-    // Store original methods
-    const originalSpawn = spawn
-    const originalExec = exec
-    const originalFork = fork
-    const originalExecFile = execFile
-
-    // Override spawn
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ;(global as any).spawn = function (
-      command: string,
-      args?: readonly string[],
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      options?: any,
-    ): ChildProcess {
-      const child = originalSpawn(command, args, options)
-      ProcessTracker.getInstance().trackProcess(child, command, args ? [...args] : [])
-      return child
-    }
-
-    // Override exec
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ;(global as any).exec = function (
-      command: string,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ...args: any[]
-    ): ChildProcess {
-      const child = originalExec(command, ...args)
-      ProcessTracker.getInstance().trackProcess(child, 'exec', [command])
-      return child
-    }
-
-    // Override fork
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ;(global as any).fork = function (
-      modulePath: string,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ...args: any[]
-    ): ChildProcess {
-      const child = originalFork(modulePath, ...args)
-      ProcessTracker.getInstance().trackProcess(child, 'fork', [modulePath])
-      return child
-    }
-
-    // Override execFile
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ;(global as any).execFile = function (
-      file: string,
-      args?: readonly string[],
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      options?: any,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      callback?: any,
-    ): ChildProcess {
-      const child = originalExecFile(file, args, options, callback)
-      ProcessTracker.getInstance().trackProcess(child, file, args ? [...args] : [])
-      return child
-    }
+    // Note: This method is currently disabled as it causes issues with module exports
+    // The ProcessTracker can still be used by manually calling trackProcess
+    // TODO: Find a better way to intercept process spawning without breaking module exports
   }
 
   /**
@@ -137,7 +83,7 @@ export class ProcessTracker {
   /**
    * Track a spawned child process
    */
-  private trackProcess(child: ChildProcess, command: string, args: string[]): void {
+  public trackProcess(child: ChildProcess, command: string, args: string[]): void {
     if (!child.pid) return
 
     const tracked: TrackedProcess = {
