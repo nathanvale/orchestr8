@@ -9,6 +9,11 @@ import { spawn, ChildProcess } from 'child_process'
 import { processTracker } from '../packages/quality-check/src/process-tracker.js'
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import * as os from 'os'
+import {
+  setupFakeTimers,
+  teardownFakeTimers,
+  advanceTimers,
+} from '../packages/quality-check/src/test-utils/timing-test-utils.js'
 
 describe('Zombie Process Prevention', () => {
   let trackedProcesses: ChildProcess[] = []
@@ -17,6 +22,8 @@ describe('Zombie Process Prevention', () => {
     trackedProcesses = []
     // Reset tracker for clean test state
     processTracker.reset()
+    // Setup fake timers for reliable timing tests
+    setupFakeTimers()
   })
 
   afterEach(async () => {
@@ -34,10 +41,12 @@ describe('Zombie Process Prevention', () => {
 
     // Ensure tracker cleanup
     await processTracker.cleanupAll(true)
+    // Clean up fake timers
+    teardownFakeTimers()
   })
 
   describe('Process Tracking', () => {
-    it('should track spawned processes', () => {
+    it('should track spawned processes', async () => {
       const initialStats = processTracker.getStats()
       expect(initialStats.totalSpawned).toBe(0)
 
@@ -48,7 +57,8 @@ describe('Zombie Process Prevention', () => {
       // Manually track the process since auto-interception is disabled
       processTracker.trackProcess(proc, 'echo', ['test'])
 
-      // Give it a moment to register
+      // Give it a moment to register using fake timers
+      await advanceTimers(10)
       const stats = processTracker.getStats()
       expect(stats.totalSpawned).toBeGreaterThan(0)
     })
@@ -66,8 +76,8 @@ describe('Zombie Process Prevention', () => {
         proc.on('exit', () => resolve())
       })
 
-      // Give tracker time to update
-      await new Promise((resolve) => setTimeout(resolve, 100))
+      // Give tracker time to update using fake timers
+      await advanceTimers(100)
 
       const stats = processTracker.getStats()
       expect(stats.totalCleaned).toBeGreaterThan(0)
