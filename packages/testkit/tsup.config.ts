@@ -9,5 +9,6 @@ export default createTsupConfig({
     'src/convex/index.ts',
     'src/env/index.ts',
     'src/utils/index.ts',
+    'src/fs/index.ts',
   ],
 })

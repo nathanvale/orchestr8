@@ -37,6 +37,10 @@
     "./utils": {
       "types": "./dist/utils/index.d.ts",
       "import": "./dist/utils/index.js"
+    },
+    "./fs": {
+      "types": "./dist/fs/index.d.ts",
+      "import": "./dist/fs/index.js"
     }
   },
   "types": "./dist/index.d.ts",

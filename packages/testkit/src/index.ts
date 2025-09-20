@@ -7,9 +7,11 @@
  */
 
 // Re-export all utility modules
+export * from './cli/index.js'
 export * from './containers/index.js'
 export * from './convex/index.js'
 export * from './env/index.js'
+export * from './fs/index.js'
 
 // MSW exports - handle delay conflict by aliasing
 export {
