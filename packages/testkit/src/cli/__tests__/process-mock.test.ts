@@ -3,7 +3,6 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import * as cp from 'child_process'
 import {
   MockStream,
   MockChildProcess,
@@ -13,6 +12,17 @@ import {
   processHelpers,
   type ProcessMockConfig,
 } from '../process-mock.js'
+
+// Mock the child_process module at the module level for ESM compatibility
+vi.mock('child_process', () => ({
+  spawn: vi.fn(),
+  exec: vi.fn(),
+  execSync: vi.fn(),
+  fork: vi.fn(),
+}))
+
+// Import child_process after mocking
+import * as cp from 'child_process'
 
 describe('MockStream', () => {
   let stream: MockStream

@@ -4,8 +4,8 @@
 
 import { describe, it, expect, afterEach } from 'vitest'
 import * as cp from 'child_process'
-import { spawnUtils, commonCommands, mockSpawn, quickMocks } from '../spawn.js'
 import { getGlobalProcessMocker } from '../process-mock.js'
+import { spawnUtils, commonCommands, mockSpawn, quickMocks } from '../spawn.js'
 
 describe('spawnUtils', () => {
   afterEach(() => {

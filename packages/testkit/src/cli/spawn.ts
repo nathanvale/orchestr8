@@ -48,7 +48,7 @@ export const spawnUtils = {
    */
   mockCommandSuccess: (command: string | RegExp, stdout = '', stderr = '', exitCode = 0): void => {
     const mocker = getGlobalProcessMocker()
-    mocker.registerSpawn(command, {
+    mocker.register(command, {
       stdout,
       stderr,
       exitCode,
@@ -65,7 +65,7 @@ export const spawnUtils = {
     stdout = '',
   ): void => {
     const mocker = getGlobalProcessMocker()
-    mocker.registerSpawn(command, {
+    mocker.register(command, {
       stdout,
       stderr,
       exitCode,
@@ -77,7 +77,7 @@ export const spawnUtils = {
    */
   mockCommandError: (command: string | RegExp, error: Error): void => {
     const mocker = getGlobalProcessMocker()
-    mocker.registerSpawn(command, {
+    mocker.register(command, {
       error,
     })
   },
@@ -92,7 +92,7 @@ export const spawnUtils = {
     exitCode = 0,
   ): void => {
     const mocker = getGlobalProcessMocker()
-    mocker.registerSpawn(command, {
+    mocker.register(command, {
       stdout,
       exitCode,
       delay,
@@ -114,7 +114,7 @@ export const spawnUtils = {
       .map(([prompt, response]) => `${prompt}\n${response}\n`)
       .join('')
 
-    mocker.registerSpawn(command, {
+    mocker.register(command, {
       stdout: fullOutput + finalOutput,
       exitCode,
     })
@@ -321,7 +321,7 @@ export class SpawnMockBuilder {
    */
   mock(): void {
     const mocker = getGlobalProcessMocker()
-    mocker.registerSpawn(this.command, this.config)
+    mocker.register(this.command, this.config)
   }
 }
 

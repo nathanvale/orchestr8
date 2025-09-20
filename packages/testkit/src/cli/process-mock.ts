@@ -3,9 +3,9 @@
  * Provides comprehensive mocking of child_process methods (spawn, exec, execSync, fork)
  */
 
-import { vi } from 'vitest'
-import * as cp from 'child_process'
 import { EventEmitter } from 'events'
+import type * as cp from 'child_process'
+import { getProcessMockRegistry, clearMockRegistry } from './mock-factory.js'
 
 /**
  * Mock stream implementation for stdin/stdout/stderr
@@ -129,8 +129,10 @@ export class MockChildProcess extends EventEmitter {
       return
     }
 
-    // Set exit code and signal
-    this.exitCode = this.config.exitCode ?? 0
+    // Set exit code and signal (only set exitCode if explicitly provided)
+    if (this.config.exitCode !== undefined) {
+      this.exitCode = this.config.exitCode
+    }
     this.signalCode = this.config.signal ?? null
 
     // Emit exit event
@@ -169,7 +171,7 @@ export class MockChildProcess extends EventEmitter {
 }
 
 /**
- * Process mocker interface
+ * Process mocker interface - now uses the factory pattern
  */
 export interface ProcessMocker {
   /** Register a mock for a specific command */
@@ -182,9 +184,13 @@ export interface ProcessMocker {
   registerExecSync(command: string | RegExp, config: ProcessMockConfig): void
   /** Register a mock for fork calls */
   registerFork(modulePath: string | RegExp, config: ProcessMockConfig): void
+  /** Register a mock for execFile calls */
+  registerExecFile(file: string | RegExp, config: ProcessMockConfig): void
+  /** Register a mock for execFileSync calls */
+  registerExecFileSync(file: string | RegExp, config: ProcessMockConfig): void
   /** Clear all registered mocks */
   clear(): void
-  /** Restore original child_process methods */
+  /** Restore original child_process methods (no longer needed but kept for compatibility) */
   restore(): void
   /** Get all spawned processes */
   getSpawnedProcesses(): MockChildProcess[]
@@ -194,24 +200,23 @@ export interface ProcessMocker {
   getExecSyncCalls(): Array<{ command: string; options?: cp.ExecSyncOptions }>
   /** Get all fork calls */
   getForkCalls(): Array<{ modulePath: string; args?: string[]; options?: cp.ForkOptions }>
+  /** Get all execFile calls */
+  getExecFileCalls(): Array<{ file: string; args?: string[]; options?: cp.ExecFileOptions }>
+  /** Get all execFileSync calls */
+  getExecFileSyncCalls(): Array<{ file: string; args?: string[]; options?: cp.ExecFileSyncOptions }>
+  /** Find mock configuration for a command */
+  findMockConfig(
+    mocks: Map<string | RegExp, ProcessMockConfig>,
+    input: string,
+  ): ProcessMockConfig | undefined
 }
 
 /**
- * Process mocker implementation
+ * Process mocker implementation using factory pattern
  */
 export class ProcessMockerImpl implements ProcessMocker {
-  private spawnMocks = new Map<string | RegExp, ProcessMockConfig>()
-  private execMocks = new Map<string | RegExp, ProcessMockConfig>()
-  private execSyncMocks = new Map<string | RegExp, ProcessMockConfig>()
-  private forkMocks = new Map<string | RegExp, ProcessMockConfig>()
-
-  private spawnedProcesses: MockChildProcess[] = []
-  private execCalls: Array<{ command: string; options?: cp.ExecOptions }> = []
-  private execSyncCalls: Array<{ command: string; options?: cp.ExecSyncOptions }> = []
-  private forkCalls: Array<{ modulePath: string; args?: string[]; options?: cp.ForkOptions }> = []
-
   constructor() {
-    this.setupMocks()
+    // No runtime patching needed - factory handles everything
   }
 
   register(command: string | RegExp, config: ProcessMockConfig): void {
@@ -221,142 +226,104 @@ export class ProcessMockerImpl implements ProcessMocker {
   }
 
   registerSpawn(command: string | RegExp, config: ProcessMockConfig): void {
-    this.spawnMocks.set(command, config)
+    const registry = getProcessMockRegistry()
+    registry.spawnMocks.set(command, config)
   }
 
   registerExec(command: string | RegExp, config: ProcessMockConfig): void {
-    this.execMocks.set(command, config)
+    const registry = getProcessMockRegistry()
+    registry.execMocks.set(command, config)
   }
 
   registerExecSync(command: string | RegExp, config: ProcessMockConfig): void {
-    this.execSyncMocks.set(command, config)
+    const registry = getProcessMockRegistry()
+    registry.execSyncMocks.set(command, config)
   }
 
   registerFork(modulePath: string | RegExp, config: ProcessMockConfig): void {
-    this.forkMocks.set(modulePath, config)
+    const registry = getProcessMockRegistry()
+    registry.forkMocks.set(modulePath, config)
+  }
+
+  registerExecFile(file: string | RegExp, config: ProcessMockConfig): void {
+    const registry = getProcessMockRegistry()
+    registry.execFileMocks.set(file, config)
+  }
+
+  registerExecFileSync(file: string | RegExp, config: ProcessMockConfig): void {
+    const registry = getProcessMockRegistry()
+    registry.execFileSyncMocks.set(file, config)
   }
 
   clear(): void {
-    this.spawnMocks.clear()
-    this.execMocks.clear()
-    this.execSyncMocks.clear()
-    this.forkMocks.clear()
-    this.spawnedProcesses = []
-    this.execCalls = []
-    this.execSyncCalls = []
-    this.forkCalls = []
+    clearMockRegistry()
   }
 
   restore(): void {
-    vi.restoreAllMocks()
+    // No-op in factory pattern - mocks are created at declaration time
+    // Kept for backward compatibility
+    this.clear()
   }
 
   getSpawnedProcesses(): MockChildProcess[] {
-    return [...this.spawnedProcesses]
+    const registry = getProcessMockRegistry()
+    return [...registry.spawnedProcesses]
   }
 
   getExecCalls(): Array<{ command: string; options?: cp.ExecOptions }> {
-    return [...this.execCalls]
+    const registry = getProcessMockRegistry()
+    return [...registry.execCalls]
   }
 
   getExecSyncCalls(): Array<{ command: string; options?: cp.ExecSyncOptions }> {
-    return [...this.execSyncCalls]
+    const registry = getProcessMockRegistry()
+    return [...registry.execSyncCalls]
   }
 
   getForkCalls(): Array<{ modulePath: string; args?: string[]; options?: cp.ForkOptions }> {
-    return [...this.forkCalls]
+    const registry = getProcessMockRegistry()
+    return [...registry.forkCalls]
   }
 
-  private setupMocks(): void {
-    // Mock cp.spawn
-    vi.spyOn(cp, 'spawn').mockImplementation(
-      (command: string, args?: readonly string[], _options?: cp.SpawnOptions) => {
-        const fullCommand = args ? `${command} ${args.join(' ')}` : command
-        const config = this.findMockConfig(this.spawnMocks, fullCommand) ?? {}
-
-        const mockProcess = new MockChildProcess(config)
-        this.spawnedProcesses.push(mockProcess)
-
-        return mockProcess as unknown as cp.ChildProcess
-      },
-    )
-
-    // Mock cp.exec
-    vi.spyOn(cp, 'exec').mockImplementation((...args: Parameters<typeof cp.exec>) => {
-      const [command, optionsOrCallback, callback] = args
-      // Handle overloaded function signature
-      const actualOptions = typeof optionsOrCallback === 'function' ? {} : optionsOrCallback
-      const actualCallback = typeof optionsOrCallback === 'function' ? optionsOrCallback : callback
-
-      this.execCalls.push({ command, options: actualOptions || undefined })
-
-      const config = this.findMockConfig(this.execMocks, command) ?? {}
-
-      // Simulate async execution
-      setTimeout(() => {
-        if (actualCallback) {
-          if (config.error) {
-            const execError = config.error as cp.ExecException
-            execError.code = config.exitCode ?? 1
-            actualCallback(execError, '', config.stderr ?? '')
-          } else {
-            actualCallback(null, config.stdout ?? '', config.stderr ?? '')
-          }
-        }
-      }, config.delay ?? 0)
-
-      // Return a mock ChildProcess
-      const mockProcess = new MockChildProcess(config)
-      return mockProcess as unknown as cp.ChildProcess
-    })
-
-    // Mock cp.execSync
-    vi.spyOn(cp, 'execSync').mockImplementation((command: string, options?: cp.ExecSyncOptions) => {
-      this.execSyncCalls.push({ command, options })
-
-      const config = this.findMockConfig(this.execSyncMocks, command) ?? {}
-
-      if (config.error) {
-        throw config.error
-      }
-
-      const output = config.stdout ?? ''
-      return Buffer.from(output)
-    })
-
-    // Mock cp.fork
-    vi.spyOn(cp, 'fork').mockImplementation(
-      (modulePath: string | URL, args?: readonly string[], options?: cp.ForkOptions) => {
-        const modulePathStr = modulePath.toString()
-        this.forkCalls.push({
-          modulePath: modulePathStr,
-          args: args ? [...args] : undefined,
-          options,
-        })
-
-        const config = this.findMockConfig(this.forkMocks, modulePathStr) ?? {}
-        const mockProcess = new MockChildProcess(config)
-
-        return mockProcess as unknown as cp.ChildProcess
-      },
-    )
+  getExecFileCalls(): Array<{ file: string; args?: string[]; options?: cp.ExecFileOptions }> {
+    const registry = getProcessMockRegistry()
+    return [...registry.execFileCalls]
   }
 
-  private findMockConfig(
+  getExecFileSyncCalls(): Array<{
+    file: string
+    args?: string[]
+    options?: cp.ExecFileSyncOptions
+  }> {
+    const registry = getProcessMockRegistry()
+    return [...registry.execFileSyncCalls]
+  }
+
+  public findMockConfig(
     mocks: Map<string | RegExp, ProcessMockConfig>,
     input: string,
   ): ProcessMockConfig | undefined {
+    // First pass: look for exact matches
     for (const [pattern, config] of mocks) {
-      if (typeof pattern === 'string') {
-        if (input === pattern || input.includes(pattern)) {
-          return config
-        }
-      } else if (pattern instanceof RegExp) {
-        if (pattern.test(input)) {
-          return config
-        }
+      if (typeof pattern === 'string' && input === pattern) {
+        return config
       }
     }
+
+    // Second pass: look for regex matches
+    for (const [pattern, config] of mocks) {
+      if (pattern instanceof RegExp && pattern.test(input)) {
+        return config
+      }
+    }
+
+    // Third pass: look for includes matches (least specific)
+    for (const [pattern, config] of mocks) {
+      if (typeof pattern === 'string' && input.includes(pattern)) {
+        return config
+      }
+    }
+
     return undefined
   }
 }
@@ -367,7 +334,7 @@ export class ProcessMockerImpl implements ProcessMocker {
 let globalMocker: ProcessMockerImpl | null = null
 
 /**
- * Create a new process mocker or get the global instance
+ * Create a new process mocker
  */
 export function createProcessMocker(): ProcessMocker {
   return new ProcessMockerImpl()
@@ -405,6 +372,17 @@ export function setupProcessMocking(): ProcessMocker {
   }
 
   return mocker
+}
+
+/**
+ * Direct setup for child_process mocks (deprecated - use factory pattern instead)
+ * @deprecated Use the factory pattern with vi.mock declarations
+ */
+export function setupChildProcessMocks(_childProcess: typeof cp): void {
+  console.warn(
+    'setupChildProcessMocks is deprecated. Use the factory pattern with vi.mock declarations instead.',
+  )
+  // No-op - factory handles everything
 }
 
 /**

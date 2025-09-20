@@ -1,301 +1,144 @@
-# Task 009 Analysis: Setup CLI command mocking utilities
+# Task 009 Analysis: Setup CLI command mocking utilities (aligned with 013–016)
 
 ## Current State Assessment
 
-**No Existing Implementation**:
+Existing implementation in `packages/testkit` provides core CLI mocking:
 
-- No CLI command mocking utilities
-- No process spawn/exec mocking
-- No shell command interception
-- Clean implementation opportunity
+- `src/cli/process-mock.ts`: end-to-end mocking for spawn, exec, execSync, fork with `MockChildProcess`, global registry, and helpers via `processHelpers`.
+- `src/cli/spawn.ts`: higher-level spawn utilities (`spawnUtils`, `commonCommands`, `mockSpawn`, `quickMocks`).
 
-## Parallel Streams
+Gaps and risks (addressed by 013–016):
 
-### Stream A: Core Process Mocking
+- Runtime delegation is brittle with `vi.mock` hoisting; needs factory-at-mock-time (013).
+- Import order must be enforced via bootstrap/setupFiles (014).
+- Helper semantics should tri-register by default; `quickMocks` currently reads spawn-centric (015).
+- Runner config drift between Vitest and Wallaby; unify setupFiles, env, and CI reporters (016).
 
-- **Files**: `src/cli/process-mock.ts`, `src/cli/spawn.ts`
-- **Work**: Mock child_process.spawn, exec, execSync
-- **Dependencies**: None
-- **Estimated Time**: 1-2 hours
+## Work Streams (updated)
 
-### Stream B: Command Registry
+### Stream A: Mock factory integration (013)
 
-- **Files**: `src/cli/command-registry.ts`, `src/cli/matchers.ts`
-- **Work**: Register mock commands, pattern matching, response management
-- **Dependencies**: None (parallel with Stream A)
-- **Estimated Time**: 1-2 hours
+- Files: `packages/testkit/src/cli/process-mock.ts`, `packages/testkit/src/register.ts`, `packages/testkit/src/cli/mock-factory.ts` (new)
+- Work: Provide `createChildProcessMock()` and wire `vi.mock(...)` at declaration time in `register.ts`. Remove reliance on late runtime delegation.
+- Dependencies: Foundation for 014–015
+- Estimate: 8–12h
 
-### Stream C: Interactive CLI Testing
+### Stream B: Bootstrap import order (014)
 
-- **Files**: `src/cli/interactive.ts`, `src/cli/stdio.ts`
-- **Work**: Mock stdin/stdout/stderr, interactive prompts, stream handling
-- **Dependencies**: Stream A for process control
-- **Estimated Time**: 2 hours
+- Files: `packages/testkit/src/bootstrap.ts` (new), `packages/testkit/src/register.ts`, root `vitest.config.ts`, `wallaby.cjs`
+- Work: Ensure bootstrap/register is first in setupFiles for both Vitest and Wallaby; document import pattern and migration.
+- Dependencies: A
+- Estimate: 6–8h
 
-### Stream D: Shell Script Mocking
+### Stream C: Helper semantics alignment (015)
 
-- **Files**: `src/cli/shell.ts`, `src/cli/scripts.ts`
-- **Work**: Mock shell scripts, bash commands, environment variables
-- **Dependencies**: Streams A & B
-- **Estimated Time**: 1-2 hours
+- Files: `packages/testkit/src/cli/spawn.ts`, `packages/testkit/src/cli/process-mock.ts`, docs
+- Work: Tri-register by default (spawn, exec, execSync); expose narrowing flags; update types and docs.
+- Dependencies: A (can run parallel with B once factory shape is known)
+- Estimate: 4–6h
 
-### Stream E: Testing & Documentation
+### Stream D: Runner config unification (016)
 
-- **Files**: `src/cli/__tests__/*.test.ts`, `docs/cli-mocking.md`
-- **Work**: Comprehensive tests, usage documentation
-- **Dependencies**: Stream A complete
-- **Estimated Time**: 1 hour
+- Files: root `vitest.config.ts`, `packages/testkit/vitest.config.ts`, `wallaby.cjs`
+- Work: Single source of truth for setupFiles/env/timeouts; unify CI reporters and outputs to `./test-results/`.
+- Dependencies: None (parallel)
+- Estimate: 6–8h
 
 ## Dependencies Graph
 
 ```mermaid
 graph TD
-    A[Stream A: Process] --> C[Stream C: Interactive]
-    A --> D[Stream D: Shell]
-    B[Stream B: Registry] --> D
-    A --> E[Stream E: Testing]
+  A[013: Mock factory] --> B[014: Bootstrap ordering]
+  A --> C[015: Helper semantics]
+  D[016: Runner config] --- A
+  D --- B
+  D --- C
 ```
 
-## Implementation Details
+## Implementation Notes (aligned)
 
-### Core Process Mocking (Stream A)
+### Factory-at-mock-time (013)
 
-```typescript
-export interface ProcessMock {
-  stdout: MockStream
-  stderr: MockStream
-  stdin: MockStream
-  exitCode: number
-  kill: () => void
-  pid: number
-}
+- Declare mocks via `vi.mock('child_process', () => createChildProcessMock())` in setupFiles.
+- Provide dual-specifier coverage with `vi.mock('node:child_process', ...)` when required.
 
-export function mockChildProcess(): ChildProcessMocker {
-  const registry = new Map<string, ProcessMock>()
+### Bootstrap ordering (014)
 
-  vi.spyOn(cp, 'spawn').mockImplementation((command, args, options) => {
-    const mock = registry.get(command) ?? createDefaultMock()
-    return createMockProcess(mock)
-  })
+- Ensure `packages/testkit/src/register.ts` (or `bootstrap.ts`) is first in setupFiles for Vitest and honored by Wallaby.
+- Document side-effect import pattern for edge cases.
 
-  return {
-    register: (command: string, mock: Partial<ProcessMock>) => {
-      registry.set(command, { ...createDefaultMock(), ...mock })
-    },
-    reset: () => registry.clear(),
-    restore: () => vi.restoreAllMocks(),
-  }
-}
+### Helper semantics (015)
+
+- Use `processHelpers` to tri-register spawn/exec/execSync quickly:
+
+```ts
+import { processHelpers } from 'packages/testkit/src/cli/process-mock.js'
+
+processHelpers.mockSuccess(/git status/, 'nothing to commit\n')
+processHelpers.mockFailure('npm install', 'ERESOLVE', 1)
+processHelpers.mockError('pnpm build', new Error('boom'))
 ```
 
-### Command Registry (Stream B)
+- Or use the builder API from `spawn.ts` for fluent setup:
 
-```typescript
-export class CommandRegistry {
-  private commands = new Map<string | RegExp, CommandHandler>()
+```ts
+import { mockSpawn } from 'packages/testkit/src/cli/spawn.js'
 
-  register(pattern: string | RegExp, handler: CommandHandler) {
-    this.commands.set(pattern, handler)
-  }
-
-  match(command: string, args: string[]): CommandResult {
-    for (const [pattern, handler] of this.commands) {
-      if (this.matches(pattern, command)) {
-        return handler(args)
-      }
-    }
-    throw new Error(`No mock registered for: ${command}`)
-  }
-
-  mockCommand(command: string) {
-    return {
-      withArgs: (...args: string[]) => ({
-        returns: (output: string, exitCode = 0) => {
-          this.register(command, () => ({
-            stdout: output,
-            stderr: '',
-            exitCode,
-          }))
-        },
-        throws: (error: string) => {
-          this.register(command, () => ({
-            stdout: '',
-            stderr: error,
-            exitCode: 1,
-          }))
-        },
-      }),
-    }
-  }
-}
+mockSpawn('docker build -t my:tag').stdout('Successfully built my:tag').exitCode(0).mock()
 ```
 
-### Interactive CLI Testing (Stream C)
+### Runner config unification (016)
 
-```typescript
-export class InteractiveCLI {
-  private stdin = new MockStream()
-  private stdout = new MockStream()
-  private stderr = new MockStream()
+- Single source of truth for setupFiles/env; unify CI reporters to `./test-results/`.
 
-  async sendInput(input: string) {
-    this.stdin.write(input + '\n')
-  }
+## File Patterns (current)
 
-  async waitForPrompt(prompt: string | RegExp) {
-    return new Promise((resolve) => {
-      this.stdout.on('data', (data) => {
-        if (this.matches(prompt, data)) {
-          resolve(data)
-        }
-      })
-    })
-  }
-
-  async interact(script: InteractionScript) {
-    for (const step of script) {
-      await this.waitForPrompt(step.expect)
-      await this.sendInput(step.input)
-    }
-  }
-
-  getOutput(): { stdout: string; stderr: string } {
-    return {
-      stdout: this.stdout.getBuffer(),
-      stderr: this.stderr.getBuffer(),
-    }
-  }
-}
-```
-
-### Shell Script Mocking (Stream D)
-
-```typescript
-export const shellMocks = {
-  mockScript: (scriptPath: string, behavior: ScriptBehavior) => {
-    const registry = CommandRegistry.getInstance()
-    registry.register(scriptPath, (args) => {
-      return behavior(args)
-    })
-  },
-
-  mockBashCommand: (command: string, output: string) => {
-    vi.spyOn(cp, 'execSync').mockImplementation((cmd) => {
-      if (cmd.includes(command)) {
-        return Buffer.from(output)
-      }
-      throw new Error(`Unmocked command: ${cmd}`)
-    })
-  },
-
-  mockEnvironment: (vars: Record<string, string>) => {
-    const original = { ...process.env }
-    Object.assign(process.env, vars)
-    return () => {
-      process.env = original
-    }
-  },
-}
-```
-
-## File Patterns
-
-```
+```text
 packages/testkit/
 ├── src/cli/
-│   ├── process-mock.ts    [Stream A]
-│   ├── spawn.ts          [Stream A]
-│   ├── command-registry.ts [Stream B]
-│   ├── matchers.ts       [Stream B]
-│   ├── interactive.ts    [Stream C]
-│   ├── stdio.ts         [Stream C]
-│   ├── shell.ts         [Stream D]
-│   ├── scripts.ts       [Stream D]
+│   ├── process-mock.ts
+│   ├── spawn.ts
 │   └── __tests__/
-│       └── cli.test.ts   [Stream E]
-├── docs/
-│   └── cli-mocking.md    [Stream E]
-└── examples/
-    └── cli-tests/        [Stream E]
+├── src/register.ts
+└── docs/
 ```
 
 ## Integration Points
 
-1. **Child Process API**: Mock spawn, exec, execSync, fork
-2. **Stream Handling**: Mock readable/writable streams
-3. **Exit Codes**: Proper process exit code simulation
-4. **Signal Handling**: Mock process signals (SIGTERM, SIGKILL)
+1. Child Process API: spawn, exec, execSync, fork (tri-register by default)
+2. Stream handling: stdin/stdout/stderr via `MockStream`
+3. Exit codes and signals: simulate exitCode/signal; support kill()
+4. Dual specifiers: support `child_process` and `node:child_process`
 
 ## Usage Examples
 
-### Basic Command Mocking
+### Basic command mocking (helpers)
 
 ```typescript
-it('should mock git commands', async () => {
-  const cli = mockChildProcess()
+import { processHelpers } from 'packages/testkit/src/cli/process-mock.js'
 
-  cli.register('git', {
-    stdout: 'main\n',
-    exitCode: 0,
-  })
-
-  const result = await exec('git branch --show-current')
-  expect(result.stdout).toBe('main\n')
-  expect(result.exitCode).toBe(0)
-})
+processHelpers.mockSuccess('git branch --show-current', 'main\n')
+// execSync('git branch --show-current') will return Buffer('main\n')
 ```
 
-### Interactive CLI Testing
+### Builder pattern (spawn)
 
 ```typescript
-it('should test interactive prompts', async () => {
-  const interactive = new InteractiveCLI()
+import { mockSpawn } from 'packages/testkit/src/cli/spawn.js'
 
-  const process = interactive.spawn('npm init')
-
-  await interactive.interact([
-    { expect: 'package name:', input: 'my-package' },
-    { expect: 'version:', input: '1.0.0' },
-    { expect: 'description:', input: 'Test package' },
-  ])
-
-  const output = interactive.getOutput()
-  expect(output.stdout).toContain('package.json created')
-})
-```
-
-### Command Builder Pattern
-
-```typescript
-it('should use fluent API', () => {
-  const registry = new CommandRegistry()
-
-  registry.mockCommand('npm').withArgs('test').returns('All tests passed', 0)
-
-  registry
-    .mockCommand('npm')
-    .withArgs('build')
-    .throws('Build failed: TypeScript errors')
-
-  // Tests will use these mocked responses
-})
+mockSpawn(/docker run .+/).stdout('OK').exitCode(0).mock()
 ```
 
 ## Risk Mitigation
 
-- **Risk**: Process leaks
-  - **Mitigation**: Track spawned processes, kill in cleanup
-- **Risk**: Stream buffer overflow
-  - **Mitigation**: Configurable buffer limits, streaming mode
-- **Risk**: Timing issues with async commands
-  - **Mitigation**: Promise-based API, proper event handling
-- **Risk**: Platform differences (Windows vs Unix)
-  - **Mitigation**: Platform-specific command normalization
+- `vi.mock` hoisting vs runtime delegation — use factory-at-mock-time (013)
+- Import order drift between runners — bootstrap/register first (014)
+- Helper spawn-only vs exec paths — tri-register by default (015)
+- Config divergence — unify Vitest/Wallaby and CI reporters (016)
 
 ## Success Metrics
 
-- Zero real processes spawned during tests
-- Support for all child_process methods
-- Interactive CLI tests < 100ms execution
-- No zombie processes after test runs
-- Cross-platform compatibility
+- All child_process methods covered at declaration time (no late patching)
+- Tests pass consistently under Vitest and Wallaby with identical setupFiles order
+- Helpers provide deterministic outputs for spawn/exec/execSync
+- CI reporters produced at `./test-results/` with no environment-specific flakes

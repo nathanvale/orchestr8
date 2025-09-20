@@ -52,10 +52,10 @@ Focus on what failed:
 
 ## Cleanup
 
-Always clean up after tests:
+**ALWAYS** clean up after tests:
 
 ```bash
-pkill -f "jest|mocha|pytest|vitest" 2>/dev/null || true
+pkill -f "node.*vitest" 2>/dev/null || true
 ```
 
 ## Important Notes
