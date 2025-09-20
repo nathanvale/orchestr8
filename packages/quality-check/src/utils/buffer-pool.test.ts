@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { BufferPool, GlobalBufferPools, createBufferPool, StreamBufferPool } from './buffer-pool'
 
 describe('BufferPool', () => {
@@ -410,6 +410,7 @@ describe('Error handling', () => {
   it('should handle concurrent operations', async () => {
     const pool = new BufferPool({ maxPoolSize: 10 })
 
+    vi.useFakeTimers()
     try {
       const operations = []
 
@@ -423,10 +424,14 @@ describe('Error handling', () => {
         )
       }
 
+      // Advance timers to resolve the setTimeout promises
+      await vi.advanceTimersByTimeAsync(10)
+
       const results = await Promise.all(operations)
       expect(results.every((size) => typeof size === 'number')).toBe(true)
       expect(pool.getStats().inUse).toBe(0)
     } finally {
+      vi.useRealTimers()
       pool.clear()
     }
   })

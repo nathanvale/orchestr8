@@ -3,6 +3,7 @@ import { execSync } from 'node:child_process'
 import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join, parse } from 'node:path'
 import { describe, expect, test } from 'vitest'
+import { execSyncSafe } from '../src/test-utils/process-utils.js'
 
 // Helper to parse JSONC (JSON with comments)
 function parseJsonc(content: string): any {
@@ -164,14 +165,17 @@ describe('Turborepo Pipeline Configuration', () => {
       // Opt-in execution: set RUN_TURBO_PERF=true to run the heavy performance assertions
       if (process.env['RUN_TURBO_PERF'] !== 'true') return
       try {
-        execSync('which turbo', { stdio: 'ignore' })
+        execSyncSafe('which turbo', { stdio: 'ignore', timeout: 10000 })
       } catch {
         return
       }
 
-      execSync('turbo run build', { stdio: 'ignore' })
-      const output = execSync('turbo run build --dry-run=json', { encoding: 'utf8' })
-      const result = JSON.parse(output)
+      execSyncSafe('turbo run build', { stdio: 'ignore', timeout: 60000 })
+      const output = execSyncSafe('turbo run build --dry-run=json', {
+        encoding: 'utf8',
+        timeout: 30000,
+      })
+      const result = JSON.parse(output.toString())
 
       // Ensure we have tasks to measure (will be meaningful only after packages exist)
       expect(result.tasks).toBeDefined()
@@ -185,7 +189,7 @@ describe('Turborepo Pipeline Configuration', () => {
     test('should invalidate cache when base config changes (perf optional)', () => {
       if (process.env['RUN_TURBO_PERF'] !== 'true') return
       try {
-        execSync('which turbo', { stdio: 'ignore' })
+        execSyncSafe('which turbo', { stdio: 'ignore', timeout: 10000 })
       } catch {
         return
       }
@@ -193,12 +197,15 @@ describe('Turborepo Pipeline Configuration', () => {
       const baseConfigPath = join(rootDir, 'tooling', 'tsconfig', 'base.json')
       if (!existsSync(baseConfigPath)) return
 
-      execSync('turbo run build', { stdio: 'ignore' })
+      execSyncSafe('turbo run build', { stdio: 'ignore', timeout: 60000 })
       const originalContent = readFileSync(baseConfigPath, 'utf8')
       writeFileSync(baseConfigPath, originalContent + '\n// Modified for cache test')
       try {
-        const output = execSync('turbo run build --dry-run=json', { encoding: 'utf8' })
-        const result = JSON.parse(output)
+        const output = execSyncSafe('turbo run build --dry-run=json', {
+          encoding: 'utf8',
+          timeout: 30000,
+        })
+        const result = JSON.parse(output.toString())
         // Ensure we have tasks to check cache status
         expect(result.tasks).toBeDefined()
         expect(result.tasks.length).toBeGreaterThan(0)

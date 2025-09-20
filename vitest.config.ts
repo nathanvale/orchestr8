@@ -47,6 +47,10 @@ export default mergeConfig(
     cacheDir: '.vitest',
 
     test: {
+      // Note: Global setup/teardown temporarily disabled due to Vitest v3 compatibility issues
+      // TODO: Find alternative approach for zombie prevention
+      // globalSetup: './vitest.globalSetup.ts',
+      // globalTeardown: './vitest.globalTeardown.ts',
       // Modern 2025 workspace pattern for automatic package discovery
       projects: [
         // Auto-discover all packages with their own configs
@@ -61,7 +65,6 @@ export default mergeConfig(
             include:
               process.env['WALLABY_WORKER'] || process.env['WALLABY_WORKER_ID']
                 ? [
-                    'tests/**/*.unit.{test,spec}.{ts,tsx}',
                     'tests/**/*.{test,spec}.{ts,tsx}',
                     '!tests/**/*.integration.{test,spec}.{ts,tsx}',
                     '!tests/**/*.e2e.{test,spec}.{ts,tsx}',
@@ -74,7 +77,6 @@ export default mergeConfig(
                     : process.env['TEST_MODE'] === 'all'
                       ? ['tests/**/*.{test,spec}.{ts,tsx}']
                       : [
-                          'tests/**/*.unit.{test,spec}.{ts,tsx}',
                           'tests/**/*.{test,spec}.{ts,tsx}',
                           '!tests/**/*.integration.{test,spec}.{ts,tsx}',
                           '!tests/**/*.e2e.{test,spec}.{ts,tsx}',
@@ -98,6 +100,7 @@ export default mergeConfig(
         '**/*.integration.test.{ts,tsx}',
         '**/*.e2e.test.{ts,tsx}',
         '**/*.slow.test.{ts,tsx}',
+        '**/*.disposal.test.{ts,tsx}',
       ],
 
       // Include pattern for different modes - ADHD-optimized test classification
@@ -106,24 +109,34 @@ export default mergeConfig(
           ? ['**/*.integration.test.{ts,tsx}']
           : process.env['TEST_MODE'] === 'e2e'
             ? ['**/*.e2e.test.{ts,tsx}']
-            : ['**/*.unit.test.{ts,tsx}', '**/*.test.{ts,tsx}'],
+            : ['**/*.test.{ts,tsx}'],
 
-      // Setup files - includes memory monitoring for all tests
+      // Setup files - includes memory monitoring and zombie prevention for all tests
       setupFiles: [
         './vitest.setup.tsx',
         './tests/setup/console-suppression.ts', // Console noise suppression
         './tests/setup/memory-cleanup.ts', // Memory monitoring hooks
+        './tests/setup/zombie-prevention.ts', // Zombie process prevention
       ],
 
-      // Modern 2025: threads pool for optimal performance
-      // Threads provide better performance and memory efficiency
-      pool: 'threads',
+      // Environment-aware pool configuration for optimal zombie prevention
+      // Wallaby: Use threads with singleThread for better instrumentation
+      // Regular: Use forks with controlled workers to prevent zombies
+      pool: process.env['WALLABY_WORKER'] ? 'threads' : 'forks',
       poolOptions: {
         threads: {
-          singleThread: false,
+          // Single thread for Wallaby's real-time feedback and instrumentation
+          singleThread: !!process.env['WALLABY_WORKER'],
+          isolate: true,
+          useAtomics: false, // Avoid segfaults in older Node versions
+        },
+        forks: {
+          // Controlled multi-process execution for regular tests
+          singleFork: false,
           // Optimize for available CPUs, leaving some for system
-          maxThreads: Math.max(1, cpus().length - 1),
-          minThreads: 1,
+          maxForks: isCI ? 2 : Math.max(1, cpus().length - 1),
+          minForks: 1,
+          isolate: true,
         },
       },
 
@@ -204,10 +217,10 @@ export default mergeConfig(
         skipFull: false,
       },
 
-      // Timeouts that respect ADHD time blindness
+      // Timeouts for zombie process prevention (more aggressive)
       testTimeout: 5000, // 5s max for unit tests
       hookTimeout: 10000, // 10s for setup/teardown
-      teardownTimeout: 15000, // MSW cleanup and worker termination need extra time
+      teardownTimeout: 5000, // 5s for teardown (aggressive to prevent zombies)
 
       // Environment-aware reporter configuration for noise reduction
       reporters: process.env['GITHUB_ACTIONS']

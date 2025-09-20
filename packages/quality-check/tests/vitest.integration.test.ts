@@ -33,6 +33,8 @@ describe('Vitest Integration Test', () => {
   afterEach(() => {
     // Clean up the DOM after each test
     document.body.innerHTML = ''
+    // Ensure timers are always restored to prevent leaks
+    vi.useRealTimers()
   })
 
   test('should render React components using @testing-library/react', () => {
