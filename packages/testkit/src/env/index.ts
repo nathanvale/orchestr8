@@ -75,3 +75,7 @@ export function getTestTimeouts() {
 
   return baseTimeouts
 }
+
+// Export random control utilities
+export * from './random.js'
+export * from './seed.js'
