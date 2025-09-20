@@ -92,8 +92,10 @@ This epic implements patterns from `@docs/guides/vitest-mocking-report.md`:
 ### Phase 0: Legacy Test Migration (1 week)
 
 - [ ] 000: Audit existing test locations across monorepo and packages - Small
-- [ ] 000.1: Create test-legacy folders in root and all packages with existing tests - Small
-- [ ] 000.2: Move existing test files to test-legacy folders for safe preservation - Medium
+- [ ] 000.1: Create test-legacy folders in root and all packages with existing
+      tests - Small
+- [ ] 000.2: Move existing test files to test-legacy folders for safe
+      preservation - Medium
 
 ### Phase 1: Foundation (4 weeks)
 
@@ -264,65 +266,96 @@ This epic implements patterns from `@docs/guides/vitest-mocking-report.md`:
 - **Week 20-21**: Stabilization (CI controls, training, monitoring)
 
 **Total Duration**: 21 weeks **Critical Path**: Legacy migration → Foundation →
-Mock reduction → Architecture transformation → Stabilization **Parallel Workstreams**:
-Foundation can overlap with early mock reduction work
+Mock reduction → Architecture transformation → Stabilization **Parallel
+Workstreams**: Foundation can overlap with early mock reduction work
 
 ## Tasks Created
 
 ### Phase 0: Legacy Test Migration (Tasks 000-000.2)
-- [ ] 000.md - Audit existing test locations across monorepo and packages (parallel: true)
-- [ ] 000.1.md - Create test-legacy folders in root and all packages with existing tests (parallel: true)
-- [ ] 000.2.md - Move existing test files to test-legacy folders for safe preservation (parallel: false)
+
+- [ ] 000.md - Audit existing test locations across monorepo and packages
+      (parallel: true)
+- [ ] 000.1.md - Create test-legacy folders in root and all packages with
+      existing tests (parallel: true)
+- [ ] 000.2.md - Move existing test files to test-legacy folders for safe
+      preservation (parallel: false)
 
 ### Phase 1: Foundation (Tasks 001-010)
-- [ ] 001.md - Create test tier directory structure in root and all packages (parallel: true)
+
+- [ ] 001.md - Create test tier directory structure in root and all packages
+      (parallel: true)
 - [ ] 002.md - Set up shared fixtures directory structure (parallel: true)
 - [ ] 003.md - Implement MSW server setup and configuration (parallel: true)
-- [ ] 004.md - Create test database utilities (SQLite in-memory) (parallel: true)
+- [ ] 004.md - Create test database utilities (SQLite in-memory) (parallel:
+      true)
 - [ ] 005.md - Set up temporary file system utilities (parallel: true)
 - [ ] 006.md - Implement fake time/random utilities (parallel: true)
-- [ ] 007.md - Update Vitest configuration with proper teardown (parallel: false)
+- [ ] 007.md - Update Vitest configuration with proper teardown (parallel:
+      false)
 - [ ] 008.md - Create global test cleanup mechanisms (parallel: false)
-- [ ] 009.md - Establish test builder patterns for common entities (parallel: true)
+- [ ] 009.md - Establish test builder patterns for common entities (parallel:
+      true)
 - [ ] 010.md - Document new test organization guidelines (parallel: true)
 
 ### Phase 2: Mock Reduction (Tasks 011-020)
+
 - [ ] 011.md - Audit current mock usage and categorize by type (parallel: true)
-- [ ] 012.md - Eliminate console output mocking (target: -150 mocks) (parallel: true)
-- [ ] 013.md - Remove utility function mocking (path, string utils) (parallel: true)
-- [ ] 014.md - Consolidate repetitive mock patterns into factories (parallel: true)
-- [ ] 015.md - Apply promotion rules: identify >2 mock tests for conversion (parallel: true)
-- [ ] 016.md - Replace internal module mocks with real implementations (parallel: false)
-- [ ] 017.md - Convert over-mocked unit tests to integration tests (parallel: false)
-- [ ] 018.md - Consolidate external service mocks to boundary adapters (parallel: true)
+- [ ] 012.md - Eliminate console output mocking (target: -150 mocks) (parallel:
+      true)
+- [ ] 013.md - Remove utility function mocking (path, string utils) (parallel:
+      true)
+- [ ] 014.md - Consolidate repetitive mock patterns into factories (parallel:
+      true)
+- [ ] 015.md - Apply promotion rules: identify >2 mock tests for conversion
+      (parallel: true)
+- [ ] 016.md - Replace internal module mocks with real implementations
+      (parallel: false)
+- [ ] 017.md - Convert over-mocked unit tests to integration tests (parallel:
+      false)
+- [ ] 018.md - Consolidate external service mocks to boundary adapters
+      (parallel: true)
 - [ ] 019.md - Implement mock usage monitoring and reporting (parallel: true)
 - [ ] 020.md - Create automated mock count tracking in CI (parallel: true)
 
 ### Phase 3: Architecture Transformation (Tasks 021-030)
-- [ ] 021.md - Implement boundary adapter pattern for external dependencies (parallel: true)
-- [ ] 022.md - Convert file system mocking to temp directory usage (parallel: true)
-- [ ] 023.md - Replace database mocking with SQLite integration tests (parallel: true)
+
+- [ ] 021.md - Implement boundary adapter pattern for external dependencies
+      (parallel: true)
+- [ ] 022.md - Convert file system mocking to temp directory usage (parallel:
+      true)
+- [ ] 023.md - Replace database mocking with SQLite integration tests (parallel:
+      true)
 - [ ] 024.md - Implement HTTP mocking with MSW handlers (parallel: true)
-- [ ] 025.md - Create integration test patterns for service → repo → DB flows (parallel: true)
-- [ ] 026.md - Establish adapter fakes for external services (email, S3, etc.) (parallel: true)
-- [ ] 027.md - Apply "mock only at trust boundaries" throughout codebase (parallel: false)
-- [ ] 028.md - Complete test fixture library for reusable patterns (parallel: true)
-- [ ] 029.md - Validate promotion rule compliance across all tests (parallel: true)
+- [ ] 025.md - Create integration test patterns for service → repo → DB flows
+      (parallel: true)
+- [ ] 026.md - Establish adapter fakes for external services (email, S3, etc.)
+      (parallel: true)
+- [ ] 027.md - Apply "mock only at trust boundaries" throughout codebase
+      (parallel: false)
+- [ ] 028.md - Complete test fixture library for reusable patterns (parallel:
+      true)
+- [ ] 029.md - Validate promotion rule compliance across all tests (parallel:
+      true)
 - [ ] 030.md - Update existing tests to follow new patterns (parallel: false)
 
 ### Phase 4: Stabilization (Tasks 031-040)
-- [ ] 031.md - Implement CI controls with mock density monitoring (parallel: true)
-- [ ] 032.md - Set up flake quarantining with hanging process detection (parallel: true)
-- [ ] 033.md - Create mock usage enforcement rules in code review (parallel: true)
+
+- [ ] 031.md - Implement CI controls with mock density monitoring (parallel:
+      true)
+- [ ] 032.md - Set up flake quarantining with hanging process detection
+      (parallel: true)
+- [ ] 033.md - Create mock usage enforcement rules in code review (parallel:
+      true)
 - [ ] 034.md - Complete team training materials and sessions (parallel: true)
-- [ ] 035.md - Establish metrics tracking for mock creep prevention (parallel: true)
-- [ ] 036.md - Create troubleshooting guide for new test patterns (parallel: true)
+- [ ] 035.md - Establish metrics tracking for mock creep prevention (parallel:
+      true)
+- [ ] 036.md - Create troubleshooting guide for new test patterns (parallel:
+      true)
 - [ ] 037.md - Implement automated promotion rule enforcement (parallel: true)
-- [ ] 038.md - Final validation of success criteria achievement (parallel: false)
+- [ ] 038.md - Final validation of success criteria achievement (parallel:
+      false)
 - [ ] 039.md - Document lessons learned and best practices (parallel: true)
 - [ ] 040.md - Set up ongoing monitoring and alerting (parallel: true)
 
-**Total tasks**: 43
-**Parallel tasks**: 32
-**Sequential tasks**: 11
-**Estimated total effort**: 107 days (21.4 weeks)
+**Total tasks**: 43 **Parallel tasks**: 32 **Sequential tasks**: 11 **Estimated
+total effort**: 107 days (21.4 weeks)

@@ -7,7 +7,8 @@
 Analyzed 12 integration test files across the codebase:
 
 1. `packages/quality-check/src/integration/claude-hook-workflow-mocked.integration.test.ts`
-2. `packages/quality-check/src/integration/claude-hook-workflow.integration.test.ts` ✅
+2. `packages/quality-check/src/integration/claude-hook-workflow.integration.test.ts`
+   ✅
 3. `packages/quality-check/src/integration/config-variations.integration.test.ts`
 4. `packages/quality-check/tests/quality-checker-full.integration.test.ts` ✅
 5. `packages/quality-check/tests/vitest.integration.test.ts` ⚠️
@@ -22,12 +23,14 @@ Analyzed 12 integration test files across the codebase:
 ### Critical Issues Found
 
 #### 1. Timer Management Issues
+
 - **File**: `vitest.integration.test.ts`
 - **Line**: 86-99
 - **Issue**: Timer created but not cleaned up on test failure
 - **Fix**: Move `vi.useRealTimers()` to afterEach hook
 
 #### 2. Process Spawning Without Timeouts
+
 - **File**: `turborepo-validation.integration.test.ts`
 - **Issue**: Multiple `execSync` calls without timeout protection
 - **Fix**: Add timeout and killSignal options
@@ -35,21 +38,25 @@ Analyzed 12 integration test files across the codebase:
 ### Resource Leak Patterns
 
 #### Pattern 1: File System Resources
+
 - 5 files create temp directories
 - 4/5 use proper cleanup with `fs.rm`
 - Issue: `changesets.integration.test.ts` uses shell commands
 
 #### Pattern 2: Mock State Persistence
+
 - 7 files use mocks
 - 4/7 properly call `vi.clearAllMocks()`
 - 3 files missing mock cleanup
 
 #### Pattern 3: Process Management
+
 - 2 files spawn processes
 - No process tracking or cleanup guards
 - Risk of zombie processes
 
 #### Pattern 4: Timer/Interval Management
+
 - 3 files use timers
 - Only 1/3 properly manages timers
 - Risk of timer leaks
@@ -102,12 +109,12 @@ export function setupIntegrationTest() {
 // packages/quality-check/src/test-utils/process-utils.ts
 export function execSyncSafe(
   command: string,
-  options: ExecSyncOptions = {}
+  options: ExecSyncOptions = {},
 ): Buffer | string {
   const defaults = {
     timeout: 30000,
     killSignal: 'SIGTERM',
-    maxBuffer: 10 * 1024 * 1024
+    maxBuffer: 10 * 1024 * 1024,
   }
   return execSync(command, { ...defaults, ...options })
 }
@@ -116,6 +123,7 @@ export function execSyncSafe(
 ## Priority Order for Fixes
 
 ### High Priority (Immediate)
+
 1. **Fix timer leak in vitest.integration.test.ts**
    - Add afterEach with vi.useRealTimers()
    - Effort: 15 minutes
@@ -126,6 +134,7 @@ export function execSyncSafe(
    - Effort: 30 minutes
 
 ### Medium Priority
+
 3. **Standardize mock cleanup**
    - Add vi.clearAllMocks() to all test files
    - Effort: 1 hour
@@ -135,6 +144,7 @@ export function execSyncSafe(
    - Effort: 30 minutes
 
 ### Low Priority
+
 5. **Implement TestResourceGuard**
    - Create shared utility
    - Migrate tests to use it
@@ -161,12 +171,14 @@ export function execSyncSafe(
 ## Exemplary Patterns Found
 
 ### Best: claude-hook-workflow.integration.test.ts
+
 - Robust cleanup with fallback strategies
 - Restores working directory
 - Verifies cleanup completion
 - Handles environment variables properly
 
 ### Best: quality-checker-full.integration.test.ts
+
 - Clean separation of setup/teardown
 - Uses mock environment factory
 - Properly disposes resources
@@ -174,12 +186,14 @@ export function execSyncSafe(
 ## Testing Strategy
 
 ### 1. Resource Leak Detection
+
 - Run tests in loop to detect leaks
 - Monitor process count before/after
 - Check for open file handles
 - Verify timer cleanup
 
 ### 2. CI Integration
+
 ```yaml
 - name: Check for zombie processes
   run: |

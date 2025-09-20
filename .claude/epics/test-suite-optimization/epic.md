@@ -53,7 +53,8 @@ maintenance burden and confusion.
 
 ## Success Criteria
 
-- [x] Zero zombie processes verified in Activity Monitor after test runs (via pnpm test:safe)
+- [x] Zero zombie processes verified in Activity Monitor after test runs (via
+      pnpm test:safe)
 - [x] Memory baseline captured and documented (partial - placeholder values)
 - [x] All 18 .unit.test.ts files renamed to .test.ts
 - [x] Wallaby configured to run only .test.ts files
@@ -88,15 +89,20 @@ maintenance burden and confusion.
 ## Current Status (Updated 2025-09-20)
 
 ### Implementation Progress
+
 - **Actual**: ~90% implemented (19/21 tasks)
 - **Phase 5 COMPLETED**: Test quality improvements (Tasks #019, #020, #021)
 - **Immediate solutions working**: Emergency scripts provide protection now
-- **Vitest worker issue identified**: Internal worker processes not automatically tracked
+- **Vitest worker issue identified**: Internal worker processes not
+  automatically tracked
 
 ### What's Working Now
-1. **Emergency cleanup scripts** - `pnpm zombies:kill` instantly kills all zombies
+
+1. **Emergency cleanup scripts** - `pnpm zombies:kill` instantly kills all
+   zombies
 2. **Safe test wrapper** - `pnpm test:safe` runs tests with automatic cleanup
-3. **ProcessTracker class** - Implemented and tested, tracking user-spawned processes
+3. **ProcessTracker class** - Implemented and tested, tracking user-spawned
+   processes
 4. **TestResourceGuard** - Comprehensive cleanup guards for integration tests
 5. **Wallaby configuration** - Updated with worker recycling and timeouts
 6. **Mock reduction** - Eliminated 202 mocks in typescript-engine tests
@@ -111,10 +117,13 @@ maintenance burden and confusion.
 
 ### Phase 1: Zombie Process Elimination [COMPLETED]
 
-- [x] 004: Create zombie process tracking system (ProcessTracker class implemented)
-- [x] 005: Implement Vitest force-kill configuration (Updated with aggressive timeouts)
+- [x] 004: Create zombie process tracking system (ProcessTracker class
+      implemented)
+- [x] 005: Implement Vitest force-kill configuration (Updated with aggressive
+      timeouts)
 - [x] 006: Add global teardown hooks (Created but disabled for compatibility)
-- [x] 007: Create emergency cleanup script (Multiple scripts created and working)
+- [x] 007: Create emergency cleanup script (Multiple scripts created and
+      working)
 - [x] 008: Test zero-zombie guarantee (Validation tests implemented)
 
 ### Phase 2: Test File Standardization
@@ -140,7 +149,8 @@ maintenance burden and confusion.
 
 - [x] 019: Fix timing-dependent tests (Fixed with timing-test-utils.ts)
 - [x] 020: Reduce excessive mocking (Eliminated 202 mocks, exceeded 50% target)
-- [x] 021: Add cleanup guards to integration tests (TestResourceGuard implemented)
+- [x] 021: Add cleanup guards to integration tests (TestResourceGuard
+      implemented)
 
 ## Dependencies
 
@@ -198,6 +208,7 @@ Given single developer and no time constraints:
 ## Zombie Prevention Status (Updated 2025-09-20)
 
 ### ✅ What's Working
+
 - Manual cleanup scripts (`pnpm zombies:kill`) work perfectly
 - Safe test wrapper (`pnpm test:safe`) provides protection
 - ProcessTracker class is implemented and tested
@@ -208,6 +219,7 @@ Given single developer and no time constraints:
 **The Core Issue**: Vitest's `forks` pool configuration with multiple workers.
 
 When Vitest runs with:
+
 ```typescript
 pool: 'forks',
 poolOptions: {
@@ -219,27 +231,32 @@ poolOptions: {
 ```
 
 **What happens:**
+
 1. Vitest spawns multiple worker processes (node vitest 1, node vitest 2, etc.)
 2. Each worker runs tests in isolation
 3. When tests complete or timeout, workers don't always clean up properly
 4. Workers become zombie processes that accumulate over time
 
 **Contributing Factors:**
+
 - `isolate: true` - Each test file gets fresh environment (more process churn)
 - `watch: true` - Keeps processes alive for file watching
 - Test timeouts or failures can leave workers in bad state
 - Our tests that spawn processes (`spawn('sleep', ['60'])`) can timeout
 
 ### 🔧 Current Workarounds
+
 1. **Use `pnpm test:safe`** - Runs tests with automatic cleanup afterward
 2. **Use `pnpm zombies:kill`** - Manual cleanup when zombies accumulate
 3. **Monitor with Activity Monitor** - Watch for `node (vitest)` processes
 
 ### 📋 Production Solutions Research
 
-After researching Firecrawl, Tavily, Context7, and Vitest documentation, here are proven solutions:
+After researching Firecrawl, Tavily, Context7, and Vitest documentation, here
+are proven solutions:
 
 #### Option 1: Single Worker Mode (Most Reliable - Cloudflare Workers SDK)
+
 ```typescript
 poolOptions: {
   forks: {
@@ -248,10 +265,12 @@ poolOptions: {
   }
 }
 ```
-**Used by**: Cloudflare Workers SDK, NestJS projects
-**Trade-off**: Slower tests, no parallelism, but **zero zombies**
+
+**Used by**: Cloudflare Workers SDK, NestJS projects **Trade-off**: Slower
+tests, no parallelism, but **zero zombies**
 
 #### Option 2: Memory-Based Worker Recycling (Balanced Approach)
+
 ```typescript
 poolOptions: {
   vmForks: {
@@ -260,9 +279,11 @@ poolOptions: {
   }
 }
 ```
+
 **Purpose**: Prevents workers from becoming zombies due to memory leaks
 
 #### Option 3: Switch to Threads Pool (Better Cleanup)
+
 ```typescript
 pool: 'threads',           // Use worker threads instead of forks
 poolOptions: {
@@ -271,27 +292,34 @@ poolOptions: {
   }
 }
 ```
+
 **Benefit**: Threads have better cleanup behavior than child processes
 
 #### Option 4: Disable File Parallelism (Simple Fix)
+
 ```typescript
 fileParallelism: false,    // Forces workers to 1
 ```
+
 **Effect**: Single-threaded execution, eliminates worker management
 
 #### Option 5: Hanging Process Detection (Vitest Built-in)
+
 ```bash
 npx vitest --reporter=hanging-process
 ```
+
 **Use**: Identifies which processes prevent clean exit
 
 #### Option 6: Explicit Resource Management (Vitest 3.2+)
+
 ```typescript
 // Automatic cleanup when scope exits
 using spy = vi.spyOn(console, 'log').mockImplementation(() => {})
 ```
 
 #### Option 7: Current Approach (Wrapper-based)
+
 - Keep current config but use `pnpm test:safe` wrapper
 - Kills all processes after test completion
 
@@ -300,6 +328,7 @@ using spy = vi.spyOn(console, 'log').mockImplementation(() => {})
 Based on production examples and research, the **recommended approach** is:
 
 **Phase 1: Immediate Fix (Option 1)**
+
 ```typescript
 // vitest.config.ts
 poolOptions: {
@@ -311,15 +340,18 @@ poolOptions: {
 ```
 
 **Phase 2: Monitor and Optimize**
+
 - Use `--reporter=hanging-process` to identify any remaining issues
 - Consider memory limits if tests grow: `memoryLimit: '100MB'`
 - Implement explicit resource management for new tests
 
 **Phase 3: Advanced (If performance becomes critical)**
+
 - Switch to `pool: 'threads'` with `singleThread: true`
 - Use worker-scoped fixtures for expensive setup/teardown
 
 ### 🎯 Why This Is Hard to Fix Completely
+
 1. **Vitest's internal architecture** - Worker management is deeply embedded
 2. **Process isolation benefits** - Forks provide better test isolation
 3. **Performance vs safety trade-off** - Multiple workers = faster tests
@@ -331,11 +363,13 @@ poolOptions: {
 ### Working Zombie Prevention Commands
 
 1. **Safe Test Execution**
+
    ```bash
    pnpm test:safe  # Runs tests with automatic cleanup
    ```
 
 2. **Emergency Cleanup**
+
    ```bash
    pnpm zombies:kill  # Instantly kills all node/vitest processes
    ```
@@ -346,6 +380,7 @@ poolOptions: {
    ```
 
 ### Implementation Files
+
 - `scripts/kill-all-zombies.sh` - Instant cleanup utility
 - `scripts/test-with-cleanup.sh` - Test wrapper with automatic cleanup
 - `scripts/emergency-cleanup.ts` - Interactive cleanup with reporting
@@ -354,6 +389,7 @@ poolOptions: {
 ## Long-Term Solution Architecture
 
 ### 1. Vitest Plugin System (Recommended)
+
 Create a custom Vitest plugin that automatically tracks and kills processes:
 
 ```typescript
@@ -364,12 +400,13 @@ export default function zombieKillerPlugin() {
     setupFiles: ['./zombie-tracker-setup.ts'],
     beforeTestFile: async () => await trackProcessesBefore(),
     afterTestFile: async () => await killNewProcesses(),
-    teardown: async () => await killAllRemainingProcesses()
+    teardown: async () => await killAllRemainingProcesses(),
   }
 }
 ```
 
 ### 2. Process Proxy Pattern
+
 Safe wrapper functions that auto-track and kill:
 
 ```typescript
@@ -384,18 +421,23 @@ export function safeSpawn(...args) {
 ```
 
 ### 3. Test Runner Wrapper
+
 Custom runner wrapping Vitest with process monitoring:
+
 - Use async_hooks to track all async resources
 - Monitor PROCESSWRAP type resources
 - Guaranteed cleanup on exit
 
 ### 4. Operating System Integration
+
 Process groups for guaranteed cleanup:
+
 - Create process groups with setpgid
 - Kill entire groups with process.kill(-pgid)
 - Cross-platform compatibility layer
 
 ### 5. Vitest Configuration with Pool Isolation
+
 ```typescript
 pool: 'forks',
 poolOptions: {
@@ -408,6 +450,7 @@ poolOptions: {
 ```
 
 ### 6. Resource Disposal Pattern (TypeScript 5.2+)
+
 ```typescript
 class ManagedProcess implements Disposable {
   [Symbol.dispose]() {
@@ -422,6 +465,7 @@ class ManagedProcess implements Disposable {
 ```
 
 ### 7. Implementation Plan
+
 1. Create `vitest-zombie-plugin.ts` with lifecycle hooks
 2. Implement process wrapping functions
 3. Add worker recycling to Vitest config
@@ -430,6 +474,7 @@ class ManagedProcess implements Disposable {
 6. Add telemetry and reporting
 
 ### Expected Outcome
+
 - Zero manual intervention required
 - Automatic process cleanup after every test
 - No zombie accumulation even during crashes
