@@ -1,6 +1,12 @@
 /**
  * Test registration utilities for setting up test environments
+ *
+ * IMPORTANT: This file imports bootstrap.ts first to ensure all mocks
+ * are properly initialized before any other code runs.
  */
+
+// Bootstrap MUST be imported first - this sets up all vi.mock declarations
+import './bootstrap.js'
 
 import type { TestConfig, TestEnvironment } from './types.js'
 
@@ -59,6 +65,5 @@ export function isTestEnvironment(env: keyof TestEnvironment): boolean {
 
 // Global type extension
 declare global {
-  // eslint-disable-next-line no-var
   var __TEST_CONFIG__: TestConfig | undefined
 }
