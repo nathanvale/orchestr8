@@ -1,0 +1,13 @@
+import { createTsupConfig } from '../../tooling/build/tsup.base.js'
+
+export default createTsupConfig({
+  entry: [
+    'src/index.ts',
+    'src/register.ts',
+    'src/msw/index.ts',
+    'src/containers/index.ts',
+    'src/convex/index.ts',
+    'src/env/index.ts',
+    'src/utils/index.ts',
+  ],
+})
