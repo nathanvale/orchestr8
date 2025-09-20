@@ -2,8 +2,51 @@
  * Test container utilities using testcontainers library
  */
 
+// Export base database types and utilities
+export type {
+  BaseDatabaseConfig,
+  DatabaseConnectionConfig,
+  DatabaseTestContext,
+  MigrationConfig,
+  SeedConfig,
+  HealthCheckResult,
+  ContainerHooks,
+  DatabaseContainerOptions,
+  ContainerStartupResult,
+  ResourceTracker,
+  DatabaseExtensions,
+  TestConfiguration,
+  PoolConfig,
+  IsolationLevel,
+} from './types.js'
+
+// Export base database container
+export { BaseDatabaseContainer, createPoolConfig, createDatabaseConfig } from './base-database.js'
+
+// Export MySQL container and utilities
+export {
+  MySQLContainer,
+  createMySQLContext,
+  setupMySQLTest,
+  createMySQLConfig,
+  MySQLPresets,
+  MySQLSQLMode,
+  MySQLCharacterSet,
+} from './mysql.js'
+
+// Export MySQL configuration types
+export type {
+  MySQLDatabaseConfig,
+  MySQLConnectionOptions,
+  MySQLReplicationConfig,
+  MySQLPerformanceConfig,
+} from './mysql-config.js'
+
+export { MySQLCollation, MySQLStorageEngine } from './mysql-config.js'
+
 /**
- * Base container configuration
+ * Legacy container configuration for backwards compatibility
+ * @deprecated Use the specific database container implementations instead
  */
 export interface ContainerConfig {
   /** Container image name */
@@ -18,9 +61,9 @@ export interface ContainerConfig {
 
 /**
  * Create a test container with the given configuration
+ * @deprecated Use createMySQLContext or specific database helpers instead
  */
 export function createTestContainer(config: ContainerConfig) {
-  // Container creation logic will be implemented here
   return {
     config,
     start: async () => {
@@ -38,6 +81,7 @@ export function createTestContainer(config: ContainerConfig) {
 
 /**
  * Common container configurations
+ * @deprecated Use MySQLPresets or specific database presets instead
  */
 export const containerConfigs = {
   postgres: {
@@ -47,6 +91,16 @@ export const containerConfigs = {
       POSTGRES_DB: 'test',
       POSTGRES_USER: 'test',
       POSTGRES_PASSWORD: 'test',
+    },
+  },
+  mysql: {
+    image: 'mysql:8.0',
+    ports: [3306],
+    env: {
+      MYSQL_DATABASE: 'test',
+      MYSQL_USER: 'test',
+      MYSQL_PASSWORD: 'test',
+      MYSQL_ROOT_PASSWORD: 'root',
     },
   },
   redis: {

@@ -60,19 +60,24 @@
     "@template/utils": "workspace:*"
   },
   "devDependencies": {
+    "@testcontainers/mysql": "^11.6.0",
+    "@testcontainers/postgresql": "^11.6.0",
     "@types/node": "^24.3.0",
+    "@types/pg": "^8.15.5",
     "@vitest/coverage-v8": "^3.2.4",
     "@vitest/ui": "^3.2.4",
     "convex-test": "^0.0.38",
     "happy-dom": "^18.0.1",
     "msw": "^2.10.5",
+    "mysql2": "^3.15.0",
+    "pg": "^8.16.3",
     "testcontainers": "^10.17.2",
     "tsup": "^8.3.5",
     "typescript": "^5.7.3",
     "vitest": "^3.2.4"
   },
   "peerDependencies": {
-    "vitest": "^3.2.4",
-    "@vitest/ui": "^3.2.4"
+    "@vitest/ui": "^3.2.4",
+    "vitest": "^3.2.4"
   }
 }

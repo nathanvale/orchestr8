@@ -97,19 +97,23 @@ export function createConvexTestHarness<Schema extends GenericSchema = GenericSc
     withUser(identity) {
       debugLog('Setting user identity', identity)
       state.currentUser = identity
-      return state.convexInstance.withIdentity(identity) as TestConvex<SchemaDefinition<Schema>>
+      return state.convexInstance.withIdentity(identity) as unknown as TestConvex<
+        SchemaDefinition<Schema>
+      >
     },
 
     withoutAuth() {
       debugLog('Removing user identity')
       state.currentUser = null
-      return state.convexInstance as TestConvex<SchemaDefinition<Schema>>
+      return state.convexInstance as unknown as TestConvex<SchemaDefinition<Schema>>
     },
 
     switchUser(identity) {
       debugLog('Switching user identity', identity)
       state.currentUser = identity
-      return state.convexInstance.withIdentity(identity) as TestConvex<SchemaDefinition<Schema>>
+      return state.convexInstance.withIdentity(identity) as unknown as TestConvex<
+        SchemaDefinition<Schema>
+      >
     },
 
     getCurrentUser() {
@@ -233,7 +237,7 @@ export function createConvexTestHarness<Schema extends GenericSchema = GenericSc
   }
 
   const context: ConvexTestContext<Schema> = {
-    convex: state.convexInstance as TestConvex<SchemaDefinition<Schema>>,
+    convex: state.convexInstance as unknown as TestConvex<SchemaDefinition<Schema>>,
     db,
     auth,
     storage,
@@ -360,7 +364,7 @@ export function createMinimalConvexTest<Schema extends GenericSchema = GenericSc
   const convexInstance = convexTest(schema as any)
 
   return {
-    convex: convexInstance as TestConvex<SchemaDefinition<Schema>>,
+    convex: convexInstance as unknown as TestConvex<SchemaDefinition<Schema>>,
     db: {
       async run(func) {
         return convexInstance.run(func as any)
