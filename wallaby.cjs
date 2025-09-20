@@ -31,6 +31,7 @@ module.exports = function (wallaby) {
 
     // Only include source tests, exclude node_modules completely
     tests: [
+      '*.test.ts', // Include root level test files
       'packages/*/src/**/*.test.ts',
       'packages/*/src/**/*.test.tsx',
       'tests/**/*.test.ts',
@@ -45,6 +46,8 @@ module.exports = function (wallaby) {
 
     // Also exclude node_modules from files
     files: [
+      '*.ts', // Include root level files
+      '!*.test.ts', // Exclude root level test files
       'packages/*/src/**/*.ts',
       'packages/*/src/**/*.tsx',
       '!packages/*/src/**/*.test.ts',
@@ -53,8 +56,6 @@ module.exports = function (wallaby) {
       'packages/*/package.json',
       'tsconfig*.json',
       'vitest.config.ts',
-      'vitest.shared.ts',
-      'vitest.setup.tsx',
     ],
   }
 }
