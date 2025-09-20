@@ -2,53 +2,16 @@
  * Convex testing utilities
  */
 
-/**
- * Convex test configuration
- */
-export interface ConvexTestConfig {
-  /** Convex deployment URL */
-  deploymentUrl?: string
-  /** Test mode */
-  mode: 'local' | 'cloud'
-  /** Auth configuration for tests */
-  auth?: {
-    provider: string
-    testUserId?: string
-  }
-}
+// Export all types from context
+export type * from './context.js'
 
-/**
- * Default Convex test configuration
- */
-export const defaultConvexConfig: ConvexTestConfig = {
-  mode: 'local',
-}
+// Export all functions from harness
+export * from './harness.js'
 
-/**
- * Setup Convex for testing
- */
-export function setupConvexTest(config: Partial<ConvexTestConfig> = {}) {
-  const mergedConfig = {
-    ...defaultConvexConfig,
-    ...config,
-  }
-
-  // Convex test setup logic will be implemented here
-  return {
-    config: mergedConfig,
-    cleanup: async () => {
-      // Cleanup logic
-    },
-  }
-}
-
-/**
- * Create a mock Convex client for testing
- */
-export function createMockConvexClient() {
-  return {
-    query: async () => ({}),
-    mutation: async () => ({}),
-    action: async () => ({}),
-  }
-}
+// Re-export key classes
+export {
+  ConvexTestError,
+  ConvexAuthError,
+  ConvexDataError,
+  ConvexTestTimeoutError,
+} from './context.js'
