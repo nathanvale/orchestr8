@@ -3,6 +3,7 @@
 ## Current State Assessment
 
 **No Testcontainers Implementation**:
+
 - No existing database testing utilities in testkit
 - No Testcontainers dependencies installed
 - No Docker configuration for testing
@@ -10,36 +11,43 @@
 ## Parallel Streams
 
 ### Stream A: Shared Database Abstraction
+
 - **Files**: src/containers/base-database.ts, src/containers/types.ts
-- **Work**: Create abstract base class for database containers (shared with Task 004)
+- **Work**: Create abstract base class for database containers (shared with
+  Task 004)
 - **Dependencies**: None
 - **Estimated Time**: 2-3 hours
 
 ### Stream B: Postgres-Specific Implementation
+
 - **Files**: src/containers/postgres.ts, src/containers/postgres-config.ts
 - **Work**: Postgres container wrapper, connection management, extensions
 - **Dependencies**: Stream A for base class
 - **Estimated Time**: 2 hours
 
 ### Stream C: Migration & Seeding Utilities
+
 - **Files**: src/containers/migrations.ts, src/containers/seeders.ts
 - **Work**: Generic migration runner, data seeding patterns
 - **Dependencies**: Stream A for types
 - **Estimated Time**: 2 hours
 
 ### Stream D: Connection Pool Management
+
 - **Files**: src/containers/pool.ts, src/containers/cleanup.ts
 - **Work**: Connection pooling, resource cleanup hooks
 - **Dependencies**: None (can run parallel)
 - **Estimated Time**: 1-2 hours
 
 ### Stream E: Test Fixtures & Examples
-- **Files**: fixtures/postgres/*, examples/postgres.test.ts
+
+- **Files**: fixtures/postgres/\*, examples/postgres.test.ts
 - **Work**: Sample schemas, test data, usage examples
 - **Dependencies**: Streams B & C complete
 - **Estimated Time**: 1 hour
 
 ## Dependencies Graph
+
 ```mermaid
 graph TD
     A[Stream A: Base Abstraction] --> B[Stream B: Postgres]
@@ -52,6 +60,7 @@ graph TD
 ## Shared Abstraction with Task 004
 
 ### Base Database Container
+
 ```typescript
 abstract class BaseDatabaseContainer<T> {
   abstract getConnectionString(): string
@@ -64,6 +73,7 @@ abstract class BaseDatabaseContainer<T> {
 ```
 
 ### Shared Types
+
 ```typescript
 interface DatabaseConfig {
   image: string
@@ -119,11 +129,12 @@ packages/testkit/
 ## Implementation Strategy
 
 ### Quick Start API
+
 ```typescript
 // Simple one-liner setup
 const { db, cleanup } = await setupPostgresTest({
   migrations: './migrations',
-  seed: './fixtures/seed.sql'
+  seed: './fixtures/seed.sql',
 })
 
 // Advanced configuration
@@ -131,11 +142,12 @@ const context = await createPostgresContext({
   version: '15-alpine',
   extensions: ['pgvector', 'postgis'],
   initScripts: ['./init.sql'],
-  poolSize: 5
+  poolSize: 5,
 })
 ```
 
 ### Resource Management
+
 ```typescript
 // Automatic cleanup in afterEach/afterAll
 beforeAll(async () => {

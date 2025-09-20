@@ -3,6 +3,7 @@
 ## Current State Assessment
 
 **No Testcontainers Implementation**:
+
 - No existing database testing utilities in testkit
 - Shares ~80% implementation with Task 003 (Postgres)
 - Can reuse base abstraction from Task 003
@@ -10,24 +11,28 @@
 ## Parallel Streams
 
 ### Stream A: MySQL-Specific Implementation
+
 - **Files**: src/containers/mysql.ts, src/containers/mysql-config.ts
 - **Work**: MySQL container wrapper, connection management, charset config
 - **Dependencies**: Base abstraction from Task 003 Stream A
 - **Estimated Time**: 2 hours
 
 ### Stream B: MySQL-Specific Features
+
 - **Files**: src/containers/mysql-features.ts
 - **Work**: SQL modes, character sets, replication setup
 - **Dependencies**: Stream A
 - **Estimated Time**: 1-2 hours
 
 ### Stream C: Test Fixtures & Examples
-- **Files**: fixtures/mysql/*, examples/mysql.test.ts
+
+- **Files**: fixtures/mysql/\*, examples/mysql.test.ts
 - **Work**: Sample schemas, test data, usage examples
 - **Dependencies**: Stream A complete
 - **Estimated Time**: 1 hour
 
 ## Dependencies Graph
+
 ```mermaid
 graph TD
     T003[Task 003: Base Abstraction] --> A[Stream A: MySQL Core]
@@ -39,6 +44,7 @@ graph TD
 ## Shared Components from Task 003
 
 ### Reused from Base Abstraction
+
 - `BaseDatabaseContainer` class
 - `DatabaseConfig` interface
 - `TestContext` interface
@@ -48,6 +54,7 @@ graph TD
 - Cleanup hooks
 
 ### MySQL-Specific Extensions
+
 ```typescript
 class MySQLContainer extends BaseDatabaseContainer<MySQLConnection> {
   // MySQL-specific overrides
@@ -91,11 +98,12 @@ packages/testkit/
 ## Implementation Strategy
 
 ### Quick Start API
+
 ```typescript
 // Simple setup (mirrors Postgres API)
 const { db, cleanup } = await setupMySQLTest({
   migrations: './migrations',
-  seed: './fixtures/seed.sql'
+  seed: './fixtures/seed.sql',
 })
 
 // MySQL-specific configuration
@@ -103,11 +111,12 @@ const context = await createMySQLContext({
   version: '8.0',
   characterSet: 'utf8mb4',
   sqlMode: 'STRICT_ALL_TABLES',
-  enableSlowQueryLog: true
+  enableSlowQueryLog: true,
 })
 ```
 
 ### Feature Parity with Postgres
+
 ```typescript
 // Same API surface for consistency
 interface DatabaseTestHelpers {
@@ -119,14 +128,14 @@ interface DatabaseTestHelpers {
 
 ## Differences from Postgres
 
-| Feature | Postgres | MySQL |
-|---------|----------|--------|
-| Default Port | 5432 | 3306 |
-| Connection Library | pg | mysql2 |
-| Schema Support | Multiple schemas | Database = schema |
-| Extensions | CREATE EXTENSION | Built-in features |
-| Arrays | Native support | JSON arrays |
-| JSONB | Native | JSON type |
+| Feature            | Postgres         | MySQL             |
+| ------------------ | ---------------- | ----------------- |
+| Default Port       | 5432             | 3306              |
+| Connection Library | pg               | mysql2            |
+| Schema Support     | Multiple schemas | Database = schema |
+| Extensions         | CREATE EXTENSION | Built-in features |
+| Arrays             | Native support   | JSON arrays       |
+| JSONB              | Native           | JSON type         |
 
 ## Risk Mitigation
 

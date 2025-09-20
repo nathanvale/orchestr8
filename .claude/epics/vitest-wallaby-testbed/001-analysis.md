@@ -2,7 +2,9 @@
 
 ## Current State Assessment
 
-**Package Already Exists**: The testkit package is already present at `/packages/testkit` with:
+**Package Already Exists**: The testkit package is already present at
+`/packages/testkit` with:
+
 - Basic package.json structure
 - TypeScript configuration extending monorepo base
 - Empty src/index.ts file
@@ -11,36 +13,43 @@
 ## Parallel Streams
 
 ### Stream A: Core Configuration Updates
+
 - **Files**: package.json, tsconfig.json, vitest.config.ts
-- **Work**: Update dependencies, enhance TypeScript config, create Vitest configuration
+- **Work**: Update dependencies, enhance TypeScript config, create Vitest
+  configuration
 - **Dependencies**: None (can start immediately)
 - **Estimated Time**: 1-2 hours
 
 ### Stream B: Export Structure & API Design
+
 - **Files**: src/index.ts, src/types.ts
 - **Work**: Design and implement the public API exports
 - **Dependencies**: None (can start immediately)
 - **Estimated Time**: 1 hour
 
 ### Stream C: Documentation & Examples
-- **Files**: README.md, examples/*.ts
+
+- **Files**: README.md, examples/\*.ts
 - **Work**: Create usage documentation and example tests
 - **Dependencies**: Streams A & B must be complete
 - **Estimated Time**: 1-2 hours
 
 ### Stream D: Turbo Integration
+
 - **Files**: ../../turbo.json
 - **Work**: Add testkit to pipeline, configure caching
 - **Dependencies**: Stream A must define scripts
 - **Estimated Time**: 30 minutes
 
 ### Stream E: Wallaby Configuration
+
 - **Files**: wallaby.config.js (package level)
 - **Work**: Create Wallaby-specific configuration
 - **Dependencies**: Stream A vitest config
 - **Estimated Time**: 1 hour
 
 ## Dependencies Graph
+
 ```mermaid
 graph TD
     A[Stream A: Core Config] --> D[Stream D: Turbo]
@@ -76,11 +85,13 @@ packages/testkit/
 ## Implementation Details
 
 ### Stream A Specifics
+
 - Add missing dev dependencies: @vitest/ui, @vitest/coverage-v8
 - Configure test globals in tsconfig
 - Setup vitest with proper test patterns and coverage
 
 ### Stream B Specifics
+
 - Export MSW utilities from src/msw
 - Export container helpers (future tasks)
 - Export test utilities and matchers

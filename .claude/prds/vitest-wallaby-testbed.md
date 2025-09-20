@@ -1,6 +1,8 @@
 ---
 name: vitest-wallaby-testbed
-description: Disciplined, low-flake testing infrastructure with strict mocking policies for Turbo monorepo
+description:
+  Disciplined, low-flake testing infrastructure with strict mocking policies for
+  Turbo monorepo
 status: backlog
 created: 2025-09-20T03:16:39Z
 ---
@@ -9,17 +11,27 @@ created: 2025-09-20T03:16:39Z
 
 ## Executive Summary
 
-This PRD defines requirements for a disciplined, low-flake testing infrastructure across a Turbo monorepo that combines Vitest (test runner) and Wallaby (fast TDD feedback) with support for Convex, Postgres, and MySQL. The core focus is establishing strict and detailed rules for mocking to prevent brittle, over-mocked test suites while maintaining sub-second feedback loops for TDD.
+This PRD defines requirements for a disciplined, low-flake testing
+infrastructure across a Turbo monorepo that combines Vitest (test runner) and
+Wallaby (fast TDD feedback) with support for Convex, Postgres, and MySQL. The
+core focus is establishing strict and detailed rules for mocking to prevent
+brittle, over-mocked test suites while maintaining sub-second feedback loops for
+TDD.
 
 ## Problem Statement
 
 ### What problem are we solving?
 
-- **Mock Overuse**: Teams frequently overuse mocks, creating brittle test suites that require high maintenance and provide false confidence
-- **Unclear Policies**: Without clear mocking guidelines, developers simulate too much, missing real integration issues
-- **Slow Feedback**: Traditional test runners provide slow feedback loops that discourage TDD practices
-- **Test Flakiness**: Inconsistent approaches to handling external dependencies lead to flaky tests in CI
-- **Mixed Technologies**: Supporting Convex, Postgres, and MySQL requires different testing strategies that aren't well-defined
+- **Mock Overuse**: Teams frequently overuse mocks, creating brittle test suites
+  that require high maintenance and provide false confidence
+- **Unclear Policies**: Without clear mocking guidelines, developers simulate
+  too much, missing real integration issues
+- **Slow Feedback**: Traditional test runners provide slow feedback loops that
+  discourage TDD practices
+- **Test Flakiness**: Inconsistent approaches to handling external dependencies
+  lead to flaky tests in CI
+- **Mixed Technologies**: Supporting Convex, Postgres, and MySQL requires
+  different testing strategies that aren't well-defined
 
 ### Why is this important now?
 
@@ -50,6 +62,7 @@ This PRD defines requirements for a disciplined, low-flake testing infrastructur
 ### Detailed User Journeys
 
 **Alex's TDD Workflow:**
+
 1. Opens Wallaby in VS Code
 2. Writes a failing unit test for new business logic
 3. Gets sub-second feedback showing test failure
@@ -57,6 +70,7 @@ This PRD defines requirements for a disciplined, low-flake testing infrastructur
 5. Refactors with confidence knowing tests run instantly
 
 **Sarah's Integration Testing:**
+
 1. Writes integration test for API endpoint
 2. Test automatically spins up Postgres via Testcontainers
 3. Makes real DB queries to validate schema and transactions
@@ -109,6 +123,7 @@ This PRD defines requirements for a disciplined, low-flake testing infrastructur
 #### User Interactions and Flows
 
 1. **Test Execution Flow**
+
    ```
    Developer writes test → Wallaby detects change → Runs affected tests →
    Shows inline results → Developer fixes issues → Tests pass → Commit
@@ -214,13 +229,18 @@ This PRD defines requirements for a disciplined, low-flake testing infrastructur
 
 ### Existing Documentation
 
-The following documentation has been created to support this initiative and should be referenced during implementation:
+The following documentation has been created to support this initiative and
+should be referenced during implementation:
 
-- **[Product Requirements Document](../../docs/guides/vitest-wallaby-prd.md)**: Detailed PRD with mocking policies and success criteria
-- **[Technical Specification](../../docs/guides/vitest-wallaby-spec.md)**: Comprehensive technical spec with monorepo layout and configuration details
-- **[Technical Design Document](../../docs/guides/vitest-wallaby-tdd.md)**: Architecture and implementation design with deliverables
+- **[Product Requirements Document](../../docs/guides/vitest-wallaby-prd.md)**:
+  Detailed PRD with mocking policies and success criteria
+- **[Technical Specification](../../docs/guides/vitest-wallaby-spec.md)**:
+  Comprehensive technical spec with monorepo layout and configuration details
+- **[Technical Design Document](../../docs/guides/vitest-wallaby-tdd.md)**:
+  Architecture and implementation design with deliverables
 
-These documents contain the detailed technical requirements, mocking policies, and implementation guidelines that supplement this PRD.
+These documents contain the detailed technical requirements, mocking policies,
+and implementation guidelines that supplement this PRD.
 
 ## Dependencies
 
@@ -243,18 +263,21 @@ These documents contain the detailed technical requirements, mocking policies, a
 ## Implementation Phases
 
 ### Phase 1: Foundation (Weeks 1-4)
+
 - Set up testkit package with core utilities
 - Implement MSW server configuration
 - Create Testcontainers helpers for Postgres/MySQL
 - Establish Convex test harness
 
 ### Phase 2: Policy Implementation (Weeks 5-8)
+
 - Document detailed mocking policies
 - Create test templates for each scenario
 - Implement lint rules for policy enforcement
 - Set up CI pipeline with worker caps
 
 ### Phase 3: Migration Support (Weeks 9-12)
+
 - Create migration guides from current test setup
 - Provide training sessions on new approach
 - Support gradual test migration
@@ -288,11 +311,16 @@ These documents contain the detailed technical requirements, mocking policies, a
 
 ## Open Questions
 
-1. **Enforcement Strategy**: Should mocking rules be enforced via lint rules, CI reports, or both?
-2. **Memory File System**: Should memfs be included by default in testkit or rely on tmp directories?
-3. **Convex Integration**: Should Convex local backend run in CI by default or remain opt-in?
-4. **Test Data Management**: How should test data factories and builders be standardized?
-5. **Performance Regression**: What thresholds trigger CI failure for test duration regression?
+1. **Enforcement Strategy**: Should mocking rules be enforced via lint rules, CI
+   reports, or both?
+2. **Memory File System**: Should memfs be included by default in testkit or
+   rely on tmp directories?
+3. **Convex Integration**: Should Convex local backend run in CI by default or
+   remain opt-in?
+4. **Test Data Management**: How should test data factories and builders be
+   standardized?
+5. **Performance Regression**: What thresholds trigger CI failure for test
+   duration regression?
 
 ## Appendix
 
@@ -319,14 +347,14 @@ Unit Tests (70-80%)
 
 ### Mocking Decision Matrix
 
-| Scenario | Unit Test | Integration Test | E2E Test |
-|----------|-----------|------------------|----------|
-| HTTP/API | MSW | Real/MSW | Stub 3P only |
-| Database | SQLite/convex-test | Testcontainers | Real |
-| CLI | Stub child_process | Real in sandbox | Real |
-| File System | memfs/stub | tmp dirs | Real |
-| Time | Fake timers | Fake timers | Real |
-| Random | Stub Math.random | Deterministic seed | Real |
+| Scenario    | Unit Test          | Integration Test   | E2E Test     |
+| ----------- | ------------------ | ------------------ | ------------ |
+| HTTP/API    | MSW                | Real/MSW           | Stub 3P only |
+| Database    | SQLite/convex-test | Testcontainers     | Real         |
+| CLI         | Stub child_process | Real in sandbox    | Real         |
+| File System | memfs/stub         | tmp dirs           | Real         |
+| Time        | Fake timers        | Fake timers        | Real         |
+| Random      | Stub Math.random   | Deterministic seed | Real         |
 
 ### Sample Configuration
 
@@ -342,7 +370,7 @@ export default defineConfig({
     isolate: true,
     bail: 1,
     teardownTimeout: 20_000,
-    env: { NODE_ENV: 'test' }
-  }
+    env: { NODE_ENV: 'test' },
+  },
 })
 ```

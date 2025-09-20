@@ -1,6 +1,8 @@
 ---
 name: vitest-wallaby-testbed
-description: Disciplined, low-flake testing infrastructure with strict mocking policies for Turbo monorepo
+description:
+  Disciplined, low-flake testing infrastructure with strict mocking policies for
+  Turbo monorepo
 status: in-progress
 progress: 33%
 prd_link: ../../prds/vitest-wallaby-testbed.md
@@ -12,7 +14,10 @@ updated: 2025-09-20T04:58:21Z
 
 ## Overview
 
-Implementation of disciplined, low-flake testing infrastructure combining Vitest (test runner) and Wallaby (fast TDD feedback) with support for Convex, Postgres, and MySQL. Focus on strict mocking policies to prevent brittle test suites while maintaining sub-second feedback loops.
+Implementation of disciplined, low-flake testing infrastructure combining Vitest
+(test runner) and Wallaby (fast TDD feedback) with support for Convex, Postgres,
+and MySQL. Focus on strict mocking policies to prevent brittle test suites while
+maintaining sub-second feedback loops.
 
 ## Related Documentation
 
@@ -32,6 +37,7 @@ Implementation of disciplined, low-flake testing infrastructure combining Vitest
 ## Task Breakdown
 
 ### Phase 1: Foundation (Tasks 001-010)
+
 - Setup testkit package structure
 - Implement MSW server configuration
 - Create database testing utilities
@@ -39,6 +45,7 @@ Implementation of disciplined, low-flake testing infrastructure combining Vitest
 - Configure Vitest base settings
 
 ### Phase 2: Mocking Infrastructure (Tasks 011-020)
+
 - Implement HTTP/API mocking with MSW
 - Create database mocking strategies
 - Setup CLI command mocking
@@ -46,6 +53,7 @@ Implementation of disciplined, low-flake testing infrastructure combining Vitest
 - Configure time and randomness control
 
 ### Phase 3: Integration Layer (Tasks 021-030)
+
 - Setup Testcontainers for Postgres
 - Setup Testcontainers for MySQL
 - Implement Convex local backend testing
@@ -53,6 +61,7 @@ Implementation of disciplined, low-flake testing infrastructure combining Vitest
 - Build integration test templates
 
 ### Phase 4: CI/CD Configuration (Tasks 031-040)
+
 - Configure worker caps and parallelization
 - Implement test sharding strategy
 - Setup performance monitoring
@@ -60,6 +69,7 @@ Implementation of disciplined, low-flake testing infrastructure combining Vitest
 - Configure Wallaby CI integration
 
 ### Phase 5: Documentation & Training (Tasks 041-050)
+
 - Write mocking policy documentation
 - Create test template library
 - Build migration guides
@@ -67,6 +77,7 @@ Implementation of disciplined, low-flake testing infrastructure combining Vitest
 - Implement policy enforcement
 
 ### Phase 6: Migration Support (Tasks 051-060)
+
 - Create automated migration tools
 - Package-by-package migration plan
 - Performance baseline establishment
@@ -83,12 +94,12 @@ Implementation of disciplined, low-flake testing infrastructure combining Vitest
 
 ## Risk Register
 
-| Risk | Impact | Mitigation |
-|------|--------|------------|
-| Wallaby compatibility issues | High | Early POC validation, fallback to Vitest watch |
-| Container resource consumption | Medium | Resource limits, cleanup hooks |
-| Test migration complexity | High | Automated tools, gradual migration |
-| Developer resistance | Medium | Clear docs, gradual enforcement |
+| Risk                           | Impact | Mitigation                                     |
+| ------------------------------ | ------ | ---------------------------------------------- |
+| Wallaby compatibility issues   | High   | Early POC validation, fallback to Vitest watch |
+| Container resource consumption | Medium | Resource limits, cleanup hooks                 |
+| Test migration complexity      | High   | Automated tools, gradual migration             |
+| Developer resistance           | Medium | Clear docs, gradual enforcement                |
 
 ## Dependencies
 
