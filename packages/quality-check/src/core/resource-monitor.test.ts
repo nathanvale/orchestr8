@@ -6,6 +6,7 @@ describe('ResourceMonitor', () => {
   let originalMemoryUsage: typeof process.memoryUsage
 
   beforeEach(() => {
+    vi.useFakeTimers()
     monitor = new ResourceMonitor()
     originalMemoryUsage = process.memoryUsage
   })
@@ -14,6 +15,7 @@ describe('ResourceMonitor', () => {
     monitor.cleanup()
     process.memoryUsage = originalMemoryUsage
     vi.clearAllMocks()
+    vi.useRealTimers()
   })
 
   describe('constructor', () => {
@@ -113,7 +115,7 @@ describe('ResourceMonitor', () => {
       monitor.startMonitoring(10) // Faster interval for testing
 
       // Wait for some snapshots to be collected
-      await new Promise((resolve) => setTimeout(resolve, 50))
+      await vi.advanceTimersByTimeAsync(50)
 
       const growthRate = monitor.getMemoryGrowthRate()
       expect(typeof growthRate).toBe('number')
@@ -133,7 +135,7 @@ describe('ResourceMonitor', () => {
       monitor.startMonitoring(10)
 
       // Wait for snapshots
-      await new Promise((resolve) => setTimeout(resolve, 50))
+      await vi.advanceTimersByTimeAsync(50)
 
       const prediction = monitor.predictMemoryExhaustion(1000)
       expect(typeof prediction).toBe('boolean')
@@ -257,7 +259,7 @@ describe('ResourceMonitor', () => {
       monitor.startMonitoring(10)
 
       // Wait for snapshots to accumulate
-      await new Promise((resolve) => setTimeout(resolve, 50))
+      await vi.advanceTimersByTimeAsync(50)
 
       monitor.cleanup()
 
@@ -294,7 +296,7 @@ describe('ResourceMonitor', () => {
     it('should maintain accuracy with frequent updates', async () => {
       monitor.startMonitoring(5) // Very fast updates
 
-      await new Promise((resolve) => setTimeout(resolve, 100))
+      await vi.advanceTimersByTimeAsync(100)
 
       const status = monitor.getStatus()
       expect(status.memoryUsed).toBeGreaterThan(0)

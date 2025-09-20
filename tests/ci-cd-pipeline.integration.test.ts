@@ -1,17 +1,25 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, afterAll, vi } from 'vitest'
 import {
   loadActualADHDWorkflow,
   validateWorkflowStructure,
   ADHD_CI_JOBS,
   DEPENDENT_JOBS,
   type CIWorkflow,
-} from './workflow-validation-helpers'
+} from './workflow-validation-helpers.js'
 
 describe('GitHub Actions ADHD CI Workflow Validation', () => {
   let workflow: CIWorkflow
 
   beforeEach(async () => {
     workflow = await loadActualADHDWorkflow()
+  })
+
+  afterEach(() => {
+    vi.clearAllMocks()
+  })
+
+  afterAll(() => {
+    vi.restoreAllMocks()
   })
 
   describe('GitHub Actions Workflow Syntax', () => {
@@ -30,8 +38,8 @@ describe('GitHub Actions ADHD CI Workflow Validation', () => {
 
     it('should_have_valid_environment_variables', () => {
       expect(workflow.env).toBeDefined()
-      expect(workflow.env?.NODE_VERSION).toMatch(/^\d+\.\d+\.\d+$/)
-      expect(workflow.env?.PNPM_VERSION).toMatch(/^\d+\.\d+\.\d+$/)
+      expect(workflow.env?.['NODE_VERSION']).toMatch(/^\d+\.\d+\.\d+$/)
+      expect(workflow.env?.['PNPM_VERSION']).toMatch(/^\d+\.\d+\.\d+$/)
     })
   })
 
@@ -68,9 +76,9 @@ describe('GitHub Actions ADHD CI Workflow Validation', () => {
 
   describe('Job Dependencies Validation', () => {
     it('should_have_setup_job_with_no_dependencies', () => {
-      const setupJob = workflow.jobs.setup
+      const setupJob = workflow.jobs['setup']
       expect(setupJob).toBeDefined()
-      expect(setupJob.needs).toBeUndefined()
+      expect(setupJob?.needs).toBeUndefined()
     })
 
     it('should_have_all_dependent_jobs_requiring_setup', () => {
@@ -82,22 +90,22 @@ describe('GitHub Actions ADHD CI Workflow Validation', () => {
 
         const job = workflow.jobs[jobId]
         expect(job).toBeDefined()
-        expect(job.needs).toBe('setup')
+        expect(job?.needs).toBe('setup')
       })
     })
 
     it('should_have_ci_status_job_depending_on_all_other_jobs', () => {
       const statusJob = workflow.jobs['ci-status']
       expect(statusJob).toBeDefined()
-      expect(statusJob.needs).toBeDefined()
+      expect(statusJob?.needs).toBeDefined()
 
-      const needs = Array.isArray(statusJob.needs) ? statusJob.needs : [statusJob.needs]
+      const needs = Array.isArray(statusJob?.needs) ? statusJob?.needs : [statusJob?.needs]
       expect(needs.sort()).toEqual(DEPENDENT_JOBS.sort())
     })
 
     it('should_have_ci_status_job_with_always_condition', () => {
       const statusJob = workflow.jobs['ci-status']
-      expect(statusJob.if).toBe('always()')
+      expect(statusJob?.if).toBe('always()')
     })
   })
 
@@ -105,12 +113,12 @@ describe('GitHub Actions ADHD CI Workflow Validation', () => {
     it('should_have_commit_lint_only_run_on_pull_requests', () => {
       const commitLintJob = workflow.jobs['commit-lint']
       expect(commitLintJob).toBeDefined()
-      expect(commitLintJob.if).toBe("github.event_name == 'pull_request'")
+      expect(commitLintJob?.if).toBe("github.event_name == 'pull_request'")
     })
 
     it('should_have_setup_job_cache_conditional_install', () => {
-      const setupJob = workflow.jobs.setup
-      const installStep = setupJob.steps.find((step) => step.name === 'Install Dependencies')
+      const setupJob = workflow.jobs['setup']
+      const installStep = setupJob?.steps.find((step) => step.name === 'Install Dependencies')
 
       expect(installStep).toBeDefined()
       expect(installStep?.if).toBe("steps.cache.outputs.cache-hit != 'true'")
@@ -141,14 +149,14 @@ describe('GitHub Actions ADHD CI Workflow Validation', () => {
 
   describe('Job Outputs Validation', () => {
     it('should_have_setup_job_produce_cache_hit_output', () => {
-      const setupJob = workflow.jobs.setup
-      expect(setupJob.outputs).toBeDefined()
-      expect(setupJob.outputs?.['cache-hit']).toBe('${{ steps.cache.outputs.cache-hit }}')
+      const setupJob = workflow.jobs['setup']
+      expect(setupJob?.outputs).toBeDefined()
+      expect(setupJob?.outputs?.['cache-hit']).toBe('${{ steps.cache.outputs.cache-hit }}')
     })
 
     it('should_have_cache_step_with_correct_id', () => {
-      const setupJob = workflow.jobs.setup
-      const cacheStep = setupJob.steps.find((step) => step.name === 'Cache Dependencies')
+      const setupJob = workflow.jobs['setup']
+      const cacheStep = setupJob?.steps.find((step) => step.name === 'Cache Dependencies')
 
       expect(cacheStep).toBeDefined()
       expect(cacheStep?.id).toBe('cache')
@@ -160,7 +168,7 @@ describe('GitHub Actions ADHD CI Workflow Validation', () => {
     it('should_use_valid_github_context_expressions', () => {
       // Test expressions in ci-status job
       const statusJob = workflow.jobs['ci-status']
-      const checkStep = statusJob.steps.find(
+      const checkStep = statusJob?.steps.find(
         (step) => step.name === 'Generate Enhanced Status Report',
       )
 
@@ -184,8 +192,8 @@ describe('GitHub Actions ADHD CI Workflow Validation', () => {
     })
 
     it('should_use_valid_cache_key_expressions', () => {
-      const setupJob = workflow.jobs.setup
-      const cacheStep = setupJob.steps.find((step) => step.name === 'Cache Dependencies')
+      const setupJob = workflow.jobs['setup']
+      const cacheStep = setupJob?.steps.find((step) => step.name === 'Cache Dependencies')
 
       expect(cacheStep?.with?.key).toContain('${{ runner.os }}')
       expect(cacheStep?.with?.key).toContain("${{ hashFiles('**/pnpm-lock.yaml') }}")
@@ -225,7 +233,7 @@ describe('GitHub Actions ADHD CI Workflow Validation', () => {
 
       Object.entries(expectedTimeouts).forEach(([jobId, expectedTimeout]) => {
         const job = workflow.jobs[jobId]
-        expect(job['timeout-minutes']).toBe(expectedTimeout)
+        expect(job?.['timeout-minutes']).toBe(expectedTimeout)
       })
     })
   })
@@ -238,10 +246,12 @@ describe('GitHub Actions ADHD CI Workflow Validation', () => {
         job.steps.forEach((step) => {
           if (step.uses) {
             const [action, version] = step.uses.split('@')
-            if (!actionVersions[action]) {
-              actionVersions[action] = new Set()
+            if (action && version) {
+              if (!actionVersions[action]) {
+                actionVersions[action] = new Set()
+              }
+              actionVersions[action].add(version)
             }
-            actionVersions[action].add(version)
           }
         })
       })
@@ -254,7 +264,7 @@ describe('GitHub Actions ADHD CI Workflow Validation', () => {
 
     it('should_have_commit_lint_job_with_fetch_depth_zero', () => {
       const commitLintJob = workflow.jobs['commit-lint']
-      const checkoutStep = commitLintJob.steps.find((step) =>
+      const checkoutStep = commitLintJob?.steps.find((step) =>
         step.uses?.startsWith('actions/checkout@'),
       )
 

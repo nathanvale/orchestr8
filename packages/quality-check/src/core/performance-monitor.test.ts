@@ -74,7 +74,7 @@ describe('PerformanceMonitor', () => {
       monitor.startSession()
 
       const result = await monitor.trackOperation('typescript', 'compile', async () => {
-        await new Promise((resolve) => setTimeout(resolve, 10))
+        await Promise.resolve() // Removed setTimeout to eliminate timing dependency
         return 'success'
       })
 
