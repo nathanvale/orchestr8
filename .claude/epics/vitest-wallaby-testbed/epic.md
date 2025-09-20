@@ -1,10 +1,11 @@
 ---
 name: vitest-wallaby-testbed
 description: Disciplined, low-flake testing infrastructure with strict mocking policies for Turbo monorepo
-status: active
+status: in-progress
+progress: 33%
 prd_link: ../../prds/vitest-wallaby-testbed.md
 created: 2025-09-20T03:22:42Z
-updated: 2025-09-20T03:22:42Z
+updated: 2025-09-20T04:58:21Z
 ---
 
 # Epic: vitest-wallaby-testbed
