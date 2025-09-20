@@ -1,8 +1,8 @@
 ---
 created: 2025-09-18T07:32:12Z
-last_updated: 2025-09-18T07:32:12Z
-version: 1.0
-author: Claude Code PM System
+last_updated: 2025-09-20T10:32:00Z
+version: 1.1
+author: Claude Code PM System + Nathan Vale
 ---
 
 # System Patterns
@@ -66,19 +66,6 @@ Developer Action → <2s feedback → Stay in flow
 
 ### Creational Patterns
 
-#### Factory Pattern for Providers
-
-```typescript
-// Voice-vault TTS provider pattern
-interface Provider {
-  textToSpeech(text: string): Promise<Audio>
-}
-
-class ProviderFactory {
-  create(type: 'openai' | 'elevenlabs' | 'system'): Provider
-}
-```
-
 #### Builder Pattern for Test Config
 
 - Fluent API for test configuration
@@ -123,6 +110,38 @@ tests/
 ├── e2e/         # Full workflow tests
 └── smoke/       # Critical path validation
 ```
+
+### Mocking Patterns (Strict)
+
+#### Mock When
+
+- At **trust boundaries**: external APIs, 3rd-party SDKs, payments, email
+- For **nondeterminism**: time, timers, randomness, UUIDs, environment
+- For **hostile platform APIs**: Canvas, WebGL in jsdom
+- For **CLI unit tests**: stub `child_process.exec`
+
+#### Do Not Mock
+
+- Domain/business modules
+- Database drivers (use SQLite or Testcontainers instead)
+- Global `fetch` or `fs` (use MSW/tmp dirs)
+
+#### Promotion Heuristic
+
+- If a test uses **>2 mocks** or **>3 spy assertions**, promote to
+  **integration**.
+
+#### Scenario-Specific Solutions
+
+- **HTTP**: MSW for unit/integration, stub 3P APIs in E2E only
+- **Databases**: SQLite/convex-test for unit, Testcontainers for integration
+- **CLI**: stub exec in unit, run in tmp dir for integration, full CLI in E2E
+- **File System**: memfs/tmp dirs for unit, tmp real dirs for integration, real
+  disk asserts in E2E
+- **Time/Timers**: `vi.useFakeTimers`, `vi.setSystemTime`
+- **Randomness**: stub `Math.random`, `crypto.randomUUID`
+- **3rd-Party SDKs**: wrap in adapters, fake in unit, test sandbox in
+  integration
 
 ### Mock Avoidance Pattern
 
