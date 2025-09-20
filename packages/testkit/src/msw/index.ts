@@ -1,57 +1,76 @@
 /**
  * MSW (Mock Service Worker) utilities for API mocking in tests
+ *
+ * This module provides a complete MSW setup for testing environments with:
+ * - Singleton server pattern for efficient resource usage
+ * - Environment-aware configuration
+ * - Common handlers and response builders
+ * - Lifecycle management for various testing frameworks
  */
 
+// Re-export configuration
+export type { MSWConfig } from './config'
+export { defaultMSWConfig, createMSWConfig, validateMSWConfig } from './config'
+
+// Re-export server management
+export {
+  createMSWServer,
+  getMSWServer,
+  startMSWServer,
+  stopMSWServer,
+  resetMSWHandlers,
+  addMSWHandlers,
+  restoreMSWHandlers,
+  disposeMSWServer,
+  getMSWConfig,
+  updateMSWConfig,
+} from './server'
+
+// Re-export setup utilities
+export {
+  setupMSW,
+  setupMSWGlobal,
+  setupMSWManual,
+  quickSetupMSW,
+  setupMSWForEnvironment,
+  createTestScopedMSW,
+} from './setup'
+
+// Re-export handlers and utilities
+export {
+  HTTP_STATUS,
+  COMMON_HEADERS,
+  createSuccessResponse,
+  createErrorResponse,
+  createDelayedResponse,
+  createUnreliableHandler,
+  createPaginatedHandler,
+  createAuthHandlers,
+  createCRUDHandlers,
+  createNetworkIssueHandler,
+  defaultHandlers,
+} from './handlers'
+
+// Convenience re-exports from MSW
+export { http, HttpResponse, delay } from 'msw'
+export type { RequestHandler } from 'msw'
+
 /**
- * Base MSW configuration for the testkit
+ * Backward compatibility - legacy function names
+ * @deprecated Use setupMSW instead
  */
-export interface MSWConfig {
-  /** Whether MSW is enabled */
-  enabled: boolean
-  /** API base URL for mocking */
-  baseUrl: string
-  /** Request timeout in milliseconds */
-  timeout: number
-}
+export { setupMSW as setupMSWLegacy } from './setup'
 
 /**
- * Default MSW configuration
- */
-export const defaultMSWConfig: MSWConfig = {
-  enabled: true,
-  baseUrl: 'http://localhost:3000',
-  timeout: 5000,
-}
-
-/**
- * Initialize MSW for testing
- */
-export function setupMSW(config: Partial<MSWConfig> = {}): MSWConfig {
-  const mergedConfig = {
-    ...defaultMSWConfig,
-    ...config,
-  }
-
-  // MSW setup logic will be implemented here
-  // This is a placeholder for the actual MSW integration
-
-  return mergedConfig
-}
-
-/**
- * Create a mock API handler
+ * Backward compatibility - create mock handler
+ * @deprecated Use createSuccessResponse with http.get/post/etc instead
  */
 export function createMockHandler(endpoint: string, response: unknown) {
-  // Mock handler creation logic
+  console.warn(
+    'createMockHandler is deprecated. Use http handlers with createSuccessResponse instead.',
+  )
   return {
     endpoint,
     response,
   }
-}
-
-/**
- * Reset all MSW handlers
- */
-export function resetMSWHandlers(): void {
-  // Reset logic will be implemented here
 }
