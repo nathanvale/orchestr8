@@ -223,6 +223,11 @@ export const randomHelpers = {
 let globalController: RandomContext | null = null
 
 /**
+ * Track active restore functions from quickRandom helpers
+ */
+const activeRestoreFns: Array<() => void> = []
+
+/**
  * Get or create global random controller
  */
 export function getGlobalRandomController(seed?: number | string): RandomContext {
@@ -264,7 +269,9 @@ export const quickRandom = {
    * Mock Math.random for predictable values
    */
   predictable: (seed = 12345) => {
-    return controlRandomness(seed)
+    // Store as global controller so restore() can clean it up
+    globalController = controlRandomness(seed)
+    return globalController
   },
 
   /**
@@ -272,7 +279,9 @@ export const quickRandom = {
    */
   sequence: (values: number[]) => {
     const mocker = createRandomMocker()
-    return mocker.mockSequence(values)
+    const restore = mocker.mockSequence(values)
+    activeRestoreFns.push(restore)
+    return restore
   },
 
   /**
@@ -280,7 +289,9 @@ export const quickRandom = {
    */
   fixed: (value = 0.5) => {
     const mocker = createRandomMocker()
-    return mocker.mockValue(value)
+    const restore = mocker.mockValue(value)
+    activeRestoreFns.push(restore)
+    return restore
   },
 
   /**
@@ -295,6 +306,13 @@ export const quickRandom = {
    * Only restores randomness-related mocks, not all mocks in the test suite
    */
   restore: () => {
+    // Restore all active mockers from sequence/fixed
+    while (activeRestoreFns.length > 0) {
+      const restore = activeRestoreFns.pop()
+      if (restore) restore()
+    }
+
+    // Restore global controller if exists
     if (globalController) {
       globalController.restore()
       globalController = null
