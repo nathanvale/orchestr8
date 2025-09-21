@@ -140,7 +140,30 @@ export function createConvexTestHarness<Schema extends GenericSchema = GenericSc
   // Storage context implementation
   const storage: ConvexStorageContext = {
     async uploadFile(name, content) {
-      const data = typeof content === 'string' ? new TextEncoder().encode(content) : content
+      let data: ArrayBuffer
+
+      if (typeof content === 'string') {
+        // Convert string to ArrayBuffer
+        const encoded = new TextEncoder().encode(content)
+        data = encoded.buffer.slice(encoded.byteOffset, encoded.byteOffset + encoded.byteLength)
+      } else if (content instanceof ArrayBuffer) {
+        // Already an ArrayBuffer
+        data = content
+      } else {
+        // Assume it's a Uint8Array or similar TypedArray
+        const typedArray = content as Uint8Array
+        const buffer = typedArray.buffer
+        // Handle both ArrayBuffer and SharedArrayBuffer
+        if (buffer instanceof ArrayBuffer) {
+          data = buffer.slice(typedArray.byteOffset, typedArray.byteOffset + typedArray.byteLength)
+        } else {
+          // Convert SharedArrayBuffer to ArrayBuffer
+          const temp = new ArrayBuffer(typedArray.byteLength)
+          new Uint8Array(temp).set(typedArray)
+          data = temp
+        }
+      }
+
       const fileId = `storage_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
 
       state.mockStorage.set(fileId, {
