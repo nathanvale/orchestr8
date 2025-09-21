@@ -99,10 +99,8 @@ export class PostgresContainer extends BaseDatabaseContainer<StartedPostgreSqlCo
 
   getConnectionString(): string {
     if (!this.container) throw new Error('Container not started')
-    const cfg = this.config as PostgresDatabaseConfig
-    const host = this.container.getHost()
-    const port = this.container.getPort()
-    return `postgresql://${cfg.username}:${cfg.password}@${host}:${port}/${cfg.database}`
+    // Note: getConnectionUri is the correct method for @testcontainers/postgresql
+    return this.container.getConnectionUri()
   }
 
   getConnectionConfig(): DatabaseConnectionConfig {
@@ -253,15 +251,21 @@ export async function createPostgresContext(
   return await container.getTestContext()
 }
 
-export async function setupPostgresTest(options: {
-  migrations?: string
-  seed?: string | Record<string, unknown[]>
-  config?: Partial<PostgresDatabaseConfig>
-}): Promise<{
+export async function setupPostgresTest(
+  options: {
+    migrations?: string
+    seed?: string | Record<string, unknown[]>
+    config?: Partial<PostgresDatabaseConfig>
+  } = {},
+): Promise<{
   db: Client
   connectionString: string
   cleanup: () => Promise<void>
   reset: () => Promise<void>
+  host: string
+  port: number
+  database: string
+  username: string
 }> {
   const config = createPostgresConfig({
     ...options.config,
@@ -274,10 +278,25 @@ export async function setupPostgresTest(options: {
   if (options.migrations) await container.migrate()
   if (options.seed) await container.seed()
   const context = await container.getTestContext()
+  const connectionConfig = container.getConnectionConfig()
+
+  // Import and use registerCleanupHandler for signal handling
+  const { registerCleanupHandler } = await import('./docker-utils.js')
+  const unregister = registerCleanupHandler(async () => {
+    await context.cleanup()
+  })
+
   return {
     db: context.client,
     connectionString: context.connectionString,
-    cleanup: context.cleanup,
+    cleanup: async () => {
+      unregister()
+      await context.cleanup()
+    },
     reset: () => context.reset(),
+    host: connectionConfig.host,
+    port: connectionConfig.port,
+    database: connectionConfig.database,
+    username: connectionConfig.username,
   }
 }

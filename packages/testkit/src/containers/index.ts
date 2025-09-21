@@ -45,8 +45,22 @@ export type {
 export { MySQLCollation, MySQLStorageEngine } from './mysql-config.js'
 
 // Export Postgres container and utilities
-export { PostgresContainer, createPostgresContext, setupPostgresTest } from './postgres.js'
+export {
+  PostgresContainer,
+  createPostgresConfig,
+  createPostgresContext,
+  setupPostgresTest,
+} from './postgres.js'
 export type { PostgresDatabaseConfig } from './postgres.js'
+
+// Export Docker utilities for integration testing
+export {
+  isDockerAvailable,
+  skipIfNoDocker,
+  skipIfNotIntegration,
+  isIntegrationTestMode,
+  registerCleanupHandler,
+} from './docker-utils.js'
 
 /**
  * Legacy container configuration for backwards compatibility

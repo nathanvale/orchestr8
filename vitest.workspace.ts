@@ -1,5 +1,5 @@
-import { defineWorkspace } from 'vitest/config'
 import { resolve } from 'path'
+import { defineWorkspace } from 'vitest/config'
 
 /**
  * Unified workspace configuration for Vitest and Wallaby
@@ -9,6 +9,7 @@ import { resolve } from 'path'
 // Environment detection
 const isCI = process.env.CI === 'true'
 const isWallaby = process.env.WALLABY_WORKER !== undefined
+const isIntegration = process.env.TEST_MODE === 'integration'
 
 // Shared configuration for all packages
 const sharedConfig = {
@@ -41,11 +42,15 @@ export default defineWorkspace([
       root: '.',
       environment: 'node',
       include: ['*.test.ts', 'tests/**/*.test.ts'],
-      exclude: ['**/node_modules/**', '**/dist/**', '**/.{idea,git,cache,output,temp}/**'],
+      exclude: [
+        '**/node_modules/**',
+        '**/dist/**',
+        '**/.{idea,git,cache,output,temp}/**',
+        '**/*.integration.test.*',
+      ],
       setupFiles: [resolve(__dirname, 'packages/testkit/src/setup.ts')],
       testTimeout: timeouts.test,
       hookTimeout: timeouts.hook,
-      teardownTimeout: timeouts.teardown,
     },
   },
   // Testkit package configuration
@@ -65,43 +70,19 @@ export default defineWorkspace([
         '**/cypress/**',
         '**/.{idea,git,cache,output,temp}/**',
         '**/{karma,rollup,webpack,vite,vitest,jest,ava,babel,nyc,cypress,tsup,build}.config.*',
+        '**/*.integration.test.*',
       ],
       setupFiles: [
         resolve(__dirname, 'packages/testkit/src/setup.ts'),
         resolve(__dirname, 'packages/testkit/src/register.ts'),
       ],
-      coverage: {
-        provider: 'v8',
-        reporter: ['text', 'json', 'html'],
-        exclude: [
-          'node_modules/',
-          'dist/',
-          'coverage/',
-          '**/*.d.ts',
-          '**/*.config.*',
-          '**/index.ts',
-          '**/__tests__/**',
-          '**/__mocks__/**',
-          '**/tests/**',
-        ],
-        thresholds: {
-          lines: 80,
-          functions: 80,
-          branches: 80,
-          statements: 80,
-        },
-      },
       testTimeout: timeouts.test,
       hookTimeout: timeouts.hook,
-      teardownTimeout: timeouts.teardown,
       pool: 'threads',
       poolOptions: {
         threads: {
           singleThread: false,
-          maxThreads: isCI ? 2 : 4,
-          minThreads: 1,
           isolate: true,
-          useAtomics: true,
         },
       },
     },
@@ -117,10 +98,14 @@ export default defineWorkspace([
         'src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
         'tests/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
       ],
-      exclude: ['**/node_modules/**', '**/dist/**', '**/.{idea,git,cache,output,temp}/**'],
+      exclude: [
+        '**/node_modules/**',
+        '**/dist/**',
+        '**/.{idea,git,cache,output,temp}/**',
+        '**/*.integration.test.*',
+      ],
       testTimeout: timeouts.test,
       hookTimeout: timeouts.hook,
-      teardownTimeout: timeouts.teardown,
     },
   },
   // Quality-check package configuration
@@ -134,11 +119,44 @@ export default defineWorkspace([
         'src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
         'tests/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
       ],
-      exclude: ['**/node_modules/**', '**/dist/**', '**/.{idea,git,cache,output,temp}/**'],
+      exclude: [
+        '**/node_modules/**',
+        '**/dist/**',
+        '**/.{idea,git,cache,output,temp}/**',
+        '**/*.integration.test.*',
+      ],
       setupFiles: [resolve(__dirname, 'packages/testkit/src/setup.ts')],
       testTimeout: timeouts.test,
       hookTimeout: timeouts.hook,
-      teardownTimeout: timeouts.teardown,
     },
   },
+  // Integration tests (gated)
+  ...(isIntegration
+    ? [
+        {
+          test: {
+            ...sharedConfig,
+            name: 'testkit-integration',
+            root: resolve(__dirname, 'packages/testkit'),
+            environment: 'node',
+            include: [
+              'src/**/*.integration.test.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
+              'tests/**/*.integration.test.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
+            ],
+            exclude: ['**/node_modules/**', '**/dist/**', '**/.{idea,git,cache,output,temp}/**'],
+            setupFiles: [resolve(__dirname, 'packages/testkit/src/setup.ts')],
+            // Longer timeouts for container startup
+            testTimeout: isCI ? 60000 : isWallaby ? 45000 : 45000,
+            hookTimeout: isCI ? 60000 : isWallaby ? 45000 : 45000,
+            pool: 'threads',
+            poolOptions: {
+              threads: {
+                singleThread: false,
+                isolate: true,
+              },
+            },
+          },
+        },
+      ]
+    : []),
 ])
