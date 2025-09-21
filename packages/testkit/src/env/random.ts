@@ -119,7 +119,6 @@ export function controlRandomness(seed?: number | string): RandomContext {
  * Create a random mocker for simple mocking scenarios
  */
 export function createRandomMocker(): RandomMocker {
-  const originalRandom = Math.random
   let restoreFn: (() => void) | null = null
 
   return {
@@ -165,9 +164,9 @@ export function createRandomMocker(): RandomMocker {
       if (restoreFn) {
         restoreFn()
         restoreFn = null
-      } else {
-        Math.random = originalRandom
       }
+      // P1 fix: Don't touch Math.random if no mock was installed
+      // This prevents clobbering a seeded generator from controlRandomness()
     },
   }
 }

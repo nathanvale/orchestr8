@@ -20,6 +20,32 @@ export function hashString(str: string): number {
 }
 
 /**
+ * Get default seed from environment or use fallback
+ */
+function getDefaultSeed(): number {
+  // P1 fix: Allow configurable default seed via environment variable
+  const envSeed = process.env.TEST_SEED
+  if (envSeed) {
+    const parsed = parseInt(envSeed, 10)
+    if (!isNaN(parsed)) {
+      // Log seed for CI reproducibility
+      console.log(`[testkit] Using TEST_SEED=${parsed} for deterministic testing`)
+      return Math.abs(parsed)
+    }
+    // If TEST_SEED is a string, hash it
+    console.log(`[testkit] Using TEST_SEED="${envSeed}" (hashed) for deterministic testing`)
+    return hashString(envSeed)
+  }
+
+  // Use current timestamp as fallback
+  const fallbackSeed = Date.now() % 2147483647
+  if (process.env.NODE_ENV === 'test') {
+    console.log(`[testkit] No TEST_SEED set, using timestamp seed=${fallbackSeed}`)
+  }
+  return fallbackSeed
+}
+
+/**
  * Normalize various input types to a consistent seed value
  */
 export function normalizeSeed(seed: number | string | undefined): number {
@@ -31,8 +57,8 @@ export function normalizeSeed(seed: number | string | undefined): number {
     return hashString(seed)
   }
 
-  // Use current timestamp as fallback
-  return Date.now() % 2147483647 // Keep within 32-bit range
+  // P1 fix: Use configurable default seed
+  return getDefaultSeed()
 }
 
 /**
