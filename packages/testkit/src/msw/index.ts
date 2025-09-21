@@ -9,8 +9,8 @@
  */
 
 // Re-export configuration
-export type { MSWConfig } from './config'
-export { defaultMSWConfig, createMSWConfig, validateMSWConfig } from './config'
+export type { MSWConfig } from './config.js'
+export { defaultMSWConfig, createMSWConfig, validateMSWConfig } from './config.js'
 
 // Re-export server management
 export {
@@ -24,7 +24,7 @@ export {
   disposeMSWServer,
   getMSWConfig,
   updateMSWConfig,
-} from './server'
+} from './server.js'
 
 // Re-export setup utilities
 export {
@@ -34,7 +34,7 @@ export {
   quickSetupMSW,
   setupMSWForEnvironment,
   createTestScopedMSW,
-} from './setup'
+} from './setup.js'
 
 // Re-export handlers and utilities
 export {
@@ -49,10 +49,10 @@ export {
   createCRUDHandlers,
   createNetworkIssueHandler,
   defaultHandlers,
-} from './handlers'
+} from './handlers.js'
 
 // Re-export example handlers
-export { viteDemoHandlers } from './example-handlers/vite-demo'
+export { viteDemoHandlers } from './example-handlers/vite-demo.js'
 
 // Convenience re-exports from MSW
 export { http, HttpResponse, delay } from 'msw'
@@ -62,7 +62,7 @@ export type { RequestHandler } from 'msw'
  * Backward compatibility - legacy function names
  * @deprecated Use setupMSW instead
  */
-export { setupMSW as setupMSWLegacy } from './setup'
+export { setupMSW as setupMSWLegacy } from './setup.js'
 
 /**
  * Backward compatibility - create mock handler

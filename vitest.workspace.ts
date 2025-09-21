@@ -1,9 +1,6 @@
 import { resolve } from 'path'
 import { defineWorkspace } from 'vitest/config'
-import {
-  createBaseVitestConfig,
-  defineVitestConfig,
-} from './packages/testkit/src/config/vitest.base.js'
+import { createBaseVitestConfig } from './packages/testkit/src/config/vitest.base.js'
 
 /**
  * Unified workspace configuration for Vitest and Wallaby
@@ -15,7 +12,7 @@ const isIntegration = process.env.TEST_MODE === 'integration'
 
 export default defineWorkspace([
   // Root project configuration (for root-level tests if any)
-  defineVitestConfig({
+  createBaseVitestConfig({
     test: {
       name: 'root',
       root: '.',
@@ -49,7 +46,7 @@ export default defineWorkspace([
   }),
 
   // Testkit package configuration
-  defineVitestConfig({
+  createBaseVitestConfig({
     test: {
       name: 'testkit',
       root: resolve(__dirname, 'packages/testkit'),
@@ -92,7 +89,7 @@ export default defineWorkspace([
   }),
 
   // Utils package configuration
-  defineVitestConfig({
+  createBaseVitestConfig({
     test: {
       name: 'utils',
       root: resolve(__dirname, 'packages/utils'),
@@ -120,7 +117,7 @@ export default defineWorkspace([
   }),
 
   // Quality-check package configuration
-  defineVitestConfig({
+  createBaseVitestConfig({
     test: {
       name: 'quality-check',
       root: resolve(__dirname, 'packages/quality-check'),
