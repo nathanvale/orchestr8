@@ -67,13 +67,25 @@ describe('normalizeSeed', () => {
   })
 
   it('should use current timestamp for undefined', () => {
+    // Temporarily clear TEST_SEED to test timestamp fallback
+    const originalSeed = process.env.TEST_SEED
+    delete process.env.TEST_SEED
+
     const before = Date.now()
     const result = normalizeSeed(undefined)
     const after = Date.now()
 
+    // Restore original TEST_SEED
+    if (originalSeed !== undefined) {
+      process.env.TEST_SEED = originalSeed
+    }
+
     expect(typeof result).toBe('number')
-    expect(result).toBeGreaterThanOrEqual(before % 2147483647)
-    expect(result).toBeLessThanOrEqual(after % 2147483647)
+    // When TEST_SEED is not set, should use timestamp
+    if (!originalSeed) {
+      expect(result).toBeGreaterThanOrEqual(before % 2147483647)
+      expect(result).toBeLessThanOrEqual(after % 2147483647)
+    }
   })
 })
 

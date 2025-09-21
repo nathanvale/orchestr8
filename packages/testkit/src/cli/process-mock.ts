@@ -188,8 +188,26 @@ export class MockChildProcess extends EventEmitter {
  * Process mocker interface - now uses the factory pattern
  */
 export interface ProcessMocker {
-  /** Register a mock for a specific command */
-  register(command: string | RegExp, config: ProcessMockConfig): void
+  /**
+   * Register a mock for a specific command across multiple methods
+   * By default registers for spawn, exec, execSync, and fork (quad-register pattern)
+   *
+   * @param command - Command pattern to match (string or RegExp)
+   * @param config - Mock configuration
+   * @param options - Optional registration options
+   *
+   * @example
+   * // Register for all methods (default)
+   * mocker.register('npm install', { stdout: 'installed' })
+   *
+   * // Register only for specific methods
+   * mocker.register('git', { stdout: 'output' }, { methods: ['spawn', 'exec'] })
+   */
+  register(
+    command: string | RegExp,
+    config: ProcessMockConfig,
+    options?: { methods?: Array<'spawn' | 'exec' | 'execSync' | 'fork'> },
+  ): void
   /** Register a mock for spawn calls */
   registerSpawn(command: string | RegExp, config: ProcessMockConfig): void
   /** Register a mock for exec calls */
@@ -227,16 +245,40 @@ export interface ProcessMocker {
 
 /**
  * Process mocker implementation using factory pattern
+ *
+ * This implementation uses a centralized factory pattern where mocks are
+ * registered at module initialization time via vi.mock declarations.
+ * The registry is shared globally and persists across test runs.
+ *
+ * @remarks
+ * Unlike traditional runtime mocking, this approach ensures mocks are
+ * available immediately when tests start, avoiding timing issues with
+ * module hoisting and import order.
  */
 export class ProcessMockerImpl implements ProcessMocker {
   constructor() {
     // No runtime patching needed - factory handles everything
   }
 
-  register(command: string | RegExp, config: ProcessMockConfig): void {
-    this.registerSpawn(command, config)
-    this.registerExec(command, config)
-    this.registerExecSync(command, config)
+  register(
+    command: string | RegExp,
+    config: ProcessMockConfig,
+    options?: { methods?: Array<'spawn' | 'exec' | 'execSync' | 'fork'> },
+  ): void {
+    const methods = options?.methods || ['spawn', 'exec', 'execSync', 'fork']
+
+    if (methods.includes('spawn')) {
+      this.registerSpawn(command, config)
+    }
+    if (methods.includes('exec')) {
+      this.registerExec(command, config)
+    }
+    if (methods.includes('execSync')) {
+      this.registerExecSync(command, config)
+    }
+    if (methods.includes('fork')) {
+      this.registerFork(command, config)
+    }
   }
 
   registerSpawn(command: string | RegExp, config: ProcessMockConfig): void {

@@ -2,9 +2,9 @@ module.exports = function (wallaby) {
   return {
     autoDetect: ['vitest'],
 
-    // Force use of root vitest config - critical for monorepo
+    // Use workspace configuration for consistent test behavior
     testFramework: {
-      configFile: './vitest.config.ts',
+      configFile: './vitest.workspace.ts',
     },
 
     env: {

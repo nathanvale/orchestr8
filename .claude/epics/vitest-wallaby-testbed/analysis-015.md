@@ -1,13 +1,18 @@
 # Task 015 Analysis: Align CLI Helper Semantics
 
 ## Executive Summary
-The perceived API mismatch is actually a documentation/naming issue. The helper functions already support tri-registration (spawn/exec/execSync) through the underlying `mocker.register()` method. The real issues are missing fork() support and unclear documentation that misleads users about the actual behavior.
+
+The perceived API mismatch is actually a documentation/naming issue. The helper
+functions already support tri-registration (spawn/exec/execSync) through the
+underlying `mocker.register()` method. The real issues are missing fork()
+support and unclear documentation that misleads users about the actual behavior.
 
 ## Current Helper Implementation
 
 ### Core Helper Functions
 
 1. **quickMocks() - packages/testkit/src/cli/spawn.ts:236**
+
 ```typescript
 export function quickMocks(mocks: QuickMock[]) {
   const mocker = spawnMock()
@@ -20,10 +25,13 @@ export function quickMocks(mocks: QuickMock[]) {
   })
 }
 ```
-- **Current behavior**: Calls mocker.register() which tri-registers spawn/exec/execSync
+
+- **Current behavior**: Calls mocker.register() which tri-registers
+  spawn/exec/execSync
 - **Misleading name**: "quickMocks" doesn't indicate multi-method support
 
 2. **spawnUtils() - packages/testkit/src/cli/spawn.ts:245**
+
 ```typescript
 export const spawnUtils = () => {
   quickMocks([
@@ -35,10 +43,12 @@ export const spawnUtils = () => {
   ])
 }
 ```
+
 - Utility helper that uses quickMocks
 - Registers common Node.js commands
 
 3. **commonCommands() - packages/testkit/src/cli/spawn.ts:250**
+
 ```typescript
 export const commonCommands = () => {
   quickMocks([
@@ -48,12 +58,14 @@ export const commonCommands = () => {
   ])
 }
 ```
+
 - Registers common shell commands
 - Also uses tri-registration through quickMocks
 
 ### Underlying Registration
 
 **ProcessMocker.register() - packages/testkit/src/cli/process-mock.ts:164-182**
+
 ```typescript
 register(config: ProcessMockConfig) {
   // Validates config
@@ -69,6 +81,7 @@ register(config: ProcessMockConfig) {
   return { id, registration }
 }
 ```
+
 - **Key finding**: register() already does tri-registration!
 - Creates entries in both spawnMocks and execMocks maps
 - The exec key is used by both exec() and execSync()
@@ -83,6 +96,7 @@ register(config: ProcessMockConfig) {
    - Works correctly
 
 2. **process-mock.test.ts:66-82**
+
 ```typescript
 it('should handle exec with callback', async () => {
   const mocker = new ProcessMocker()
@@ -91,7 +105,7 @@ it('should handle exec with callback', async () => {
   mocker.register({
     command: 'echo',
     args: ['hello'],
-    behavior: { stdout: 'hello' }
+    behavior: { stdout: 'hello' },
   })
 
   const result = await new Promise((resolve) => {
@@ -103,10 +117,12 @@ it('should handle exec with callback', async () => {
   expect(result.stdout).toBe('hello')
 })
 ```
+
 - Tests exec() after registration
 - **Works because register() tri-registers**
 
 3. **process-mock.test.ts:84-94**
+
 ```typescript
 it('should handle execSync', () => {
   const mocker = new ProcessMocker()
@@ -115,17 +131,19 @@ it('should handle execSync', () => {
   mocker.register({
     command: 'echo',
     args: ['world'],
-    behavior: { stdout: 'world' }
+    behavior: { stdout: 'world' },
   })
 
   const result = childProcess.execSync('echo world')
   expect(result.toString()).toBe('world')
 })
 ```
+
 - Tests execSync() after registration
 - **Also works due to tri-registration**
 
 ### No Actual Mismatch!
+
 - Tests use exec/execSync successfully
 - They work because register() handles all three methods
 - The perceived issue is documentation/naming confusion
@@ -133,6 +151,7 @@ it('should handle execSync', () => {
 ## Method Coverage Analysis
 
 ### Currently Supported
+
 1. **spawn()** ✓ - Fully supported
 2. **exec()** ✓ - Supported via tri-registration
 3. **execSync()** ✓ - Supported via tri-registration
@@ -142,12 +161,14 @@ it('should handle execSync', () => {
 7. **execFileSync()** ✗ - Not implemented
 
 ### Registration Gaps
+
 - fork() has its own mock method but isn't included in default registration
 - execFile/execFileSync not implemented (less commonly used)
 
 ## Recommended API Design
 
 ### 1. Update Default Registration
+
 ```typescript
 // Make it quad-registration by default
 register(config: ProcessMockConfig) {
@@ -163,6 +184,7 @@ register(config: ProcessMockConfig) {
 ```
 
 ### 2. Add Scoped Registration Options
+
 ```typescript
 interface QuickMockOptions {
   methods?: ('spawn' | 'exec' | 'execSync' | 'fork' | 'all')[]
@@ -174,24 +196,26 @@ export function quickMocks(mocks: QuickMock[], options?: QuickMockOptions) {
 
   mocks.forEach((mock) => {
     if (methods.includes('all')) {
-      mocker.register(mock)  // Default quad-registration
+      mocker.register(mock) // Default quad-registration
     } else {
-      mocker.registerScoped(mock, methods)  // Method-specific
+      mocker.registerScoped(mock, methods) // Method-specific
     }
   })
 }
 ```
 
 ### 3. Rename for Clarity
+
 ```typescript
 // Better names that reflect actual behavior
-export const cliMocks = quickMocks  // Clearer that it's not spawn-only
-export const registerCommands = quickMocks  // Alternative name
+export const cliMocks = quickMocks // Clearer that it's not spawn-only
+export const registerCommands = quickMocks // Alternative name
 ```
 
 ## TypeScript Typing Requirements
 
 ### Current Types (Accurate but Unclear)
+
 ```typescript
 interface QuickMock {
   command: string
@@ -201,6 +225,7 @@ interface QuickMock {
 ```
 
 ### Recommended Enhanced Types
+
 ```typescript
 interface QuickMock {
   command: string
@@ -221,6 +246,7 @@ interface QuickMockOptions {
 ## Documentation Updates Needed
 
 ### 1. Update JSDoc for quickMocks
+
 ```typescript
 /**
  * Register mock behaviors for CLI commands.
@@ -240,6 +266,7 @@ interface QuickMockOptions {
 ```
 
 ### 2. Update README/Documentation
+
 - Clarify that helpers register for multiple methods
 - Explain the tri/quad-registration behavior
 - Provide examples showing all supported methods
@@ -247,15 +274,19 @@ interface QuickMockOptions {
 ## Migration Impact Assessment
 
 ### Low Impact Changes
-1. **Adding fork() to default registration**: Backward compatible, only adds functionality
+
+1. **Adding fork() to default registration**: Backward compatible, only adds
+   functionality
 2. **Documentation updates**: No code changes required
 3. **Adding optional scoping**: Backward compatible with defaults
 
 ### Medium Impact Changes
+
 1. **Renaming helpers**: Would require updates to existing tests
 2. **Changing default behavior**: Could break tests expecting specific methods
 
 ### Recommendation
+
 - Start with low-impact changes (add fork, update docs)
 - Add optional scoping for advanced users
 - Consider deprecation cycle for any renames
@@ -278,12 +309,12 @@ interface QuickMockOptions {
 
 ## Risks and Mitigation
 
-| Risk | Impact | Mitigation |
-|------|--------|------------|
-| Adding fork() breaks existing mocks | Low | Fork uses different signature, unlikely to conflict |
-| Documentation confusion | Medium | Clear examples showing all methods |
-| Performance overhead of quad-registration | Low | Hash map lookups are O(1) |
-| TypeScript type complexity | Low | Keep simple defaults, advanced types optional |
+| Risk                                      | Impact | Mitigation                                          |
+| ----------------------------------------- | ------ | --------------------------------------------------- |
+| Adding fork() breaks existing mocks       | Low    | Fork uses different signature, unlikely to conflict |
+| Documentation confusion                   | Medium | Clear examples showing all methods                  |
+| Performance overhead of quad-registration | Low    | Hash map lookups are O(1)                           |
+| TypeScript type complexity                | Low    | Keep simple defaults, advanced types optional       |
 
 ## Success Metrics
 
@@ -295,4 +326,8 @@ interface QuickMockOptions {
 
 ## Conclusion
 
-The perceived API mismatch doesn't exist - the helpers already support multiple methods through tri-registration. The solution is to add fork() support, update documentation to clarify the behavior, and optionally provide method-specific scoping for advanced use cases. This is primarily a documentation and minor enhancement task rather than a major refactoring.
+The perceived API mismatch doesn't exist - the helpers already support multiple
+methods through tri-registration. The solution is to add fork() support, update
+documentation to clarify the behavior, and optionally provide method-specific
+scoping for advanced use cases. This is primarily a documentation and minor
+enhancement task rather than a major refactoring.

@@ -245,6 +245,11 @@ export const cryptoMocks = {
 }
 
 /**
+ * Track active crypto restore functions
+ */
+export const activeCryptoRestoreFns: Array<() => void> = []
+
+/**
  * Global crypto controller for convenient access
  */
 let globalCryptoController: CryptoMocker | null = null
@@ -303,4 +308,87 @@ export function setupCryptoControl(seed?: number | string): CryptoMocker {
   }
 
   return controller
+}
+
+/**
+ * Quick crypto helpers integrated with restore tracking
+ */
+export const quickCrypto = {
+  /**
+   * Mock crypto.randomUUID with fixed sequence
+   */
+  uuid: (sequence: string[]) => {
+    const mocker = createCryptoMocker()
+    const restore = mocker.mockUUID(sequence)
+    activeCryptoRestoreFns.push(restore)
+    return restore
+  },
+
+  /**
+   * Mock crypto.randomUUID with sequential UUIDs
+   */
+  sequential: (prefix = '00000000') => {
+    const generator = createSequentialUUID(prefix)
+    const mocker = createCryptoMocker()
+    const restore = mocker.mockUUIDGenerator(generator)
+    activeCryptoRestoreFns.push(restore)
+    return restore
+  },
+
+  /**
+   * Mock crypto.randomUUID with seeded deterministic values
+   */
+  seeded: (seed: number | string) => {
+    const mocker = createCryptoMocker()
+    const rng = new SeededRandom(seed)
+    const restore = mocker.mockUUIDGenerator(() => {
+      const bytes = new Uint8Array(16)
+      for (let i = 0; i < 16; i++) {
+        bytes[i] = rng.nextInt(0, 255)
+      }
+      bytes[6] = (bytes[6] & 0x0f) | 0x40
+      bytes[8] = (bytes[8] & 0x3f) | 0x80
+      const hex = Array.from(bytes)
+        .map((b) => b.toString(16).padStart(2, '0'))
+        .join('')
+      return [
+        hex.slice(0, 8),
+        hex.slice(8, 12),
+        hex.slice(12, 16),
+        hex.slice(16, 20),
+        hex.slice(20, 32),
+      ].join('-') as UUID
+    })
+    activeCryptoRestoreFns.push(restore)
+    return restore
+  },
+
+  /**
+   * Mock crypto.getRandomValues
+   */
+  randomValues: (pattern?: number[] | SeededRandom) => {
+    const mocker = createCryptoMocker()
+    const restore = mocker.mockRandomValues(pattern)
+    activeCryptoRestoreFns.push(restore)
+    return restore
+  },
+
+  /**
+   * Generate deterministic UUID from seed
+   */
+  deterministicUUID: generateUUIDFromSeed,
+
+  /**
+   * Restore all crypto mocking
+   */
+  restore: () => {
+    while (activeCryptoRestoreFns.length > 0) {
+      const restore = activeCryptoRestoreFns.pop()
+      if (restore) restore()
+    }
+    if (globalCryptoController) {
+      globalCryptoController.restore()
+      globalCryptoController = null
+    }
+  },
 }

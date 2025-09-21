@@ -262,6 +262,35 @@ export function setupRandomControl(seed?: number | string): RandomContext {
 }
 
 /**
+ * Execute a function with scoped random control
+ * Automatically sets up and tears down random mocking
+ */
+export function randomScope<T>(fn: () => T, seed?: number | string): T {
+  const controller = controlRandomness(seed)
+  try {
+    return fn()
+  } finally {
+    controller.restore()
+  }
+}
+
+/**
+ * Execute an async function with scoped random control
+ * Automatically sets up and tears down random mocking
+ */
+export async function randomScopeAsync<T>(
+  fn: () => Promise<T>,
+  seed?: number | string,
+): Promise<T> {
+  const controller = controlRandomness(seed)
+  try {
+    return await fn()
+  } finally {
+    controller.restore()
+  }
+}
+
+/**
  * Quick helpers for common randomization scenarios
  */
 export const quickRandom = {
@@ -269,9 +298,13 @@ export const quickRandom = {
    * Mock Math.random for predictable values
    */
   predictable: (seed = 12345) => {
-    // Store as global controller so restore() can clean it up
-    globalController = controlRandomness(seed)
-    return globalController
+    const controller = controlRandomness(seed)
+    globalController = controller
+    // Track this controller for restoration
+    activeRestoreFns.push(() => {
+      controller.restore()
+    })
+    return controller
   },
 
   /**
@@ -306,17 +339,18 @@ export const quickRandom = {
    * Only restores randomness-related mocks, not all mocks in the test suite
    */
   restore: () => {
-    // Restore all active mockers from sequence/fixed
+    // Restore all tracked functions
     while (activeRestoreFns.length > 0) {
       const restore = activeRestoreFns.pop()
       if (restore) restore()
     }
 
-    // Restore global controller if exists
+    // Clear global controller reference
     if (globalController) {
       globalController.restore()
       globalController = null
     }
+
     // NOTE: Intentionally NOT calling vi.restoreAllMocks() here
     // as it would restore ALL mocks in the entire test suite,
     // breaking unrelated test scaffolding (P0 issue fixed)

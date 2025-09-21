@@ -20,27 +20,51 @@ export function hashString(str: string): number {
 }
 
 /**
+ * Module-level flag to track if we've already logged the seed this process
+ */
+let seedLoggedThisProcess = false
+
+/**
+ * Check if debug logging is enabled
+ */
+function isDebugEnabled(): boolean {
+  return process.env.TESTKIT_RANDOM_DEBUG === 'true'
+}
+
+/**
  * Get default seed from environment or use fallback
  */
 function getDefaultSeed(): number {
   // P1 fix: Allow configurable default seed via environment variable
   const envSeed = process.env.TEST_SEED
+  const debugEnabled = isDebugEnabled()
+
   if (envSeed) {
     const parsed = parseInt(envSeed, 10)
     if (!isNaN(parsed)) {
-      // Log seed for CI reproducibility
-      console.log(`[testkit] Using TEST_SEED=${parsed} for deterministic testing`)
+      // Log seed for CI reproducibility (only once per process)
+      if (debugEnabled && !seedLoggedThisProcess) {
+        console.log(`[testkit] Using TEST_SEED=${parsed} for deterministic testing`)
+        seedLoggedThisProcess = true
+      }
       return Math.abs(parsed)
     }
     // If TEST_SEED is a string, hash it
-    console.log(`[testkit] Using TEST_SEED="${envSeed}" (hashed) for deterministic testing`)
+    if (debugEnabled && !seedLoggedThisProcess) {
+      console.log(`[testkit] Using TEST_SEED="${envSeed}" (hashed) for deterministic testing`)
+      seedLoggedThisProcess = true
+    }
     return hashString(envSeed)
   }
 
   // Use current timestamp as fallback
   const fallbackSeed = Date.now() % 2147483647
-  if (process.env.NODE_ENV === 'test') {
-    console.log(`[testkit] No TEST_SEED set, using timestamp seed=${fallbackSeed}`)
+  // Only log in CI or when explicitly debugging
+  if ((process.env.CI === 'true' || debugEnabled) && !seedLoggedThisProcess) {
+    console.log(
+      `[testkit] No TEST_SEED set, using timestamp seed=${fallbackSeed} (set TEST_SEED to reproduce)`,
+    )
+    seedLoggedThisProcess = true
   }
   return fallbackSeed
 }

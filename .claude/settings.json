@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "packages/quality-check/bin/claude-hook",
+            "command": "$CLAUDE_PROJECT_DIR/packages/quality-check/bin/claude-hook",
             "timeout": 10,
             "description": "Quality check enforcement for code files",
             "continueOnError": false

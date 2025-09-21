@@ -1,6 +1,24 @@
 /**
  * Spawn utilities for testing CLI commands with subprocess spawning
  * Provides higher-level utilities built on top of process-mock for common spawning patterns
+ *
+ * @remarks
+ * These utilities use the quad-register pattern by default, meaning mocks are
+ * automatically registered for spawn, exec, execSync, and fork methods.
+ * This ensures consistent behavior regardless of which child_process method
+ * your code uses internally.
+ *
+ * @example
+ * ```typescript
+ * // Mock will work for spawn, exec, execSync, and fork
+ * spawnUtils.mockCommandSuccess('npm install', 'installed successfully')
+ *
+ * // Your code can use any method and the mock will work
+ * const result1 = spawn('npm', ['install'])
+ * const result2 = exec('npm install')
+ * const result3 = execSync('npm install')
+ * const result4 = fork('npm', ['install'])
+ * ```
  */
 
 import { getGlobalProcessMocker, type ProcessMockConfig } from './process-mock.js'
@@ -41,10 +59,23 @@ export interface SpawnTestResult {
 
 /**
  * Spawn utilities for testing CLI commands
+ *
+ * All methods in this object register mocks for multiple child_process methods
+ * (spawn, exec, execSync, fork) unless otherwise specified. This is known as
+ * the "quad-register pattern" and ensures your mocks work regardless of which
+ * method your code uses.
  */
 export const spawnUtils = {
   /**
    * Mock a command to succeed with specific output
+   *
+   * @param command - Command pattern to match
+   * @param stdout - Standard output to return
+   * @param stderr - Standard error to return
+   * @param exitCode - Exit code to return (default: 0)
+   *
+   * @remarks
+   * Registers the mock for spawn, exec, execSync, and fork methods
    */
   mockCommandSuccess: (command: string | RegExp, stdout = '', stderr = '', exitCode = 0): void => {
     const mocker = getGlobalProcessMocker()
@@ -251,10 +282,26 @@ export const commonCommands = {
 
 /**
  * Builder pattern for complex spawn mocking scenarios
+ *
+ * @example
+ * ```typescript
+ * // Simple success mock
+ * mockSpawn('npm install')
+ *   .stdout('installed')
+ *   .exitCode(0)
+ *   .mock()
+ *
+ * // Method-specific mock
+ * mockSpawn('git status')
+ *   .stdout('clean')
+ *   .forMethods(['spawn', 'exec']) // Only for spawn and exec
+ *   .mock()
+ * ```
  */
 export class SpawnMockBuilder {
   private command: string | RegExp
   private config: ProcessMockConfig = {}
+  private methods?: Array<'spawn' | 'exec' | 'execSync' | 'fork'>
 
   constructor(command: string | RegExp) {
     this.command = command
@@ -317,11 +364,55 @@ export class SpawnMockBuilder {
   }
 
   /**
+   * Specify which methods to register the mock for
+   *
+   * @param methods - Array of methods to register for
+   * @default ['spawn', 'exec', 'execSync', 'fork']
+   *
+   * @example
+   * ```typescript
+   * mockSpawn('npm install')
+   *   .stdout('installed')
+   *   .forMethods(['spawn', 'exec']) // Only spawn and exec
+   *   .mock()
+   * ```
+   */
+  forMethods(methods: Array<'spawn' | 'exec' | 'execSync' | 'fork'>): this {
+    this.methods = methods
+    return this
+  }
+
+  /**
+   * Convenience method to register only for spawn
+   */
+  forSpawnOnly(): this {
+    return this.forMethods(['spawn'])
+  }
+
+  /**
+   * Convenience method to register only for exec
+   */
+  forExecOnly(): this {
+    return this.forMethods(['exec'])
+  }
+
+  /**
+   * Convenience method to register only for sync methods
+   */
+  forSyncOnly(): this {
+    return this.forMethods(['execSync'])
+  }
+
+  /**
    * Apply the mock configuration
+   *
+   * @remarks
+   * By default registers for all methods (spawn, exec, execSync, fork)
+   * unless limited by forMethods() or convenience methods
    */
   mock(): void {
     const mocker = getGlobalProcessMocker()
-    mocker.register(this.command, this.config)
+    mocker.register(this.command, this.config, this.methods ? { methods: this.methods } : undefined)
   }
 }
 

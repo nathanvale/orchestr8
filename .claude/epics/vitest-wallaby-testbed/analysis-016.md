@@ -1,13 +1,20 @@
 # Task 016 Analysis: Unify Runner Configuration
 
 ## Executive Summary
-The monorepo has fragmented test configurations causing inconsistent behavior between Wallaby and Vitest. The root config is minimal while testkit has comprehensive settings, and a sophisticated base config exists but isn't exported. The solution is to implement a Vitest workspace configuration that provides consistent settings across all runners while allowing package-specific overrides.
+
+The monorepo has fragmented test configurations causing inconsistent behavior
+between Wallaby and Vitest. The root config is minimal while testkit has
+comprehensive settings, and a sophisticated base config exists but isn't
+exported. The solution is to implement a Vitest workspace configuration that
+provides consistent settings across all runners while allowing package-specific
+overrides.
 
 ## Current Configuration Analysis
 
 ### Configuration Files Found
 
 1. **Root vitest.config.ts** (lines 1-9)
+
 ```typescript
 export default defineConfig({
   test: {
@@ -16,11 +23,13 @@ export default defineConfig({
   },
 })
 ```
+
 - Minimal configuration
 - Node environment only
 - No timeouts, reporters, or coverage
 
 2. **packages/testkit/vitest.config.ts** (lines 1-38)
+
 ```typescript
 export default defineConfig({
   test: {
@@ -50,11 +59,13 @@ export default defineConfig({
   },
 })
 ```
+
 - Comprehensive configuration
 - Different environment (happy-dom vs node)
 - Has setupFiles, timeouts, pool settings
 
 3. **packages/testkit/src/config/vitest.base.ts** (lines 1-165)
+
 - Sophisticated configuration system
 - Environment detection (CI, Wallaby, Vitest)
 - Dynamic adjustments based on environment
@@ -62,6 +73,7 @@ export default defineConfig({
 - Contains useful utilities but unused
 
 4. **wallaby.cjs** (lines 1-44)
+
 ```javascript
 module.exports = function (wallaby) {
   return {
@@ -75,6 +87,7 @@ module.exports = function (wallaby) {
   }
 }
 ```
+
 - Explicitly uses root config (line 7)
 - Forces single worker
 - Sets 10s timeout
@@ -83,14 +96,14 @@ module.exports = function (wallaby) {
 
 ### Environment Settings Comparison
 
-| Setting | Root | Testkit | Base (Unused) | Wallaby |
-|---------|------|---------|---------------|---------|
-| Environment | node | happy-dom | node | node (via root) |
-| Globals | true | true | false | - |
-| SetupFiles | none | ./src/register.ts | - | none (via root) |
-| Timeout | undefined | 10000ms | 5000-10000ms | 10000ms |
-| Pool | undefined | threads (1-4) | forks | single worker |
-| Coverage | undefined | v8 with reporters | conditional | disabled |
+| Setting     | Root      | Testkit           | Base (Unused) | Wallaby         |
+| ----------- | --------- | ----------------- | ------------- | --------------- |
+| Environment | node      | happy-dom         | node          | node (via root) |
+| Globals     | true      | true              | false         | -               |
+| SetupFiles  | none      | ./src/register.ts | -             | none (via root) |
+| Timeout     | undefined | 10000ms           | 5000-10000ms  | 10000ms         |
+| Pool        | undefined | threads (1-4)     | forks         | single worker   |
+| Coverage    | undefined | v8 with reporters | conditional   | disabled        |
 
 ### Key Conflicts
 
@@ -119,14 +132,17 @@ module.exports = function (wallaby) {
 ### Current Problems
 
 1. **Root Config Forcing**
+
 ```javascript
 // wallaby.cjs line 7
 configFile: './vitest.config.ts'
 ```
+
 - Ignores package-level configs
 - Misses critical setupFiles
 
 2. **Worker Limitations**
+
 ```javascript
 // wallaby.cjs lines 9-12
 workers: {
@@ -134,10 +150,12 @@ workers: {
   regular: 1,
 }
 ```
+
 - Forces single worker
 - Conflicts with testkit's thread pool
 
 3. **Test Pattern Differences**
+
 ```javascript
 // wallaby.cjs lines 21-33
 tests: [
@@ -150,6 +168,7 @@ tests: [
 ## Environment Detection Analysis
 
 ### Base Config Detection (Unused but Valuable)
+
 ```typescript
 // packages/testkit/src/config/detect.ts lines 1-63
 export function detectTestEnvironment() {
@@ -162,6 +181,7 @@ export function detectTestEnvironment() {
   }
 }
 ```
+
 - Comprehensive detection logic
 - Not exported or used
 - Should be leveraged
@@ -169,12 +189,14 @@ export function detectTestEnvironment() {
 ## Reporter Configuration Gaps
 
 ### Current State
+
 - No junit reporter for CI
 - No HTML reports for debugging
 - No test-results directory
 - Coverage reporters only in testkit
 
 ### Required for CI
+
 ```typescript
 // Should have but doesn't
 reporters: [
@@ -189,6 +211,7 @@ reporters: [
 ### 1. Create Vitest Workspace Configuration
 
 **vitest.workspace.ts** (new file at root)
+
 ```typescript
 import { defineWorkspace } from 'vitest/config'
 
@@ -211,6 +234,7 @@ export default defineWorkspace([
 ### 2. Export Base Configuration from Testkit
 
 **packages/testkit/src/config/index.ts** (new)
+
 ```typescript
 export { createBaseVitestConfig } from './vitest.base'
 export { detectTestEnvironment } from './detect'
@@ -218,6 +242,7 @@ export { getEnvironmentConfig } from './environment'
 ```
 
 **packages/testkit/src/index.ts** (update)
+
 ```typescript
 // Add exports
 export * from './config'
@@ -226,6 +251,7 @@ export * from './config'
 ### 3. Update Root Configuration
 
 **vitest.config.ts** (enhanced)
+
 ```typescript
 import { defineConfig } from 'vitest/config'
 import { createBaseVitestConfig } from '@template/testkit'
@@ -237,13 +263,14 @@ export default defineConfig(
       environment: 'node',
       setupFiles: [],
     },
-  })
+  }),
 )
 ```
 
 ### 4. Update Wallaby to Use Workspace
 
 **wallaby.cjs** (update)
+
 ```javascript
 module.exports = function (wallaby) {
   return {
@@ -259,6 +286,7 @@ module.exports = function (wallaby) {
 ### 5. Standardize Reporter Configuration
 
 **packages/testkit/src/config/vitest.base.ts** (enhance)
+
 ```typescript
 function getReporters(env: TestEnvironment) {
   const reporters = ['default']
@@ -267,7 +295,7 @@ function getReporters(env: TestEnvironment) {
     reporters.push(
       ['junit', { outputFile: './test-results/junit.xml' }],
       ['html', { outputFile: './test-results/report.html' }],
-      ['json', { outputFile: './test-results/results.json' }]
+      ['json', { outputFile: './test-results/results.json' }],
     )
   }
 
@@ -287,21 +315,25 @@ function getReporters(env: TestEnvironment) {
 ## Migration Plan
 
 ### Phase 1: Foundation (Day 1)
+
 - Export base config from testkit
 - Create workspace configuration
 - Test with one package
 
 ### Phase 2: Wallaby Integration (Day 2)
+
 - Update wallaby.cjs
 - Verify setupFiles load correctly
 - Test mock initialization
 
 ### Phase 3: CI Configuration (Day 3)
+
 - Add junit/html reporters
 - Configure test-results directory
 - Test CI pipeline
 
 ### Phase 4: Documentation (Day 4)
+
 - Document configuration hierarchy
 - Create migration guide
 - Update README
@@ -316,12 +348,12 @@ function getReporters(env: TestEnvironment) {
 
 ## Risks and Mitigation
 
-| Risk | Impact | Mitigation |
-|------|--------|------------|
-| Wallaby workspace incompatibility | High | Test thoroughly, have fallback |
-| Breaking existing tests | Medium | Gradual migration, keep old configs temporarily |
-| Performance impact | Low | Monitor test execution times |
-| Configuration complexity | Medium | Clear documentation, examples |
+| Risk                              | Impact | Mitigation                                      |
+| --------------------------------- | ------ | ----------------------------------------------- |
+| Wallaby workspace incompatibility | High   | Test thoroughly, have fallback                  |
+| Breaking existing tests           | Medium | Gradual migration, keep old configs temporarily |
+| Performance impact                | Low    | Monitor test execution times                    |
+| Configuration complexity          | Medium | Clear documentation, examples                   |
 
 ## Success Metrics
 
@@ -333,4 +365,8 @@ function getReporters(env: TestEnvironment) {
 
 ## Conclusion
 
-The configuration fragmentation causes inconsistent test behavior and makes debugging difficult. Implementing a Vitest workspace configuration with exported base utilities will provide consistency while maintaining flexibility for package-specific needs. The sophisticated base configuration already exists but needs to be exported and utilized properly.
+The configuration fragmentation causes inconsistent test behavior and makes
+debugging difficult. Implementing a Vitest workspace configuration with exported
+base utilities will provide consistency while maintaining flexibility for
+package-specific needs. The sophisticated base configuration already exists but
+needs to be exported and utilized properly.
