@@ -54,8 +54,9 @@ export function createSequentialUUID(prefix = '00000000'): () => UUID {
 
   return () => {
     counter++
-    const paddedCounter = counter.toString(16).padStart(24, '0')
-    return `${prefix}-0000-4000-8000-${paddedCounter}`.slice(0, 36) as UUID
+    const paddedCounter = counter.toString(16).padStart(12, '0')
+    // Take first 8 chars of prefix, then fixed middle, then padded counter
+    return `${prefix.slice(0, 8)}-0000-4000-8000-${paddedCounter}` as UUID
   }
 }
 

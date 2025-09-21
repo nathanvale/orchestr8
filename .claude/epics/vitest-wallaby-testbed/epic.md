@@ -75,7 +75,7 @@ maintaining sub-second feedback loops.
 - ✅ Implement file system test utilities
 - 🚧 Configure time and randomness control
   - ✅ **Task 007**: Timer utilities implemented and tested
-  - ⚠️ **Task 008**: Randomness control - P0 issue with `quickRandom.restore()`
+  - ✅ **Task 008**: Randomness control - P0 FIXED, crypto mocking added (70% complete)
   - ✅ **Task 009**: Temp directory management implemented
 
 #### CLI Mocking Redesign (Tasks 013-016) 🚧 IN PROGRESS
@@ -209,25 +209,25 @@ maintaining sub-second feedback loops.
 
 ### Task 008: Randomness Control Implementation Issues
 
-**Status**: P0 critical issue identified - requires immediate fix
+**Status**: P0 FIXED (2025-09-21), P1 issues partially addressed
 
-#### P0 Issue: Overreaching restore in quickRandom
+#### ✅ P0 Issue: Overreaching restore in quickRandom [FIXED]
 
 **Problem**: `quickRandom.restore()` calls `vi.restoreAllMocks()`, which restores every spy/mock in the process, not just randomness-related mocks. This can unexpectedly clobber unrelated test scaffolding and cause cross-test flakes.
 
 **Impact**: High - especially in larger suites or when used in shared setup files; can break mocks outside randomness scope.
 
-**Solution**:
-- Track and restore only randomness-specific changes
-- Remove `vi.restoreAllMocks()` from `quickRandom.restore()`
-- Make restore idempotent and localized to randomness control only
+**Solution Implemented**:
+- ✅ Removed `vi.restoreAllMocks()` from `quickRandom.restore()`
+- ✅ Now only restores randomness-specific changes via `globalController.restore()`
+- ✅ Made restore idempotent and localized to randomness control only
 
 #### P1 Issues: Important but schedulable
 
-1. **Crypto and UUID determinism missing**
-   - Task 008 acceptance criteria calls for controlling `crypto.randomUUID` and related sources
-   - Implementation doesn't include crypto mocks yet
-   - Need: `mockRandomUUID()`, `mockGetRandomValues()`, deterministic UUID generator
+1. **✅ Crypto and UUID determinism [IMPLEMENTED]**
+   - ✅ Added `crypto-mock.ts` with full crypto mocking capabilities
+   - ✅ Implemented `mockRandomUUID()`, `mockGetRandomValues()`, deterministic UUID generator
+   - ✅ Created 30 comprehensive tests (29 passing, 1 minor issue with sequential counter)
 
 2. **Restore behavior edge case in createRandomMocker**
    - If `restore()` invoked without prior mock setup, could clobber seeded generator
