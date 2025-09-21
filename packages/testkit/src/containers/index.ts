@@ -5,44 +5,48 @@
 // Export base database types and utilities
 export type {
   BaseDatabaseConfig,
-  DatabaseConnectionConfig,
-  DatabaseTestContext,
-  MigrationConfig,
-  SeedConfig,
-  HealthCheckResult,
   ContainerHooks,
-  DatabaseContainerOptions,
   ContainerStartupResult,
-  ResourceTracker,
+  DatabaseConnectionConfig,
+  DatabaseContainerOptions,
   DatabaseExtensions,
-  TestConfiguration,
-  PoolConfig,
+  DatabaseTestContext,
+  HealthCheckResult,
   IsolationLevel,
+  MigrationConfig,
+  PoolConfig,
+  ResourceTracker,
+  SeedConfig,
+  TestConfiguration,
 } from './types.js'
 
 // Export base database container
-export { BaseDatabaseContainer, createPoolConfig, createDatabaseConfig } from './base-database.js'
+export { BaseDatabaseContainer, createDatabaseConfig, createPoolConfig } from './base-database.js'
 
 // Export MySQL container and utilities
 export {
+  MySQLCharacterSet,
   MySQLContainer,
-  createMySQLContext,
-  setupMySQLTest,
-  createMySQLConfig,
   MySQLPresets,
   MySQLSQLMode,
-  MySQLCharacterSet,
+  createMySQLConfig,
+  createMySQLContext,
+  setupMySQLTest,
 } from './mysql.js'
 
 // Export MySQL configuration types
 export type {
-  MySQLDatabaseConfig,
   MySQLConnectionOptions,
-  MySQLReplicationConfig,
+  MySQLDatabaseConfig,
   MySQLPerformanceConfig,
+  MySQLReplicationConfig,
 } from './mysql-config.js'
 
 export { MySQLCollation, MySQLStorageEngine } from './mysql-config.js'
+
+// Export Postgres container and utilities
+export { PostgresContainer, createPostgresContext, setupPostgresTest } from './postgres.js'
+export type { PostgresDatabaseConfig } from './postgres.js'
 
 /**
  * Legacy container configuration for backwards compatibility
@@ -84,15 +88,6 @@ export function createTestContainer(config: ContainerConfig) {
  * @deprecated Use MySQLPresets or specific database presets instead
  */
 export const containerConfigs = {
-  postgres: {
-    image: 'postgres:15',
-    ports: [5432],
-    env: {
-      POSTGRES_DB: 'test',
-      POSTGRES_USER: 'test',
-      POSTGRES_PASSWORD: 'test',
-    },
-  },
   mysql: {
     image: 'mysql:8.0',
     ports: [3306],

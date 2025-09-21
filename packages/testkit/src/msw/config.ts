@@ -38,14 +38,22 @@ export const defaultMSWConfig: MSWConfig = {
  * Environment-aware configuration
  */
 export function createMSWConfig(overrides: Partial<MSWConfig> = {}): MSWConfig {
-  const isCI = process.env.CI === 'true'
   const isWallaby = process.env.WALLABY_WORKER === 'true'
   const isTest = process.env.NODE_ENV === 'test'
 
   // Adjust defaults based on environment
   const envDefaults: Partial<MSWConfig> = {
-    // More lenient in CI to avoid flaky tests
-    onUnhandledRequest: isCI ? 'warn' : 'error',
+    // Strict by default in all environments. Allow explicit override via env.
+    // To change behavior, set MSW_ON_UNHANDLED_REQUEST to 'error' | 'warn' | 'bypass'
+    ...(typeof process.env.MSW_ON_UNHANDLED_REQUEST === 'string'
+      ? {
+          onUnhandledRequest: ((): MSWConfig['onUnhandledRequest'] => {
+            const v = process.env.MSW_ON_UNHANDLED_REQUEST?.toLowerCase()
+            if (v === 'error' || v === 'warn' || v === 'bypass') return v
+            return defaultMSWConfig.onUnhandledRequest
+          })(),
+        }
+      : {}),
     // Quieter in Wallaby to reduce noise
     quiet: isWallaby,
     // Shorter timeout in test environments

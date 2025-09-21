@@ -1,105 +1,427 @@
 {
-  "version": "2.0.0",
-  "tasks": [
-    {
-      "label": "Build",
-      "type": "shell",
-      "command": "bun",
-      "args": ["run", "build"],
-      "group": {
-        "kind": "build",
-        "isDefault": true
-      },
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "focus": false,
-        "panel": "shared"
-      },
-      "problemMatcher": ["$tsc"]
-    },
-    {
-      "label": "Test",
-      "type": "shell",
-      "command": "bun",
-      "args": ["run", "test:watch"],
-      "group": {
-        "kind": "test",
-        "isDefault": true
-      },
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "focus": false,
-        "panel": "shared"
-      }
-    },
-    {
-      "label": "Test CI",
-      "type": "shell",
-      "command": "bun",
-      "args": ["run", "test:ci"],
-      "group": "test",
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "focus": false,
-        "panel": "shared"
-      }
-    },
-    {
-      "label": "Lint",
-      "type": "shell",
-      "command": "bun",
-      "args": ["run", "lint"],
-      "group": "build",
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "focus": false,
-        "panel": "shared"
-      }
-    },
-    {
-      "label": "Format",
-      "type": "shell",
-      "command": "bun",
-      "args": ["run", "format"],
-      "group": "build",
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "focus": false,
-        "panel": "shared"
-      }
-    },
-    {
-      "label": "Type Check",
-      "type": "shell",
-      "command": "bun",
-      "args": ["run", "typecheck"],
-      "group": "build",
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "focus": false,
-        "panel": "shared"
-      },
-      "problemMatcher": ["$tsc-watch"]
-    },
-    {
-      "label": "Dev",
-      "type": "shell",
-      "command": "bun",
-      "args": ["run", "dev"],
-      "group": "build",
-      "isBackground": true,
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "focus": false,
-        "panel": "shared"
-      }
-    }
-  ]
+	"version": "2.0.0",
+	"tasks": [
+		// === BUILD & DEVELOPMENT ===
+		{
+			"label": "Build",
+			"type": "shell",
+			"command": "pnpm",
+			"args": ["build"],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared"
+			},
+			"problemMatcher": ["$tsc"]
+		},
+		{
+			"label": "Dev",
+			"type": "shell",
+			"command": "pnpm",
+			"args": ["dev"],
+			"group": "build",
+			"isBackground": true,
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "new"
+			}
+		},
+		{
+			"label": "Clean",
+			"type": "shell",
+			"command": "pnpm",
+			"args": ["clean"],
+			"group": "build",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared"
+			}
+		},
+
+		// === TESTING ===
+		{
+			"label": "Test",
+			"type": "shell",
+			"command": "pnpm",
+			"args": ["test"],
+			"group": {
+				"kind": "test",
+				"isDefault": true
+			},
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared"
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "Test Watch",
+			"type": "shell",
+			"command": "pnpm",
+			"args": ["test:watch"],
+			"group": "test",
+			"isBackground": true,
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "new"
+			}
+		},
+		{
+			"label": "Test UI",
+			"type": "shell",
+			"command": "pnpm",
+			"args": ["test:ui"],
+			"group": "test",
+			"isBackground": true,
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "new"
+			}
+		},
+		{
+			"label": "Test Coverage",
+			"type": "shell",
+			"command": "pnpm",
+			"args": ["test:coverage"],
+			"group": "test",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared"
+			}
+		},
+		{
+			"label": "Test Quick",
+			"type": "shell",
+			"command": "pnpm",
+			"args": ["test:quick"],
+			"group": "test",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared"
+			}
+		},
+		{
+			"label": "Test Focused (Changed Files)",
+			"type": "shell",
+			"command": "pnpm",
+			"args": ["test:focused"],
+			"group": "test",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared"
+			}
+		},
+		{
+			"label": "Test Debug",
+			"type": "shell",
+			"command": "pnpm",
+			"args": ["test:debug"],
+			"group": "test",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": true,
+				"panel": "new"
+			}
+		},
+		{
+			"label": "Test Safe (with cleanup)",
+			"type": "shell",
+			"command": "pnpm",
+			"args": ["test:safe"],
+			"group": "test",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared"
+			}
+		},
+
+		// === CODE QUALITY ===
+		{
+			"label": "Lint",
+			"type": "shell",
+			"command": "pnpm",
+			"args": ["lint"],
+			"group": "build",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared"
+			},
+			"problemMatcher": ["$eslint-stylish"]
+		},
+		{
+			"label": "Lint Fix",
+			"type": "shell",
+			"command": "pnpm",
+			"args": ["lint:fix"],
+			"group": "build",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared"
+			}
+		},
+		{
+			"label": "Format",
+			"type": "shell",
+			"command": "pnpm",
+			"args": ["format"],
+			"group": "build",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared"
+			}
+		},
+		{
+			"label": "Format Check",
+			"type": "shell",
+			"command": "pnpm",
+			"args": ["format:check"],
+			"group": "build",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared"
+			}
+		},
+		{
+			"label": "Type Check",
+			"type": "shell",
+			"command": "pnpm",
+			"args": ["typecheck"],
+			"group": "build",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared"
+			},
+			"problemMatcher": ["$tsc"]
+		},
+		{
+			"label": "Validate (Full Suite)",
+			"type": "shell",
+			"command": "pnpm",
+			"args": ["validate"],
+			"group": "build",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared"
+			}
+		},
+
+		// === RELEASE & CHANGESETS ===
+		{
+			"label": "Changeset",
+			"type": "shell",
+			"command": "pnpm",
+			"args": ["changeset"],
+			"group": "none",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": true,
+				"panel": "new"
+			}
+		},
+		{
+			"label": "Release",
+			"type": "shell",
+			"command": "pnpm",
+			"args": ["release"],
+			"group": "none",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": true,
+				"panel": "shared"
+			}
+		},
+
+		// === PERFORMANCE & DIAGNOSTICS ===
+		{
+			"label": "Performance Monitor",
+			"type": "shell",
+			"command": "pnpm",
+			"args": ["perf"],
+			"group": "none",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "new"
+			}
+		},
+		{
+			"label": "Memory Profile",
+			"type": "shell",
+			"command": "pnpm",
+			"args": ["profile"],
+			"group": "none",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "new"
+			}
+		},
+		{
+			"label": "Memory Baseline",
+			"type": "shell",
+			"command": "pnpm",
+			"args": ["memory:baseline"],
+			"group": "none",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared"
+			}
+		},
+		{
+			"label": "Kill Zombies",
+			"type": "shell",
+			"command": "pnpm",
+			"args": ["zombies"],
+			"group": "none",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared"
+			}
+		},
+		{
+			"label": "Kill All Zombies (Force)",
+			"type": "shell",
+			"command": "pnpm",
+			"args": ["zombies:kill"],
+			"group": "none",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared"
+			}
+		},
+
+		// === PACKAGE-SPECIFIC TASKS ===
+		{
+			"label": "Test: Testkit",
+			"type": "shell",
+			"command": "pnpm",
+			"args": ["--filter", "@template/testkit", "test"],
+			"group": "test",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared"
+			}
+		},
+		{
+			"label": "Test: Utils",
+			"type": "shell",
+			"command": "pnpm",
+			"args": ["--filter", "@template/utils", "test"],
+			"group": "test",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared"
+			}
+		},
+		{
+			"label": "Test: Quality Check",
+			"type": "shell",
+			"command": "pnpm",
+			"args": ["--filter", "@claude-hooks/quality-check", "test"],
+			"group": "test",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared"
+			}
+		},
+		{
+			"label": "Build: Testkit",
+			"type": "shell",
+			"command": "pnpm",
+			"args": ["--filter", "@template/testkit", "build"],
+			"group": "build",
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared"
+			}
+		},
+		{
+			"label": "Dev: Vite App",
+			"type": "shell",
+			"command": "pnpm",
+			"args": ["--filter", "@template/app", "dev"],
+			"group": "build",
+			"isBackground": true,
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "new"
+			}
+		},
+
+		// === COMPOUND TASKS ===
+		{
+			"label": "Clean & Build",
+			"dependsOn": ["Clean", "Build"],
+			"dependsOrder": "sequence",
+			"group": "build"
+		},
+		{
+			"label": "Format & Lint",
+			"dependsOn": ["Format", "Lint"],
+			"dependsOrder": "sequence",
+			"group": "build"
+		},
+		{
+			"label": "Test All Packages",
+			"dependsOn": ["Test: Testkit", "Test: Utils", "Test: Quality Check"],
+			"dependsOrder": "parallel",
+			"group": "test"
+		}
+	]
 }

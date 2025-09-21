@@ -40,7 +40,7 @@ maintaining sub-second feedback loops.
 
 ### ❌ Not Started (70%)
 
-- Database strategies (Testcontainers for Postgres/MySQL)
+- Postgres database strategy (Testcontainers)
 - Convex test harness
 - CI/CD configuration (parallelization, sharding, monitoring)
 - Documentation and training materials
@@ -67,7 +67,8 @@ maintaining sub-second feedback loops.
 
 - ✅ Setup testkit package structure
 - ✅ Implement MSW server configuration
-- ⏳ Create database testing utilities (partial - no Testcontainers yet)
+- ✅ Create database testing utilities (MySQL Testcontainers complete; Postgres
+  pending in Task 003)
 - ❌ Establish Convex test harness (not started)
 - ✅ Configure Vitest base settings
 
@@ -265,13 +266,13 @@ files; can break mocks outside randomness scope.
 
 #### Additional Implementations Beyond Requirements
 
-5. **✅ Deterministic Data Generators [ADDED]**
+1. **✅ Deterministic Data Generators [ADDED]**
    - ✅ `DeterministicGenerator` class with 30+ generation methods
    - ✅ Names, emails, addresses, dates, lorem ipsum, etc.
    - ✅ Credit card numbers with Luhn validation
    - ✅ Type-safe object generation with schemas
 
-6. **✅ Test Data Factories [ADDED]**
+2. **✅ Test Data Factories [ADDED]**
    - ✅ Factory pattern with build/buildMany/reset methods
    - ✅ Builder pattern for complex objects
    - ✅ Trait system and associations
@@ -282,7 +283,7 @@ files; can break mocks outside randomness scope.
 
 **Status**: Critical design flaw identified - requires redesign
 
-#### Symptoms
+#### Symptoms (CLI mocking)
 
 - CLI mocking tests intermittently fail with timeouts and TypeErrors
 - `undefined` returns from `exec`/`execSync`
