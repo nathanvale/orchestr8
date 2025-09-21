@@ -4,10 +4,10 @@ description:
   Disciplined, low-flake testing infrastructure with strict mocking policies for
   Turbo monorepo
 status: in-progress
-progress: 33%
+progress: 20%
 prd_link: ../../prds/vitest-wallaby-testbed.md
 created: 2025-09-20T03:22:42Z
-updated: 2025-09-20T21:05:42Z
+updated: 2025-09-21T03:49:08Z
 ---
 
 # Epic: vitest-wallaby-testbed
@@ -18,6 +18,29 @@ Implementation of disciplined, low-flake testing infrastructure combining Vitest
 (test runner) and Wallaby (fast TDD feedback) with support for Convex, Postgres,
 and MySQL. Focus on strict mocking policies to prevent brittle test suites while
 maintaining sub-second feedback loops.
+
+## Implementation Status Summary
+
+### ✅ Completed (20%)
+- **Testkit package structure**: Full setup with proper exports and configuration
+- **MSW server**: HTTP/API mocking infrastructure ready
+- **File system utilities**: Complete FS mocking capabilities
+- **Timer utilities (Task 007)**: Fake timers, time control, clock mocking
+- **Temp directory management (Task 009)**: Automated cleanup, isolation
+- **Bootstrap system (Task 014)**: Import order enforcement
+- **Mock factory (Task 013)**: Single authoritative mock source
+
+### 🚧 In Progress (10%)
+- **CLI mocking**: Critical architecture issues, needs complete redesign
+- **Randomness control (Task 008)**: P0 bug with restore scope
+- **Runner configuration**: Partial unification between Wallaby/Vitest
+
+### ❌ Not Started (70%)
+- Database strategies (Testcontainers for Postgres/MySQL)
+- Convex test harness
+- CI/CD configuration (parallelization, sharding, monitoring)
+- Documentation and training materials
+- Migration tooling and rollout
 
 ## Related Documentation
 
@@ -36,60 +59,63 @@ maintaining sub-second feedback loops.
 
 ## Task Breakdown
 
-### Phase 1: Foundation (Tasks 001-010)
+### Phase 1: Foundation (Tasks 001-010) ✅ COMPLETE
 
-- Setup testkit package structure
-- Implement MSW server configuration
-- Create database testing utilities
-- Establish Convex test harness
-- Configure Vitest base settings
+- ✅ Setup testkit package structure
+- ✅ Implement MSW server configuration
+- ⏳ Create database testing utilities (partial - no Testcontainers yet)
+- ❌ Establish Convex test harness (not started)
+- ✅ Configure Vitest base settings
 
-### Phase 2: Mocking Infrastructure (Tasks 011-020)
+### Phase 2: Mocking Infrastructure (Tasks 011-020) 🚧 IN PROGRESS
 
-- Implement HTTP/API mocking with MSW
-- Create database mocking strategies
-- Setup CLI command mocking
-- Implement file system test utilities
-- Configure time and randomness control
+- ✅ Implement HTTP/API mocking with MSW
+- ❌ Create database mocking strategies (not started)
+- 🚧 Setup CLI command mocking (major issues - needs redesign)
+- ✅ Implement file system test utilities
+- 🚧 Configure time and randomness control
+  - ✅ **Task 007**: Timer utilities implemented and tested
+  - ⚠️ **Task 008**: Randomness control - P0 issue with `quickRandom.restore()`
+  - ✅ **Task 009**: Temp directory management implemented
 
-#### CLI Mocking Redesign (Tasks 013-016)
+#### CLI Mocking Redesign (Tasks 013-016) 🚧 IN PROGRESS
 
-- Task 013: Implement single authoritative mock factory
-- Task 014: Enforce import order with bootstrap
-- Task 015: Align CLI helper semantics
-- Task 016: Unify runner configuration
+- ✅ Task 013: Implement single authoritative mock factory
+- ✅ Task 014: Enforce import order with bootstrap
+- ⏳ Task 015: Align CLI helper semantics (partial)
+- ⏳ Task 016: Unify runner configuration (partial)
 
-### Phase 3: Integration Layer (Tasks 021-030)
+### Phase 3: Integration Layer (Tasks 021-030) ❌ NOT STARTED
 
-- Setup Testcontainers for Postgres
-- Setup Testcontainers for MySQL
-- Implement Convex local backend testing
-- Create tmp directory management
-- Build integration test templates
+- ❌ Setup Testcontainers for Postgres
+- ❌ Setup Testcontainers for MySQL
+- ❌ Implement Convex local backend testing
+- ✅ Create tmp directory management (implemented in Task 009)
+- ❌ Build integration test templates
 
-### Phase 4: CI/CD Configuration (Tasks 031-040)
+### Phase 4: CI/CD Configuration (Tasks 031-040) ❌ NOT STARTED
 
-- Configure worker caps and parallelization
-- Implement test sharding strategy
-- Setup performance monitoring
-- Create flake detection system
-- Configure Wallaby CI integration
+- ❌ Configure worker caps and parallelization
+- ❌ Implement test sharding strategy
+- ❌ Setup performance monitoring
+- ❌ Create flake detection system
+- ❌ Configure Wallaby CI integration
 
-### Phase 5: Documentation & Training (Tasks 041-050)
+### Phase 5: Documentation & Training (Tasks 041-050) ❌ NOT STARTED
 
-- Write mocking policy documentation
-- Create test template library
-- Build migration guides
-- Setup training materials
-- Implement policy enforcement
+- ❌ Write mocking policy documentation
+- ❌ Create test template library
+- ❌ Build migration guides
+- ❌ Setup training materials
+- ❌ Implement policy enforcement
 
-### Phase 6: Migration Support (Tasks 051-060)
+### Phase 6: Migration Support (Tasks 051-060) ❌ NOT STARTED
 
-- Create automated migration tools
-- Package-by-package migration plan
-- Performance baseline establishment
-- Metrics dashboard setup
-- Rollout coordination
+- ❌ Create automated migration tools
+- ❌ Package-by-package migration plan
+- ❌ Performance baseline establishment
+- ❌ Metrics dashboard setup
+- ❌ Rollout coordination
 
 ## Critical Architecture Issues
 
@@ -180,6 +206,41 @@ maintaining sub-second feedback loops.
 - Convex test utilities
 
 ## Known Issues & Technical Debt
+
+### Task 008: Randomness Control Implementation Issues
+
+**Status**: P0 critical issue identified - requires immediate fix
+
+#### P0 Issue: Overreaching restore in quickRandom
+
+**Problem**: `quickRandom.restore()` calls `vi.restoreAllMocks()`, which restores every spy/mock in the process, not just randomness-related mocks. This can unexpectedly clobber unrelated test scaffolding and cause cross-test flakes.
+
+**Impact**: High - especially in larger suites or when used in shared setup files; can break mocks outside randomness scope.
+
+**Solution**:
+- Track and restore only randomness-specific changes
+- Remove `vi.restoreAllMocks()` from `quickRandom.restore()`
+- Make restore idempotent and localized to randomness control only
+
+#### P1 Issues: Important but schedulable
+
+1. **Crypto and UUID determinism missing**
+   - Task 008 acceptance criteria calls for controlling `crypto.randomUUID` and related sources
+   - Implementation doesn't include crypto mocks yet
+   - Need: `mockRandomUUID()`, `mockGetRandomValues()`, deterministic UUID generator
+
+2. **Restore behavior edge case in createRandomMocker**
+   - If `restore()` invoked without prior mock setup, could clobber seeded generator
+   - Make `restore()` a no-op when no mock was installed
+
+3. **Mixed API usage confusion**
+   - Mixing `controlRandomness()` and `createRandomMocker()` can cause precedence issues
+   - Document "don't mix" patterns or provide scoped API
+
+4. **Configurable default seed**
+   - Currently falls back to `Date.now()` (non-deterministic)
+   - Allow default seed via env variable (e.g., `TEST_SEED`)
+   - Log seed for CI reproducibility
 
 ### CLI Mocking Architecture Problem
 
