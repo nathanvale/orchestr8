@@ -71,10 +71,21 @@ export function createVitestEnvironmentConfig(): VitestEnvironmentConfig {
 
 /**
  * Create optimized pool configuration based on environment
+ *
+ * Default Strategy: 'forks' for stability and isolation
+ * - Better memory isolation between tests
+ * - More reliable in CI environments
+ * - Prevents test pollution
+ *
+ * Alternative: 'threads' for speed (can be overridden)
+ * - Faster test execution
+ * - Lower memory overhead
+ * - May have isolation issues with globals
  */
 export function createVitestPoolOptions(envConfig: VitestEnvironmentConfig): VitestPoolOptions {
-  // Use forks for stability, especially in CI and Wallaby
-  const pool: 'forks' | 'threads' = envConfig.isCI || envConfig.isWallaby ? 'forks' : 'forks'
+  // Use forks for stability in all environments by default
+  // Packages can override to 'threads' if they need speed over isolation
+  const pool: 'forks' | 'threads' = 'forks'
 
   // Worker configuration based on environment
   let maxWorkers = 4
@@ -238,8 +249,8 @@ export function createBaseVitestConfig(overrides: Partial<UserConfig> = {}): Use
           }
         : undefined,
 
-      // Setup files - packages should override this
-      setupFiles: [],
+      // Setup files - includes register by default for environment setup
+      setupFiles: ['@template/testkit/register'],
 
       // Reporter configuration
       reporters: config.environment.isCI
@@ -251,7 +262,7 @@ export function createBaseVitestConfig(overrides: Partial<UserConfig> = {}): Use
       // Output configuration
       outputFile: config.environment.isCI
         ? {
-            junit: './test-results.xml',
+            junit: './junit.xml',
           }
         : undefined,
     },
@@ -359,7 +370,7 @@ export function createCIOptimizedConfig(overrides: Partial<UserConfig> = {}): Us
       bail: 1,
       reporters: ['verbose', 'junit'],
       outputFile: {
-        junit: './test-results.xml',
+        junit: './junit.xml',
       },
       ...overrides.test,
     },

@@ -41,6 +41,14 @@
     "./fs": {
       "types": "./dist/fs/index.d.ts",
       "import": "./dist/fs/index.js"
+    },
+    "./config": {
+      "types": "./dist/config/index.d.ts",
+      "import": "./dist/config/index.js"
+    },
+    "./config/vitest": {
+      "types": "./dist/config/vitest.base.d.ts",
+      "import": "./dist/config/vitest.base.js"
     }
   },
   "types": "./dist/index.d.ts",

@@ -1,43 +1,22 @@
 import { resolve } from 'path'
 import { defineWorkspace } from 'vitest/config'
+import {
+  createBaseVitestConfig,
+  defineVitestConfig,
+} from './packages/testkit/src/config/vitest.base.js'
 
 /**
  * Unified workspace configuration for Vitest and Wallaby
- * This ensures consistent test behavior across all environments
+ * Uses the base configuration from testkit for consistency across all environments
  */
 
-// Environment detection
-const isCI = process.env.CI === 'true'
-const isWallaby = process.env.WALLABY_WORKER !== undefined
+// Environment detection for integration tests
 const isIntegration = process.env.TEST_MODE === 'integration'
-
-// Shared configuration for all packages
-const sharedConfig = {
-  globals: true,
-  mockReset: true,
-  clearMocks: true,
-  restoreMocks: false, // Let test utilities handle restoration
-  sequence: {
-    shuffle: false, // Deterministic test order
-  },
-  env: {
-    NODE_ENV: 'test',
-    TEST_SEED: process.env.TEST_SEED || '12345',
-  },
-}
-
-// Timeout configuration
-const timeouts = {
-  test: isCI ? 15000 : isWallaby ? 10000 : 10000,
-  hook: isCI ? 15000 : isWallaby ? 10000 : 10000,
-  teardown: isCI ? 30000 : isWallaby ? 20000 : 20000,
-}
 
 export default defineWorkspace([
   // Root project configuration (for root-level tests if any)
-  {
+  defineVitestConfig({
     test: {
-      ...sharedConfig,
       name: 'root',
       root: '.',
       environment: 'node',
@@ -49,22 +28,32 @@ export default defineWorkspace([
         '**/*.integration.test.*',
       ],
       globalSetup: resolve(__dirname, 'packages/testkit/vitest.globalSetup.ts'),
-      setupFiles: [resolve(__dirname, 'packages/testkit/src/setup.ts')],
-      testTimeout: timeouts.test,
-      hookTimeout: timeouts.hook,
+      setupFiles: [
+        '@template/testkit/register',
+        resolve(__dirname, 'packages/testkit/src/setup.ts'),
+      ],
+      // Override base config for workspace-specific needs
+      globals: true,
+      mockReset: true,
+      clearMocks: true,
+      restoreMocks: false,
+      sequence: {
+        shuffle: false,
+      },
+      env: {
+        NODE_ENV: 'test',
+        TEST_SEED: process.env.TEST_SEED || '12345',
+        VITEST: 'true',
+      },
     },
-  },
+  }),
+
   // Testkit package configuration
-  {
+  defineVitestConfig({
     test: {
-      ...sharedConfig,
       name: 'testkit',
       root: resolve(__dirname, 'packages/testkit'),
       environment: 'happy-dom',
-      include: [
-        'src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
-        'tests/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
-      ],
       exclude: [
         '**/node_modules/**',
         '**/dist/**',
@@ -75,11 +64,10 @@ export default defineWorkspace([
       ],
       globalSetup: resolve(__dirname, 'packages/testkit/vitest.globalSetup.ts'),
       setupFiles: [
+        '@template/testkit/register',
         resolve(__dirname, 'packages/testkit/src/setup.ts'),
-        resolve(__dirname, 'packages/testkit/src/register.ts'),
       ],
-      testTimeout: timeouts.test,
-      hookTimeout: timeouts.hook,
+      // Override pool for testkit package
       pool: 'threads',
       poolOptions: {
         threads: {
@@ -87,40 +75,56 @@ export default defineWorkspace([
           isolate: true,
         },
       },
+      // Override base config for workspace-specific needs
+      globals: true,
+      mockReset: true,
+      clearMocks: true,
+      restoreMocks: false,
+      sequence: {
+        shuffle: false,
+      },
+      env: {
+        NODE_ENV: 'test',
+        TEST_SEED: process.env.TEST_SEED || '12345',
+        VITEST: 'true',
+      },
     },
-  },
+  }),
+
   // Utils package configuration
-  {
+  defineVitestConfig({
     test: {
-      ...sharedConfig,
       name: 'utils',
       root: resolve(__dirname, 'packages/utils'),
       environment: 'node',
-      include: [
-        'src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
-        'tests/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
-      ],
       exclude: [
         '**/node_modules/**',
         '**/dist/**',
         '**/.{idea,git,cache,output,temp}/**',
         '**/*.integration.test.*',
       ],
-      testTimeout: timeouts.test,
-      hookTimeout: timeouts.hook,
+      // Override base config for workspace-specific needs
+      globals: true,
+      mockReset: true,
+      clearMocks: true,
+      restoreMocks: false,
+      sequence: {
+        shuffle: false,
+      },
+      env: {
+        NODE_ENV: 'test',
+        TEST_SEED: process.env.TEST_SEED || '12345',
+        VITEST: 'true',
+      },
     },
-  },
+  }),
+
   // Quality-check package configuration
-  {
+  defineVitestConfig({
     test: {
-      ...sharedConfig,
       name: 'quality-check',
       root: resolve(__dirname, 'packages/quality-check'),
       environment: 'node',
-      include: [
-        'src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
-        'tests/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
-      ],
       exclude: [
         '**/node_modules/**',
         '**/dist/**',
@@ -128,17 +132,31 @@ export default defineWorkspace([
         '**/*.integration.test.*',
       ],
       globalSetup: resolve(__dirname, 'packages/testkit/vitest.globalSetup.ts'),
-      setupFiles: [resolve(__dirname, 'packages/testkit/src/setup.ts')],
-      testTimeout: timeouts.test,
-      hookTimeout: timeouts.hook,
+      setupFiles: [
+        '@template/testkit/register',
+        resolve(__dirname, 'packages/testkit/src/setup.ts'),
+      ],
+      // Override base config for workspace-specific needs
+      globals: true,
+      mockReset: true,
+      clearMocks: true,
+      restoreMocks: false,
+      sequence: {
+        shuffle: false,
+      },
+      env: {
+        NODE_ENV: 'test',
+        TEST_SEED: process.env.TEST_SEED || '12345',
+        VITEST: 'true',
+      },
     },
-  },
+  }),
+
   // Integration tests (gated)
   ...(isIntegration
     ? [
-        {
+        createBaseVitestConfig({
           test: {
-            ...sharedConfig,
             name: 'testkit-integration',
             root: resolve(__dirname, 'packages/testkit'),
             environment: 'node',
@@ -148,10 +166,14 @@ export default defineWorkspace([
             ],
             exclude: ['**/node_modules/**', '**/dist/**', '**/.{idea,git,cache,output,temp}/**'],
             globalSetup: resolve(__dirname, 'packages/testkit/vitest.globalSetup.ts'),
-            setupFiles: [resolve(__dirname, 'packages/testkit/src/setup.ts')],
-            // Longer timeouts for container startup
-            testTimeout: isCI ? 60000 : isWallaby ? 45000 : 45000,
-            hookTimeout: isCI ? 60000 : isWallaby ? 45000 : 45000,
+            setupFiles: [
+              '@template/testkit/register',
+              resolve(__dirname, 'packages/testkit/src/setup.ts'),
+            ],
+            // Override timeouts for integration tests
+            testTimeout: 60000,
+            hookTimeout: 60000,
+            teardownTimeout: 30000,
             pool: 'threads',
             poolOptions: {
               threads: {
@@ -159,8 +181,21 @@ export default defineWorkspace([
                 isolate: true,
               },
             },
+            // Override base config for workspace-specific needs
+            globals: true,
+            mockReset: true,
+            clearMocks: true,
+            restoreMocks: false,
+            sequence: {
+              shuffle: false,
+            },
+            env: {
+              NODE_ENV: 'test',
+              TEST_SEED: process.env.TEST_SEED || '12345',
+              VITEST: 'true',
+            },
           },
-        },
+        }),
       ]
     : []),
 ])
