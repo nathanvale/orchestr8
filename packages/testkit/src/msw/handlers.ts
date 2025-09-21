@@ -269,13 +269,5 @@ export const defaultHandlers: RequestHandler[] = [
   http.get('*/health', () => {
     return createSuccessResponse({ status: 'ok', timestamp: new Date().toISOString() })
   }),
-
-  // Default 404 for unmatched routes
-  http.all('*', ({ request }) => {
-    console.warn(`Unhandled ${request.method} request to ${request.url}`)
-    return createErrorResponse(
-      `Route not found: ${request.method} ${request.url}`,
-      HTTP_STATUS.NOT_FOUND,
-    )
-  }),
+  // Note: No catch-all handler - let MSW's onUnhandledRequest handle unmatched routes
 ]

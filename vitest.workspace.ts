@@ -48,6 +48,7 @@ export default defineWorkspace([
         '**/.{idea,git,cache,output,temp}/**',
         '**/*.integration.test.*',
       ],
+      globalSetup: resolve(__dirname, 'packages/testkit/vitest.globalSetup.ts'),
       setupFiles: [resolve(__dirname, 'packages/testkit/src/setup.ts')],
       testTimeout: timeouts.test,
       hookTimeout: timeouts.hook,
@@ -72,6 +73,7 @@ export default defineWorkspace([
         '**/{karma,rollup,webpack,vite,vitest,jest,ava,babel,nyc,cypress,tsup,build}.config.*',
         '**/*.integration.test.*',
       ],
+      globalSetup: resolve(__dirname, 'packages/testkit/vitest.globalSetup.ts'),
       setupFiles: [
         resolve(__dirname, 'packages/testkit/src/setup.ts'),
         resolve(__dirname, 'packages/testkit/src/register.ts'),
@@ -125,6 +127,7 @@ export default defineWorkspace([
         '**/.{idea,git,cache,output,temp}/**',
         '**/*.integration.test.*',
       ],
+      globalSetup: resolve(__dirname, 'packages/testkit/vitest.globalSetup.ts'),
       setupFiles: [resolve(__dirname, 'packages/testkit/src/setup.ts')],
       testTimeout: timeouts.test,
       hookTimeout: timeouts.hook,
@@ -144,6 +147,7 @@ export default defineWorkspace([
               'tests/**/*.integration.test.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
             ],
             exclude: ['**/node_modules/**', '**/dist/**', '**/.{idea,git,cache,output,temp}/**'],
+            globalSetup: resolve(__dirname, 'packages/testkit/vitest.globalSetup.ts'),
             setupFiles: [resolve(__dirname, 'packages/testkit/src/setup.ts')],
             // Longer timeouts for container startup
             testTimeout: isCI ? 60000 : isWallaby ? 45000 : 45000,

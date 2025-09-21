@@ -135,6 +135,9 @@ importers:
 
   apps/vite:
     dependencies:
+      '@template/testkit':
+        specifier: workspace:*
+        version: link:../../packages/testkit
       '@template/utils':
         specifier: workspace:*
         version: link:../../packages/utils

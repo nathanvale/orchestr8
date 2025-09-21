@@ -51,6 +51,9 @@ export {
   defaultHandlers,
 } from './handlers'
 
+// Re-export example handlers
+export { viteDemoHandlers } from './example-handlers/vite-demo'
+
 // Convenience re-exports from MSW
 export { http, HttpResponse, delay } from 'msw'
 export type { RequestHandler } from 'msw'

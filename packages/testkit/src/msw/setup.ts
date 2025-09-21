@@ -13,6 +13,7 @@ import {
   disposeMSWServer,
 } from './server'
 import type { MSWConfig } from './config'
+import { createMSWConfig } from './config'
 
 /**
  * Setup MSW for testing with automatic lifecycle management
@@ -97,31 +98,15 @@ export function quickSetupMSW(
 
 /**
  * Environment-aware MSW setup
- * Automatically configures based on detected environment
+ * Automatically configures based on detected environment using centralized config
  */
 export function setupMSWForEnvironment(
   handlers: RequestHandler[] = [],
   customConfig: Partial<MSWConfig> = {},
 ): void {
-  const isCI = process.env.CI === 'true'
-  const isWallaby = process.env.WALLABY_WORKER === 'true'
-  const isVerbose = process.env.VITEST_VERBOSE === 'true'
-
-  const envConfig: Partial<MSWConfig> = {
-    // Less strict in CI to avoid flaky tests
-    onUnhandledRequest: isCI ? 'warn' : 'error',
-    // Quiet in Wallaby to reduce noise
-    quiet: isWallaby && !isVerbose,
-    // Shorter timeout in CI
-    timeout: isCI ? 3000 : 5000,
-  }
-
-  const finalConfig = {
-    ...envConfig,
-    ...customConfig,
-  }
-
-  setupMSW(handlers, finalConfig)
+  // Use centralized config creation with environment detection
+  const config = createMSWConfig(customConfig)
+  setupMSW(handlers, config)
 }
 
 /**
