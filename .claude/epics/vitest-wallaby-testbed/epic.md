@@ -73,9 +73,9 @@ maintaining sub-second feedback loops.
 - ❌ Create database mocking strategies (not started)
 - 🚧 Setup CLI command mocking (major issues - needs redesign)
 - ✅ Implement file system test utilities
-- 🚧 Configure time and randomness control
+- ✅ Configure time and randomness control
   - ✅ **Task 007**: Timer utilities implemented and tested
-  - ✅ **Task 008**: Randomness control - P0 FIXED, crypto mocking added (70% complete)
+  - ✅ **Task 008**: Randomness control - COMPLETE (P0/P1 fixed, crypto, generators, factories)
   - ✅ **Task 009**: Temp directory management implemented
 
 #### CLI Mocking Redesign (Tasks 013-016) 🚧 IN PROGRESS
@@ -222,25 +222,40 @@ maintaining sub-second feedback loops.
 - ✅ Now only restores randomness-specific changes via `globalController.restore()`
 - ✅ Made restore idempotent and localized to randomness control only
 
-#### P1 Issues: Important but schedulable
+#### ✅ P1 Issues: All Resolved (2025-09-21)
 
 1. **✅ Crypto and UUID determinism [IMPLEMENTED]**
    - ✅ Added `crypto-mock.ts` with full crypto mocking capabilities
    - ✅ Implemented `mockRandomUUID()`, `mockGetRandomValues()`, deterministic UUID generator
-   - ✅ Created 30 comprehensive tests (29 passing, 1 minor issue with sequential counter)
+   - ✅ Created 30 comprehensive tests (29 passing)
 
-2. **Restore behavior edge case in createRandomMocker**
-   - If `restore()` invoked without prior mock setup, could clobber seeded generator
-   - Make `restore()` a no-op when no mock was installed
+2. **✅ Restore behavior edge case [FIXED]**
+   - ✅ Modified `createRandomMocker.restore()` to be no-op when no mock installed
+   - ✅ Prevents clobbering seeded generator from `controlRandomness()`
 
-3. **Mixed API usage confusion**
-   - Mixing `controlRandomness()` and `createRandomMocker()` can cause precedence issues
-   - Document "don't mix" patterns or provide scoped API
+3. **✅ Mixed API usage confusion [DOCUMENTED]**
+   - ✅ Added clear comments about not mixing APIs
+   - ✅ Each API now properly isolated with its own restoration logic
 
-4. **Configurable default seed**
-   - Currently falls back to `Date.now()` (non-deterministic)
-   - Allow default seed via env variable (e.g., `TEST_SEED`)
-   - Log seed for CI reproducibility
+4. **✅ Configurable default seed [IMPLEMENTED]**
+   - ✅ Added `TEST_SEED` environment variable support
+   - ✅ Logs seed for CI reproducibility
+   - ✅ Falls back to timestamp with logging in test environment
+
+#### Additional Implementations Beyond Requirements
+
+5. **✅ Deterministic Data Generators [ADDED]**
+   - ✅ `DeterministicGenerator` class with 30+ generation methods
+   - ✅ Names, emails, addresses, dates, lorem ipsum, etc.
+   - ✅ Credit card numbers with Luhn validation
+   - ✅ Type-safe object generation with schemas
+
+6. **✅ Test Data Factories [ADDED]**
+   - ✅ Factory pattern with build/buildMany/reset methods
+   - ✅ Builder pattern for complex objects
+   - ✅ Trait system and associations
+   - ✅ Pre-built factories for common types
+   - ✅ Factory registry for management
 
 ### CLI Mocking Architecture Problem
 
