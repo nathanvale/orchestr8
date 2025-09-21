@@ -1,10 +1,12 @@
 # Vitest Configuration Migration Guide
 
-This guide helps you migrate to using the new base Vitest configuration from `@template/testkit`.
+This guide helps you migrate to using the new base Vitest configuration from
+`@template/testkit`.
 
 ## Overview
 
 The testkit package now provides a standardized Vitest configuration that:
+
 - Automatically detects your environment (local, CI, Wallaby)
 - Optimizes settings for stability and performance
 - Provides consistent behavior across all packages
@@ -23,6 +25,7 @@ pnpm add -D @template/testkit@latest
 ### 2. Update Your `vitest.config.ts`
 
 **Before (Old approach):**
+
 ```typescript
 import { defineConfig } from 'vitest/config'
 
@@ -46,6 +49,7 @@ export default defineConfig({
 ```
 
 **After (New approach):**
+
 ```typescript
 import { defineVitestConfig } from '@template/testkit/config'
 
@@ -61,6 +65,7 @@ export default defineVitestConfig({
 ### 3. Remove Redundant Configuration
 
 The base config already includes:
+
 - ✅ Environment detection (CI, Wallaby, local)
 - ✅ Optimized pool configuration (`forks` for stability)
 - ✅ Proper timeout settings
@@ -207,7 +212,8 @@ defineVitestConfig({
 The base config automatically detects your environment:
 
 - **Local Development**: Balanced settings for speed and reliability
-- **CI Environment** (`CI=true`): Optimized for stability, limited workers, JUnit output
+- **CI Environment** (`CI=true`): Optimized for stability, limited workers,
+  JUnit output
 - **Wallaby** (`WALLABY_WORKER` set): Single worker, no coverage, verbose output
 
 ## Common Use Cases
@@ -270,7 +276,8 @@ export default defineVitestConfig({
 
 ### Issue: Tests are slower than before
 
-**Solution**: The base config uses `forks` by default for stability. If you need speed over isolation:
+**Solution**: The base config uses `forks` by default for stability. If you need
+speed over isolation:
 
 ```typescript
 defineVitestConfig({
@@ -282,7 +289,8 @@ defineVitestConfig({
 
 ### Issue: Custom setup files not working
 
-**Solution**: The base config automatically includes `@template/testkit/register`. Add your custom files to the array:
+**Solution**: The base config automatically includes
+`@template/testkit/register`. Add your custom files to the array:
 
 ```typescript
 defineVitestConfig({
@@ -297,7 +305,8 @@ defineVitestConfig({
 
 ### Issue: Coverage not generating
 
-**Solution**: Coverage is automatically disabled in Wallaby. For other environments, ensure it's enabled:
+**Solution**: Coverage is automatically disabled in Wallaby. For other
+environments, ensure it's enabled:
 
 ```typescript
 defineVitestConfig({
@@ -312,7 +321,8 @@ defineVitestConfig({
 
 ### Issue: Environment variables not set
 
-**Solution**: The base config sets `NODE_ENV=test` and `VITEST=true`. Add custom variables:
+**Solution**: The base config sets `NODE_ENV=test` and `VITEST=true`. Add custom
+variables:
 
 ```typescript
 defineVitestConfig({
@@ -327,7 +337,8 @@ defineVitestConfig({
 ## Benefits of Migration
 
 1. **Consistency**: All packages use the same base configuration
-2. **Environment Awareness**: Automatic optimization for CI, Wallaby, and local development
+2. **Environment Awareness**: Automatic optimization for CI, Wallaby, and local
+   development
 3. **Maintenance**: Configuration updates happen in one place
 4. **Best Practices**: Built-in optimizations and sensible defaults
 5. **Type Safety**: Full TypeScript support with proper types
@@ -347,7 +358,8 @@ If you encounter issues during migration:
 1. Check the examples above for your use case
 2. Review the test files in `packages/testkit/src/config/__tests__/`
 3. Use the utility functions to debug your configuration
-4. Consider using environment-specific configs (`createWallabyConfig`, `createCIConfig`)
+4. Consider using environment-specific configs (`createWallabyConfig`,
+   `createCIConfig`)
 
 ## Advanced Usage
 
@@ -372,7 +384,9 @@ export default myConfig
 
 ### Workspace Configuration
 
-The workspace configuration (`vitest.workspace.ts`) already uses the base config. Each package can still have its own `vitest.config.ts` that extends the base:
+The workspace configuration (`vitest.workspace.ts`) already uses the base
+config. Each package can still have its own `vitest.config.ts` that extends the
+base:
 
 ```typescript
 // packages/my-package/vitest.config.ts
