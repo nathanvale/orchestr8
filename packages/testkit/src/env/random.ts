@@ -293,13 +293,16 @@ export const quickRandom = {
 
   /**
    * Restore all random mocking
+   * Only restores randomness-related mocks, not all mocks in the test suite
    */
   restore: () => {
     if (globalController) {
       globalController.restore()
       globalController = null
     }
-    vi.restoreAllMocks()
+    // NOTE: Intentionally NOT calling vi.restoreAllMocks() here
+    // as it would restore ALL mocks in the entire test suite,
+    // breaking unrelated test scaffolding (P0 issue fixed)
   },
 }
 
