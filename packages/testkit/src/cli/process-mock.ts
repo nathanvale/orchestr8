@@ -93,8 +93,11 @@ export class MockChildProcess extends EventEmitter {
     this.stdin = new MockStream()
     this.pid = config.pid ?? Math.floor(Math.random() * 10000) + 1000
 
-    // Simulate process execution
-    this.simulateExecution()
+    // Simulate process execution asynchronously
+    // Use setImmediate to ensure events are emitted after listeners are attached
+    setImmediate(() => {
+      this.simulateExecution()
+    })
   }
 
   private async simulateExecution(): Promise<void> {
@@ -125,15 +128,26 @@ export class MockChildProcess extends EventEmitter {
 
     // Emit error if configured
     if (this.config.error) {
-      this.emit('error', this.config.error)
+      // Only emit error if there are listeners to avoid unhandled rejections
+      if (this.listenerCount('error') > 0) {
+        this.emit('error', this.config.error)
+      }
+      // Still need to signal that the process ended with error
+      this.exitCode = 1
+      this.emit('exit', this.exitCode, null)
+      this.emit('close', this.exitCode, null)
       return
     }
 
-    // Set exit code and signal (only set exitCode if explicitly provided)
-    if (this.config.exitCode !== undefined) {
+    // Set exit code and signal
+    // When terminated by signal, exitCode should be null
+    if (this.config.signal) {
+      this.exitCode = null
+      this.signalCode = this.config.signal
+    } else if (this.config.exitCode !== undefined) {
       this.exitCode = this.config.exitCode
+      this.signalCode = null
     }
-    this.signalCode = this.config.signal ?? null
 
     // Emit exit event
     this.emit('exit', this.exitCode, this.signalCode)

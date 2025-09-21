@@ -141,6 +141,14 @@ export function createChildProcessMock(): typeof cp {
           const execError = config.error as cp.ExecException
           execError.code = config.exitCode ?? 1
           actualCallback(execError, '', config.stderr ?? '')
+        } else if (config?.exitCode && config.exitCode !== 0) {
+          // Create error for non-zero exit codes
+          const execError = new Error(
+            `Command failed: ${command}\n${config.stderr || ''}`,
+          ) as cp.ExecException
+          execError.code = config.exitCode
+          execError.cmd = command
+          actualCallback(execError, config.stdout ?? '', config.stderr ?? '')
         } else {
           actualCallback(null, config?.stdout ?? '', config?.stderr ?? '')
         }
@@ -162,8 +170,26 @@ export function createChildProcessMock(): typeof cp {
       console.warn('Register with: mocker.registerExecSync(command, config)')
     }
 
+    // Throw error if explicitly set
     if (config?.error) {
       throw config.error
+    }
+
+    // Also throw error for non-zero exit codes (mimics real execSync behavior)
+    if (config?.exitCode && config.exitCode !== 0) {
+      const error = new Error(
+        `Command failed: ${command}\n${config.stderr || ''}`,
+      ) as cp.ExecException & {
+        stderr?: string | Buffer
+        stdout?: string | Buffer
+        status?: number
+      }
+      error.code = config.exitCode
+      error.cmd = command
+      error.stderr = config.stderr || ''
+      error.stdout = config.stdout || ''
+      error.status = config.exitCode
+      throw error
     }
 
     const output = config?.stdout ?? ''
