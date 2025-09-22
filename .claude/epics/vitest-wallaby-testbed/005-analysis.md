@@ -11,7 +11,8 @@
 - Gaps identified in review:
   - Identity application inconsistencies (global vs fluent)
   - Scheduler cleanup doesn’t advance timers (risk for in-flight chains)
-  - Stubbed helpers (`getAllDocuments`, `countDocuments`, pending/cancel/advance time)
+  - Stubbed helpers (`getAllDocuments`, `countDocuments`, pending/cancel/advance
+    time)
   - Storage helpers diverge from convex-test path via `ctx.storage` in `t.run`
 
 Conclusion: A functional base exists; we need a clear strategy to finish and
@@ -60,7 +61,8 @@ Milestones
 1. M2 – Docs + templates
 
 - Cookbook examples (auth, seeding, scheduler, HTTP actions, file uploads)
-- Wallaby/Vitest config notes (edge-runtime for Convex tests via environmentMatchGlobs, setupFiles)
+- Wallaby/Vitest config notes (edge-runtime for Convex tests via
+  environmentMatchGlobs, setupFiles)
 - Policies: when to use convex-test vs integration DB containers
 
 1. M3 – Optional fallback
@@ -70,8 +72,8 @@ Milestones
 
 Success criteria
 
-- Unit tests demonstrate identity isolation, scheduled chains, and HTTP
-  actions; all green locally and in CI
+- Unit tests demonstrate identity isolation, scheduled chains, and HTTP actions;
+  all green locally and in CI
 - No stubbed helpers remain in public API
 - Harness usage mirrors convex-test docs to reduce cognitive load
 
@@ -131,10 +133,12 @@ graph TD
 ## Integration Points
 
 1. **convex-test**: Always the engine (adapter delegates)
-2. **Vitest**: edge-runtime for Convex tests; use fake timers for scheduler tests
+2. **Vitest**: edge-runtime for Convex tests; use fake timers for scheduler
+   tests
 3. **Type Safety**: Prefer generated `_generated/api`/`_generated/server` in
-  consumer tests; adapter stays generic
-4. **Wallaby**: Mirrors Vitest config to avoid env drift (use environmentMatchGlobs to run convex/** in edge-runtime)
+   consumer tests; adapter stays generic
+4. **Wallaby**: Mirrors Vitest config to avoid env drift (use
+   environmentMatchGlobs to run convex/\*\* in edge-runtime)
 
 ## File Patterns
 
@@ -240,7 +244,8 @@ afterEach(async () => {
   - **Mitigation**: Keep adapter thin; pin versions; add smoke tests; be ready
     to fork if needed
 - **Risk**: Type safety loss
-  - **Mitigation**: Encourage `_generated/api`/`_generated/server` usage in tests
+  - **Mitigation**: Encourage `_generated/api`/`_generated/server` usage in
+    tests
 
 ## Success Metrics
 

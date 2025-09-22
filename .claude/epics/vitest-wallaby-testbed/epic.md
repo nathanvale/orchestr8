@@ -69,7 +69,8 @@ maintaining sub-second feedback loops.
 - ✅ Implement MSW server configuration
 - ✅ Create database testing utilities (MySQL Testcontainers complete; Postgres
   pending in Task 003)
-- 🚧 Establish Convex test harness (in progress): convex-test + adapter; M0 hardening pending
+- 🚧 Establish Convex test harness (in progress): convex-test + adapter; M0
+  hardening pending
 - ✅ Configure Vitest base settings
 
 ### Phase 2: Mocking Infrastructure (Tasks 011-020) 🚧 IN PROGRESS
