@@ -6,15 +6,15 @@
 import { MySqlContainer } from '@testcontainers/mysql'
 import type { StartedMySqlContainer } from '@testcontainers/mysql'
 import * as mysql from 'mysql2/promise'
-import type { Connection, Pool, PoolConnection } from 'mysql2/promise'
+import type { Connection, Pool, PoolConnection, PoolOptions } from 'mysql2/promise'
 import * as path from 'node:path'
 import { readFile } from 'node:fs/promises'
 import { BaseDatabaseContainer, createPoolConfig } from './base-database.js'
-import type {
-  DatabaseConnectionConfig,
-  DatabaseTestContext,
-  MigrationConfig,
-  SeedConfig,
+import {
+  type DatabaseConnectionConfig,
+  type DatabaseTestContext,
+  type MigrationConfig,
+  type SeedConfig,
   IsolationLevel,
 } from './types.js'
 import {
@@ -29,7 +29,7 @@ import {
 /**
  * MySQL container implementation extending the base database container
  */
-export class MySQLContainer extends BaseDatabaseContainer<StartedMySqlContainer, Connection> {
+export class MySQLContainer extends BaseDatabaseContainer<StartedMySqlContainer, Connection, Pool> {
   private mysqlPool?: Pool
   private currentTransaction?: PoolConnection
 
@@ -111,7 +111,7 @@ export class MySQLContainer extends BaseDatabaseContainer<StartedMySqlContainer,
     const config = this.config as MySQLDatabaseConfig
     const connectionConfig = this.getConnectionConfig()
 
-    // Create connection pool
+    // Create connection pool with MySQL-specific configuration
     this.mysqlPool = mysql.createPool({
       host: connectionConfig.host,
       port: connectionConfig.port,
@@ -119,8 +119,11 @@ export class MySQLContainer extends BaseDatabaseContainer<StartedMySqlContainer,
       password: connectionConfig.password,
       database: connectionConfig.database,
       ...this.buildConnectionOptions(config.connectionOptions || {}),
-      ...createPoolConfig(),
+      ...this.createMySQLPoolConfig(),
     })
+
+    // Also assign to base class pool property for consistency
+    this.pool = this.mysqlPool
 
     // Track pool for cleanup
     this.resourceTracker.track(this.mysqlPool, async (pool) => {
@@ -136,6 +139,13 @@ export class MySQLContainer extends BaseDatabaseContainer<StartedMySqlContainer,
         connection.release()
       }
     })
+
+    // Apply collation if specified in connection options
+    if (config.connectionOptions?.collation) {
+      await this.client.execute(
+        `SET collation_connection = '${config.connectionOptions.collation}'`,
+      )
+    }
   }
 
   /**
@@ -375,6 +385,23 @@ export class MySQLContainer extends BaseDatabaseContainer<StartedMySqlContainer,
     }
 
     this.currentTransaction = await this.mysqlPool.getConnection()
+
+    // Track the transaction connection for proper cleanup
+    this.resourceTracker.track(this.currentTransaction, async (connection) => {
+      try {
+        // Check if connection is still active before attempting rollback
+        const conn = connection as PoolConnection & { _closing?: boolean }
+        if (!conn._closing) {
+          await connection.rollback()
+        }
+      } catch {
+        // Ignore rollback errors during cleanup
+      }
+      if ('release' in connection && typeof connection.release === 'function') {
+        connection.release()
+      }
+    })
+
     await this.currentTransaction.beginTransaction()
   }
 
@@ -397,6 +424,17 @@ export class MySQLContainer extends BaseDatabaseContainer<StartedMySqlContainer,
   }
 
   /**
+   * Get the MySQL connection pool
+   */
+  getPool(): Pool {
+    if (!this.mysqlPool) {
+      throw new Error('Pool not initialized')
+    }
+
+    return this.mysqlPool
+  }
+
+  /**
    * Execute SQL query
    */
   async query(sql: string, params?: unknown[]): Promise<unknown> {
@@ -409,10 +447,35 @@ export class MySQLContainer extends BaseDatabaseContainer<StartedMySqlContainer,
   }
 
   /**
+   * Create MySQL-specific pool configuration
+   */
+  private createMySQLPoolConfig(): Partial<PoolOptions> {
+    const pgPoolConfig = createPoolConfig()
+
+    // Map pg-style pool config to mysql2 pool options
+    return {
+      connectionLimit: pgPoolConfig.max, // max -> connectionLimit
+      waitForConnections: true,
+      queueLimit: 0, // unlimited queue
+      enableKeepAlive: true,
+      keepAliveInitialDelay: 0,
+      // Note: mysql2 doesn't have direct equivalents for all pg options
+      // idleTimeoutMillis, connectionTimeoutMillis, statementTimeout are handled differently
+    }
+  }
+
+  /**
    * Build MySQL command-line arguments
    */
   private buildMySQLArgs(config: MySQLDatabaseConfig): string[] {
     const args: string[] = []
+
+    // Validate binlog configuration
+    if (config.enableBinLog && (!config.serverId || config.serverId === 0)) {
+      throw new Error(
+        'Binary logging requires a non-zero server-id. Please set serverId in your MySQL configuration.',
+      )
+    }
 
     // SQL modes
     if (config.sqlModes && config.sqlModes.length > 0) {
@@ -555,6 +618,26 @@ export class MySQLContainer extends BaseDatabaseContainer<StartedMySqlContainer,
 }
 
 /**
+ * Factory function to create a MySQL container (matches acceptance criteria)
+ */
+export async function createMySQLContainer(config?: Partial<MySQLDatabaseConfig>): Promise<{
+  container: MySQLContainer
+  connectionString: string
+  stop: () => Promise<void>
+}> {
+  const mysqlConfig = createMySQLConfig(config)
+  const container = new MySQLContainer(mysqlConfig)
+
+  await container.start()
+
+  return {
+    container,
+    connectionString: container.getConnectionString(),
+    stop: () => container.stop(),
+  }
+}
+
+/**
  * Helper function to create a MySQL test context
  */
 export async function createMySQLContext(
@@ -579,12 +662,14 @@ export async function createMySQLContext(
 /**
  * Simple setup function for MySQL tests (similar to Postgres API)
  */
-export async function setupMySQLTest(options: {
-  migrations?: string
-  seed?: string | Record<string, unknown[]>
-  config?: Partial<MySQLDatabaseConfig>
-  isolationLevel?: IsolationLevel
-}): Promise<{
+export async function setupMySQLTest(
+  options: {
+    migrations?: string
+    seed?: string | Record<string, unknown[]>
+    config?: Partial<MySQLDatabaseConfig>
+    isolationLevel?: IsolationLevel
+  } = {},
+): Promise<{
   db: Connection
   pool: Pool
   connectionString: string
@@ -618,13 +703,18 @@ export async function setupMySQLTest(options: {
 
   const context = await container.getTestContext()
 
-  // Get pool connection for advanced usage
+  // Get the actual MySQL pool for advanced usage
   const mysqlContainer = container as MySQLContainer
-  const pool = await mysqlContainer.getConnection()
+  const pool = mysqlContainer.getPool()
+
+  // Start a transaction if isolation level is TRANSACTION
+  if (options.isolationLevel === IsolationLevel.TRANSACTION) {
+    await mysqlContainer.beginTransaction()
+  }
 
   return {
     db: context.client,
-    pool: pool as unknown as Pool,
+    pool: pool,
     connectionString: context.connectionString,
     cleanup: context.cleanup,
     reset: () => context.reset(),

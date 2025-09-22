@@ -3,7 +3,6 @@
  * Provides common functionality that can be shared between different database implementations
  */
 
-import type { Pool } from 'pg'
 import {
   type BaseDatabaseConfig,
   type DatabaseConnectionConfig,
@@ -19,10 +18,10 @@ import {
 /**
  * Abstract base class for database container implementations
  */
-export abstract class BaseDatabaseContainer<TContainer, TClient> {
+export abstract class BaseDatabaseContainer<TContainer, TClient, TPool = unknown> {
   protected container?: TContainer
   protected client?: TClient
-  protected pool?: Pool
+  protected pool?: TPool
   protected resourceTracker: ResourceTracker
   protected isStarted = false
   protected startupTime = 0
@@ -253,7 +252,15 @@ export abstract class BaseDatabaseContainer<TContainer, TClient> {
     await this.resourceTracker.cleanup()
 
     if (this.pool) {
-      await this.pool.end()
+      // Handle pool cleanup generically for different pool types
+      if (
+        typeof this.pool === 'object' &&
+        this.pool !== null &&
+        'end' in this.pool &&
+        typeof (this.pool as { end?: unknown }).end === 'function'
+      ) {
+        await (this.pool as { end: () => Promise<void> }).end()
+      }
       this.pool = undefined
     }
 

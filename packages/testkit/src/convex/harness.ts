@@ -1,8 +1,16 @@
 /**
- * Convex test harness implementation using convex-test
+ * Convex test harness implementation
+ * Provides a thin adapter layer over convex-test with additional utilities
  */
 
 import { convexTest } from 'convex-test'
+import type { TestConvex as ConvexTestInstance } from 'convex-test'
+import type {
+  GenericSchema,
+  SchemaDefinition,
+  DataModelFromSchemaDefinition,
+  UserIdentity,
+} from 'convex/server'
 import type {
   ConvexTestContext,
   ConvexTestConfig,
@@ -11,20 +19,14 @@ import type {
   ConvexStorageContext,
   ConvexSchedulerContext,
   ConvexLifecycleContext,
-  ConvexSeedConfig,
-  GenericSchema,
-  DataModelFromSchemaDefinition,
-  SchemaDefinition,
-  UserIdentity,
-  TestConvex,
 } from './context.js'
 import { ConvexTestError } from './context.js'
 
 /**
  * Internal storage for managing test state
  */
-interface TestHarnessState {
-  convexInstance: ReturnType<typeof convexTest>
+interface TestHarnessState<Schema extends GenericSchema = GenericSchema> {
+  convexInstance: ConvexTestInstance<SchemaDefinition<Schema, boolean>>
   mockStorage: Map<string, { data: ArrayBuffer; name: string; size: number }>
   currentUser: Partial<UserIdentity> | null
   isCleanedUp: boolean
@@ -37,14 +39,20 @@ interface TestHarnessState {
 export function createConvexTestHarness<Schema extends GenericSchema = GenericSchema>(
   config: ConvexTestConfig<Schema> = {},
 ): ConvexTestContext<Schema> {
-  const state: TestHarnessState = {
-    convexInstance: convexTest(config.schema as any, config.modules),
+  const state: TestHarnessState<Schema> = {
+    convexInstance: convexTest(config.schema, config.modules) as ConvexTestInstance<
+      SchemaDefinition<Schema, boolean>
+    >,
     mockStorage: new Map(),
     currentUser: config.defaultUser || null,
     isCleanedUp: false,
     debug: config.debug || false,
   }
 
+  // Track original instance for reset functionality
+  const originalConfig = { ...config }
+
+  // Debug logging helper
   const debugLog = (message: string, ...args: unknown[]) => {
     if (state.debug) {
       console.log(`[ConvexTestHarness] ${message}`, ...args)
@@ -54,70 +62,93 @@ export function createConvexTestHarness<Schema extends GenericSchema = GenericSc
   debugLog('Creating test harness', { schema: !!config.schema, modules: !!config.modules })
 
   // Database context implementation
-  const db: ConvexDatabaseContext<DataModelFromSchemaDefinition<SchemaDefinition<Schema>>> = {
+  const db: ConvexDatabaseContext<
+    DataModelFromSchemaDefinition<SchemaDefinition<Schema, boolean>>
+  > = {
     async run(func) {
       debugLog('Running database operation')
-      return state.convexInstance.run(func as any)
+      return state.convexInstance.run(func)
     },
 
     async seed(seedFn) {
       debugLog('Seeding database')
-      return state.convexInstance.run(seedFn as any)
+      return state.convexInstance.run(seedFn)
     },
 
     async clear() {
       debugLog('Clearing database')
       // Note: convex-test doesn't provide explicit clear method,
       // so we recreate the instance
-      state.convexInstance = convexTest(config.schema as any, config.modules)
+      state.convexInstance = convexTest(config.schema, config.modules) as ConvexTestInstance<
+        SchemaDefinition<Schema, boolean>
+      >
       state.mockStorage.clear()
     },
 
-    async getAllDocuments(_tableName) {
-      debugLog('Getting all documents from table', _tableName)
-      return state.convexInstance.run(async (_ctx) => {
-        // This is a simplified implementation - in real usage,
-        // you'd need to implement proper table scanning
-        // based on your specific schema
-        return []
-      })
+    async getAllDocuments(tableName) {
+      debugLog('getAllDocuments called for table', tableName)
+      throw new ConvexTestError(
+        'getAllDocuments is not supported yet - use db.query() instead to fetch documents',
+        'NOT_IMPLEMENTED',
+      )
     },
 
-    async countDocuments(_tableName) {
-      debugLog('Counting documents in table', _tableName)
-      return state.convexInstance.run(async (_ctx) => {
-        // This is a simplified implementation
-        return 0
-      })
+    async countDocuments(tableName) {
+      debugLog('countDocuments called for table', tableName)
+      throw new ConvexTestError(
+        'countDocuments is not supported yet - use db.query() instead to count documents',
+        'NOT_IMPLEMENTED',
+      )
     },
   }
 
-  // Authentication context implementation
-  const auth: ConvexAuthContext<Schema, DataModelFromSchemaDefinition<SchemaDefinition<Schema>>> = {
+  // Authentication context implementation with chainable API
+  const auth: ConvexAuthContext<
+    Schema,
+    DataModelFromSchemaDefinition<SchemaDefinition<Schema, boolean>>
+  > = {
     withUser(identity) {
       debugLog('Setting user identity', identity)
       state.currentUser = identity
-      return state.convexInstance.withIdentity(identity) as unknown as TestConvex<
-        SchemaDefinition<Schema>
-      >
+      // Return a new context with identity applied for chaining
+      const authenticatedInstance = state.convexInstance.withIdentity(identity as UserIdentity)
+      return authenticatedInstance as ConvexTestInstance<SchemaDefinition<Schema, boolean>>
     },
 
     withoutAuth() {
       debugLog('Removing user identity')
       state.currentUser = null
-      return state.convexInstance as unknown as TestConvex<SchemaDefinition<Schema>>
+      // Return anonymous context for chaining
+      return state.convexInstance as ConvexTestInstance<SchemaDefinition<Schema, boolean>>
     },
 
     switchUser(identity) {
       debugLog('Switching user identity', identity)
       state.currentUser = identity
-      return state.convexInstance.withIdentity(identity) as unknown as TestConvex<
-        SchemaDefinition<Schema>
-      >
+      // Return a new context with switched identity
+      const authenticatedInstance = state.convexInstance.withIdentity(identity as UserIdentity)
+      return authenticatedInstance as ConvexTestInstance<SchemaDefinition<Schema, boolean>>
+    },
+
+    asAnonymous() {
+      debugLog('Switching to anonymous context')
+      state.currentUser = null
+      return state.convexInstance as ConvexTestInstance<SchemaDefinition<Schema, boolean>>
     },
 
     getCurrentUser() {
       return state.currentUser
+    },
+
+    async withAuth<T>(
+      identity: Partial<UserIdentity>,
+      fn: (ctx: ConvexTestInstance<SchemaDefinition<Schema, boolean>>) => Promise<T>,
+    ): Promise<T> {
+      debugLog('Running with authenticated context', identity)
+      const authenticatedInstance = state.convexInstance.withIdentity(identity as UserIdentity)
+      return fn(
+        authenticatedInstance as unknown as ConvexTestInstance<SchemaDefinition<Schema, boolean>>,
+      )
     },
 
     testUsers: {
@@ -125,12 +156,16 @@ export function createConvexTestHarness<Schema extends GenericSchema = GenericSc
         subject: 'admin_user_123',
         issuer: 'test',
         tokenIdentifier: 'admin_token',
+        name: 'Admin User',
+        email: 'admin@example.com',
         role: 'admin',
       }),
       regular: () => ({
-        subject: 'regular_user_456',
+        subject: 'user_123',
         issuer: 'test',
-        tokenIdentifier: 'regular_token',
+        tokenIdentifier: 'user_token',
+        name: 'Test User',
+        email: 'user@example.com',
         role: 'user',
       }),
       anonymous: () => null,
@@ -140,61 +175,51 @@ export function createConvexTestHarness<Schema extends GenericSchema = GenericSc
   // Storage context implementation
   const storage: ConvexStorageContext = {
     async uploadFile(name, content) {
-      let data: ArrayBuffer
+      debugLog('Uploading file', { name })
+      const buffer = typeof content === 'string' ? Buffer.from(content) : content
+      const id = `storage_${Date.now()}_${Math.random().toString(36).substring(7)}`
 
-      if (typeof content === 'string') {
-        // Convert string to ArrayBuffer
-        const encoded = new TextEncoder().encode(content)
-        data = encoded.buffer.slice(encoded.byteOffset, encoded.byteOffset + encoded.byteLength)
-      } else if (content instanceof ArrayBuffer) {
-        // Already an ArrayBuffer
-        data = content
+      // Handle ArrayBuffer and SharedArrayBuffer
+      let arrayBuffer: ArrayBuffer
+      if (buffer instanceof SharedArrayBuffer) {
+        // Convert SharedArrayBuffer to ArrayBuffer
+        const uint8Array = new Uint8Array(buffer)
+        arrayBuffer = uint8Array.buffer
+      } else if (buffer instanceof ArrayBuffer) {
+        arrayBuffer = buffer
       } else {
-        // Assume it's a Uint8Array or similar TypedArray
-        const typedArray = content as Uint8Array
-        const buffer = typedArray.buffer
-        // Handle both ArrayBuffer and SharedArrayBuffer
-        if (buffer instanceof ArrayBuffer) {
-          data = buffer.slice(typedArray.byteOffset, typedArray.byteOffset + typedArray.byteLength)
-        } else {
-          // Convert SharedArrayBuffer to ArrayBuffer
-          const temp = new ArrayBuffer(typedArray.byteLength)
-          new Uint8Array(temp).set(typedArray)
-          data = temp
-        }
+        // Convert Buffer or other types to ArrayBuffer
+        const uint8Array = new Uint8Array(buffer)
+        arrayBuffer = uint8Array.buffer
       }
 
-      const fileId = `storage_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-
-      state.mockStorage.set(fileId, {
-        data,
+      state.mockStorage.set(id, {
+        data: arrayBuffer,
         name,
-        size: data.byteLength,
+        size: arrayBuffer.byteLength,
       })
-
-      debugLog('Uploaded file', { fileId, name, size: data.byteLength })
-      return fileId
+      debugLog('File uploaded', { id, name, size: arrayBuffer.byteLength })
+      return id
     },
 
     async getFile(storageId) {
+      debugLog('Getting file', { storageId })
       const file = state.mockStorage.get(storageId)
-      debugLog('Retrieved file', { storageId, found: !!file })
-      return file?.data || null
+      return file ? file.data : null
     },
 
     async deleteFile(storageId) {
-      const deleted = state.mockStorage.delete(storageId)
-      debugLog('Deleted file', { storageId, deleted })
+      debugLog('Deleting file', { storageId })
+      state.mockStorage.delete(storageId)
     },
 
     async listFiles() {
-      const files = Array.from(state.mockStorage.entries()).map(([id, file]) => ({
+      debugLog('Listing files')
+      return Array.from(state.mockStorage.entries()).map(([id, file]) => ({
         id,
         name: file.name,
         size: file.size,
       }))
-      debugLog('Listed files', { count: files.length })
-      return files
     },
 
     async clearFiles() {
@@ -234,14 +259,19 @@ export function createConvexTestHarness<Schema extends GenericSchema = GenericSc
     },
   }
 
-  // Lifecycle context implementation
+  // Lifecycle context implementation with proper isolation
   const lifecycle: ConvexLifecycleContext = {
     async reset() {
       debugLog('Resetting test harness')
-      await db.clear()
-      await storage.clearFiles()
-      state.currentUser = config.defaultUser || null
+      // Recreate convex instance for complete isolation
+      state.convexInstance = convexTest(
+        originalConfig.schema,
+        originalConfig.modules,
+      ) as ConvexTestInstance<SchemaDefinition<Schema, boolean>>
+      state.mockStorage.clear()
+      state.currentUser = originalConfig.defaultUser || null
       state.isCleanedUp = false
+      debugLog('Reset complete - test harness in clean state')
     },
 
     async cleanup() {
@@ -249,18 +279,47 @@ export function createConvexTestHarness<Schema extends GenericSchema = GenericSc
       state.mockStorage.clear()
       state.currentUser = null
       state.isCleanedUp = true
+      // Clear any pending scheduled functions
+      try {
+        await state.convexInstance.finishAllScheduledFunctions(() => {})
+      } catch {
+        // Ignore errors during cleanup
+      }
+      debugLog('Cleanup complete')
     },
 
-    setupHooks(_hooks) {
+    setupHooks(hooks) {
       debugLog('Setting up lifecycle hooks')
-      // This would integrate with the test framework's hooks
-      // For now, we store the hooks but don't actually set them up
-      // In a real implementation, this would use beforeEach/afterEach from vitest
+      // This would integrate with test framework lifecycle
+      if (typeof beforeEach === 'function') {
+        beforeEach(async () => {
+          if (hooks.beforeEach) await hooks.beforeEach()
+          await lifecycle.reset()
+        })
+      }
+      if (typeof afterEach === 'function') {
+        afterEach(async () => {
+          if (hooks.afterEach) await hooks.afterEach()
+          await lifecycle.cleanup()
+        })
+      }
+
+      // Alternative: Store hooks in global for manual invocation
+      if (typeof global !== 'undefined') {
+        ;(global as Record<string, unknown>).__convexBeforeEach = async () => {
+          if (hooks.beforeEach) await hooks.beforeEach()
+          await lifecycle.reset()
+        }
+        ;(global as Record<string, unknown>).__convexAfterEach = async () => {
+          if (hooks.afterEach) await hooks.afterEach()
+          await lifecycle.cleanup()
+        }
+      }
     },
   }
 
   const context: ConvexTestContext<Schema> = {
-    convex: state.convexInstance as unknown as TestConvex<SchemaDefinition<Schema>>,
+    convex: state.convexInstance as ConvexTestInstance<SchemaDefinition<Schema, boolean>>,
     db,
     auth,
     storage,
@@ -269,9 +328,10 @@ export function createConvexTestHarness<Schema extends GenericSchema = GenericSc
   }
 
   // Run setup hooks if provided
-  if (config.setup?.beforeEach) {
-    config.setup.beforeEach(context).catch((error) => {
-      debugLog('Setup beforeEach hook failed', error)
+  if (config.setup?.beforeEach || config.setup?.afterEach) {
+    lifecycle.setupHooks({
+      beforeEach: config.setup.beforeEach ? () => config.setup!.beforeEach!(context) : undefined,
+      afterEach: config.setup.afterEach ? () => config.setup!.afterEach!(context) : undefined,
     })
   }
 
@@ -280,131 +340,10 @@ export function createConvexTestHarness<Schema extends GenericSchema = GenericSc
 }
 
 /**
- * Simplified setup function for quick test harness creation
+ * Setup Convex test with default configuration
  */
 export function setupConvexTest<Schema extends GenericSchema = GenericSchema>(
-  config: ConvexTestConfig<Schema> = {},
+  config?: ConvexTestConfig<Schema>,
 ): ConvexTestContext<Schema> {
   return createConvexTestHarness(config)
-}
-
-/**
- * Create a test harness with authentication pre-configured
- */
-export function createAuthenticatedConvexTest<Schema extends GenericSchema = GenericSchema>(
-  config: ConvexTestConfig<Schema> & { user: Partial<UserIdentity> },
-): ConvexTestContext<Schema> {
-  const { user, ...restConfig } = config
-  const harness = createConvexTestHarness({
-    ...restConfig,
-    defaultUser: user,
-  })
-
-  // Set the authenticated context immediately
-  harness.auth.withUser(user)
-  return harness
-}
-
-/**
- * Seed test data using a simplified configuration
- */
-export async function seedConvexData<Schema extends GenericSchema = GenericSchema>(
-  context: ConvexTestContext<Schema>,
-  seedConfig: ConvexSeedConfig,
-): Promise<void> {
-  for (const [tableName, data] of Object.entries(seedConfig)) {
-    const documents = typeof data === 'function' ? await data() : data
-
-    await context.db.run(async (ctx: any) => {
-      for (const doc of documents) {
-        await ctx.db.insert(tableName, doc)
-      }
-    })
-  }
-}
-
-/**
- * Utility to create common test data factories
- */
-export const createTestDataFactories = () => ({
-  user: (overrides: Record<string, unknown> = {}) => ({
-    name: 'Test User',
-    email: 'test@example.com',
-    createdAt: Date.now(),
-    ...overrides,
-  }),
-
-  post: (userId: string, overrides: Record<string, unknown> = {}) => ({
-    title: 'Test Post',
-    content: 'This is a test post content',
-    authorId: userId,
-    createdAt: Date.now(),
-    published: false,
-    ...overrides,
-  }),
-
-  comment: (postId: string, userId: string, overrides: Record<string, unknown> = {}) => ({
-    content: 'This is a test comment',
-    postId,
-    authorId: userId,
-    createdAt: Date.now(),
-    ...overrides,
-  }),
-})
-
-/**
- * Assert that a Convex test context is properly initialized
- */
-export function assertConvexTestContext<Schema extends GenericSchema = GenericSchema>(
-  context: ConvexTestContext<Schema>,
-): void {
-  if (!context.convex) {
-    throw new ConvexTestError('Convex instance not initialized', 'INITIALIZATION_ERROR')
-  }
-  if (!context.db) {
-    throw new ConvexTestError('Database context not initialized', 'INITIALIZATION_ERROR')
-  }
-  if (!context.auth) {
-    throw new ConvexTestError('Auth context not initialized', 'INITIALIZATION_ERROR')
-  }
-  if (!context.storage) {
-    throw new ConvexTestError('Storage context not initialized', 'INITIALIZATION_ERROR')
-  }
-  if (!context.scheduler) {
-    throw new ConvexTestError('Scheduler context not initialized', 'INITIALIZATION_ERROR')
-  }
-  if (!context.lifecycle) {
-    throw new ConvexTestError('Lifecycle context not initialized', 'INITIALIZATION_ERROR')
-  }
-}
-
-/**
- * Create a minimal test context for unit tests that don't need full features
- */
-export function createMinimalConvexTest<Schema extends GenericSchema = GenericSchema>(
-  schema?: SchemaDefinition<Schema>,
-): Pick<ConvexTestContext<Schema>, 'convex' | 'db'> {
-  const convexInstance = convexTest(schema as any)
-
-  return {
-    convex: convexInstance as unknown as TestConvex<SchemaDefinition<Schema>>,
-    db: {
-      async run(func) {
-        return convexInstance.run(func as any)
-      },
-      async seed(seedFn) {
-        return convexInstance.run(seedFn as any)
-      },
-      async clear() {
-        // Recreate instance for clearing
-        return
-      },
-      async getAllDocuments() {
-        return []
-      },
-      async countDocuments() {
-        return 0
-      },
-    },
-  }
 }

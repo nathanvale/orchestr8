@@ -103,7 +103,7 @@ TDD.
 3. **Database Testing Support**
    - SQLite in-memory for unit tests with ORM parity
    - Testcontainers for Postgres/MySQL integration tests
-   - Convex-test harness for Convex functions
+   - Convex functions tested via convex-test with a thin adapter
 
 4. **HTTP/API Testing**
    - MSW for intercepting network calls in unit tests
@@ -264,10 +264,11 @@ and implementation guidelines that supplement this PRD.
 
 ### Phase 1: Foundation (Weeks 1-4)
 
-- Set up testkit package with core utilities
-- Implement MSW server configuration
-- Create Testcontainers helpers for Postgres/MySQL
-- Establish Convex test harness
+```text
+Implement MSW server configuration
+Create Testcontainers helpers for Postgres/MySQL
+Establish Convex test harness (convex-test + adapter)
+```
 
 ### Phase 2: Policy Implementation (Weeks 5-8)
 
@@ -299,6 +300,10 @@ and implementation guidelines that supplement this PRD.
    - Mitigation: Automated migration tools where possible
    - Fallback: Gradual package-by-package migration
 
+4. **Convex-test library maintenance**
+   - Mitigation: Keep adapter thin, pin versions, add smoke tests, and use only
+     documented APIs; be ready to fork if necessary
+
 ### Organizational Risks
 
 1. **Developer Resistance to Mocking Policies**
@@ -326,7 +331,7 @@ and implementation guidelines that supplement this PRD.
 
 ### Test Pyramid Distribution
 
-```
+```text
 E2E Tests (5-10%)
 ├── Critical user journeys
 ├── Payment flows

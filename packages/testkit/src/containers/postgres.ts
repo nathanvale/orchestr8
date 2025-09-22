@@ -7,7 +7,7 @@ import { PostgreSqlContainer } from '@testcontainers/postgresql'
 import { readFile } from 'node:fs/promises'
 import * as path from 'node:path'
 import type { ClientConfig } from 'pg'
-import { Client } from 'pg'
+import { Client, Pool } from 'pg'
 import { BaseDatabaseContainer } from './base-database.js'
 import type {
   DatabaseConnectionConfig,
@@ -42,7 +42,11 @@ export function createPostgresConfig(
   }
 }
 
-export class PostgresContainer extends BaseDatabaseContainer<StartedPostgreSqlContainer, Client> {
+export class PostgresContainer extends BaseDatabaseContainer<
+  StartedPostgreSqlContainer,
+  Client,
+  Pool
+> {
   constructor(config: PostgresDatabaseConfig) {
     super(config)
   }

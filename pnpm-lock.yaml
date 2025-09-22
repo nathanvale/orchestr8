@@ -246,6 +246,9 @@ importers:
       '@vitest/ui':
         specifier: ^3.2.4
         version: 3.2.4(vitest@3.2.4)
+      convex:
+        specifier: ^1.27.1
+        version: 1.27.1(react@19.1.1)
       convex-test:
         specifier: ^0.0.38
         version: 0.0.38(convex@1.27.1(react@19.1.1))

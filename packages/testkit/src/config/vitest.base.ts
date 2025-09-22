@@ -161,6 +161,11 @@ export function createBaseVitestConfig(overrides: Partial<UserConfig> = {}): Use
     test: {
       // Environment setup
       environment: 'node',
+      // Route Convex tests to edge-runtime to better match Convex's runtime
+      environmentMatchGlobs: [
+        // Any tests located under a convex/ folder will run in edge-runtime
+        ['**/convex/**', 'edge-runtime'],
+      ],
       globals: false, // Explicit imports for better IDE support
 
       // Pool configuration
@@ -252,6 +257,11 @@ export function createBaseVitestConfig(overrides: Partial<UserConfig> = {}): Use
 
       // Setup files - includes register by default for environment setup
       setupFiles: ['@template/testkit/register'],
+
+      // Inline convex-test for better dependency tracking in Vitest
+      server: {
+        deps: { inline: ['convex-test'] },
+      },
 
       // Reporter configuration
       reporters: config.environment.isCI

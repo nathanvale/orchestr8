@@ -2,63 +2,54 @@
  * Convex test context and type definitions
  */
 
-// Base types for Convex testing
-export type GenericDataModel = Record<string, { document: Record<string, any> }>
-export type GenericSchema = Record<string, any>
-export type SchemaDefinition<T = any> = T
-export type DataModelFromSchemaDefinition<T> =
-  T extends SchemaDefinition<infer U> ? U : GenericDataModel
-export type FunctionReference<T = any, U = any> = { _type: T; _args: U }
-export type FunctionReturnType<T> = T extends FunctionReference<any, infer U> ? U : any
-export type OptionalRestArgs<T> = T extends FunctionReference<any, infer U> ? [U] | [] : []
-export type GenericMutationCtx<_DataModel = GenericDataModel> = {
-  db: {
-    insert: (table: string, doc: unknown) => Promise<string>
-    get: (id: string) => Promise<unknown>
-  }
-}
-export type StorageActionWriter = {
-  store: (blob: ArrayBuffer) => Promise<string>
-  delete: (id: string) => Promise<void>
-}
-export type UserIdentity = {
-  subject: string
-  issuer?: string
-  tokenIdentifier?: string
-  [key: string]: any
+import type { TestConvex as ConvexTestInstance } from 'convex-test'
+import type {
+  GenericSchema,
+  GenericDataModel,
+  SchemaDefinition,
+  DataModelFromSchemaDefinition,
+  GenericMutationCtx,
+  StorageActionWriter,
+  UserIdentity,
+} from 'convex/server'
+
+// Re-export all the types from convex/server
+export type {
+  GenericSchema,
+  GenericDataModel,
+  SchemaDefinition,
+  DataModelFromSchemaDefinition,
+  GenericMutationCtx,
+  StorageActionWriter,
+  UserIdentity,
 }
 
-// TestConvex type from convex-test
-export type TestConvex<T = any> = {
-  query: <Q extends FunctionReference<'query', any>>(
-    query: Q,
-    ...args: OptionalRestArgs<Q>
-  ) => Promise<FunctionReturnType<Q>>
-  mutation: <M extends FunctionReference<'mutation', any>>(
-    mutation: M,
-    ...args: OptionalRestArgs<M>
-  ) => Promise<FunctionReturnType<M>>
-  action: <A extends FunctionReference<'action', any>>(
-    action: A,
-    ...args: OptionalRestArgs<A>
-  ) => Promise<FunctionReturnType<A>>
-  run: <Output>(
-    func: (ctx: GenericMutationCtx<any> & { storage: StorageActionWriter }) => Promise<Output>,
-  ) => Promise<Output>
-  withIdentity: (identity: Partial<UserIdentity>) => TestConvex<T>
-  finishInProgressScheduledFunctions: () => Promise<void>
-  finishAllScheduledFunctions: (advanceTimers: () => void) => Promise<void>
+// Re-export TestConvex with proper type constraint
+export type TestConvex<
+  T extends SchemaDefinition<GenericSchema, boolean> = SchemaDefinition<GenericSchema, boolean>,
+> = ConvexTestInstance<T>
+
+// Types for Convex operations
+export type FunctionReference<Type extends string = string, Args = unknown> = {
+  _type: Type
+  _args: Args
 }
+export type FunctionReturnType<T> = T extends FunctionReference<string, unknown> ? unknown : unknown
+export type OptionalRestArgs<T> = T extends FunctionReference<string, infer Args> ? [Args] | [] : []
+
+// Types imported from convex/server - no local redefinition needed
 
 /**
  * Extended test context that provides additional utilities beyond the basic convex-test
  */
 export interface ConvexTestContext<
   Schema extends GenericSchema = GenericSchema,
-  DataModel extends GenericDataModel = DataModelFromSchemaDefinition<SchemaDefinition<Schema>>,
+  DataModel extends GenericDataModel = DataModelFromSchemaDefinition<
+    SchemaDefinition<Schema, boolean>
+  >,
 > {
   /** Core convex-test instance */
-  readonly convex: TestConvex<SchemaDefinition<Schema>>
+  readonly convex: TestConvex<SchemaDefinition<Schema, boolean>>
 
   /** Database operations context */
   readonly db: ConvexDatabaseContext<DataModel>
@@ -110,13 +101,22 @@ export interface ConvexAuthContext<
   _DataModel extends GenericDataModel,
 > {
   /** Create authenticated test context */
-  withUser: (identity: Partial<UserIdentity>) => TestConvex<SchemaDefinition<Schema>>
+  withUser: (identity: Partial<UserIdentity>) => TestConvex<SchemaDefinition<Schema, boolean>>
 
   /** Create anonymous test context */
-  withoutAuth: () => TestConvex<SchemaDefinition<Schema>>
+  withoutAuth: () => TestConvex<SchemaDefinition<Schema, boolean>>
 
   /** Switch to different user mid-test */
-  switchUser: (identity: Partial<UserIdentity>) => TestConvex<SchemaDefinition<Schema>>
+  switchUser: (identity: Partial<UserIdentity>) => TestConvex<SchemaDefinition<Schema, boolean>>
+
+  /** Switch to anonymous context */
+  asAnonymous: () => TestConvex<SchemaDefinition<Schema, boolean>>
+
+  /** Run function with authenticated context */
+  withAuth: <T>(
+    identity: Partial<UserIdentity>,
+    fn: (ctx: TestConvex<SchemaDefinition<Schema, boolean>>) => Promise<T>,
+  ) => Promise<T>
 
   /** Current user identity */
   getCurrentUser: () => Partial<UserIdentity> | null
@@ -193,10 +193,10 @@ export interface ConvexLifecycleContext {
  */
 export interface ConvexTestConfig<Schema extends GenericSchema = GenericSchema> {
   /** Schema definition */
-  schema?: SchemaDefinition<Schema>
+  schema?: SchemaDefinition<Schema, boolean>
 
   /** Module map for functions */
-  modules?: Record<string, () => Promise<any>>
+  modules?: Record<string, () => Promise<unknown>>
 
   /** Default user for authenticated tests */
   defaultUser?: Partial<UserIdentity>
@@ -217,13 +217,15 @@ export interface ConvexTestConfig<Schema extends GenericSchema = GenericSchema> 
 /**
  * Factory function type for creating test data
  */
-export type ConvexTestFactory<T = any> = () => T | Promise<T>
+export type ConvexTestFactory<T = unknown> = () => T | Promise<T>
 
 /**
  * Seed data configuration - simplified version without mapped types
  */
 export interface ConvexSeedConfig {
-  [tableName: string]: Array<Record<string, any>> | ConvexTestFactory<Array<Record<string, any>>>
+  [tableName: string]:
+    | Array<Record<string, unknown>>
+    | ConvexTestFactory<Array<Record<string, unknown>>>
 }
 
 /**
@@ -231,14 +233,14 @@ export interface ConvexSeedConfig {
  */
 export interface ConvexQueryHelpers<_Schema extends GenericSchema> {
   /** Execute query and assert result */
-  expectQuery: <Query extends FunctionReference<'query', any>>(
+  expectQuery: <Query extends FunctionReference<'query', unknown>>(
     query: Query,
     ...args: OptionalRestArgs<Query>
   ) => Promise<QueryAssertion<FunctionReturnType<Query>>>
 
   /** Execute multiple queries in parallel */
   executeQueries: <
-    Queries extends Record<string, { query: FunctionReference<'query', any>; args: any[] }>,
+    Queries extends Record<string, { query: FunctionReference<'query', unknown>; args: unknown[] }>,
   >(
     queries: Queries,
   ) => Promise<{ [K in keyof Queries]: FunctionReturnType<Queries[K]['query']> }>
@@ -249,13 +251,13 @@ export interface ConvexQueryHelpers<_Schema extends GenericSchema> {
  */
 export interface ConvexMutationHelpers<_Schema extends GenericSchema> {
   /** Execute mutation and assert result */
-  expectMutation: <Mutation extends FunctionReference<'mutation', any>>(
+  expectMutation: <Mutation extends FunctionReference<'mutation', unknown>>(
     mutation: Mutation,
     ...args: OptionalRestArgs<Mutation>
   ) => Promise<MutationAssertion<FunctionReturnType<Mutation>>>
 
   /** Execute mutation and verify side effects */
-  executeMutation: <Mutation extends FunctionReference<'mutation', any>>(
+  executeMutation: <Mutation extends FunctionReference<'mutation', unknown>>(
     mutation: Mutation,
     ...args: OptionalRestArgs<Mutation>
   ) => Promise<MutationResult<FunctionReturnType<Mutation>>>
@@ -305,16 +307,16 @@ export interface MutationResult<T> {
   /** Side effects tracking */
   sideEffects: {
     /** Documents that were created */
-    created: Array<{ table: string; id: string; document: any }>
+    created: Array<{ table: string; id: string; document: unknown }>
 
     /** Documents that were updated */
-    updated: Array<{ table: string; id: string; before: any; after: any }>
+    updated: Array<{ table: string; id: string; before: unknown; after: unknown }>
 
     /** Documents that were deleted */
-    deleted: Array<{ table: string; id: string; document: any }>
+    deleted: Array<{ table: string; id: string; document: unknown }>
 
     /** Functions that were scheduled */
-    scheduled: Array<{ functionName: string; args: any; scheduledTime: number }>
+    scheduled: Array<{ functionName: string; args: unknown; scheduledTime: number }>
 
     /** Storage operations */
     storage: Array<{ operation: 'upload' | 'delete'; fileId: string; fileName?: string }>
@@ -331,7 +333,7 @@ export class ConvexTestError extends Error {
   constructor(
     message: string,
     public readonly code: string,
-    public readonly details?: any,
+    public readonly details?: unknown,
   ) {
     super(message)
     this.name = 'ConvexTestError'
@@ -339,19 +341,19 @@ export class ConvexTestError extends Error {
 }
 
 export class ConvexAuthError extends ConvexTestError {
-  constructor(message: string, details?: any) {
+  constructor(message: string, details?: unknown) {
     super(message, 'AUTH_ERROR', details)
   }
 }
 
 export class ConvexDataError extends ConvexTestError {
-  constructor(message: string, details?: any) {
+  constructor(message: string, details?: unknown) {
     super(message, 'DATA_ERROR', details)
   }
 }
 
 export class ConvexTestTimeoutError extends ConvexTestError {
-  constructor(message: string, details?: any) {
+  constructor(message: string, details?: unknown) {
     super(message, 'TIMEOUT_ERROR', details)
   }
 }

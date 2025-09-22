@@ -37,11 +37,11 @@ maintaining sub-second feedback loops.
 - **CLI mocking**: Critical architecture issues, needs complete redesign
 - **Randomness control (Task 008)**: P0 bug with restore scope
 - **Runner configuration**: Partial unification between Wallaby/Vitest
+- **Convex test harness (Task 005)**: Using convex-test with a thin adapter
 
 ### ❌ Not Started (70%)
 
 - Postgres database strategy (Testcontainers)
-- Convex test harness
 - CI/CD configuration (parallelization, sharding, monitoring)
 - Documentation and training materials
 - Migration tooling and rollout
@@ -63,13 +63,13 @@ maintaining sub-second feedback loops.
 
 ## Task Breakdown
 
-### Phase 1: Foundation (Tasks 001-010) ✅ COMPLETE
+### Phase 1: Foundation (Tasks 001-010) ✅ COMPLETE (with follow-ups)
 
 - ✅ Setup testkit package structure
 - ✅ Implement MSW server configuration
 - ✅ Create database testing utilities (MySQL Testcontainers complete; Postgres
   pending in Task 003)
-- ❌ Establish Convex test harness (not started)
+- 🚧 Establish Convex test harness (in progress): convex-test + adapter; M0 hardening pending
 - ✅ Configure Vitest base settings
 
 ### Phase 2: Mocking Infrastructure (Tasks 011-020) 🚧 IN PROGRESS
