@@ -244,7 +244,7 @@ export function createConvexTestHarness<Schema extends GenericSchema = GenericSc
     },
   }
 
-  // Scheduler context implementation
+  // Scheduler context implementation with proper timer advancing
   const scheduler: ConvexSchedulerContext = {
     async getPendingFunctions() {
       debugLog('getPendingFunctions called')
@@ -261,8 +261,18 @@ export function createConvexTestHarness<Schema extends GenericSchema = GenericSc
 
     async finishAll(advanceTimers) {
       debugLog('Finishing all scheduled functions')
-      // The convex-test library requires a function, so provide a no-op if not specified
+      // The convex-test library requires a function for timer advancement
+      // This allows tests to explicitly control timer behavior:
+      // - Pass vi.runAllTimers to advance all timers
+      // - Pass () => vi.advanceTimersByTime(ms) for specific advancement
+      // - Pass undefined/no-op to let functions complete without timer advancement
       return state.convexInstance.finishAllScheduledFunctions(advanceTimers ?? (() => {}))
+    },
+
+    async finishAllWithTimers(timerFn) {
+      debugLog('Finishing all scheduled functions with timer advancement')
+      // Convenience helper that always advances timers
+      return state.convexInstance.finishAllScheduledFunctions(timerFn)
     },
 
     async cancelAll() {

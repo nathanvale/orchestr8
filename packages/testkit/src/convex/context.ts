@@ -162,6 +162,9 @@ export interface ConvexSchedulerContext {
   /** Finish all scheduled functions (including newly scheduled ones) */
   finishAll: (advanceTimers?: () => void) => Promise<void>
 
+  /** Helper to finish all scheduled functions with timer advancement */
+  finishAllWithTimers: (timerFn: () => void) => Promise<void>
+
   /** Cancel all pending scheduled functions */
   cancelAll: () => Promise<void>
 
