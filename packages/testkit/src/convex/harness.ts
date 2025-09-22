@@ -27,7 +27,6 @@ import { ConvexTestError } from './context.js'
  */
 interface TestHarnessState<Schema extends GenericSchema = GenericSchema> {
   convexInstance: ConvexTestInstance<SchemaDefinition<Schema, boolean>>
-  mockStorage: Map<string, { data: ArrayBuffer; name: string; size: number }>
   currentUser: Partial<UserIdentity> | null
   isCleanedUp: boolean
   debug: boolean
@@ -43,7 +42,6 @@ export function createConvexTestHarness<Schema extends GenericSchema = GenericSc
     convexInstance: convexTest(config.schema, config.modules) as ConvexTestInstance<
       SchemaDefinition<Schema, boolean>
     >,
-    mockStorage: new Map(),
     currentUser: config.defaultUser || null,
     isCleanedUp: false,
     debug: config.debug || false,
@@ -82,7 +80,7 @@ export function createConvexTestHarness<Schema extends GenericSchema = GenericSc
       state.convexInstance = convexTest(config.schema, config.modules) as ConvexTestInstance<
         SchemaDefinition<Schema, boolean>
       >
-      state.mockStorage.clear()
+      // Storage is cleared when convex instance is recreated
     },
 
     async getAllDocuments(tableName) {
@@ -110,30 +108,36 @@ export function createConvexTestHarness<Schema extends GenericSchema = GenericSc
     withUser(identity) {
       debugLog('Setting user identity', identity)
       state.currentUser = identity
-      // Return a new context with identity applied for chaining
-      const authenticatedInstance = state.convexInstance.withIdentity(identity as UserIdentity)
-      return authenticatedInstance as ConvexTestInstance<SchemaDefinition<Schema, boolean>>
+      // Cast the return type to match the expected interface
+      return state.convexInstance.withIdentity(
+        identity as UserIdentity,
+      ) as unknown as ConvexTestInstance<SchemaDefinition<Schema, boolean>>
     },
 
     withoutAuth() {
       debugLog('Removing user identity')
       state.currentUser = null
       // Return anonymous context for chaining
-      return state.convexInstance as ConvexTestInstance<SchemaDefinition<Schema, boolean>>
+      return state.convexInstance as unknown as ConvexTestInstance<
+        SchemaDefinition<Schema, boolean>
+      >
     },
 
     switchUser(identity) {
       debugLog('Switching user identity', identity)
       state.currentUser = identity
       // Return a new context with switched identity
-      const authenticatedInstance = state.convexInstance.withIdentity(identity as UserIdentity)
-      return authenticatedInstance as ConvexTestInstance<SchemaDefinition<Schema, boolean>>
+      return state.convexInstance.withIdentity(
+        identity as UserIdentity,
+      ) as unknown as ConvexTestInstance<SchemaDefinition<Schema, boolean>>
     },
 
     asAnonymous() {
       debugLog('Switching to anonymous context')
       state.currentUser = null
-      return state.convexInstance as ConvexTestInstance<SchemaDefinition<Schema, boolean>>
+      return state.convexInstance as unknown as ConvexTestInstance<
+        SchemaDefinition<Schema, boolean>
+      >
     },
 
     getCurrentUser() {
@@ -172,69 +176,82 @@ export function createConvexTestHarness<Schema extends GenericSchema = GenericSc
     },
   }
 
-  // Storage context implementation
+  // Storage context implementation using convex-test's storage via t.run
   const storage: ConvexStorageContext = {
     async uploadFile(name, content) {
       debugLog('Uploading file', { name })
       const buffer = typeof content === 'string' ? Buffer.from(content) : content
-      const id = `storage_${Date.now()}_${Math.random().toString(36).substring(7)}`
 
-      // Handle ArrayBuffer and SharedArrayBuffer
-      let arrayBuffer: ArrayBuffer
-      if (buffer instanceof SharedArrayBuffer) {
-        // Convert SharedArrayBuffer to ArrayBuffer
-        const uint8Array = new Uint8Array(buffer)
-        arrayBuffer = uint8Array.buffer
-      } else if (buffer instanceof ArrayBuffer) {
-        arrayBuffer = buffer
-      } else {
-        // Convert Buffer or other types to ArrayBuffer
-        const uint8Array = new Uint8Array(buffer)
-        arrayBuffer = uint8Array.buffer
-      }
+      // Use convex-test's storage context via run
+      return state.convexInstance.run(async (ctx) => {
+        // Handle ArrayBuffer and SharedArrayBuffer
+        let arrayBuffer: ArrayBuffer
+        if (buffer instanceof SharedArrayBuffer) {
+          // Convert SharedArrayBuffer to ArrayBuffer
+          const uint8Array = new Uint8Array(buffer)
+          arrayBuffer = uint8Array.buffer
+        } else if (buffer instanceof ArrayBuffer) {
+          arrayBuffer = buffer
+        } else {
+          // Convert Buffer or other types to ArrayBuffer
+          const uint8Array = new Uint8Array(buffer)
+          arrayBuffer = uint8Array.buffer
+        }
 
-      state.mockStorage.set(id, {
-        data: arrayBuffer,
-        name,
-        size: arrayBuffer.byteLength,
+        // Use ctx.storage for proper integration with convex-test
+        const blob = new Blob([arrayBuffer])
+        const storageId = await ctx.storage.store(blob)
+        debugLog('File uploaded via convex-test', { storageId, name, size: arrayBuffer.byteLength })
+        return storageId
       })
-      debugLog('File uploaded', { id, name, size: arrayBuffer.byteLength })
-      return id
     },
 
     async getFile(storageId) {
       debugLog('Getting file', { storageId })
-      const file = state.mockStorage.get(storageId)
-      return file ? file.data : null
+      // Use convex-test's storage context via run
+      return state.convexInstance.run(async (ctx) => {
+        const blob = await ctx.storage.get(storageId)
+        if (!blob) return null
+        const arrayBuffer = await blob.arrayBuffer()
+        return arrayBuffer
+      })
     },
 
     async deleteFile(storageId) {
       debugLog('Deleting file', { storageId })
-      state.mockStorage.delete(storageId)
+      // Use convex-test's storage context via run
+      return state.convexInstance.run(async (ctx) => {
+        await ctx.storage.delete(storageId)
+      })
     },
 
     async listFiles() {
-      debugLog('Listing files')
-      return Array.from(state.mockStorage.entries()).map(([id, file]) => ({
-        id,
-        name: file.name,
-        size: file.size,
-      }))
+      debugLog('listFiles called')
+      // Convex-test doesn't provide a way to list all stored files
+      throw new ConvexTestError(
+        'listFiles not implemented. Convex-test does not expose storage listing functionality',
+        'NOT_IMPLEMENTED',
+      )
     },
 
     async clearFiles() {
-      const count = state.mockStorage.size
-      state.mockStorage.clear()
-      debugLog('Cleared files', { count })
+      debugLog('clearFiles called')
+      // Convex-test doesn't provide a way to clear all files
+      throw new ConvexTestError(
+        'clearFiles not implemented. Files are cleared when test harness is reset',
+        'NOT_IMPLEMENTED',
+      )
     },
   }
 
   // Scheduler context implementation
   const scheduler: ConvexSchedulerContext = {
     async getPendingFunctions() {
-      debugLog('Getting pending scheduled functions')
-      // Mock implementation - convex-test doesn't expose internal scheduler state
-      return []
+      debugLog('getPendingFunctions called')
+      throw new ConvexTestError(
+        'getPendingFunctions not implemented. Convex-test does not expose internal scheduler state',
+        'NOT_IMPLEMENTED',
+      )
     },
 
     async finishInProgress() {
@@ -244,18 +261,25 @@ export function createConvexTestHarness<Schema extends GenericSchema = GenericSc
 
     async finishAll(advanceTimers) {
       debugLog('Finishing all scheduled functions')
-      return state.convexInstance.finishAllScheduledFunctions(advanceTimers)
+      // The convex-test library requires a function, so provide a no-op if not specified
+      return state.convexInstance.finishAllScheduledFunctions(advanceTimers ?? (() => {}))
     },
 
     async cancelAll() {
-      debugLog('Cancelling all scheduled functions')
-      // Mock implementation - would need actual scheduler access
+      debugLog('cancelAll called')
+      throw new ConvexTestError(
+        'cancelAll not implemented. Use finishAll() or let functions complete naturally',
+        'NOT_IMPLEMENTED',
+      )
     },
 
     async advanceTime(ms) {
-      debugLog('Advancing time', { ms })
-      // This would typically integrate with vi.advanceTimersByTime or similar
-      // For now, it's a placeholder
+      debugLog('advanceTime called', { ms })
+      throw new ConvexTestError(
+        'advanceTime not implemented. Use vi.advanceTimersByTime() directly with finishAll()',
+        'NOT_IMPLEMENTED',
+        { ms },
+      )
     },
   }
 
@@ -268,7 +292,7 @@ export function createConvexTestHarness<Schema extends GenericSchema = GenericSc
         originalConfig.schema,
         originalConfig.modules,
       ) as ConvexTestInstance<SchemaDefinition<Schema, boolean>>
-      state.mockStorage.clear()
+      // Storage is cleared when convex instance is recreated
       state.currentUser = originalConfig.defaultUser || null
       state.isCleanedUp = false
       debugLog('Reset complete - test harness in clean state')
@@ -276,7 +300,7 @@ export function createConvexTestHarness<Schema extends GenericSchema = GenericSc
 
     async cleanup() {
       debugLog('Cleaning up test harness')
-      state.mockStorage.clear()
+      // Storage is handled by convex-test instance
       state.currentUser = null
       state.isCleanedUp = true
       // Clear any pending scheduled functions

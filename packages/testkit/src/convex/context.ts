@@ -160,7 +160,7 @@ export interface ConvexSchedulerContext {
   finishInProgress: () => Promise<void>
 
   /** Finish all scheduled functions (including newly scheduled ones) */
-  finishAll: (advanceTimers: () => void) => Promise<void>
+  finishAll: (advanceTimers?: () => void) => Promise<void>
 
   /** Cancel all pending scheduled functions */
   cancelAll: () => Promise<void>
