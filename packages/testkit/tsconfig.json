@@ -2,6 +2,7 @@
   "$schema": "https://json.schemastore.org/tsconfig",
   "extends": "../../tooling/tsconfig/esm-library.json",
   "compilerOptions": {
+    "rootDir": ".",
     "outDir": "dist",
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "jsx": "react-jsx",

@@ -7,7 +7,7 @@
  */
 
 import { defineConfig, type UserConfig } from 'vitest/config'
-import { getTestEnvironment, getTestTimeouts } from '../env/index.js'
+import { getTestEnvironment, getTestTimeouts } from '../env/core.js'
 
 export interface VitestEnvironmentConfig {
   /** Whether running in CI environment */
@@ -232,6 +232,7 @@ export function createBaseVitestConfig(overrides: Partial<UserConfig> = {}): Use
               | 'text-summary'
               | 'cobertura'
             )[],
+            reportsDirectory: './test-results/coverage',
             exclude: [
               'node_modules/',
               'dist/',
@@ -262,7 +263,7 @@ export function createBaseVitestConfig(overrides: Partial<UserConfig> = {}): Use
       // Output configuration
       outputFile: config.environment.isCI
         ? {
-            junit: './junit.xml',
+            junit: './test-results/junit.xml',
           }
         : undefined,
     },

@@ -19,7 +19,7 @@
       "dependsOn": ["//#format:root"],
       "outputs": [".eslintcache"],
       "cache": true,
-      "inputs": ["$TURBO_DEFAULT$", "eslint.config.js"],
+      "inputs": ["$TURBO_DEFAULT$", "eslint.config.mjs"],
       "outputLogs": "errors-only"
     },
     "//#format:root": {
@@ -79,7 +79,7 @@
     "tooling/tsconfig/base.json",
     "tooling/tsconfig/library.json",
     ".changeset/config.json",
-    "eslint.config.js",
+    "eslint.config.mjs",
     "vitest.config.ts",
     ".prettierrc*",
     "prettier.config.*",

@@ -3,8 +3,8 @@
  * This ensures mocks are created at declaration time, not runtime
  */
 
-import { vi } from 'vitest'
 import type * as cp from 'child_process'
+import { vi } from 'vitest'
 import { MockChildProcess, type ProcessMockConfig } from './process-mock.js'
 
 /**
@@ -310,8 +310,9 @@ export function createChildProcessMock(): typeof cp {
     },
   )
 
-  // Return the mocked module
-  return {
+  // Create the mocked module object
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const moduleMock: any = {
     spawn,
     exec,
     execSync,
@@ -323,5 +324,12 @@ export function createChildProcessMock(): typeof cp {
     ChildProcess: class {} as unknown,
     StdioNull: 'inherit' as unknown,
     StdioPipe: 'pipe' as unknown,
-  } as unknown as typeof cp
+  }
+
+  // Vitest ESM/CJS interop: provide a default export pointing to the module object
+  // This ensures imports like `import child from 'child_process'` or Vitest's CJS shim work
+  moduleMock.default = moduleMock
+
+  // Return the mocked module
+  return moduleMock as unknown as typeof cp
 }

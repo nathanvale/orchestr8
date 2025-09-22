@@ -2,18 +2,19 @@
  * Tests for MSW handlers and response builders
  */
 
-import { describe, it, expect, beforeAll, afterAll, afterEach, vi } from 'vitest'
 import { http } from 'msw'
 import { setupServer } from 'msw/node'
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
+import { quickRandom } from '../../env/random'
 import {
-  createSuccessResponse,
-  createErrorResponse,
-  createDelayedResponse,
-  createUnreliableHandler,
-  createPaginatedHandler,
   createAuthHandlers,
   createCRUDHandlers,
+  createDelayedResponse,
+  createErrorResponse,
   createNetworkIssueHandler,
+  createPaginatedHandler,
+  createSuccessResponse,
+  createUnreliableHandler,
   HTTP_STATUS,
 } from '../handlers'
 
@@ -367,7 +368,16 @@ describe('MSW Handlers', () => {
     })
 
     describe('createNetworkIssueHandler', () => {
+      afterEach(() => {
+        // Ensure any random mocks are cleaned up between tests
+        quickRandom.restore()
+      })
+
       it('should simulate network issues', async () => {
+        // Force a non-delay branch to keep the test fast and deterministic
+        // issues[Math.floor(Math.random() * 3)] with 0.9 selects index 2
+        quickRandom.fixed(0.9)
+
         server.use(createNetworkIssueHandler('https://api.test.com/flaky'))
 
         // Network issue handlers should return error responses

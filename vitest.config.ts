@@ -1,18 +1,12 @@
 import { defineConfig } from 'vitest/config'
-import { resolve } from 'path'
+import { getVitestProjects } from './vitest.projects'
 
 /**
- * Root configuration that delegates to workspace
- * This ensures consistent behavior across all test environments
+ * Root Vitest config using projects (workspace is deprecated).
+ * Single source of truth lives in vitest.projects.ts
  */
 export default defineConfig({
   test: {
-    globals: true,
-    environment: 'node',
-    setupFiles: [resolve(__dirname, 'packages/testkit/src/setup.ts')],
-    // Individual package configs will override these defaults
-    mockReset: true,
-    clearMocks: true,
-    restoreMocks: false,
+    projects: getVitestProjects(),
   },
 })

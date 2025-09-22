@@ -56,6 +56,9 @@
     "dist",
     "README.md"
   ],
+  "bin": {
+    "cleanup-zombies": "dist/teardown/emergencyCleanup.js"
+  },
   "scripts": {
     "build": "tsup",
     "clean": "rm -rf dist .tsbuildinfo",

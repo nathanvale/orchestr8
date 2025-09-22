@@ -94,6 +94,19 @@
       }
     },
     {
+      "label": "Test Smoke",
+      "type": "shell",
+      "command": "pnpm",
+      "args": ["test:smoke"],
+      "group": "test",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      }
+    },
+    {
       "label": "Test Coverage",
       "type": "shell",
       "command": "pnpm",
