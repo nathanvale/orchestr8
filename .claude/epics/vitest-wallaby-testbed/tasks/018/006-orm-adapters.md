@@ -1,8 +1,8 @@
 ---
 name: Create ORM-specific SQLite adapters and helpers
-status: open
+status: completed
 created: 2025-09-23T02:00:07Z
-updated: 2025-09-23T02:00:07Z
+updated: 2025-09-23T16:50:00Z
 github: [Will be updated when synced to GitHub]
 depends_on: [001, 002, 003, 004, 005]
 parallel: false
@@ -20,11 +20,11 @@ live behind env flags.
 
 ## Acceptance Criteria
 
-- [ ] Create `packages/testkit/src/sqlite/orm.ts`
-- [ ] Implement `prismaUrl(kind, path?)` and `drizzleUrl(kind, path?, driver)`
-- [ ] Provide types for supported targets/drivers
-- [ ] Unit tests validate string outputs per ORM
-- [ ] Optional integration test stubs (skipped unless env enabled)
+- [x] Create `packages/testkit/src/sqlite/orm.ts`
+- [x] Implement `prismaUrl(kind, path?)` and `drizzleUrl(kind, path?, driver)`
+- [x] Provide types for supported targets/drivers
+- [x] Unit tests validate string outputs per ORM
+- [x] Optional integration test stubs (skipped unless env enabled)
 
 ## Technical Details
 
@@ -48,6 +48,6 @@ live behind env flags.
 
 ## Definition of Done
 
-- [ ] URL shims implemented and unit-tested
-- [ ] Optional integration tests are gated and documented
-- [ ] Documentation covers ORM-specific URL forms
+- [x] URL shims implemented and unit-tested
+- [x] Optional integration tests are gated and documented
+- [x] Documentation covers ORM-specific URL forms

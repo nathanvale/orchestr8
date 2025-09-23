@@ -207,13 +207,65 @@ function withTransaction<T, TDb, TTx>(
 ): Promise<T>
 ```
 
+## ORM-Specific Helpers
+
+### Prisma URL Generation
+
+```typescript
+import { prismaUrl, type DatabaseKind } from '@template/testkit/sqlite'
+
+// In-memory database
+const memoryUrl = prismaUrl('memory')
+// Returns: 'file:memory?mode=memory&cache=shared'
+
+// File-based database (default path)
+const fileUrl = prismaUrl('file')
+// Returns: 'file:./db.sqlite'
+
+// File-based database (custom path)
+const customUrl = prismaUrl('file', './test/mydb.sqlite')
+// Returns: 'file:./test/mydb.sqlite'
+```
+
+### Drizzle URL Generation
+
+```typescript
+import { drizzleUrl, type DrizzleDriver } from '@template/testkit/sqlite'
+
+// Memory database with better-sqlite3 (default)
+const memoryUrl = drizzleUrl('memory')
+// Returns: ':memory:'
+
+// Memory database with libsql
+const libsqlMemory = drizzleUrl('memory', undefined, 'libsql')
+// Returns: 'file::memory:?cache=shared'
+
+// File database with better-sqlite3
+const fileUrl = drizzleUrl('file', './test.db')
+// Returns: './test.db'
+
+// File database with libsql
+const libsqlFile = drizzleUrl('file', './test.db', 'libsql')
+// Returns: 'file:./test.db'
+```
+
+### Usage Notes
+
+- **Prisma**: Disable connection pooling for in-memory tests (see Prisma
+  Configuration section)
+- **Drizzle**: better-sqlite3 uses `:memory:` while libsql uses
+  `file::memory:?cache=shared`
+- **Default path**: When no path is provided for file databases, defaults to
+  `./db.sqlite`
+- **No client management**: These helpers only generate URLs; manage ORM clients
+  separately
+
 ## Phase 2 Features (Coming Soon)
 
 - **Driver adapters** for better-sqlite3
 - **Pragma utilities** for WAL mode, foreign keys, etc.
 - **Migration runner** for SQL files
 - **Seed utilities** for test data
-- **ORM-specific helpers** and adapters
 - **Integration tests** with actual drivers
 
 ## Troubleshooting
