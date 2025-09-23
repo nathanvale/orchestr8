@@ -16,6 +16,7 @@ export interface BetterSqlite3Adapter<TDb extends BetterSqlite3DbLike, TTx = TDb
   begin(db: TDb): Promise<TTx>
   commit(tx: TTx): Promise<void>
   rollback(tx: TTx): Promise<void>
+  pragma(db: TDb, sql: string): unknown
 }
 
 export const betterSqlite3Adapter: BetterSqlite3Adapter<BetterSqlite3DbLike> = {
@@ -29,5 +30,13 @@ export const betterSqlite3Adapter: BetterSqlite3Adapter<BetterSqlite3DbLike> = {
   },
   async rollback(_tx) {
     // No-op stub
+  },
+  pragma(db, sql) {
+    // Execute pragma if db supports it
+    if (db.pragma && typeof db.pragma === 'function') {
+      return db.pragma(sql)
+    }
+    // Return empty result for databases without pragma support
+    return []
   },
 }
