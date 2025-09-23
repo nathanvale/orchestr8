@@ -4,9 +4,12 @@
  * Run with: TEST_MODE=integration pnpm test postgres-usage
  */
 
-import { describe, it, expect, beforeAll, afterAll } from 'vitest'
-import { setupPostgresTest } from '../src/containers/postgres.js'
-import { isIntegrationTestMode, isDockerAvailable } from '../src/containers/docker-utils.js'
+import {
+  isDockerAvailable,
+  isIntegrationTestMode,
+  setupPostgresTest,
+} from '@template/testkit/containers'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
 // Only run in integration test mode
 describe.skipIf(!isIntegrationTestMode())('Postgres Container Usage Examples', () => {

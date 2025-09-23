@@ -19,20 +19,20 @@ integrations behind env flags.
 
 ## Acceptance Criteria
 
-- [ ] Create `packages/testkit/src/sqlite/__tests__/` with coverage for helpers
-- [ ] Test memory URL variants; smoke CRUD only if env enables driver
-- [ ] Test file database cleanup in success/failure
-- [ ] Verify transaction commit/rollback behavior (fake adapter)
-- [ ] Test migration and seeding workflows
-- [ ] Validate ORM URL helper outputs
-- [ ] Optional: env-gated driver/ORM integration tests
-- [ ] Anti-flake: avoid `test.concurrent` for DB tests; enforce ORDER BY in
+- [x] Create `packages/testkit/src/sqlite/__tests__/` with coverage for helpers
+- [x] Test memory URL variants; smoke CRUD only if env enables driver
+- [x] Test file database cleanup in success/failure
+- [x] Verify transaction commit/rollback behavior (fake adapter)
+- [x] Test migration and seeding workflows
+- [x] Validate ORM URL helper outputs
+- [x] Optional: env-gated driver/ORM integration tests
+- [x] Anti-flake: avoid `test.concurrent` for DB tests; enforce ORDER BY in
       assertions; fix system time where relevant
-- [ ] Add a capabilities probe that validates environment expectations early
+- [x] Add a capabilities probe that validates environment expectations early
       (e.g., `PRAGMA foreign_keys = ON`, file DBs default to WAL when
       `applyRecommendedPragmas` is used, and JSON1 availability if relied on).
       Fail fast with a clear message if expectations aren't met.
-- [ ] Add a "capabilities probe" test that validates expected environment
+- [x] Add a "capabilities probe" test that validates expected environment
       properties early (e.g., `PRAGMA foreign_keys = ON`, `PRAGMA journal_mode`
       is `wal` for file DBs, and JSON1 availability if used). Fail fast with a
       clear message if expectations aren't met.
@@ -46,8 +46,8 @@ integrations behind env flags.
 
 ## Dependencies
 
-- [ ] All SQLite helper implementations (Tasks 001-006)
-- [ ] Vitest test runner configuration
+- [x] All SQLite helper implementations (Tasks 001-006)
+- [x] Vitest test runner configuration
 
 ## Effort Estimate
 
@@ -57,7 +57,7 @@ integrations behind env flags.
 
 ## Definition of Done
 
-- [ ] High coverage for core helpers (Phase 1)
-- [ ] Integration tests gated and passing when enabled
-- [ ] Cleanup validated in all scenarios
-- [ ] Documentation updated with test examples
+- [x] High coverage for core helpers (Phase 1)
+- [x] Integration tests gated and passing when enabled
+- [x] Cleanup validated in all scenarios
+- [x] Documentation updated with test examples

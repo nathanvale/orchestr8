@@ -1,5 +1,12 @@
+// Deprecated: cookbook examples moved to ./convex/cookbook.examples.ts
+export {}
+
 // Non-executing examples matching the cookbook docs.
-// Copy snippets into your Convex project and adjust imports/paths.
+// Standards:
+// - Keep this file non-executing; it's documentation-first.
+// - See docs/guides/convex-harness.md and docs/guides/examples-conventions.md
+// - In this repo's runnable examples, import from '@template/testkit/convex'
+// - In your Convex app, use your generated schema/api modules
 
 /* Auth: scoped identity with withIdentity
 import { convexTest } from 'convex-test'
@@ -86,7 +93,7 @@ test('HTTP action handles POST JSON', async () => {
 
 // Custom convex folder location (modules)
 // /// <reference types="vite/client" />
-// export const modules = import.meta.glob('./path/to/files/*.ts')
+// export const modules = import.meta.glob('./**/*.{js,ts}')
 //
 // import { convexTest } from 'convex-test'
 // import { test } from 'vitest'

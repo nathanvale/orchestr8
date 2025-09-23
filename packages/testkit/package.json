@@ -14,6 +14,12 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
+    "./cli": {
+      "vitest": "./src/cli/index.ts",
+      "development": "./src/cli/index.ts",
+      "types": "./dist/cli/index.d.ts",
+      "import": "./dist/cli/index.js"
+    },
     "./register": {
       "vitest": "./src/register.ts",
       "development": "./src/register.ts",
@@ -41,6 +47,12 @@
       "development": "./src/convex/index.ts",
       "types": "./dist/convex/index.d.ts",
       "import": "./dist/convex/index.js"
+    },
+    "./sqlite": {
+      "vitest": "./src/sqlite/index.ts",
+      "development": "./src/sqlite/index.ts",
+      "types": "./dist/sqlite/index.d.ts",
+      "import": "./dist/sqlite/index.js"
     },
     "./env": {
       "vitest": "./src/env/index.ts",

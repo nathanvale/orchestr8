@@ -70,6 +70,9 @@
       "@tests/*": ["./tests/*"],
       "@template/testkit": ["./packages/testkit/src/index.ts"],
       "@template/testkit/*": ["./packages/testkit/src/*"],
+      "@template/testkit/cli": ["./packages/testkit/src/cli/index.ts"],
+      "@template/testkit/convex": ["./packages/testkit/src/convex/index.ts"],
+      "@template/testkit/sqlite": ["./packages/testkit/src/sqlite/index.ts"],
       "@template/testkit/msw": ["./packages/testkit/src/msw/index.ts"],
       "@template/testkit/msw/browser": ["./packages/testkit/src/msw/browser.ts"]
       // Removed unused @types, @utils and @config paths (can reintroduce when directories exist)

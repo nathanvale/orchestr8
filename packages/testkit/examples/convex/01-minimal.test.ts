@@ -1,6 +1,3 @@
-// DEPRECATED: Use ./00-minimal.test.ts instead
-export * from './01-minimal.test'
-
 import { convexTest } from 'convex-test'
 import { expect, test, vi } from 'vitest'
 const RUN_CONVEX = process.env.CONVEX_GENERATED === 'true'

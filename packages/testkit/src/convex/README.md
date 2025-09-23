@@ -203,7 +203,7 @@ it('should handle external API calls', async () => {
 
 #### Scheduler Troubleshooting Guide
 
-**Problem: "Cleanup failed: Scheduled functions are still pending"**
+##### Problem: "Cleanup failed: Scheduled functions are still pending"
 
 This error occurs when:
 
@@ -226,7 +226,7 @@ afterEach(async () => {
 })
 ```
 
-**Problem: Scheduled functions not executing in tests**
+##### Problem: Scheduled functions not executing in tests
 
 Required sequence for scheduler tests:
 
@@ -236,7 +236,7 @@ Required sequence for scheduler tests:
 4. Finish scheduled functions: `await harness.scheduler.finishInProgress()`
 5. Clean up with timer advancement
 
-**Problem: Chained scheduled functions only partially execute**
+##### Problem: Chained scheduled functions only partially execute
 
 For functions that schedule other functions:
 
@@ -392,7 +392,21 @@ Utilities:
 
 ## Examples
 
-See `examples/convex.cookbook.examples.ts` for comprehensive usage patterns.
+See `examples/convex/cookbook.examples.ts` for comprehensive usage patterns.
+
+### Opt-in: run the runnable examples
+
+The runnable examples under `packages/testkit/examples/convex/` are skipped by
+default to keep this repo runnable without Convex codegen. To enable them:
+
+1. Generate Convex code in your app (`npx convex codegen` or `npx convex dev`)
+2. Run the testkit tests with the env flag:
+
+```bash
+CONVEX_GENERATED=true pnpm --filter @template/testkit test
+```
+
+For a deeper walkthrough, see `docs/guides/convex-harness.md`.
 
 ## Migration from Raw convex-test
 
