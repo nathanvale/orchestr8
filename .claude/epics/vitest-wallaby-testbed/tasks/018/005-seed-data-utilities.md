@@ -1,8 +1,8 @@
 ---
 name: Implement seed data and fixture management utilities
-status: open
+status: completed
 created: 2025-09-23T02:00:07Z
-updated: 2025-09-23T02:00:07Z
+updated: 2025-09-23T06:15:00Z
 github: [Will be updated when synced to GitHub]
 depends_on: [001, 002, 004]
 parallel: false
@@ -19,12 +19,12 @@ idempotent mode for rerunnable seeds.
 
 ## Acceptance Criteria
 
-- [ ] Create `packages/testkit/src/sqlite/seed.ts`
-- [ ] `seedWithSql(sql, run)` executes provided SQL
-- [ ] `seedWithFiles({ dir }, run)` loads .sql files in order
-- [ ] Optional idempotent mode (e.g., INSERT OR IGNORE pattern)
-- [ ] Minimal reset helper can be shared with migration task
-- [ ] Anti-flake: idempotent seeds verified; directory seeding uses
+- [x] Create `packages/testkit/src/sqlite/seed.ts`
+- [x] `seedWithSql(sql, run)` executes provided SQL
+- [x] `seedWithFiles({ dir }, run)` loads .sql files in order
+- [x] Optional idempotent mode (e.g., INSERT OR IGNORE pattern)
+- [x] Minimal reset helper can be shared with migration task
+- [x] Anti-flake: idempotent seeds verified; directory seeding uses
       lexicographic order
 
 ## Technical Details
@@ -48,6 +48,6 @@ idempotent mode for rerunnable seeds.
 
 ## Definition of Done
 
-- [ ] SQL seed helpers implemented
-- [ ] Tests verify seeds applied and idempotent mode
-- [ ] Documentation includes seed patterns and caveats
+- [x] SQL seed helpers implemented
+- [x] Tests verify seeds applied and idempotent mode
+- [x] Documentation includes seed patterns and caveats
