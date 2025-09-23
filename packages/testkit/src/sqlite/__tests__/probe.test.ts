@@ -21,8 +21,8 @@ describe('sqlite helpers (probe)', () => {
 
   it('should return recommended pragmas shape', async () => {
     const pragmas = await applyRecommendedPragmas({} as any)
-    expect(pragmas.journal_mode).toBe('wal')
-    expect(pragmas.foreign_keys).toBe('on')
+    expect(pragmas.journal_mode).toBe('unknown')
+    expect(pragmas.foreign_keys).toBe('unknown')
     expect(typeof pragmas.busy_timeout).toBe('number')
   })
 })

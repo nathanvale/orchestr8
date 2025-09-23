@@ -759,10 +759,10 @@ describe('SQLite Integration Tests', () => {
       // Should gracefully handle missing pragma method
       const pragmas = await applyRecommendedPragmas(mockDb)
 
-      // Should return default values when pragma is not available
+      // Should return unknown status when pragma support is unavailable (prevents false positives)
       expect(pragmas).toMatchObject({
-        journal_mode: 'wal',
-        foreign_keys: 'on',
+        journal_mode: 'unknown',
+        foreign_keys: 'unknown',
         busy_timeout: 2000, // default timeout
       })
     })

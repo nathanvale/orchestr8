@@ -116,8 +116,18 @@ export async function applyMigrations<TDb extends MigrationDatabase>(
         continue
       }
 
-      // Per-file transaction: wrap the SQL to ensure atomic execution
-      const transactionalSql = `BEGIN; -- ${filename}\n${sql}\nCOMMIT;`
+      // Check if the file already contains transaction commands
+      const hasTransactionCommands = /\b(BEGIN|COMMIT|ROLLBACK)\b/i.test(sql)
+
+      let transactionalSql: string
+      if (hasTransactionCommands) {
+        // File already manages its own transactions - execute as-is
+        transactionalSql = sql
+      } else {
+        // Wrap in transaction for atomic execution
+        transactionalSql = `BEGIN; -- ${filename}\n${sql}\nCOMMIT;`
+      }
+
       await executeMigration(db, transactionalSql)
     } catch (err) {
       // Best-effort rollback if a transaction is open
@@ -130,9 +140,9 @@ export async function applyMigrations<TDb extends MigrationDatabase>(
 }
 
 /**
- * Reset database by dropping all user tables.
+ * Reset database by safely dropping all user tables, views, triggers, and indexes.
  *
- * @param db - Database connection or database object
+ * @param db - Database connection or database object with all method
  *
  * @example
  * ```typescript
@@ -141,31 +151,77 @@ export async function applyMigrations<TDb extends MigrationDatabase>(
  * ```
  *
  * @remarks
- * - Only drops user tables, not system tables
+ * - Uses safe enumeration approach (not PRAGMA writable_schema)
+ * - Only drops user objects, not system objects
  * - Safe to call on empty databases
- * - Useful for test teardown
+ * - Useful for test teardown only - enforces NODE_ENV=test
+ * - Drops objects in safe order: triggers → views → indexes → tables
  */
-export async function resetDatabase<TDb extends MigrationDatabase>(db: TDb): Promise<void> {
-  try {
-    // For now, we'll implement a simple approach that works with file databases
-    // In a real implementation, we'd need to query the database for table names
-    // and then drop them. Since we don't have a query interface, we'll use
-    // a simpler approach with DROP statements that won't fail if tables don't exist
+export async function resetDatabase<
+  TDb extends MigrationDatabase & { all?: (sql: string) => Array<{ name: string; type: string }> },
+>(db: TDb): Promise<void> {
+  // Safety guard: only allow in test environment
+  if (process.env.NODE_ENV !== 'test') {
+    throw new Error('resetDatabase is only allowed in test environment (NODE_ENV=test)')
+  }
 
-    const dropAllTablesSQL = `
-      -- Drop all user tables
-      -- This is a simplified implementation for file databases
-      PRAGMA writable_schema = 1;
-      DELETE FROM sqlite_master WHERE type IN ('table', 'index', 'trigger', 'view') AND name NOT LIKE 'sqlite_%';
-      PRAGMA writable_schema = 0;
-      VACUUM;
+  try {
+    // Get all user objects from sqlite_master
+    const query = `
+      SELECT name, type FROM sqlite_master
+      WHERE type IN ('table', 'view', 'trigger', 'index')
+      AND name NOT LIKE 'sqlite_%'
+      ORDER BY
+        CASE type
+          WHEN 'trigger' THEN 1
+          WHEN 'view' THEN 2
+          WHEN 'index' THEN 3
+          WHEN 'table' THEN 4
+        END
     `
 
-    await executeMigration(db, dropAllTablesSQL)
-  } catch {
-    // If the database is empty or has no user tables, this might fail
-    // That's okay - we'll ignore errors for reset operations
-    // In a production system, we'd be more sophisticated about this
+    let objects: Array<{ name: string; type: string }> = []
+
+    // Try to get objects using the all method if available
+    if (typeof db.all === 'function') {
+      objects = db.all(query)
+    } else {
+      // If no all method, we can't safely enumerate objects
+      // This is a limitation but prevents unsafe operations
+      console.warn('Database object lacks all() method - cannot safely reset database')
+      return
+    }
+
+    // Drop objects in safe order within a transaction
+    if (objects.length > 0) {
+      const dropStatements = objects.map((obj) => {
+        switch (obj.type) {
+          case 'trigger':
+            return `DROP TRIGGER IF EXISTS "${obj.name}";`
+          case 'view':
+            return `DROP VIEW IF EXISTS "${obj.name}";`
+          case 'index':
+            return `DROP INDEX IF EXISTS "${obj.name}";`
+          case 'table':
+            return `DROP TABLE IF EXISTS "${obj.name}";`
+          default:
+            return `-- Unknown type: ${obj.type} ${obj.name}`
+        }
+      })
+
+      const resetSql = `
+        BEGIN;
+        ${dropStatements.join('\n        ')}
+        COMMIT;
+        VACUUM;
+      `
+
+      await executeMigration(db, resetSql)
+    }
+  } catch (err) {
+    // Add context about the reset operation
+    const message = err instanceof Error ? err.message : String(err)
+    throw new Error(`Database reset failed: ${message}`)
   }
 }
 

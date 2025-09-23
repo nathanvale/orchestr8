@@ -39,7 +39,7 @@ export interface AppliedPragmas {
   /** Current journal mode (typically 'wal', 'memory', or 'delete') */
   journal_mode?: string
   /** Foreign key constraint enforcement status */
-  foreign_keys?: 'on' | 'off'
+  foreign_keys?: 'on' | 'off' | 'unknown'
   /** Busy timeout in milliseconds (normalized across drivers) */
   busy_timeout?: number
 }
@@ -169,23 +169,23 @@ export async function applyRecommendedPragmas<TDb>(
       }
 
       return {
-        journal_mode: journalModeResult?.journal_mode ?? 'wal',
+        journal_mode: journalModeResult?.journal_mode ?? 'unknown',
         foreign_keys: foreignKeysResult?.foreign_keys === 1 ? 'on' : 'off',
         busy_timeout: busyTimeoutValue,
       }
     }
 
-    // If the database doesn't support pragma, return defaults
+    // If the database doesn't support pragma, return unknown status
     return {
-      journal_mode: 'wal',
-      foreign_keys: 'on',
+      journal_mode: 'unknown',
+      foreign_keys: 'unknown',
       busy_timeout: busyTimeoutMs,
     }
   } catch {
-    // Graceful fallback on any error
+    // Graceful fallback on any error - return unknown status to avoid false positives
     return {
-      journal_mode: 'wal',
-      foreign_keys: 'on',
+      journal_mode: 'unknown',
+      foreign_keys: 'unknown',
       busy_timeout: busyTimeoutMs,
     }
   }
@@ -269,7 +269,14 @@ export async function probeEnvironment<TDb>(
 
   // Check WAL mode
   capabilities.wal = pragmas.journal_mode === 'wal'
-  if (!capabilities.wal) {
+  if (pragmas.journal_mode === 'unknown') {
+    const message = '⚠️  WAL mode status unknown (pragma support unavailable)'
+    if (required.includes('wal')) {
+      throw new Error('WAL mode is required but pragma support is unavailable to verify')
+    }
+    log('warn', message)
+    log('warn', '   Database object may lack pragma() or prepare() methods')
+  } else if (!capabilities.wal) {
     const message = `⚠️  WAL mode not available, using: ${pragmas.journal_mode}`
     if (required.includes('wal')) {
       throw new Error(`WAL mode is required but not available (using: ${pragmas.journal_mode})`)
@@ -282,7 +289,13 @@ export async function probeEnvironment<TDb>(
 
   // Check foreign keys
   capabilities.foreign_keys = pragmas.foreign_keys === 'on'
-  if (!capabilities.foreign_keys) {
+  if (pragmas.foreign_keys === 'unknown') {
+    const message = 'Foreign key status unknown (pragma support unavailable)'
+    if (required.includes('foreign_keys')) {
+      throw new Error('Foreign keys are required but pragma support is unavailable to verify')
+    }
+    log('warn', `⚠️  ${message}`)
+  } else if (!capabilities.foreign_keys) {
     const message = 'Foreign key support is required but not enabled'
     if (required.includes('foreign_keys')) {
       throw new Error(message)

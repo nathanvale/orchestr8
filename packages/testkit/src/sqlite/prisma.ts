@@ -152,6 +152,9 @@ export async function createPrismaFileConfig(
   }
 }
 
+// Global guard against concurrent setPrismaTestEnv usage
+let _prismaEnvActive = false
+
 /**
  * Helper to set Prisma environment variables for testing.
  *
@@ -168,8 +171,29 @@ export async function createPrismaFileConfig(
  * // Restore original environment
  * restore()
  * ```
+ *
+ * @remarks
+ * ⚠️ **Warning**: This function mutates global process.env and is not safe for
+ * concurrent use. In parallel test environments (Vitest workers), this can
+ * cause environment variable leaks between tests.
+ *
+ * **Recommendations**:
+ * - Use per-process isolation for parallel Prisma tests
+ * - Or avoid parallel execution when using environment variables
+ * - Consider using datasource URL configuration instead of env vars
+ *
+ * @throws {Error} When called while another setPrismaTestEnv is active
  */
 export function setPrismaTestEnv(config: PrismaTestConfig): () => void {
+  // Guard against concurrent usage
+  if (_prismaEnvActive) {
+    throw new Error(
+      'setPrismaTestEnv is already active. This function is not safe for concurrent use. ' +
+        'Consider using per-process isolation or datasource URL configuration instead of env vars.',
+    )
+  }
+
+  _prismaEnvActive = true
   const originalEnv: Record<string, string | undefined> = {}
 
   // Save original values and set new ones
@@ -189,6 +213,7 @@ export function setPrismaTestEnv(config: PrismaTestConfig): () => void {
         process.env[key] = originalValue
       }
     }
+    _prismaEnvActive = false
   }
 }
 

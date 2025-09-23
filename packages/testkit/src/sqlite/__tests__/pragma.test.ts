@@ -114,10 +114,10 @@ describe('SQLite Pragma Support', () => {
 
       const result = await applyRecommendedPragmas(mockDb)
 
-      // Should return default values without throwing
+      // Should return unknown status when pragma support is unavailable
       expect(result).toEqual({
-        journal_mode: 'wal',
-        foreign_keys: 'on',
+        journal_mode: 'unknown',
+        foreign_keys: 'unknown',
         busy_timeout: 2000,
       })
     })
@@ -131,10 +131,10 @@ describe('SQLite Pragma Support', () => {
 
       const result = await applyRecommendedPragmas(mockDb)
 
-      // Should fallback to default values on error
+      // Should return unknown status on pragma execution errors to prevent false positives
       expect(result).toEqual({
-        journal_mode: 'wal',
-        foreign_keys: 'on',
+        journal_mode: 'unknown',
+        foreign_keys: 'unknown',
         busy_timeout: 2000,
       })
     })

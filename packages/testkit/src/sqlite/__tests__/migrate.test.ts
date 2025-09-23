@@ -14,6 +14,7 @@ class MockDatabase implements MigrationDatabase {
   public executedStatements: string[] = []
   public shouldThrowError = false
   public errorMessage = 'Mock database error'
+  public mockTables: Array<{ name: string; type: string }> = []
 
   async exec(sql: string): Promise<void> {
     if (this.shouldThrowError) {
@@ -22,13 +23,21 @@ class MockDatabase implements MigrationDatabase {
     this.executedStatements.push(sql)
   }
 
+  all(sql: string): Array<{ name: string; type: string }> {
+    // Return mock tables for resetDatabase queries
+    if (sql.includes('sqlite_master')) {
+      return this.mockTables
+    }
+    return []
+  }
+
   reset() {
     this.executedStatements = []
     this.shouldThrowError = false
     this.errorMessage = 'Mock database error'
+    this.mockTables = []
   }
 }
-
 describe('SQLite Migration Support', () => {
   let databases: Array<FileDatabase> = []
   let tempDirs: Array<TempDirectory> = []
@@ -328,41 +337,42 @@ describe('SQLite Migration Support', () => {
 
   describe('resetDatabase', () => {
     it('should drop all tables in the database', async () => {
-      // First create some tables via migrations
-      const migrationDir = await createManagedTempDirectory({ prefix: 'reset-test-' })
-      tempDirs.push(migrationDir)
-
-      const migration = `
-        CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT);
-        CREATE TABLE posts (id INTEGER PRIMARY KEY, title TEXT);
-        CREATE TABLE comments (id INTEGER PRIMARY KEY, content TEXT);
-      `
-
-      await writeFile(migrationDir.getPath('001_create_tables.sql'), migration)
-      await applyMigrations(mockDb, { dir: migrationDir.path })
-
-      // Reset should clear the executed statements tracking and execute reset SQL
-      mockDb.reset() // Reset our tracking
+      // Set up mock tables that would be returned by sqlite_master query
+      mockDb.mockTables = [
+        { name: 'users', type: 'table' },
+        { name: 'posts', type: 'table' },
+        { name: 'comments', type: 'table' },
+      ]
 
       await resetDatabase(mockDb)
 
-      // Should have executed the reset SQL
+      // Should have executed safe DROP statements, not dangerous PRAGMA
       expect(mockDb.executedStatements).toHaveLength(1)
-      expect(mockDb.executedStatements[0]).toContain('PRAGMA writable_schema')
+      expect(mockDb.executedStatements[0]).toContain('DROP TABLE IF EXISTS')
+      expect(mockDb.executedStatements[0]).toContain('users')
+      expect(mockDb.executedStatements[0]).toContain('posts')
+      expect(mockDb.executedStatements[0]).toContain('comments')
+      expect(mockDb.executedStatements[0]).not.toContain('PRAGMA writable_schema')
     })
 
     it('should handle empty database gracefully', async () => {
+      // No mock tables = empty database
+      mockDb.mockTables = []
+
       await expect(resetDatabase(mockDb)).resolves.not.toThrow()
-      expect(mockDb.executedStatements).toHaveLength(1)
+      // No tables to drop = no SQL executed
+      expect(mockDb.executedStatements).toHaveLength(0)
     })
 
     it('should handle database with only system tables', async () => {
-      // SQLite creates system tables automatically, reset should only affect user tables
+      // System tables are filtered out by the sqlite_master query
+      mockDb.mockTables = []
+
       await expect(resetDatabase(mockDb)).resolves.not.toThrow()
-      expect(mockDb.executedStatements).toHaveLength(1)
+      // No user tables to drop = no SQL executed
+      expect(mockDb.executedStatements).toHaveLength(0)
     })
   })
-
   describe('integration patterns', () => {
     it('should support test setup and teardown workflow', async () => {
       const migrationDir = await createManagedTempDirectory({ prefix: 'workflow-test-' })
