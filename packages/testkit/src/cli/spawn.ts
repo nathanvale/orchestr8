@@ -3,14 +3,14 @@
  * Provides higher-level utilities built on top of process-mock for common spawning patterns
  *
  * @remarks
- * These utilities use the hexa-register pattern by default, meaning mocks are
- * automatically registered for spawn, exec, execSync, fork, execFile, and
- * execFileSync methods. This ensures consistent behavior regardless of which
- * child_process method your code uses internally.
+ * These utilities use the quad-register pattern by default, meaning mocks are
+ * automatically registered for spawn, exec, execSync, and fork methods.
+ * This ensures consistent behavior regardless of which child_process method
+ * your code uses internally.
  *
  * @example
  * ```typescript
- * // Mock will work for spawn, exec, execSync, fork, execFile, execFileSync
+ * // Mock will work for spawn, exec, execSync, and fork
  * spawnUtils.mockCommandSuccess('npm install', 'installed successfully')
  *
  * // Your code can use any method and the mock will work
@@ -21,9 +21,9 @@
  * ```
  */
 
+import { getRegistry, resetAll, clearCalls } from './registry.js'
 import { normalize } from './normalize.js'
 import type { ProcessMockConfig } from './process-mock.js'
-import { clearCalls, getRegistry, resetAll } from './registry.js'
 
 /**
  * Options for spawn testing
@@ -60,26 +60,11 @@ export interface SpawnTestResult {
 }
 
 /**
- * Helper to register a mock config across all six child process methods
- */
-function registerAllMethods(command: string | RegExp, config: ProcessMockConfig): void {
-  const registry = getRegistry()
-  const key = typeof command === 'string' ? normalize(command) : command
-
-  registry.spawnMocks.set(key, config)
-  registry.execMocks.set(key, config)
-  registry.execSyncMocks.set(key, config)
-  registry.forkMocks.set(key, config)
-  registry.execFileMocks.set(key, config)
-  registry.execFileSyncMocks.set(key, config)
-}
-
-/**
  * Spawn utilities for testing CLI commands
  *
  * All methods in this object register mocks for multiple child_process methods
- * (spawn, exec, execSync, fork, execFile, execFileSync) unless otherwise specified. This is known as
- * the "hexa-register pattern" and ensures your mocks work regardless of which
+ * (spawn, exec, execSync, fork) unless otherwise specified. This is known as
+ * the "quad-register pattern" and ensures your mocks work regardless of which
  * method your code uses.
  */
 export const spawnUtils = {
@@ -92,11 +77,20 @@ export const spawnUtils = {
    * @param exitCode - Exit code to return (default: 0)
    *
    * @remarks
-   * Registers the mock for all six methods (spawn, exec, execSync, fork, execFile, execFileSync)
+   * Registers the mock for spawn, exec, execSync, and fork methods
    */
   mockCommandSuccess: (command: string | RegExp, stdout = '', stderr = '', exitCode = 0): void => {
+    const registry = getRegistry()
+    const key = typeof command === 'string' ? normalize(command) : command
     const config: ProcessMockConfig = { stdout, stderr, exitCode }
-    registerAllMethods(command, config)
+
+    // Register for all methods by default (quad-register pattern)
+    registry.spawnMocks.set(key, config)
+    registry.execMocks.set(key, config)
+    registry.execSyncMocks.set(key, config)
+    registry.forkMocks.set(key, config)
+    registry.execFileMocks.set(key, config)
+    registry.execFileSyncMocks.set(key, config)
   },
 
   /**
@@ -108,16 +102,34 @@ export const spawnUtils = {
     exitCode = 1,
     stdout = '',
   ): void => {
+    const registry = getRegistry()
+    const key = typeof command === 'string' ? normalize(command) : command
     const config: ProcessMockConfig = { stdout, stderr, exitCode }
-    registerAllMethods(command, config)
+
+    // Register for all methods by default (quad-register pattern)
+    registry.spawnMocks.set(key, config)
+    registry.execMocks.set(key, config)
+    registry.execSyncMocks.set(key, config)
+    registry.forkMocks.set(key, config)
+    registry.execFileMocks.set(key, config)
+    registry.execFileSyncMocks.set(key, config)
   },
 
   /**
    * Mock a command to throw an error during execution
    */
   mockCommandError: (command: string | RegExp, error: Error): void => {
+    const registry = getRegistry()
+    const key = typeof command === 'string' ? normalize(command) : command
     const config: ProcessMockConfig = { error }
-    registerAllMethods(command, config)
+
+    // Register for all methods by default (quad-register pattern)
+    registry.spawnMocks.set(key, config)
+    registry.execMocks.set(key, config)
+    registry.execSyncMocks.set(key, config)
+    registry.forkMocks.set(key, config)
+    registry.execFileMocks.set(key, config)
+    registry.execFileSyncMocks.set(key, config)
   },
 
   /**
@@ -129,8 +141,17 @@ export const spawnUtils = {
     stdout = '',
     exitCode = 0,
   ): void => {
+    const registry = getRegistry()
+    const key = typeof command === 'string' ? normalize(command) : command
     const config: ProcessMockConfig = { stdout, exitCode, delay }
-    registerAllMethods(command, config)
+
+    // Register for all methods by default (quad-register pattern)
+    registry.spawnMocks.set(key, config)
+    registry.execMocks.set(key, config)
+    registry.execSyncMocks.set(key, config)
+    registry.forkMocks.set(key, config)
+    registry.execFileMocks.set(key, config)
+    registry.execFileSyncMocks.set(key, config)
   },
 
   /**
@@ -142,13 +163,23 @@ export const spawnUtils = {
     finalOutput = '',
     exitCode = 0,
   ): void => {
+    const registry = getRegistry()
+    const key = typeof command === 'string' ? normalize(command) : command
+
     // For interactive commands, we simulate the full conversation
     const fullOutput = Object.entries(responses)
       .map(([prompt, response]) => `${prompt}\n${response}\n`)
       .join('')
 
     const config: ProcessMockConfig = { stdout: fullOutput + finalOutput, exitCode }
-    registerAllMethods(command, config)
+
+    // Register for all methods by default (quad-register pattern)
+    registry.spawnMocks.set(key, config)
+    registry.execMocks.set(key, config)
+    registry.execSyncMocks.set(key, config)
+    registry.forkMocks.set(key, config)
+    registry.execFileMocks.set(key, config)
+    registry.execFileSyncMocks.set(key, config)
   },
 
   /**
@@ -296,39 +327,10 @@ export const commonCommands = {
  *   .mock()
  * ```
  */
-/**
- * Union type representing all available child process methods
- */
-export type ChildProcessMethod =
-  | 'spawn'
-  | 'exec'
-  | 'execSync'
-  | 'fork'
-  | 'execFile'
-  | 'execFileSync'
-
-/**
- * Default methods registered when forMethods() is not called
- * The builder will also add execFile and execFileSync automatically
- */
-export const DEFAULT_BUILDER_METHODS: ChildProcessMethod[] = ['spawn', 'exec', 'execSync', 'fork']
-
-/**
- * All available child process methods
- */
-export const ALL_METHODS: ChildProcessMethod[] = [
-  'spawn',
-  'exec',
-  'execSync',
-  'fork',
-  'execFile',
-  'execFileSync',
-]
-
 export class SpawnMockBuilder {
   private command: string | RegExp
   private config: ProcessMockConfig = {}
-  private methods?: ChildProcessMethod[]
+  private methods?: Array<'spawn' | 'exec' | 'execSync' | 'fork' | 'execFile' | 'execFileSync'>
 
   constructor(command: string | RegExp) {
     this.command = command
@@ -394,7 +396,7 @@ export class SpawnMockBuilder {
    * Specify which methods to register the mock for
    *
    * @param methods - Array of methods to register for
-   * @default ['spawn', 'exec', 'execSync', 'fork'] plus execFile/execFileSync added automatically
+   * @default ['spawn', 'exec', 'execSync', 'fork', 'execFile', 'execFileSync']
    *
    * @example
    * ```typescript
@@ -404,7 +406,9 @@ export class SpawnMockBuilder {
    *   .mock()
    * ```
    */
-  forMethods(methods: ChildProcessMethod[]): this {
+  forMethods(
+    methods: Array<'spawn' | 'exec' | 'execSync' | 'fork' | 'execFile' | 'execFileSync'>,
+  ): this {
     this.methods = methods
     return this
   }
@@ -424,10 +428,10 @@ export class SpawnMockBuilder {
   }
 
   /**
-   * Convenience method to register only for execSync
+   * Convenience method to register only for sync methods
    */
   forSyncOnly(): this {
-    return this.forMethods(['execSync'])
+    return this.forMethods(['execSync', 'execFileSync'])
   }
 
   /**
@@ -445,14 +449,14 @@ export class SpawnMockBuilder {
   }
 
   /**
-   * Convenience method to register for all six methods
+   * Convenience method to register for all methods
    */
   forAll(): this {
-    return this.forMethods(ALL_METHODS)
+    return this.forMethods(['spawn', 'exec', 'execSync', 'fork', 'execFile', 'execFileSync'])
   }
 
   /**
-   * Convenience method to register for async methods only
+   * Convenience method to register only for async methods
    */
   forAsyncOnly(): this {
     return this.forMethods(['spawn', 'exec', 'fork', 'execFile'])
@@ -462,15 +466,20 @@ export class SpawnMockBuilder {
    * Apply the mock configuration
    *
    * @remarks
-   * Default behavior (when forMethods() not called):
-   * - Registers for: spawn, exec, execSync, fork
-   * - Also adds: execFile, execFileSync
-   * When forMethods() is called, only registers for specified methods
+   * By default registers for all methods (spawn, exec, execSync, fork, execFile, execFileSync)
+   * unless limited by forMethods() or convenience methods
    */
   mock(): void {
     const registry = getRegistry()
     const key = typeof this.command === 'string' ? normalize(this.command) : this.command
-    const methods = this.methods || DEFAULT_BUILDER_METHODS
+    const methods = this.methods || [
+      'spawn',
+      'exec',
+      'execSync',
+      'fork',
+      'execFile',
+      'execFileSync',
+    ]
 
     // Register for specified methods
     if (methods.includes('spawn')) {
@@ -491,11 +500,6 @@ export class SpawnMockBuilder {
     if (methods.includes('execFileSync')) {
       registry.execFileSyncMocks.set(key, this.config)
     }
-    // Also register for execFile variants if not explicitly limited
-    if (!this.methods) {
-      registry.execFileMocks.set(key, this.config)
-      registry.execFileSyncMocks.set(key, this.config)
-    }
   }
 }
 
@@ -507,10 +511,7 @@ export function mockSpawn(command: string | RegExp): SpawnMockBuilder {
 }
 
 /**
- * Quick utilities for common testing scenarios.
- *
- * Uses the hexa-register pattern: each method registers mocks for all 6 child_process methods:
- * - spawn, exec, execSync, fork, execFile, execFileSync
+ * Quick utilities for common testing scenarios
  */
 export const quickMocks = {
   /**

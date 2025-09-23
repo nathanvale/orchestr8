@@ -74,7 +74,8 @@
       "@template/testkit/convex": ["./packages/testkit/src/convex/index.ts"],
       "@template/testkit/sqlite": ["./packages/testkit/src/sqlite/index.ts"],
       "@template/testkit/msw": ["./packages/testkit/src/msw/index.ts"],
-      "@template/testkit/msw/browser": ["./packages/testkit/src/msw/browser.ts"]
+      "@template/testkit/msw/browser": ["./packages/testkit/src/msw/browser.ts"],
+      "@template/testkit/fs": ["./packages/testkit/src/fs/index.ts"]
       // Removed unused @types, @utils and @config paths (can reintroduce when directories exist)
     }
   },

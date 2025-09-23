@@ -41,7 +41,8 @@ exec('git status', (err, stdout) => {
 
 - Single authoritative mock factory for child_process methods
 - Unified singleton registry prevents parallel/duplicate state
-- Hexa-register pattern: one registration covers all 6 methods (spawn/exec/execSync/fork/execFile/execFileSync)
+- Hexa-register pattern: one registration covers all 6 methods
+  (spawn/exec/execSync/fork/execFile/execFileSync)
 - Import-order safe: mocks are hoisted in a bootstrap module
 - Deterministic outputs and failure modes for anti-flake tests
 
@@ -115,7 +116,8 @@ exec('git status', (err, _stdout, stderr) => {
 - `spawnUtils.mockInteractiveCommand(command, responses, finalOutput?, exitCode?)`
 - `mockSpawn(command).stdout(...).stderr(...).exitCode(...).forMethods([...]).mock()`
 
-These register for all 6 child_process methods by default (hexa-register: spawn, exec, execSync, fork, execFile, execFileSync).
+These register for all 6 child_process methods by default (hexa-register: spawn,
+exec, execSync, fork, execFile, execFileSync).
 
 ### Verifying calls
 
@@ -172,15 +174,20 @@ Common scenarios:
 ## Delay Behavior
 
 Note that delay simulation differs between synchronous methods:
+
 - `execSync`: Simulates synchronous delay using a busy-wait loop
 - `execFileSync`: Returns immediately without delay simulation
-- Async methods (`spawn`, `exec`, `execFile`, `fork`): Properly simulate async delays
+- Async methods (`spawn`, `exec`, `execFile`, `fork`): Properly simulate async
+  delays
 
-This design avoids blocking test execution unnecessarily while still allowing delay testing for methods that support it.
+This design avoids blocking test execution unnecessarily while still allowing
+delay testing for methods that support it.
 
 ## Fallback Precedence
 
-When a command is not found in a method-specific registry, the system checks in this order:
+When a command is not found in a method-specific registry, the system checks in
+this order:
+
 1. Primary map (method-specific registry)
 2. `execFile` map
 3. `execSync` map
@@ -188,17 +195,84 @@ When a command is not found in a method-specific registry, the system checks in 
 5. `fork` map
 6. `execFileSync` map
 
-If a command is registered differently for multiple methods, the fallback may match a different method's config. Use method-specific registration when different behaviors are intended.
+If a command is registered differently for multiple methods, the fallback may
+match a different method's config. Use method-specific registration when
+different behaviors are intended.
 
 ## Environment Variables
 
-The CLI mocking system supports several environment variables for fine-tuning behavior:
+The CLI mocking system supports several environment variables for fine-tuning
+behavior:
 
 - `DEBUG_TESTKIT`: Enable verbose logging of mock operations
-- `ALLOW_SYNC_DELAY=true`: Allow synchronous delay simulation in execSync (capped at 250ms)
-- `STRICT_PROCESS_MOCKS=1`: Warn when mocks are found via fallback instead of primary registry
-- `STRICT_PROCESS_MOCKS=throw`: Throw error when fallback would be used (ultra-strict mode)
+- `ALLOW_SYNC_DELAY=true`: Allow synchronous delay simulation in execSync
+  (capped at 250ms)
+- `PROCESS_MOCK_WARN_FALLBACK=1`: Warn when mocks are found via fallback instead
+  of primary registry
+- `STRICT_PROCESS_MOCKS=1`: Warn when mocks are found via fallback (same as
+  PROCESS_MOCK_WARN_FALLBACK)
+- `STRICT_PROCESS_MOCKS=throw`: Throw error when fallback would be used
+  (ultra-strict mode)
 - `RANDOM_PIDS=true`: Use random PIDs instead of deterministic incremental PIDs
+
+## Lookup Resolution Algorithm
+
+The mock resolution process follows a specific algorithm to find matching
+configurations:
+
+### Phase 1: Command Normalization
+
+1. **Input Processing**: The raw command string is normalized
+   - Multiple whitespaces collapsed to single space
+   - Surrounding quotes removed (both single and double)
+   - Path separators normalized (backslashes to forward slashes)
+   - Example: `"npm  install"` becomes `npm install`
+
+### Phase 2: Primary Registry Lookup
+
+2. **Exact Match**: Check for exact string match in method-specific registry
+3. **RegExp Match**: Test against registered RegExp patterns
+4. **Includes Match**: Check if any registered string is contained in the
+   command
+
+### Phase 3: Fallback Resolution
+
+If no match found in primary registry and fallback is allowed: 5. **Fallback
+Order**: Check other method registries in this sequence:
+
+- `execFile` → `execSync` → `spawn` → `fork` → `execFileSync`
+
+6. **Warning/Error Handling**:
+   - If `PROCESS_MOCK_WARN_FALLBACK=1` or `STRICT_PROCESS_MOCKS=1`: Warn about
+     fallback usage
+   - If `STRICT_PROCESS_MOCKS=throw`: Throw error instead of using fallback
+
+### Example Resolution Flow
+
+```typescript
+// Register a mock for exec
+mocker.register('git status', { stdout: 'clean' }, { methods: ['exec'] })
+
+// When spawn('git status') is called:
+// 1. Normalize: "git status" → "git status"
+// 2. Check spawn registry: Not found
+// 3. Check fallbacks: Found in exec registry
+// 4. If warnings enabled: Console warning about fallback
+// 5. Return exec's config for spawn to use
+
+// To avoid fallback, register specifically:
+mocker.register('git status', { stdout: 'clean' }, { methods: ['spawn'] })
+```
+
+### Resolution Truth Table
+
+| Method Call | Registered In | Strict Mode | Result                |
+| ----------- | ------------- | ----------- | --------------------- |
+| spawn       | spawn         | Any         | Direct match ✓        |
+| spawn       | exec          | Off         | Fallback match ✓      |
+| spawn       | exec          | Warn        | Fallback + warning ⚠️ |
+| spawn       | exec          | Throw       | Error thrown ✗        |
+| spawn       | None          | Any         | No config (undefined) |
 
 ## References
 

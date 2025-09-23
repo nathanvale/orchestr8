@@ -9,6 +9,7 @@ import { promisify } from 'node:util'
 import { URL } from 'url'
 import { vi } from 'vitest'
 
+import { createExecLikeError } from './error-factory.js'
 import { findConfig, normalizeParts } from './normalize.js'
 import { MockChildProcess, type ProcessMockConfig } from './process-mock.js'
 import { getRegistry, trackCall, trackProcess } from './registry.js'
@@ -52,8 +53,9 @@ export function createChildProcessMock(): typeof cp {
       return primaryConfig
     }
 
-    // Check for strict mode
+    // Check for strict mode and warning settings
     const strictMode = process.env.STRICT_PROCESS_MOCKS === '1'
+    const warnFallback = process.env.PROCESS_MOCK_WARN_FALLBACK === '1' || strictMode
 
     // Try fallback maps
     const fallbackConfig =
@@ -63,11 +65,11 @@ export function createChildProcessMock(): typeof cp {
       findConfig(reg.forkMocks, input) ||
       findConfig(reg.execFileSyncMocks, input)
 
-    if (fallbackConfig && strictMode && kind) {
-      // In strict mode, warn when using fallback
-      if (process.env.DEBUG_TESTKIT) {
+    if (fallbackConfig && kind) {
+      // Warn when using fallback if enabled or in strict mode
+      if (warnFallback || process.env.DEBUG_TESTKIT) {
         console.warn(
-          `[STRICT MODE] Mock for ${kind} "${input}" found via fallback, not in primary registry. ` +
+          `[FALLBACK] Mock for ${kind} "${input}" found via fallback, not in primary registry. ` +
             `Consider registering specifically for ${kind}.`,
         )
       }
@@ -134,22 +136,14 @@ export function createChildProcessMock(): typeof cp {
 
         // Match Node semantics: non-zero exit should produce an ExecException
         if (config?.exitCode !== undefined && config.exitCode !== 0) {
-          const err = new Error(`Command failed: ${command}`) as cp.ExecException & {
-            status?: number
-            output?: Array<null | string>
-            pid?: number
-          }
-          err.code = config.exitCode
-          err.killed = false
-          err.signal = config.signal ?? undefined
-          err.cmd = command
-          // Extended props
-          err.status = config.exitCode
-          err.output = [null, config.stdout ?? '', config.stderr ?? '']
-          err.pid = 0
-          // Assign non-standard props via index access for compatibility
-          ;(err as unknown as Record<string, unknown>)['stdout'] = config.stdout ?? ''
-          ;(err as unknown as Record<string, unknown>)['stderr'] = config.stderr ?? ''
+          const err = createExecLikeError('exec', {
+            command,
+            exitCode: config.exitCode,
+            signal: config.signal,
+            stdout: config.stdout,
+            stderr: config.stderr,
+            pid: 0,
+          })
           actualCallback(err, '', config.stderr ?? '')
           return
         }
@@ -208,21 +202,14 @@ export function createChildProcessMock(): typeof cp {
     }
 
     if (config?.exitCode && config.exitCode !== 0) {
-      const error = new Error(`Command failed: ${command}`) as cp.ExecException & {
-        status?: number
-        output?: Array<null | string>
-        pid?: number
-      }
-      error.code = config.exitCode
-      error.killed = false
-      error.signal = config.signal ?? undefined
-      error.cmd = command
-      // Extended properties that some versions of Node provide
-      error.status = config.exitCode
-      error.output = [null, config.stdout ?? '', config.stderr ?? '']
-      error.pid = 0
-      error.stdout = config.stdout ?? ''
-      error.stderr = config.stderr ?? ''
+      const error = createExecLikeError('execSync', {
+        command,
+        exitCode: config.exitCode,
+        signal: config.signal,
+        stdout: config.stdout,
+        stderr: config.stderr,
+        pid: 0,
+      })
       throw error
     }
 
@@ -359,23 +346,14 @@ export function createChildProcessMock(): typeof cp {
 
           // Non-zero exit codes should surface an error similar to Node
           if (config?.exitCode !== undefined && config.exitCode !== 0) {
-            type ExecFileError = cp.ExecFileException & {
-              status?: number
-              output?: Array<null | string>
-              pid?: number
-              stdout?: string | Buffer
-              stderr?: string | Buffer
-            }
-            const error = new Error(`Command failed: ${fullCommand}`) as ExecFileError
-            error.code = config.exitCode
-            error.killed = false
-            error.signal = config.signal ?? undefined
-            error.cmd = fullCommand
-            error.status = config.exitCode
-            error.output = [null, config.stdout ?? '', config.stderr ?? '']
-            error.pid = 0
-            error.stdout = config.stdout ?? ''
-            error.stderr = config.stderr ?? ''
+            const error = createExecLikeError('execFile', {
+              command: fullCommand,
+              exitCode: config.exitCode,
+              signal: config.signal,
+              stdout: config.stdout,
+              stderr: config.stderr,
+              pid: 0,
+            })
             actualCallback(error, Buffer.from(''), Buffer.from(config.stderr ?? ''))
             return
           }
@@ -451,24 +429,14 @@ export function createChildProcessMock(): typeof cp {
       }
 
       if (config?.exitCode && config.exitCode !== 0) {
-        type ExecFileError = cp.ExecFileException & {
-          status?: number
-          output?: Array<null | string>
-          pid?: number
-          stdout?: string | Buffer
-          stderr?: string | Buffer
-        }
-        const error = new Error(`Command failed: ${fullCommand}`) as ExecFileError
-        error.code = config.exitCode
-        error.killed = false
-        error.signal = config.signal ?? undefined
-        error.cmd = fullCommand
-        // Extended properties
-        error.status = config.exitCode
-        error.output = [null, config.stdout ?? '', config.stderr ?? '']
-        error.pid = 0
-        error.stdout = config.stdout ?? ''
-        error.stderr = config.stderr ?? ''
+        const error = createExecLikeError('execFileSync', {
+          command: fullCommand,
+          exitCode: config.exitCode,
+          signal: config.signal,
+          stdout: config.stdout,
+          stderr: config.stderr,
+          pid: 0,
+        })
         throw error
       }
 

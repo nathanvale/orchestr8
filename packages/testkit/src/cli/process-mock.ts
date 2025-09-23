@@ -206,7 +206,7 @@ export class MockChildProcess extends EventEmitter {
 export interface ProcessMocker {
   /**
    * Register a mock for a specific command across multiple methods
-   * By default registers for spawn, exec, execSync, and fork (quad-register pattern)
+   * By default registers for all six child_process methods (hexa-register pattern)
    *
    * @param command - Command pattern to match (string or RegExp)
    * @param config - Mock configuration

@@ -26,7 +26,8 @@ The CLI helpers are now fully complete with accurate documentation.
 
 ### What Was Fixed
 
-1. **Documentation Updated**: Changed from "quad-register" to "hexa-register" pattern
+1. **Documentation Updated**: Changed from "quad-register" to "hexa-register"
+   pattern
    - README now correctly states that quickMocks registers for all 6 methods
    - JSDoc comments updated to reflect actual behavior
 
@@ -38,7 +39,7 @@ The CLI helpers are now fully complete with accurate documentation.
 3. **Mock Implementation Fixed**:
    - Fixed fork module registration to handle both module path and full command
    - Fixed execFileSync to handle overloaded signatures (with/without args)
-   - Fixed __promisify__ implementations for exec and execFile
+   - Fixed **promisify** implementations for exec and execFile
    - Fixed test expectations to match Node.js promisify behavior
 
 4. **Examples Created**: Added `all-methods-demo.ts` showing usage patterns
@@ -46,6 +47,7 @@ The CLI helpers are now fully complete with accurate documentation.
 ### Hexa-Register Pattern
 
 The `quickMocks` functions register mocks for all 6 child_process methods:
+
 - spawn
 - exec
 - execSync
@@ -55,7 +57,6 @@ The `quickMocks` functions register mocks for all 6 child_process methods:
 
 ## Verification Completed
 
-✅ Documentation matches implementation
-✅ Integration tests added for all methods (33 tests)
-✅ All tests passing with Wallaby
-✅ Coverage at 89.1% for CLI module
+✅ Documentation matches implementation ✅ Integration tests added for all
+methods (33 tests) ✅ All tests passing with Wallaby ✅ Coverage at 89.1% for
+CLI module
