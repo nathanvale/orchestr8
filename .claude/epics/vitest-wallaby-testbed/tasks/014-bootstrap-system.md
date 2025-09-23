@@ -15,11 +15,13 @@ updated: 2025-09-23T15:00:00Z
 Bootstrap system fully implemented to enforce correct import ordering.
 
 ### Core Implementation
+
 - ✅ `src/bootstrap.ts` - Import order enforcement
 - ✅ `src/register.ts` - Global setup integration
 - ✅ Mock hoisting before consumer imports
 
 ### Bootstrap Architecture
+
 ```typescript
 // bootstrap.ts - MUST be imported first
 import { vi } from 'vitest'
@@ -37,6 +39,7 @@ export function ensureBootstrap() {
 ```
 
 ### Register Integration
+
 ```typescript
 // register.ts - Used in setupFiles
 import './bootstrap' // FIRST
@@ -49,6 +52,7 @@ if (typeof beforeAll !== 'undefined') {
 ```
 
 ### Key Features
+
 - **Guaranteed early execution**: Before any consumer imports
 - **Load tracking**: Detects multiple loads
 - **Debug support**: TESTKIT_DEBUG environment variable
@@ -56,16 +60,18 @@ if (typeof beforeAll !== 'undefined') {
 - **Module compatibility**: Works with all import styles
 
 ### Usage Pattern
+
 ```typescript
 // vitest.config.ts
 export default defineConfig({
   test: {
-    setupFiles: ['@template/testkit/register']
-  }
+    setupFiles: ['@template/testkit/register'],
+  },
 })
 ```
 
 ## Verification
+
 - Bootstrap loads before tests
 - Mocks available immediately
 - No timing race conditions

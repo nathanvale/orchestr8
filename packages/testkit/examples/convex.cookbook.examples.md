@@ -3,8 +3,9 @@
 
 # Convex Cookbook Examples (non-executing)
 
-> NOTE: This file contains non-executing example snippets copied from the cookbook.
-> It is intentionally a Markdown file to avoid TypeScript parsing errors.
+> NOTE: This file contains non-executing example snippets copied from the
+> cookbook. It is intentionally a Markdown file to avoid TypeScript parsing
+> errors.
 
 ## Auth: scoped identity with withIdentity
 
@@ -61,10 +62,9 @@ test('mutation schedules action and completes', async () => {
   vi.useFakeTimers()
   const t = convexTest(schema)
 
-  const scheduledId = await t.mutation(
-    api.scheduler.mutationSchedulingAction,
-    { delayMs: 10_000 },
-  )
+  const scheduledId = await t.mutation(api.scheduler.mutationSchedulingAction, {
+    delayMs: 10_000,
+  })
 
   vi.advanceTimersByTime(10_001)
 

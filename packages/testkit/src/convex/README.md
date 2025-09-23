@@ -206,6 +206,7 @@ it('should handle external API calls', async () => {
 **Problem: "Cleanup failed: Scheduled functions are still pending"**
 
 This error occurs when:
+
 1. You have scheduled functions that haven't completed
 2. You're using fake timers but not advancing them
 3. You're calling cleanup without the `advanceTimers` option
@@ -228,6 +229,7 @@ afterEach(async () => {
 **Problem: Scheduled functions not executing in tests**
 
 Required sequence for scheduler tests:
+
 1. Use fake timers: `vi.useFakeTimers()`
 2. Schedule your functions
 3. Advance timers: `vi.runAllTimers()` or `vi.advanceTimersByTime(ms)`
@@ -249,6 +251,7 @@ await harness.scheduler.finishAllWithTimers(vi.runAllTimers)
 **CI vs Local Differences:**
 
 In CI (when `process.env.CI` is set), the harness will:
+
 - **Hard fail** if fake timers are detected without `advanceTimers` in cleanup
 - Enforce stricter validation on scheduler operations
 

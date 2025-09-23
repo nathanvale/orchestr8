@@ -16,7 +16,9 @@ updated: 2025-09-23T14:45:00Z
 
 ## Objective
 
-Implement a comprehensive mock adapter for ChromaDB to enable fast, deterministic testing of RAG (Retrieval-Augmented Generation) features without external dependencies.
+Implement a comprehensive mock adapter for ChromaDB to enable fast,
+deterministic testing of RAG (Retrieval-Augmented Generation) features without
+external dependencies.
 
 ## TDD Applicability Decision
 
@@ -33,7 +35,8 @@ Implement a comprehensive mock adapter for ChromaDB to enable fast, deterministi
   - Distributed storage patterns
   - Transaction support
   - Multiple embedding providers
-- **Trigger to revisit:** When query latency > 100ms in tests or need for real Chroma integration
+- **Trigger to revisit:** When query latency > 100ms in tests or need for real
+  Chroma integration
 
 ## Requirements
 
@@ -79,28 +82,30 @@ Implement a comprehensive mock adapter for ChromaDB to enable fast, deterministi
 ### Phase 1: Minimal Viable Mock (4 hours)
 
 **Test-First Development:**
+
 ```typescript
 describe('ChromaDB Mock Client', () => {
   it('creates and retrieves a collection', async () => {
-    const client = createMockChromaClient();
-    const collection = await client.createCollection({ name: 'test' });
-    expect(collection.name).toBe('test');
-  });
+    const client = createMockChromaClient()
+    const collection = await client.createCollection({ name: 'test' })
+    expect(collection.name).toBe('test')
+  })
 
   it('adds and retrieves documents', async () => {
-    const client = createMockChromaClient();
-    const collection = await client.createCollection({ name: 'docs' });
+    const client = createMockChromaClient()
+    const collection = await client.createCollection({ name: 'docs' })
     await collection.add({
       ids: ['1'],
-      documents: ['Hello world']
-    });
-    const result = await collection.get({ ids: ['1'] });
-    expect(result.documents[0]).toBe('Hello world');
-  });
-});
+      documents: ['Hello world'],
+    })
+    const result = await collection.get({ ids: ['1'] })
+    expect(result.documents[0]).toBe('Hello world')
+  })
+})
 ```
 
 **Implementation:**
+
 - Basic ChromaClient with createCollection, getCollection
 - Simple Collection with add, get methods
 - InMemoryStore with Map-based storage
@@ -108,27 +113,29 @@ describe('ChromaDB Mock Client', () => {
 ### Phase 2: Similarity Search (4 hours)
 
 **Test-First:**
+
 ```typescript
 it('returns documents by similarity', async () => {
-  const client = createMockChromaClient();
-  const collection = await client.createCollection({ name: 'docs' });
+  const client = createMockChromaClient()
+  const collection = await client.createCollection({ name: 'docs' })
 
   await collection.add({
     ids: ['1', '2', '3'],
-    documents: ['cat', 'dog', 'cat food']
-  });
+    documents: ['cat', 'dog', 'cat food'],
+  })
 
   const results = await collection.query({
     queryTexts: ['cat'],
-    nResults: 2
-  });
+    nResults: 2,
+  })
 
-  expect(results.ids[0]).toContain('1'); // 'cat' exact match
-  expect(results.ids[0]).toContain('3'); // 'cat food' partial match
-});
+  expect(results.ids[0]).toContain('1') // 'cat' exact match
+  expect(results.ids[0]).toContain('3') // 'cat food' partial match
+})
 ```
 
 **Implementation:**
+
 - Deterministic embedding function
 - Cosine similarity implementation
 - Top-k retrieval algorithm
@@ -136,27 +143,29 @@ it('returns documents by similarity', async () => {
 ### Phase 3: Metadata & Filtering (4 hours)
 
 **Test-First:**
+
 ```typescript
 it('filters by metadata', async () => {
-  const collection = await client.createCollection({ name: 'docs' });
+  const collection = await client.createCollection({ name: 'docs' })
 
   await collection.add({
     ids: ['1', '2'],
     documents: ['doc1', 'doc2'],
-    metadatas: [{ type: 'article' }, { type: 'blog' }]
-  });
+    metadatas: [{ type: 'article' }, { type: 'blog' }],
+  })
 
   const results = await collection.query({
     queryTexts: ['content'],
     where: { type: { $eq: 'article' } },
-    nResults: 10
-  });
+    nResults: 10,
+  })
 
-  expect(results.ids).toEqual([['1']]);
-});
+  expect(results.ids).toEqual([['1']])
+})
 ```
 
 **Implementation:**
+
 - Metadata storage in InMemoryStore
 - Filter predicate evaluation ($eq, $ne, $in, $nin, $gt, $gte, $lt, $lte)
 - Combined similarity + filter queries
@@ -184,26 +193,30 @@ packages/testkit/src/chromadb/
 ## Key Implementation Details
 
 ### Deterministic Embedding Function
+
 ```typescript
 export function mockEmbedding(text: string, dimensions = 384): number[] {
-  const hash = simpleHash(text);
-  return Array(dimensions).fill(0).map((_, i) =>
-    Math.sin(hash * (i + 1)) // Deterministic but varied
-  );
+  const hash = simpleHash(text)
+  return Array(dimensions)
+    .fill(0)
+    .map(
+      (_, i) => Math.sin(hash * (i + 1)), // Deterministic but varied
+    )
 }
 ```
 
 ### Simple Storage Engine
+
 ```typescript
 export class InMemoryVectorStore {
-  private vectors = new Map<string, Float32Array>();
-  private documents = new Map<string, string>();
-  private metadata = new Map<string, Record<string, any>>();
+  private vectors = new Map<string, Float32Array>()
+  private documents = new Map<string, string>()
+  private metadata = new Map<string, Record<string, any>>()
 
   add(id: string, vector: Float32Array, document: string, metadata?: any) {
-    this.vectors.set(id, vector);
-    this.documents.set(id, document);
-    if (metadata) this.metadata.set(id, metadata);
+    this.vectors.set(id, vector)
+    this.documents.set(id, document)
+    if (metadata) this.metadata.set(id, metadata)
   }
 
   search(queryVector: Float32Array, k: number, filter?: any): string[] {
@@ -248,11 +261,11 @@ export class InMemoryVectorStore {
 
 ## Risks & Mitigations
 
-| Risk | Impact | Mitigation |
-|------|--------|------------|
+| Risk                    | Impact | Mitigation                                       |
+| ----------------------- | ------ | ------------------------------------------------ |
 | API compatibility drift | Medium | Pin chromadb-js version, add compatibility tests |
-| Performance regression | Low | Benchmark tests, optimize hot paths |
-| Missing edge cases | Medium | Shadow testing against real ChromaDB |
+| Performance regression  | Low    | Benchmark tests, optimize hot paths              |
+| Missing edge cases      | Medium | Shadow testing against real ChromaDB             |
 
 ## Notes
 

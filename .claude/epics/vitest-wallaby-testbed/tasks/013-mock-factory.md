@@ -15,17 +15,21 @@ updated: 2025-09-23T15:00:00Z
 Single authoritative mock factory pattern fully implemented for CLI mocking.
 
 ### Core Implementation
+
 - ✅ `src/cli/mock-factory.ts` - Central mock module factory
 - ✅ Registry-backed state management
 - ✅ Compile-time mock creation
 
 ### Architectural Achievement
+
 Successfully addresses the critical design flaw identified in the epic:
+
 - Mock factory created at vi.mock time (not runtime)
 - No runtime patching after module load
 - Eliminates timing issues with vi.mock hoisting
 
 ### Factory Pattern
+
 ```typescript
 // Created once at mock time, pulls from registry
 export const mockChildProcessModule = {
@@ -40,6 +44,7 @@ export const mockChildProcessModule = {
 ```
 
 ### Key Features
+
 - **Single source of truth**: One factory for all imports
 - **Registry delegation**: Behavior pulled from central registry
 - **Hoisting compatible**: Works with vi.mock hoisting
@@ -47,12 +52,14 @@ export const mockChildProcessModule = {
 - **Type safety**: Full TypeScript support
 
 ### Integration Points
+
 - Used by bootstrap.ts for early setup
 - Registry provides runtime behavior
 - Process mocker configures registry
 - Test utilities interact via registry
 
 ## Verification
+
 - Factory creation happens at right time
 - No undefined returns from methods
 - Registry delegation working

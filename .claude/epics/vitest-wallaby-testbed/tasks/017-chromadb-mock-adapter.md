@@ -14,11 +14,14 @@ updated: 2025-09-23T15:00:00Z
 
 # Task 017: ChromaDB Mock Adapter
 
-> "Our mock ChromaDB stores vectors faster than an ADHD brain switches contexts - which is saying something since both use hash maps!" 🧠
+> "Our mock ChromaDB stores vectors faster than an ADHD brain switches
+> contexts - which is saying something since both use hash maps!" 🧠
 
 ## Objective
 
-Implement a comprehensive mock adapter for ChromaDB to enable fast, deterministic testing of RAG (Retrieval-Augmented Generation) features without external dependencies.
+Implement a comprehensive mock adapter for ChromaDB to enable fast,
+deterministic testing of RAG (Retrieval-Augmented Generation) features without
+external dependencies.
 
 ## TDD Applicability Decision
 
@@ -35,7 +38,8 @@ Implement a comprehensive mock adapter for ChromaDB to enable fast, deterministi
   - Distributed storage patterns
   - Transaction support
   - Multiple embedding providers
-- **Trigger to revisit:** When query latency > 100ms in tests or need for real Chroma integration
+- **Trigger to revisit:** When query latency > 100ms in tests or need for real
+  Chroma integration
 
 ## Requirements
 
@@ -82,44 +86,46 @@ Implement a comprehensive mock adapter for ChromaDB to enable fast, deterministi
 ### Phase 1: Minimal Viable Mock (4 hours)
 
 **Test-First Development:**
+
 ```typescript
 describe('ChromaDB Mock Client', () => {
   it('creates and retrieves a collection', async () => {
-    const client = createMockChromaClient();
-    const collection = await client.createCollection({ name: 'test' });
-    expect(collection.name).toBe('test');
-  });
+    const client = createMockChromaClient()
+    const collection = await client.createCollection({ name: 'test' })
+    expect(collection.name).toBe('test')
+  })
 
   it('adds and retrieves documents', async () => {
-    const client = createMockChromaClient();
-    const collection = await client.createCollection({ name: 'docs' });
+    const client = createMockChromaClient()
+    const collection = await client.createCollection({ name: 'docs' })
     await collection.add({
       ids: ['1'],
-      documents: ['Hello world']
-    });
-    const result = await collection.get({ ids: ['1'] });
-    expect(result.documents[0]).toBe('Hello world');
-  });
+      documents: ['Hello world'],
+    })
+    const result = await collection.get({ ids: ['1'] })
+    expect(result.documents[0]).toBe('Hello world')
+  })
 
   // Error cases
   it('throws on duplicate collection names', async () => {
-    const client = createMockChromaClient();
-    await client.createCollection({ name: 'test' });
-    await expect(
-      client.createCollection({ name: 'test' })
-    ).rejects.toThrow('Collection already exists');
-  });
+    const client = createMockChromaClient()
+    await client.createCollection({ name: 'test' })
+    await expect(client.createCollection({ name: 'test' })).rejects.toThrow(
+      'Collection already exists',
+    )
+  })
 
   it('throws when collection not found', async () => {
-    const client = createMockChromaClient();
-    await expect(
-      client.getCollection({ name: 'nonexistent' })
-    ).rejects.toThrow('Collection not found');
-  });
-});
+    const client = createMockChromaClient()
+    await expect(client.getCollection({ name: 'nonexistent' })).rejects.toThrow(
+      'Collection not found',
+    )
+  })
+})
 ```
 
 **Implementation:**
+
 - Basic ChromaClient with createCollection, getCollection
 - Simple Collection with add, get methods
 - InMemoryStore with Map-based storage
@@ -128,27 +134,29 @@ describe('ChromaDB Mock Client', () => {
 ### Phase 2: Similarity Search (4 hours)
 
 **Test-First:**
+
 ```typescript
 it('returns documents by similarity', async () => {
-  const client = createMockChromaClient();
-  const collection = await client.createCollection({ name: 'docs' });
+  const client = createMockChromaClient()
+  const collection = await client.createCollection({ name: 'docs' })
 
   await collection.add({
     ids: ['1', '2', '3'],
-    documents: ['cat', 'dog', 'cat food']
-  });
+    documents: ['cat', 'dog', 'cat food'],
+  })
 
   const results = await collection.query({
     queryTexts: ['cat'],
-    nResults: 2
-  });
+    nResults: 2,
+  })
 
-  expect(results.ids[0]).toContain('1'); // 'cat' exact match
-  expect(results.ids[0]).toContain('3'); // 'cat food' partial match
-});
+  expect(results.ids[0]).toContain('1') // 'cat' exact match
+  expect(results.ids[0]).toContain('3') // 'cat food' partial match
+})
 ```
 
 **Implementation:**
+
 - Deterministic embedding function
 - Cosine similarity implementation
 - Top-k retrieval algorithm
@@ -156,27 +164,29 @@ it('returns documents by similarity', async () => {
 ### Phase 3: Metadata & Filtering (4 hours)
 
 **Test-First:**
+
 ```typescript
 it('filters by metadata', async () => {
-  const collection = await client.createCollection({ name: 'docs' });
+  const collection = await client.createCollection({ name: 'docs' })
 
   await collection.add({
     ids: ['1', '2'],
     documents: ['doc1', 'doc2'],
-    metadatas: [{ type: 'article' }, { type: 'blog' }]
-  });
+    metadatas: [{ type: 'article' }, { type: 'blog' }],
+  })
 
   const results = await collection.query({
     queryTexts: ['content'],
     where: { type: { $eq: 'article' } },
-    nResults: 10
-  });
+    nResults: 10,
+  })
 
-  expect(results.ids).toEqual([['1']]);
-});
+  expect(results.ids).toEqual([['1']])
+})
 ```
 
 **Implementation:**
+
 - Metadata storage in InMemoryStore
 - Filter predicate evaluation ($eq, $ne, $in, $nin, $gt, $gte, $lt, $lte)
 - Combined similarity + filter queries
@@ -184,32 +194,34 @@ it('filters by metadata', async () => {
 ### Phase 4: Polish & Documentation (4 hours)
 
 **Performance Tests:**
+
 ```typescript
 it('queries 1000 documents in under 100ms', async () => {
   const client = createMockChromaClient({
-    embeddingDimension: EMBEDDING_CONFIGS.mini // Use 128 dims for speed
-  });
-  const collection = await client.createCollection({ name: 'perf' });
+    embeddingDimension: EMBEDDING_CONFIGS.mini, // Use 128 dims for speed
+  })
+  const collection = await client.createCollection({ name: 'perf' })
 
   // Add 1000 documents
-  const ids = Array.from({ length: 1000 }, (_, i) => `doc${i}`);
-  const documents = ids.map(id => `Document content for ${id}`);
-  await collection.add({ ids, documents });
+  const ids = Array.from({ length: 1000 }, (_, i) => `doc${i}`)
+  const documents = ids.map((id) => `Document content for ${id}`)
+  await collection.add({ ids, documents })
 
   // Measure query time
-  const start = performance.now();
+  const start = performance.now()
   const results = await collection.query({
     queryTexts: ['test query'],
-    nResults: 10
-  });
-  const elapsed = performance.now() - start;
+    nResults: 10,
+  })
+  const elapsed = performance.now() - start
 
-  expect(elapsed).toBeLessThan(100);
-  expect(results.ids[0]).toHaveLength(10);
-});
+  expect(elapsed).toBeLessThan(100)
+  expect(results.ids[0]).toHaveLength(10)
+})
 ```
 
 **Additional Work:**
+
 - Debug logging with environment detection
 - Performance benchmarks
 - README with usage examples
@@ -230,125 +242,133 @@ packages/testkit/src/chromadb/
 ## Key Implementation Details
 
 ### Feature Flag Integration
+
 ```typescript
 // packages/testkit/src/chromadb/index.ts
 export function createChromaClient(config?: ChromaConfig) {
   // Explicit env var takes precedence
-  if (process.env.CHROMA_USE_MOCK === 'true') return createMockChromaClient(config);
+  if (process.env.CHROMA_USE_MOCK === 'true')
+    return createMockChromaClient(config)
   if (process.env.CHROMA_USE_MOCK === 'false') {
     // Real ChromaDB client (when implemented)
-    const { ChromaClient } = await import('chromadb');
-    return new ChromaClient(config);
+    const { ChromaClient } = await import('chromadb')
+    return new ChromaClient(config)
   }
 
   // Default to mock in test environment
-  if (process.env.NODE_ENV === 'test') return createMockChromaClient(config);
+  if (process.env.NODE_ENV === 'test') return createMockChromaClient(config)
 
   // Production defaults to real
-  const { ChromaClient } = await import('chromadb');
-  return new ChromaClient(config);
+  const { ChromaClient } = await import('chromadb')
+  return new ChromaClient(config)
 }
 ```
 
 ### Embedding Dimension Strategy
+
 ```typescript
 // Support multiple embedding dimensions for different models
 export const EMBEDDING_CONFIGS = {
-  default: 384,    // Ollama llama2
-  openai: 1536,    // text-embedding-ada-002
-  mini: 128        // For fast tests
-} as const;
+  default: 384, // Ollama llama2
+  openai: 1536, // text-embedding-ada-002
+  mini: 128, // For fast tests
+} as const
 
 // Allow override in tests
 const client = createMockChromaClient({
-  embeddingDimension: EMBEDDING_CONFIGS.mini
-});
+  embeddingDimension: EMBEDDING_CONFIGS.mini,
+})
 ```
 
 ### Deterministic Embedding Function
+
 ```typescript
 export function mockEmbedding(text: string, dimensions = 384): number[] {
-  const hash = simpleHash(text);
-  return Array(dimensions).fill(0).map((_, i) =>
-    Math.sin(hash * (i + 1)) // Deterministic but varied
-  );
+  const hash = simpleHash(text)
+  return Array(dimensions)
+    .fill(0)
+    .map(
+      (_, i) => Math.sin(hash * (i + 1)), // Deterministic but varied
+    )
 }
 
 function simpleHash(str: string): number {
-  let hash = 0;
+  let hash = 0
   for (let i = 0; i < str.length; i++) {
-    hash = ((hash << 5) - hash) + str.charCodeAt(i);
-    hash = hash & hash; // Convert to 32-bit integer
+    hash = (hash << 5) - hash + str.charCodeAt(i)
+    hash = hash & hash // Convert to 32-bit integer
   }
-  return hash;
+  return hash
 }
 ```
 
 ### Cosine Similarity Implementation
+
 ```typescript
 // storage.ts
 function cosineSimilarity(a: Float32Array, b: Float32Array): number {
-  let dotProduct = 0;
-  let normA = 0;
-  let normB = 0;
+  let dotProduct = 0
+  let normA = 0
+  let normB = 0
 
   for (let i = 0; i < a.length; i++) {
-    dotProduct += a[i] * b[i];
-    normA += a[i] * a[i];
-    normB += b[i] * b[i];
+    dotProduct += a[i] * b[i]
+    normA += a[i] * a[i]
+    normB += b[i] * b[i]
   }
 
-  return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
+  return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB))
 }
 ```
 
 ### Simple Storage Engine
+
 ```typescript
 export class InMemoryVectorStore {
-  private vectors = new Map<string, Float32Array>();
-  private documents = new Map<string, string>();
-  private metadata = new Map<string, Record<string, any>>();
+  private vectors = new Map<string, Float32Array>()
+  private documents = new Map<string, string>()
+  private metadata = new Map<string, Record<string, any>>()
 
   add(id: string, vector: Float32Array, document: string, metadata?: any) {
-    this.vectors.set(id, vector);
-    this.documents.set(id, document);
-    if (metadata) this.metadata.set(id, metadata);
+    this.vectors.set(id, vector)
+    this.documents.set(id, document)
+    if (metadata) this.metadata.set(id, metadata)
   }
 
   search(queryVector: Float32Array, k: number, filter?: any): string[] {
-    const scores: Array<[string, number]> = [];
+    const scores: Array<[string, number]> = []
 
     for (const [id, vector] of this.vectors) {
       // Apply metadata filter if provided
       if (filter && !this.matchesFilter(id, filter)) {
-        continue;
+        continue
       }
 
-      const similarity = cosineSimilarity(queryVector, vector);
-      scores.push([id, similarity]);
+      const similarity = cosineSimilarity(queryVector, vector)
+      scores.push([id, similarity])
     }
 
     // Sort by similarity (descending) and take top k
-    scores.sort((a, b) => b[1] - a[1]);
-    return scores.slice(0, k).map(([id]) => id);
+    scores.sort((a, b) => b[1] - a[1])
+    return scores.slice(0, k).map(([id]) => id)
   }
 
   private matchesFilter(id: string, filter: any): boolean {
-    const meta = this.metadata.get(id);
-    if (!meta) return false;
+    const meta = this.metadata.get(id)
+    if (!meta) return false
 
     // Simple filter evaluation (expand as needed)
     for (const [key, condition] of Object.entries(filter)) {
       if (typeof condition === 'object' && condition !== null) {
-        const [op, value] = Object.entries(condition)[0];
+        const [op, value] = Object.entries(condition)[0]
         if (!this.evaluateCondition(meta[key], op, value)) {
-          return false;
+          return false
         }
       } else if (meta[key] !== condition) {
-        return false;
+        return false
       }
     }
-    return true;
+    return true
   }
 }
 ```
@@ -394,23 +414,28 @@ export class InMemoryVectorStore {
 
 ## Risks & Mitigations
 
-| Risk | Impact | Mitigation |
-|------|--------|------------|
-| API compatibility drift | Medium | Pin chromadb-js version, add compatibility tests |
-| Performance regression | Low | Benchmark tests, optimize hot paths |
-| Missing edge cases | Medium | Shadow testing against real ChromaDB |
+| Risk                                    | Impact | Mitigation                                                                        |
+| --------------------------------------- | ------ | --------------------------------------------------------------------------------- |
+| API compatibility drift                 | Medium | Pin chromadb-js version, add compatibility tests                                  |
+| Performance regression                  | Low    | Benchmark tests, optimize hot paths                                               |
+| Missing edge cases                      | Medium | Shadow testing against real ChromaDB                                              |
 | Deterministic embeddings too simplistic | Medium | Add "quality mode" with more realistic vector distributions for integration tests |
-| Embedding dimension mismatch | High | Validate dimensions match across mock/real, add dimension config |
+| Embedding dimension mismatch            | High   | Validate dimensions match across mock/real, add dimension config                  |
 
 ## Answers to Clarifying Questions
 
 1. **Collection Limits**: Ignore ChromaDB's limits in mock for test flexibility
-2. **Embedding Caching**: Always regenerate for test isolation (no caching) - deterministic but not memoized
+2. **Embedding Caching**: Always regenerate for test isolation (no caching) -
+   deterministic but not memoized
 3. **Query Response Format**: Full format with distances for compatibility
-4. **Persistence Between Tests**: Always fresh instances, each client has isolated state
-5. **Compatibility Verification**: Building mock-first, will add compatibility tests later
-6. **Test Helpers**: Factory functions preferred (`createTestCollection()`, `createTestDocuments()`)
-7. **Dimension Configuration**: Global per client - all collections in a client share dimensions
+4. **Persistence Between Tests**: Always fresh instances, each client has
+   isolated state
+5. **Compatibility Verification**: Building mock-first, will add compatibility
+   tests later
+6. **Test Helpers**: Factory functions preferred (`createTestCollection()`,
+   `createTestDocuments()`)
+7. **Dimension Configuration**: Global per client - all collections in a client
+   share dimensions
 
 ## Notes
 

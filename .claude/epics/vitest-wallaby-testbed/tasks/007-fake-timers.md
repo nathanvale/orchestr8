@@ -15,11 +15,13 @@ updated: 2025-09-23T15:00:00Z
 Comprehensive fake timer utilities implemented with Vitest integration.
 
 ### Core Implementation
+
 - ✅ `src/env/fake-time.ts` - Complete timer control utilities
 - ✅ `TimerController` class for advanced scenarios
 - ✅ Integration with Vitest's timer mocking
 
 ### Features Implemented
+
 - **Timer control**: Advance, run all, clear all timers
 - **System time manipulation**: Set and control Date.now()
 - **Timezone testing**: Mock different timezones
@@ -28,6 +30,7 @@ Comprehensive fake timer utilities implemented with Vitest integration.
 - **Quick helpers**: Simple API for common cases
 
 ### API Surface
+
 ```typescript
 - controlTime() - Full timer control with all options
 - quickTime() - Simplified timer control
@@ -41,6 +44,7 @@ Comprehensive fake timer utilities implemented with Vitest integration.
 ```
 
 ### Advanced Features
+
 - Configurable timer types (setTimeout, setInterval, etc.)
 - Promise tick handling
 - RAF (requestAnimationFrame) support
@@ -48,6 +52,7 @@ Comprehensive fake timer utilities implemented with Vitest integration.
 - System time freezing
 
 ## Verification
+
 - All timer types properly mocked
 - Async operations handled correctly
 - Cleanup restores real timers

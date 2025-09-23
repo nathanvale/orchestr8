@@ -16,11 +16,13 @@ updated: 2025-09-23T15:00:00Z
 Implement SQLite helpers for unit-tier database testing.
 
 ### Required Components
+
 - `src/sqlite/memory.ts` - In-memory database URLs
 - `src/sqlite/file.ts` - File-based database helpers
 - `src/sqlite/txn.ts` - Transaction utilities
 
 ### Implementation Goals
+
 ```typescript
 // Memory databases
 export function createMemoryDatabase(): string {
@@ -36,11 +38,12 @@ export function createFileDatabase(name?: string): {
 // Transaction helpers
 export function withTransaction<T>(
   db: Database,
-  fn: (tx: Transaction) => Promise<T>
+  fn: (tx: Transaction) => Promise<T>,
 ): Promise<T>
 ```
 
 ### Features Needed
+
 - URL generation for ORMs (Prisma, Drizzle, etc.)
 - Automatic cleanup registration
 - Transaction rollback testing
@@ -48,6 +51,7 @@ export function withTransaction<T>(
 - Seed data utilities
 
 ### Test Requirements
+
 1. Memory database happy path
 2. File-based database parity test
 3. Transaction rollback verification
@@ -55,10 +59,12 @@ export function withTransaction<T>(
 5. ORM compatibility tests
 
 ## Priority Justification
+
 - Identified as key gap in implementation review
 - Needed for unit-tier database testing
 - Blocks full testing pyramid implementation
 
 ## References
+
 - Technical Design Document examples
 - Implementation review recommendations

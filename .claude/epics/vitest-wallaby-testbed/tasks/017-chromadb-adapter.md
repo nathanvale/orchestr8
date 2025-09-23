@@ -16,6 +16,7 @@ updated: 2025-09-23T15:00:00Z
 Implement ChromaDB mock adapter for vector similarity testing.
 
 ### Planned Components
+
 - In-memory vector storage
 - Deterministic embeddings
 - Cosine similarity search
@@ -23,6 +24,7 @@ Implement ChromaDB mock adapter for vector similarity testing.
 - Collection management
 
 ### Requirements
+
 - Full API compatibility with chromadb-js v1.5.x
 - Deterministic embedding generation
 - Configurable similarity thresholds
@@ -30,6 +32,7 @@ Implement ChromaDB mock adapter for vector similarity testing.
 - Metadata filtering and queries
 
 ### Proposed Architecture
+
 ```typescript
 // src/mocks/chromadb/
 ├── adapter.ts       # Main ChromaDB adapter
@@ -40,6 +43,7 @@ Implement ChromaDB mock adapter for vector similarity testing.
 ```
 
 ### API Surface
+
 ```typescript
 - createChromaDBMock()
 - mockEmbeddings()
@@ -49,6 +53,7 @@ Implement ChromaDB mock adapter for vector similarity testing.
 ```
 
 ### Implementation Tasks
+
 1. Study ChromaDB JS client API
 2. Implement in-memory vector store
 3. Create deterministic embeddings
@@ -58,8 +63,10 @@ Implement ChromaDB mock adapter for vector similarity testing.
 7. Add documentation
 
 ## Dependencies
+
 - chromadb-js (for API reference)
 - No runtime dependencies (pure mock)
 
 ## Priority
+
 Low - Not blocking other work

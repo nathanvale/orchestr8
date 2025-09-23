@@ -15,11 +15,13 @@ updated: 2025-09-23T15:00:00Z
 Comprehensive file system test utilities with temp directory management.
 
 ### Core Implementation
+
 - ✅ `src/fs/temp.ts` - Temporary directory management
 - ✅ `src/fs/cleanup.ts` - Resource cleanup utilities
 - ✅ TempDirectory interface with rich API
 
 ### Features Implemented
+
 - **Temp directory creation**: Unique, isolated directories
 - **Structure creation**: Build from object definitions
 - **File operations**: Read, write, copy, exists checks
@@ -29,6 +31,7 @@ Comprehensive file system test utilities with temp directory management.
 - **Nested structures**: Deep directory creation
 
 ### TempDirectory API
+
 ```typescript
 interface TempDirectory {
   path: string
@@ -43,21 +46,24 @@ interface TempDirectory {
 ```
 
 ### Helper Functions
+
 - `createTempDirectory()` - Main factory
 - `createStructure()` - Build from objects
 - `registerCleanup()` - Lifecycle management
 - Path resolution utilities
 
 ### Structure Creation
+
 ```typescript
 await dir.createStructure({
   'src/index.ts': 'content',
   'src/utils/helper.ts': 'content',
-  'package.json': JSON.stringify(pkg)
+  'package.json': JSON.stringify(pkg),
 })
 ```
 
 ## Verification
+
 - Temp directories created successfully
 - Cleanup removes all artifacts
 - No file system pollution

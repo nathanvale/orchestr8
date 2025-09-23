@@ -16,11 +16,13 @@ completed: 2025-09-23T14:45:00Z
 Convex test harness fully implemented as an adapter over convex-test library.
 
 ### Core Implementation
+
 - ✅ `src/convex/harness.ts` - Main test harness adapter
 - ✅ `src/convex/context.ts` - Context utilities
 - ✅ `src/convex/index.ts` - Public API exports
 
 ### Features Implemented
+
 - **Database context**: Full Convex database testing
 - **Auth context**: User impersonation and auth flows
 - **Storage context**: File and blob testing
@@ -31,6 +33,7 @@ Convex test harness fully implemented as an adapter over convex-test library.
 - **TypeScript support**: Full type safety with generics
 
 ### Helper Functions
+
 ```typescript
 - createConvexTestHarness() - Main harness factory
 - finishAllScheduledFunctions() - Scheduler utilities
@@ -40,12 +43,14 @@ Convex test harness fully implemented as an adapter over convex-test library.
 ```
 
 ### Recent Improvements
+
 - Fixed ArrayBuffer/SharedArrayBuffer conversion issues
 - Proper handling of all typed array buffer types
 - Type-safe context creation
 - Automatic cleanup integration
 
 ## Verification
+
 - All harness methods work correctly
 - Type inference works properly
 - Resources cleaned up automatically
