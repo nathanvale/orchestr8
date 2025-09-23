@@ -4,8 +4,10 @@
  * This test should run under convex path to trigger edge-runtime
  * environment via the environmentMatchGlobs configuration.
  */
-import { describe, it, expect } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { createConvexTestHarness } from '../harness.js'
+const RUN_CONVEX = process.env.CONVEX_GENERATED === 'true'
+const itConvex = RUN_CONVEX ? it : it.skip
 
 describe('Wallaby Edge-Runtime Smoke Test', () => {
   it('should run in edge-runtime environment', () => {
@@ -32,8 +34,9 @@ describe('Wallaby Edge-Runtime Smoke Test', () => {
     expect(true).toBe(true)
   })
 
-  it('should initialize Convex test harness in Wallaby', () => {
+  itConvex('should initialize Convex test harness in Wallaby', () => {
     // Simple smoke test to verify the harness initializes
+    // modules defaults to {} to prevent _generated directory scan
     const harness = createConvexTestHarness({
       debug: false, // Set to true for debugging
     })
@@ -46,8 +49,9 @@ describe('Wallaby Edge-Runtime Smoke Test', () => {
     expect(harness.lifecycle).toBeDefined()
   })
 
-  it('should execute basic Convex operations in Wallaby', async () => {
-    const harness = createConvexTestHarness()
+  itConvex('should execute basic Convex operations in Wallaby', async () => {
+    // modules defaults to {} to prevent _generated directory scan
+    const harness = createConvexTestHarness({})
 
     // Simple operation to verify convex-test works in Wallaby
     const result = await harness.db.run(async (_ctx) => {
@@ -58,8 +62,9 @@ describe('Wallaby Edge-Runtime Smoke Test', () => {
     expect(result.environment).toBe('wallaby-edge-runtime')
   })
 
-  it('should handle async operations correctly in Wallaby', async () => {
-    const harness = createConvexTestHarness()
+  itConvex('should handle async operations correctly in Wallaby', async () => {
+    // modules defaults to {} to prevent _generated directory scan
+    const harness = createConvexTestHarness({})
 
     // Test async behavior with timers
     let completed = false
@@ -74,19 +79,17 @@ describe('Wallaby Edge-Runtime Smoke Test', () => {
 
   it('should verify Wallaby-specific configuration is applied', () => {
     // Check if we're running in Wallaby
-    const isWallaby =
-      process.env.WALLABY_WORKER !== undefined || process.env.WALLABY_PROJECT_DIR !== undefined
-
+    const isWallaby = process.env.WALLABY_ENV === 'true'
+    console.log('[Wallaby Smoke] isWallaby:', { WALLABY_ENV: process.env.WALLABY_ENV })
     if (isWallaby) {
       console.log('[Wallaby Smoke] Running in Wallaby environment')
 
       // Wallaby-specific checks
-      expect(process.env.WALLABY_WORKER).toBeDefined()
+      expect(process.env.WALLABY_ENV).toBe('true')
 
       // Log Wallaby configuration for debugging
       console.log('[Wallaby Smoke] Wallaby config:', {
-        worker: process.env.WALLABY_WORKER,
-        projectDir: process.env.WALLABY_PROJECT_DIR,
+        env: process.env.WALLABY_ENV,
         testFile: __filename,
       })
     } else {

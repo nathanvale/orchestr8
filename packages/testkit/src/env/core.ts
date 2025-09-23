@@ -15,7 +15,7 @@ function isCI(): boolean {
  * Check if running in Wallaby test runner
  */
 function isWallaby(): boolean {
-  return Boolean(process.env.WALLABY_WORKER)
+  return process.env.WALLABY_ENV === 'true'
 }
 
 /**

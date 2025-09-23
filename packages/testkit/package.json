@@ -15,38 +15,60 @@
       "import": "./dist/index.js"
     },
     "./register": {
+      "vitest": "./src/register.ts",
+      "development": "./src/register.ts",
       "types": "./dist/register.d.ts",
       "import": "./dist/register.js"
     },
     "./msw": {
+      "vitest": "./src/msw/index.ts",
+      "development": "./src/msw/index.ts",
       "types": "./dist/msw/index.d.ts",
       "import": "./dist/msw/index.js"
     },
+    "./msw/browser": {
+      "types": "./dist/msw/browser.d.ts",
+      "import": "./dist/msw/browser.js"
+    },
     "./containers": {
+      "vitest": "./src/containers/index.ts",
+      "development": "./src/containers/index.ts",
       "types": "./dist/containers/index.d.ts",
       "import": "./dist/containers/index.js"
     },
     "./convex": {
+      "vitest": "./src/convex/index.ts",
+      "development": "./src/convex/index.ts",
       "types": "./dist/convex/index.d.ts",
       "import": "./dist/convex/index.js"
     },
     "./env": {
+      "vitest": "./src/env/index.ts",
+      "development": "./src/env/index.ts",
       "types": "./dist/env/index.d.ts",
       "import": "./dist/env/index.js"
     },
     "./utils": {
+      "vitest": "./src/utils/index.ts",
+      "development": "./src/utils/index.ts",
       "types": "./dist/utils/index.d.ts",
       "import": "./dist/utils/index.js"
     },
     "./fs": {
+      "vitest": "./src/fs/index.ts",
+      "development": "./src/fs/index.ts",
       "types": "./dist/fs/index.d.ts",
       "import": "./dist/fs/index.js"
     },
     "./config": {
+      "vitest": "./src/config/index.ts",
+      "development": "./src/config/index.ts",
       "types": "./dist/config/index.d.ts",
       "import": "./dist/config/index.js"
     },
     "./config/vitest": {
+      "vitest": "./src/config/vitest.base.ts",
+      "development": "./src/config/vitest.base.ts",
       "types": "./dist/config/vitest.base.d.ts",
       "import": "./dist/config/vitest.base.js"
     }
@@ -65,10 +87,10 @@
     "dev": "tsup --watch",
     "lint": "eslint . --cache --cache-location ../../.eslintcache/testkit",
     "prepublishOnly": "pnpm run build && test -d dist",
-    "test": "vitest run",
-    "test:watch": "vitest watch",
-    "test:ui": "vitest --ui",
-    "test:coverage": "vitest run --coverage",
+    "test": "vitest run -c ./vitest.config.ts",
+    "test:watch": "vitest watch -c ./vitest.config.ts",
+    "test:ui": "vitest --ui -c ./vitest.config.ts",
+    "test:coverage": "vitest run --coverage -c ./vitest.config.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

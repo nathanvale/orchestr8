@@ -4,10 +4,10 @@ description:
   Disciplined, low-flake testing infrastructure with strict mocking policies for
   Turbo monorepo
 status: in-progress
-progress: 20%
+progress: 67%
 prd_link: ../../prds/vitest-wallaby-testbed.md
 created: 2025-09-20T03:22:42Z
-updated: 2025-09-21T03:49:08Z
+updated: 2025-09-23T01:48:39Z
 ---
 
 # Epic: vitest-wallaby-testbed
@@ -21,30 +21,32 @@ maintaining sub-second feedback loops.
 
 ## Implementation Status Summary
 
-### ✅ Completed (20%)
+### ✅ Completed (67% - 12/18 tasks)
 
-- **Testkit package structure**: Full setup with proper exports and
-  configuration
-- **MSW server**: HTTP/API mocking infrastructure ready
-- **File system utilities**: Complete FS mocking capabilities
-- **Timer utilities (Task 007)**: Fake timers, time control, clock mocking
-- **Temp directory management (Task 009)**: Automated cleanup, isolation
-- **Bootstrap system (Task 014)**: Import order enforcement
-- **Mock factory (Task 013)**: Single authoritative mock source
+- **Task 001**: Testkit package structure with full exports
+- **Task 002**: MSW server with strict mode and environment awareness
+- **Task 003**: PostgreSQL Testcontainers with migrations and pooling
+- **Task 004**: MySQL Testcontainers with enterprise features
+- **Task 005**: Convex test harness with typed context utilities
+- **Task 006**: Vitest base config with fork pool and environment detection
+- **Task 007**: Fake timers with timezone and async support
+- **Task 008**: Randomness control with crypto mocking and data generators
+- **Task 009**: CLI mocking with factory pattern and import order enforcement
+- **Task 010**: File system utilities with temp directory management
+- **Task 013**: Single authoritative mock factory implementation
+- **Task 014**: Bootstrap system with vi.mock hoisting
 
-### 🚧 In Progress (10%)
+### 🔶 Needs Completion (17% - 3/18 tasks)
 
-- **CLI mocking**: Critical architecture issues, needs complete redesign
-- **Randomness control (Task 008)**: P0 bug with restore scope
-- **Runner configuration**: Partial unification between Wallaby/Vitest
-- **Convex test harness (Task 005)**: Using convex-test with a thin adapter
+- **Task 015**: CLI helper semantics - documentation update needed
+- **Task 016**: Runner config unification - validation required
+- **Task 017**: ChromaDB mock adapter - not started
 
-### ❌ Not Started (70%)
+### ❌ High Priority Gaps (17% - 3/18 tasks)
 
-- Postgres database strategy (Testcontainers)
-- CI/CD configuration (parallelization, sharding, monitoring)
-- Documentation and training materials
-- Migration tooling and rollout
+- **Task 018**: SQLite helpers (memory/file/txn) - HIGH PRIORITY
+- **Task 019**: Deny-all network guard - MEDIUM PRIORITY
+- **Task 020**: Policy and metrics enforcement - LOW PRIORITY
 
 ## Related Documentation
 
@@ -84,6 +86,14 @@ maintaining sub-second feedback loops.
   - ✅ **Task 008**: Randomness control - COMPLETE (P0/P1 fixed, crypto,
     generators, factories)
   - ✅ **Task 009**: Temp directory management implemented
+
+#### ChromaDB Vector Database Mocking (Task 017) ⏳ NOT STARTED
+
+- **Task 017**: Implement ChromaDB mock adapter for vector similarity testing
+  - In-memory vector storage with deterministic embeddings
+  - Full API compatibility with chromadb-js v1.5.x
+  - Cosine similarity search implementation
+  - Metadata filtering support
 
 #### CLI Mocking Redesign (Tasks 013-016) 🚧 IN PROGRESS
 
@@ -212,6 +222,7 @@ maintaining sub-second feedback loops.
 | Container resource consumption | Medium | Resource limits, cleanup hooks                 |
 | Test migration complexity      | High   | Automated tools, gradual migration             |
 | Developer resistance           | Medium | Clear docs, gradual enforcement                |
+| ChromaDB API drift             | Low    | Pin chromadb-js version, track changes         |
 
 ## Dependencies
 
@@ -220,6 +231,7 @@ maintaining sub-second feedback loops.
 - Docker infrastructure for Testcontainers
 - MSW library integration
 - Convex test utilities
+- ChromaDB JS client (for API compatibility reference)
 
 ## Known Issues & Technical Debt
 

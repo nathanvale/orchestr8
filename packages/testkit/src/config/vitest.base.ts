@@ -7,6 +7,7 @@
  */
 
 import { defineConfig, type UserConfig } from 'vitest/config'
+// no-op
 import { getTestEnvironment, getTestTimeouts } from '../env/core.js'
 
 export interface VitestEnvironmentConfig {
@@ -128,7 +129,7 @@ export function createVitestTimeouts(_envConfig: VitestEnvironmentConfig) {
  */
 export function createVitestCoverage(envConfig: VitestEnvironmentConfig) {
   return {
-    enabled: !envConfig.isWallaby, // Disable in Wallaby for performance
+    enabled: envConfig.isCI, // Enable coverage only in CI; speed up local/dev runs
     threshold: 80, // Target coverage percentage
     reporter: envConfig.isCI ? ['json', 'clover'] : ['text', 'html'],
   }
@@ -157,15 +158,31 @@ export function createVitestBaseConfig(): VitestBaseConfig {
 export function createBaseVitestConfig(overrides: Partial<UserConfig> = {}): UserConfig {
   const config = createVitestBaseConfig()
 
+  // Normalize setupFiles so overrides can propagate into projects too.
+  // By default, consumers should use the published entry '@template/testkit/register'.
+  // However, when running this package itself, tests may need './src/register.ts'.
+  // Determine if running inside the testkit package using cwd heuristics only
+  const cwdPath = process.cwd().replace(/\\/g, '/')
+  const rootOverride = typeof overrides.test?.root === 'string' ? overrides.test?.root : undefined
+  const rootPath = rootOverride ? String(rootOverride).replace(/\\/g, '/') : ''
+  const isRunningInTestkit =
+    (!!rootPath &&
+      (rootPath.includes('/packages/testkit/') || rootPath.endsWith('/packages/testkit'))) ||
+    cwdPath.includes('/packages/testkit/') ||
+    cwdPath.endsWith('/packages/testkit') ||
+    process.env['TESTKIT_LOCAL'] === '1'
+  const overrideSetup = Array.isArray(overrides.test?.setupFiles)
+    ? (overrides.test?.setupFiles as string[])
+    : overrides.test?.setupFiles
+      ? [overrides.test.setupFiles as unknown as string]
+      : undefined
+  const defaultSetup = isRunningInTestkit ? ['./src/register.ts'] : ['@template/testkit/register']
+  const setupFiles = overrideSetup ?? defaultSetup
+
   const baseConfig: UserConfig = {
     test: {
       // Environment setup
       environment: 'node',
-      // Route Convex tests to edge-runtime to better match Convex's runtime
-      environmentMatchGlobs: [
-        // Any tests located under a convex/ folder will run in edge-runtime
-        ['**/convex/**', 'edge-runtime'],
-      ],
       globals: false, // Explicit imports for better IDE support
 
       // Pool configuration
@@ -218,45 +235,44 @@ export function createBaseVitestConfig(overrides: Partial<UserConfig> = {}): Use
         '**/{karma,rollup,webpack,vite,vitest,jest,ava,babel,nyc,cypress,tsup,build}.config.*',
       ],
 
-      // Coverage configuration
-      coverage: config.coverage.enabled
-        ? {
-            provider: 'v8' as const,
-            reporter: config.coverage.reporter as (
-              | 'text'
-              | 'json'
-              | 'html'
-              | 'clover'
-              | 'json-summary'
-              | 'lcov'
-              | 'lcovonly'
-              | 'none'
-              | 'teamcity'
-              | 'text-file'
-              | 'text-lcov'
-              | 'text-summary'
-              | 'cobertura'
-            )[],
-            reportsDirectory: './test-results/coverage',
-            exclude: [
-              'node_modules/',
-              'dist/',
-              'coverage/',
-              '**/*.d.ts',
-              '**/*.config.*',
-              '**/index.ts',
-            ],
-            thresholds: {
-              statements: config.coverage.threshold,
-              branches: config.coverage.threshold,
-              functions: config.coverage.threshold,
-              lines: config.coverage.threshold,
-            },
-          }
-        : undefined,
+      // Coverage configuration (always present to satisfy tooling that reads shape)
+      coverage: {
+        enabled: config.coverage.enabled,
+        provider: 'v8' as const,
+        reporter: config.coverage.reporter as (
+          | 'text'
+          | 'json'
+          | 'html'
+          | 'clover'
+          | 'json-summary'
+          | 'lcov'
+          | 'lcovonly'
+          | 'none'
+          | 'teamcity'
+          | 'text-file'
+          | 'text-lcov'
+          | 'text-summary'
+          | 'cobertura'
+        )[],
+        reportsDirectory: './test-results/coverage',
+        exclude: [
+          'node_modules/',
+          'dist/',
+          'coverage/',
+          '**/*.d.ts',
+          '**/*.config.*',
+          '**/index.ts',
+        ],
+        thresholds: {
+          statements: config.coverage.threshold,
+          branches: config.coverage.threshold,
+          functions: config.coverage.threshold,
+          lines: config.coverage.threshold,
+        },
+      },
 
       // Setup files - includes register by default for environment setup
-      setupFiles: ['@template/testkit/register'],
+      setupFiles,
 
       // Inline convex-test for better dependency tracking in Vitest
       server: {
@@ -279,8 +295,53 @@ export function createBaseVitestConfig(overrides: Partial<UserConfig> = {}): Use
     },
   }
 
+  // Add projects configuration for Convex tests with edge-runtime
+  // This replaces the deprecated environmentMatchGlobs
+  const defaultProjects = [
+    {
+      test: {
+        ...baseConfig.test,
+        setupFiles, // Use the normalized setupFiles that respects overrides
+        include: [
+          'src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
+          'tests/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
+          'examples/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
+        ],
+        exclude: [
+          ...(baseConfig.test?.exclude || []),
+          '**/convex/**', // Exclude Convex tests from unit project
+        ],
+      },
+    },
+    {
+      test: {
+        ...baseConfig.test,
+        setupFiles, // Use the normalized setupFiles that respects overrides
+        environment: 'edge-runtime',
+        include: ['**/convex/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
+        // Inline convex-test for better dependency tracking
+        server: {
+          deps: { inline: ['convex-test'] },
+        },
+      },
+    },
+  ]
+
+  const configWithProjects: UserConfig = {
+    ...baseConfig,
+    test: {
+      ...baseConfig.test,
+      // Only add projects if none were provided in overrides
+      ...(overrides.test?.projects
+        ? { projects: overrides.test.projects }
+        : isRunningInTestkit
+          ? {}
+          : { projects: defaultProjects }),
+    },
+  }
+
   // Deep merge with overrides
-  return mergeVitestConfig(baseConfig, overrides)
+  return mergeVitestConfig(configWithProjects, overrides)
 }
 
 /**
@@ -356,7 +417,7 @@ export function createWallabyOptimizedConfig(overrides: Partial<UserConfig> = {}
         },
       },
       isolate: true,
-      coverage: undefined, // Disable coverage in Wallaby
+      coverage: { provider: 'v8', enabled: false }, // Disable coverage in Wallaby but keep shape
       reporters: ['verbose'],
       ...overrides.test,
     },

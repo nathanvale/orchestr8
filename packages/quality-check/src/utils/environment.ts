@@ -150,7 +150,7 @@ export function isTestEnvironment(): boolean {
     process.env.NODE_ENV === 'test' ||
     process.env.VITEST ||
     process.env.JEST_WORKER_ID ||
-    process.env.WALLABY_WORKER ||
+    process.env.WALLABY_ENV === 'true' ||
     process.env.npm_lifecycle_event?.includes('test')
   )
 }
@@ -222,7 +222,7 @@ export function getEnvironmentContext(): EnvironmentContext {
     'TEAMCITY_VERSION',
     'VITEST',
     'JEST_WORKER_ID',
-    'WALLABY_WORKER',
+    'WALLABY_ENV',
     'npm_lifecycle_event',
   ]
 

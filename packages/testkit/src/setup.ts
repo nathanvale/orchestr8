@@ -10,10 +10,4 @@ import './bootstrap.js'
 
 // Re-export utilities for convenience
 export { getGlobalProcessMocker, setupProcessMocking } from './cli/process-mock.js'
-export { getProcessMockRegistry, clearMockRegistry } from './cli/mock-factory.js'
-export {
-  bootstrapStatus,
-  isBootstrapLoaded,
-  requireBootstrap,
-  detectEnvironment,
-} from './bootstrap.js'
+export { getTestEnvironment } from './env/core.js'

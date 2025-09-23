@@ -20,12 +20,12 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@template/testkit": "workspace:*",
     "@template/utils": "workspace:*",
     "react": "^19.1.1",
     "react-dom": "^19.1.1"
   },
   "devDependencies": {
+    "@template/testkit": "workspace:*",
     "@types/react": "^19.1.11",
     "@types/react-dom": "^19.1.8",
     "@vitejs/plugin-react": "^4.3.4",

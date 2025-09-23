@@ -62,7 +62,7 @@ author: Claude Code PM System + Nathan Vale
 - Implementation hooks
   - `vitest.projects.ts`: single source of truth for project selection and file
     patterns. Gate integration via `TEST_MODE=integration`, skip when
-    `WALLABY_WORKER` is set.
+    `WALLABY_ENV` is set to 'true'.
   - `wallaby.cjs`: clears `TEST_MODE` to prevent integration projects.
   - `.claude/scripts/test-and-log.sh`: logs to `test-results/logs`, sets
     `TEST_MODE` for integration, auto-detects integration by filename.
@@ -110,7 +110,7 @@ export { default } from './main'
 
 #### ADHD-Optimized Feedback Loop
 
-```
+```text
 Developer Action → <2s feedback → Stay in flow
                  ↓
            >2s feedback → Context switch risk
@@ -135,7 +135,7 @@ Developer Action → <2s feedback → Stay in flow
 
 ### Unidirectional Build Flow
 
-```
+```text
 Source → TypeScript → tsup → dist/
       ↓
     Tests → Vitest → Coverage → Reports
@@ -143,7 +143,7 @@ Source → TypeScript → tsup → dist/
 
 ### Dependency Graph
 
-```
+```text
 @template/utils (foundation)
     ↓
 @claude-hooks/quality-check (tooling)
@@ -162,7 +162,7 @@ Applications (consumers)
 
 ### Test Organization
 
-```
+```text
 tests/
 ├── unit/        # Isolated component tests
 ├── integration/ # Component interaction tests
@@ -305,7 +305,7 @@ try {
 
 ### Continuous Validation
 
-```
+```text
 Code → Pre-commit hooks → Local tests → CI validation → Merge
 ```
 

@@ -8,6 +8,13 @@
 // Bootstrap MUST be imported first - this sets up all vi.mock declarations
 import './bootstrap.js'
 
+// Install global lifecycle hooks for process mocking
+// This ensures spawnedProcesses and call tracking are cleared after each test
+// while keeping registered mocks intact. It prevents cross-test leakage when
+// using a single fork/pool.
+import { setupProcessMocking } from './cli/process-mock.js'
+setupProcessMocking()
+
 import type { TestConfig, TestEnvironment } from './types.js'
 
 /**
@@ -20,7 +27,7 @@ export const defaultTestConfig: TestConfig = {
   environment: {
     NODE_ENV: 'test',
     CI: Boolean(process.env.CI),
-    WALLABY: Boolean(process.env.WALLABY_WORKER),
+    WALLABY: process.env.WALLABY_ENV === 'true',
     VITEST: Boolean(process.env.VITEST),
   },
 }

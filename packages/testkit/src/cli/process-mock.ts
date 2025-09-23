@@ -3,9 +3,10 @@
  * Provides comprehensive mocking of child_process methods (spawn, exec, execSync, fork)
  */
 
-import { EventEmitter } from 'events'
 import type * as cp from 'child_process'
-import { getProcessMockRegistry, clearMockRegistry } from './mock-factory.js'
+import { EventEmitter } from 'events'
+import { findConfig, normalize } from './normalize.js'
+import { clearCalls, getRegistry, resetAll } from './registry.js'
 
 /**
  * Mock stream implementation for stdin/stdout/stderr
@@ -91,7 +92,8 @@ export class MockChildProcess extends EventEmitter {
     this.stdout = new MockStream()
     this.stderr = new MockStream()
     this.stdin = new MockStream()
-    this.pid = config.pid ?? Math.floor(Math.random() * 10000) + 1000
+    this.pid =
+      typeof config.pid === 'number' ? config.pid : Math.floor(Math.random() * 10000) + 1000
 
     // Simulate process execution asynchronously
     // Use setImmediate to ensure events are emitted after listeners are attached
@@ -139,13 +141,16 @@ export class MockChildProcess extends EventEmitter {
       return
     }
 
-    // Set exit code and signal
-    // When terminated by signal, exitCode should be null
+    // Set exit code and/or signal. When terminated by signal, exitCode should be null
     if (this.config.signal) {
       this.exitCode = null
       this.signalCode = this.config.signal
     } else if (this.config.exitCode !== undefined) {
       this.exitCode = this.config.exitCode
+      this.signalCode = null
+    } else {
+      // default success when no explicit instruction
+      this.exitCode = 0
       this.signalCode = null
     }
 
@@ -185,7 +190,7 @@ export class MockChildProcess extends EventEmitter {
 }
 
 /**
- * Process mocker interface - now uses the factory pattern
+ * Process mocker interface - now uses the singleton registry
  */
 export interface ProcessMocker {
   /**
@@ -244,28 +249,25 @@ export interface ProcessMocker {
 }
 
 /**
- * Process mocker implementation using factory pattern
+ * Process mocker implementation using singleton registry
  *
- * This implementation uses a centralized factory pattern where mocks are
- * registered at module initialization time via vi.mock declarations.
- * The registry is shared globally and persists across test runs.
- *
- * @remarks
- * Unlike traditional runtime mocking, this approach ensures mocks are
- * available immediately when tests start, avoiding timing issues with
- * module hoisting and import order.
+ * This implementation uses the unified singleton registry to eliminate
+ * parallel registry issues and ensure consistent registration/lookup.
  */
 export class ProcessMockerImpl implements ProcessMocker {
   constructor() {
-    // No runtime patching needed - factory handles everything
+    // Use singleton registry directly - no runtime patching needed
   }
 
   register(
     command: string | RegExp,
     config: ProcessMockConfig,
-    options?: { methods?: Array<'spawn' | 'exec' | 'execSync' | 'fork'> },
+    options?: {
+      methods?: Array<'spawn' | 'exec' | 'execSync' | 'fork' | 'execFile' | 'execFileSync'>
+    },
   ): void {
-    const methods = options?.methods || ['spawn', 'exec', 'execSync', 'fork']
+    const methods: Array<'spawn' | 'exec' | 'execSync' | 'fork' | 'execFile' | 'execFileSync'> =
+      options?.methods || ['spawn', 'exec', 'execSync', 'fork', 'execFile', 'execFileSync']
 
     if (methods.includes('spawn')) {
       this.registerSpawn(command, config)
@@ -279,40 +281,142 @@ export class ProcessMockerImpl implements ProcessMocker {
     if (methods.includes('fork')) {
       this.registerFork(command, config)
     }
+    if (methods.includes('execFile')) {
+      this.registerExecFile(command as string | RegExp, config)
+    }
+    if (methods.includes('execFileSync')) {
+      this.registerExecFileSync(command as string | RegExp, config)
+    }
   }
 
   registerSpawn(command: string | RegExp, config: ProcessMockConfig): void {
-    const registry = getProcessMockRegistry()
+    const registry = getRegistry()
     registry.spawnMocks.set(command, config)
+
+    // Also register normalized version for strings
+    if (typeof command === 'string') {
+      const norm = normalize(command)
+      if (norm !== command) {
+        registry.spawnMocks.set(norm, config)
+      }
+    }
+
+    if (process.env.DEBUG_TESTKIT) {
+      console.log('[registerSpawn]', {
+        key: command,
+        size: registry.spawnMocks.size,
+        keys: Array.from(registry.spawnMocks.keys()),
+      })
+    }
   }
 
   registerExec(command: string | RegExp, config: ProcessMockConfig): void {
-    const registry = getProcessMockRegistry()
+    const registry = getRegistry()
     registry.execMocks.set(command, config)
+
+    // Also register normalized version for strings
+    if (typeof command === 'string') {
+      const norm = normalize(command)
+      if (norm !== command) {
+        registry.execMocks.set(norm, config)
+      }
+    }
+
+    if (process.env.DEBUG_TESTKIT) {
+      console.log('[registerExec]', {
+        key: command,
+        size: registry.execMocks.size,
+        keys: Array.from(registry.execMocks.keys()),
+      })
+    }
   }
 
   registerExecSync(command: string | RegExp, config: ProcessMockConfig): void {
-    const registry = getProcessMockRegistry()
+    const registry = getRegistry()
     registry.execSyncMocks.set(command, config)
+
+    // Also register normalized version for strings
+    if (typeof command === 'string') {
+      const norm = normalize(command)
+      if (norm !== command) {
+        registry.execSyncMocks.set(norm, config)
+      }
+    }
+
+    if (process.env.DEBUG_TESTKIT) {
+      console.log('[registerExecSync]', {
+        key: command,
+        size: registry.execSyncMocks.size,
+        keys: Array.from(registry.execSyncMocks.keys()),
+      })
+    }
   }
 
   registerFork(modulePath: string | RegExp, config: ProcessMockConfig): void {
-    const registry = getProcessMockRegistry()
+    const registry = getRegistry()
     registry.forkMocks.set(modulePath, config)
+
+    // Also register normalized version for strings
+    if (typeof modulePath === 'string') {
+      const norm = normalize(modulePath)
+      if (norm !== modulePath) {
+        registry.forkMocks.set(norm, config)
+      }
+    }
+
+    if (process.env.DEBUG_TESTKIT) {
+      console.log('[registerFork]', {
+        key: modulePath,
+        size: registry.forkMocks.size,
+        keys: Array.from(registry.forkMocks.keys()),
+      })
+    }
   }
 
   registerExecFile(file: string | RegExp, config: ProcessMockConfig): void {
-    const registry = getProcessMockRegistry()
+    const registry = getRegistry()
     registry.execFileMocks.set(file, config)
+
+    // Also register normalized version for strings
+    if (typeof file === 'string') {
+      const norm = normalize(file)
+      if (norm !== file) {
+        registry.execFileMocks.set(norm, config)
+      }
+    }
+
+    if (process.env.DEBUG_TESTKIT) {
+      console.log('[registerExecFile]', {
+        key: file,
+        size: registry.execFileMocks.size,
+        keys: Array.from(registry.execFileMocks.keys()),
+      })
+    }
   }
 
   registerExecFileSync(file: string | RegExp, config: ProcessMockConfig): void {
-    const registry = getProcessMockRegistry()
+    const registry = getRegistry()
     registry.execFileSyncMocks.set(file, config)
+
+    // Also register normalized version for strings
+    if (typeof file === 'string') {
+      const norm = normalize(file)
+      if (norm !== file) {
+        registry.execFileSyncMocks.set(norm, config)
+      }
+    }
+
+    if (process.env.DEBUG_TESTKIT) {
+      console.log('[registerExecFileSync]', {
+        key: file,
+        size: registry.execFileSyncMocks.size,
+        keys: Array.from(registry.execFileSyncMocks.keys()),
+      })
+    }
   }
 
   clear(): void {
-    clearMockRegistry()
+    resetAll()
   }
 
   restore(): void {
@@ -322,27 +426,27 @@ export class ProcessMockerImpl implements ProcessMocker {
   }
 
   getSpawnedProcesses(): MockChildProcess[] {
-    const registry = getProcessMockRegistry()
+    const registry = getRegistry()
     return [...registry.spawnedProcesses]
   }
 
   getExecCalls(): Array<{ command: string; options?: cp.ExecOptions }> {
-    const registry = getProcessMockRegistry()
+    const registry = getRegistry()
     return [...registry.execCalls]
   }
 
   getExecSyncCalls(): Array<{ command: string; options?: cp.ExecSyncOptions }> {
-    const registry = getProcessMockRegistry()
+    const registry = getRegistry()
     return [...registry.execSyncCalls]
   }
 
   getForkCalls(): Array<{ modulePath: string; args?: string[]; options?: cp.ForkOptions }> {
-    const registry = getProcessMockRegistry()
+    const registry = getRegistry()
     return [...registry.forkCalls]
   }
 
   getExecFileCalls(): Array<{ file: string; args?: string[]; options?: cp.ExecFileOptions }> {
-    const registry = getProcessMockRegistry()
+    const registry = getRegistry()
     return [...registry.execFileCalls]
   }
 
@@ -351,7 +455,7 @@ export class ProcessMockerImpl implements ProcessMocker {
     args?: string[]
     options?: cp.ExecFileSyncOptions
   }> {
-    const registry = getProcessMockRegistry()
+    const registry = getRegistry()
     return [...registry.execFileSyncCalls]
   }
 
@@ -359,35 +463,17 @@ export class ProcessMockerImpl implements ProcessMocker {
     mocks: Map<string | RegExp, ProcessMockConfig>,
     input: string,
   ): ProcessMockConfig | undefined {
-    // First pass: look for exact matches
-    for (const [pattern, config] of mocks) {
-      if (typeof pattern === 'string' && input === pattern) {
-        return config
-      }
-    }
-
-    // Second pass: look for regex matches
-    for (const [pattern, config] of mocks) {
-      if (pattern instanceof RegExp && pattern.test(input)) {
-        return config
-      }
-    }
-
-    // Third pass: look for includes matches (least specific)
-    for (const [pattern, config] of mocks) {
-      if (typeof pattern === 'string' && input.includes(pattern)) {
-        return config
-      }
-    }
-
-    return undefined
+    return findConfig(mocks, input)
   }
 }
 
 /**
  * Global process mocker instance
  */
-let globalMocker: ProcessMockerImpl | null = null
+declare global {
+  // Expose a singleton for the process mocker across module graphs
+  var __GLOBAL_PROCESS_MOCKER__: ProcessMockerImpl | undefined
+}
 
 /**
  * Create a new process mocker
@@ -400,10 +486,10 @@ export function createProcessMocker(): ProcessMocker {
  * Get or create the global process mocker
  */
 export function getGlobalProcessMocker(): ProcessMocker {
-  if (!globalMocker) {
-    globalMocker = new ProcessMockerImpl()
+  if (!globalThis.__GLOBAL_PROCESS_MOCKER__) {
+    globalThis.__GLOBAL_PROCESS_MOCKER__ = new ProcessMockerImpl()
   }
-  return globalMocker
+  return globalThis.__GLOBAL_PROCESS_MOCKER__
 }
 
 /**
@@ -416,7 +502,7 @@ export function setupProcessMocking(): ProcessMocker {
   // Clear mocks after each test
   if (typeof afterEach !== 'undefined') {
     afterEach(() => {
-      mocker.clear()
+      clearCalls() // Only clear calls, keep registered mocks
     })
   }
 
@@ -487,7 +573,12 @@ export const processHelpers = {
   getMocker: () => getGlobalProcessMocker(),
 
   /**
-   * Clear all mocks
+   * Clear all calls but keep mocks
+   */
+  clearCalls: () => clearCalls(),
+
+  /**
+   * Clear all mocks and calls
    */
   clear: () => getGlobalProcessMocker().clear(),
 

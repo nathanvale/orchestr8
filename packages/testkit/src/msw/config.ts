@@ -38,7 +38,7 @@ export const defaultMSWConfig: MSWConfig = {
  * Environment-aware configuration
  */
 export function createMSWConfig(overrides: Partial<MSWConfig> = {}): MSWConfig {
-  const isWallaby = process.env.WALLABY_WORKER === 'true'
+  const isWallaby = process.env.WALLABY_ENV === 'true'
   const isTest = process.env.NODE_ENV === 'test'
 
   // Adjust defaults based on environment

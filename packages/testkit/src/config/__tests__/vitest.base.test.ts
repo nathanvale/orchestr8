@@ -2,16 +2,16 @@
  * @vitest-environment node
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import {
+  createBaseVitestConfig,
+  createCIOptimizedConfig,
+  createVitestCoverage,
   createVitestEnvironmentConfig,
   createVitestPoolOptions,
   createVitestTimeouts,
-  createVitestCoverage,
-  createBaseVitestConfig,
-  defineVitestConfig,
   createWallabyOptimizedConfig,
-  createCIOptimizedConfig,
+  defineVitestConfig,
   type VitestEnvironmentConfig,
 } from '../vitest.base.js'
 
@@ -30,7 +30,7 @@ describe('vitest.base', () => {
   describe('createVitestEnvironmentConfig', () => {
     it('should detect local development environment', () => {
       process.env.CI = undefined
-      process.env.WALLABY_WORKER = undefined
+      process.env.WALLABY_ENV = undefined as unknown as string
       process.env.VITEST = 'true'
       process.env.NODE_ENV = 'test'
 
@@ -47,7 +47,7 @@ describe('vitest.base', () => {
 
     it('should detect CI environment', () => {
       process.env.CI = 'true'
-      process.env.WALLABY_WORKER = undefined
+      process.env.WALLABY_ENV = undefined as unknown as string
       process.env.VITEST = 'true'
       process.env.NODE_ENV = 'test'
 
@@ -59,7 +59,7 @@ describe('vitest.base', () => {
 
     it('should detect Wallaby environment', () => {
       process.env.CI = undefined
-      process.env.WALLABY_WORKER = 'true'
+      process.env.WALLABY_ENV = 'true'
       process.env.VITEST = 'true'
       process.env.NODE_ENV = 'test'
 
@@ -155,7 +155,7 @@ describe('vitest.base', () => {
   })
 
   describe('createVitestCoverage', () => {
-    it('should enable coverage for local development', () => {
+    it('should disable coverage for local development (CI-only policy)', () => {
       const envConfig: VitestEnvironmentConfig = {
         isCI: false,
         isWallaby: false,
@@ -167,7 +167,7 @@ describe('vitest.base', () => {
       const coverage = createVitestCoverage(envConfig)
 
       expect(coverage).toEqual({
-        enabled: true,
+        enabled: false,
         threshold: 80,
         reporter: ['text', 'html'],
       })
@@ -297,7 +297,10 @@ describe('vitest.base', () => {
       expect(config.test?.poolOptions?.forks?.singleFork).toBe(true)
       expect(config.test?.poolOptions?.forks?.maxForks).toBe(1)
       expect(config.test?.isolate).toBe(true)
-      expect(config.test?.coverage).toBeUndefined()
+      expect(config.test?.coverage).toBeDefined()
+      // Coverage is disabled in Wallaby but the object shape is retained
+      // to satisfy tooling that reads coverage.reporter, etc.
+      expect((config.test as any).coverage.enabled).toBe(false)
       expect(config.test?.reporters).toEqual(['verbose'])
     })
 

@@ -1,13 +1,7 @@
 /**
- * MSW server setup for testing
- * Uses testkit's MSW infrastructure for consistency
+ * MSW worker setup for development browser environment
  */
-
-import { setupMSW } from '@template/testkit/msw'
+import { worker } from './browser'
 import { handlers } from './handlers'
 
-// Setup MSW using testkit with consistent onUnhandledRequest: 'error' behavior
-setupMSW(handlers, {
-  onUnhandledRequest: 'error',
-  quiet: false,
-})
+worker.use(...handlers)

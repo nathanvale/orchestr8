@@ -28,7 +28,7 @@ export default defineConfig({
 - Node environment only
 - No timeouts, reporters, or coverage
 
-2. **packages/testkit/vitest.config.ts** (lines 1-38)
+1. **packages/testkit/vitest.config.ts** (lines 1-38)
 
 ```typescript
 export default defineConfig({
@@ -64,7 +64,7 @@ export default defineConfig({
 - Different environment (happy-dom vs node)
 - Has setupFiles, timeouts, pool settings
 
-3. **packages/testkit/src/config/vitest.base.ts** (lines 1-165)
+1. **packages/testkit/src/config/vitest.base.ts** (lines 1-165)
 
 - Sophisticated configuration system
 - Environment detection (CI, Wallaby, Vitest)
@@ -72,7 +72,7 @@ export default defineConfig({
 - **NOT EXPORTED** from testkit package
 - Contains useful utilities but unused
 
-4. **wallaby.cjs** (lines 1-44)
+1. **wallaby.cjs** (lines 1-44)
 
 ```javascript
 module.exports = function (wallaby) {
@@ -141,7 +141,7 @@ configFile: './vitest.config.ts'
 - Ignores package-level configs
 - Misses critical setupFiles
 
-2. **Worker Limitations**
+1. **Worker Limitations**
 
 ```javascript
 // wallaby.cjs lines 9-12
@@ -154,7 +154,7 @@ workers: {
 - Forces single worker
 - Conflicts with testkit's thread pool
 
-3. **Test Pattern Differences**
+1. **Test Pattern Differences**
 
 ```javascript
 // wallaby.cjs lines 21-33
@@ -174,7 +174,7 @@ tests: [
 export function detectTestEnvironment() {
   return {
     isCI: process.env.CI === 'true',
-    isWallaby: process.env.WALLABY_WORKER !== undefined,
+    isWallaby: process.env.WALLABY_ENV === 'true',
     isVitest: process.env.VITEST === 'true',
     isJest: process.env.JEST_WORKER_ID !== undefined,
     isTurbo: process.env.TURBO_HASH !== undefined,

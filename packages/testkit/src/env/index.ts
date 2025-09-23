@@ -13,7 +13,7 @@ function isCI(): boolean {
  * Check if running in Wallaby test runner
  */
 function isWallaby(): boolean {
-  return Boolean(process.env.WALLABY_WORKER)
+  return process.env.WALLABY_ENV === 'true'
 }
 
 /**
@@ -77,10 +77,10 @@ export function getTestTimeouts() {
 }
 
 // Export all environment utilities
+export * from './crypto-mock.js'
+export * from './factories.js'
 export * from './fake-time.js'
-export * from './types.js'
+export * from './generators.js'
 export * from './random.js'
 export * from './seed.js'
-export * from './crypto-mock.js'
-export * from './generators.js'
-export * from './factories.js'
+export * from './types.js'

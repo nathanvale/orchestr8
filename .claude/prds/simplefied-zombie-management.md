@@ -151,10 +151,10 @@ setupFiles: [
 ],
 
 // ❌ REMOVE: Environment-aware pool configuration
-pool: process.env['WALLABY_WORKER'] ? 'threads' : 'forks',
+pool: process.env['WALLABY_ENV'] === 'true' ? 'threads' : 'forks',
 poolOptions: {
   threads: {
-    singleThread: !!process.env['WALLABY_WORKER'],
+  singleThread: process.env['WALLABY_ENV'] === 'true',
     isolate: true,
     useAtomics: false,
   },

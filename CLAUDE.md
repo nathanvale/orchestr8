@@ -78,7 +78,7 @@ npx quality-check --since main
 
 ### Monorepo Structure
 
-```
+```text
 packages/
 ├── quality-check/    # Code quality enforcement with fix-first pipeline
 ├── utils/           # Shared utilities
@@ -213,7 +213,7 @@ Follow conventional commits:
 
 1. **TypeScript strict mode**: Some legacy code may need `@ts-ignore` during
    migration
-2. **Wallaby integration**: Use `WALLABY_WORKER` env var for detection
+2. **Wallaby integration**: Use `WALLABY_ENV` env var for detection
 3. **CI memory**: Set `NODE_OPTIONS='--max-old-space-size=4096'` for
    memory-intensive tests
 

@@ -38,8 +38,17 @@ interface TestHarnessState<Schema extends GenericSchema = GenericSchema> {
 export function createConvexTestHarness<Schema extends GenericSchema = GenericSchema>(
   config: ConvexTestConfig<Schema> = {},
 ): ConvexTestContext<Schema> {
+  // Default to empty modules object to prevent _generated directory scan
+  // For smoke tests, we explicitly pass empty modules to match the pattern that works
+  const modules = config.modules ?? ({} as Record<string, () => Promise<unknown>>)
+
+  // Match the pattern from working examples: convexTest(undefined as any, {} as any)
+  // When no schema is provided, we pass undefined explicitly
+  const convexTestSchema = config.schema || (undefined as unknown)
+
   const state: TestHarnessState<Schema> = {
-    convexInstance: convexTest(config.schema, config.modules) as ConvexTestInstance<
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    convexInstance: convexTest(convexTestSchema as any, modules as any) as ConvexTestInstance<
       SchemaDefinition<Schema, boolean>
     >,
     currentUser: config.defaultUser || null,
@@ -77,16 +86,23 @@ export function createConvexTestHarness<Schema extends GenericSchema = GenericSc
       debugLog('Clearing database')
       // Note: convex-test doesn't provide explicit clear method,
       // so we recreate the instance
-      state.convexInstance = convexTest(config.schema, config.modules) as ConvexTestInstance<
-        SchemaDefinition<Schema, boolean>
-      >
+      // Default to empty modules to prevent _generated directory scan
+      const resetModules = config.modules ?? ({} as Record<string, () => Promise<unknown>>)
+      const resetSchema = config.schema || (undefined as unknown)
+
+      state.convexInstance = convexTest(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        resetSchema as any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        resetModules as any,
+      ) as ConvexTestInstance<SchemaDefinition<Schema, boolean>>
       // Storage is cleared when convex instance is recreated
     },
 
     async getAllDocuments(tableName) {
       debugLog('getAllDocuments called for table', tableName)
       throw new ConvexTestError(
-        'getAllDocuments is not supported yet - use db.query() instead to fetch documents',
+        `getAllDocuments is not implemented. Use t.run(ctx => ctx.db.query('${String(tableName)}').collect()) instead`,
         'NOT_IMPLEMENTED',
       )
     },
@@ -94,7 +110,7 @@ export function createConvexTestHarness<Schema extends GenericSchema = GenericSc
     async countDocuments(tableName) {
       debugLog('countDocuments called for table', tableName)
       throw new ConvexTestError(
-        'countDocuments is not supported yet - use db.query() instead to count documents',
+        `countDocuments is not implemented. Use t.run(ctx => ctx.db.query('${String(tableName)}').collect().then(docs => docs.length)) instead`,
         'NOT_IMPLEMENTED',
       )
     },
@@ -105,6 +121,14 @@ export function createConvexTestHarness<Schema extends GenericSchema = GenericSc
     Schema,
     DataModelFromSchemaDefinition<SchemaDefinition<Schema, boolean>>
   > = {
+    /**
+     * Returns a Convex instance with the specified user identity for making authenticated calls.
+     * This is the fluent API that directly affects subsequent convex operations.
+     *
+     * @example
+     * const asUser = harness.auth.withUser({ subject: 'user123' })
+     * await asUser.query(api.messages.list) // Will execute with user123 identity
+     */
     withUser(identity) {
       debugLog('Setting user identity', identity)
       state.currentUser = identity
@@ -114,6 +138,14 @@ export function createConvexTestHarness<Schema extends GenericSchema = GenericSc
       ) as unknown as ConvexTestInstance<SchemaDefinition<Schema, boolean>>
     },
 
+    /**
+     * Returns a Convex instance without authentication for making anonymous calls.
+     * This is the fluent API that directly affects subsequent convex operations.
+     *
+     * @example
+     * const anon = harness.auth.withoutAuth()
+     * await anon.query(api.public.list) // Will execute without identity
+     */
     withoutAuth() {
       debugLog('Removing user identity')
       state.currentUser = null
@@ -123,6 +155,14 @@ export function createConvexTestHarness<Schema extends GenericSchema = GenericSc
       >
     },
 
+    /**
+     * Switches to a different user identity and returns the authenticated instance.
+     * This is the fluent API that directly affects subsequent convex operations.
+     *
+     * @example
+     * const asNewUser = harness.auth.switchUser({ subject: 'user456' })
+     * await asNewUser.mutation(api.messages.create, { text: 'Hello' })
+     */
     switchUser(identity) {
       debugLog('Switching user identity', identity)
       state.currentUser = identity
@@ -132,6 +172,14 @@ export function createConvexTestHarness<Schema extends GenericSchema = GenericSc
       ) as unknown as ConvexTestInstance<SchemaDefinition<Schema, boolean>>
     },
 
+    /**
+     * Returns an anonymous Convex instance for making unauthenticated calls.
+     * This is the fluent API that directly affects subsequent convex operations.
+     *
+     * @example
+     * const anon = harness.auth.asAnonymous()
+     * await anon.query(api.public.data) // Will execute anonymously
+     */
     asAnonymous() {
       debugLog('Switching to anonymous context')
       state.currentUser = null
@@ -140,7 +188,13 @@ export function createConvexTestHarness<Schema extends GenericSchema = GenericSc
       >
     },
 
-    getCurrentUser() {
+    /**
+     * Get the last user identity set via metadata (does not reflect actual auth context).
+     * This only returns metadata from setUser() and does NOT indicate which identity is
+     * being used for actual Convex operations. Use the fluent API for real auth state.
+     * @deprecated Use the fluent API instances for actual authentication state.
+     */
+    getCurrentUserMetadata() {
       return state.currentUser
     },
 
@@ -153,6 +207,90 @@ export function createConvexTestHarness<Schema extends GenericSchema = GenericSc
       return fn(
         authenticatedInstance as unknown as ConvexTestInstance<SchemaDefinition<Schema, boolean>>,
       )
+    },
+
+    /**
+     * Sets the current user in harness state for convenience tracking.
+     * ⚠️ IMPORTANT: This ONLY updates metadata and does NOT affect Convex operations.
+     * To make authenticated calls, use withUser(), switchUser(), or withAuth() instead.
+     *
+     * @deprecated Prefer the fluent API methods (withUser, switchUser) for actual authenticated calls
+     *
+     * @example
+     * // ❌ This does NOT authenticate calls:
+     * harness.auth.setUser({ subject: 'user123' })
+     * await harness.convex.query(api.private.data) // Still runs as anonymous!
+     *
+     * // ✅ Use fluent API instead:
+     * const asUser = harness.auth.withUser({ subject: 'user123' })
+     * await asUser.query(api.private.data) // Runs authenticated
+     */
+    setUser(identity: Partial<UserIdentity>) {
+      // Check if mutating auth is allowed
+      if (!config.allowMutatingAuth) {
+        throw new ConvexTestError(
+          'setUser() is deprecated and disabled by default. ' +
+            'This method only updates metadata and does NOT affect Convex operations. ' +
+            'Use the fluent API instead:\n' +
+            '  const asUser = harness.auth.withUser({ subject: "user123" })\n' +
+            '  await asUser.query(api.private.data)\n\n' +
+            'To temporarily enable this deprecated method, set allowMutatingAuth: true in config.',
+          'AUTH_ERROR',
+        )
+      }
+
+      debugLog('Setting user (mutating API - prefer withUser)', identity)
+      if (state.isCleanedUp) {
+        throw new ConvexTestError(
+          'Cannot setUser after cleanup. Call lifecycle.reset() first or start a new test',
+          'LIFECYCLE_ERROR',
+        )
+      }
+      state.currentUser = identity
+      // Note: This does NOT affect the underlying convex instance
+      // Users must use withUser() or switchUser() for actual authenticated contexts
+    },
+
+    /**
+     * Clears the current user from harness state.
+     * ⚠️ IMPORTANT: This ONLY updates metadata and does NOT affect Convex operations.
+     * To make anonymous calls, use withoutAuth() or asAnonymous() instead.
+     *
+     * @deprecated Prefer the fluent API methods (withoutAuth, asAnonymous) for actual anonymous calls
+     *
+     * @example
+     * // ❌ This does NOT remove authentication:
+     * harness.auth.clearUser()
+     * await harness.convex.query(api.private.data) // May still run with previous identity!
+     *
+     * // ✅ Use fluent API instead:
+     * const anon = harness.auth.withoutAuth()
+     * await anon.query(api.public.data) // Runs anonymously
+     */
+    clearUser() {
+      // Check if mutating auth is allowed
+      if (!config.allowMutatingAuth) {
+        throw new ConvexTestError(
+          'clearUser() is deprecated and disabled by default. ' +
+            'This method only updates metadata and does NOT affect Convex operations. ' +
+            'Use the fluent API instead:\n' +
+            '  const anon = harness.auth.withoutAuth()\n' +
+            '  await anon.query(api.public.data)\n\n' +
+            'To temporarily enable this deprecated method, set allowMutatingAuth: true in config.',
+          'AUTH_ERROR',
+        )
+      }
+
+      debugLog('Clearing user (mutating API - prefer withoutAuth)')
+      if (state.isCleanedUp) {
+        throw new ConvexTestError(
+          'Cannot clearUser after cleanup. Call lifecycle.reset() first or start a new test',
+          'LIFECYCLE_ERROR',
+        )
+      }
+      state.currentUser = null
+      // Note: This does NOT affect the underlying convex instance
+      // Users must use withoutAuth() or asAnonymous() for actual anonymous contexts
     },
 
     testUsers: {
@@ -180,28 +318,19 @@ export function createConvexTestHarness<Schema extends GenericSchema = GenericSc
   const storage: ConvexStorageContext = {
     async uploadFile(name, content) {
       debugLog('Uploading file', { name })
-      const buffer = typeof content === 'string' ? Buffer.from(content) : content
 
       // Use convex-test's storage context via run
       return state.convexInstance.run(async (ctx) => {
-        // Handle ArrayBuffer and SharedArrayBuffer
-        let arrayBuffer: ArrayBuffer
-        if (buffer instanceof SharedArrayBuffer) {
-          // Convert SharedArrayBuffer to ArrayBuffer
-          const uint8Array = new Uint8Array(buffer)
-          arrayBuffer = uint8Array.buffer
-        } else if (buffer instanceof ArrayBuffer) {
-          arrayBuffer = buffer
-        } else {
-          // Convert Buffer or other types to ArrayBuffer
-          const uint8Array = new Uint8Array(buffer)
-          arrayBuffer = uint8Array.buffer
-        }
+        // Normalize to Uint8Array for all binary inputs
+        // This avoids SharedArrayBuffer vs ArrayBuffer pitfalls and Node/browser differences
+        const bytes =
+          typeof content === 'string' ? new TextEncoder().encode(content) : new Uint8Array(content)
 
         // Use ctx.storage for proper integration with convex-test
-        const blob = new Blob([arrayBuffer])
+        // Pass the Uint8Array directly to Blob - it's a BufferSource
+        const blob = new Blob([bytes])
         const storageId = await ctx.storage.store(blob)
-        debugLog('File uploaded via convex-test', { storageId, name, size: arrayBuffer.byteLength })
+        debugLog('File uploaded via convex-test', { storageId, name, size: bytes.byteLength })
         return storageId
       })
     },
@@ -298,9 +427,15 @@ export function createConvexTestHarness<Schema extends GenericSchema = GenericSc
     async reset() {
       debugLog('Resetting test harness')
       // Recreate convex instance for complete isolation
+      // Default to empty modules to prevent _generated directory scan
+      const resetModules = originalConfig.modules ?? ({} as Record<string, () => Promise<unknown>>)
+      const resetSchema = originalConfig.schema || (undefined as unknown)
+
       state.convexInstance = convexTest(
-        originalConfig.schema,
-        originalConfig.modules,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        resetSchema as any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        resetModules as any,
       ) as ConvexTestInstance<SchemaDefinition<Schema, boolean>>
       // Storage is cleared when convex instance is recreated
       state.currentUser = originalConfig.defaultUser || null
@@ -308,16 +443,52 @@ export function createConvexTestHarness<Schema extends GenericSchema = GenericSc
       debugLog('Reset complete - test harness in clean state')
     },
 
-    async cleanup() {
+    async cleanup(options?: { advanceTimers?: () => void }) {
       debugLog('Cleaning up test harness')
       // Storage is handled by convex-test instance
       state.currentUser = null
       state.isCleanedUp = true
-      // Clear any pending scheduled functions
+
+      // Clear any pending scheduled functions with proper timer advancement
       try {
-        await state.convexInstance.finishAllScheduledFunctions(() => {})
-      } catch {
-        // Ignore errors during cleanup
+        // Check if fake timers are being used
+        const isFakeTimers = typeof vi !== 'undefined' && vi.isFakeTimers?.()
+
+        // In CI or when fake timers are detected, require advanceTimers
+        if (isFakeTimers && !options?.advanceTimers) {
+          const isCI = process.env.CI === 'true' || process.env.CI === '1'
+          const message =
+            'Cleanup detected fake timers without advanceTimers function. ' +
+            'Pass advanceTimers option to cleanup() to ensure scheduled functions complete. ' +
+            'Example: await cleanup({ advanceTimers: vi.runAllTimers })'
+
+          if (isCI) {
+            // Hard fail in CI
+            throw new ConvexTestError(message, 'CLEANUP_ERROR')
+          } else {
+            // Warn locally but continue
+            console.warn(`⚠️ [ConvexTestHarness] ${message}`)
+          }
+        }
+
+        await state.convexInstance.finishAllScheduledFunctions(options?.advanceTimers ?? (() => {}))
+      } catch (error) {
+        // Log the error but don't throw during cleanup unless it's critical
+        debugLog('Error during cleanup of scheduled functions:', error)
+        // If there are pending scheduled functions, throw a more helpful error
+        if (String(error).includes('pending') || String(error).includes('scheduled')) {
+          throw new ConvexTestError(
+            'Cleanup failed: Scheduled functions are still pending. ' +
+              'Pass advanceTimers option to cleanup() or use vi.runAllTimers() before cleanup. ' +
+              'Example: await cleanup({ advanceTimers: vi.runAllTimers })',
+            'CLEANUP_ERROR',
+            { originalError: error },
+          )
+        }
+        // Re-throw if it's our own error from above
+        if (error instanceof ConvexTestError) {
+          throw error
+        }
       }
       debugLog('Cleanup complete')
     },

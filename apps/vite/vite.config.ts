@@ -22,7 +22,10 @@ export default defineConfig({
     port: 3000,
   },
   resolve: {
+    conditions: ['module', 'browser', 'development', 'node'],
     alias: {
+      // Ensure browser build never tries to resolve the Node-only MSW entry
+      'msw/node': 'msw/browser',
       '@': resolve(__dirname, './src'),
     },
   },

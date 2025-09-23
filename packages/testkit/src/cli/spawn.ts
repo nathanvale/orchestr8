@@ -21,7 +21,9 @@
  * ```
  */
 
-import { getGlobalProcessMocker, type ProcessMockConfig } from './process-mock.js'
+import { getRegistry, resetAll, clearCalls } from './registry.js'
+import { normalize } from './normalize.js'
+import type { ProcessMockConfig } from './process-mock.js'
 
 /**
  * Options for spawn testing
@@ -78,12 +80,17 @@ export const spawnUtils = {
    * Registers the mock for spawn, exec, execSync, and fork methods
    */
   mockCommandSuccess: (command: string | RegExp, stdout = '', stderr = '', exitCode = 0): void => {
-    const mocker = getGlobalProcessMocker()
-    mocker.register(command, {
-      stdout,
-      stderr,
-      exitCode,
-    })
+    const registry = getRegistry()
+    const key = typeof command === 'string' ? normalize(command) : command
+    const config: ProcessMockConfig = { stdout, stderr, exitCode }
+
+    // Register for all methods by default (quad-register pattern)
+    registry.spawnMocks.set(key, config)
+    registry.execMocks.set(key, config)
+    registry.execSyncMocks.set(key, config)
+    registry.forkMocks.set(key, config)
+    registry.execFileMocks.set(key, config)
+    registry.execFileSyncMocks.set(key, config)
   },
 
   /**
@@ -95,22 +102,34 @@ export const spawnUtils = {
     exitCode = 1,
     stdout = '',
   ): void => {
-    const mocker = getGlobalProcessMocker()
-    mocker.register(command, {
-      stdout,
-      stderr,
-      exitCode,
-    })
+    const registry = getRegistry()
+    const key = typeof command === 'string' ? normalize(command) : command
+    const config: ProcessMockConfig = { stdout, stderr, exitCode }
+
+    // Register for all methods by default (quad-register pattern)
+    registry.spawnMocks.set(key, config)
+    registry.execMocks.set(key, config)
+    registry.execSyncMocks.set(key, config)
+    registry.forkMocks.set(key, config)
+    registry.execFileMocks.set(key, config)
+    registry.execFileSyncMocks.set(key, config)
   },
 
   /**
    * Mock a command to throw an error during execution
    */
   mockCommandError: (command: string | RegExp, error: Error): void => {
-    const mocker = getGlobalProcessMocker()
-    mocker.register(command, {
-      error,
-    })
+    const registry = getRegistry()
+    const key = typeof command === 'string' ? normalize(command) : command
+    const config: ProcessMockConfig = { error }
+
+    // Register for all methods by default (quad-register pattern)
+    registry.spawnMocks.set(key, config)
+    registry.execMocks.set(key, config)
+    registry.execSyncMocks.set(key, config)
+    registry.forkMocks.set(key, config)
+    registry.execFileMocks.set(key, config)
+    registry.execFileSyncMocks.set(key, config)
   },
 
   /**
@@ -122,12 +141,17 @@ export const spawnUtils = {
     stdout = '',
     exitCode = 0,
   ): void => {
-    const mocker = getGlobalProcessMocker()
-    mocker.register(command, {
-      stdout,
-      exitCode,
-      delay,
-    })
+    const registry = getRegistry()
+    const key = typeof command === 'string' ? normalize(command) : command
+    const config: ProcessMockConfig = { stdout, exitCode, delay }
+
+    // Register for all methods by default (quad-register pattern)
+    registry.spawnMocks.set(key, config)
+    registry.execMocks.set(key, config)
+    registry.execSyncMocks.set(key, config)
+    registry.forkMocks.set(key, config)
+    registry.execFileMocks.set(key, config)
+    registry.execFileSyncMocks.set(key, config)
   },
 
   /**
@@ -139,40 +163,45 @@ export const spawnUtils = {
     finalOutput = '',
     exitCode = 0,
   ): void => {
-    const mocker = getGlobalProcessMocker()
+    const registry = getRegistry()
+    const key = typeof command === 'string' ? normalize(command) : command
+
     // For interactive commands, we simulate the full conversation
     const fullOutput = Object.entries(responses)
       .map(([prompt, response]) => `${prompt}\n${response}\n`)
       .join('')
 
-    mocker.register(command, {
-      stdout: fullOutput + finalOutput,
-      exitCode,
-    })
+    const config: ProcessMockConfig = { stdout: fullOutput + finalOutput, exitCode }
+
+    // Register for all methods by default (quad-register pattern)
+    registry.spawnMocks.set(key, config)
+    registry.execMocks.set(key, config)
+    registry.execSyncMocks.set(key, config)
+    registry.forkMocks.set(key, config)
+    registry.execFileMocks.set(key, config)
+    registry.execFileSyncMocks.set(key, config)
   },
 
   /**
    * Get all spawned processes for testing verification
    */
   getSpawnedProcesses: () => {
-    const mocker = getGlobalProcessMocker()
-    return mocker.getSpawnedProcesses()
+    const registry = getRegistry()
+    return registry.spawnedProcesses
   },
 
   /**
    * Clear all spawn mocks
    */
   clearMocks: (): void => {
-    const mocker = getGlobalProcessMocker()
-    mocker.clear()
+    clearCalls()
   },
 
   /**
    * Restore original spawn functionality
    */
   restore: (): void => {
-    const mocker = getGlobalProcessMocker()
-    mocker.restore()
+    resetAll()
   },
 }
 
@@ -411,8 +440,28 @@ export class SpawnMockBuilder {
    * unless limited by forMethods() or convenience methods
    */
   mock(): void {
-    const mocker = getGlobalProcessMocker()
-    mocker.register(this.command, this.config, this.methods ? { methods: this.methods } : undefined)
+    const registry = getRegistry()
+    const key = typeof this.command === 'string' ? normalize(this.command) : this.command
+    const methods = this.methods || ['spawn', 'exec', 'execSync', 'fork']
+
+    // Register for specified methods
+    if (methods.includes('spawn')) {
+      registry.spawnMocks.set(key, this.config)
+    }
+    if (methods.includes('exec')) {
+      registry.execMocks.set(key, this.config)
+    }
+    if (methods.includes('execSync')) {
+      registry.execSyncMocks.set(key, this.config)
+    }
+    if (methods.includes('fork')) {
+      registry.forkMocks.set(key, this.config)
+    }
+    // Also register for execFile variants if not explicitly limited
+    if (!this.methods) {
+      registry.execFileMocks.set(key, this.config)
+      registry.execFileSyncMocks.set(key, this.config)
+    }
   }
 }
 

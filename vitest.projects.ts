@@ -6,7 +6,7 @@ import { createBaseVitestConfig } from './packages/testkit/src/config/vitest.bas
  * This is the single source of truth used by both Vitest and Wallaby.
  */
 export function getVitestProjects() {
-  const isWallaby = Boolean(process.env['WALLABY_WORKER'])
+  const isWallaby = process.env['WALLABY_ENV'] === 'true'
   const isIntegration = process.env['TEST_MODE'] === 'integration' && !isWallaby
   const isE2E = process.env['TEST_MODE'] === 'e2e' && !isWallaby
   const globalTeardownPath = resolve(__dirname, 'packages/testkit/src/teardown/globalTeardown.ts')
@@ -56,9 +56,9 @@ export function getVitestProjects() {
       globalSetup: resolve(__dirname, 'packages/testkit/vitest.globalSetup.ts'),
       ...(isWallaby ? {} : { globalTeardown: globalTeardownPath }),
       setupFiles: [resolve(__dirname, 'packages/testkit/src/register.ts')],
-      // Testkit runs faster on threads without sacrificing isolation
-      pool: 'threads',
-      poolOptions: { threads: { singleThread: false, isolate: true } },
+      // Deterministic CLI mocking: run in a single fork to share globals
+      pool: 'forks',
+      poolOptions: { forks: { singleFork: true, maxForks: 1, minForks: 1 } },
       globals: true,
       mockReset: true,
       clearMocks: true,

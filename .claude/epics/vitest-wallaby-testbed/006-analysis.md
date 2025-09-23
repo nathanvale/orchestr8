@@ -52,13 +52,13 @@
 
 ## Dependencies Graph
 
-```mermaid
+````mermaid
 graph TD
     A[Stream A: Migration] --> D[Stream D: Testing]
     B[Stream B: Templates] --> D
     C[Stream C: Documentation]
     E[Stream E: Performance]
-```
+```text
 
 ## Configuration Features Already Implemented
 
@@ -88,12 +88,12 @@ export function defineVitestConfig(overrides?: InlineConfig): InlineConfig {
     },
   }
 }
-```
+````
 
 ### Environment Detection
 
 - CI detection (GitHub Actions, Jenkins, CircleCI, etc.)
-- Wallaby detection via WALLABY_WORKER
+- Wallaby detection via WALLABY_ENV (set to 'true')
 - Vitest/Jest detection
 - Debug mode detection
 

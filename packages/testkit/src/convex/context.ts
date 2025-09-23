@@ -100,6 +100,7 @@ export interface ConvexAuthContext<
   Schema extends GenericSchema,
   _DataModel extends GenericDataModel,
 > {
+  // Fluent API (Preferred - returns new context without modifying global state)
   /** Create authenticated test context */
   withUser: (identity: Partial<UserIdentity>) => TestConvex<SchemaDefinition<Schema, boolean>>
 
@@ -118,8 +119,20 @@ export interface ConvexAuthContext<
     fn: (ctx: TestConvex<SchemaDefinition<Schema, boolean>>) => Promise<T>,
   ) => Promise<T>
 
-  /** Current user identity */
-  getCurrentUser: () => Partial<UserIdentity> | null
+  // Mutating API (Legacy - modifies test-scoped state, isolated per test)
+  /** Set current user (mutating, test-scoped only) - prefer withUser() */
+  setUser: (identity: Partial<UserIdentity>) => void
+
+  /** Clear current user (mutating, test-scoped only) - prefer withoutAuth() */
+  clearUser: () => void
+
+  /**
+   * Get the last user identity set via metadata (does not reflect actual auth context).
+   * This only returns metadata from setUser() and does NOT indicate which identity is
+   * being used for actual Convex operations. Use the fluent API for real auth state.
+   * @deprecated Use the fluent API instances for actual authentication state.
+   */
+  getCurrentUserMetadata: () => Partial<UserIdentity> | null
 
   /** Common test user factories */
   testUsers: {
@@ -179,8 +192,8 @@ export interface ConvexLifecycleContext {
   /** Reset all test state (db, storage, scheduler) */
   reset: () => Promise<void>
 
-  /** Cleanup resources */
-  cleanup: () => Promise<void>
+  /** Cleanup resources - pass advanceTimers to ensure scheduled functions complete */
+  cleanup: (options?: { advanceTimers?: () => void }) => Promise<void>
 
   /** Setup hooks for test lifecycle */
   setupHooks: (hooks: {
@@ -210,6 +223,14 @@ export interface ConvexTestConfig<Schema extends GenericSchema = GenericSchema> 
   /** Enable debug logging */
   debug?: boolean
 
+  /**
+   * Allow legacy mutating auth API (setUser/clearUser).
+   * @deprecated These methods only update metadata and don't affect actual auth.
+   * Use the fluent API (withUser/switchUser) instead.
+   * @default false
+   */
+  allowMutatingAuth?: boolean
+
   /** Custom setup functions */
   setup?: {
     beforeEach?: (ctx: ConvexTestContext<Schema>) => Promise<void>
@@ -231,74 +252,11 @@ export interface ConvexSeedConfig {
     | ConvexTestFactory<Array<Record<string, unknown>>>
 }
 
-/**
- * Query test helpers
- */
-export interface ConvexQueryHelpers<_Schema extends GenericSchema> {
-  /** Execute query and assert result */
-  expectQuery: <Query extends FunctionReference<'query', unknown>>(
-    query: Query,
-    ...args: OptionalRestArgs<Query>
-  ) => Promise<QueryAssertion<FunctionReturnType<Query>>>
+// Note: Query and Mutation helpers are planned for a future release.
+// For now, use the convex instance methods directly.
 
-  /** Execute multiple queries in parallel */
-  executeQueries: <
-    Queries extends Record<string, { query: FunctionReference<'query', unknown>; args: unknown[] }>,
-  >(
-    queries: Queries,
-  ) => Promise<{ [K in keyof Queries]: FunctionReturnType<Queries[K]['query']> }>
-}
-
-/**
- * Mutation test helpers
- */
-export interface ConvexMutationHelpers<_Schema extends GenericSchema> {
-  /** Execute mutation and assert result */
-  expectMutation: <Mutation extends FunctionReference<'mutation', unknown>>(
-    mutation: Mutation,
-    ...args: OptionalRestArgs<Mutation>
-  ) => Promise<MutationAssertion<FunctionReturnType<Mutation>>>
-
-  /** Execute mutation and verify side effects */
-  executeMutation: <Mutation extends FunctionReference<'mutation', unknown>>(
-    mutation: Mutation,
-    ...args: OptionalRestArgs<Mutation>
-  ) => Promise<MutationResult<FunctionReturnType<Mutation>>>
-}
-
-/**
- * Query assertion utilities
- */
-export interface QueryAssertion<T> {
-  /** The query result */
-  result: T
-
-  /** Assert the result matches expected value */
-  toEqual: (expected: T) => void
-
-  /** Assert the result matches partial value */
-  toMatchObject: (expected: Partial<T>) => void
-
-  /** Assert the result satisfies condition */
-  toSatisfy: (predicate: (result: T) => boolean) => void
-
-  /** Assert query completed within time limit */
-  toCompleteWithin: (ms: number) => void
-}
-
-/**
- * Mutation assertion utilities
- */
-export interface MutationAssertion<T> extends QueryAssertion<T> {
-  /** Assert mutation invalidated specific queries */
-  toInvalidateQueries: (queryNames: string[]) => void
-
-  /** Assert mutation triggered scheduled functions */
-  toScheduleFunctions: (functionNames: string[]) => void
-
-  /** Assert mutation created/updated/deleted documents */
-  toModifyDocuments: (changes: { created?: number; updated?: number; deleted?: number }) => void
-}
+// Note: Assertion helpers are planned for a future release.
+// For now, use standard test matchers with the results from convex operations.
 
 /**
  * Mutation execution result with side effect tracking
@@ -325,8 +283,7 @@ export interface MutationResult<T> {
     storage: Array<{ operation: 'upload' | 'delete'; fileId: string; fileName?: string }>
   }
 
-  /** Get assertion helpers */
-  expect: () => MutationAssertion<T>
+  // Note: Assertion helpers are planned for a future release
 }
 
 /**

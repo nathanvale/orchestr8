@@ -37,7 +37,7 @@ feedback and consistent patterns.
 - Environments: Node by default; `packages/testkit` uses `happy-dom`. Timeouts
   and thread pools adapt to CI and Wallaby via env detection.
 - Wallaby: `wallaby.cjs` auto‑detects Vitest, runs on save, and excludes
-  slow/perf/integration tests. Detect with `WALLABY_WORKER`. Prefer Wallaby for
+  slow/perf/integration tests. Detect with `WALLABY_ENV`. Prefer Wallaby for
   tight inner loop.
 
 ## Builds and TypeScript
