@@ -103,9 +103,9 @@ describe('SQLite Pragma Support', () => {
       await applyRecommendedPragmas(mockDb)
 
       // Verify the expected pragma commands were executed
-      expect(mockPragma).toHaveBeenCalledWith('PRAGMA journal_mode = WAL')
-      expect(mockPragma).toHaveBeenCalledWith('PRAGMA foreign_keys = ON')
-      expect(mockPragma).toHaveBeenCalledWith('PRAGMA busy_timeout = 2000')
+      expect(mockPragma).toHaveBeenCalledWith('journal_mode = WAL')
+      expect(mockPragma).toHaveBeenCalledWith('foreign_keys = ON')
+      expect(mockPragma).toHaveBeenCalledWith('busy_timeout = 2000')
     })
 
     it('should handle database without pragma method gracefully', async () => {

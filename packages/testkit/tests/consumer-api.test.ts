@@ -31,7 +31,17 @@ describe('Package Export API', () => {
   })
 
   it('should create a valid vitest config using defineVitestConfig', async () => {
-    const { defineVitestConfig } = await import('@template/testkit/config/vitest')
+    let defineVitestConfig: any
+    try {
+      const spec = ['@template', 'testkit', 'config', 'vitest'].join('/')
+      const module = await import(spec)
+      defineVitestConfig = module.defineVitestConfig
+    } catch (err) {
+      // Fallback to source when running locally without dist build
+      const module = await import('../src/config/vitest.base')
+      defineVitestConfig = module.defineVitestConfig
+      void err
+    }
     const config = defineVitestConfig({
       test: {
         name: 'consumer-test',

@@ -15,6 +15,8 @@ export interface PragmasOptions {
 
 interface DbWithPragma {
   pragma?(sql: string): unknown
+  prepare?(sql: string): { get(): unknown; all(): unknown; run?(): unknown }
+  exec?(sql: string): unknown
 }
 
 /**
@@ -22,7 +24,10 @@ interface DbWithPragma {
  *
  * @param db - Database instance with optional pragma method
  * @param opts - Options for pragma configuration
- * @returns Applied pragma values for verification
+ * @returns Applied pragma values for verification. Note: The returned
+ *          `busy_timeout` field is normalized - better-sqlite3 returns
+ *          `{ timeout }` but this function always returns `{ busy_timeout }`
+ *          for consistency across different SQLite drivers.
  */
 export async function applyRecommendedPragmas<TDb>(
   db: TDb,
@@ -32,52 +37,105 @@ export async function applyRecommendedPragmas<TDb>(
   const dbWithPragma = db as unknown as DbWithPragma
 
   try {
-    // If the database doesn't support pragma, return defaults
-    if (!dbWithPragma.pragma || typeof dbWithPragma.pragma !== 'function') {
+    // Handle better-sqlite3 style (uses pragma method directly)
+    if (dbWithPragma.pragma && typeof dbWithPragma.pragma === 'function') {
+      // Apply pragmas using pragma() method for better-sqlite3
+      let journalModeValue = 'wal'
+      try {
+        const result = dbWithPragma.pragma('journal_mode = WAL')
+        if (Array.isArray(result) && result[0]?.journal_mode) {
+          journalModeValue = result[0].journal_mode
+        }
+      } catch {
+        // Fallback for in-memory databases that can't use WAL
+        try {
+          const result = dbWithPragma.pragma('journal_mode = MEMORY')
+          if (Array.isArray(result) && result[0]?.journal_mode) {
+            journalModeValue = result[0].journal_mode
+          }
+        } catch {
+          // Ignore if memory mode also fails
+        }
+      }
+
+      dbWithPragma.pragma('foreign_keys = ON')
+      dbWithPragma.pragma(`busy_timeout = ${busyTimeoutMs}`)
+
+      // Now read the actual values using prepare
+      // Note: better-sqlite3 returns { timeout } not { busy_timeout } for busy_timeout pragma
+      let busyTimeoutValue = busyTimeoutMs
+
+      if (dbWithPragma.prepare && typeof dbWithPragma.prepare === 'function') {
+        const journalModeResult = dbWithPragma.prepare('PRAGMA journal_mode')?.get() as
+          | { journal_mode: string }
+          | undefined
+        const foreignKeysResult = dbWithPragma.prepare('PRAGMA foreign_keys')?.get() as
+          | { foreign_keys: number }
+          | undefined
+        const busyTimeoutResult = dbWithPragma.prepare('PRAGMA busy_timeout')?.get() as
+          | { timeout?: number; busy_timeout?: number }
+          | undefined
+
+        // Handle both { timeout } and { busy_timeout } formats
+        // Normalize to always return as 'busy_timeout' for consistency
+        if (busyTimeoutResult) {
+          busyTimeoutValue =
+            busyTimeoutResult.timeout ?? busyTimeoutResult.busy_timeout ?? busyTimeoutMs
+        }
+
+        return {
+          journal_mode: journalModeResult?.journal_mode ?? journalModeValue,
+          foreign_keys: foreignKeysResult?.foreign_keys === 1 ? 'on' : 'off',
+          busy_timeout: busyTimeoutValue, // Always normalized as 'busy_timeout'
+        }
+      }
+
       return {
-        journal_mode: 'wal',
+        journal_mode: journalModeValue,
         foreign_keys: 'on',
         busy_timeout: busyTimeoutMs,
       }
     }
 
-    // Apply journal_mode = WAL (with fallback for in-memory databases)
-    let journalModeResult: unknown
-    try {
-      journalModeResult = dbWithPragma.pragma('PRAGMA journal_mode = WAL')
-    } catch {
-      // Fallback for in-memory databases that can't use WAL
-      journalModeResult = [{ journal_mode: 'memory' }]
+    // Fallback: Handle libraries without pragma() method but with prepare/exec
+    if (dbWithPragma.prepare && typeof dbWithPragma.prepare === 'function') {
+      // Apply pragmas using exec for better-sqlite3
+      if (dbWithPragma.exec) {
+        dbWithPragma.exec('PRAGMA journal_mode = WAL')
+        dbWithPragma.exec('PRAGMA foreign_keys = ON')
+        dbWithPragma.exec(`PRAGMA busy_timeout = ${busyTimeoutMs}`)
+      }
+
+      // Now read the actual values
+      const journalModeResult = dbWithPragma.prepare!('PRAGMA journal_mode')?.get() as
+        | { journal_mode: string }
+        | undefined
+      const foreignKeysResult = dbWithPragma.prepare!('PRAGMA foreign_keys')?.get() as
+        | { foreign_keys: number }
+        | undefined
+      const busyTimeoutResult = dbWithPragma.prepare!('PRAGMA busy_timeout')?.get() as
+        | { timeout?: number; busy_timeout?: number }
+        | undefined
+
+      // Handle both { timeout } and { busy_timeout } formats
+      let busyTimeoutValue = busyTimeoutMs
+      if (busyTimeoutResult) {
+        busyTimeoutValue =
+          busyTimeoutResult.timeout ?? busyTimeoutResult.busy_timeout ?? busyTimeoutMs
+      }
+
+      return {
+        journal_mode: journalModeResult?.journal_mode ?? 'wal',
+        foreign_keys: foreignKeysResult?.foreign_keys === 1 ? 'on' : 'off',
+        busy_timeout: busyTimeoutValue,
+      }
     }
 
-    // Apply foreign_keys = ON
-    const foreignKeysResult = dbWithPragma.pragma('PRAGMA foreign_keys = ON')
-
-    // Apply busy_timeout
-    const busyTimeoutResult = dbWithPragma.pragma(`PRAGMA busy_timeout = ${busyTimeoutMs}`)
-
-    // Extract actual values from results
-    const journalMode =
-      Array.isArray(journalModeResult) && journalModeResult[0]?.journal_mode
-        ? journalModeResult[0].journal_mode
-        : 'wal'
-
-    const foreignKeys =
-      Array.isArray(foreignKeysResult) && foreignKeysResult[0]?.foreign_keys !== undefined
-        ? foreignKeysResult[0].foreign_keys === 1 || foreignKeysResult[0].foreign_keys === 'on'
-          ? 'on'
-          : 'off'
-        : 'on'
-
-    const busyTimeout =
-      Array.isArray(busyTimeoutResult) && busyTimeoutResult[0]?.busy_timeout !== undefined
-        ? busyTimeoutResult[0].busy_timeout
-        : busyTimeoutMs
-
+    // If the database doesn't support pragma, return defaults
     return {
-      journal_mode: journalMode,
-      foreign_keys: foreignKeys,
-      busy_timeout: busyTimeout,
+      journal_mode: 'wal',
+      foreign_keys: 'on',
+      busy_timeout: busyTimeoutMs,
     }
   } catch {
     // Graceful fallback on any error

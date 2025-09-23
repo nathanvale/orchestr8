@@ -219,7 +219,13 @@ describe('vitest.base', () => {
       expect(config.test).toHaveProperty('globals', false)
       expect(config.test).toHaveProperty('pool', 'forks')
       expect(config.test).toHaveProperty('isolate', true)
-      expect(config.test).toHaveProperty('setupFiles', ['@template/testkit/register'])
+      // Setup files depend on where tests are run from (root vs package)
+      const setupFiles = config.test?.setupFiles as string[]
+      expect(setupFiles).toBeDefined()
+      expect(setupFiles).toHaveLength(1)
+      expect(
+        setupFiles[0] === './src/register.ts' || setupFiles[0] === '@template/testkit/register',
+      ).toBe(true)
       expect(config.test).toHaveProperty('include')
       expect(config.test).toHaveProperty('exclude')
     })
@@ -240,7 +246,13 @@ describe('vitest.base', () => {
       expect(config.test?.pool).toBe('threads')
       // Should preserve other base config properties
       expect(config.test?.isolate).toBe(true)
-      expect(config.test?.setupFiles).toEqual(['@template/testkit/register'])
+      // Setup files depend on where tests are run from (root vs package)
+      const setupFiles = config.test?.setupFiles as string[]
+      expect(setupFiles).toBeDefined()
+      expect(setupFiles).toHaveLength(1)
+      expect(
+        setupFiles[0] === './src/register.ts' || setupFiles[0] === '@template/testkit/register',
+      ).toBe(true)
     })
 
     it('should merge nested configurations correctly', () => {

@@ -105,6 +105,16 @@ test-temp/
 *.bak
 *.backup
 
+# SQLite artifacts (from tests with URI-style filenames)
+file:*?mode=memory&cache=shared
+packages/testkit/file:*?mode=memory&cache=shared
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+*.db
+*.db-wal
+*.db-shm
+
 # Debug/temporary test files
 test-*.sh
 test-*.js
