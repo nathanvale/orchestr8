@@ -5,8 +5,9 @@
  * including connection pooling management and datasource configuration.
  */
 
-import { createMemoryUrl } from './memory.js'
+import { createMemoryUrl, type MemoryDatabaseOptions } from './memory.js'
 import { createFileDatabase, type FileDatabase } from './file.js'
+import { type Logger, consoleLogger } from './migrate.js'
 
 /**
  * Prisma datasource configuration for testing
@@ -31,15 +32,19 @@ export interface PrismaTestConfig {
 /**
  * Create a Prisma configuration for in-memory SQLite testing.
  *
- * @param options - Configuration options
+ * @param options - Configuration options including memory database options
+ * @param logger - Optional logger for debugging database operations
  * @returns Prisma test configuration with pooling disabled
  *
  * @example
  * ```typescript
  * import { PrismaClient } from '@prisma/client'
- * import { createPrismaMemoryConfig } from '@template/testkit/sqlite'
+ * import { createPrismaMemoryConfig, consoleLogger } from '@template/testkit/sqlite'
  *
- * const config = createPrismaMemoryConfig()
+ * const config = createPrismaMemoryConfig({
+ *   name: 'test-db',
+ *   connectionLimit: 1
+ * }, consoleLogger)
  *
  * const prisma = new PrismaClient({
  *   datasources: {
@@ -53,6 +58,8 @@ export interface PrismaTestConfig {
  * - Uses the correct Prisma memory URL format
  * - Disables connection pooling for unit tests
  * - Sets appropriate query parameters
+ * - Provides detailed logging for debugging
+ * - Supports advanced memory database isolation options
  */
 export function createPrismaMemoryConfig(
   options: {
@@ -64,12 +71,20 @@ export function createPrismaMemoryConfig(
      * Additional URL parameters
      */
     params?: Record<string, string | number>
-  } = {},
+  } & Partial<MemoryDatabaseOptions> = {},
+  logger: Logger = consoleLogger,
 ): PrismaTestConfig {
-  const { connectionLimit = 1, params = {} } = options
+  const { connectionLimit = 1, params = {}, ...memoryOptions } = options
 
-  // Start with base Prisma memory URL
-  let url = createMemoryUrl('prisma')
+  logger.info(
+    `Creating Prisma memory configuration: connectionLimit=${connectionLimit}, additionalParams=${Object.keys(params).length}`,
+  )
+
+  // Start with base Prisma memory URL with enhanced options
+  let url = createMemoryUrl('prisma', {
+    identifier: memoryOptions.identifier,
+    ...memoryOptions,
+  })
 
   // Add connection limit and other params
   const allParams = {
@@ -86,27 +101,37 @@ export function createPrismaMemoryConfig(
     url += (url.includes('?') ? '&' : '?') + paramString
   }
 
-  return {
+  const config = {
     url,
     urlParams: allParams,
     env: {
       DATABASE_URL: url,
     },
   }
+
+  logger.info(
+    `Created Prisma memory configuration: url=${config.url}, paramCount=${Object.keys(allParams).length}`,
+  )
+
+  return config
 }
 
 /**
  * Create a Prisma configuration for file-based SQLite testing.
  *
  * @param name - Optional database file name
+ * @param options - Configuration options including connection settings
+ * @param logger - Optional logger for debugging database operations
  * @returns Prisma test configuration with file database
  *
  * @example
  * ```typescript
  * import { PrismaClient } from '@prisma/client'
- * import { createPrismaFileConfig } from '@template/testkit/sqlite'
+ * import { createPrismaFileConfig, consoleLogger } from '@template/testkit/sqlite'
  *
- * const config = await createPrismaFileConfig('test.db')
+ * const config = await createPrismaFileConfig('test.db', {
+ *   connectionLimit: 1
+ * }, consoleLogger)
  *
  * const prisma = new PrismaClient({
  *   datasources: {
@@ -124,8 +149,13 @@ export async function createPrismaFileConfig(
     connectionLimit?: number
     params?: Record<string, string | number>
   } = {},
+  logger: Logger = consoleLogger,
 ): Promise<PrismaTestConfig & { cleanup: () => Promise<void>; db: FileDatabase }> {
   const { connectionLimit = 1, params = {} } = options
+
+  logger.info(
+    `Creating Prisma file configuration: name=${name || 'auto-generated'}, connectionLimit=${connectionLimit}`,
+  )
 
   const db = await createFileDatabase(name)
 
@@ -141,15 +171,22 @@ export async function createPrismaFileConfig(
 
   const url = paramString ? `${db.url}?${paramString}` : db.url
 
-  return {
+  const config = {
     url,
     urlParams: allParams,
     env: {
       DATABASE_URL: url,
     },
     db,
-    cleanup: db.cleanup,
+    cleanup: async () => {
+      logger.info(`Cleaning up Prisma file database: ${db.path}`)
+      await db.cleanup()
+    },
   }
+
+  logger.info(`Created Prisma file configuration: path=${db.path}, url=${config.url}`)
+
+  return config
 }
 
 // Global guard against concurrent setPrismaTestEnv usage
@@ -159,12 +196,15 @@ let _prismaEnvActive = false
  * Helper to set Prisma environment variables for testing.
  *
  * @param config - Prisma test configuration
+ * @param logger - Optional logger for debugging environment operations
  * @returns Function to restore original environment
  *
  * @example
  * ```typescript
+ * import { createPrismaMemoryConfig, setPrismaTestEnv, consoleLogger } from '@template/testkit/sqlite'
+ *
  * const config = createPrismaMemoryConfig()
- * const restore = setPrismaTestEnv(config)
+ * const restore = setPrismaTestEnv(config, consoleLogger)
  *
  * // Run tests with Prisma env vars set
  *
@@ -184,20 +224,29 @@ let _prismaEnvActive = false
  *
  * @throws {Error} When called while another setPrismaTestEnv is active
  */
-export function setPrismaTestEnv(config: PrismaTestConfig): () => void {
+export function setPrismaTestEnv(
+  config: PrismaTestConfig,
+  logger: Logger = consoleLogger,
+): () => void {
   // Guard against concurrent usage
   if (_prismaEnvActive) {
-    throw new Error(
+    const error = new Error(
       'setPrismaTestEnv is already active. This function is not safe for concurrent use. ' +
         'Consider using per-process isolation or datasource URL configuration instead of env vars.',
     )
+    logger.error(`Concurrent usage detected: ${error.message}`)
+    throw error
   }
 
+  logger.info('Setting Prisma test environment variables')
   _prismaEnvActive = true
   const originalEnv: Record<string, string | undefined> = {}
 
   // Save original values and set new ones
   if (config.env) {
+    const envKeys = Object.keys(config.env)
+    logger.info(`Setting ${envKeys.length} environment variables: ${envKeys.join(', ')}`)
+
     for (const [key, value] of Object.entries(config.env)) {
       originalEnv[key] = process.env[key]
       process.env[key] = value
@@ -206,6 +255,8 @@ export function setPrismaTestEnv(config: PrismaTestConfig): () => void {
 
   // Return restore function
   return () => {
+    logger.info('Restoring original Prisma environment variables')
+
     for (const [key, originalValue] of Object.entries(originalEnv)) {
       if (originalValue === undefined) {
         delete process.env[key]
@@ -214,6 +265,7 @@ export function setPrismaTestEnv(config: PrismaTestConfig): () => void {
       }
     }
     _prismaEnvActive = false
+    logger.info('Prisma environment variables restored successfully')
   }
 }
 
@@ -246,4 +298,175 @@ export function setPrismaTestEnv(config: PrismaTestConfig): () => void {
 export function usePrismaTestDatabase() {
   // This will be implemented in Phase 2 with actual Prisma dependency
   throw new Error('usePrismaTestDatabase will be available in Phase 2 with driver implementation')
+}
+
+/**
+ * Enhanced configuration options for Prisma test environment setup
+ */
+export interface PrismaTestEnvironmentOptions {
+  /** Base configuration for the Prisma database */
+  config?: Partial<PrismaTestConfig>
+  /** Logger for debugging operations */
+  logger?: Logger
+  /** Enable automatic cleanup on process exit */
+  autoCleanup?: boolean
+  /** Memory database options for enhanced isolation */
+  memoryOptions?: MemoryDatabaseOptions
+}
+
+/**
+ * Create an isolated Prisma test environment with automatic lifecycle management.
+ *
+ * @param options - Configuration options for the test environment
+ * @returns Object with configuration, environment setup, and cleanup functions
+ *
+ * @example
+ * ```typescript
+ * import { createPrismaTestEnvironment, consoleLogger } from '@template/testkit/sqlite'
+ *
+ * const testEnv = createPrismaTestEnvironment({
+ *   logger: consoleLogger,
+ *   autoCleanup: true,
+ *   memoryOptions: {
+ *     identifier: 'test-suite',
+ *     isolation: 'private'
+ *   }
+ * })
+ *
+ * // Set up environment for tests
+ * const restore = testEnv.setup()
+ *
+ * // Run tests...
+ *
+ * // Clean up
+ * restore()
+ * ```
+ */
+export function createPrismaTestEnvironment(options: PrismaTestEnvironmentOptions = {}): {
+  config: PrismaTestConfig
+  setup: () => () => void
+  cleanup: () => void
+} {
+  const {
+    config: userConfig = {},
+    logger = consoleLogger,
+    autoCleanup = false,
+    memoryOptions = {},
+  } = options
+
+  logger.info('Creating Prisma test environment with enhanced configuration')
+
+  // Create enhanced memory configuration
+  const config = createPrismaMemoryConfig(
+    {
+      connectionLimit: 1,
+      ...memoryOptions,
+      ...userConfig,
+    },
+    logger,
+  )
+
+  // Setup auto-cleanup if requested
+  let cleanupHandler: (() => void) | null = null
+  if (autoCleanup) {
+    cleanupHandler = () => {
+      logger.info('Auto-cleanup triggered for Prisma test environment')
+      // Additional cleanup logic can be added here in Phase 2
+    }
+    process.on('exit', cleanupHandler)
+    process.on('SIGINT', cleanupHandler)
+    process.on('SIGTERM', cleanupHandler)
+  }
+
+  return {
+    config,
+    setup: () => {
+      logger.info('Setting up Prisma test environment')
+      return setPrismaTestEnv(config, logger)
+    },
+    cleanup: () => {
+      logger.info('Cleaning up Prisma test environment')
+      if (cleanupHandler) {
+        process.removeListener('exit', cleanupHandler)
+        process.removeListener('SIGINT', cleanupHandler)
+        process.removeListener('SIGTERM', cleanupHandler)
+      }
+    },
+  }
+}
+
+/**
+ * Validate Prisma configuration for common issues.
+ *
+ * @param config - Prisma test configuration to validate
+ * @param logger - Optional logger for validation messages
+ * @returns Validation result with any detected issues
+ *
+ * @example
+ * ```typescript
+ * import { createPrismaMemoryConfig, validatePrismaConfig } from '@template/testkit/sqlite'
+ *
+ * const config = createPrismaMemoryConfig()
+ * const validation = validatePrismaConfig(config)
+ *
+ * if (!validation.isValid) {
+ *   console.error('Configuration issues:', validation.issues)
+ * }
+ * ```
+ */
+export function validatePrismaConfig(
+  config: PrismaTestConfig,
+  logger: Logger = consoleLogger,
+): {
+  isValid: boolean
+  issues: string[]
+  warnings: string[]
+} {
+  const issues: string[] = []
+  const warnings: string[] = []
+
+  logger.info('Validating Prisma test configuration')
+
+  // Check required properties
+  if (!config.url) {
+    issues.push('Missing required property: url')
+  }
+
+  // Validate URL format
+  if (config.url && !config.url.startsWith('file:')) {
+    issues.push('URL must be a file: protocol for SQLite testing')
+  }
+
+  // Check for memory database indicators
+  if (config.url && !config.url.includes('memory')) {
+    warnings.push(
+      'URL does not appear to be an in-memory database - consider using memory databases for faster tests',
+    )
+  }
+
+  // Validate connection limit for tests
+  if (config.urlParams?.connection_limit && Number(config.urlParams.connection_limit) > 1) {
+    warnings.push('Connection limit > 1 may cause issues in parallel test environments')
+  }
+
+  // Check environment variables
+  if (config.env?.DATABASE_URL && config.env.DATABASE_URL !== config.url) {
+    issues.push('Environment DATABASE_URL does not match configuration URL')
+  }
+
+  const isValid = issues.length === 0
+
+  if (issues.length > 0) {
+    logger.error(`Prisma configuration validation failed: ${issues.length} issues found`)
+  } else if (warnings.length > 0) {
+    logger.warn(`Prisma configuration validation passed with ${warnings.length} warnings`)
+  } else {
+    logger.info('Prisma configuration validation passed successfully')
+  }
+
+  return {
+    isValid,
+    issues,
+    warnings,
+  }
 }

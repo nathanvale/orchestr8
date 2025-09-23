@@ -32,6 +32,9 @@
  * this module always returns `{ busy_timeout }` for consistency.
  */
 
+import type { Logger } from './migrate.js'
+import { consoleLogger } from './migrate.js'
+
 /**
  * Applied pragma values returned for verification
  */
@@ -45,11 +48,54 @@ export interface AppliedPragmas {
 }
 
 /**
+ * Detailed error information for pragma operations
+ */
+export interface PragmaErrorInfo {
+  /** Error type classification */
+  type: 'driver_limitation' | 'pragma_unsupported' | 'execution_failure'
+  /** Human-readable error message */
+  message: string
+  /** Specific pragma that failed */
+  pragma?: string
+  /** Original error from database driver */
+  cause?: Error
+}
+
+/**
+ * Custom error class for pragma operations
+ */
+export class PragmaError extends Error {
+  public readonly type: 'driver_limitation' | 'pragma_unsupported' | 'execution_failure'
+  public readonly pragma?: string
+  public override readonly cause?: Error
+
+  constructor(info: PragmaErrorInfo) {
+    super(info.message)
+    this.type = info.type
+    this.pragma = info.pragma
+    this.cause = info.cause
+
+    // Set the error name properly
+    Object.defineProperty(this, 'name', {
+      value: 'PragmaError',
+      configurable: true,
+    })
+
+    // Maintain proper stack trace (for V8)
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, PragmaError)
+    }
+  }
+}
+
+/**
  * Options for pragma configuration
  */
 export interface PragmasOptions {
   /** Busy timeout in milliseconds (default: 2000) */
   busyTimeoutMs?: number
+  /** Custom logger (default: consoleLogger) */
+  logger?: Logger
   // future: adapter flags
 }
 
@@ -64,6 +110,190 @@ interface DbWithPragma {
 }
 
 /**
+ * Apply pragmas using better-sqlite3 style pragma() method
+ * @internal
+ */
+async function applyPragmasUsingPragmaMethod(
+  db: DbWithPragma,
+  busyTimeoutMs: number,
+): Promise<AppliedPragmas> {
+  if (!db.pragma) {
+    throw new PragmaError({
+      type: 'driver_limitation',
+      message: 'Database pragma method is not available',
+    })
+  }
+
+  try {
+    // Apply pragmas
+    db.pragma(`journal_mode = WAL`)
+    db.pragma(`foreign_keys = ON`)
+    db.pragma(`busy_timeout = ${busyTimeoutMs}`)
+
+    // Verify and return applied values
+    const journalMode = db.pragma('journal_mode')
+    const foreignKeys = db.pragma('foreign_keys')
+    const busyTimeout = db.pragma('busy_timeout')
+
+    return {
+      journal_mode: extractPragmaValue(journalMode, 'string') as string | undefined,
+      foreign_keys: extractPragmaValue(foreignKeys, 'string') as 'on' | 'off' | 'unknown',
+      busy_timeout: normalizeBusyTimeout(busyTimeout),
+    }
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err)
+    throw new PragmaError({
+      type: 'execution_failure',
+      message: `Failed to apply pragmas using pragma() method: ${message}`,
+      cause: err as Error,
+    })
+  }
+}
+
+/**
+ * Apply pragmas using prepare() method for other SQLite drivers
+ * @internal
+ */
+async function applyPragmasUsingPrepareMethod(
+  db: DbWithPragma,
+  busyTimeoutMs: number,
+): Promise<AppliedPragmas> {
+  if (!db.prepare) {
+    throw new PragmaError({
+      type: 'driver_limitation',
+      message: 'Database prepare method is not available',
+    })
+  }
+
+  try {
+    // Apply pragmas using prepare/run
+    const setPragmas = [
+      `PRAGMA journal_mode = WAL`,
+      `PRAGMA foreign_keys = ON`,
+      `PRAGMA busy_timeout = ${busyTimeoutMs}`,
+    ]
+
+    for (const pragma of setPragmas) {
+      const stmt = db.prepare(pragma)
+      if (stmt.run) {
+        stmt.run()
+      } else {
+        // Some drivers might only support get()
+        stmt.get()
+      }
+    }
+
+    // Verify applied values
+    const journalMode = db.prepare('PRAGMA journal_mode').get()
+    const foreignKeys = db.prepare('PRAGMA foreign_keys').get()
+    const busyTimeout = db.prepare('PRAGMA busy_timeout').get()
+
+    return {
+      journal_mode: extractPragmaValue(journalMode, 'string') as string | undefined,
+      foreign_keys: extractPragmaValue(foreignKeys, 'string') as 'on' | 'off' | 'unknown',
+      busy_timeout: normalizeBusyTimeout(busyTimeout),
+    }
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err)
+    throw new PragmaError({
+      type: 'execution_failure',
+      message: `Failed to apply pragmas using prepare() method: ${message}`,
+      cause: err as Error,
+    })
+  }
+}
+
+/**
+ * Extract pragma value from various driver response formats
+ * @internal
+ */
+function extractPragmaValue(
+  result: unknown,
+  expectedType: 'string' | 'number',
+): string | number | 'unknown' {
+  if (result === null || result === undefined) {
+    return 'unknown'
+  }
+
+  // Handle array responses (some drivers return arrays)
+  if (Array.isArray(result) && result.length > 0) {
+    const firstItem = result[0]
+    if (typeof firstItem === 'object' && firstItem !== null) {
+      // Extract first value from object
+      const values = Object.values(firstItem)
+      if (values.length > 0) {
+        result = values[0]
+      }
+    } else {
+      result = firstItem
+    }
+  }
+
+  // Handle object responses (better-sqlite3 style)
+  if (typeof result === 'object' && result !== null) {
+    const values = Object.values(result)
+    if (values.length > 0) {
+      result = values[0]
+    }
+  }
+
+  // Validate type
+  if (expectedType === 'string' && typeof result === 'string') {
+    return result.toLowerCase()
+  }
+  if (expectedType === 'number' && typeof result === 'number') {
+    return result
+  }
+  if (expectedType === 'string' && typeof result === 'number') {
+    return String(result)
+  }
+  if (expectedType === 'number' && typeof result === 'string') {
+    const parsed = parseInt(result, 10)
+    return isNaN(parsed) ? 'unknown' : parsed
+  }
+
+  return 'unknown'
+}
+
+/**
+ * Normalize busy timeout across different driver response formats
+ * @internal
+ */
+function normalizeBusyTimeout(result: unknown): number | undefined {
+  if (result === null || result === undefined) {
+    return undefined
+  }
+
+  // Handle better-sqlite3 format: { timeout: number }
+  if (
+    typeof result === 'object' &&
+    result !== null &&
+    'timeout' in result &&
+    typeof (result as { timeout: unknown }).timeout === 'number'
+  ) {
+    return (result as { timeout: number }).timeout
+  }
+
+  // Handle direct number
+  if (typeof result === 'number') {
+    return result
+  }
+
+  // Handle string number
+  if (typeof result === 'string') {
+    const parsed = parseInt(result, 10)
+    return isNaN(parsed) ? undefined : parsed
+  }
+
+  // Handle array format
+  if (Array.isArray(result) && result.length > 0) {
+    return normalizeBusyTimeout(result[0])
+  }
+
+  return undefined
+}
+
+/**
  * Apply recommended SQLite pragmas for test stability.
  *
  * @param db - Database instance with optional pragma method
@@ -72,122 +302,59 @@ interface DbWithPragma {
  *          `busy_timeout` field is normalized - better-sqlite3 returns
  *          `{ timeout }` but this function always returns `{ busy_timeout }`
  *          for consistency across different SQLite drivers.
+ * @throws {PragmaError} When pragma operations fail with detailed error information
  */
 export async function applyRecommendedPragmas<TDb>(
   db: TDb,
   opts: PragmasOptions = {},
 ): Promise<AppliedPragmas> {
   const busyTimeoutMs = opts.busyTimeoutMs ?? 2000
+  const logger = opts.logger ?? consoleLogger
   const dbWithPragma = db as unknown as DbWithPragma
+
+  // Check for driver limitations first
+  if (!dbWithPragma.pragma && !dbWithPragma.prepare && !dbWithPragma.exec) {
+    logger.error(
+      'Database object lacks pragma(), prepare(), and exec() methods - cannot apply pragmas',
+    )
+    throw new PragmaError({
+      type: 'driver_limitation',
+      message:
+        'Database object lacks pragma(), prepare(), and exec() methods - cannot apply pragmas',
+    })
+  }
 
   try {
     // Handle better-sqlite3 style (uses pragma method directly)
     if (dbWithPragma.pragma && typeof dbWithPragma.pragma === 'function') {
-      // Apply pragmas using pragma() method for better-sqlite3
-      let journalModeValue = 'wal'
-      try {
-        const result = dbWithPragma.pragma('journal_mode = WAL')
-        if (Array.isArray(result) && result[0]?.journal_mode) {
-          journalModeValue = result[0].journal_mode
-        }
-      } catch {
-        // Fallback for in-memory databases that can't use WAL
-        try {
-          const result = dbWithPragma.pragma('journal_mode = MEMORY')
-          if (Array.isArray(result) && result[0]?.journal_mode) {
-            journalModeValue = result[0].journal_mode
-          }
-        } catch {
-          // Ignore if memory mode also fails
-        }
-      }
-
-      dbWithPragma.pragma('foreign_keys = ON')
-      dbWithPragma.pragma(`busy_timeout = ${busyTimeoutMs}`)
-
-      // Now read the actual values using prepare
-      // Note: better-sqlite3 returns { timeout } not { busy_timeout } for busy_timeout pragma
-      let busyTimeoutValue = busyTimeoutMs
-
-      if (dbWithPragma.prepare && typeof dbWithPragma.prepare === 'function') {
-        const journalModeResult = dbWithPragma.prepare('PRAGMA journal_mode')?.get() as
-          | { journal_mode: string }
-          | undefined
-        const foreignKeysResult = dbWithPragma.prepare('PRAGMA foreign_keys')?.get() as
-          | { foreign_keys: number }
-          | undefined
-        const busyTimeoutResult = dbWithPragma.prepare('PRAGMA busy_timeout')?.get() as
-          | { timeout?: number; busy_timeout?: number }
-          | undefined
-
-        // Handle both { timeout } and { busy_timeout } formats
-        // Normalize to always return as 'busy_timeout' for consistency
-        if (busyTimeoutResult) {
-          busyTimeoutValue =
-            busyTimeoutResult.timeout ?? busyTimeoutResult.busy_timeout ?? busyTimeoutMs
-        }
-
-        return {
-          journal_mode: journalModeResult?.journal_mode ?? journalModeValue,
-          foreign_keys: foreignKeysResult?.foreign_keys === 1 ? 'on' : 'off',
-          busy_timeout: busyTimeoutValue, // Always normalized as 'busy_timeout'
-        }
-      }
-
-      return {
-        journal_mode: journalModeValue,
-        foreign_keys: 'on',
-        busy_timeout: busyTimeoutMs,
-      }
+      logger.info('Applying pragmas using pragma() method')
+      return await applyPragmasUsingPragmaMethod(dbWithPragma, busyTimeoutMs)
     }
 
     // Fallback: Handle libraries without pragma() method but with prepare/exec
     if (dbWithPragma.prepare && typeof dbWithPragma.prepare === 'function') {
-      // Apply pragmas using exec for better-sqlite3
-      if (dbWithPragma.exec) {
-        dbWithPragma.exec('PRAGMA journal_mode = WAL')
-        dbWithPragma.exec('PRAGMA foreign_keys = ON')
-        dbWithPragma.exec(`PRAGMA busy_timeout = ${busyTimeoutMs}`)
-      }
-
-      // Now read the actual values
-      const journalModeResult = dbWithPragma.prepare!('PRAGMA journal_mode')?.get() as
-        | { journal_mode: string }
-        | undefined
-      const foreignKeysResult = dbWithPragma.prepare!('PRAGMA foreign_keys')?.get() as
-        | { foreign_keys: number }
-        | undefined
-      const busyTimeoutResult = dbWithPragma.prepare!('PRAGMA busy_timeout')?.get() as
-        | { timeout?: number; busy_timeout?: number }
-        | undefined
-
-      // Handle both { timeout } and { busy_timeout } formats
-      let busyTimeoutValue = busyTimeoutMs
-      if (busyTimeoutResult) {
-        busyTimeoutValue =
-          busyTimeoutResult.timeout ?? busyTimeoutResult.busy_timeout ?? busyTimeoutMs
-      }
-
-      return {
-        journal_mode: journalModeResult?.journal_mode ?? 'unknown',
-        foreign_keys: foreignKeysResult?.foreign_keys === 1 ? 'on' : 'off',
-        busy_timeout: busyTimeoutValue,
-      }
+      logger.info('Applying pragmas using prepare() method')
+      return await applyPragmasUsingPrepareMethod(dbWithPragma, busyTimeoutMs)
     }
 
-    // If the database doesn't support pragma, return unknown status
-    return {
-      journal_mode: 'unknown',
-      foreign_keys: 'unknown',
-      busy_timeout: busyTimeoutMs,
+    // If we get here, the database doesn't support any pragma operations
+    throw new PragmaError({
+      type: 'driver_limitation',
+      message:
+        'Database object lacks pragma() and prepare() methods - cannot apply or verify pragmas',
+    })
+  } catch (err) {
+    if (err instanceof PragmaError) {
+      throw err
     }
-  } catch {
-    // Graceful fallback on any error - return unknown status to avoid false positives
-    return {
-      journal_mode: 'unknown',
-      foreign_keys: 'unknown',
-      busy_timeout: busyTimeoutMs,
-    }
+
+    // Convert unknown errors to structured format
+    const message = err instanceof Error ? err.message : String(err)
+    throw new PragmaError({
+      type: 'execution_failure',
+      message: `Failed to apply recommended pragmas: ${message}`,
+      cause: err as Error,
+    })
   }
 }
 
@@ -211,6 +378,7 @@ interface ProbeDatabase {
  * @param options.logLevel - Control console output ('silent', 'warn', 'info')
  * @param options.required - Array of required capabilities that will throw if missing
  * @param options.pragmaOptions - Options passed to applyRecommendedPragmas
+ * @param options.logger - Custom logger (default: consoleLogger)
  *
  * @example
  * ```typescript
@@ -236,6 +404,7 @@ export async function probeEnvironment<TDb>(
     logLevel?: 'silent' | 'warn' | 'info'
     required?: Array<'wal' | 'foreign_keys' | 'json1' | 'fts5'>
     pragmaOptions?: PragmasOptions
+    logger?: Logger
   } = {},
 ): Promise<{
   pragmas: AppliedPragmas
@@ -246,19 +415,23 @@ export async function probeEnvironment<TDb>(
     fts5: boolean
   }
 }> {
-  const { logLevel = 'info', required = [], pragmaOptions = {} } = options
+  const { logLevel = 'info', required = [], pragmaOptions = {}, logger = consoleLogger } = options
   const probeDb = db as unknown as ProbeDatabase
 
   const log = (level: 'info' | 'warn', message: string) => {
     if (logLevel === 'silent') return
     if (logLevel === 'warn' && level === 'info') return
-    console[level](message)
+    if (level === 'info') {
+      logger.info(message)
+    } else {
+      logger.warn(message)
+    }
   }
 
   log('info', '🔍 Probing SQLite environment capabilities...')
 
   // Apply and check pragmas
-  const pragmas = await applyRecommendedPragmas(db, pragmaOptions)
+  const pragmas = await applyRecommendedPragmas(db, { ...pragmaOptions, logger })
 
   const capabilities = {
     wal: false,
