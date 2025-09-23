@@ -62,9 +62,6 @@ export function getRegistry(): ProcessMockRegistry {
     globalThis[REGISTRY_KEY] = reg
     // Keep legacy alias in sync for readers referencing the old name
     globalThis[LEGACY_REGISTRY_KEY] = reg
-    if (process.env.DEBUG_TESTKIT) {
-      console.log('[Registry] Created new global registry instance')
-    }
   }
   // Ensure alias stays in sync if only legacy key exists
   if (!globalThis[LEGACY_REGISTRY_KEY]) {
@@ -140,9 +137,6 @@ export function trackCall(
 export function trackProcess(proc: MockChildProcess): void {
   const registry = getRegistry()
   registry.spawnedProcesses.push(proc)
-  if (globalThis.process?.env?.DEBUG_TESTKIT) {
-    console.log('[Registry] Tracked process, total:', registry.spawnedProcesses.length)
-  }
 }
 
 // Legacy compatibility functions

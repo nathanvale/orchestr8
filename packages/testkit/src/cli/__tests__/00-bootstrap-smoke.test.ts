@@ -121,6 +121,9 @@ describe('CLI process mock bootstrap', () => {
   })
 
   it('should warn when no mock is registered', () => {
+    // Enable debug mode to trigger warnings
+    const originalDebug = process.env.DEBUG_TESTKIT
+    process.env.DEBUG_TESTKIT = '1'
     // Capture console.warn calls
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
 
@@ -133,6 +136,12 @@ describe('CLI process mock bootstrap', () => {
         expect.stringContaining('No mock registered for execSync command: unmocked-command'),
       )
     } finally {
+      // Restore original debug setting
+      if (originalDebug !== undefined) {
+        process.env.DEBUG_TESTKIT = originalDebug
+      } else {
+        delete process.env.DEBUG_TESTKIT
+      }
       warnSpy.mockRestore()
     }
   })

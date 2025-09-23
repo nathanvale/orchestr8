@@ -73,6 +73,9 @@ export interface ProcessMockConfig {
   signal?: NodeJS.Signals | null
 }
 
+// Counter for deterministic PID generation
+let pidCounter = 1000
+
 /**
  * Mock child process implementation
  */
@@ -92,8 +95,16 @@ export class MockChildProcess extends EventEmitter {
     this.stdout = new MockStream()
     this.stderr = new MockStream()
     this.stdin = new MockStream()
-    this.pid =
-      typeof config.pid === 'number' ? config.pid : Math.floor(Math.random() * 10000) + 1000
+
+    // Use deterministic PID generation by default, random only if explicitly requested
+    if (typeof config.pid === 'number') {
+      this.pid = config.pid
+    } else if (process.env.RANDOM_PIDS === 'true') {
+      this.pid = Math.floor(Math.random() * 10000) + 1000
+    } else {
+      // Deterministic incremental PID
+      this.pid = ++pidCounter
+    }
 
     // Simulate process execution asynchronously
     // Use setImmediate to ensure events are emitted after listeners are attached
@@ -573,14 +584,23 @@ export const processHelpers = {
   getMocker: () => getGlobalProcessMocker(),
 
   /**
-   * Clear all calls but keep mocks
+   * Clear all call history but keep registered mocks
    */
   clearCalls: () => clearCalls(),
 
   /**
-   * Clear all mocks and calls
+   * Clear everything: all registered mocks AND call history
+   * @remarks
+   * This is more destructive than clearCalls() as it removes all mock registrations.
+   * Use clearCalls() if you only want to reset call tracking between tests.
    */
   clear: () => getGlobalProcessMocker().clear(),
+
+  /**
+   * Alias for clear() - removes all mocks and calls
+   * @deprecated Use clear() or clearCalls() for clarity
+   */
+  clearAllMocksAndCalls: () => getGlobalProcessMocker().clear(),
 
   /**
    * Restore original functions

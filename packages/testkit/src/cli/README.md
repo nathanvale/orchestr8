@@ -41,7 +41,7 @@ exec('git status', (err, stdout) => {
 
 - Single authoritative mock factory for child_process methods
 - Unified singleton registry prevents parallel/duplicate state
-- Quad-register pattern: one registration covers spawn/exec/execSync/fork
+- Hexa-register pattern: one registration covers all 6 methods (spawn/exec/execSync/fork/execFile/execFileSync)
 - Import-order safe: mocks are hoisted in a bootstrap module
 - Deterministic outputs and failure modes for anti-flake tests
 
@@ -58,7 +58,7 @@ From `@template/testkit`:
   - `spawnUtils`
   - `commonCommands`
   - `mockSpawn(command)` → `SpawnMockBuilder`
-  - `quickMocks`
+  - `quickMocks` (registers for all 6 child_process methods)
 - Types/classes
   - `MockStream`, `MockChildProcess`
   - `SpawnMockBuilder`
@@ -115,7 +115,7 @@ exec('git status', (err, _stdout, stderr) => {
 - `spawnUtils.mockInteractiveCommand(command, responses, finalOutput?, exitCode?)`
 - `mockSpawn(command).stdout(...).stderr(...).exitCode(...).forMethods([...]).mock()`
 
-These register for multiple child_process methods by default (quad-register).
+These register for all 6 child_process methods by default (hexa-register: spawn, exec, execSync, fork, execFile, execFileSync).
 
 ### Verifying calls
 
@@ -168,6 +168,37 @@ Common scenarios:
 - Prefer deterministic assertions: check known stdout substrings, exit codes
 - Use RegExp patterns when arguments vary
 - Isolate imports: make sure bootstrap runs before importing code under test
+
+## Delay Behavior
+
+Note that delay simulation differs between synchronous methods:
+- `execSync`: Simulates synchronous delay using a busy-wait loop
+- `execFileSync`: Returns immediately without delay simulation
+- Async methods (`spawn`, `exec`, `execFile`, `fork`): Properly simulate async delays
+
+This design avoids blocking test execution unnecessarily while still allowing delay testing for methods that support it.
+
+## Fallback Precedence
+
+When a command is not found in a method-specific registry, the system checks in this order:
+1. Primary map (method-specific registry)
+2. `execFile` map
+3. `execSync` map
+4. `spawn` map
+5. `fork` map
+6. `execFileSync` map
+
+If a command is registered differently for multiple methods, the fallback may match a different method's config. Use method-specific registration when different behaviors are intended.
+
+## Environment Variables
+
+The CLI mocking system supports several environment variables for fine-tuning behavior:
+
+- `DEBUG_TESTKIT`: Enable verbose logging of mock operations
+- `ALLOW_SYNC_DELAY=true`: Allow synchronous delay simulation in execSync (capped at 250ms)
+- `STRICT_PROCESS_MOCKS=1`: Warn when mocks are found via fallback instead of primary registry
+- `STRICT_PROCESS_MOCKS=throw`: Throw error when fallback would be used (ultra-strict mode)
+- `RANDOM_PIDS=true`: Use random PIDs instead of deterministic incremental PIDs
 
 ## References
 

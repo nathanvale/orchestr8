@@ -5,6 +5,7 @@
 
 // IMPORTANT: type-only import to avoid circular runtime import while mocking
 import type * as cp from 'node:child_process'
+import { promisify } from 'node:util'
 import { URL } from 'url'
 import { vi } from 'vitest'
 
@@ -20,35 +21,66 @@ export function createChildProcessMock(): typeof cp {
   // Don't capture registry in closure - call getRegistry() each time
 
   function warnMissing(kind: string, key: string) {
-    console.warn(`No mock registered for ${kind}: ${key}`)
-    const hint = kind.startsWith('spawn')
-      ? 'mocker.registerSpawn(command, config)'
-      : kind.startsWith('execFileSync')
-        ? 'mocker.registerExecFileSync(file, config)'
-        : kind.startsWith('execFile')
-          ? 'mocker.registerExecFile(file, config)'
-          : kind.startsWith('execSync')
-            ? 'mocker.registerExecSync(command, config)'
-            : kind.startsWith('fork')
-              ? 'mocker.registerFork(modulePath, config)'
-              : 'mocker.registerExec(command, config)'
-    console.warn(`Register with: ${hint}`)
+    if (process.env.DEBUG_TESTKIT) {
+      console.warn(`No mock registered for ${kind}: ${key}`)
+      const hint = kind.startsWith('spawn')
+        ? 'mocker.registerSpawn(command, config)'
+        : kind.startsWith('execFileSync')
+          ? 'mocker.registerExecFileSync(file, config)'
+          : kind.startsWith('execFile')
+            ? 'mocker.registerExecFile(file, config)'
+            : kind.startsWith('execSync')
+              ? 'mocker.registerExecSync(command, config)'
+              : kind.startsWith('fork')
+                ? 'mocker.registerFork(modulePath, config)'
+                : 'mocker.registerExec(command, config)'
+      console.warn(`Register with: ${hint}`)
+    }
   }
 
-  // Fallback lookup: try primary, then others to honor quad-register semantics
+  // Fallback lookup: try primary, then others to honor hexa-register semantics
   function findWithFallback(
     primary: Map<string | RegExp, ProcessMockConfig>,
     input: string,
+    kind?: string,
   ): ProcessMockConfig | undefined {
     const reg = getRegistry()
-    return (
-      findConfig(primary, input) ||
+
+    // First try primary map
+    const primaryConfig = findConfig(primary, input)
+    if (primaryConfig) {
+      return primaryConfig
+    }
+
+    // Check for strict mode
+    const strictMode = process.env.STRICT_PROCESS_MOCKS === '1'
+
+    // Try fallback maps
+    const fallbackConfig =
       findConfig(reg.execFileMocks, input) ||
       findConfig(reg.execSyncMocks, input) ||
       findConfig(reg.spawnMocks, input) ||
       findConfig(reg.forkMocks, input) ||
       findConfig(reg.execFileSyncMocks, input)
-    )
+
+    if (fallbackConfig && strictMode && kind) {
+      // In strict mode, warn when using fallback
+      if (process.env.DEBUG_TESTKIT) {
+        console.warn(
+          `[STRICT MODE] Mock for ${kind} "${input}" found via fallback, not in primary registry. ` +
+            `Consider registering specifically for ${kind}.`,
+        )
+      }
+      // Optionally throw in ultra-strict mode
+      if (process.env.STRICT_PROCESS_MOCKS === 'throw') {
+        throw new Error(
+          `Strict mode: Mock for ${kind} "${input}" not found in primary registry. ` +
+            `Found in fallback but STRICT_PROCESS_MOCKS=throw prevents fallback usage.`,
+        )
+      }
+    }
+
+    return fallbackConfig
   }
 
   // Create spawn mock
@@ -63,7 +95,7 @@ export function createChildProcessMock(): typeof cp {
       console.log('[spawn mock] Registry keys:', Array.from(registry.spawnMocks.keys()))
     }
 
-    const config = findWithFallback(registry.spawnMocks, fullCommand)
+    const config = findWithFallback(registry.spawnMocks, fullCommand, 'spawn')
 
     if (!config) {
       warnMissing('spawn command', fullCommand)
@@ -83,7 +115,7 @@ export function createChildProcessMock(): typeof cp {
 
     trackCall('exec', { command, options: actualOptions || undefined })
 
-    const config = findWithFallback(getRegistry().execMocks, command)
+    const config = findWithFallback(getRegistry().execMocks, command, 'exec')
 
     if (!config) {
       warnMissing('exec command', command)
@@ -133,13 +165,39 @@ export function createChildProcessMock(): typeof cp {
 
   // Add __promisify__ to match Node.js exec signature
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  ;(exec as any).__promisify__ = vi.fn()
+  ;(exec as any).__promisify__ = vi.fn((command: string, options?: cp.ExecOptions) => {
+    return new Promise<{ stdout: string; stderr: string }>((resolve, reject) => {
+      exec(command, options, (error, stdout, _stderr) => {
+        if (error) {
+          reject(error)
+        } else {
+          resolve({ stdout: stdout.toString(), stderr: _stderr?.toString?.() ?? '' })
+        }
+      })
+    })
+  })
+
+  // Also provide util.promisify.custom so util.promisify(exec) returns { stdout, stderr }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ;(exec as any)[(promisify as unknown as { custom: symbol }).custom] = vi.fn(
+    (command: string, options?: cp.ExecOptions) => {
+      return new Promise<{ stdout: string; stderr: string }>((resolve, reject) => {
+        exec(command, options, (error, stdout, _stderr) => {
+          if (error) {
+            reject(error)
+          } else {
+            resolve({ stdout: stdout.toString(), stderr: _stderr?.toString?.() ?? '' })
+          }
+        })
+      })
+    },
+  )
 
   // Create execSync mock
   const execSync = vi.fn((command: string, options?: cp.ExecSyncOptions) => {
     trackCall('execSync', { command, options })
 
-    const config = findWithFallback(getRegistry().execSyncMocks, command)
+    const config = findWithFallback(getRegistry().execSyncMocks, command, 'execSync')
 
     if (!config) {
       warnMissing('execSync command', command)
@@ -168,11 +226,20 @@ export function createChildProcessMock(): typeof cp {
       throw error
     }
 
-    // If delay is specified, use a sync delay (not recommended in real code)
+    // If delay is specified, use a sync delay (capped for safety)
     if (config?.delay) {
-      const start = Date.now()
-      while (Date.now() - start < config.delay) {
-        // Busy wait
+      // Cap delay at 250ms to prevent blocking event loop too long
+      const MAX_SYNC_DELAY = 250
+      const actualDelay = Math.min(config.delay, MAX_SYNC_DELAY)
+
+      // Only apply delay if explicitly allowed
+      if (process.env.ALLOW_SYNC_DELAY === 'true') {
+        const start = Date.now()
+        while (Date.now() - start < actualDelay) {
+          // Busy wait - intentionally blocking for test simulation
+        }
+      } else if (process.env.DEBUG_TESTKIT) {
+        console.warn(`Sync delay of ${config.delay}ms requested but ALLOW_SYNC_DELAY not set`)
       }
     }
 
@@ -196,7 +263,11 @@ export function createChildProcessMock(): typeof cp {
         options,
       })
 
-      const config = findWithFallback(getRegistry().forkMocks, modulePathStr)
+      // For fork, try both module path alone and full command format
+      const fullCommand = normalizeParts(modulePathStr, args ? [...args] : undefined)
+      const config =
+        findWithFallback(getRegistry().forkMocks, modulePathStr, 'fork') ||
+        findWithFallback(getRegistry().forkMocks, fullCommand, 'fork')
 
       if (!config) {
         warnMissing('fork module', modulePathStr)
@@ -243,20 +314,23 @@ export function createChildProcessMock(): typeof cp {
           ) => void)
         | undefined
 
-      // Handle overloaded signatures
+      // Handle overloaded signatures robustly regardless of undefined placeholders
       if (Array.isArray(argsOrOptions)) {
         actualArgs = argsOrOptions as string[]
-        if (typeof optionsOrCallback === 'function') {
-          actualCallback = optionsOrCallback as typeof actualCallback
-        } else {
-          actualOptions = optionsOrCallback as cp.ExecFileOptions | undefined
-          actualCallback = callback as typeof actualCallback
-        }
       } else if (typeof argsOrOptions === 'function') {
         actualCallback = argsOrOptions as typeof actualCallback
-      } else {
-        actualOptions = argsOrOptions as cp.ExecFileOptions | undefined
+      } else if (argsOrOptions) {
+        actualOptions = argsOrOptions as cp.ExecFileOptions
+      }
+
+      if (typeof optionsOrCallback === 'function') {
         actualCallback = optionsOrCallback as typeof actualCallback
+      } else if (optionsOrCallback) {
+        actualOptions = optionsOrCallback as cp.ExecFileOptions
+      }
+
+      if (callback) {
+        actualCallback = callback as typeof actualCallback
       }
 
       const fullCommand = normalizeParts(file, actualArgs)
@@ -266,7 +340,7 @@ export function createChildProcessMock(): typeof cp {
         options: actualOptions,
       })
 
-      const config = findWithFallback(getRegistry().execFileMocks, fullCommand)
+      const config = findWithFallback(getRegistry().execFileMocks, fullCommand, 'execFile')
 
       if (!config) {
         warnMissing('execFile', fullCommand)
@@ -319,7 +393,35 @@ export function createChildProcessMock(): typeof cp {
 
   // Add __promisify__ to match Node.js execFile signature
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  ;(execFile as any).__promisify__ = vi.fn()
+  ;(execFile as any).__promisify__ = vi.fn(
+    (file: string, args?: readonly string[], options?: cp.ExecFileOptions) => {
+      return new Promise<{ stdout: string; stderr: string }>((resolve, reject) => {
+        execFile(file, args, options, (error, stdout, _stderr) => {
+          if (error) {
+            reject(error)
+          } else {
+            resolve({ stdout: stdout.toString(), stderr: _stderr?.toString?.() ?? '' })
+          }
+        })
+      })
+    },
+  )
+
+  // And util.promisify.custom for execFile as well
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ;(execFile as any)[(promisify as unknown as { custom: symbol }).custom] = vi.fn(
+    (file: string, args?: readonly string[], options?: cp.ExecFileOptions) => {
+      return new Promise<{ stdout: string; stderr: string }>((resolve, reject) => {
+        execFile(file, args, options, (error, stdout, _stderr) => {
+          if (error) {
+            reject(error)
+          } else {
+            resolve({ stdout: stdout.toString(), stderr: _stderr?.toString?.() ?? '' })
+          }
+        })
+      })
+    },
+  )
 
   // Create execFileSync mock
   const execFileSync = vi.fn(
@@ -331,10 +433,17 @@ export function createChildProcessMock(): typeof cp {
         options,
       })
 
-      const config = findWithFallback(getRegistry().execFileSyncMocks, fullCommand)
+      const config = findWithFallback(getRegistry().execFileSyncMocks, fullCommand, 'execFileSync')
 
       if (!config) {
         warnMissing('execFileSync', fullCommand)
+      }
+
+      // Throw error if delay is specified - execFileSync doesn't support delays
+      if (config?.delay) {
+        throw new Error(
+          `execFileSync does not support delays. Remove delay from mock config for: ${fullCommand}`,
+        )
       }
 
       if (config?.error) {
