@@ -1,0 +1,63 @@
+---
+name: Write comprehensive integration tests for SQLite helpers
+status: open
+created: 2025-09-23T02:00:07Z
+updated: 2025-09-23T02:00:07Z
+github: [Will be updated when synced to GitHub]
+depends_on: [001, 002, 003, 004, 005, 006]
+parallel: false
+conflicts_with: []
+---
+
+# Task: Write comprehensive integration tests for SQLite helpers
+
+## Description
+
+Create a comprehensive test suite that validates all SQLite utilities work
+correctly together. Keep the default test cycle unit-fast; place driver/ORM
+integrations behind env flags.
+
+## Acceptance Criteria
+
+- [ ] Create `packages/testkit/src/sqlite/__tests__/` with coverage for helpers
+- [ ] Test memory URL variants; smoke CRUD only if env enables driver
+- [ ] Test file database cleanup in success/failure
+- [ ] Verify transaction commit/rollback behavior (fake adapter)
+- [ ] Test migration and seeding workflows
+- [ ] Validate ORM URL helper outputs
+- [ ] Optional: env-gated driver/ORM integration tests
+- [ ] Anti-flake: avoid `test.concurrent` for DB tests; enforce ORDER BY in
+      assertions; fix system time where relevant
+- [ ] Add a capabilities probe that validates environment expectations early
+      (e.g., `PRAGMA foreign_keys = ON`, file DBs default to WAL when
+      `applyRecommendedPragmas` is used, and JSON1 availability if relied on).
+      Fail fast with a clear message if expectations aren't met.
+- [ ] Add a "capabilities probe" test that validates expected environment
+      properties early (e.g., `PRAGMA foreign_keys = ON`, `PRAGMA journal_mode`
+      is `wal` for file DBs, and JSON1 availability if used). Fail fast with a
+      clear message if expectations aren't met.
+
+## Technical Details
+
+- Test location: `packages/testkit/src/sqlite/__tests__/`
+- Focus on behavior and error conditions
+- Verify cleanup in failure scenarios
+- Parallel execution coverage as needed
+
+## Dependencies
+
+- [ ] All SQLite helper implementations (Tasks 001-006)
+- [ ] Vitest test runner configuration
+
+## Effort Estimate
+
+- Size: M
+- Hours: 3-4
+- Parallel: false (requires all components)
+
+## Definition of Done
+
+- [ ] High coverage for core helpers (Phase 1)
+- [ ] Integration tests gated and passing when enabled
+- [ ] Cleanup validated in all scenarios
+- [ ] Documentation updated with test examples

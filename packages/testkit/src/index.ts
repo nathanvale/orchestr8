@@ -13,48 +13,48 @@ export * from './containers/index.js'
 export * from './convex/index.js'
 export * from './env/index.js'
 export * from './fs/index.js'
+export * from './sqlite/index.js'
 
 // MSW exports - handle delay conflict by aliasing
 export {
-  // Setup functions
-  setupMSW,
-  setupMSWGlobal,
-  setupMSWManual,
-  setupMSWForEnvironment,
-  createTestScopedMSW,
-  quickSetupMSW,
-  // Server management
-  getMSWServer,
-  createMSWServer,
-  startMSWServer,
-  stopMSWServer,
-  resetMSWHandlers,
-  addMSWHandlers,
-  restoreMSWHandlers,
-  disposeMSWServer,
-  // Configuration
-  createMSWConfig,
-  getMSWConfig,
-  updateMSWConfig,
-  validateMSWConfig,
-  defaultMSWConfig,
-  // Handlers
-  createSuccessResponse,
-  createErrorResponse,
-  createDelayedResponse,
-  createAuthHandlers,
-  createCRUDHandlers,
-  createPaginatedHandler,
-  createNetworkIssueHandler,
-  createUnreliableHandler,
-  defaultHandlers,
+  COMMON_HEADERS,
   // Constants
   HTTP_STATUS,
-  COMMON_HEADERS,
+  HttpResponse,
+  addMSWHandlers,
+  createAuthHandlers,
+  createCRUDHandlers,
+  createDelayedResponse,
+  createErrorResponse,
+  // Configuration
+  createMSWConfig,
+  createMSWServer,
+  createNetworkIssueHandler,
+  createPaginatedHandler,
+  // Handlers
+  createSuccessResponse,
+  createTestScopedMSW,
+  createUnreliableHandler,
+  defaultHandlers,
+  defaultMSWConfig,
+  disposeMSWServer,
+  getMSWConfig,
+  // Server management
+  getMSWServer,
   // Direct MSW re-exports (except delay which conflicts with utils)
   http,
-  HttpResponse,
-  // delay as mswDelay, // Alias MSW's delay to avoid conflict
+  quickSetupMSW,
+  resetMSWHandlers,
+  restoreMSWHandlers,
+  // Setup functions
+  setupMSW,
+  setupMSWForEnvironment,
+  setupMSWGlobal,
+  setupMSWManual,
+  startMSWServer,
+  stopMSWServer,
+  updateMSWConfig,
+  validateMSWConfig,
 } from './msw/index.js'
 
 export * from './register.js'

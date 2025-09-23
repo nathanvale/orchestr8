@@ -7,7 +7,7 @@ status: in-progress
 progress: 67%
 prd_link: ../../prds/vitest-wallaby-testbed.md
 created: 2025-09-20T03:22:42Z
-updated: 2025-09-23T01:48:39Z
+updated: 2025-09-23T16:25:00Z
 ---
 
 # Epic: vitest-wallaby-testbed
@@ -51,9 +51,10 @@ maintaining sub-second feedback loops.
 ## Related Documentation
 
 - [Product Requirements Document](../../prds/vitest-wallaby-testbed.md)
-- [Technical PRD Guide](.docs/guides/vitest-wallaby-prd.md)
-- [Technical Specification](./docs/guides/vitest-wallaby-spec.md)
-- [Technical Design Document](./docs/guides/vitest-wallaby-tdd.md)
+- [Technical PRD Guide](./docs/vitest-wallaby-prd.md)
+- [Technical Specification](./docs/vitest-wallaby-spec.md)
+- [Technical Design Document](./docs/vitest-wallaby-tdd.md)
+- [Implementation Review (2025‑09‑23)](./docs/vitest-wallaby-implementation-review-2025-09-23.md)
 
 ## Success Criteria
 
@@ -78,8 +79,10 @@ maintaining sub-second feedback loops.
 ### Phase 2: Mocking Infrastructure (Tasks 011-020) 🚧 IN PROGRESS
 
 - ✅ Implement HTTP/API mocking with MSW
-- ❌ Create database mocking strategies (not started)
-- 🚧 Setup CLI command mocking (major issues - needs redesign)
+- ℹ️ Create database mocking strategies — N/A by policy (prefer
+  Testcontainers/SQLite; do not mock DB drivers)
+- ✅ Setup CLI command mocking — implemented via factory pattern + hoisted
+  bootstrap (follow-ups in Tasks 015/016)
 - ✅ Implement file system test utilities
 - ✅ Configure time and randomness control
   - ✅ **Task 007**: Timer utilities implemented and tested
@@ -104,8 +107,8 @@ maintaining sub-second feedback loops.
 
 ### Phase 3: Integration Layer (Tasks 021-030) ❌ NOT STARTED
 
-- ❌ Setup Testcontainers for Postgres
-- ❌ Setup Testcontainers for MySQL
+- ✅ Setup Testcontainers for Postgres (see Task 003)
+- ✅ Setup Testcontainers for MySQL (see Task 004)
 - ❌ Implement Convex local backend testing
 - ✅ Create tmp directory management (implemented in Task 009)
 - ❌ Build integration test templates
@@ -136,7 +139,7 @@ maintaining sub-second feedback loops.
 
 ## Critical Architecture Issues
 
-### CLI Mocking Design Flaws (Discovered 2025-09-20)
+### CLI Mocking Design Flaws (Discovered 2025-09-20) — Resolved
 
 #### Symptoms
 
@@ -182,29 +185,31 @@ maintaining sub-second feedback loops.
 - Fundamental incompatibility with vi.mock hoisting makes current approach
   unviable
 
-#### Recommended Redesign
+#### Implemented Redesign
 
-1. **Single Authoritative Mock Factory**
-   - Declare `vi.mock('node:child_process', () => createMock(cpState))` in setup
-     file
-   - Must run before any consumer imports
-   - Factory pulls behavior from central registry (ProcessMocker) at mock time
-   - No runtime patching after module load
+1. **Single Authoritative Mock Factory** — Implemented
+   - `vi.mock('node:child_process'|'child_process')` declared in
+     `packages/testkit/src/bootstrap.ts`
+   - Factory-backed module in `src/cli/mock-factory.ts` uses a unified registry
+     with Node-like semantics
 
-2. **Enforce Import Order**
-   - Provide testkit bootstrap that hoists vi.mock and initializes registry
-   - Import consumer code after bootstrap
-   - Document usage patterns and provide test templates
+2. **Enforce Import Order** — Implemented
+   - `packages/testkit/src/register.ts` imports `bootstrap.ts` first to ensure
+     hoisting before consumer imports
+   - Process mocking lifecycle hooks are installed centrally
 
-3. **Align Helper Semantics**
-   - Decide if `quickMocks` is spawn-only or tri-registers spawn/exec/execSync
-   - Update either documentation or helpers for consistency
-   - Ensure test expectations match actual behavior
+3. **Align Helper Semantics** — Partially complete (Task 015)
+   - Quad-register defaults provided via `spawnUtils` and builder APIs
+   - Documentation updates pending to clearly state semantics and examples
 
-4. **Unify Runner Configuration**
-   - Make Wallaby honor package's `vitest.config.ts`
-   - OR make root config load package-level setupFiles/timeouts
-   - Eliminate environment-based configuration drift
+4. **Unify Runner Configuration** — Partially complete (Task 016)
+   - `src/config/vitest.base.ts` provides shared base; Wallaby-optimized variant
+     available
+   - Validate repo-wide that Wallaby uses the same setupFiles/timeouts as Vitest
+
+See also the
+[Implementation Review](./docs/vitest-wallaby-implementation-review-2025-09-23.md)
+for a full mapping and follow-ups.
 
 ## Open Questions
 
