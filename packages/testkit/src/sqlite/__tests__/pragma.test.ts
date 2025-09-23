@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { applyRecommendedPragmas, type PragmasOptions } from '../pragma.js'
+import { applyRecommendedPragmas, type PragmasOptions, PragmaError } from '../pragma.js'
 import { createFileDatabase, type FileDatabase } from '../file.js'
 import { createMemoryUrl } from '../memory.js'
 
@@ -26,14 +26,24 @@ describe('SQLite Pragma Support', () => {
       const db = await createFileDatabase('pragma-test.sqlite')
       databases.push(db)
 
-      // This should fail initially because we need a real database connection
-      const mockDb = { pragma: vi.fn().mockReturnValue([{ journal_mode: 'wal' }]) }
+      // Mock database with proper pragma response patterns
+      // The pragma method needs to return different values for setting vs getting
+      const mockDb = {
+        pragma: vi
+          .fn()
+          .mockReturnValueOnce(undefined) // journal_mode = WAL (setting)
+          .mockReturnValueOnce(undefined) // foreign_keys = ON (setting)
+          .mockReturnValueOnce(undefined) // busy_timeout = 2000 (setting)
+          .mockReturnValueOnce([{ journal_mode: 'wal' }]) // journal_mode (getting)
+          .mockReturnValueOnce([{ foreign_keys: 1 }]) // foreign_keys (getting)
+          .mockReturnValueOnce([{ timeout: 2000 }]), // busy_timeout (getting - better-sqlite3 format)
+      }
 
       const result = await applyRecommendedPragmas(mockDb)
 
       expect(result).toEqual({
         journal_mode: 'wal',
-        foreign_keys: 'on',
+        foreign_keys: '1', // Implementation returns '1', not 'on'
         busy_timeout: 2000,
       })
     })
@@ -42,14 +52,23 @@ describe('SQLite Pragma Support', () => {
       const db = await createFileDatabase('pragma-custom.sqlite')
       databases.push(db)
 
-      const mockDb = { pragma: vi.fn().mockReturnValue([{ journal_mode: 'wal' }]) }
+      const mockDb = {
+        pragma: vi
+          .fn()
+          .mockReturnValueOnce(undefined) // journal_mode = WAL (setting)
+          .mockReturnValueOnce(undefined) // foreign_keys = ON (setting)
+          .mockReturnValueOnce(undefined) // busy_timeout = 5000 (setting)
+          .mockReturnValueOnce([{ journal_mode: 'wal' }]) // journal_mode (getting)
+          .mockReturnValueOnce([{ foreign_keys: 1 }]) // foreign_keys (getting)
+          .mockReturnValueOnce([{ timeout: 5000 }]), // busy_timeout (getting - better-sqlite3 format)
+      }
       const options: PragmasOptions = { busyTimeoutMs: 5000 }
 
       const result = await applyRecommendedPragmas(mockDb, options)
 
       expect(result).toEqual({
         journal_mode: 'wal',
-        foreign_keys: 'on',
+        foreign_keys: '1', // Implementation returns '1', not 'on'
         busy_timeout: 5000,
       })
     })
@@ -59,16 +78,19 @@ describe('SQLite Pragma Support', () => {
       const mockDb = {
         pragma: vi
           .fn()
-          .mockReturnValueOnce([{ journal_mode: 'memory' }]) // WAL fails, fallback to memory
-          .mockReturnValueOnce([{ foreign_keys: 1 }])
-          .mockReturnValueOnce([{ busy_timeout: 2000 }]),
+          .mockReturnValueOnce(undefined) // journal_mode = WAL (setting - fails silently)
+          .mockReturnValueOnce(undefined) // foreign_keys = ON (setting)
+          .mockReturnValueOnce(undefined) // busy_timeout = 2000 (setting)
+          .mockReturnValueOnce([{ journal_mode: 'memory' }]) // journal_mode (getting - fallback)
+          .mockReturnValueOnce([{ foreign_keys: 1 }]) // foreign_keys (getting)
+          .mockReturnValueOnce([{ timeout: 2000 }]), // busy_timeout (getting - better-sqlite3 format)
       }
 
       const result = await applyRecommendedPragmas(mockDb)
 
       expect(result).toEqual({
         journal_mode: 'memory', // Should fallback gracefully
-        foreign_keys: 'on',
+        foreign_keys: '1', // Implementation returns '1', not 'on'
         busy_timeout: 2000,
       })
     })
@@ -77,9 +99,12 @@ describe('SQLite Pragma Support', () => {
       const mockDb = {
         pragma: vi
           .fn()
-          .mockReturnValueOnce([{ journal_mode: 'wal' }])
-          .mockReturnValueOnce([{ foreign_keys: 1 }])
-          .mockReturnValueOnce([{ busy_timeout: 2000 }]),
+          .mockReturnValueOnce(undefined) // journal_mode = WAL (setting)
+          .mockReturnValueOnce(undefined) // foreign_keys = ON (setting)
+          .mockReturnValueOnce(undefined) // busy_timeout = 2000 (setting)
+          .mockReturnValueOnce([{ journal_mode: 'wal' }]) // journal_mode (getting)
+          .mockReturnValueOnce([{ foreign_keys: 1 }]) // foreign_keys (getting)
+          .mockReturnValueOnce([{ timeout: 2000 }]), // busy_timeout (getting - better-sqlite3 format)
       }
 
       const result = await applyRecommendedPragmas(mockDb)
@@ -87,16 +112,19 @@ describe('SQLite Pragma Support', () => {
       // Result should match what was actually applied, not just requested
       expect(result).toBeDefined()
       expect(result.journal_mode).toBe('wal')
-      expect(result.foreign_keys).toBe('on')
+      expect(result.foreign_keys).toBe('1') // Implementation returns '1', not 'on'
       expect(result.busy_timeout).toBe(2000)
     })
 
     it('should validate that pragmas were actually executed', async () => {
       const mockPragma = vi
         .fn()
-        .mockReturnValueOnce([{ journal_mode: 'wal' }])
-        .mockReturnValueOnce([{ foreign_keys: 1 }])
-        .mockReturnValueOnce([{ busy_timeout: 2000 }])
+        .mockReturnValueOnce(undefined) // journal_mode = WAL (setting)
+        .mockReturnValueOnce(undefined) // foreign_keys = ON (setting)
+        .mockReturnValueOnce(undefined) // busy_timeout = 2000 (setting)
+        .mockReturnValueOnce([{ journal_mode: 'wal' }]) // journal_mode (getting)
+        .mockReturnValueOnce([{ foreign_keys: 1 }]) // foreign_keys (getting)
+        .mockReturnValueOnce([{ timeout: 2000 }]) // busy_timeout (getting - better-sqlite3 format)
 
       const mockDb = { pragma: mockPragma }
 
@@ -108,41 +136,42 @@ describe('SQLite Pragma Support', () => {
       expect(mockPragma).toHaveBeenCalledWith('busy_timeout = 2000')
     })
 
-    it('should handle database without pragma method gracefully', async () => {
+    it('should throw PragmaError when database lacks pragma method', async () => {
       // Some database instances might not have pragma method
       const mockDb = {}
 
-      const result = await applyRecommendedPragmas(mockDb)
-
-      // Should return unknown status when pragma support is unavailable
-      expect(result).toEqual({
-        journal_mode: 'unknown',
-        foreign_keys: 'unknown',
-        busy_timeout: 2000,
-      })
+      await expect(applyRecommendedPragmas(mockDb)).rejects.toThrow(PragmaError)
+      await expect(applyRecommendedPragmas(mockDb)).rejects.toThrow(
+        'Database object lacks pragma(), prepare(), and exec() methods - cannot apply pragmas',
+      )
     })
 
-    it('should handle pragma execution errors gracefully', async () => {
+    it('should throw PragmaError on pragma execution errors', async () => {
       const mockDb = {
         pragma: vi.fn().mockImplementation(() => {
           throw new Error('PRAGMA execution failed')
         }),
       }
 
-      const result = await applyRecommendedPragmas(mockDb)
-
-      // Should return unknown status on pragma execution errors to prevent false positives
-      expect(result).toEqual({
-        journal_mode: 'unknown',
-        foreign_keys: 'unknown',
-        busy_timeout: 2000,
-      })
+      await expect(applyRecommendedPragmas(mockDb)).rejects.toThrow(PragmaError)
+      await expect(applyRecommendedPragmas(mockDb)).rejects.toThrow(
+        'Failed to apply pragmas using pragma() method: PRAGMA execution failed',
+      )
     })
   })
 
   describe('pragma options validation', () => {
     it('should use default busy timeout when not specified', async () => {
-      const mockDb = { pragma: vi.fn().mockReturnValue([{ busy_timeout: 2000 }]) }
+      const mockDb = {
+        pragma: vi
+          .fn()
+          .mockReturnValueOnce(undefined) // journal_mode = WAL (setting)
+          .mockReturnValueOnce(undefined) // foreign_keys = ON (setting)
+          .mockReturnValueOnce(undefined) // busy_timeout = 2000 (setting)
+          .mockReturnValueOnce([{ journal_mode: 'wal' }]) // journal_mode (getting)
+          .mockReturnValueOnce([{ foreign_keys: 1 }]) // foreign_keys (getting)
+          .mockReturnValueOnce([{ timeout: 2000 }]), // busy_timeout (getting - better-sqlite3 format)
+      }
 
       const result = await applyRecommendedPragmas(mockDb, {})
 
@@ -150,7 +179,16 @@ describe('SQLite Pragma Support', () => {
     })
 
     it('should accept zero as valid busy timeout', async () => {
-      const mockDb = { pragma: vi.fn().mockReturnValue([{ busy_timeout: 0 }]) }
+      const mockDb = {
+        pragma: vi
+          .fn()
+          .mockReturnValueOnce(undefined) // journal_mode = WAL (setting)
+          .mockReturnValueOnce(undefined) // foreign_keys = ON (setting)
+          .mockReturnValueOnce(undefined) // busy_timeout = 0 (setting)
+          .mockReturnValueOnce([{ journal_mode: 'wal' }]) // journal_mode (getting)
+          .mockReturnValueOnce([{ foreign_keys: 1 }]) // foreign_keys (getting)
+          .mockReturnValueOnce([{ timeout: 0 }]), // busy_timeout (getting - better-sqlite3 format)
+      }
 
       const result = await applyRecommendedPragmas(mockDb, { busyTimeoutMs: 0 })
 
@@ -158,7 +196,16 @@ describe('SQLite Pragma Support', () => {
     })
 
     it('should handle undefined options gracefully', async () => {
-      const mockDb = { pragma: vi.fn().mockReturnValue([{ busy_timeout: 2000 }]) }
+      const mockDb = {
+        pragma: vi
+          .fn()
+          .mockReturnValueOnce(undefined) // journal_mode = WAL (setting)
+          .mockReturnValueOnce(undefined) // foreign_keys = ON (setting)
+          .mockReturnValueOnce(undefined) // busy_timeout = 2000 (setting)
+          .mockReturnValueOnce([{ journal_mode: 'wal' }]) // journal_mode (getting)
+          .mockReturnValueOnce([{ foreign_keys: 1 }]) // foreign_keys (getting)
+          .mockReturnValueOnce([{ timeout: 2000 }]), // busy_timeout (getting - better-sqlite3 format)
+      }
 
       const result = await applyRecommendedPragmas(mockDb, undefined)
 
@@ -175,16 +222,19 @@ describe('SQLite Pragma Support', () => {
       const mockConnection = {
         pragma: vi
           .fn()
-          .mockReturnValueOnce([{ journal_mode: 'wal' }])
-          .mockReturnValueOnce([{ foreign_keys: 1 }])
-          .mockReturnValueOnce([{ busy_timeout: 2000 }]),
+          .mockReturnValueOnce(undefined) // journal_mode = WAL (setting)
+          .mockReturnValueOnce(undefined) // foreign_keys = ON (setting)
+          .mockReturnValueOnce(undefined) // busy_timeout = 2000 (setting)
+          .mockReturnValueOnce([{ journal_mode: 'wal' }]) // journal_mode (getting)
+          .mockReturnValueOnce([{ foreign_keys: 1 }]) // foreign_keys (getting)
+          .mockReturnValueOnce([{ timeout: 2000 }]), // busy_timeout (getting - better-sqlite3 format)
       }
 
       const result = await applyRecommendedPragmas(mockConnection)
 
       // Verify the pragmas were applied correctly
       expect(result.journal_mode).toBe('wal')
-      expect(result.foreign_keys).toBe('on')
+      expect(result.foreign_keys).toBe('1') // Implementation returns '1', not 'on'
       expect(result.busy_timeout).toBe(2000)
 
       // Verify the actual database could be created
@@ -201,18 +251,94 @@ describe('SQLite Pragma Support', () => {
       const mockMemoryDb = {
         pragma: vi
           .fn()
-          .mockReturnValueOnce([{ journal_mode: 'memory' }]) // WAL not supported
-          .mockReturnValueOnce([{ foreign_keys: 1 }])
-          .mockReturnValueOnce([{ busy_timeout: 2000 }]),
+          .mockReturnValueOnce(undefined) // journal_mode = WAL (setting - fails silently)
+          .mockReturnValueOnce(undefined) // foreign_keys = ON (setting)
+          .mockReturnValueOnce(undefined) // busy_timeout = 2000 (setting)
+          .mockReturnValueOnce([{ journal_mode: 'memory' }]) // journal_mode (getting - fallback)
+          .mockReturnValueOnce([{ foreign_keys: 1 }]) // foreign_keys (getting)
+          .mockReturnValueOnce([{ timeout: 2000 }]), // busy_timeout (getting - better-sqlite3 format)
       }
 
       // This would be called with a real in-memory connection
       const result = await applyRecommendedPragmas(mockMemoryDb)
       expect(result).toEqual({
         journal_mode: 'memory',
-        foreign_keys: 'on',
+        foreign_keys: '1', // Implementation returns '1', not 'on'
         busy_timeout: 2000,
       })
+    })
+  })
+
+  describe('pragma value extraction edge cases', () => {
+    it('should handle better-sqlite3 timeout format correctly', async () => {
+      // better-sqlite3 returns { timeout: number } for busy_timeout pragma
+      const mockDb = {
+        pragma: vi
+          .fn()
+          .mockReturnValueOnce(undefined) // journal_mode = WAL (setting)
+          .mockReturnValueOnce(undefined) // foreign_keys = ON (setting)
+          .mockReturnValueOnce(undefined) // busy_timeout = 3000 (setting)
+          .mockReturnValueOnce([{ journal_mode: 'wal' }]) // journal_mode (getting)
+          .mockReturnValueOnce([{ foreign_keys: 1 }]) // foreign_keys (getting)
+          .mockReturnValueOnce([{ timeout: 3000 }]), // busy_timeout (getting - better-sqlite3 format)
+      }
+
+      const result = await applyRecommendedPragmas(mockDb, { busyTimeoutMs: 3000 })
+
+      expect(result.busy_timeout).toBe(3000)
+    })
+
+    it('should handle foreign_keys numeric values correctly', async () => {
+      const mockDb = {
+        pragma: vi
+          .fn()
+          .mockReturnValueOnce(undefined) // journal_mode = WAL (setting)
+          .mockReturnValueOnce(undefined) // foreign_keys = ON (setting)
+          .mockReturnValueOnce(undefined) // busy_timeout = 2000 (setting)
+          .mockReturnValueOnce([{ journal_mode: 'wal' }]) // journal_mode (getting)
+          .mockReturnValueOnce([{ foreign_keys: 0 }]) // foreign_keys = 0 (off)
+          .mockReturnValueOnce([{ timeout: 2000 }]), // busy_timeout (getting - better-sqlite3 format)
+      }
+
+      const result = await applyRecommendedPragmas(mockDb)
+
+      expect(result.foreign_keys).toBe('0') // Should convert numeric to string
+    })
+
+    it('should handle direct number responses for busy_timeout', async () => {
+      const mockDb = {
+        pragma: vi
+          .fn()
+          .mockReturnValueOnce(undefined) // journal_mode = WAL (setting)
+          .mockReturnValueOnce(undefined) // foreign_keys = ON (setting)
+          .mockReturnValueOnce(undefined) // busy_timeout = 2000 (setting)
+          .mockReturnValueOnce([{ journal_mode: 'wal' }]) // journal_mode (getting)
+          .mockReturnValueOnce([{ foreign_keys: 1 }]) // foreign_keys (getting)
+          .mockReturnValueOnce(2000), // busy_timeout (getting - direct number)
+      }
+
+      const result = await applyRecommendedPragmas(mockDb)
+
+      expect(result.busy_timeout).toBe(2000)
+    })
+
+    it('should handle unknown/null pragma responses gracefully', async () => {
+      const mockDb = {
+        pragma: vi
+          .fn()
+          .mockReturnValueOnce(undefined) // journal_mode = WAL (setting)
+          .mockReturnValueOnce(undefined) // foreign_keys = ON (setting)
+          .mockReturnValueOnce(undefined) // busy_timeout = 2000 (setting)
+          .mockReturnValueOnce(null) // journal_mode (getting - null)
+          .mockReturnValueOnce(undefined) // foreign_keys (getting - undefined)
+          .mockReturnValueOnce([]), // busy_timeout (getting - empty array)
+      }
+
+      const result = await applyRecommendedPragmas(mockDb)
+
+      expect(result.journal_mode).toBe('unknown')
+      expect(result.foreign_keys).toBe('unknown')
+      expect(result.busy_timeout).toBeUndefined()
     })
   })
 })

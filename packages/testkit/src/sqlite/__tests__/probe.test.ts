@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { createFileDatabase } from '../file.js'
 import { createMemoryUrl } from '../memory.js'
-import { applyRecommendedPragmas } from '../pragma.js'
+import { applyRecommendedPragmas, PragmaError } from '../pragma.js'
 
 // Minimal probe showing shapes; full integration is env-gated in Phase 2
 
@@ -19,10 +19,10 @@ describe('sqlite helpers (probe)', () => {
     await db.cleanup()
   })
 
-  it('should return recommended pragmas shape', async () => {
-    const pragmas = await applyRecommendedPragmas({} as any)
-    expect(pragmas.journal_mode).toBe('unknown')
-    expect(pragmas.foreign_keys).toBe('unknown')
-    expect(typeof pragmas.busy_timeout).toBe('number')
+  it('should throw PragmaError for empty database object', async () => {
+    await expect(applyRecommendedPragmas({} as any)).rejects.toThrow(PragmaError)
+    await expect(applyRecommendedPragmas({} as any)).rejects.toThrow(
+      'Database object lacks pragma(), prepare(), and exec() methods - cannot apply pragmas',
+    )
   })
 })
