@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { existsSync } from 'node:fs'
-import { createFileDatabase, type FileDatabase } from '../file'
+import { createFileDatabase, createFileSQLiteDatabase, type FileDatabase } from '../file.js'
 
 describe('SQLite File Database Helpers', () => {
-  let databases: FileDatabase[] = []
+  let databases: Array<FileDatabase> = []
 
   beforeEach(() => {
     databases = []
@@ -164,6 +164,20 @@ describe('SQLite File Database Helpers', () => {
 
         // Cleanup in afterEach or afterAll
         expect(typeof testDb.cleanup).toBe('function')
+      })
+
+      it('should work with createFileSQLiteDatabase alias', async () => {
+        // Verify the alias works the same as the main function
+        const db = await createFileSQLiteDatabase('aliased.sqlite')
+        databases.push(db)
+
+        expect(db.url).toMatch(/^file:/)
+        expect(db.path).toContain('aliased.sqlite')
+        expect(db.dir).toBeTruthy()
+        expect(typeof db.cleanup).toBe('function')
+
+        // Verify it creates the directory
+        expect(existsSync(db.dir)).toBe(true)
       })
 
       it('should provide consistent URL format for ORM compatibility', async () => {

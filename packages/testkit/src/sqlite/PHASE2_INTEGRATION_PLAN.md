@@ -2,86 +2,91 @@
 
 ## Overview
 
-This document outlines the integration test strategy for Phase 2 of the SQLite test helpers, which will include actual driver implementations and ORM integrations.
+This document outlines the integration test strategy for Phase 2 of the SQLite
+test helpers, which will include actual driver implementations and ORM
+integrations.
 
 ## Test Strategy
 
 ### Environment-Gated Testing
 
-All integration tests will be gated by environment variables to keep the core test suite fast and dependency-free:
+All integration tests will be gated by environment variables to keep the core
+test suite fast and dependency-free:
 
 ```typescript
 // Only run when SQLITE_DRIVER is set
-const skipIfNoDriver = process.env.SQLITE_DRIVER !== 'better-sqlite3'
-  ? test.skip
-  : test
+const skipIfNoDriver =
+  process.env.SQLITE_DRIVER !== 'better-sqlite3' ? test.skip : test
 ```
 
 ### Test Categories
 
 #### 1. Driver Integration Tests
 
-**Location**: `packages/testkit/src/sqlite/__tests__/integration/better-sqlite3.test.ts`
+**Location**:
+`packages/testkit/src/sqlite/__tests__/integration/better-sqlite3.test.ts`
 
 ```typescript
-describe.skipIf(!process.env.SQLITE_DRIVER)('better-sqlite3 integration', () => {
-  test('memory database connection', async () => {
-    const db = await openMemoryDb()
-    expect(db.name).toBe('main')
+describe.skipIf(!process.env.SQLITE_DRIVER)(
+  'better-sqlite3 integration',
+  () => {
+    test('memory database connection', async () => {
+      const db = await openMemoryDb()
+      expect(db.name).toBe('main')
 
-    // Verify basic operations
-    const result = db.prepare('SELECT 1 as value').get()
-    expect(result.value).toBe(1)
+      // Verify basic operations
+      const result = db.prepare('SELECT 1 as value').get()
+      expect(result.value).toBe(1)
 
-    db.close()
-  })
+      db.close()
+    })
 
-  test('file database with cleanup', async () => {
-    const { db, cleanup } = await openFileDb('test.db')
+    test('file database with cleanup', async () => {
+      const { db, cleanup } = await openFileDb('test.db')
 
-    // Create table
-    db.exec('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)')
-    db.prepare('INSERT INTO users (name) VALUES (?)').run('Alice')
+      // Create table
+      db.exec('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)')
+      db.prepare('INSERT INTO users (name) VALUES (?)').run('Alice')
 
-    const user = db.prepare('SELECT * FROM users WHERE name = ?').get('Alice')
-    expect(user.name).toBe('Alice')
+      const user = db.prepare('SELECT * FROM users WHERE name = ?').get('Alice')
+      expect(user.name).toBe('Alice')
 
-    db.close()
-    await cleanup()
-  })
+      db.close()
+      await cleanup()
+    })
 
-  test('transaction adapter implementation', async () => {
-    const db = await openMemoryDb()
-    const adapter = createBetterSqlite3Adapter()
+    test('transaction adapter implementation', async () => {
+      const db = await openMemoryDb()
+      const adapter = createBetterSqlite3Adapter()
 
-    // Test rollback
-    await expect(
-      withTransaction(db, adapter, async (tx) => {
-        tx.prepare('CREATE TABLE test (id INTEGER)').run()
-        tx.prepare('INSERT INTO test VALUES (1)').run()
-        throw new Error('rollback')
-      })
-    ).rejects.toThrow('rollback')
+      // Test rollback
+      await expect(
+        withTransaction(db, adapter, async (tx) => {
+          tx.prepare('CREATE TABLE test (id INTEGER)').run()
+          tx.prepare('INSERT INTO test VALUES (1)').run()
+          throw new Error('rollback')
+        }),
+      ).rejects.toThrow('rollback')
 
-    // Table should not exist after rollback
-    const tables = db.prepare(
-      "SELECT name FROM sqlite_master WHERE type='table'"
-    ).all()
-    expect(tables).toHaveLength(0)
+      // Table should not exist after rollback
+      const tables = db
+        .prepare("SELECT name FROM sqlite_master WHERE type='table'")
+        .all()
+      expect(tables).toHaveLength(0)
 
-    db.close()
-  })
+      db.close()
+    })
 
-  test('pragma application', async () => {
-    const db = await openMemoryDb()
-    const pragmas = await applyRecommendedPragmas(db)
+    test('pragma application', async () => {
+      const db = await openMemoryDb()
+      const pragmas = await applyRecommendedPragmas(db)
 
-    expect(pragmas.journal_mode).toBe('wal')
-    expect(pragmas.foreign_keys).toBe('on')
-    expect(pragmas.busy_timeout).toBeGreaterThan(0)
+      expect(pragmas.journal_mode).toBe('wal')
+      expect(pragmas.foreign_keys).toBe('on')
+      expect(pragmas.busy_timeout).toBeGreaterThan(0)
 
-    // Verify foreign key constraint enforcement
-    db.exec(`
+      // Verify foreign key constraint enforcement
+      db.exec(`
       CREATE TABLE parent (id INTEGER PRIMARY KEY);
       CREATE TABLE child (
         id INTEGER PRIMARY KEY,
@@ -90,18 +95,20 @@ describe.skipIf(!process.env.SQLITE_DRIVER)('better-sqlite3 integration', () => 
       );
     `)
 
-    expect(() => {
-      db.prepare('INSERT INTO child (parent_id) VALUES (999)').run()
-    }).toThrow(/FOREIGN KEY constraint failed/)
+      expect(() => {
+        db.prepare('INSERT INTO child (parent_id) VALUES (999)').run()
+      }).toThrow(/FOREIGN KEY constraint failed/)
 
-    db.close()
-  })
-})
+      db.close()
+    })
+  },
+)
 ```
 
 #### 2. ORM Integration Tests
 
-**Prisma Integration** (`packages/testkit/src/sqlite/__tests__/integration/prisma.test.ts`):
+**Prisma Integration**
+(`packages/testkit/src/sqlite/__tests__/integration/prisma.test.ts`):
 
 ```typescript
 describe.skipIf(!process.env.TEST_PRISMA)('Prisma integration', () => {
@@ -111,7 +118,7 @@ describe.skipIf(!process.env.TEST_PRISMA)('Prisma integration', () => {
   beforeEach(async () => {
     config = await createPrismaFileConfig('test.db')
     prisma = new PrismaClient({
-      datasources: { db: { url: config.url } }
+      datasources: { db: { url: config.url } },
     })
 
     // Run migrations
@@ -131,13 +138,13 @@ describe.skipIf(!process.env.TEST_PRISMA)('Prisma integration', () => {
 
   test('CRUD operations with Prisma', async () => {
     const user = await prisma.user.create({
-      data: { email: 'test@example.com', name: 'Test User' }
+      data: { email: 'test@example.com', name: 'Test User' },
     })
 
     expect(user.email).toBe('test@example.com')
 
     const found = await prisma.user.findUnique({
-      where: { email: 'test@example.com' }
+      where: { email: 'test@example.com' },
     })
 
     expect(found?.name).toBe('Test User')
@@ -147,10 +154,10 @@ describe.skipIf(!process.env.TEST_PRISMA)('Prisma integration', () => {
     await expect(
       prisma.$transaction(async (tx) => {
         await tx.user.create({
-          data: { email: 'tx@example.com', name: 'Transaction User' }
+          data: { email: 'tx@example.com', name: 'Transaction User' },
         })
         throw new Error('rollback')
-      })
+      }),
     ).rejects.toThrow('rollback')
 
     const count = await prisma.user.count()
@@ -159,7 +166,8 @@ describe.skipIf(!process.env.TEST_PRISMA)('Prisma integration', () => {
 })
 ```
 
-**Drizzle Integration** (`packages/testkit/src/sqlite/__tests__/integration/drizzle.test.ts`):
+**Drizzle Integration**
+(`packages/testkit/src/sqlite/__tests__/integration/drizzle.test.ts`):
 
 ```typescript
 describe.skipIf(!process.env.TEST_DRIZZLE)('Drizzle integration', () => {
@@ -193,28 +201,26 @@ describe.skipIf(!process.env.TEST_DRIZZLE)('Drizzle integration', () => {
 })
 ```
 
-**Kysely Integration** (`packages/testkit/src/sqlite/__tests__/integration/kysely.test.ts`):
+**Kysely Integration**
+(`packages/testkit/src/sqlite/__tests__/integration/kysely.test.ts`):
 
 ```typescript
 describe.skipIf(!process.env.TEST_KYSELY)('Kysely integration', () => {
   test('memory database with Kysely', async () => {
     const url = createMemoryUrl('kysely')
     const dialect = new SqliteDialect({
-      database: new Database(url)
+      database: new Database(url),
     })
 
     const db = new Kysely<Database>({ dialect })
 
     await db.schema
       .createTable('person')
-      .addColumn('id', 'integer', col => col.primaryKey())
-      .addColumn('name', 'text', col => col.notNull())
+      .addColumn('id', 'integer', (col) => col.primaryKey())
+      .addColumn('name', 'text', (col) => col.notNull())
       .execute()
 
-    await db
-      .insertInto('person')
-      .values({ id: 1, name: 'Alice' })
-      .execute()
+    await db.insertInto('person').values({ id: 1, name: 'Alice' }).execute()
 
     const person = await db
       .selectFrom('person')
@@ -231,61 +237,74 @@ describe.skipIf(!process.env.TEST_KYSELY)('Kysely integration', () => {
 
 #### 3. Migration Integration Tests
 
-**Location**: `packages/testkit/src/sqlite/__tests__/integration/migrations.test.ts`
+**Location**:
+`packages/testkit/src/sqlite/__tests__/integration/migrations.test.ts`
 
 ```typescript
-describe.skipIf(!process.env.SQLITE_DRIVER)('Migration runner integration', () => {
-  test('apply SQL migrations in order', async () => {
-    const db = await openMemoryDb()
+describe.skipIf(!process.env.SQLITE_DRIVER)(
+  'Migration runner integration',
+  () => {
+    test('apply SQL migrations in order', async () => {
+      const db = await openMemoryDb()
 
-    // Create migration files in temp directory
-    const migrations = [
-      { name: '001_create_users.sql', sql: 'CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)' },
-      { name: '002_add_email.sql', sql: 'ALTER TABLE users ADD COLUMN email TEXT' },
-      { name: '003_add_index.sql', sql: 'CREATE INDEX idx_users_email ON users(email)' },
-    ]
+      // Create migration files in temp directory
+      const migrations = [
+        {
+          name: '001_create_users.sql',
+          sql: 'CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)',
+        },
+        {
+          name: '002_add_email.sql',
+          sql: 'ALTER TABLE users ADD COLUMN email TEXT',
+        },
+        {
+          name: '003_add_index.sql',
+          sql: 'CREATE INDEX idx_users_email ON users(email)',
+        },
+      ]
 
-    const migrationDir = await createTempDirectory()
-    for (const migration of migrations) {
-      await migrationDir.writeFile(migration.name, migration.sql)
-    }
+      const migrationDir = await createTempDirectory()
+      for (const migration of migrations) {
+        await migrationDir.writeFile(migration.name, migration.sql)
+      }
 
-    // Apply migrations
-    await applyMigrations(db, { dir: migrationDir.path })
+      // Apply migrations
+      await applyMigrations(db, { dir: migrationDir.path })
 
-    // Verify schema
-    const columns = db.prepare("PRAGMA table_info('users')").all()
-    const columnNames = columns.map(c => c.name)
+      // Verify schema
+      const columns = db.prepare("PRAGMA table_info('users')").all()
+      const columnNames = columns.map((c) => c.name)
 
-    expect(columnNames).toContain('id')
-    expect(columnNames).toContain('name')
-    expect(columnNames).toContain('email')
+      expect(columnNames).toContain('id')
+      expect(columnNames).toContain('name')
+      expect(columnNames).toContain('email')
 
-    // Verify index
-    const indexes = db.prepare("PRAGMA index_list('users')").all()
-    expect(indexes).toContainEqual(
-      expect.objectContaining({ name: 'idx_users_email' })
-    )
+      // Verify index
+      const indexes = db.prepare("PRAGMA index_list('users')").all()
+      expect(indexes).toContainEqual(
+        expect.objectContaining({ name: 'idx_users_email' }),
+      )
 
-    db.close()
-    await migrationDir.cleanup()
-  })
+      db.close()
+      await migrationDir.cleanup()
+    })
 
-  test('migration error handling', async () => {
-    const db = await openMemoryDb()
-    const migrationDir = await createTempDirectory()
+    test('migration error handling', async () => {
+      const db = await openMemoryDb()
+      const migrationDir = await createTempDirectory()
 
-    // Create invalid migration
-    await migrationDir.writeFile('001_invalid.sql', 'INVALID SQL SYNTAX HERE')
+      // Create invalid migration
+      await migrationDir.writeFile('001_invalid.sql', 'INVALID SQL SYNTAX HERE')
 
-    await expect(
-      applyMigrations(db, { dir: migrationDir.path })
-    ).rejects.toThrow(/Migration failed: 001_invalid.sql/)
+      await expect(
+        applyMigrations(db, { dir: migrationDir.path }),
+      ).rejects.toThrow(/Migration failed: 001_invalid.sql/)
 
-    db.close()
-    await migrationDir.cleanup()
-  })
-})
+      db.close()
+      await migrationDir.cleanup()
+    })
+  },
+)
 ```
 
 #### 4. Seed Data Integration Tests
@@ -298,15 +317,20 @@ describe.skipIf(!process.env.SQLITE_DRIVER)('Seed data integration', () => {
     const db = await openMemoryDb()
 
     // Create schema
-    db.exec('CREATE TABLE products (id INTEGER PRIMARY KEY, name TEXT, price REAL)')
+    db.exec(
+      'CREATE TABLE products (id INTEGER PRIMARY KEY, name TEXT, price REAL)',
+    )
 
     // Seed data
-    await seedWithSql(db, `
+    await seedWithSql(
+      db,
+      `
       INSERT INTO products (name, price) VALUES
         ('Widget', 9.99),
         ('Gadget', 19.99),
         ('Doohickey', 29.99)
-    `)
+    `,
+    )
 
     const products = db.prepare('SELECT * FROM products').all()
     expect(products).toHaveLength(3)
@@ -319,11 +343,13 @@ describe.skipIf(!process.env.SQLITE_DRIVER)('Seed data integration', () => {
     const seedDir = await createTempDirectory()
 
     // Create seed files
-    await seedDir.writeFile('001_schema.sql',
-      'CREATE TABLE categories (id INTEGER PRIMARY KEY, name TEXT)'
+    await seedDir.writeFile(
+      '001_schema.sql',
+      'CREATE TABLE categories (id INTEGER PRIMARY KEY, name TEXT)',
     )
-    await seedDir.writeFile('002_data.sql',
-      "INSERT INTO categories (name) VALUES ('Electronics'), ('Books'), ('Clothing')"
+    await seedDir.writeFile(
+      '002_data.sql',
+      "INSERT INTO categories (name) VALUES ('Electronics'), ('Books'), ('Clothing')",
     )
 
     await seedWithFiles(db, { dir: seedDir.path })
@@ -460,7 +486,8 @@ jobs:
 
       - name: Run integration tests
         env:
-          SQLITE_DRIVER: ${{ matrix.test-suite == 'driver' && 'better-sqlite3' || '' }}
+          SQLITE_DRIVER:
+            ${{ matrix.test-suite == 'driver' && 'better-sqlite3' || '' }}
           TEST_PRISMA: ${{ matrix.test-suite == 'prisma' && '1' || '' }}
           TEST_DRIZZLE: ${{ matrix.test-suite == 'drizzle' && '1' || '' }}
           TEST_KYSELY: ${{ matrix.test-suite == 'kysely' && '1' || '' }}
@@ -503,7 +530,7 @@ test('parallel test isolation', async () => {
       await db.cleanup()
 
       return result.id
-    })
+    }),
   )
 
   // Each test should have its own value
@@ -533,6 +560,7 @@ test('parallel test isolation', async () => {
 ## Documentation Requirements
 
 Each integration must include:
+
 - Setup instructions
 - Example test patterns
 - Common pitfalls

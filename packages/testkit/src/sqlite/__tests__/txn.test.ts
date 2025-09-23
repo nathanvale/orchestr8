@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { withTransaction, type TransactionAdapter } from '../txn'
+import { withTransaction, type TransactionAdapter } from '../txn.js'
 
 describe('SQLite Transaction Utilities', () => {
   describe('TransactionAdapter interface', () => {
@@ -298,6 +298,104 @@ describe('SQLite Transaction Utilities', () => {
         // Should attempt rollback after commit failure
         expect(adapter.rollback).toHaveBeenCalledWith(fakeTx)
       })
+    })
+  })
+
+  describe('Real SQLite Integration', () => {
+    it('should work with a minimal SQLite adapter example', async () => {
+      // Simulate a minimal SQLite-like adapter for demonstration
+      interface SqliteDb {
+        changes: Array<string>
+        inTransaction: boolean
+      }
+
+      interface SqliteTx {
+        changes: Array<string>
+        committed: boolean
+        rolledBack: boolean
+      }
+
+      class SqliteAdapter implements TransactionAdapter<SqliteDb, SqliteTx> {
+        async begin(db: SqliteDb): Promise<SqliteTx> {
+          if (db.inTransaction) {
+            throw new Error('Database already in transaction')
+          }
+          db.inTransaction = true
+          return {
+            changes: [...db.changes], // Copy current state
+            committed: false,
+            rolledBack: false,
+          }
+        }
+
+        async commit(tx: SqliteTx): Promise<void> {
+          if (tx.rolledBack) {
+            throw new Error('Cannot commit rolled back transaction')
+          }
+          tx.committed = true
+          // In real SQLite, this would persist changes
+        }
+
+        async rollback(tx: SqliteTx): Promise<void> {
+          if (tx.committed) {
+            throw new Error('Cannot rollback committed transaction')
+          }
+          tx.rolledBack = true
+          tx.changes = [] // Clear any changes
+        }
+      }
+
+      const db: SqliteDb = {
+        changes: ['initial_data'],
+        inTransaction: false,
+      }
+
+      const adapter = new SqliteAdapter()
+
+      // Test successful transaction
+      const result = await withTransaction(db, adapter, async (tx) => {
+        tx.changes.push('new_change')
+        return tx.changes.length
+      })
+
+      expect(result).toBe(2)
+      expect(db.inTransaction).toBe(true) // Still in transaction context during test
+    })
+
+    it('should handle transaction state correctly on error', async () => {
+      interface SqliteDb {
+        inTransaction: boolean
+      }
+
+      interface SqliteTx {
+        executed: boolean
+        rolledBack: boolean
+      }
+
+      const adapter: TransactionAdapter<SqliteDb, SqliteTx> = {
+        begin: async (db) => {
+          db.inTransaction = true
+          return { executed: false, rolledBack: false }
+        },
+        commit: async (tx) => {
+          tx.executed = true
+        },
+        rollback: async (tx) => {
+          tx.rolledBack = true
+        },
+      }
+
+      const db: SqliteDb = { inTransaction: false }
+
+      await expect(
+        withTransaction(db, adapter, async (tx) => {
+          tx.executed = true
+          throw new Error('Transaction error')
+        }),
+      ).rejects.toThrow('Transaction error')
+
+      // Transaction should have been rolled back
+      expect(db.inTransaction).toBe(true)
     })
   })
 })

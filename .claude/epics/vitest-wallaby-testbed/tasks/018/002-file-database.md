@@ -1,8 +1,8 @@
 ---
 name: Create file-based SQLite database helpers with cleanup
-status: open
+status: completed
 created: 2025-09-23T02:00:07Z
-updated: 2025-09-23T02:00:07Z
+updated: 2025-09-23T03:28:18Z
 github: [Will be updated when synced to GitHub]
 depends_on: []
 parallel: true
@@ -20,14 +20,14 @@ provided separately to keep this task driver-agnostic.
 
 ## Acceptance Criteria
 
-- [ ] Create `packages/testkit/src/sqlite/file.ts` with file database management
-- [ ] Generate unique temporary database files per test
-- [ ] Return `{ url, dir, path, cleanup }`
-- [ ] Support custom database file names
-- [ ] Handle concurrent test execution safely (unique temp dirs)
-- [ ] Unit tests verify cleanup removes temp dir
-- [ ] Anti-flake: doc recommends close → cleanup order; per-test unique dirs
-- [ ] Use existing testkit FS helpers for temp dirs — do not roll your own tmp
+- [x] Create `packages/testkit/src/sqlite/file.ts` with file database management
+- [x] Generate unique temporary database files per test
+- [x] Return `{ url, dir, path, cleanup }`
+- [x] Support custom database file names
+- [x] Handle concurrent test execution safely (unique temp dirs)
+- [x] Unit tests verify cleanup removes temp dir
+- [x] Anti-flake: doc recommends close → cleanup order; per-test unique dirs
+- [x] Use existing testkit FS helpers for temp dirs — do not roll your own tmp
       logic. Prefer `createTempDirectory` or `createManagedTempDirectory` from
       `packages/testkit/src/fs`.
 
@@ -55,6 +55,46 @@ provided separately to keep this task driver-agnostic.
 
 ## Definition of Done
 
-- [ ] Code implemented with cleanup guarantees
-- [ ] Unit tests verify cleanup (including failure path)
-- [ ] Documentation includes cleanup best practices
+- [x] Code implemented with cleanup guarantees
+- [x] Unit tests verify cleanup (including failure path)
+- [x] Documentation includes cleanup best practices
+
+## Completion Notes
+
+Completed on 2025-09-23:
+
+### Implementation
+
+- Enhanced existing `packages/testkit/src/sqlite/file.ts` with comprehensive
+  documentation
+- Added `createFileSQLiteDatabase` alias for naming consistency
+- Properly delegates to `createManagedTempDirectory` for automatic cleanup
+  registration
+- Returns `{ url, dir, path, cleanup }` interface as specified
+
+### Testing
+
+- Complete test suite in `packages/testkit/src/sqlite/__tests__/file.test.ts`
+  (13 tests)
+- Tests verify:
+  - Default and custom database names
+  - Unique temporary directories per database
+  - Cleanup functionality including double-cleanup handling
+  - Concurrent database creation
+  - URL format compatibility
+  - Alias functionality
+
+### Documentation
+
+- Module-level documentation with best practices
+- JSDoc comments for all exports
+- Cleanup order recommendations (close connections before cleanup)
+- Concurrency safety notes
+- Usage examples
+
+### Validation
+
+- All tests passing (13/13)
+- Quality checks passed
+- TypeScript compilation successful
+- Build successful

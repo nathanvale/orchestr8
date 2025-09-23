@@ -4,7 +4,8 @@ Fast, hermetic SQLite database helpers for unit and integration testing.
 
 ## Overview
 
-This module provides driver-agnostic utilities for working with SQLite databases in tests, with a focus on isolation, performance, and reliability.
+This module provides driver-agnostic utilities for working with SQLite databases
+in tests, with a focus on isolation, performance, and reliability.
 
 ## Features
 
@@ -48,9 +49,9 @@ test('database operations', async () => {
   const db = await createFileDatabase('test.sqlite')
 
   // Use db.url for connections
-  console.log(db.url)  // file:/tmp/sqlite-xxx/test.sqlite
+  console.log(db.url) // file:/tmp/sqlite-xxx/test.sqlite
   console.log(db.path) // /tmp/sqlite-xxx/test.sqlite
-  console.log(db.dir)  // /tmp/sqlite-xxx
+  console.log(db.dir) // /tmp/sqlite-xxx
 
   // Cleanup happens automatically via Vitest hooks
   // Or manually:
@@ -63,7 +64,10 @@ test('database operations', async () => {
 Use the adapter pattern for transaction management:
 
 ```typescript
-import { withTransaction, type TransactionAdapter } from '@template/testkit/sqlite'
+import {
+  withTransaction,
+  type TransactionAdapter,
+} from '@template/testkit/sqlite'
 
 // Define your adapter
 const adapter: TransactionAdapter<Database, Transaction> = {
@@ -97,9 +101,9 @@ export function createPrismaTestConfig() {
     // Or set via datasource URL
     datasources: {
       db: {
-        url: `${createMemoryUrl('prisma')}&connection_limit=1`
-      }
-    }
+        url: `${createMemoryUrl('prisma')}&connection_limit=1`,
+      },
+    },
   }
 }
 
@@ -117,8 +121,10 @@ const prisma = new PrismaClient({
 
 Different targets have different isolation behaviors:
 
-- **Shared cache** (`raw`, `kysely`, `drizzle-libsql`): Multiple connections can access the same in-memory database
-- **Isolated** (`drizzle-better-sqlite3`): Each connection gets its own database unless sharing the handle
+- **Shared cache** (`raw`, `kysely`, `drizzle-libsql`): Multiple connections can
+  access the same in-memory database
+- **Isolated** (`drizzle-better-sqlite3`): Each connection gets its own database
+  unless sharing the handle
 - **Prisma**: Uses shared cache but requires pooling configuration
 
 ### Test Isolation
@@ -149,7 +155,8 @@ beforeEach(() => {
 
 ## Anti-Flake Guidelines
 
-1. **Always use shared cache** for in-memory databases when multiple connections are needed
+1. **Always use shared cache** for in-memory databases when multiple connections
+   are needed
 2. **Disable connection pooling** for Prisma in unit tests
 3. **Use deterministic ordering** with `ORDER BY` in queries
 4. **Fix time** with `vi.setSystemTime()` for time-dependent tests
@@ -162,10 +169,10 @@ beforeEach(() => {
 
 ```typescript
 type SqliteTarget =
-  | 'raw'                    // Standard SQLite libraries
-  | 'prisma'                 // Prisma ORM
-  | 'drizzle-libsql'        // Drizzle with libSQL
-  | 'kysely'                // Kysely query builder
+  | 'raw' // Standard SQLite libraries
+  | 'prisma' // Prisma ORM
+  | 'drizzle-libsql' // Drizzle with libSQL
+  | 'kysely' // Kysely query builder
   | 'drizzle-better-sqlite3' // Drizzle with better-sqlite3
 
 function createMemoryUrl(target?: SqliteTarget): string
@@ -175,9 +182,9 @@ function createMemoryUrl(target?: SqliteTarget): string
 
 ```typescript
 interface FileDatabase {
-  url: string      // file:// URL for connections
-  dir: string      // Temporary directory path
-  path: string     // Full database file path
+  url: string // file:// URL for connections
+  dir: string // Temporary directory path
+  path: string // Full database file path
   cleanup: () => Promise<void>
 }
 
@@ -196,7 +203,7 @@ interface TransactionAdapter<TDb, TTx> {
 function withTransaction<T, TDb, TTx>(
   db: TDb,
   adapter: TransactionAdapter<TDb, TTx>,
-  fn: (tx: TTx) => Promise<T>
+  fn: (tx: TTx) => Promise<T>,
 ): Promise<T>
 ```
 
@@ -212,14 +219,17 @@ function withTransaction<T, TDb, TTx>(
 ## Troubleshooting
 
 ### "No such table" errors
+
 - Ensure migrations are run before tests
 - Check that you're using the correct database URL
 
 ### Connection pool exhaustion (Prisma)
+
 - Set `connection_limit=1` in datasource URL
 - Use a single PrismaClient instance per test
 
 ### Isolation issues
+
 - Verify you're using shared cache URLs correctly
 - Ensure cleanup is happening between tests
 - Check for accidental database handle reuse
@@ -227,6 +237,7 @@ function withTransaction<T, TDb, TTx>(
 ## Contributing
 
 When adding new features:
+
 1. Follow TDD approach with Wallaby
 2. Maintain driver-agnostic design in core utilities
 3. Gate driver-specific code behind environment variables

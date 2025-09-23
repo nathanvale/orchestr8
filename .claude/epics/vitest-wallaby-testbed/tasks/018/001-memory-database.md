@@ -28,12 +28,10 @@ code out of this task.
 - [x] Support shared memory forms where applicable
 - [x] Unit tests validate exact URL strings per target
 - [x] Anti-flake: document when `:memory:` is not shared and require shared
-      cache forms where needed
-                  Notes:
-                  - Prisma memory URLs use `file:memory?mode=memory&cache=shared`; ensure
-                        connection pooling is disabled for unit tests.
-                  - `drizzle-libsql` may behave differently depending on driver; treat as
-                        optional and document caveats.
+      cache forms where needed Notes: - Prisma memory URLs use
+      `file:memory?mode=memory&cache=shared`; ensure connection pooling is
+      disabled for unit tests. - `drizzle-libsql` may behave differently
+      depending on driver; treat as optional and document caveats.
 
 ## Technical Details
 
