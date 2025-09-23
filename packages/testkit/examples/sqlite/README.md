@@ -1,32 +1,41 @@
 # SQLite Testing Examples
 
-This directory contains comprehensive examples demonstrating how to use the SQLite testing utilities in various scenarios.
+This directory contains comprehensive examples demonstrating how to use the
+SQLite testing utilities in various scenarios.
 
 ## Example Files
 
 ### 1. [Basic Setup](./01-basic-setup.ts)
+
 **Fundamental SQLite test setup**
+
 - Creating file databases for each test
 - Applying migrations and seeding data
 - Proper cleanup and isolation patterns
 - Best practices for test organization
 
 ### 2. [Transaction Isolation](./02-transaction-isolation.ts)
+
 **Using transactions for test isolation**
+
 - Transaction-per-test pattern
 - Automatic rollback for isolation
 - Adapter pattern implementation
 - Complex transactional scenarios
 
 ### 3. [Pragma Configuration](./03-pragma-configuration.ts)
+
 **SQLite optimization and stability**
+
 - Applying recommended pragmas (WAL, foreign keys, busy timeout)
 - Environment capabilities probe function
 - Testing foreign key constraints
 - Handling concurrent access scenarios
 
 ### 4. [Migrations and Seeding](./04-migrations-and-seeding.ts)
+
 **Database schema and data management**
+
 - Migration file patterns and ordering
 - Error handling and rollback scenarios
 - Database reset for test cleanup
@@ -34,7 +43,9 @@ This directory contains comprehensive examples demonstrating how to use the SQLi
 - File-based vs SQL-based seeding
 
 ### 5. [Prisma Integration](./05-prisma-integration.ts)
+
 **ORM integration patterns**
+
 - Memory vs file database configuration
 - Connection pooling for tests
 - Environment variable management
@@ -45,6 +56,7 @@ This directory contains comprehensive examples demonstrating how to use the SQLi
 ### Test Isolation Strategies
 
 1. **Fresh Database Per Test** (Examples 1, 5)
+
    ```typescript
    beforeEach(async () => {
      fileDb = await createFileDatabase('test.db')
@@ -58,6 +70,7 @@ This directory contains comprehensive examples demonstrating how to use the SQLi
    ```
 
 2. **Transaction Rollback** (Example 2)
+
    ```typescript
    test('isolated test', async () => {
      await withTransaction(db, adapter, async (tx) => {
@@ -77,12 +90,14 @@ This directory contains comprehensive examples demonstrating how to use the SQLi
 ### Configuration Patterns
 
 1. **Memory Database for Speed**
+
    ```typescript
    const url = createMemoryUrl('raw')
    const db = await connectToDatabase(url)
    ```
 
 2. **File Database for WAL Mode**
+
    ```typescript
    const fileDb = await createFileDatabase('test.db')
    await applyRecommendedPragmas(db, { busyTimeoutMs: 5000 })
@@ -96,11 +111,15 @@ This directory contains comprehensive examples demonstrating how to use the SQLi
 
 ## Running the Examples
 
-These examples are demonstration code and require mock implementations for database connections. To adapt them for your project:
+These examples are demonstration code and require mock implementations for
+database connections. To adapt them for your project:
 
-1. **Replace Mock Interfaces**: Replace the example `Database` interfaces with your actual SQLite driver types
-2. **Implement Connection Function**: Replace `connectToDatabase` with your actual database connection logic
-3. **Add Real Dependencies**: Install and import your chosen SQLite driver (better-sqlite3, sqlite, etc.)
+1. **Replace Mock Interfaces**: Replace the example `Database` interfaces with
+   your actual SQLite driver types
+2. **Implement Connection Function**: Replace `connectToDatabase` with your
+   actual database connection logic
+3. **Add Real Dependencies**: Install and import your chosen SQLite driver
+   (better-sqlite3, sqlite, etc.)
 
 ### Example Adaptation for better-sqlite3
 
@@ -125,12 +144,14 @@ let db: Database
 2. **Error Handling**: Graceful error handling with context preservation
 3. **Test Isolation**: Each test should be independent and repeatable
 4. **Resource Management**: Proper cleanup of temporary files and connections
-5. **Performance Optimization**: Using appropriate database types and configurations
+5. **Performance Optimization**: Using appropriate database types and
+   configurations
 6. **Anti-Flake Patterns**: Deterministic ordering, time control, and isolation
 
 ## Environment Probe
 
-The SQLite utilities include a comprehensive environment probe function that you can use to verify your SQLite setup:
+The SQLite utilities include a comprehensive environment probe function that you
+can use to verify your SQLite setup:
 
 ```typescript
 import { probeEnvironment } from '@template/testkit/sqlite'
@@ -147,12 +168,13 @@ beforeAll(async () => {
 
   // Require specific capabilities
   await probeEnvironment(db, {
-    required: ['wal', 'foreign_keys', 'json1']
+    required: ['wal', 'foreign_keys', 'json1'],
   })
 })
 ```
 
 This will verify:
+
 - WAL mode availability
 - Foreign key support
 - Busy timeout configuration
