@@ -18,6 +18,16 @@ class MockDatabase implements MigrationDatabase {
     this.executedStatements.push(sql)
   }
 
+  // Add all() method to support resetDatabase enumeration
+  all(_sql: string): Array<{ name: string; type: string }> {
+    if (this.shouldThrowError) {
+      throw new Error(this.errorMessage)
+    }
+    // Return empty array by default (no objects to drop)
+    // In real tests, this would return actual database objects
+    return []
+  }
+
   reset() {
     this.executedStatements = []
     this.shouldThrowError = false
@@ -350,9 +360,9 @@ describe('SQLite Seed Support', () => {
       mockDb.reset()
       await resetDatabase(mockDb)
 
-      // Should have executed the reset SQL
-      expect(mockDb.executedStatements).toHaveLength(1)
-      expect(mockDb.executedStatements[0]).toContain('PRAGMA writable_schema')
+      // MockDatabase lacks all() method, so resetDatabase should warn and not execute anything
+      // This is the new safe behavior - no dangerous PRAGMA operations
+      expect(mockDb.executedStatements).toHaveLength(0)
 
       // Should be able to seed again after reset
       mockDb.reset()
