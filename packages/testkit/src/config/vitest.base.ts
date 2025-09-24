@@ -7,8 +7,51 @@
  */
 
 import { defineConfig, type UserConfig } from 'vitest/config'
-// no-op
 import { getTestEnvironment, getTestTimeouts } from '../env/core.js'
+import fs from 'node:fs'
+import path from 'node:path'
+
+/**
+ * Current coverage baseline threshold
+ * Set to 69% based on actual coverage analysis (69.32% measured).
+ * This provides ADHD-friendly fail-fast feedback while maintaining quality standards.
+ * Adjust via COVERAGE_THRESHOLD env var or increment gradually in CI.
+ */
+const DEFAULT_COVERAGE_THRESHOLD = 69
+
+/**
+ * Check if edge runtime dependency is available
+ * Safely attempts to resolve @edge-runtime/vm without throwing
+ */
+function canUseEdgeRuntime(): boolean {
+  if (process.env.TESTKIT_DISABLE_EDGE_RUNTIME === '1') {
+    return false
+  }
+
+  try {
+    // If import.meta.resolve is not available (e.g., in test environments), return false
+    if (!import.meta.resolve) {
+      return false
+    }
+    import.meta.resolve('@edge-runtime/vm')
+    return true
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Check if Convex tests exist in the project
+ * Uses simple directory existence check
+ */
+function hasConvexTests(): boolean {
+  try {
+    const convexDir = path.join(process.cwd(), 'convex')
+    return fs.existsSync(convexDir)
+  } catch {
+    return false
+  }
+}
 
 export interface VitestEnvironmentConfig {
   /** Whether running in CI environment */
@@ -25,7 +68,7 @@ export interface VitestEnvironmentConfig {
 
 export interface VitestPoolOptions {
   /** Pool strategy: 'forks' for stability, 'threads' for speed */
-  pool: 'forks' | 'threads' | 'vmThreads'
+  pool: 'forks' | 'threads'
   /** Isolate tests from each other */
   isolate: boolean
   /** Bail on first test failure */
@@ -128,9 +171,10 @@ export function createVitestTimeouts(_envConfig: VitestEnvironmentConfig) {
  * Create coverage configuration
  */
 export function createVitestCoverage(envConfig: VitestEnvironmentConfig) {
+  const threshold = Number(process.env.COVERAGE_THRESHOLD) || DEFAULT_COVERAGE_THRESHOLD
   return {
     enabled: envConfig.isCI, // Enable coverage only in CI; speed up local/dev runs
-    threshold: 69, // Current coverage baseline (69.32% actual coverage)
+    threshold,
     reporter: envConfig.isCI ? ['json', 'clover'] : ['text', 'html'],
   }
 }
@@ -158,25 +202,20 @@ export function createVitestBaseConfig(): VitestBaseConfig {
 export function createBaseVitestConfig(overrides: Partial<UserConfig> = {}): UserConfig {
   const config = createVitestBaseConfig()
 
-  // Normalize setupFiles so overrides can propagate into projects too.
-  // By default, consumers should use the published entry '@template/testkit/register'.
-  // However, when running this package itself, tests may need './src/register.ts'.
-  // Determine if running inside the testkit package using cwd heuristics only
-  const cwdPath = process.cwd().replace(/\\/g, '/')
-  const rootOverride = typeof overrides.test?.root === 'string' ? overrides.test?.root : undefined
-  const rootPath = rootOverride ? String(rootOverride).replace(/\\/g, '/') : ''
-  const isRunningInTestkit =
-    (!!rootPath &&
-      (rootPath.includes('/packages/testkit/') || rootPath.endsWith('/packages/testkit'))) ||
-    cwdPath.includes('/packages/testkit/') ||
-    cwdPath.endsWith('/packages/testkit') ||
-    process.env['TESTKIT_LOCAL'] === '1'
+  // Simplified setupFiles detection:
+  // 1. Use TESTKIT_LOCAL=1 env var for explicit local mode (preferred)
+  // 2. Fallback to path-based detection as secondary method
+  // 3. Default to published package entry
+  const isLocalTestkit =
+    process.env.TESTKIT_LOCAL === '1' || (process.cwd()?.includes('/packages/testkit') ?? false)
+
   const overrideSetup = Array.isArray(overrides.test?.setupFiles)
     ? (overrides.test?.setupFiles as string[])
     : overrides.test?.setupFiles
       ? [overrides.test.setupFiles as unknown as string]
       : undefined
-  const defaultSetup = isRunningInTestkit ? ['./src/register.ts'] : ['@template/testkit/register']
+
+  const defaultSetup = isLocalTestkit ? ['./src/register.ts'] : ['@template/testkit/register']
   const setupFiles = overrideSetup ?? defaultSetup
 
   const baseConfig: UserConfig = {
@@ -297,35 +336,52 @@ export function createBaseVitestConfig(overrides: Partial<UserConfig> = {}): Use
 
   // Add projects configuration for Convex tests with edge-runtime
   // This replaces the deprecated environmentMatchGlobs
+  const includePatterns = [
+    'src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
+    'tests/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
+  ]
+
+  // Examples are opt-in to avoid slowing down CI with large/slow example tests
+  if (process.env.TESTKIT_INCLUDE_EXAMPLES === '1') {
+    includePatterns.push('examples/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}')
+  }
+
   const defaultProjects = [
     {
       test: {
         ...baseConfig.test,
         setupFiles, // Use the normalized setupFiles that respects overrides
-        include: [
-          'src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
-          'tests/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
-          'examples/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
-        ],
+        include: includePatterns,
         exclude: [
           ...(baseConfig.test?.exclude || []),
           '**/convex/**', // Exclude Convex tests from unit project
         ],
       },
     },
-    {
+  ]
+
+  // Conditionally add edge-runtime project only when:
+  // - Edge runtime dependency is available (canUseEdgeRuntime returns true)
+  // - OR Convex tests exist in the project (hasConvexTests returns true)
+  // - OR TESTKIT_ENABLE_EDGE_RUNTIME=1 is set
+  const shouldIncludeEdgeRuntime =
+    process.env.TESTKIT_ENABLE_EDGE_RUNTIME === '1' || canUseEdgeRuntime() || hasConvexTests()
+
+  if (shouldIncludeEdgeRuntime) {
+    defaultProjects.push({
       test: {
         ...baseConfig.test,
         setupFiles, // Use the normalized setupFiles that respects overrides
         environment: 'edge-runtime',
         include: ['**/convex/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
+        exclude: baseConfig.test?.exclude || [],
         // Inline convex-test for better dependency tracking
         server: {
           deps: { inline: ['convex-test'] },
         },
       },
-    },
-  ]
+    })
+  }
 
   const configWithProjects: UserConfig = {
     ...baseConfig,
@@ -334,7 +390,7 @@ export function createBaseVitestConfig(overrides: Partial<UserConfig> = {}): Use
       // Only add projects if none were provided in overrides
       ...(overrides.test?.projects
         ? { projects: overrides.test.projects }
-        : isRunningInTestkit
+        : isLocalTestkit
           ? {}
           : { projects: defaultProjects }),
     },
@@ -442,7 +498,7 @@ export function createCIOptimizedConfig(overrides: Partial<UserConfig> = {}): Us
       bail: 1,
       reporters: ['verbose', 'junit'],
       outputFile: {
-        junit: './junit.xml',
+        junit: './test-results/junit.xml',
       },
       ...overrides.test,
     },

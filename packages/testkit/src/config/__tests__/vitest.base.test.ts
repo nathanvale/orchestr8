@@ -2,7 +2,7 @@
  * @vitest-environment node
  */
 
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   createBaseVitestConfig,
   createCIOptimizedConfig,
@@ -337,7 +337,7 @@ describe('vitest.base', () => {
       expect(config.test?.bail).toBe(1)
       expect(config.test?.reporters).toEqual(['verbose', 'junit'])
       expect(config.test?.outputFile).toEqual({
-        junit: './junit.xml',
+        junit: './test-results/junit.xml',
       })
     })
 
@@ -391,6 +391,140 @@ describe('vitest.base', () => {
       expect(config).toHaveProperty('define')
       expect(config.define).toEqual({ __TEST__: true })
       expect(config.test).toBeDefined() // Should preserve test config
+    })
+  })
+
+  describe('environment detection and project selection', () => {
+    const originalEnv = process.env
+    const originalCwd = process.cwd
+
+    beforeEach(() => {
+      // Reset environment before each test
+      process.env = { ...originalEnv }
+      delete process.env.TESTKIT_LOCAL
+      delete process.env.TESTKIT_ENABLE_EDGE_RUNTIME
+      delete process.env.TESTKIT_INCLUDE_EXAMPLES
+    })
+
+    afterEach(() => {
+      process.env = originalEnv
+      process.cwd = originalCwd
+    })
+
+    describe('setupFiles selection', () => {
+      it('should use local path when TESTKIT_LOCAL=1', () => {
+        process.env.TESTKIT_LOCAL = '1'
+        const config = createBaseVitestConfig()
+        const setupFiles = config.test?.setupFiles as string[]
+        expect(setupFiles[0]).toBe('./src/register.ts')
+      })
+
+      it('should use published package when not in testkit', () => {
+        // Mock cwd to not include 'packages/testkit'
+        process.cwd = vi.fn().mockReturnValue('/some/other/path')
+        const config = createBaseVitestConfig()
+        const setupFiles = config.test?.setupFiles as string[]
+        expect(setupFiles[0]).toBe('@template/testkit/register')
+      })
+
+      it('should use local path when cwd includes packages/testkit', () => {
+        process.cwd = vi.fn().mockReturnValue('/path/to/packages/testkit')
+        const config = createBaseVitestConfig()
+        const setupFiles = config.test?.setupFiles as string[]
+        expect(setupFiles[0]).toBe('./src/register.ts')
+      })
+
+      it('should respect setupFiles overrides', () => {
+        const customSetup = ['./custom-setup.ts']
+        const config = createBaseVitestConfig({
+          test: { setupFiles: customSetup },
+        })
+        const setupFiles = config.test?.setupFiles as string[]
+        expect(setupFiles).toEqual(customSetup)
+      })
+    })
+
+    describe('project configuration', () => {
+      it('should include examples when TESTKIT_INCLUDE_EXAMPLES=1', () => {
+        process.env.TESTKIT_INCLUDE_EXAMPLES = '1'
+        process.cwd = vi.fn().mockReturnValue('/some/consumer/path')
+        const config = createBaseVitestConfig()
+
+        // Should have projects with examples included
+        expect(config.test?.projects).toBeDefined()
+        const projects = config.test?.projects as any[]
+        const unitProject = projects.find((p) =>
+          p.test?.include?.some((pattern: string) => pattern.includes('src/')),
+        )
+        expect(unitProject?.test?.include).toContain(
+          'examples/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
+        )
+      })
+
+      it('should exclude examples by default', () => {
+        process.cwd = vi.fn().mockReturnValue('/some/consumer/path')
+        const config = createBaseVitestConfig()
+
+        const projects = config.test?.projects as any[]
+        const unitProject = projects.find((p) =>
+          p.test?.include?.some((pattern: string) => pattern.includes('src/')),
+        )
+        expect(unitProject?.test?.include).not.toContain(
+          'examples/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
+        )
+      })
+    })
+
+    describe('edge runtime project', () => {
+      it('should include edge runtime when TESTKIT_ENABLE_EDGE_RUNTIME=1', () => {
+        process.env.TESTKIT_ENABLE_EDGE_RUNTIME = '1'
+        process.cwd = vi.fn().mockReturnValue('/some/consumer/path')
+        const config = createBaseVitestConfig()
+
+        const projects = config.test?.projects as any[]
+        const edgeProject = projects.find((p) => p.test?.environment === 'edge-runtime')
+        expect(edgeProject).toBeDefined()
+        expect(edgeProject?.test?.include).toEqual([
+          '**/convex/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
+        ])
+      })
+
+      it('should skip edge runtime when disabled', () => {
+        process.env.TESTKIT_DISABLE_EDGE_RUNTIME = '1'
+        process.cwd = vi.fn().mockReturnValue('/some/consumer/path')
+        const config = createBaseVitestConfig()
+
+        const projects = config.test?.projects as any[]
+        const edgeProject = projects.find((p) => p.test?.environment === 'edge-runtime')
+        expect(edgeProject).toBeUndefined()
+      })
+
+      it('should not add projects when running inside testkit package', () => {
+        process.env.TESTKIT_LOCAL = '1'
+        const config = createBaseVitestConfig()
+
+        // When running inside testkit, projects should not be added
+        expect(config.test?.projects).toBeUndefined()
+      })
+    })
+
+    describe('coverage threshold configuration', () => {
+      it('should use default coverage threshold', () => {
+        const config = createBaseVitestConfig()
+        expect((config.test as any)?.coverage?.thresholds?.statements).toBe(69)
+      })
+
+      it('should respect COVERAGE_THRESHOLD env var', () => {
+        process.env.COVERAGE_THRESHOLD = '80'
+        const config = createBaseVitestConfig()
+        expect((config.test as any)?.coverage?.thresholds?.statements).toBe(80)
+      })
+
+      it('should fallback to default on invalid threshold', () => {
+        process.env.COVERAGE_THRESHOLD = 'invalid'
+        const config = createBaseVitestConfig()
+        expect((config.test as any)?.coverage?.thresholds?.statements).toBe(69)
+      })
     })
   })
 })
