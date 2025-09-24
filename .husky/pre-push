@@ -21,8 +21,8 @@ if [[ "$BRANCH" != "main" && "$BRANCH" != "develop" ]]; then
   fi
 fi
 
-echo "🧪 Running full validation suite (with caching)..."
-pnpm run validate:cached
+echo "🧪 Running full validation suite..."
+pnpm run validate
 
 if [ $? -eq 0 ]; then
   echo "🎉 All validations passed! Ready to push."
