@@ -262,9 +262,23 @@ export async function resetDatabase<
     allowReset?: boolean
     /** Custom logger (default: consoleLogger) */
     logger?: Logger
+    /**
+     * Temporarily disable foreign key constraints during reset operation.
+     * When true (default), wraps drop statements with `PRAGMA foreign_keys=OFF/ON`
+     * to safely handle complex FK relationships that might otherwise cause drop failures.
+     *
+     * This helps avoid errors when:
+     * - FK constraints form cycles between tables
+     * - Parent tables are dropped before their children
+     * - Complex multi-table FK relationships prevent clean teardown
+     *
+     * Foreign key state is automatically restored after the operation,
+     * even if the reset operation fails. (default: true)
+     */
+    disableForeignKeys?: boolean
   } = {},
 ): Promise<void> {
-  const { allowReset = false, logger = consoleLogger } = options
+  const { allowReset = false, logger = consoleLogger, disableForeignKeys = true } = options
 
   // Enhanced safety guard: require test environment OR explicit allowReset flag
   const isTestEnv = process.env.NODE_ENV === 'test'
@@ -325,14 +339,41 @@ export async function resetDatabase<
         }
       })
 
-      const resetSql = `
-        BEGIN;
-        ${dropStatements.join('\n        ')}
-        COMMIT;
-        VACUUM;
-      `
+      if (disableForeignKeys) {
+        // Temporarily disable foreign keys with proper restoration handling
+        try {
+          // Disable foreign keys outside transaction to persist through rollbacks
+          await executeMigration(db, 'PRAGMA foreign_keys=OFF;')
 
-      await executeMigration(db, resetSql)
+          // Execute drop statements in transaction
+          const resetSql = `
+            BEGIN;
+            ${dropStatements.join('\n            ')}
+            COMMIT;
+            VACUUM;
+          `
+          await executeMigration(db, resetSql)
+        } finally {
+          // Always restore foreign key constraints, even if operation failed
+          try {
+            await executeMigration(db, 'PRAGMA foreign_keys=ON;')
+          } catch (restoreErr) {
+            // Log restoration error but don't override original error
+            logger.warn(
+              `Failed to restore foreign key constraints: ${restoreErr instanceof Error ? restoreErr.message : String(restoreErr)}`,
+            )
+          }
+        }
+      } else {
+        // Standard reset without foreign key constraint handling
+        const resetSql = `
+          BEGIN;
+          ${dropStatements.join('\n          ')}
+          COMMIT;
+          VACUUM;
+        `
+        await executeMigration(db, resetSql)
+      }
     }
   } catch (err) {
     // Add context about the reset operation

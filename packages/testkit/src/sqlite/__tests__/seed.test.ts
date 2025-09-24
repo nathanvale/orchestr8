@@ -3,7 +3,14 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { createManagedTempDirectory, type TempDirectory } from '../../fs/index.js'
 import { createFileDatabase, type FileDatabase } from '../file.js'
 import { resetDatabase, type MigrationDatabase } from '../migrate.js'
-import { seedWithSql, seedWithFiles, type SeedFilesOptions } from '../seed.js'
+import {
+  seedWithSql,
+  seedWithFiles,
+  seedWithBatch,
+  type SeedFilesOptions,
+  type BatchSeedOperation,
+  type BatchSeedOptions,
+} from '../seed.js'
 
 // Mock database for testing seed functionality
 class MockDatabase implements MigrationDatabase {
@@ -474,6 +481,387 @@ describe('SQLite Seed Support', () => {
       // Verify data was inserted
       expect(dbWithExec.executedStatements).toHaveLength(2) // CREATE + INSERT
       expect(dbWithExec.executedStatements[1]).toContain('INSERT INTO file_integration_test')
+    })
+  })
+})
+
+describe('SQLite Seed Batch Operations', () => {
+  let databases: Array<FileDatabase> = []
+  let tempDirs: Array<TempDirectory> = []
+  let mockDb: MockDatabase
+
+  beforeEach(() => {
+    databases = []
+    tempDirs = []
+    mockDb = new MockDatabase()
+  })
+
+  afterEach(async () => {
+    // Clean up all databases and temp directories
+    for (const db of databases) {
+      try {
+        await db.cleanup()
+      } catch (err) {
+        console.warn('Failed to cleanup database:', err)
+      }
+    }
+    for (const dir of tempDirs) {
+      try {
+        await dir.cleanup()
+      } catch (err) {
+        console.warn('Failed to cleanup temp directory:', err)
+      }
+    }
+  })
+
+  describe('seedWithBatch - basic operations', () => {
+    it('should execute basic batch operations with transactions by default', async () => {
+      const operations: BatchSeedOperation[] = [
+        { sql: 'INSERT INTO users (name) VALUES ("Alice")', label: 'Create Alice' },
+        { sql: 'INSERT INTO users (name) VALUES ("Bob")', label: 'Create Bob' },
+        {
+          sql: 'INSERT INTO posts (title, user_id) VALUES ("First Post", 1)',
+          label: 'Create post',
+        },
+      ]
+
+      await seedWithBatch(mockDb, operations)
+
+      // Should execute as a single transaction
+      expect(mockDb.executedStatements).toHaveLength(1)
+      const executed = mockDb.executedStatements[0]
+      expect(executed).toContain('BEGIN;')
+      expect(executed).toContain('COMMIT;')
+      expect(executed).toContain('INSERT INTO users (name) VALUES ("Alice")')
+      expect(executed).toContain('INSERT INTO users (name) VALUES ("Bob")')
+      expect(executed).toContain('INSERT INTO posts (title, user_id) VALUES ("First Post", 1)')
+    })
+
+    it('should include operation labels as SQL comments in transaction mode', async () => {
+      const operations: BatchSeedOperation[] = [
+        { sql: 'INSERT INTO users (name) VALUES ("Alice")', label: 'Create Alice' },
+        { sql: 'INSERT INTO posts (title) VALUES ("Test Post")', label: 'Create test post' },
+      ]
+
+      await seedWithBatch(mockDb, operations)
+
+      const executed = mockDb.executedStatements[0]
+      expect(executed).toContain('-- Create Alice')
+      expect(executed).toContain('-- Create test post')
+    })
+
+    it('should execute operations individually without transactions when useTransaction is false', async () => {
+      const operations: BatchSeedOperation[] = [
+        { sql: 'INSERT INTO users (name) VALUES ("Alice")', label: 'Create Alice' },
+        { sql: 'INSERT INTO users (name) VALUES ("Bob")', label: 'Create Bob' },
+      ]
+
+      const options: BatchSeedOptions = { useTransaction: false }
+      await seedWithBatch(mockDb, operations, options)
+
+      // Should execute each operation separately
+      expect(mockDb.executedStatements).toHaveLength(2)
+      expect(mockDb.executedStatements[0]).toBe('INSERT INTO users (name) VALUES ("Alice")')
+      expect(mockDb.executedStatements[1]).toBe('INSERT INTO users (name) VALUES ("Bob")')
+      expect(mockDb.executedStatements[0]).not.toContain('BEGIN')
+      expect(mockDb.executedStatements[1]).not.toContain('COMMIT')
+    })
+
+    it('should handle empty operations array gracefully', async () => {
+      await seedWithBatch(mockDb, [])
+
+      expect(mockDb.executedStatements).toHaveLength(0)
+    })
+
+    it('should execute operations without labels correctly', async () => {
+      const operations: BatchSeedOperation[] = [
+        { sql: 'INSERT INTO users (name) VALUES ("Alice")' }, // No label
+        { sql: 'INSERT INTO users (name) VALUES ("Bob")', label: 'Create Bob' },
+        { sql: 'INSERT INTO posts (title) VALUES ("Test Post")' }, // No label
+      ]
+
+      await seedWithBatch(mockDb, operations)
+
+      const executed = mockDb.executedStatements[0]
+      expect(executed).toContain('BEGIN;')
+      expect(executed).toContain('COMMIT;')
+      expect(executed).toContain('INSERT INTO users (name) VALUES ("Alice")')
+      expect(executed).toContain('INSERT INTO users (name) VALUES ("Bob")')
+      expect(executed).toContain('INSERT INTO posts (title) VALUES ("Test Post")')
+      expect(executed).toContain('-- Create Bob') // Only labeled operation should have comment
+    })
+  })
+
+  describe('seedWithBatch - error handling', () => {
+    it('should stop on first error when continueOnError is false (default)', async () => {
+      const operations: BatchSeedOperation[] = [
+        { sql: 'INSERT INTO users (name) VALUES ("Alice")', label: 'Create Alice' },
+        { sql: 'INVALID SQL STATEMENT', label: 'This will fail' },
+        { sql: 'INSERT INTO users (name) VALUES ("Bob")', label: 'Create Bob' },
+      ]
+
+      // Configure mock to fail on the first transaction call
+      let callCount = 0
+      const originalExec = mockDb.exec.bind(mockDb)
+      mockDb.exec = async (sql: string) => {
+        callCount++
+        mockDb.executedStatements.push(sql) // Record before potentially throwing
+        if (callCount === 1) {
+          throw new Error('SQL syntax error')
+        }
+        return originalExec(sql)
+      }
+      let thrownError: Error | undefined
+      try {
+        await seedWithBatch(mockDb, operations)
+      } catch (err) {
+        thrownError = err as Error
+      }
+
+      expect(thrownError).toBeDefined()
+      expect(thrownError?.message).toContain('Batch seeding failed at operation 0')
+      expect(thrownError?.message).toContain('Create Alice')
+      expect(thrownError?.message).toContain('SQL syntax error')
+      expect(thrownError?.cause).toBeDefined()
+
+      // Should attempt rollback when transaction fails
+      expect(mockDb.executedStatements).toHaveLength(3) // Original transaction + rollback
+      expect(mockDb.executedStatements[1]).toBe('ROLLBACK;')
+    })
+
+    it('should continue on errors when continueOnError is true', async () => {
+      const operations: BatchSeedOperation[] = [
+        { sql: 'INSERT INTO users (name) VALUES ("Alice")', label: 'Create Alice' },
+        { sql: 'INVALID SQL STATEMENT', label: 'This will fail' },
+        { sql: 'INSERT INTO users (name) VALUES ("Bob")', label: 'Create Bob' },
+      ]
+
+      // Configure mock to fail on second operation
+      let callCount = 0
+      const originalExec = mockDb.exec.bind(mockDb)
+      mockDb.exec = async (sql: string) => {
+        callCount++
+        if (callCount === 2) {
+          throw new Error('SQL syntax error in operation 2')
+        }
+        return originalExec(sql)
+      }
+
+      const options: BatchSeedOptions = { continueOnError: true, useTransaction: false }
+
+      // Should not throw, but continue processing
+      await expect(seedWithBatch(mockDb, operations, options)).resolves.not.toThrow()
+
+      // Should have attempted all three operations
+      expect(mockDb.executedStatements).toHaveLength(2) // First and third operations succeed
+      expect(mockDb.executedStatements[0]).toContain('Alice')
+      expect(mockDb.executedStatements[1]).toContain('Bob')
+    })
+
+    it('should handle ignoreErrors flag on individual operations', async () => {
+      const operations: BatchSeedOperation[] = [
+        { sql: 'INSERT INTO users (name) VALUES ("Alice")', label: 'Create Alice' },
+        {
+          sql: 'INVALID SQL STATEMENT',
+          label: 'This will fail but be ignored',
+          ignoreErrors: true,
+        },
+        { sql: 'INSERT INTO users (name) VALUES ("Bob")', label: 'Create Bob' },
+      ]
+
+      // Configure mock to fail on second operation
+      let callCount = 0
+      const originalExec = mockDb.exec.bind(mockDb)
+      mockDb.exec = async (sql: string) => {
+        callCount++
+        if (callCount === 2) {
+          throw new Error('SQL syntax error in operation 2')
+        }
+        return originalExec(sql)
+      }
+
+      const options: BatchSeedOptions = { useTransaction: false }
+
+      // Should not throw because middle operation has ignoreErrors: true
+      await expect(seedWithBatch(mockDb, operations, options)).resolves.not.toThrow()
+
+      // Should have executed first and third operations
+      expect(mockDb.executedStatements).toHaveLength(2)
+      expect(mockDb.executedStatements[0]).toContain('Alice')
+      expect(mockDb.executedStatements[1]).toContain('Bob')
+    })
+
+    it('should handle complex batch scenarios with mixed success and failure', async () => {
+      const operations: BatchSeedOperation[] = [
+        { sql: 'INSERT INTO users (name) VALUES ("Alice")', label: 'Create Alice' },
+        {
+          sql: 'INVALID SQL STATEMENT',
+          label: 'This will fail but continue',
+          ignoreErrors: true,
+        },
+        { sql: 'INSERT INTO users (name) VALUES ("Bob")', label: 'Create Bob' },
+        { sql: 'ANOTHER INVALID SQL', label: 'This will also fail' },
+        { sql: 'INSERT INTO users (name) VALUES ("Charlie")', label: 'Create Charlie' },
+      ]
+
+      // Configure mock to fail on invalid SQL statements
+      let callCount = 0
+      const originalExec = mockDb.exec.bind(mockDb)
+      mockDb.exec = async (sql: string) => {
+        callCount++
+        if (sql.includes('INVALID SQL') || sql.includes('ANOTHER INVALID SQL')) {
+          throw new Error(`SQL error on call ${callCount}`)
+        }
+        return originalExec(sql)
+      }
+
+      const options: BatchSeedOptions = { useTransaction: false, continueOnError: true }
+
+      // Should not throw and process all operations
+      await expect(seedWithBatch(mockDb, operations, options)).resolves.not.toThrow()
+
+      // Should execute Alice, skip first invalid (ignored), execute Bob, skip second invalid, execute Charlie
+      expect(mockDb.executedStatements).toHaveLength(3)
+      expect(mockDb.executedStatements[0]).toContain('Alice')
+      expect(mockDb.executedStatements[1]).toContain('Bob')
+      expect(mockDb.executedStatements[2]).toContain('Charlie')
+    })
+
+    it('should propagate cause in error for debugging', async () => {
+      const operations: BatchSeedOperation[] = [
+        { sql: 'INVALID SQL STATEMENT', label: 'This will fail' },
+      ]
+
+      mockDb.shouldThrowError = true
+      mockDb.errorMessage = 'Original database error'
+
+      let thrownError: Error | undefined
+      try {
+        await seedWithBatch(mockDb, operations)
+      } catch (err) {
+        thrownError = err as Error
+      }
+
+      expect(thrownError).toBeDefined()
+      expect(thrownError?.cause).toBeDefined()
+      expect((thrownError?.cause as Error)?.message).toContain('Original database error')
+    })
+  })
+
+  describe('seedWithBatch - chunking and logging', () => {
+    it('should chunk operations when maxBatchSize is specified', async () => {
+      const operations: BatchSeedOperation[] = [
+        { sql: 'INSERT INTO users (name) VALUES ("User1")', label: 'User 1' },
+        { sql: 'INSERT INTO users (name) VALUES ("User2")', label: 'User 2' },
+        { sql: 'INSERT INTO users (name) VALUES ("User3")', label: 'User 3' },
+        { sql: 'INSERT INTO users (name) VALUES ("User4")', label: 'User 4' },
+        { sql: 'INSERT INTO users (name) VALUES ("User5")', label: 'User 5' },
+      ]
+
+      const options: BatchSeedOptions = { maxBatchSize: 2 }
+      await seedWithBatch(mockDb, operations, options)
+
+      // Should create 3 chunks: [1,2], [3,4], [5]
+      expect(mockDb.executedStatements).toHaveLength(3)
+
+      // Each chunk should be wrapped in transaction
+      mockDb.executedStatements.forEach((statement) => {
+        expect(statement).toContain('BEGIN;')
+        expect(statement).toContain('COMMIT;')
+      })
+
+      // First chunk should have User1 and User2
+      expect(mockDb.executedStatements[0]).toContain('User1')
+      expect(mockDb.executedStatements[0]).toContain('User2')
+      expect(mockDb.executedStatements[0]).not.toContain('User3')
+
+      // Second chunk should have User3 and User4
+      expect(mockDb.executedStatements[1]).toContain('User3')
+      expect(mockDb.executedStatements[1]).toContain('User4')
+      expect(mockDb.executedStatements[1]).not.toContain('User5')
+
+      // Third chunk should have User5 only
+      expect(mockDb.executedStatements[2]).toContain('User5')
+      expect(mockDb.executedStatements[2]).not.toContain('User1')
+    })
+
+    it('should handle chunked execution with continueOnError across chunks', async () => {
+      const operations: BatchSeedOperation[] = [
+        { sql: 'INSERT INTO users (name) VALUES ("User1")', label: 'User 1' },
+        { sql: 'INVALID SQL STATEMENT', label: 'This will fail' },
+        { sql: 'INSERT INTO users (name) VALUES ("User3")', label: 'User 3' },
+        { sql: 'INSERT INTO users (name) VALUES ("User4")', label: 'User 4' },
+      ]
+
+      // Configure mock to fail on second chunk (which contains the invalid SQL)
+      let chunkCount = 0
+      const originalExec = mockDb.exec.bind(mockDb)
+      mockDb.exec = async (sql: string) => {
+        chunkCount++
+        mockDb.executedStatements.push(sql) // Record before potentially throwing
+        if (chunkCount === 2 && sql.includes('INVALID SQL STATEMENT')) {
+          throw new Error('SQL syntax error in chunk 2')
+        }
+        return originalExec(sql)
+      }
+      const options: BatchSeedOptions = { maxBatchSize: 2, continueOnError: true }
+
+      // Should not throw and continue processing remaining chunks
+      await expect(seedWithBatch(mockDb, operations, options)).resolves.not.toThrow()
+
+      // Should execute chunks 1 and 3, with chunk 2 failing
+      expect(mockDb.executedStatements).toHaveLength(3) // Chunk 1, failed chunk 2, chunk 3
+    })
+
+    it('should work with custom logger for detailed operation tracking', async () => {
+      const logMessages: string[] = []
+      const customLogger = {
+        info: (msg: string) => logMessages.push(`INFO: ${msg}`),
+        warn: (msg: string) => logMessages.push(`WARN: ${msg}`),
+        error: (msg: string) => logMessages.push(`ERROR: ${msg}`),
+      }
+
+      const operations: BatchSeedOperation[] = [
+        { sql: 'INSERT INTO users (name) VALUES ("Alice")', label: 'Create Alice' },
+        { sql: 'INSERT INTO users (name) VALUES ("Bob")', label: 'Create Bob' },
+      ]
+
+      const options: BatchSeedOptions = { logger: customLogger, useTransaction: false }
+      await seedWithBatch(mockDb, operations, options)
+
+      // Should log execution progress
+      expect(logMessages).toContain('INFO: Executing 2 seed operations in 1 batch(es)')
+      expect(logMessages).toContain('INFO: ✓ Operation 1 (Create Alice) completed successfully')
+      expect(logMessages).toContain('INFO: ✓ Operation 2 (Create Bob) completed successfully')
+      expect(logMessages).toContain('INFO: Batch seeding completed: 2/2 operations successful')
+    })
+
+    it('should handle production environment warning', async () => {
+      const originalNodeEnv = process.env.NODE_ENV
+      process.env.NODE_ENV = 'production'
+
+      const logMessages: string[] = []
+      const customLogger = {
+        info: (msg: string) => logMessages.push(`INFO: ${msg}`),
+        warn: (msg: string) => logMessages.push(`WARN: ${msg}`),
+        error: (msg: string) => logMessages.push(`ERROR: ${msg}`),
+      }
+
+      const operations: BatchSeedOperation[] = [
+        { sql: 'INSERT INTO users (name) VALUES ("Test")', label: 'Test operation' },
+      ]
+
+      try {
+        const options: BatchSeedOptions = { logger: customLogger }
+        await seedWithBatch(mockDb, operations, options)
+
+        // Should log production warning
+        const warningMessage = logMessages.find((msg) => msg.includes('production environment'))
+        expect(warningMessage).toBeDefined()
+        expect(warningMessage).toContain('WARNING: seedWithBatch called in production environment')
+      } finally {
+        process.env.NODE_ENV = originalNodeEnv
+      }
     })
   })
 })

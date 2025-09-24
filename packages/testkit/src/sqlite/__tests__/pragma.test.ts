@@ -43,7 +43,7 @@ describe('SQLite Pragma Support', () => {
 
       expect(result).toEqual({
         journal_mode: 'wal',
-        foreign_keys: '1', // Implementation returns '1', not 'on'
+        foreign_keys: 'on', // Implementation normalizes 1 to 'on'
         busy_timeout: 2000,
       })
     })
@@ -68,7 +68,7 @@ describe('SQLite Pragma Support', () => {
 
       expect(result).toEqual({
         journal_mode: 'wal',
-        foreign_keys: '1', // Implementation returns '1', not 'on'
+        foreign_keys: 'on', // Implementation normalizes 1 to 'on'
         busy_timeout: 5000,
       })
     })
@@ -90,7 +90,7 @@ describe('SQLite Pragma Support', () => {
 
       expect(result).toEqual({
         journal_mode: 'memory', // Should fallback gracefully
-        foreign_keys: '1', // Implementation returns '1', not 'on'
+        foreign_keys: 'on', // Implementation normalizes 1 to 'on'
         busy_timeout: 2000,
       })
     })
@@ -112,7 +112,7 @@ describe('SQLite Pragma Support', () => {
       // Result should match what was actually applied, not just requested
       expect(result).toBeDefined()
       expect(result.journal_mode).toBe('wal')
-      expect(result.foreign_keys).toBe('1') // Implementation returns '1', not 'on'
+      expect(result.foreign_keys).toBe('on') // Implementation normalizes 1 to 'on'
       expect(result.busy_timeout).toBe(2000)
     })
 
@@ -234,7 +234,7 @@ describe('SQLite Pragma Support', () => {
 
       // Verify the pragmas were applied correctly
       expect(result.journal_mode).toBe('wal')
-      expect(result.foreign_keys).toBe('1') // Implementation returns '1', not 'on'
+      expect(result.foreign_keys).toBe('on') // Implementation normalizes 1 to 'on'
       expect(result.busy_timeout).toBe(2000)
 
       // Verify the actual database could be created
@@ -263,7 +263,7 @@ describe('SQLite Pragma Support', () => {
       const result = await applyRecommendedPragmas(mockMemoryDb)
       expect(result).toEqual({
         journal_mode: 'memory',
-        foreign_keys: '1', // Implementation returns '1', not 'on'
+        foreign_keys: 'on', // Implementation normalizes 1 to 'on'
         busy_timeout: 2000,
       })
     })
@@ -302,7 +302,7 @@ describe('SQLite Pragma Support', () => {
 
       const result = await applyRecommendedPragmas(mockDb)
 
-      expect(result.foreign_keys).toBe('0') // Should convert numeric to string
+      expect(result.foreign_keys).toBe('off') // Should normalize numeric 0 to 'off'
     })
 
     it('should handle direct number responses for busy_timeout', async () => {

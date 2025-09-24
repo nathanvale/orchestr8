@@ -327,7 +327,7 @@ import { applyRecommendedPragmas } from '@template/testkit/sqlite'
 
 // Apply WAL mode, foreign keys, and busy timeout
 const pragmas = await applyRecommendedPragmas(db, {
-  busyTimeoutMs: 5000, // optional, defaults to 5000ms
+  busyTimeoutMs: 5000, // optional, defaults to 2000ms
 })
 
 console.log(pragmas)

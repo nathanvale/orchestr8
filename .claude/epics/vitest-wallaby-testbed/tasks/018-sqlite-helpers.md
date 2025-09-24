@@ -1,7 +1,7 @@
 ---
 task: 018
 name: SQLite test helpers
-status: open
+status: in-progress
 priority: high
 created: 2025-09-23T15:00:00Z
 updated: 2025-09-23T16:15:00Z
@@ -9,7 +9,13 @@ updated: 2025-09-23T16:15:00Z
 
 # Task 018: SQLite test helpers
 
-## Status: ❌ NOT STARTED (HIGH PRIORITY)
+## Status: 🔄 IN PROGRESS (HIGH PRIORITY)
+
+> Progress summary: Core helpers, migrations, seeds, pragmas, and ORM URL shims
+> are implemented with tests. Remaining gaps: dedicated cleanup hook
+> (`cleanup.ts`), richer better-sqlite3 adapter behaviors + env-gated smoke
+> tests, final integration test gating, and normalization improvements (pragma
+> foreign key value semantics). Overall ~80% functional coverage of scope.
 
 ## Requirements (from Review)
 
@@ -94,29 +100,103 @@ minimal cross-coupling.
 
 ### Phase 1 — Core helpers (parallelizable)
 
-- [ ] 001 - Memory & URL helpers (createMemoryUrl)
-- [ ] 002 - File DB with cleanup (createFileDatabase)
-- [ ] 003 - Transaction utilities (withTransaction + adapter type)
-- [ ] 1A - Vitest cleanup hook (registerCleanup)
+- [x] 001 - Memory & URL helpers (`createMemoryUrl` in `memory.ts`)
+- [x] 002 - File DB with cleanup (`createFileDatabase` in `file.ts`)
+- [x] 003 - Transaction utilities (`withTransaction` + adapter interface in
+      `txn.ts`)
+- [ ] 1A - Vitest cleanup hook (`cleanup.ts`) — NOT IMPLEMENTED (needs a
+      lightweight registry + afterAll hook)
 
 ### Phase 2 — Driver adapter + pragmas
 
-- [ ] 004 - better-sqlite3 adapter (openMemoryDb/openFileDb) [env-gated tests]
-- [ ] 004a - applyRecommendedPragmas (WAL, foreign_keys)
+- [~] 004 - better-sqlite3 adapter (`adapters/better-sqlite3.ts`) — STUB ONLY
+  (needs open helpers + real transaction semantics + tests gated by
+  `SQLITE_DRIVER=better-sqlite3`)
+- [x] 004a - applyRecommendedPragmas (implemented in `pragma.ts` with tests;
+      follow-up: normalize foreign key values to `'on' | 'off'`)
 
 ### Phase 3 — Migrations + seeds (SQL-first)
 
-- [ ] 005 - Migration runner (applyMigrations; .sql only)
-- [ ] 006 - Seed helpers (seedWithSql/seedWithFiles)
+- [x] 005 - Migration runner (`migrate.ts`) — implemented incl. checksum support
+      (needs checksum tests & improved transaction detection heuristic)
+- [x] 006 - Seed helpers (`seed.ts`) — implemented incl. batch API (batch path
+      untested)
 
 ### Phase 4 — ORM compatibility shims
 
-- [ ] 007 - ORM URL helpers (prismaUrl/drizzleUrl)
-- [ ] 007a - Integration tests (skipped unless env enabled)
+- [x] 007 - ORM URL helpers (`orm.ts`, plus Prisma-specific helpers in
+      `prisma.ts`)
+- [~] 007a - Integration tests — basic unit tests exist (`orm.test.ts`,
+  `prisma.test.ts`), real driver integration pending (env-gated)
 
 ### Phase 5 — Docs + examples
 
-- [ ] 008 - README and cookbook (hermetic patterns)
+- [x] 008 - README and cookbook (`sqlite/README.md`) — substantial content
+      present (needs small drift corrections: pragma examples, busy timeout
+      default)
+
+---
+
+## Implementation Summary
+
+### ✅ Implemented Components
+
+- Memory URL generation (`memory.ts`) with multi-target support
+- File database helper (`file.ts`) using managed temp directories
+- Transaction utilities (`txn.ts`)
+- Pragmas utility with normalization & capability probing (`pragma.ts`)
+- Migration runner with lexicographic ordering & per-file transactions
+  (`migrate.ts`)
+- Seed helpers (direct, directory, batch) (`seed.ts`)
+- ORM URL shims (`orm.ts`) & Prisma configuration helpers (`prisma.ts`)
+- Barrel export wiring (`index.ts`) and comprehensive test suites for most
+  surfaces
+
+### ⚠️ Partial / Pending
+
+- Cleanup hook (`cleanup.ts`) — not yet created (add an opt-in registry to
+  auto-dispose file DBs)
+- better-sqlite3 adapter — currently a stub; needs transaction wrapper + pragma
+  convenience + open helpers
+- Batch seeding (`seedWithBatch`) — implementation present but lacks test
+  coverage
+- Checksum validation tests — code path exists, no dedicated assertions
+- Foreign key pragma normalization — currently returns numeric '1'/'0'; should
+  map to 'on'/'off' for capability alignment
+- Integration tests with real drivers (Prisma, better-sqlite3) — gated tests not
+  implemented
+
+### 🧪 Test Coverage Gaps (Planned Follow-ups)
+
+| Area                     | Gap                            | Planned Action                                                  |
+| ------------------------ | ------------------------------ | --------------------------------------------------------------- |
+| Batch seeding            | No success/failure/chunk tests | Add unit tests with synthetic exec driver                       |
+| Checksum validation      | No tamper detection test       | Create migration dir, apply twice w/ edit                       |
+| Adapter (better-sqlite3) | No behavior tests              | Implement env-gated smoke test (`SQLITE_DRIVER=better-sqlite3`) |
+| Cleanup hook             | No registry semantics          | Add tests verifying auto-disposal afterAll                      |
+| Probe capabilities       | Only partial via pragma tests  | Add direct tests for `probeEnvironment` once finalized          |
+
+### 🔧 Recommended Next Steps
+
+1. Implement `cleanup.ts` with a simple singleton registry
+   (`registerTempResource(fn)`) + `afterAll` hook.
+2. Normalize foreign key pragma values; adjust tests & docs.
+3. Add checksum tamper test and batch seeding tests (happy path + failure
+   attribution).
+4. Flesh out better-sqlite3 adapter (transaction wrapper, open helpers) and gate
+   with environment var.
+5. Update README examples (foreign_keys = 'on', busy timeout default 2000) and
+   clarify Phase 2/4 boundaries.
+6. Add integration test stubs behind `TEST_SQLITE_INTEGRATION` for future driver
+   verification.
+
+### 📈 Rough Completion Estimate
+
+- Core functional scope: ~80% complete
+- Testing completeness: ~60% (due to untested batch & checksum paths)
+- Adapter & integration maturity: ~30%
+
+---
 
 ## Estimates and critical path
 

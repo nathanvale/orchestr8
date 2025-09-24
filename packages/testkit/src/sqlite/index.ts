@@ -1,4 +1,5 @@
 // Public barrel for SQLite helpers (stubs for Phase 1–2)
+export * from './errors.js'
 export * from './file.js'
 export * from './memory.js'
 export * from './migrate.js'

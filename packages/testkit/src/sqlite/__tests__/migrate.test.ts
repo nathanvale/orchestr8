@@ -346,13 +346,15 @@ describe('SQLite Migration Support', () => {
 
       await resetDatabase(mockDb)
 
-      // Should have executed safe DROP statements, not dangerous PRAGMA
-      expect(mockDb.executedStatements).toHaveLength(1)
-      expect(mockDb.executedStatements[0]).toContain('DROP TABLE IF EXISTS')
-      expect(mockDb.executedStatements[0]).toContain('users')
-      expect(mockDb.executedStatements[0]).toContain('posts')
-      expect(mockDb.executedStatements[0]).toContain('comments')
-      expect(mockDb.executedStatements[0]).not.toContain('PRAGMA writable_schema')
+      // Should have executed foreign key management and DROP statements
+      expect(mockDb.executedStatements).toHaveLength(3)
+      expect(mockDb.executedStatements[0]).toBe('PRAGMA foreign_keys=OFF;')
+      expect(mockDb.executedStatements[1]).toContain('DROP TABLE IF EXISTS')
+      expect(mockDb.executedStatements[1]).toContain('users')
+      expect(mockDb.executedStatements[1]).toContain('posts')
+      expect(mockDb.executedStatements[1]).toContain('comments')
+      expect(mockDb.executedStatements[1]).not.toContain('PRAGMA writable_schema')
+      expect(mockDb.executedStatements[2]).toBe('PRAGMA foreign_keys=ON;')
     })
 
     it('should handle empty database gracefully', async () => {
@@ -371,6 +373,35 @@ describe('SQLite Migration Support', () => {
       await expect(resetDatabase(mockDb)).resolves.not.toThrow()
       // No user tables to drop = no SQL executed
       expect(mockDb.executedStatements).toHaveLength(0)
+    })
+
+    it('should support disableForeignKeys option', async () => {
+      // Set up mock tables
+      mockDb.mockTables = [
+        { name: 'users', type: 'table' },
+        { name: 'posts', type: 'table' },
+      ]
+
+      // Test with disableForeignKeys: false
+      await resetDatabase(mockDb, { disableForeignKeys: false })
+      expect(mockDb.executedStatements).toHaveLength(1)
+      expect(mockDb.executedStatements[0]).toContain('DROP TABLE IF EXISTS')
+      expect(mockDb.executedStatements[0]).toContain('users')
+      expect(mockDb.executedStatements[0]).toContain('posts')
+      expect(mockDb.executedStatements[0]).not.toContain('PRAGMA foreign_keys')
+
+      // Reset and test with disableForeignKeys: true (default)
+      mockDb.reset()
+      mockDb.mockTables = [
+        { name: 'users', type: 'table' },
+        { name: 'posts', type: 'table' },
+      ]
+
+      await resetDatabase(mockDb, { disableForeignKeys: true })
+      expect(mockDb.executedStatements).toHaveLength(3)
+      expect(mockDb.executedStatements[0]).toBe('PRAGMA foreign_keys=OFF;')
+      expect(mockDb.executedStatements[1]).toContain('DROP TABLE IF EXISTS')
+      expect(mockDb.executedStatements[2]).toBe('PRAGMA foreign_keys=ON;')
     })
   })
   describe('integration patterns', () => {

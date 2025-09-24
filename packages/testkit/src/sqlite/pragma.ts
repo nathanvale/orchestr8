@@ -34,6 +34,10 @@
 
 import type { Logger } from './migrate.js'
 import { consoleLogger } from './migrate.js'
+import { PragmaError } from './errors.js'
+
+// Re-export PragmaError for backward compatibility
+export { PragmaError }
 
 /**
  * Applied pragma values returned for verification
@@ -59,33 +63,6 @@ export interface PragmaErrorInfo {
   pragma?: string
   /** Original error from database driver */
   cause?: Error
-}
-
-/**
- * Custom error class for pragma operations
- */
-export class PragmaError extends Error {
-  public readonly type: 'driver_limitation' | 'pragma_unsupported' | 'execution_failure'
-  public readonly pragma?: string
-  public override readonly cause?: Error
-
-  constructor(info: PragmaErrorInfo) {
-    super(info.message)
-    this.type = info.type
-    this.pragma = info.pragma
-    this.cause = info.cause
-
-    // Set the error name properly
-    Object.defineProperty(this, 'name', {
-      value: 'PragmaError',
-      configurable: true,
-    })
-
-    // Maintain proper stack trace (for V8)
-    if (Error.captureStackTrace) {
-      Error.captureStackTrace(this, PragmaError)
-    }
-  }
 }
 
 /**
@@ -137,7 +114,7 @@ async function applyPragmasUsingPragmaMethod(
 
     return {
       journal_mode: extractPragmaValue(journalMode, 'string') as string | undefined,
-      foreign_keys: extractPragmaValue(foreignKeys, 'string') as 'on' | 'off' | 'unknown',
+      foreign_keys: normalizeForeignKeys(foreignKeys),
       busy_timeout: normalizeBusyTimeout(busyTimeout),
     }
   } catch (err) {
@@ -190,7 +167,7 @@ async function applyPragmasUsingPrepareMethod(
 
     return {
       journal_mode: extractPragmaValue(journalMode, 'string') as string | undefined,
-      foreign_keys: extractPragmaValue(foreignKeys, 'string') as 'on' | 'off' | 'unknown',
+      foreign_keys: normalizeForeignKeys(foreignKeys),
       busy_timeout: normalizeBusyTimeout(busyTimeout),
     }
   } catch (err) {
@@ -250,6 +227,29 @@ function extractPragmaValue(
   if (expectedType === 'number' && typeof result === 'string') {
     const parsed = parseInt(result, 10)
     return isNaN(parsed) ? 'unknown' : parsed
+  }
+
+  return 'unknown'
+}
+
+/**
+ * Normalize foreign keys pragma value across different driver response formats
+ * @internal
+ */
+function normalizeForeignKeys(result: unknown): 'on' | 'off' | 'unknown' {
+  const raw = extractPragmaValue(result, 'string')
+
+  if (raw === 'unknown') {
+    return 'unknown'
+  }
+
+  // Handle numeric values (SQLite native: 1 = on, 0 = off)
+  if (raw === '1' || raw === 'true' || raw === 'on') {
+    return 'on'
+  }
+
+  if (raw === '0' || raw === 'false' || raw === 'off') {
+    return 'off'
   }
 
   return 'unknown'
@@ -431,8 +431,13 @@ export async function probeEnvironment<TDb>(
   log('info', '🔍 Probing SQLite environment capabilities...')
 
   // Apply and check pragmas
-  const pragmas = await applyRecommendedPragmas(db, { ...pragmaOptions, logger })
-
+  // Apply and check pragmas with filtered logger
+  const filteredLogger = {
+    info: (msg: string) => log('info', msg),
+    warn: (msg: string) => log('warn', msg),
+    error: logger.error, // Error logging always passes through
+  }
+  const pragmas = await applyRecommendedPragmas(db, { ...pragmaOptions, logger: filteredLogger })
   const capabilities = {
     wal: false,
     foreign_keys: false,
