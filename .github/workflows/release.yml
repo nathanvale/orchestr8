@@ -62,10 +62,13 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build
-        run: pnpm run build:all
+        run: pnpm run build
 
-      - name: Run Tests
-        run: pnpm run test:ci
+      - name: Run Unit Tests
+        run: pnpm run test
+
+      - name: Run Integration Tests
+        run: pnpm run test:integration
 
       - name: Generate SBOM
         run: |
