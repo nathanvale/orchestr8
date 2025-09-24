@@ -194,9 +194,7 @@ jobs:
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile
       - name: Run Integration Tests with Fast Fail
-        run: |
-          # Run integration tests with --bail=1 for fast failure and no coverage
-          pnpm test:integration -- --bail=1 --no-coverage
+        run: TEST_MODE=integration pnpm exec vitest run --bail=1 --no-coverage
 
   commit-lint:
     name: ⚧ Commit Lint (5m)
