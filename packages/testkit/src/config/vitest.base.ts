@@ -207,7 +207,7 @@ export function createBaseVitestConfig(overrides: Partial<UserConfig> = {}): Use
   // 2. Fallback to path-based detection as secondary method
   // 3. Default to published package entry
   const isLocalTestkit =
-    process.env.TESTKIT_LOCAL === '1' || process.cwd().includes('/packages/testkit')
+    process.env.TESTKIT_LOCAL === '1' || (process.cwd()?.includes('/packages/testkit') ?? false)
 
   const overrideSetup = Array.isArray(overrides.test?.setupFiles)
     ? (overrides.test?.setupFiles as string[])
