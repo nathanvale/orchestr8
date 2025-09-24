@@ -64,8 +64,11 @@ jobs:
       - name: Build
         run: pnpm run build
 
-      - name: Run Tests
+      - name: Run Unit Tests
         run: pnpm run test
+
+      - name: Run Integration Tests
+        run: pnpm run test:integration
 
       - name: Generate SBOM
         run: |
