@@ -1,5 +1,6 @@
 export default {
   extends: ['@commitlint/config-conventional'],
+  ignores: [(message) => message.startsWith('Merge ')],
   rules: {
     // Type must be one of the following
     'type-enum': [
