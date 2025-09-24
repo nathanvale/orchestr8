@@ -10,6 +10,14 @@
     "test": {
       "dependsOn": ["^build"],
       "outputs": ["coverage/**"],
+      "cache": true,
+      "inputs": ["$TURBO_DEFAULT$", "vitest.config.ts", "src/**/*.{ts,tsx,js,jsx}", "!**/*.md"],
+      "env": ["NODE_ENV", "VITEST_SILENT", "MEMORY_DEBUG", "CI"],
+      "outputLogs": "new-only"
+    },
+    "test:nocache": {
+      "dependsOn": ["^build"],
+      "outputs": ["coverage/**"],
       "cache": false,
       "inputs": ["$TURBO_DEFAULT$", "vitest.config.ts"],
       "env": ["NODE_ENV", "VITEST_SILENT", "MEMORY_DEBUG", "CI"],
