@@ -9,8 +9,12 @@ BRANCH=$(git branch --show-current)
 echo "📝 Validating branch: $BRANCH"
 
 # Branch-aware changeset validation
-if [[ "$BRANCH" != "main" && "$BRANCH" != "develop" ]]; then
-  CHANGESET_COUNT=$(find .changeset -name "*.md" -not -name "README.md" | wc -l)
+if [ "$BRANCH" != "main" ] && [ "$BRANCH" != "develop" ]; then
+  if [ -d .changeset ]; then
+    CHANGESET_COUNT=$(find .changeset -name "*.md" -not -name "README.md" | wc -l)
+  else
+    CHANGESET_COUNT=0
+  fi
   if [ "$CHANGESET_COUNT" -eq 0 ]; then
     echo "⚠️  No changeset found on feature branch '$BRANCH'"
     echo "💡 Generate one with: pnpm changeset"
@@ -21,8 +25,14 @@ if [[ "$BRANCH" != "main" && "$BRANCH" != "develop" ]]; then
   fi
 fi
 
-echo "🧪 Running full validation suite..."
-pnpm run validate
+# Use changed-only validation for feature branches, full validation for main/develop
+if [ "$BRANCH" = "main" ] || [ "$BRANCH" = "develop" ]; then
+  echo "🧪 Running full validation suite for $BRANCH..."
+  pnpm run validate
+else
+  echo "🧪 Running changed-only validation for feature branch..."
+  pnpm run validate:changed
+fi
 
 if [ $? -eq 0 ]; then
   echo "🎉 All validations passed! Ready to push."

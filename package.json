@@ -28,6 +28,8 @@
     "lint:fix": "turbo run lint:fix --continue=dependencies-successful --output-logs=errors-only",
     "prepare": "husky",
     "release": "pnpm build --silent && changeset publish --silent",
+    "release:version": "changeset version",
+    "release:publish": "pnpm build && changeset publish",
     "test": "NODE_OPTIONS='--max-old-space-size=4096' vitest run",
     "test:watch": "vitest watch",
     "test:ui": "vitest --ui",

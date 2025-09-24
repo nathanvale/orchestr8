@@ -70,6 +70,21 @@ jobs:
       - name: Run Integration Tests
         run: pnpm run test:integration
 
+      - name: Verify Release Configuration
+        run: |
+          echo "🔍 Verifying release configuration..."
+          if [ -z "$NPM_TOKEN" ]; then
+            echo "❌ NPM_TOKEN is not set"
+            exit 1
+          fi
+          echo "✅ NPM_TOKEN is configured"
+
+          # Check changeset status
+          pnpm changeset status
+          echo "✅ Changeset status verified"
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
       - name: Generate SBOM
         run: |
           pnpx @cyclonedx/cdxgen@10.6.0 -o sbom.json -t js .
@@ -120,7 +135,7 @@ jobs:
                   owner: context.repo.owner,
                   repo: context.repo.repo,
                   release_id: release.data.id,
-                  name: 'sbom.json',
+                  name: `sbom-${pkg.name.replace('@', '').replace('/', '-')}-${pkg.version}.json`,
                   data: fs.readFileSync('sbom.json')
                 });
               } catch (error) {

@@ -6,6 +6,10 @@ on:
     branches: [main, develop]
   workflow_dispatch:
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   NODE_VERSION: "20.18.1"
   PNPM_VERSION: "9.15.4"
@@ -71,7 +75,19 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: "pnpm"
-      - run: pnpm install --frozen-lockfile
+
+      - name: Cache Dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.pnpm-store
+            node_modules
+          key: deps-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}-turbo-${{ hashFiles('turbo.json*', 'tsconfig*.json') }}
+          restore-keys: |
+            deps-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}-
+            deps-${{ runner.os }}-
+
+      - run: pnpm install --frozen-lockfile --prefer-offline
       - run: pnpm test:smoke
 
   focused-tests:
@@ -88,13 +104,25 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: "pnpm"
-      - run: pnpm install --frozen-lockfile
+
+      - name: Cache Dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.pnpm-store
+            node_modules
+          key: deps-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}-turbo-${{ hashFiles('turbo.json*', 'tsconfig*.json') }}
+          restore-keys: |
+            deps-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}-
+            deps-${{ runner.os }}-
+
+      - run: pnpm install --frozen-lockfile --prefer-offline
       - run: pnpm test:focused
 
   format:
     name: 💅 Format (5m)
     runs-on: ubuntu-latest
-    needs: setup
+    needs: [setup, quick-tests]
     timeout-minutes: 5
     steps:
       - name: Checkout code
@@ -108,14 +136,25 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: "pnpm"
+      - name: Cache Dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.pnpm-store
+            node_modules
+          key: deps-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}-turbo-${{ hashFiles('turbo.json*', 'tsconfig*.json') }}
+          restore-keys: |
+            deps-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}-
+            deps-${{ runner.os }}-
+
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --prefer-offline
       - run: pnpm format:check
 
   lint:
     name: 🔍 Lint (5m)
     runs-on: ubuntu-latest
-    needs: setup
+    needs: [setup, quick-tests]
     timeout-minutes: 5
     steps:
       - name: Checkout code
@@ -129,14 +168,25 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: "pnpm"
+      - name: Cache Dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.pnpm-store
+            node_modules
+          key: deps-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}-turbo-${{ hashFiles('turbo.json*', 'tsconfig*.json') }}
+          restore-keys: |
+            deps-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}-
+            deps-${{ runner.os }}-
+
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --prefer-offline
       - run: pnpm lint
 
   typecheck:
     name: 🔧 Types (5m)
     runs-on: ubuntu-latest
-    needs: setup
+    needs: [setup, quick-tests]
     timeout-minutes: 5
     steps:
       - name: Checkout code
@@ -150,8 +200,19 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: "pnpm"
+      - name: Cache Dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.pnpm-store
+            node_modules
+          key: deps-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}-turbo-${{ hashFiles('turbo.json*', 'tsconfig*.json') }}
+          restore-keys: |
+            deps-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}-
+            deps-${{ runner.os }}-
+
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --prefer-offline
       - name: Build packages for type resolution
         run: pnpm build
       - run: pnpm typecheck
@@ -159,7 +220,7 @@ jobs:
   build:
     name: 🏗️ Build (5m)
     runs-on: ubuntu-latest
-    needs: setup
+    needs: [setup, quick-tests, typecheck]
     timeout-minutes: 5
     steps:
       - name: Checkout code
@@ -173,14 +234,25 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: "pnpm"
+      - name: Cache Dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.pnpm-store
+            node_modules
+          key: deps-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}-turbo-${{ hashFiles('turbo.json*', 'tsconfig*.json') }}
+          restore-keys: |
+            deps-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}-
+            deps-${{ runner.os }}-
+
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --prefer-offline
       - run: pnpm build
 
   integration-tests:
     name: 🔬 Integration Tests (8m)
     runs-on: ubuntu-latest
-    needs: [setup, quick-tests]  # Only run if quick tests pass
+    needs: [setup, quick-tests, typecheck, build]  # Only run if quick tests, typecheck, and build pass
     timeout-minutes: 8
     if: success()  # Explicit success check
     steps:
@@ -192,7 +264,18 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: "pnpm"
-      - run: pnpm install --frozen-lockfile
+      - name: Cache Dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.pnpm-store
+            node_modules
+          key: deps-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}-turbo-${{ hashFiles('turbo.json*', 'tsconfig*.json') }}
+          restore-keys: |
+            deps-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}-
+            deps-${{ runner.os }}-
+
+      - run: pnpm install --frozen-lockfile --prefer-offline
       - name: Run Integration Tests with Fast Fail
         run: TEST_MODE=integration pnpm exec vitest run --bail=1 --no-coverage
 
@@ -212,7 +295,18 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: "pnpm"
-      - run: pnpm install --frozen-lockfile
+      - name: Cache Dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.pnpm-store
+            node_modules
+          key: deps-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}-turbo-${{ hashFiles('turbo.json*', 'tsconfig*.json') }}
+          restore-keys: |
+            deps-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}-
+            deps-${{ runner.os }}-
+
+      - run: pnpm install --frozen-lockfile --prefer-offline
       - run: |
           # Use commitlint's from/to range checking which respects ignores config
           # This will automatically skip merge commits based on commitlint.config.js
