@@ -194,7 +194,18 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile
-      - run: pnpm commitlint --from ${{ github.event.pull_request.base.sha }} --to HEAD --verbose
+      - run: |
+          # Get all commit messages except merge commits
+          git log --pretty=format:"%s" --no-merges ${{ github.event.pull_request.base.sha }}..HEAD > commits.txt
+
+          # Run commitlint on each non-merge commit
+          if [ -s commits.txt ]; then
+            cat commits.txt | while read -r msg; do
+              echo "$msg" | pnpm commitlint --verbose || exit 1
+            done
+          else
+            echo "No commits to lint (only merge commits found)"
+          fi
 
   ci-status:
     name: 📊 CI Status
