@@ -68,7 +68,7 @@ jobs:
         run: pnpm run test
 
       - name: Run Integration Tests
-        run: pnpm run test:integration
+        run: NODE_OPTIONS='--max-old-space-size=4096' TEST_MODE=integration vitest run --no-coverage
 
       - name: Verify Release Configuration
         run: |
