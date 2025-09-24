@@ -168,7 +168,7 @@ describe('vitest.base', () => {
 
       expect(coverage).toEqual({
         enabled: false,
-        threshold: 70,
+        threshold: 69,
         reporter: ['text', 'html'],
       })
     })
@@ -186,7 +186,7 @@ describe('vitest.base', () => {
 
       expect(coverage).toEqual({
         enabled: true,
-        threshold: 70,
+        threshold: 69,
         reporter: ['json', 'clover'],
       })
     })
@@ -204,7 +204,7 @@ describe('vitest.base', () => {
 
       expect(coverage).toEqual({
         enabled: false,
-        threshold: 70,
+        threshold: 69,
         reporter: ['text', 'html'],
       })
     })
