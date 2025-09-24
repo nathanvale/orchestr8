@@ -35,9 +35,9 @@
  * this module always returns `{ busy_timeout }` for consistency.
  */
 
+import { PragmaError } from './errors.js'
 import type { Logger } from './migrate.js'
 import { consoleLogger } from './migrate.js'
-import { PragmaError } from './errors.js'
 
 // Re-export PragmaError for backward compatibility
 export { PragmaError }

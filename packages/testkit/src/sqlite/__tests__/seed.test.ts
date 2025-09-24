@@ -4,12 +4,12 @@ import { createManagedTempDirectory, type TempDirectory } from '../../fs/index.j
 import { createFileDatabase, type FileDatabase } from '../file.js'
 import { resetDatabase, type MigrationDatabase } from '../migrate.js'
 import {
-  seedWithSql,
-  seedWithFiles,
   seedWithBatch,
-  type SeedFilesOptions,
+  seedWithFiles,
+  seedWithSql,
   type BatchSeedOperation,
   type BatchSeedOptions,
+  type SeedFilesOptions,
 } from '../seed.js'
 
 // Mock database for testing seed functionality
