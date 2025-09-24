@@ -177,6 +177,25 @@ jobs:
         run: pnpm install --frozen-lockfile
       - run: pnpm build
 
+  integration-tests:
+    name: 🔬 Integration Tests (8m)
+    runs-on: ubuntu-latest
+    needs: [setup, quick-tests]  # Only run if quick tests pass
+    timeout-minutes: 8
+    if: success()  # Explicit success check
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "pnpm"
+      - run: pnpm install --frozen-lockfile
+      - name: Run Integration Tests with Fast Fail
+        run: TEST_MODE=integration pnpm exec vitest run --bail=1 --no-coverage
+
   commit-lint:
     name: ⚧ Commit Lint (5m)
     runs-on: ubuntu-latest
@@ -195,33 +214,14 @@ jobs:
           cache: "pnpm"
       - run: pnpm install --frozen-lockfile
       - run: |
-          # Only check commits that are new in this PR
-          # Skip commits that don't follow conventional format from before the standard was enforced
-
-          # Get the last 10 commits specific to this PR (usually enough for most PRs)
-          git log --pretty=format:"%H %s" --no-merges -10 HEAD > all_commits.txt
-
-          # Filter out known problematic commits from before conventional commits were enforced
-          grep -v "aa25d65" all_commits.txt | grep -v "Task 005: Establish Convex test harness" > commits_to_check.txt || true
-
-          # Extract just the commit messages
-          cut -d' ' -f2- commits_to_check.txt > messages.txt
-
-          # Run commitlint on each commit message
-          if [ -s messages.txt ]; then
-            echo "Checking $(wc -l < messages.txt) recent commits..."
-            cat messages.txt | while read -r msg; do
-              echo "Checking: $msg"
-              echo "$msg" | pnpm commitlint --verbose || exit 1
-            done
-          else
-            echo "No commits to lint"
-          fi
+          # Use commitlint's from/to range checking which respects ignores config
+          # This will automatically skip merge commits based on commitlint.config.js
+          pnpm commitlint --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }} --verbose
 
   ci-status:
     name: 📊 CI Status
     runs-on: ubuntu-latest
-    needs: [quick-tests, focused-tests, format, lint, typecheck, build, commit-lint]
+    needs: [quick-tests, focused-tests, integration-tests, format, lint, typecheck, build, commit-lint]
     if: always()
     steps:
       - name: Generate Enhanced Status Report
@@ -230,26 +230,29 @@ jobs:
           echo "📊 CI Pipeline Status Summary"
           echo "$([[ "${{ needs.quick-tests.result }}" == "success" ]] && echo "✅" || echo "❌") Quick Tests: ${{ needs.quick-tests.result }}"
           echo "$([[ "${{ needs.focused-tests.result }}" == "success" ]] && echo "✅" || echo "❌") Focused Tests: ${{ needs.focused-tests.result }}"
+          echo "$([[ "${{ needs.integration-tests.result }}" == "success" ]] && echo "✅" || [[ "${{ needs.integration-tests.result }}" == "skipped" ]] && echo "⏭️" || echo "❌") Integration Tests: ${{ needs.integration-tests.result }}"
           echo "$([[ "${{ needs.format.result }}" == "success" ]] && echo "✅" || echo "❌") Format: ${{ needs.format.result }}"
           echo "$([[ "${{ needs.lint.result }}" == "success" ]] && echo "✅" || echo "❌") Lint: ${{ needs.lint.result }}"
           echo "$([[ "${{ needs.typecheck.result }}" == "success" ]] && echo "✅" || echo "❌") Types: ${{ needs.typecheck.result }}"
           echo "$([[ "${{ needs.build.result }}" == "success" ]] && echo "✅" || echo "❌") Build: ${{ needs.build.result }}"
           echo "$([[ "${{ needs.commit-lint.result }}" == "success" ]] && echo "✅" || echo "❌") Commit Lint: ${{ needs.commit-lint.result }}"
-          
+
           # Add breadcrumb navigation and progress tracking
-          echo "📍 Step 7/7 - Pipeline Status Check"
-          echo "🧭 Navigation: Setup → Tests → Quality → Build → Status"
-          
+          echo "📍 Final Step - Pipeline Status Check"
+          echo "🧭 Navigation: Setup → Quick Tests → Integration → Quality → Build → Status"
+
           # Include fix command infrastructure
           echo "🔧 Fix Commands Available:"
           echo "  - Lint: pnpm lint:fix"
           echo "  - Format: pnpm format"
           echo "  - Types: pnpm typecheck"
           echo "  - Tests: pnpm test"
+          echo "  - Integration: pnpm test:integration"
           echo "include-fix-commands: true"
-          
+
           # Failure recovery hints and status reporting
-          if [[ "${{ needs.quick-tests.result }}" == "failure" || "${{ needs.focused-tests.result }}" == "failure" || "${{ needs.format.result }}" == "failure" || "${{ needs.lint.result }}" == "failure" || "${{ needs.typecheck.result }}" == "failure" || "${{ needs.build.result }}" == "failure" || "${{ needs.commit-lint.result }}" == "failure" ]]; then
+          # Note: integration-tests can be skipped if quick-tests fail (fast-fail strategy)
+          if [[ "${{ needs.quick-tests.result }}" == "failure" || "${{ needs.focused-tests.result }}" == "failure" || "${{ needs.integration-tests.result }}" == "failure" || "${{ needs.format.result }}" == "failure" || "${{ needs.lint.result }}" == "failure" || "${{ needs.typecheck.result }}" == "failure" || "${{ needs.build.result }}" == "failure" || "${{ needs.commit-lint.result }}" == "failure" ]]; then
             echo "❌ CI Pipeline failed"
             echo "status-reporter: failure detected"
             exit 1
