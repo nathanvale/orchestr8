@@ -2,8 +2,8 @@
  * Common MSW handlers and utilities for API mocking
  */
 
-import { http, HttpResponse, delay } from 'msw'
 import type { RequestHandler } from 'msw'
+import { delay, http, HttpResponse } from 'msw'
 
 /**
  * Common HTTP status codes
@@ -89,9 +89,11 @@ export function createUnreliableHandler(
   successData: Record<string, unknown> | unknown[],
   failureRate = 0.3,
   method: 'get' | 'post' | 'put' | 'delete' | 'patch' = 'get',
+  options: { rng?: () => number } = {},
 ): RequestHandler {
+  const rng = options.rng || Math.random
   return http[method](endpoint, async () => {
-    if (Math.random() < failureRate) {
+    if (rng() < failureRate) {
       return createErrorResponse('Random failure for testing', HTTP_STATUS.INTERNAL_SERVER_ERROR)
     }
     return createSuccessResponse(successData)
@@ -108,12 +110,14 @@ export function createPaginatedHandler<T>(
 ): RequestHandler {
   return http.get(endpoint, ({ request }) => {
     const url = new URL(request.url)
-    const page = parseInt(url.searchParams.get('page') || '1', 10)
-    const pageSize = parseInt(url.searchParams.get('pageSize') || defaultPageSize.toString(), 10)
+    const rawPage = parseInt(url.searchParams.get('page') || '1', 10)
+    const rawPageSize = parseInt(url.searchParams.get('pageSize') || defaultPageSize.toString(), 10)
+    const page = Number.isFinite(rawPage) && rawPage > 0 ? rawPage : 1
+    const pageSize = Number.isFinite(rawPageSize) && rawPageSize > 0 ? rawPageSize : defaultPageSize
 
     const startIndex = (page - 1) * pageSize
     const endIndex = startIndex + pageSize
-    const items = allData.slice(startIndex, endIndex)
+    const items = startIndex >= 0 ? allData.slice(startIndex, endIndex) : []
 
     return createSuccessResponse({
       items,
@@ -247,16 +251,18 @@ export function createCRUDHandlers<T extends { id: string }>(
 export function createNetworkIssueHandler(
   endpoint: string,
   method: 'get' | 'post' | 'put' | 'delete' | 'patch' = 'get',
+  options: { rng?: () => number; timeoutDelayMs?: number } = {},
 ): RequestHandler {
+  const rng = options.rng || Math.random
+  const timeoutDelay = options.timeoutDelayMs ?? 1200
   return http[method](endpoint, async () => {
-    // Simulate various network issues
     const issues = [
-      () => delay(5000).then(() => createErrorResponse('Request timeout', 408)),
+      () => delay(timeoutDelay).then(() => createErrorResponse('Request timeout', 408)),
       () => createErrorResponse('Service unavailable', HTTP_STATUS.SERVICE_UNAVAILABLE),
       () => createErrorResponse('Internal server error', HTTP_STATUS.INTERNAL_SERVER_ERROR),
     ]
-
-    const randomIssue = issues[Math.floor(Math.random() * issues.length)]
+    const idx = Math.floor(rng() * issues.length)
+    const randomIssue = issues[idx]
     return randomIssue?.()
   })
 }

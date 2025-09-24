@@ -6,6 +6,9 @@
  * Provides utilities for applying recommended SQLite pragmas that improve
  * test stability, performance, and correctness.
  *
+ * NOTE: Logging behavior adjusted (2025-09-24) to remove unconditional
+ * logger.info calls so silent/warn log levels produce zero info output.
+ *
  * ## Recommended Pragmas
  *
  * - **WAL mode**: Write-Ahead Logging for better concurrency
@@ -327,13 +330,11 @@ export async function applyRecommendedPragmas<TDb>(
   try {
     // Handle better-sqlite3 style (uses pragma method directly)
     if (dbWithPragma.pragma && typeof dbWithPragma.pragma === 'function') {
-      logger.info('Applying pragmas using pragma() method')
       return await applyPragmasUsingPragmaMethod(dbWithPragma, busyTimeoutMs)
     }
 
     // Fallback: Handle libraries without pragma() method but with prepare/exec
     if (dbWithPragma.prepare && typeof dbWithPragma.prepare === 'function') {
-      logger.info('Applying pragmas using prepare() method')
       return await applyPragmasUsingPrepareMethod(dbWithPragma, busyTimeoutMs)
     }
 
@@ -428,7 +429,10 @@ export async function probeEnvironment<TDb>(
     }
   }
 
-  log('info', '🔍 Probing SQLite environment capabilities...')
+  // Only emit banner when not silent; guard explicitly instead of relying on log helper
+  if (logLevel !== 'silent') {
+    log('info', '🔍 Probing SQLite environment capabilities...')
+  }
 
   // Apply and check pragmas
   // Apply and check pragmas with filtered logger
@@ -525,7 +529,9 @@ export async function probeEnvironment<TDb>(
     log('warn', '⚠️  FTS5 extension not available')
   }
 
-  log('info', '✅ Environment probe complete\n')
+  if (logLevel !== 'silent') {
+    log('info', '✅ Environment probe complete\n')
+  }
 
   return { pragmas, capabilities }
 }
