@@ -19,7 +19,7 @@
       "dependsOn": ["//#format:root"],
       "outputs": [".eslintcache"],
       "cache": true,
-      "inputs": ["$TURBO_DEFAULT$", "eslint.config.js"],
+      "inputs": ["$TURBO_DEFAULT$", "eslint.config.mjs"],
       "outputLogs": "errors-only"
     },
     "//#format:root": {
@@ -55,7 +55,7 @@
       "outputLogs": "errors-only"
     },
     "typecheck": {
-      "dependsOn": ["^typecheck"],
+      "dependsOn": ["^build", "^typecheck"],
       "outputs": [],
       "cache": true,
       "inputs": ["$TURBO_DEFAULT$", "src/**/*.{ts,tsx}"],
@@ -79,7 +79,7 @@
     "tooling/tsconfig/base.json",
     "tooling/tsconfig/library.json",
     ".changeset/config.json",
-    "eslint.config.js",
+    "eslint.config.mjs",
     "vitest.config.ts",
     ".prettierrc*",
     "prettier.config.*",
@@ -93,8 +93,7 @@
     "VITEST_SILENT",
     "VITEST_WORKER_ID",
     "JEST_WORKER_ID",
-    "WALLABY_WORKER",
-    "WALLABY_WORKER_ID",
+    "WALLABY_ENV",
     "ELEVENLABS_API_KEY",
     "OPENAI_API_KEY",
     "DEBUG",

@@ -2,14 +2,21 @@ module.exports = function (wallaby) {
   return {
     autoDetect: ['vitest'],
 
-    // Force use of root vitest config - critical for monorepo
+    // Use Wallaby-specific workspace configuration
     testFramework: {
+      // Use the unified Vitest config with projects
       configFile: './vitest.config.ts',
     },
 
     env: {
       type: 'node',
       runner: 'node',
+      params: {
+        env: `WALLABY_ENV=true;TEST_MODE=`, // set WALLABY_ENV and explicitly clear TEST_MODE
+        // Note: we clear TEST_MODE so Wallaby does not run integration or e2e
+        // projects. E2E is intentionally gated behind TEST_MODE=e2e and should
+        // be run via CI or the `pnpm test:e2e` script on capable runners.
+      },
     },
 
     workers: {
@@ -26,36 +33,11 @@ module.exports = function (wallaby) {
     slowTestThreshold: 5000, // Mark tests as slow after 5s
     testTimeout: 10000, // Kill tests after 10s
 
-    // Increase console message limits for noisy tests
+    // Let Vitest config drive test/file discovery to avoid duplication
     maxConsoleMessagesPerTest: 1000,
 
-    // Only include source tests, exclude node_modules completely
-    tests: [
-      '*.test.ts', // Include root level test files
-      'packages/*/src/**/*.test.ts',
-      'packages/*/src/**/*.test.tsx',
-      'tests/**/*.test.ts',
-      'tests/**/*.test.tsx',
-      '!**/node_modules/**', // Critical: exclude all node_modules
-      '!**/*performance*.test.ts', // Skip all performance tests
-      '!**/*benchmark*.test.ts', // Skip all benchmark tests
-      '!**/*.integration.test.ts', // Skip integration tests
-      '!**/*.e2e.test.ts', // Skip e2e tests
-      '!**/*.slow.test.ts', // Skip slow tests
-    ],
-
-    // Also exclude node_modules from files
-    files: [
-      '*.ts', // Include root level files
-      '!*.test.ts', // Exclude root level test files
-      'packages/*/src/**/*.ts',
-      'packages/*/src/**/*.tsx',
-      '!packages/*/src/**/*.test.ts',
-      '!packages/*/src/**/*.test.tsx',
-      '!**/node_modules/**', // Critical: exclude all node_modules
-      'packages/*/package.json',
-      'tsconfig*.json',
-      'vitest.config.ts',
-    ],
+    // Note: Edge runtime routing and convex-test dependency inlining are
+    // configured in packages/testkit/src/config/vitest.base.ts and consumed
+    // via vitest.config.ts + vitest.projects.ts so Wallaby inherits them.
   }
 }

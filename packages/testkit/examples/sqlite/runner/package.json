@@ -1,0 +1,20 @@
+{
+  "name": "sqlite-examples-runner",
+  "version": "1.0.0",
+  "description": "Executable SQLite examples using better-sqlite3",
+  "type": "module",
+  "scripts": {
+    "setup": "npm install",
+    "basic": "node basic-setup.js",
+    "transactions": "node transaction-isolation.js",
+    "pragmas": "node pragma-configuration.js",
+    "migrations": "node migrations-and-seeding.js",
+    "all": "npm run basic && npm run transactions && npm run pragmas && npm run migrations"
+  },
+  "dependencies": {
+    "better-sqlite3": "^9.2.2"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.8"
+  }
+}

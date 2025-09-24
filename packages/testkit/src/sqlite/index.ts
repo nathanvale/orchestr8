@@ -1,0 +1,11 @@
+// Public barrel for SQLite helpers (stubs for Phase 1–2)
+export * from './cleanup.js'
+export * from './errors.js'
+export * from './file.js'
+export * from './memory.js'
+export * from './migrate.js'
+export * from './orm.js'
+export * from './pragma.js'
+export * from './prisma.js'
+export * from './seed.js'
+export * from './txn.js'

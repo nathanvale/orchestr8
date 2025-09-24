@@ -1,8 +1,8 @@
 ---
 created: 2025-09-18T07:32:12Z
-last_updated: 2025-09-18T07:32:12Z
-version: 1.0
-author: Claude Code PM System
+last_updated: 2025-09-20T10:32:00Z
+version: 1.1
+author: Claude Code PM System + Nathan Vale
 ---
 
 # System Patterns
@@ -14,7 +14,66 @@ author: Claude Code PM System
 - **Plugin Architecture:** Extensible through packages
 - **Convention over Configuration:** Opinionated defaults
 
-## Design Patterns
+### Testing Matrix Router Pattern (Intent-to-Action)
+
+- Purpose: Route developer intent to the correct test execution path for fast,
+  deterministic feedback. Prefer unit-first, promote to integration only when
+  signaled, and keep Wallaby for the tightest TDD loop.
+
+- Inputs (signals)
+  - TDD/inner loop: 'watch', 'on save', mentions Wallaby
+  - Unit-only: 'unit', 'feature tests', 'no integration'
+  - Integration: 'integration', 'containers', 'testcontainers', or path matches
+    `*.integration.test.*`
+  - Full suite: 'full', 'all tests', 'CI', 'gate'
+  - Coverage/UI/Watch: explicit modes
+  - Specific file path
+
+- Policy defaults
+  - Safe default is unit-only. Integration/E2E require explicit intent.
+  - Wallaby never runs integration; `TEST_MODE` is cleared by design.
+
+- Decision tree (intent → action)
+  1. If Wallaby is available AND intent is TDD/inner loop
+     - Action: Use Wallaby (unit-only, single worker, coverage off)
+  2. Else if intent is unit-only
+     - Action: `.claude/scripts/test-and-log.sh unit` (equiv: `pnpm test`)
+  3. Else if intent is integration-only
+     - Action: `.claude/scripts/test-and-log.sh integration`
+       - Sets `TEST_MODE=integration`, warns if Docker is missing
+  4. Else if intent is full suite (pre-release/CI gate)
+     - Action: `.claude/scripts/test-and-log.sh full`
+       - Run unit then integration (or separate CI jobs for speed)
+  5. Else if a specific test file is provided
+     - If path matches `*.integration.test.*` → run with `TEST_MODE=integration`
+     - Else → run as unit: `pnpm vitest run <file>`
+  6. Else if coverage/UI/watch requested
+     - Actions: `coverage|ui|watch` modes via the runner script
+
+- Matrix summary (what runs where)
+  - `pnpm test` → unit/feature only (projects exclude `**/*.integration.test.*`)
+  - `TEST_MODE=integration pnpm test` → adds integration project
+    - Recommended: return only the integration project under this flag
+  - Wallaby (`wallaby.cjs`) → unit-only, never integration
+  - Runner shortcuts: `.claude/scripts/test-and-log.sh`
+    - `quick`, `unit`, `coverage`, `integration`, `full`, `ui`, `watch`,
+      `<file>`
+
+- Implementation hooks
+  - `vitest.projects.ts`: single source of truth for project selection and file
+    patterns. Gate integration via `TEST_MODE=integration`, skip when
+    `WALLABY_ENV` is set to 'true'.
+  - `wallaby.cjs`: clears `TEST_MODE` to prevent integration projects.
+  - `.claude/scripts/test-and-log.sh`: logs to `test-results/logs`, sets
+    `TEST_MODE` for integration, auto-detects integration by filename.
+
+- Anti-patterns
+  - Running integration tests in Wallaby
+  - Mixing integration into unit watch by default (slows inner loop)
+  - Having an e2e script without a configured e2e Vitest project
+
+- References
+  - @docs/guides/testing-matrix.md
 
 ### Structural Patterns
 
@@ -51,7 +110,7 @@ export { default } from './main'
 
 #### ADHD-Optimized Feedback Loop
 
-```
+```text
 Developer Action → <2s feedback → Stay in flow
                  ↓
            >2s feedback → Context switch risk
@@ -66,19 +125,6 @@ Developer Action → <2s feedback → Stay in flow
 
 ### Creational Patterns
 
-#### Factory Pattern for Providers
-
-```typescript
-// Voice-vault TTS provider pattern
-interface Provider {
-  textToSpeech(text: string): Promise<Audio>
-}
-
-class ProviderFactory {
-  create(type: 'openai' | 'elevenlabs' | 'system'): Provider
-}
-```
-
 #### Builder Pattern for Test Config
 
 - Fluent API for test configuration
@@ -89,7 +135,7 @@ class ProviderFactory {
 
 ### Unidirectional Build Flow
 
-```
+```text
 Source → TypeScript → tsup → dist/
       ↓
     Tests → Vitest → Coverage → Reports
@@ -97,7 +143,7 @@ Source → TypeScript → tsup → dist/
 
 ### Dependency Graph
 
-```
+```text
 @template/utils (foundation)
     ↓
 @claude-hooks/quality-check (tooling)
@@ -116,13 +162,45 @@ Applications (consumers)
 
 ### Test Organization
 
-```
+```text
 tests/
 ├── unit/        # Isolated component tests
 ├── integration/ # Component interaction tests
 ├── e2e/         # Full workflow tests
 └── smoke/       # Critical path validation
 ```
+
+### Mocking Patterns (Strict)
+
+#### Mock When
+
+- At **trust boundaries**: external APIs, 3rd-party SDKs, payments, email
+- For **nondeterminism**: time, timers, randomness, UUIDs, environment
+- For **hostile platform APIs**: Canvas, WebGL in jsdom
+- For **CLI unit tests**: stub `child_process.exec`
+
+#### Do Not Mock
+
+- Domain/business modules
+- Database drivers (use SQLite or Testcontainers instead)
+- Global `fetch` or `fs` (use MSW/tmp dirs)
+
+#### Promotion Heuristic
+
+- If a test uses **>2 mocks** or **>3 spy assertions**, promote to
+  **integration**.
+
+#### Scenario-Specific Solutions
+
+- **HTTP**: MSW for unit/integration, stub 3P APIs in E2E only
+- **Databases**: SQLite/convex-test for unit, Testcontainers for integration
+- **CLI**: stub exec in unit, run in tmp dir for integration, full CLI in E2E
+- **File System**: memfs/tmp dirs for unit, tmp real dirs for integration, real
+  disk asserts in E2E
+- **Time/Timers**: `vi.useFakeTimers`, `vi.setSystemTime`
+- **Randomness**: stub `Math.random`, `crypto.randomUUID`
+- **3rd-Party SDKs**: wrap in adapters, fake in unit, test sandbox in
+  integration
 
 ### Mock Avoidance Pattern
 
@@ -227,7 +305,7 @@ try {
 
 ### Continuous Validation
 
-```
+```text
 Code → Pre-commit hooks → Local tests → CI validation → Merge
 ```
 
