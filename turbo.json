@@ -72,6 +72,30 @@
       "dependsOn": ["^build"],
       "cache": true,
       "inputs": ["dist/**", "dist-node/**", "dist-types/**"]
+    },
+    "test:integration": {
+      "dependsOn": ["^build"],
+      "outputs": ["test-results/**"],
+      "cache": false,
+      "inputs": ["$TURBO_DEFAULT$", "vitest.config.ts", "**/*.integration.test.*"],
+      "env": ["NODE_ENV", "TEST_MODE", "CI"],
+      "outputLogs": "new-only"
+    },
+    "//#test:root": {
+      "dependsOn": ["^build"],
+      "outputs": ["coverage/**", "test-results/**"],
+      "cache": false,
+      "inputs": ["$TURBO_DEFAULT$", "vitest.config.ts", "vitest.projects.ts"],
+      "env": ["NODE_ENV", "VITEST_SILENT", "MEMORY_DEBUG", "CI"],
+      "outputLogs": "new-only"
+    },
+    "//#test:integration:root": {
+      "dependsOn": ["^build"],
+      "outputs": ["test-results/**"],
+      "cache": false,
+      "inputs": ["$TURBO_DEFAULT$", "vitest.config.ts", "vitest.projects.ts", "**/*.integration.test.*"],
+      "env": ["NODE_ENV", "TEST_MODE", "CI"],
+      "outputLogs": "new-only"
     }
   },
   "globalDependencies": [

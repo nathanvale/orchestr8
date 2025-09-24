@@ -420,4 +420,3 @@ describeConvex('Test Lifecycle Management', () => {
     expect(t2Count).toBe(1)
   })
 })
-export * from '../convex-comprehensive.test'
