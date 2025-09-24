@@ -14,6 +14,50 @@ import type { FileDatabase } from './file.js'
 export type CleanupFunction = () => void | Promise<void>
 
 /**
+ * Options for cleanup operations
+ */
+export interface CleanupOptions {
+  /** Timeout in milliseconds for cleanup operations (default: 5000ms) */
+  timeoutMs?: number
+}
+
+/**
+ * Default cleanup timeout in milliseconds
+ */
+export const DEFAULT_CLEANUP_TIMEOUT = 5000
+
+/**
+ * Timeout error for cleanup operations
+ */
+export class CleanupTimeoutError extends Error {
+  constructor(
+    message: string,
+    public readonly timeoutMs: number,
+  ) {
+    super(message)
+    this.name = 'CleanupTimeoutError'
+  }
+}
+
+/**
+ * Execute a cleanup operation with timeout support
+ */
+async function withTimeout<T>(
+  promise: Promise<T>,
+  timeoutMs: number,
+  operation: string,
+): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<never>((_, reject) => {
+      setTimeout(() => {
+        reject(new CleanupTimeoutError(`${operation} timed out after ${timeoutMs}ms`, timeoutMs))
+      }, timeoutMs)
+    }),
+  ])
+}
+
+/**
  * Database-like interface with cleanup method
  */
 export interface DatabaseLike {
@@ -27,6 +71,7 @@ class SqliteCleanupRegistry {
   private cleanupFunctions = new Set<CleanupFunction>()
   private databases = new Set<DatabaseLike>()
   private isGlobalCleanupRegistered = false
+  private isProcessListenersRegistered = false
 
   /**
    * Register a generic cleanup function
@@ -61,9 +106,10 @@ class SqliteCleanupRegistry {
   /**
    * Execute and unregister a specific cleanup function
    */
-  async cleanup(cleanupFn: CleanupFunction): Promise<void> {
+  async cleanup(cleanupFn: CleanupFunction, options: CleanupOptions = {}): Promise<void> {
+    const timeoutMs = options.timeoutMs ?? DEFAULT_CLEANUP_TIMEOUT
     try {
-      await cleanupFn()
+      await withTimeout(Promise.resolve(cleanupFn()), timeoutMs, 'Cleanup function')
     } finally {
       this.unregister(cleanupFn)
     }
@@ -72,9 +118,10 @@ class SqliteCleanupRegistry {
   /**
    * Execute and unregister a specific database cleanup
    */
-  async cleanupDatabase(db: DatabaseLike): Promise<void> {
+  async cleanupDatabase(db: DatabaseLike, options: CleanupOptions = {}): Promise<void> {
+    const timeoutMs = options.timeoutMs ?? DEFAULT_CLEANUP_TIMEOUT
     try {
-      await db.cleanup()
+      await withTimeout(Promise.resolve(db.cleanup()), timeoutMs, 'Database cleanup')
     } finally {
       this.unregisterDatabase(db)
     }
@@ -83,13 +130,13 @@ class SqliteCleanupRegistry {
   /**
    * Execute all registered cleanup functions and clear the registry
    */
-  async cleanupAll(): Promise<void> {
+  async cleanupAll(options: CleanupOptions = {}): Promise<void> {
     const errors: Error[] = []
 
     // Clean up database objects first
     const databaseCleanups = Array.from(this.databases).map(async (db) => {
       try {
-        await this.cleanupDatabase(db)
+        await this.cleanupDatabase(db, options)
       } catch (error) {
         const cleanupError = error instanceof Error ? error : new Error(String(error))
         errors.push(
@@ -102,7 +149,7 @@ class SqliteCleanupRegistry {
     // Clean up generic functions second
     const functionCleanups = Array.from(this.cleanupFunctions).map(async (fn) => {
       try {
-        await this.cleanup(fn)
+        await this.cleanup(fn, options)
       } catch (error) {
         const cleanupError = error instanceof Error ? error : new Error(String(error))
         errors.push(
@@ -138,6 +185,18 @@ class SqliteCleanupRegistry {
     afterAll(async () => {
       await this.cleanupAll()
     })
+
+    // Register process exit event listeners only once
+    this.ensureProcessListeners()
+  }
+
+  /**
+   * Register process event listeners for emergency cleanup (called only once)
+   */
+  private ensureProcessListeners(): void {
+    if (this.isProcessListenersRegistered) return
+
+    this.isProcessListenersRegistered = true
 
     // Handle process exit events for emergency cleanup
     const emergencyCleanup = () => {
@@ -265,13 +324,17 @@ export function registerDatabaseCleanup(db: DatabaseLike): void {
  * Manually execute and unregister a specific cleanup function
  *
  * @param cleanupFn - Cleanup function to execute and remove from registry
+ * @param options - Cleanup options including timeout
  * @returns Promise<boolean> - true if cleanup was executed, false if not registered
  */
-export async function executeCleanup(cleanupFn: CleanupFunction): Promise<boolean> {
+export async function executeCleanup(
+  cleanupFn: CleanupFunction,
+  options: CleanupOptions = {},
+): Promise<boolean> {
   if (!registry.hasCleanupFunction(cleanupFn)) {
     return false
   }
-  await registry.cleanup(cleanupFn)
+  await registry.cleanup(cleanupFn, options)
   return true
 }
 
@@ -279,13 +342,59 @@ export async function executeCleanup(cleanupFn: CleanupFunction): Promise<boolea
  * Manually execute and unregister a specific database cleanup
  *
  * @param db - Database object to cleanup and remove from registry
+ * @param options - Cleanup options including timeout
  * @returns Promise<boolean> - true if cleanup was executed, false if not registered
  */
-export async function executeDatabaseCleanup(db: DatabaseLike): Promise<boolean> {
+export async function executeDatabaseCleanup(
+  db: DatabaseLike,
+  options: CleanupOptions = {},
+): Promise<boolean> {
   if (!registry.hasDatabase(db)) {
     return false
   }
-  await registry.cleanupDatabase(db)
+  await registry.cleanupDatabase(db, options)
+  return true
+}
+
+/**
+ * Unregister a cleanup function without executing it
+ *
+ * @param cleanupFn - Cleanup function to remove from registry
+ * @returns boolean - true if function was registered and removed, false if not found
+ *
+ * @example
+ * ```typescript
+ * const cleanup = () => console.log('cleanup')
+ * registerCleanup(cleanup)
+ * const removed = unregisterCleanup(cleanup) // true
+ * ```
+ */
+export function unregisterCleanup(cleanupFn: CleanupFunction): boolean {
+  if (!registry.hasCleanupFunction(cleanupFn)) {
+    return false
+  }
+  registry.unregister(cleanupFn)
+  return true
+}
+
+/**
+ * Unregister a database cleanup without executing it
+ *
+ * @param db - Database object to remove from registry
+ * @returns boolean - true if database was registered and removed, false if not found
+ *
+ * @example
+ * ```typescript
+ * const db = await createFileDatabase()
+ * registerDatabaseCleanup(db)
+ * const removed = unregisterDatabaseCleanup(db) // true
+ * ```
+ */
+export function unregisterDatabaseCleanup(db: DatabaseLike): boolean {
+  if (!registry.hasDatabase(db)) {
+    return false
+  }
+  registry.unregisterDatabase(db)
   return true
 }
 
@@ -294,9 +403,11 @@ export async function executeDatabaseCleanup(db: DatabaseLike): Promise<boolean>
  *
  * Useful for manual cleanup or emergency situations.
  * All cleanup functions are removed from the registry after execution.
+ *
+ * @param options - Cleanup options including timeout
  */
-export async function cleanupAllSqlite(): Promise<void> {
-  await registry.cleanupAll()
+export async function cleanupAllSqlite(options: CleanupOptions = {}): Promise<void> {
+  await registry.cleanupAll(options)
 }
 
 /**

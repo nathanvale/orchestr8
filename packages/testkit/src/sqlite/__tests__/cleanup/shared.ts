@@ -10,8 +10,12 @@ import { cleanupAllSqlite, getCleanupCount, type DatabaseLike } from '../../clea
  */
 export class MockDatabase implements DatabaseLike {
   public isCleanedUp = false
+  public shouldThrowOnCleanup = false
 
   cleanup = async (): Promise<void> => {
+    if (this.shouldThrowOnCleanup) {
+      throw new Error('Mock cleanup error')
+    }
     this.isCleanedUp = true
   }
 }
@@ -41,6 +45,21 @@ export class MockFileDatabaseImpl implements MockFileDatabase {
   constructor(public path: string) {}
 
   cleanup = async (): Promise<void> => {
+    this.isCleanedUp = true
+  }
+}
+
+/**
+ * Mock database with synchronous cleanup method
+ */
+export class MockSyncDatabase implements DatabaseLike {
+  public isCleanedUp = false
+  public shouldThrowOnCleanup = false
+
+  cleanup = (): void => {
+    if (this.shouldThrowOnCleanup) {
+      throw new Error('Sync cleanup error')
+    }
     this.isCleanedUp = true
   }
 }

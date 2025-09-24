@@ -18,6 +18,7 @@ import {
   createMemoryUrl,
   withTransaction,
   applyRecommendedPragmas,
+  PragmaError,
   type FileDatabase,
   type TransactionAdapter,
   type SqliteTarget,
@@ -756,15 +757,11 @@ describe('SQLite Integration Tests', () => {
       // Test with a database that doesn't support pragma method
       const mockDb = {} as any
 
-      // Should gracefully handle missing pragma method
-      const pragmas = await applyRecommendedPragmas(mockDb)
-
-      // Should return unknown status when pragma support is unavailable (prevents false positives)
-      expect(pragmas).toMatchObject({
-        journal_mode: 'unknown',
-        foreign_keys: 'unknown',
-        busy_timeout: 2000, // default timeout
-      })
+      // Should throw PragmaError for unsupported databases
+      await expect(applyRecommendedPragmas(mockDb)).rejects.toThrow(PragmaError)
+      await expect(applyRecommendedPragmas(mockDb)).rejects.toThrow(
+        /lacks pragma.*prepare.*exec.*methods/,
+      )
     })
   })
 

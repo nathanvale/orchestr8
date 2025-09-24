@@ -464,4 +464,205 @@ describe('SQLite Migration Support', () => {
       expect(mockDbWithUrl.executedStatements).toHaveLength(1)
     })
   })
+
+  describe('checksum validation', () => {
+    it('should detect checksum mismatch when migration file is tampered', async () => {
+      const migrationDir = await createManagedTempDirectory({ prefix: 'checksum-tamper-' })
+      tempDirs.push(migrationDir)
+
+      const originalMigration = `
+        CREATE TABLE users (
+          id INTEGER PRIMARY KEY,
+          name TEXT NOT NULL
+        );
+      `
+
+      // Write initial migration file
+      await writeFile(migrationDir.getPath('001_create_users.sql'), originalMigration)
+
+      // Apply migration with checksum validation - should create checksum file
+      await applyMigrations(mockDb, {
+        dir: migrationDir.path,
+        validateChecksums: true,
+      })
+
+      expect(mockDb.executedStatements).toHaveLength(1)
+      expect(mockDb.executedStatements[0]).toContain('CREATE TABLE users')
+
+      // Verify checksum file was created
+      const checksumPath = migrationDir.getPath('001_create_users.sql.checksum')
+      const checksumExists = await migrationDir.exists('001_create_users.sql.checksum')
+      expect(checksumExists).toBe(true)
+
+      // Tamper with the migration file content
+      const tamperedMigration = `
+        CREATE TABLE users (
+          id INTEGER PRIMARY KEY,
+          name TEXT NOT NULL,
+          email TEXT -- This line was added after initial application
+        );
+      `
+      await writeFile(migrationDir.getPath('001_create_users.sql'), tamperedMigration)
+
+      // Reset mock database
+      mockDb.reset()
+
+      // Try to apply migrations again with checksum validation
+      await expect(
+        applyMigrations(mockDb, {
+          dir: migrationDir.path,
+          validateChecksums: true,
+        }),
+      ).rejects.toThrow(
+        /Migration file '001_create_users\.sql' has been modified after initial application/,
+      )
+
+      // Should also mention the checksum mismatch in the error message
+      try {
+        await applyMigrations(mockDb, {
+          dir: migrationDir.path,
+          validateChecksums: true,
+        })
+        expect.fail('Expected checksum validation to fail')
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error)
+        expect(errorMessage).toMatch(/Expected checksum:/)
+        expect(errorMessage).toMatch(/Actual checksum:/)
+        expect(errorMessage).toMatch(
+          /Modifying applied migrations can lead to inconsistent database states/,
+        )
+      }
+
+      // Should have executed rollback statements due to checksum failure
+      expect(mockDb.executedStatements).toContain('ROLLBACK;')
+      // But no migration SQL should have been executed
+      expect(mockDb.executedStatements).not.toContain('CREATE TABLE users')
+    })
+
+    it('should create checksum files for new migrations', async () => {
+      const migrationDir = await createManagedTempDirectory({ prefix: 'new-checksum-' })
+      tempDirs.push(migrationDir)
+
+      const migration1 = `
+        CREATE TABLE products (
+          id INTEGER PRIMARY KEY,
+          name TEXT NOT NULL
+        );
+      `
+      const migration2 = `
+        CREATE TABLE orders (
+          id INTEGER PRIMARY KEY,
+          product_id INTEGER,
+          FOREIGN KEY (product_id) REFERENCES products(id)
+        );
+      `
+
+      await writeFile(migrationDir.getPath('001_products.sql'), migration1)
+      await writeFile(migrationDir.getPath('002_orders.sql'), migration2)
+
+      // Apply migrations with checksum validation
+      await applyMigrations(mockDb, {
+        dir: migrationDir.path,
+        validateChecksums: true,
+      })
+
+      // Both migrations should execute
+      expect(mockDb.executedStatements).toHaveLength(2)
+
+      // Both checksum files should be created
+      expect(await migrationDir.exists('001_products.sql.checksum')).toBe(true)
+      expect(await migrationDir.exists('002_orders.sql.checksum')).toBe(true)
+
+      // Read checksums and verify they contain hex strings
+      const checksum1 = await migrationDir.readFile('001_products.sql.checksum')
+      const checksum2 = await migrationDir.readFile('002_orders.sql.checksum')
+
+      expect(checksum1).toMatch(/^[a-f0-9]{64}$/)
+      expect(checksum2).toMatch(/^[a-f0-9]{64}$/)
+      expect(checksum1).not.toBe(checksum2) // Different files should have different checksums
+    })
+
+    it('should validate existing checksums on subsequent runs', async () => {
+      const migrationDir = await createManagedTempDirectory({ prefix: 'validate-existing-' })
+      tempDirs.push(migrationDir)
+
+      const migration = `
+        CREATE TABLE categories (
+          id INTEGER PRIMARY KEY,
+          name TEXT UNIQUE NOT NULL
+        );
+      `
+
+      await writeFile(migrationDir.getPath('001_categories.sql'), migration)
+
+      // First run - creates checksum
+      await applyMigrations(mockDb, {
+        dir: migrationDir.path,
+        validateChecksums: true,
+      })
+      expect(mockDb.executedStatements).toHaveLength(1)
+
+      // Reset mock
+      mockDb.reset()
+
+      // Second run - validates existing checksum
+      await applyMigrations(mockDb, {
+        dir: migrationDir.path,
+        validateChecksums: true,
+      })
+
+      // Should execute successfully (no checksum errors)
+      expect(mockDb.executedStatements).toHaveLength(1)
+      expect(mockDb.executedStatements[0]).toContain('CREATE TABLE categories')
+    })
+
+    it('should work without checksum validation by default', async () => {
+      const migrationDir = await createManagedTempDirectory({ prefix: 'no-checksum-' })
+      tempDirs.push(migrationDir)
+
+      const migration = `
+        CREATE TABLE no_checksum_table (
+          id INTEGER PRIMARY KEY
+        );
+      `
+
+      await writeFile(migrationDir.getPath('001_no_checksum.sql'), migration)
+
+      // Apply without checksum validation (default)
+      await applyMigrations(mockDb, { dir: migrationDir.path })
+
+      expect(mockDb.executedStatements).toHaveLength(1)
+
+      // No checksum file should be created
+      expect(await migrationDir.exists('001_no_checksum.sql.checksum')).toBe(false)
+    })
+
+    it('should handle custom checksum directory', async () => {
+      const migrationDir = await createManagedTempDirectory({ prefix: 'custom-checksum-dir-' })
+      const checksumDir = await createManagedTempDirectory({ prefix: 'checksum-storage-' })
+      tempDirs.push(migrationDir, checksumDir)
+
+      const migration = `
+        CREATE TABLE custom_checksum (
+          id INTEGER PRIMARY KEY,
+          data TEXT
+        );
+      `
+
+      await writeFile(migrationDir.getPath('001_custom.sql'), migration)
+
+      // Apply with custom checksum directory
+      await applyMigrations(mockDb, {
+        dir: migrationDir.path,
+        validateChecksums: true,
+        checksumDir: checksumDir.path,
+      })
+
+      expect(mockDb.executedStatements).toHaveLength(1)
+
+      // Checksum should be in custom directory
+      expect(await migrationDir.exists('001_custom.sql.checksum')).toBe(false)
+      expect(await checksumDir.exists('001_custom.sql.checksum')).toBe(true)
+    })
+  })
 })

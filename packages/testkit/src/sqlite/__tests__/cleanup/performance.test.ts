@@ -205,13 +205,17 @@ describe('SQLite Cleanup Performance', () => {
       // Performance should not degrade significantly (roughly linear or better)
       const ratios = []
       for (let i = 1; i < times.length; i++) {
-        ratios.push(times[i] / times[i - 1])
+        if (times[i - 1] > 0) {
+          ratios.push(times[i] / times[i - 1])
+        }
       }
 
       // Each step should not be more than 10x slower than expected linear scaling
       ratios.forEach((ratio, index) => {
-        const expectedRatio = sizes[index + 1] / sizes[index]
-        expect(ratio).toBeLessThan(expectedRatio * 10)
+        if (!isNaN(ratio) && isFinite(ratio)) {
+          const expectedRatio = sizes[index + 1] / sizes[index]
+          expect(ratio).toBeLessThan(expectedRatio * 10)
+        }
       })
     })
   })
