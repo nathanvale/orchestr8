@@ -1,5 +1,5 @@
-#!/usr/bin/env sh
-. "$(dirname "$0")/_/husky.sh"
+#!/usr/bin/env bash
+set -euo pipefail
 
 echo "🔍 Running pre-push validation..."
 echo "⏱️ This includes linting, typechecking, testing, and changeset validation"
@@ -8,20 +8,26 @@ echo "💡 Tip: Use 'git push --no-verify' to bypass in emergencies"
 BRANCH=$(git branch --show-current)
 echo "📝 Validating branch: $BRANCH"
 
+# Use centralized base detection logic
+source scripts/compute-base.sh
+
 # Branch-aware changeset validation
 if [ "$BRANCH" != "main" ] && [ "$BRANCH" != "develop" ]; then
-  if [ -d .changeset ]; then
-    CHANGESET_COUNT=$(find .changeset -name "*.md" -not -name "README.md" | wc -l)
+  # Only enforce changesets when actual source code changed (skip docs/config/chore changes)
+  CHANGED_CODE_COUNT=$(git diff --name-only "$BASE"...HEAD 2>/dev/null | grep -E '^(packages|apps)/.+/src/.+\.(ts|tsx|js|jsx)$' | wc -l | tr -d '[:space:]' || echo 0)
+  if [ "${CHANGED_CODE_COUNT:-0}" -gt 0 ]; then
+    NEW_CHANGESETS=$(git diff --name-only "$BASE"...HEAD -- .changeset/*.md 2>/dev/null | wc -l | tr -d '[:space:]')
+    if [ "${NEW_CHANGESETS:-0}" -eq 0 ]; then
+      echo "⚠️  No new changeset added on feature branch '$BRANCH'"
+      echo "💡 This branch modifies code but doesn't include a changeset"
+      echo "🔧 Generate one with: pnpm changeset"
+      echo "🚀 Or bypass with: git push --no-verify"
+      exit 1
+    else
+      echo "✅ New changeset found (${NEW_CHANGESETS} files)"
+    fi
   else
-    CHANGESET_COUNT=0
-  fi
-  if [ "$CHANGESET_COUNT" -eq 0 ]; then
-    echo "⚠️  No changeset found on feature branch '$BRANCH'"
-    echo "💡 Generate one with: pnpm changeset"
-    echo "🚀 Or bypass with: git push --no-verify"
-    exit 1
-  else
-    echo "✅ Changeset found ($CHANGESET_COUNT files)"
+    echo "ℹ️ Code changeset enforcement skipped (no TS/JS/JSON changes since base)"
   fi
 fi
 
@@ -34,10 +40,4 @@ else
   pnpm run validate:changed
 fi
 
-if [ $? -eq 0 ]; then
-  echo "🎉 All validations passed! Ready to push."
-else
-  echo "❌ Validation failed"
-  echo "🔧 Fix issues above or bypass with: git push --no-verify"
-  exit 1
-fi
+echo "🎉 All validations passed! Ready to push."

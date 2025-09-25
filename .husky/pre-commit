@@ -1,5 +1,4 @@
 #!/usr/bin/env sh
-. "$(dirname "$0")/_/husky.sh"
 
 echo "🚀 Running pre-commit checks..."
 echo "💡 Tip: Use 'HUSKY=0 git commit' to bypass if needed"

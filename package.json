@@ -38,13 +38,15 @@
     "test:e2e": "TEST_MODE=e2e vitest run",
     "test:smoke": "vitest run --bail=1 --no-coverage **/*.smoke.test.*",
     "test:quick": "vitest run --bail=1 --no-coverage --pool=threads",
-    "test:focused": "vitest run --changed HEAD~1 --no-coverage",
+    "test:focused": ". scripts/compute-base.sh && vitest run --changed $BASE_SHA --no-coverage --bail=1",
     "test:debug": "vitest --inspect-brk --pool=threads --poolOptions.threads.singleThread",
+    "test:turbo": "turbo run test --output-logs=errors-only",
+    "test:turbo:changed": "turbo run test --filter=\"...[$TURBO_SCM_BASE]\" --output-logs=errors-only",
     "typecheck": "turbo run typecheck --output-logs=errors-only",
-    "validate": "turbo run lint typecheck test test:integration //#format:check:root --output-logs=errors-only",
-    "validate:changed": "turbo run lint typecheck test --filter='[HEAD^1]' --output-logs=errors-only",
+    "validate": "turbo run lint typecheck test test:integration \"//#format:check:root\" --output-logs=errors-only",
+    "validate:changed": "turbo run lint typecheck test --filter=\"...[${TURBO_SCM_BASE:-origin/main}]\" --output-logs=errors-only",
     "validate:quick": "turbo run lint typecheck --output-logs=errors-only",
-    "validate:nocache": "turbo run lint typecheck test test:integration //#format:check:root --output-logs=errors-only --force",
+    "validate:nocache": "turbo run lint typecheck test test:integration \"//#format:check:root\" --output-logs=errors-only --force",
     "perf": "tsx scripts/performance-monitor.ts",
     "profile": "tsx scripts/memory-baseline.ts",
     "zombies": "tsx scripts/emergency-cleanup.ts",
@@ -54,7 +56,8 @@
     "memory:baseline": "NODE_OPTIONS='--max-old-space-size=4096' tsx scripts/memory-baseline.ts",
     "memory:profile": "NODE_OPTIONS='--max-old-space-size=4096 --expose-gc' tsx scripts/memory-baseline.ts --profile",
     "memory:compare": "tsx scripts/memory-baseline.ts --compare",
-    "memory:report": "tsx scripts/memory-baseline.ts --report"
+    "memory:report": "tsx scripts/memory-baseline.ts --report",
+    "server:start": "echo 'Performance benchmark server placeholder - implement based on your app needs'"
   },
   "config": {
     "commitizen": {
