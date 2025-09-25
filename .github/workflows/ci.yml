@@ -124,6 +124,32 @@ jobs:
       - name: Run Quality Checks
         run: turbo run lint typecheck "//#format:check:root" --continue=dependencies-successful --output-logs=errors-only
 
+  unit-tests:
+    name: 🧪 Unit Tests (Full) (10m)
+    runs-on: ubuntu-latest
+    # Run in parallel with other fast-signal jobs; gate nothing else directly except via status aggregation
+    timeout-minutes: 10
+    env:
+      VITEST_SILENT: 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup PNPM with Caching
+        uses: ./.github/actions/setup-pnpm
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          pnpm-version: ${{ env.PNPM_VERSION }}
+      - name: Run Full Unit Test Suite (JUnit + no coverage for speed)
+        run: |
+          mkdir -p test-results
+          pnpm test -- --reporter=dot --reporter=junit --outputFile=./test-results/junit-unit.xml --no-coverage
+      - name: Upload JUnit (Unit)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: junit-unit-${{ github.run_number }}
+          path: test-results/junit-unit.xml
+          retention-days: 14
+
   build:
     name: 🏗️ Build (5m)
     runs-on: ubuntu-latest
@@ -190,7 +216,7 @@ jobs:
   ci-status:
     name: 📊 CI Status
     runs-on: ubuntu-latest
-    needs: [quick-tests, focused-tests, integration-tests, quality, build, commit-lint]
+    needs: [quick-tests, focused-tests, unit-tests, integration-tests, quality, build, commit-lint]
     if: always()
     steps:
       - name: Download all JUnit artifacts
@@ -253,13 +279,14 @@ jobs:
           |-----|--------|---------|
           | ⚡ Quick Tests | $([[ "${{ needs.quick-tests.result }}" == "success" ]] && echo "✅" || echo "❌") | ${{ needs.quick-tests.result }} |
           | 🎯 Focused Tests | $([[ "${{ needs.focused-tests.result }}" == "success" ]] && echo "✅" || echo "❌") | ${{ needs.focused-tests.result }} |
+          | 🧪 Unit Tests (Full) | $([[ "${{ needs.unit-tests.result }}" == "success" ]] && echo "✅" || echo "❌") | ${{ needs.unit-tests.result }} |
           | 🔬 Integration Tests | $([[ "${{ needs.integration-tests.result }}" == "success" ]] && echo "✅" || [[ "${{ needs.integration-tests.result }}" == "skipped" ]] && echo "⏭️" || echo "❌") | ${{ needs.integration-tests.result }} |
           | 🔧 Quality | $([[ "${{ needs.quality.result }}" == "success" ]] && echo "✅" || echo "❌") | ${{ needs.quality.result }} |
           | 🏠 Build | $([[ "${{ needs.build.result }}" == "success" ]] && echo "✅" || echo "❌") | ${{ needs.build.result }} |
           | ⚧ Commit Lint | $([[ "${{ needs.commit-lint.result }}" == "success" ]] && echo "✅" || [[ "${{ needs.commit-lint.result }}" == "skipped" ]] && echo "⏭️" || echo "❌") | ${{ needs.commit-lint.result }} |
 
           ## 🧭 Pipeline Flow
-          Setup → Quick Tests + Quality (parallel) → Build → Integration → Status
+          Setup → Quick/Focused/Quality/Full Unit (parallel) → Build → Integration → Status
 
           ## 🔧 Available Fix Commands
           - **Lint**: \`pnpm lint:fix\`
@@ -280,7 +307,7 @@ jobs:
           echo "$STATUS_CONTENT" >> $GITHUB_STEP_SUMMARY
 
           # Failure check
-          if [[ "${{ needs.quick-tests.result }}" == "failure" || "${{ needs.focused-tests.result }}" == "failure" || "${{ needs.integration-tests.result }}" == "failure" || "${{ needs.quality.result }}" == "failure" || "${{ needs.build.result }}" == "failure" || "${{ needs.commit-lint.result }}" == "failure" ]]; then
+          if [[ "${{ needs.quick-tests.result }}" == "failure" || "${{ needs.focused-tests.result }}" == "failure" || "${{ needs.unit-tests.result }}" == "failure" || "${{ needs.integration-tests.result }}" == "failure" || "${{ needs.quality.result }}" == "failure" || "${{ needs.build.result }}" == "failure" || "${{ needs.commit-lint.result }}" == "failure" ]]; then
             echo "❌ CI Pipeline failed" | tee -a $GITHUB_STEP_SUMMARY
             exit 1
           fi
