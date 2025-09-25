@@ -35,8 +35,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - name: Standard CI Setup
-        uses: ./.github/actions/standard-setup
+      - uses: actions/checkout@v4
+      - name: Setup PNPM with Caching
+        uses: ./.github/actions/setup-pnpm
         with:
           node-version: ${{ env.NODE_VERSION }}
           pnpm-version: ${{ env.PNPM_VERSION }}
@@ -85,8 +86,9 @@ jobs:
       matrix:
         test-type: [unit, integration]
     steps:
-      - name: Standard CI Setup
-        uses: ./.github/actions/standard-setup
+      - uses: actions/checkout@v4
+      - name: Setup PNPM with Caching
+        uses: ./.github/actions/setup-pnpm
         with:
           node-version: ${{ env.NODE_VERSION }}
           pnpm-version: ${{ env.PNPM_VERSION }}
@@ -128,8 +130,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - name: Standard CI Setup
-        uses: ./.github/actions/standard-setup
+      - uses: actions/checkout@v4
+      - name: Setup PNPM with Caching
+        uses: ./.github/actions/setup-pnpm
         with:
           node-version: ${{ env.NODE_VERSION }}
           pnpm-version: ${{ env.PNPM_VERSION }}
@@ -161,8 +164,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - name: Standard CI Setup
-        uses: ./.github/actions/standard-setup
+      - uses: actions/checkout@v4
+      - name: Setup PNPM with Caching
+        uses: ./.github/actions/setup-pnpm
         with:
           node-version: ${{ env.NODE_VERSION }}
           pnpm-version: ${{ env.PNPM_VERSION }}
@@ -193,8 +197,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - name: Standard CI Setup
-        uses: ./.github/actions/standard-setup
+      - uses: actions/checkout@v4
+      - name: Setup PNPM with Caching
+        uses: ./.github/actions/setup-pnpm
         with:
           node-version: ${{ env.NODE_VERSION }}
           pnpm-version: ${{ env.PNPM_VERSION }}

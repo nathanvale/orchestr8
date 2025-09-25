@@ -23,8 +23,20 @@ runs:
       with:
         fetch-depth: ${{ inputs.fetch-depth }}
 
-    - name: Setup PNPM with Caching
-      uses: ./.github/actions/setup-pnpm
+    - name: Setup PNPM
+      uses: pnpm/action-setup@v4
+      with:
+        version: ${{ inputs.pnpm-version }}
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
       with:
         node-version: ${{ inputs.node-version }}
-        pnpm-version: ${{ inputs.pnpm-version }}
+        cache: "pnpm"
+
+    - name: Install dependencies
+      shell: bash
+      run: |
+        pnpm install --frozen-lockfile --prefer-offline
+        # Ensure turbo is available in PATH
+        echo "$(pwd)/node_modules/.bin" >> $GITHUB_PATH
