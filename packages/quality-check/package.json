@@ -29,7 +29,7 @@
     "README.md"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "tsup",
     "clean": "rm -rf dist .tsbuildinfo",
     "lint": "eslint . --cache --cache-location ../../.eslintcache/quality-check",
     "lint:fix": "NODE_NO_WARNINGS=1 eslint . --fix --cache --cache-location .eslintcache",

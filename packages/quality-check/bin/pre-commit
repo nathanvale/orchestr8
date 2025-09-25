@@ -21,7 +21,7 @@ if (!existsSync(distPath)) {
 The quality-check package needs to be built before running pre-commit hooks.
 
 Please run:
-  pnpm --filter @template/quality-check build
+  pnpm --filter @orchestr8/quality-check build
 
 Or build all packages:
   pnpm build
