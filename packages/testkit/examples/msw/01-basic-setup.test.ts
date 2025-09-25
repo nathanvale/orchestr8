@@ -1,4 +1,4 @@
-import { createSuccessResponse, http, setupMSW } from '@template/testkit/msw'
+import { createSuccessResponse, http, setupMSW } from '@orchestr8/testkit/msw'
 import { describe, expect, it } from 'vitest'
 
 // Basic server with a simple endpoint

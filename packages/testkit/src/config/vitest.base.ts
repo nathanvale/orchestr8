@@ -216,7 +216,7 @@ export function createBaseVitestConfig(overrides: Partial<UserConfig> = {}): Use
       ? [overrides.test.setupFiles as unknown as string]
       : undefined
 
-  const defaultSetup = isLocalTestkit ? ['./src/register.ts'] : ['@template/testkit/register']
+  const defaultSetup = isLocalTestkit ? ['./src/register.ts'] : ['@orchestr8/testkit/register']
   const setupFiles = overrideSetup ?? defaultSetup
 
   const baseConfig: UserConfig = {

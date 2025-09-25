@@ -1,5 +1,5 @@
 /**
- * Main entry point for @claude-hooks/quality-check
+ * Main entry point for @orchestr8/quality-check
  * ~10 lines - just exports
  */
 

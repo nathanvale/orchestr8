@@ -224,7 +224,7 @@ describe('vitest.base', () => {
       expect(setupFiles).toBeDefined()
       expect(setupFiles).toHaveLength(1)
       expect(
-        setupFiles[0] === './src/register.ts' || setupFiles[0] === '@template/testkit/register',
+        setupFiles[0] === './src/register.ts' || setupFiles[0] === '@orchestr8/testkit/register',
       ).toBe(true)
       expect(config.test).toHaveProperty('include')
       expect(config.test).toHaveProperty('exclude')
@@ -251,7 +251,7 @@ describe('vitest.base', () => {
       expect(setupFiles).toBeDefined()
       expect(setupFiles).toHaveLength(1)
       expect(
-        setupFiles[0] === './src/register.ts' || setupFiles[0] === '@template/testkit/register',
+        setupFiles[0] === './src/register.ts' || setupFiles[0] === '@orchestr8/testkit/register',
       ).toBe(true)
     })
 
@@ -424,7 +424,7 @@ describe('vitest.base', () => {
         process.cwd = vi.fn().mockReturnValue('/some/other/path')
         const config = createBaseVitestConfig()
         const setupFiles = config.test?.setupFiles as string[]
-        expect(setupFiles[0]).toBe('@template/testkit/register')
+        expect(setupFiles[0]).toBe('@orchestr8/testkit/register')
       })
 
       it('should use local path when cwd includes packages/testkit', () => {

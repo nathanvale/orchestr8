@@ -8,7 +8,7 @@ import {
   isDockerAvailable,
   isIntegrationTestMode,
   setupPostgresTest,
-} from '@template/testkit/containers'
+} from '@orchestr8/testkit/containers'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
 // Only run in integration test mode

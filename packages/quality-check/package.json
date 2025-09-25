@@ -1,5 +1,5 @@
 {
-  "name": "@claude-hooks/quality-check",
+  "name": "@orchestr8/quality-check",
   "version": "0.2.0",
   "description": "Production-ready quality check package for ESLint, Prettier, and TypeScript validation with <2s execution time",
   "keywords": [
@@ -29,7 +29,7 @@
     "README.md"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "tsup",
     "clean": "rm -rf dist .tsbuildinfo",
     "lint": "eslint . --cache --cache-location ../../.eslintcache/quality-check",
     "lint:fix": "NODE_NO_WARNINGS=1 eslint . --fix --cache --cache-location .eslintcache",

@@ -13,7 +13,7 @@
  *
  * ```typescript
  * import { beforeEach, afterEach, it } from 'vitest'
- * import { withTransaction } from '@template/testkit/sqlite'
+ * import { withTransaction } from '@orchestr8/testkit/sqlite'
  * import { createAdapter } from './your-adapter'
  *
  * let tx: Transaction

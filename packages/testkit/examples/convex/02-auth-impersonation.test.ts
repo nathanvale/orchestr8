@@ -1,4 +1,4 @@
-import { createConvexTestHarness } from '@template/testkit/convex'
+import { createConvexTestHarness } from '@orchestr8/testkit/convex'
 import { describe, expect, it } from 'vitest'
 
 const RUN_CONVEX = process.env.CONVEX_GENERATED === 'true'

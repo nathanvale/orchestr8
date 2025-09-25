@@ -1,4 +1,8 @@
-import { createNetworkIssueHandler, createUnreliableHandler, setupMSW } from '@template/testkit/msw'
+import {
+  createNetworkIssueHandler,
+  createUnreliableHandler,
+  setupMSW,
+} from '@orchestr8/testkit/msw'
 import { describe, expect, it } from 'vitest'
 
 setupMSW([

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { createConvexTestHarness } from '@template/testkit/convex'
+import { createConvexTestHarness } from '@orchestr8/testkit/convex'
 
 const RUN_CONVEX = process.env.CONVEX_GENERATED === 'true'
 const d = RUN_CONVEX ? describe : describe.skip

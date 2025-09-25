@@ -13,7 +13,7 @@ import {
   seedWithSql,
   seedWithFiles,
   type FileDatabase,
-} from '@template/testkit/sqlite'
+} from '@orchestr8/testkit/sqlite'
 
 // Example database interface
 interface Database {

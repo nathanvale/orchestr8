@@ -1,5 +1,5 @@
-import { average, median, percentile } from '@template/utils'
 import { useEffect, useState } from 'react'
+import { average, median, percentile } from './utils/number-utils'
 import LogDashboard from './components/LogDashboard'
 import MetricsPanel from './components/MetricsPanel'
 import { fetchServerLogs, fetchServerMetrics } from './services/api'

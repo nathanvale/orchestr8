@@ -18,7 +18,7 @@
  * ## Usage
  *
  * ```typescript
- * import { applyRecommendedPragmas } from '@template/testkit/sqlite'
+ * import { applyRecommendedPragmas } from '@orchestr8/testkit/sqlite'
  *
  * const pragmas = await applyRecommendedPragmas(db, {
  *   busyTimeoutMs: 5000
@@ -383,7 +383,7 @@ interface ProbeDatabase {
  *
  * @example
  * ```typescript
- * import { probeEnvironment } from '@template/testkit/sqlite'
+ * import { probeEnvironment } from '@orchestr8/testkit/sqlite'
  *
  * // Basic probe with console output
  * await probeEnvironment(db)

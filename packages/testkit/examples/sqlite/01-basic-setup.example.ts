@@ -6,8 +6,8 @@
  */
 
 import { describe, test, expect, beforeEach, afterEach } from 'vitest'
-import { createFileDatabase, applyMigrations, seedWithSql } from '@template/testkit/sqlite'
-import type { FileDatabase } from '@template/testkit/sqlite'
+import { createFileDatabase, applyMigrations, seedWithSql } from '@orchestr8/testkit/sqlite'
+import type { FileDatabase } from '@orchestr8/testkit/sqlite'
 
 // Example types for demonstration
 interface Database {

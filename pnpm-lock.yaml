@@ -8,9 +8,6 @@ importers:
 
   .:
     dependencies:
-      '@template/utils':
-        specifier: workspace:*
-        version: link:packages/utils
       react:
         specifier: 19.1.1
         version: 19.1.1
@@ -138,9 +135,6 @@ importers:
 
   apps/vite:
     dependencies:
-      '@template/utils':
-        specifier: workspace:*
-        version: link:../../packages/utils
       react:
         specifier: ^19.1.1
         version: 19.1.1
@@ -148,7 +142,7 @@ importers:
         specifier: ^19.1.1
         version: 19.1.1(react@19.1.1)
     devDependencies:
-      '@template/testkit':
+      '@orchestr8/testkit':
         specifier: workspace:*
         version: link:../../packages/testkit
       '@types/react':
@@ -226,10 +220,6 @@ importers:
         version: 3.2.4(@edge-runtime/vm@5.0.0)(@types/debug@4.1.12)(@types/node@22.18.0)(@vitest/ui@3.2.4)(happy-dom@18.0.1)(jiti@2.5.1)(msw@2.10.5(@types/node@22.18.0)(typescript@5.7.3))(tsx@4.20.5)(yaml@2.8.1)
 
   packages/testkit:
-    dependencies:
-      '@template/utils':
-        specifier: workspace:*
-        version: link:../utils
     devDependencies:
       '@edge-runtime/vm':
         specifier: ^5.0.0
@@ -288,8 +278,6 @@ importers:
       vitest:
         specifier: ^3.2.4
         version: 3.2.4(@edge-runtime/vm@5.0.0)(@types/debug@4.1.12)(@types/node@24.3.0)(@vitest/ui@3.2.4)(happy-dom@18.0.1)(jiti@2.5.1)(msw@2.10.5(@types/node@24.3.0)(typescript@5.9.2))(tsx@4.20.5)(yaml@2.8.1)
-
-  packages/utils: {}
 
   packages/voice-vault:
     dependencies:
@@ -5824,7 +5812,7 @@ snapshots:
       sirv: 3.0.2
       tinyglobby: 0.2.14
       tinyrainbow: 2.0.0
-      vitest: 3.2.4(@edge-runtime/vm@5.0.0)(@types/debug@4.1.12)(@types/node@24.3.0)(@vitest/ui@3.2.4)(happy-dom@18.0.1)(jiti@2.5.1)(msw@2.10.5(@types/node@24.3.0)(typescript@5.9.2))(tsx@4.20.5)(yaml@2.8.1)
+      vitest: 3.2.4(@edge-runtime/vm@5.0.0)(@types/debug@4.1.12)(@types/node@22.18.0)(@vitest/ui@3.2.4)(happy-dom@18.0.1)(jiti@2.5.1)(msw@2.10.5(@types/node@22.18.0)(typescript@5.7.3))(tsx@4.20.5)(yaml@2.8.1)
 
   '@vitest/utils@3.2.4':
     dependencies:

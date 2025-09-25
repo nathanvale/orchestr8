@@ -6,7 +6,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { spawn, exec, execSync, fork, execFile, execFileSync } from 'node:child_process'
 import { promisify } from 'node:util'
-import { quickMocks, processHelpers } from '@template/testkit/cli'
+import { quickMocks, processHelpers } from '@orchestr8/testkit/cli'
 
 const execAsync = promisify(exec)
 const execFileAsync = promisify(execFile)

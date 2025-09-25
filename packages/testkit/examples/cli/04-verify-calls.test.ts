@@ -1,4 +1,4 @@
-import { processHelpers } from '@template/testkit/cli'
+import { processHelpers } from '@orchestr8/testkit/cli'
 import { exec } from 'node:child_process'
 import { describe, expect, it } from 'vitest'
 

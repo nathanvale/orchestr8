@@ -4,7 +4,7 @@ describe('Package Export API', () => {
   it('should export defineVitestConfig from config/vitest', async () => {
     let vitestExports: Record<string, unknown>
     try {
-      const spec = ['@template', 'testkit', 'config', 'vitest'].join('/')
+      const spec = ['@orchestr8', 'testkit', 'config', 'vitest'].join('/')
       vitestExports = await import(spec)
     } catch (err) {
       // Fallback to source when running locally without dist build
@@ -19,7 +19,7 @@ describe('Package Export API', () => {
   it('should export createBaseVitestConfig from config/vitest', async () => {
     let vitestExports: Record<string, unknown>
     try {
-      const spec = ['@template', 'testkit', 'config', 'vitest'].join('/')
+      const spec = ['@orchestr8', 'testkit', 'config', 'vitest'].join('/')
       vitestExports = await import(spec)
     } catch (err) {
       vitestExports = await import('../src/config/vitest.base')
@@ -33,7 +33,7 @@ describe('Package Export API', () => {
   it('should create a valid vitest config using defineVitestConfig', async () => {
     let defineVitestConfig: any
     try {
-      const spec = ['@template', 'testkit', 'config', 'vitest'].join('/')
+      const spec = ['@orchestr8', 'testkit', 'config', 'vitest'].join('/')
       const module = await import(spec)
       defineVitestConfig = module.defineVitestConfig
     } catch (err) {
@@ -61,7 +61,7 @@ describe('Package Export API', () => {
   it('should export register module', async () => {
     let registerExports: Record<string, unknown>
     try {
-      const spec = ['@template', 'testkit', 'register'].join('/')
+      const spec = ['@orchestr8', 'testkit', 'register'].join('/')
       registerExports = await import(spec)
     } catch (err) {
       registerExports = await import('../src/register')
@@ -73,7 +73,7 @@ describe('Package Export API', () => {
   it('should export msw utilities', async () => {
     let mswExports: Record<string, unknown>
     try {
-      const spec = ['@template', 'testkit', 'msw'].join('/')
+      const spec = ['@orchestr8', 'testkit', 'msw'].join('/')
       mswExports = await import(spec)
     } catch (err) {
       mswExports = await import('../src/msw/index')
@@ -94,7 +94,7 @@ describe('Package Export API', () => {
   it('should export env utilities', async () => {
     let envExports: Record<string, unknown>
     try {
-      const spec = ['@template', 'testkit', 'env'].join('/')
+      const spec = ['@orchestr8', 'testkit', 'env'].join('/')
       envExports = await import(spec)
     } catch (err) {
       envExports = await import('../src/env/index')
@@ -106,7 +106,7 @@ describe('Package Export API', () => {
   it('should export utils', async () => {
     let utilsExports: Record<string, unknown>
     try {
-      const spec = ['@template', 'testkit', 'utils'].join('/')
+      const spec = ['@orchestr8', 'testkit', 'utils'].join('/')
       utilsExports = await import(spec)
     } catch (err) {
       utilsExports = await import('../src/utils/index')
@@ -118,7 +118,7 @@ describe('Package Export API', () => {
   it('should export fs utilities', async () => {
     let fsExports: Record<string, unknown>
     try {
-      const spec = ['@template', 'testkit', 'fs'].join('/')
+      const spec = ['@orchestr8', 'testkit', 'fs'].join('/')
       fsExports = await import(spec)
     } catch (err) {
       fsExports = await import('../src/fs/index')
