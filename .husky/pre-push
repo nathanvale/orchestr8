@@ -12,13 +12,25 @@ echo "📝 Validating branch: $BRANCH"
 # Ensure base refs exist locally for reliable diffing
 git fetch -q origin main develop || true
 
-# Determine a safe base reference
-if git show-ref --verify --quiet refs/remotes/origin/main; then
+# Determine the best base reference
+# 1. Try tracking branch base first
+TRACKING_BRANCH=$(git rev-parse --abbrev-ref --symbolic-full-name @{u} 2>/dev/null | sed 's/origin\///')
+if [ -n "$TRACKING_BRANCH" ] && git show-ref --verify --quiet "refs/remotes/origin/$TRACKING_BRANCH"; then
+  DEFAULT_BASE="origin/$TRACKING_BRANCH"
+# 2. Then try develop if it exists
+elif git show-ref --verify --quiet refs/remotes/origin/develop; then
+  DEFAULT_BASE="origin/develop"
+# 3. Then try main
+elif git show-ref --verify --quiet refs/remotes/origin/main; then
   DEFAULT_BASE="origin/main"
+# 4. Fallback to HEAD~1
 else
   DEFAULT_BASE="HEAD~1"
 fi
 BASE=$(git merge-base HEAD "$DEFAULT_BASE" 2>/dev/null || echo "$DEFAULT_BASE")
+
+# Export for Turbo to use
+export TURBO_SCM_BASE="$BASE"
 
 # Branch-aware changeset validation
 if [ "$BRANCH" != "main" ] && [ "$BRANCH" != "develop" ]; then

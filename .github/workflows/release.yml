@@ -108,21 +108,29 @@ jobs:
 
             for (const pkg of packages) {
               const tagName = `${pkg.name}@${pkg.version}`;
-              
+
               try {
                 const release = await github.rest.repos.getReleaseByTag({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
                   tag: tagName
                 });
-                
-                // Upload SBOM to release
+
+                // Read SBOM file
+                const sbomContent = fs.readFileSync('sbom.json');
+                const sbomFileName = `sbom-${pkg.name.replace('@', '').replace('/', '-')}-${pkg.version}.json`;
+
+                // Upload SBOM to release with proper headers
                 await github.rest.repos.uploadReleaseAsset({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
                   release_id: release.data.id,
-                  name: `sbom-${pkg.name.replace('@', '').replace('/', '-')}-${pkg.version}.json`,
-                  data: fs.readFileSync('sbom.json')
+                  name: sbomFileName,
+                  data: sbomContent,
+                  headers: {
+                    'content-type': 'application/json',
+                    'content-length': sbomContent.length
+                  }
                 });
               } catch (error) {
                 console.error(`Failed to upload assets for ${tagName}:`, error);
