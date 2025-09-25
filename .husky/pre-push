@@ -1,6 +1,12 @@
 #!/usr/bin/env sh
 set -eu
 
+# Skip pre-push in CI environments
+if [ "${CI:-}" = "true" ]; then
+  echo "⏭️ Skipping pre-push validation in CI environment"
+  exit 0
+fi
+
 echo "🔍 Running pre-push validation..."
 echo "⏱️ This includes linting, typechecking, testing, and changeset validation"
 echo "💡 Tip: Use 'git push --no-verify' to bypass in emergencies"
