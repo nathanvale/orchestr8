@@ -14,7 +14,6 @@ env:
   NODE_VERSION: "20.18.1"
   PNPM_VERSION: "9.15.4"
   NODE_OPTIONS: "--max-old-space-size=4096"
-  # Turbo remote cache for snappy CI across runs/branches
   TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
   TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
   TURBO_REMOTE_CACHE_SIGNATURE_KEY: ${{ secrets.TURBO_REMOTE_CACHE_SIGNATURE_KEY }}
@@ -27,7 +26,7 @@ permissions:
 
 jobs:
   quick-tests:
-    name: ⚡ Quick Tests (5m)
+    name: ⚡ Quick Tests
     runs-on: ubuntu-latest
     timeout-minutes: 5
     env:
@@ -52,7 +51,7 @@ jobs:
           retention-days: 14
 
   focused-tests:
-    name: 🎯 Focused Tests (5m)
+    name: 🎯 Focused Tests
     runs-on: ubuntu-latest
     timeout-minutes: 5
     env:
@@ -68,31 +67,19 @@ jobs:
           pnpm-version: ${{ env.PNPM_VERSION }}
       - name: Run Focused Tests
         run: |
-          # Determine the best base reference (matching pre-push logic)
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            # For PRs, use the base branch
             DEFAULT_BASE="origin/${{ github.event.pull_request.base.ref }}"
           elif [[ "${{ github.ref_name }}" == "develop" ]]; then
             DEFAULT_BASE="origin/develop"
           else
             DEFAULT_BASE="origin/main"
           fi
-
-          # Compute merge-base for accurate change detection
           BASE_SHA=$(git merge-base HEAD "$DEFAULT_BASE" 2>/dev/null || echo "$DEFAULT_BASE")
           echo "Using base: $BASE_SHA (from $DEFAULT_BASE)"
-
-          # Note:
-          # - Vitest `--changed` prefers a commit SHA/merge-base for accuracy (we use BASE_SHA)
-          # - Turborepo remote cache uses the ref (e.g., origin/main) via TURBO_SCM_BASE for graphing/cache hits
-          #   We intentionally keep both concepts separate to maximize correctness and cache performance.
-
-          echo "Listing changed test files (if any) for visibility:"
           mkdir -p test-results
           CHANGED_FILES=$(pnpm exec vitest list --changed "$BASE_SHA" --filesOnly || true)
           if [[ -z "$CHANGED_FILES" ]]; then
             echo "ℹ️  No changed tests detected. Skipping focused test run."
-            # Write an empty JUnit file to keep artifact contract predictable
             echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?><testsuites/>" > ./test-results/junit-focused.xml
           else
             echo "$CHANGED_FILES" | tee ./test-results/changed-tests.txt
@@ -107,27 +94,39 @@ jobs:
           path: test-results/junit-focused.xml
           retention-days: 14
 
-  quality:
-    name: 🔧 Quality (Format + Lint + Types) (8m)
+  lint-quality:
+    name: 🧹 Lint & Format Check
     runs-on: ubuntu-latest
-    # Run in parallel with quick-tests for faster overall feedback
     if: ${{ !cancelled() }}
-    timeout-minutes: 8
+    timeout-minutes: 4
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
       - name: Setup PNPM with Caching
         uses: ./.github/actions/setup-pnpm
         with:
           node-version: ${{ env.NODE_VERSION }}
           pnpm-version: ${{ env.PNPM_VERSION }}
-      - name: Run Quality Checks
-        run: turbo run lint typecheck "//#format:check:root" --continue=dependencies-successful --output-logs=errors-only
+      - name: Lint & Format (no typecheck)
+        run: turbo run lint "//#format:check:root" --output-logs=errors-only
+
+  typecheck:
+    name: 🔡 Type Check
+    runs-on: ubuntu-latest
+    if: ${{ !cancelled() }}
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup PNPM with Caching
+        uses: ./.github/actions/setup-pnpm
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          pnpm-version: ${{ env.PNPM_VERSION }}
+      - name: TypeScript Type Check
+        run: turbo run typecheck --output-logs=errors-only
 
   unit-tests:
-    name: 🧪 Unit Tests (Full) (10m)
+    name: 🧪 Unit Tests (Full)
     runs-on: ubuntu-latest
-    # Run in parallel with other fast-signal jobs; gate nothing else directly except via status aggregation
     timeout-minutes: 10
     env:
       VITEST_SILENT: 'true'
@@ -151,27 +150,46 @@ jobs:
           retention-days: 14
 
   build:
-    name: 🏗️ Build (5m)
+    name: 🏗️ Build
     runs-on: ubuntu-latest
-    needs: [quick-tests, quality]
-    if: ${{ !cancelled() && needs.quick-tests.result == 'success' && needs.quality.result == 'success' }}
+    needs: [quick-tests, lint-quality, typecheck, unit-tests]
+    if: ${{ !cancelled() && needs.quick-tests.result == 'success' && needs.lint-quality.result == 'success' && needs.typecheck.result == 'success' && needs.unit-tests.result == 'success' }}
     timeout-minutes: 5
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
       - name: Setup PNPM with Caching
         uses: ./.github/actions/setup-pnpm
         with:
           node-version: ${{ env.NODE_VERSION }}
           pnpm-version: ${{ env.PNPM_VERSION }}
-      - run: pnpm build
+      - name: Build packages
+        run: |
+          # Capture Turbo cache statistics
+          pnpm build 2>&1 | tee build.log
+
+          # Extract cache hit rate
+          CACHE_SUMMARY=$(grep -E "(Remote|Local) cache hit|cache miss" build.log || echo "No cache info available")
+          echo "### 📊 Turbo Cache Statistics" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "$CACHE_SUMMARY" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+          # Save metrics
+          echo "$CACHE_SUMMARY" > turbo-cache-metrics.txt
+      - name: Upload Turbo Metrics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: turbo-metrics-build-${{ github.run_number }}
+          path: turbo-cache-metrics.txt
+          retention-days: 7
 
   integration-tests:
-    name: 🔬 Integration Tests (8m)
+    name: 🔬 Integration Tests
     runs-on: ubuntu-latest
-    needs: [quick-tests, quality, build]  # Only run if quick tests, typecheck, and build pass
+    needs: [quick-tests, lint-quality, typecheck, unit-tests, build]
     timeout-minutes: 8
-    if: ${{ !cancelled() && needs.quick-tests.result == 'success' && needs.quality.result == 'success' && needs.build.result == 'success' }}
+    if: ${{ !cancelled() && needs.quick-tests.result == 'success' && needs.lint-quality.result == 'success' && needs.typecheck.result == 'success' && needs.unit-tests.result == 'success' && needs.build.result == 'success' }}
     env:
       VITEST_SILENT: 'true'
     steps:
@@ -195,7 +213,7 @@ jobs:
           retention-days: 14
 
   commit-lint:
-    name: ⚧ Commit Lint (5m)
+    name: ⚧ Commit Lint
     runs-on: ubuntu-latest
     timeout-minutes: 5
     if: github.event_name == 'pull_request'
@@ -213,10 +231,53 @@ jobs:
           # This will automatically skip merge commits based on commitlint.config.js
           pnpm commitlint --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }} --verbose
 
+  coverage:
+    name: 📊 Code Coverage
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: github.event_name == 'push' && github.ref_name == 'main'
+    env:
+      VITEST_SILENT: 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup PNPM with Caching
+        uses: ./.github/actions/setup-pnpm
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          pnpm-version: ${{ env.PNPM_VERSION }}
+      - name: Run Tests with Coverage
+        run: |
+          mkdir -p coverage-reports
+          pnpm test:coverage -- --reporter=dot
+      - name: Upload Coverage Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report-${{ github.run_number }}
+          path: coverage
+          retention-days: 30
+      - name: Generate Coverage Summary
+        run: |
+          echo "## 📊 Coverage Report" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          # Extract coverage summary from the coverage output
+          if [ -f coverage/coverage-summary.json ]; then
+            node -e "
+              const coverage = require('./coverage/coverage-summary.json');
+              const total = coverage.total;
+              console.log('Lines:       ' + total.lines.pct + '%');
+              console.log('Statements:  ' + total.statements.pct + '%');
+              console.log('Functions:   ' + total.functions.pct + '%');
+              console.log('Branches:    ' + total.branches.pct + '%');
+            " >> $GITHUB_STEP_SUMMARY
+          else
+            echo "Coverage report not found" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
   ci-status:
     name: 📊 CI Status
     runs-on: ubuntu-latest
-    needs: [quick-tests, focused-tests, unit-tests, integration-tests, quality, build, commit-lint]
+    needs: [quick-tests, focused-tests, unit-tests, integration-tests, lint-quality, typecheck, build, commit-lint]
     if: always()
     steps:
       - name: Download all JUnit artifacts
@@ -281,12 +342,13 @@ jobs:
           | 🎯 Focused Tests | $([[ "${{ needs.focused-tests.result }}" == "success" ]] && echo "✅" || echo "❌") | ${{ needs.focused-tests.result }} |
           | 🧪 Unit Tests (Full) | $([[ "${{ needs.unit-tests.result }}" == "success" ]] && echo "✅" || echo "❌") | ${{ needs.unit-tests.result }} |
           | 🔬 Integration Tests | $([[ "${{ needs.integration-tests.result }}" == "success" ]] && echo "✅" || [[ "${{ needs.integration-tests.result }}" == "skipped" ]] && echo "⏭️" || echo "❌") | ${{ needs.integration-tests.result }} |
-          | 🔧 Quality | $([[ "${{ needs.quality.result }}" == "success" ]] && echo "✅" || echo "❌") | ${{ needs.quality.result }} |
+          | 🧹 Lint & Format | $([[ "${{ needs.lint-quality.result }}" == "success" ]] && echo "✅" || echo "❌") | ${{ needs.lint-quality.result }} |
+          | 🔡 Type Check | $([[ "${{ needs.typecheck.result }}" == "success" ]] && echo "✅" || echo "❌") | ${{ needs.typecheck.result }} |
           | 🏠 Build | $([[ "${{ needs.build.result }}" == "success" ]] && echo "✅" || echo "❌") | ${{ needs.build.result }} |
           | ⚧ Commit Lint | $([[ "${{ needs.commit-lint.result }}" == "success" ]] && echo "✅" || [[ "${{ needs.commit-lint.result }}" == "skipped" ]] && echo "⏭️" || echo "❌") | ${{ needs.commit-lint.result }} |
 
           ## 🧭 Pipeline Flow
-          Setup → Quick/Focused/Quality/Full Unit (parallel) → Build → Integration → Status
+          Setup → Quick/Focused/Lint+Format/TypeCheck/Full Unit (parallel) → Build → Integration → Status
 
           ## 🔧 Available Fix Commands
           - **Lint**: \`pnpm lint:fix\`
@@ -307,7 +369,7 @@ jobs:
           echo "$STATUS_CONTENT" >> $GITHUB_STEP_SUMMARY
 
           # Failure check
-          if [[ "${{ needs.quick-tests.result }}" == "failure" || "${{ needs.focused-tests.result }}" == "failure" || "${{ needs.unit-tests.result }}" == "failure" || "${{ needs.integration-tests.result }}" == "failure" || "${{ needs.quality.result }}" == "failure" || "${{ needs.build.result }}" == "failure" || "${{ needs.commit-lint.result }}" == "failure" ]]; then
+          if [[ "${{ needs.quick-tests.result }}" == "failure" || "${{ needs.focused-tests.result }}" == "failure" || "${{ needs.unit-tests.result }}" == "failure" || "${{ needs.integration-tests.result }}" == "failure" || "${{ needs.lint-quality.result }}" == "failure" || "${{ needs.typecheck.result }}" == "failure" || "${{ needs.build.result }}" == "failure" || "${{ needs.commit-lint.result }}" == "failure" ]]; then
             echo "❌ CI Pipeline failed" | tee -a $GITHUB_STEP_SUMMARY
             exit 1
           fi
@@ -322,8 +384,7 @@ jobs:
       pages: write
       id-token: write
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
       - name: Setup PNPM with Caching
