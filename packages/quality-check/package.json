@@ -1,6 +1,6 @@
 {
   "name": "@claude-hooks/quality-check",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Production-ready quality check package for ESLint, Prettier, and TypeScript validation with <2s execution time",
   "keywords": [
     "quality-check",
