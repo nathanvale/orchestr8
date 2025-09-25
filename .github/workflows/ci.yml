@@ -217,7 +217,7 @@ jobs:
         run: |
           # Check if aggregated-junit exists and has files
           if [ -d aggregated-junit ] && [ "$(ls -A aggregated-junit 2>/dev/null)" ]; then
-            npx --yes junit-viewer@9 --results=aggregated-junit --save=test-report/index.html --minify
+            npx --yes junit-viewer@4 --results=aggregated-junit --save=test-report/index.html --minify
             echo "HTML report generated at test-report/index.html"
           else
             echo "No JUnit files found, creating placeholder report"
@@ -354,7 +354,7 @@ jobs:
             echo '}'
           ) > test-report/index.json
           # Create HTML dashboard
-          npx --yes junit-viewer@9 --results=aggregated-junit --save=test-report/index.html --minify
+          npx --yes junit-viewer@4 --results=aggregated-junit --save=test-report/index.html --minify
           # Zip raw XML for easy download
           (cd test-report && zip -q -r junit.zip junit/*.xml || true)
       - name: Upload Pages Artifact
@@ -441,7 +441,7 @@ jobs:
             echo '}'
           ) > test-report/index.json
           # Create HTML dashboard
-          npx --yes junit-viewer@9 --results=aggregated-junit --save=test-report/index.html --minify
+          npx --yes junit-viewer@4 --results=aggregated-junit --save=test-report/index.html --minify
           # Zip raw XML for easy download
           (cd test-report && zip -q -r junit.zip junit/*.xml || true)
       - name: Upload Pages Artifact (PR)
