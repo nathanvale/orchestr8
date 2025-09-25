@@ -1,5 +1,5 @@
-#!/usr/bin/env bash
-set -euo pipefail
+#!/usr/bin/env sh
+set -eu
 
 echo "🔍 Running pre-push validation..."
 echo "⏱️ This includes linting, typechecking, testing, and changeset validation"

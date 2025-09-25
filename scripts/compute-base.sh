@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 #
 # Compute the best base reference for change detection
 # Used by pre-push hooks and CI workflows to ensure consistent base detection
@@ -6,7 +6,7 @@
 # Usage: source scripts/compute-base.sh
 # Exports: TURBO_SCM_BASE
 
-set -euo pipefail
+set -eu
 
 # Ensure base refs exist locally for reliable diffing
 git fetch -q origin main 2>/dev/null || true
