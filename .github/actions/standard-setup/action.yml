@@ -1,0 +1,30 @@
+name: 'Standard CI Setup'
+description: 'Standard checkout and PNPM setup for all CI jobs'
+
+inputs:
+  node-version:
+    description: 'Node.js version to use'
+    required: false
+    default: '20.18.1'
+  pnpm-version:
+    description: 'PNPM version to use'
+    required: false
+    default: '9.15.4'
+  fetch-depth:
+    description: 'Number of commits to fetch (0 for all history)'
+    required: false
+    default: '1'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: ${{ inputs.fetch-depth }}
+
+    - name: Setup PNPM with Caching
+      uses: ./.github/actions/setup-pnpm
+      with:
+        node-version: ${{ inputs.node-version }}
+        pnpm-version: ${{ inputs.pnpm-version }}

@@ -26,15 +26,14 @@ permissions:
 
 jobs:
   quick-tests:
-    name: ⚡ Quick Tests (5m)
+    name: ⚡ Quick Tests
     runs-on: ubuntu-latest
     timeout-minutes: 5
     env:
       VITEST_SILENT: 'true'
     steps:
-      - uses: actions/checkout@v4
-      - name: Setup PNPM with Caching
-        uses: ./.github/actions/setup-pnpm
+      - name: Standard CI Setup
+        uses: ./.github/actions/standard-setup
         with:
           node-version: ${{ env.NODE_VERSION }}
           pnpm-version: ${{ env.PNPM_VERSION }}
@@ -51,20 +50,18 @@ jobs:
           retention-days: 14
 
   focused-tests:
-    name: 🎯 Focused Tests (5m)
+    name: 🎯 Focused Tests
     runs-on: ubuntu-latest
     timeout-minutes: 5
     env:
       VITEST_SILENT: 'true'
     steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Setup PNPM with Caching
-        uses: ./.github/actions/setup-pnpm
+      - name: Standard CI Setup
+        uses: ./.github/actions/standard-setup
         with:
           node-version: ${{ env.NODE_VERSION }}
           pnpm-version: ${{ env.PNPM_VERSION }}
+          fetch-depth: '0'
       - name: Run Focused Tests
         run: |
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
@@ -95,14 +92,13 @@ jobs:
           retention-days: 14
 
   lint-quality:
-    name: 🧹 Lint & Format Check (4m)
+    name: 🧹 Lint & Format Check
     runs-on: ubuntu-latest
     if: ${{ !cancelled() }}
     timeout-minutes: 4
     steps:
-      - uses: actions/checkout@v4
-      - name: Setup PNPM with Caching
-        uses: ./.github/actions/setup-pnpm
+      - name: Standard CI Setup
+        uses: ./.github/actions/standard-setup
         with:
           node-version: ${{ env.NODE_VERSION }}
           pnpm-version: ${{ env.PNPM_VERSION }}
@@ -110,14 +106,13 @@ jobs:
         run: turbo run lint "//#format:check:root" --output-logs=errors-only
 
   typecheck:
-    name: 🔡 Type Check (8m)
+    name: 🔡 Type Check
     runs-on: ubuntu-latest
     if: ${{ !cancelled() }}
     timeout-minutes: 8
     steps:
-      - uses: actions/checkout@v4
-      - name: Setup PNPM with Caching
-        uses: ./.github/actions/setup-pnpm
+      - name: Standard CI Setup
+        uses: ./.github/actions/standard-setup
         with:
           node-version: ${{ env.NODE_VERSION }}
           pnpm-version: ${{ env.PNPM_VERSION }}
@@ -125,16 +120,14 @@ jobs:
         run: turbo run typecheck --output-logs=errors-only
 
   unit-tests:
-    name: 🧪 Unit Tests (Full) (10m)
+    name: 🧪 Unit Tests (Full)
     runs-on: ubuntu-latest
-    # Run in parallel with other fast-signal jobs; gate nothing else directly except via status aggregation
     timeout-minutes: 10
     env:
       VITEST_SILENT: 'true'
     steps:
-      - uses: actions/checkout@v4
-      - name: Setup PNPM with Caching
-        uses: ./.github/actions/setup-pnpm
+      - name: Standard CI Setup
+        uses: ./.github/actions/standard-setup
         with:
           node-version: ${{ env.NODE_VERSION }}
           pnpm-version: ${{ env.PNPM_VERSION }}
@@ -151,33 +144,50 @@ jobs:
           retention-days: 14
 
   build:
-    name: 🏗️ Build (5m)
+    name: 🏗️ Build
     runs-on: ubuntu-latest
-    needs: [quick-tests, lint-quality, typecheck]
-    if: ${{ !cancelled() && needs.quick-tests.result == 'success' && needs.lint-quality.result == 'success' && needs.typecheck.result == 'success' }}
+    needs: [quick-tests, lint-quality, typecheck, unit-tests]
+    if: ${{ !cancelled() && needs.quick-tests.result == 'success' && needs.lint-quality.result == 'success' && needs.typecheck.result == 'success' && needs.unit-tests.result == 'success' }}
     timeout-minutes: 5
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Setup PNPM with Caching
-        uses: ./.github/actions/setup-pnpm
+      - name: Standard CI Setup
+        uses: ./.github/actions/standard-setup
         with:
           node-version: ${{ env.NODE_VERSION }}
           pnpm-version: ${{ env.PNPM_VERSION }}
-      - run: pnpm build
+      - name: Build packages
+        run: |
+          # Capture Turbo cache statistics
+          pnpm build 2>&1 | tee build.log
+
+          # Extract cache hit rate
+          CACHE_SUMMARY=$(grep -E "(Remote|Local) cache hit|cache miss" build.log || echo "No cache info available")
+          echo "### 📊 Turbo Cache Statistics" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "$CACHE_SUMMARY" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+          # Save metrics
+          echo "$CACHE_SUMMARY" > turbo-cache-metrics.txt
+      - name: Upload Turbo Metrics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: turbo-metrics-build-${{ github.run_number }}
+          path: turbo-cache-metrics.txt
+          retention-days: 7
 
   integration-tests:
-    name: 🔬 Integration Tests (8m)
+    name: 🔬 Integration Tests
     runs-on: ubuntu-latest
-    needs: [quick-tests, lint-quality, typecheck, build]  # Only run if quick tests + quality pieces + build pass
+    needs: [quick-tests, lint-quality, typecheck, unit-tests, build]
     timeout-minutes: 8
-    if: ${{ !cancelled() && needs.quick-tests.result == 'success' && needs.lint-quality.result == 'success' && needs.typecheck.result == 'success' && needs.build.result == 'success' }}
+    if: ${{ !cancelled() && needs.quick-tests.result == 'success' && needs.lint-quality.result == 'success' && needs.typecheck.result == 'success' && needs.unit-tests.result == 'success' && needs.build.result == 'success' }}
     env:
       VITEST_SILENT: 'true'
     steps:
-      - uses: actions/checkout@v4
-      - name: Setup PNPM with Caching
-        uses: ./.github/actions/setup-pnpm
+      - name: Standard CI Setup
+        uses: ./.github/actions/standard-setup
         with:
           node-version: ${{ env.NODE_VERSION }}
           pnpm-version: ${{ env.PNPM_VERSION }}
@@ -195,23 +205,63 @@ jobs:
           retention-days: 14
 
   commit-lint:
-    name: ⚧ Commit Lint (5m)
+    name: ⚧ Commit Lint
     runs-on: ubuntu-latest
     timeout-minutes: 5
     if: github.event_name == 'pull_request'
     steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Setup PNPM with Caching
-        uses: ./.github/actions/setup-pnpm
+      - name: Standard CI Setup
+        uses: ./.github/actions/standard-setup
         with:
           node-version: ${{ env.NODE_VERSION }}
           pnpm-version: ${{ env.PNPM_VERSION }}
+          fetch-depth: '0'
       - run: |
           # Use commitlint's from/to range checking which respects ignores config
           # This will automatically skip merge commits based on commitlint.config.js
           pnpm commitlint --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }} --verbose
+
+  coverage:
+    name: 📊 Code Coverage
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: github.event_name == 'push' && github.ref_name == 'main'
+    env:
+      VITEST_SILENT: 'true'
+    steps:
+      - name: Standard CI Setup
+        uses: ./.github/actions/standard-setup
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          pnpm-version: ${{ env.PNPM_VERSION }}
+      - name: Run Tests with Coverage
+        run: |
+          mkdir -p coverage-reports
+          pnpm test:coverage -- --reporter=dot
+      - name: Upload Coverage Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report-${{ github.run_number }}
+          path: coverage
+          retention-days: 30
+      - name: Generate Coverage Summary
+        run: |
+          echo "## 📊 Coverage Report" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          # Extract coverage summary from the coverage output
+          if [ -f coverage/coverage-summary.json ]; then
+            node -e "
+              const coverage = require('./coverage/coverage-summary.json');
+              const total = coverage.total;
+              console.log('Lines:       ' + total.lines.pct + '%');
+              console.log('Statements:  ' + total.statements.pct + '%');
+              console.log('Functions:   ' + total.functions.pct + '%');
+              console.log('Branches:    ' + total.branches.pct + '%');
+            " >> $GITHUB_STEP_SUMMARY
+          else
+            echo "Coverage report not found" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo '```' >> $GITHUB_STEP_SUMMARY
 
   ci-status:
     name: 📊 CI Status
@@ -323,12 +373,10 @@ jobs:
       pages: write
       id-token: write
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
-      - name: Setup PNPM with Caching
-        uses: ./.github/actions/setup-pnpm
+      - name: Standard CI Setup
+        uses: ./.github/actions/standard-setup
         with:
           node-version: ${{ env.NODE_VERSION }}
           pnpm-version: ${{ env.PNPM_VERSION }}
