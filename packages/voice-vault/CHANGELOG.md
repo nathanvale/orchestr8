@@ -1,5 +1,23 @@
 # @claude-hooks/voice-vault
 
+## 1.0.0
+
+### Major Changes
+
+- [#103](https://github.com/nathanvale/bun-changesets-template/pull/103)
+  [`a50ab88`](https://github.com/nathanvale/bun-changesets-template/commit/a50ab887b506ca49aae42e8deea3f3d7a29afdd1)
+  Thanks [@nathanvale](https://github.com/nathanvale)! - BREAKING CHANGE:
+  Migrate all packages to @orchestr8 scope
+  - Changed package scopes from @template/ and @claude-hooks/ to @orchestr8/
+  - Removed @template/utils package (utilities moved to app)
+  - Made @orchestr8/testkit publishable
+  - Added TSUP build system to @orchestr8/quality-check for consistency
+
+  Migration required for all consumers:
+  - Update all imports from `@template/*` to `@orchestr8/*`
+  - Update all imports from `@claude-hooks/*` to `@orchestr8/*`
+  - Remove dependencies on `@template/utils`
+
 ## 0.2.0
 
 ### Minor Changes
