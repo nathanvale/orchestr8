@@ -16,6 +16,7 @@ feat: comprehensive CI/CD workflow optimizations with Turbo cache maximization
 - Added Turbo-driven test commands (test:turbo, test:turbo:changed) for remote cache benefits
 - Unified all CI jobs to use composite setup-pnpm action, removed redundant cache steps
 - Combined format, lint, and typecheck into single "quality" job for faster execution
+- Removed redundant build step from quality job - Turbo handles dependencies automatically
 - Increased quick-tests timeout from 2 to 5 minutes to prevent cold cache flakiness
 - Added --bail=1 to test:focused for consistent fail-fast behavior
 - Added GitHub Step Summary for cleaner CI status display with markdown tables

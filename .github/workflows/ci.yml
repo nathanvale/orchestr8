@@ -88,8 +88,6 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           pnpm-version: ${{ env.PNPM_VERSION }}
-      - name: Build packages for type resolution
-        run: pnpm build
       - name: Run Quality Checks
         run: turbo run lint typecheck "//#format:check:root" --output-logs=errors-only
 
