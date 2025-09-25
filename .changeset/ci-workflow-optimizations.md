@@ -1,5 +1,5 @@
 ---
-"@template/quality-check": patch
+"@claude-hooks/quality-check": patch
 ---
 
 feat: comprehensive CI/CD workflow optimizations with Turbo cache maximization
