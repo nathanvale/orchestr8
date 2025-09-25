@@ -18,11 +18,22 @@ jobs:
   trigger-ci:
     name: Ensure CI Runs on Changeset PRs
     runs-on: ubuntu-latest
-    # Only run for changeset release PRs created by the GitHub bot
+    # Only run for changeset release PRs created by GitHub bot/app
+    # Handle both 'github-actions[bot]' and 'app/github-actions' formats
     if: |
-      github.event.pull_request.user.login == 'github-actions[bot]' &&
+      (github.event.pull_request.user.login == 'github-actions[bot]' ||
+       github.event.pull_request.user.login == 'app/github-actions' ||
+       github.event.pull_request.user.type == 'Bot') &&
       startsWith(github.event.pull_request.head.ref, 'changeset-release/')
     steps:
+      - name: Debug PR Info
+        run: |
+          echo "PR Author: ${{ github.event.pull_request.user.login }}"
+          echo "PR Author Type: ${{ github.event.pull_request.user.type }}"
+          echo "PR Branch: ${{ github.event.pull_request.head.ref }}"
+          echo "Is Bot: ${{ github.event.pull_request.user.type == 'Bot' }}"
+          echo "Is Changeset Branch: ${{ startsWith(github.event.pull_request.head.ref, 'changeset-release/') }}"
+
       - name: Checkout PR branch
         uses: actions/checkout@v4
         with:
@@ -72,6 +83,13 @@ jobs:
           I've detected this is a changeset release PR without CI checks running.
           An empty commit has been pushed to trigger the CI workflow.
 
-          This is an automated action to ensure all release PRs pass CI before merging."
+          This is an automated action to ensure all release PRs pass CI before merging.
+
+          **Note:** If CI still doesn't run, you may need to manually push an empty commit:
+          \`\`\`bash
+          git checkout ${{ github.event.pull_request.head.ref }}
+          git commit --allow-empty -m \"chore: trigger CI [skip changelog]\"
+          git push
+          \`\`\`"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
