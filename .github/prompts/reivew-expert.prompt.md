@@ -1,6 +1,5 @@
 ---
-name: review-expert
-description: 'Elite AI-powered code review (P0–P3)'
+mode: agent
 ---
 
 # Review expert

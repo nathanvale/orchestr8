@@ -14,7 +14,6 @@ env:
   NODE_VERSION: "20.18.1"
   PNPM_VERSION: "9.15.4"
   NODE_OPTIONS: "--max-old-space-size=4096"
-  # Turbo remote cache for snappy CI across runs/branches
   TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
   TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
   TURBO_REMOTE_CACHE_SIGNATURE_KEY: ${{ secrets.TURBO_REMOTE_CACHE_SIGNATURE_KEY }}
@@ -68,31 +67,19 @@ jobs:
           pnpm-version: ${{ env.PNPM_VERSION }}
       - name: Run Focused Tests
         run: |
-          # Determine the best base reference (matching pre-push logic)
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            # For PRs, use the base branch
             DEFAULT_BASE="origin/${{ github.event.pull_request.base.ref }}"
           elif [[ "${{ github.ref_name }}" == "develop" ]]; then
             DEFAULT_BASE="origin/develop"
           else
             DEFAULT_BASE="origin/main"
           fi
-
-          # Compute merge-base for accurate change detection
           BASE_SHA=$(git merge-base HEAD "$DEFAULT_BASE" 2>/dev/null || echo "$DEFAULT_BASE")
           echo "Using base: $BASE_SHA (from $DEFAULT_BASE)"
-
-          # Note:
-          # - Vitest `--changed` prefers a commit SHA/merge-base for accuracy (we use BASE_SHA)
-          # - Turborepo remote cache uses the ref (e.g., origin/main) via TURBO_SCM_BASE for graphing/cache hits
-          #   We intentionally keep both concepts separate to maximize correctness and cache performance.
-
-          echo "Listing changed test files (if any) for visibility:"
           mkdir -p test-results
           CHANGED_FILES=$(pnpm exec vitest list --changed "$BASE_SHA" --filesOnly || true)
           if [[ -z "$CHANGED_FILES" ]]; then
             echo "ℹ️  No changed tests detected. Skipping focused test run."
-            # Write an empty JUnit file to keep artifact contract predictable
             echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?><testsuites/>" > ./test-results/junit-focused.xml
           else
             echo "$CHANGED_FILES" | tee ./test-results/changed-tests.txt
