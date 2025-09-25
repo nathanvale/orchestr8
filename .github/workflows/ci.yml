@@ -39,7 +39,17 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           pnpm-version: ${{ env.PNPM_VERSION }}
-      - run: pnpm test:smoke
+      - name: Run Smoke Tests (with JUnit, low-noise)
+        run: |
+          mkdir -p test-results
+          pnpm run test:smoke -- --reporter=dot --reporter=junit --outputFile=./test-results/junit-smoke.xml
+      - name: Upload JUnit (Smoke)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: junit-smoke-${{ github.run_number }}
+          path: test-results/junit-smoke.xml
+          retention-days: 14
 
   focused-tests:
     name: 🎯 Focused Tests (5m)
@@ -72,7 +82,30 @@ jobs:
           BASE_SHA=$(git merge-base HEAD "$DEFAULT_BASE" 2>/dev/null || echo "$DEFAULT_BASE")
           echo "Using base: $BASE_SHA (from $DEFAULT_BASE)"
 
-          pnpm exec vitest run --changed "$BASE_SHA" --no-coverage --bail=1
+          # Note:
+          # - Vitest `--changed` prefers a commit SHA/merge-base for accuracy (we use BASE_SHA)
+          # - Turborepo remote cache uses the ref (e.g., origin/main) via TURBO_SCM_BASE for graphing/cache hits
+          #   We intentionally keep both concepts separate to maximize correctness and cache performance.
+
+          echo "Listing changed test files (if any) for visibility:"
+          mkdir -p test-results
+          CHANGED_FILES=$(pnpm exec vitest list --changed "$BASE_SHA" --filesOnly || true)
+          if [[ -z "$CHANGED_FILES" ]]; then
+            echo "ℹ️  No changed tests detected. Skipping focused test run."
+            # Write an empty JUnit file to keep artifact contract predictable
+            echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?><testsuites/>" > ./test-results/junit-focused.xml
+          else
+            echo "$CHANGED_FILES" | tee ./test-results/changed-tests.txt
+            pnpm exec vitest run --changed "$BASE_SHA" --no-coverage --bail=1 \
+              --reporter=dot --reporter=junit --outputFile=./test-results/junit-focused.xml
+          fi
+      - name: Upload JUnit (Focused)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: junit-focused-${{ github.run_number }}
+          path: test-results/junit-focused.xml
+          retention-days: 14
 
   quality:
     name: 🔧 Quality (Format + Lint + Types) (8m)
@@ -122,8 +155,18 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           pnpm-version: ${{ env.PNPM_VERSION }}
-      - name: Run Integration Tests with Fast Fail
-        run: TEST_MODE=integration pnpm exec vitest run --bail=1 --no-coverage
+      - name: Run Integration Tests with Fast Fail (low-noise)
+        run: |
+          mkdir -p test-results
+          TEST_MODE=integration pnpm exec vitest run --bail=1 --no-coverage \
+            --reporter=dot --reporter=junit --outputFile=./test-results/junit-integration.xml
+      - name: Upload JUnit (Integration)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: junit-integration-${{ github.run_number }}
+          path: test-results/junit-integration.xml
+          retention-days: 14
 
   commit-lint:
     name: ⚧ Commit Lint (5m)
@@ -150,6 +193,46 @@ jobs:
     needs: [quick-tests, focused-tests, integration-tests, quality, build, commit-lint]
     if: always()
     steps:
+      - name: Download all JUnit artifacts
+        if: always()
+        uses: actions/download-artifact@v4
+        with:
+          pattern: junit-*
+          merge-multiple: true
+          path: aggregated-junit
+
+      - name: Publish JUnit Test Report (Dashboard)
+        if: always()
+        uses: mikepenz/action-junit-report@v4
+        with:
+          report_paths: 'aggregated-junit/**/*.xml'
+          check_name: 'Test Report'
+          detailed_summary: true
+          include_passed: false
+          require_tests: false
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Generate HTML Test Report
+        if: always()
+        run: |
+          npx --yes junit-viewer@9 --results=aggregated-junit --save=test-report/index.html --minify
+          echo "HTML report generated at test-report/index.html"
+      - name: Upload HTML Test Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-report-html-${{ github.run_number }}
+          path: test-report
+          retention-days: 14
+
+      - name: Upload Aggregated JUnit
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: junit-all-${{ github.run_number }}
+          path: aggregated-junit
+          retention-days: 14
+
       - name: Generate Enhanced Status Report
         run: |
           # Generate status for both console logs and GitHub Step Summary
@@ -176,6 +259,11 @@ jobs:
           - **Types**: \`pnpm typecheck\`
           - **Tests**: \`pnpm test\`
           - **Integration**: \`pnpm test:integration\`
+          
+          ## 📦 Artifacts
+          - Aggregated JUnit: junit-all-${GITHUB_RUN_NUMBER}
+          - Dashboard: Checks → "Test Report" (click for failing tests, stack traces)
+          - HTML Report: test-report-html-${GITHUB_RUN_NUMBER}
           EOF
           )
 
@@ -189,3 +277,220 @@ jobs:
             exit 1
           fi
           echo "✅ All CI checks passed!" | tee -a $GITHUB_STEP_SUMMARY
+
+  publish-test-report:
+    name: 🚀 Publish Test Report (Pages)
+    if: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
+    needs: [ci-status]
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+      - name: Setup PNPM with Caching
+        uses: ./.github/actions/setup-pnpm
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          pnpm-version: ${{ env.PNPM_VERSION }}
+      - name: Download Aggregated JUnit
+        uses: actions/download-artifact@v4
+        with:
+          name: junit-all-${{ github.run_number }}
+          path: aggregated-junit
+      - name: Generate HTML Test Report
+        run: |
+          # Prepare report directory
+          mkdir -p test-report/junit
+          # Copy raw XML for agents
+          find aggregated-junit -type f -name '*.xml' -exec cp {} test-report/junit/ \;
+          # Create a simple index for XML files
+          (
+            echo '<!doctype html><meta charset="utf-8"><title>JUnit XML</title><h1>JUnit XML Files</h1><ul>'
+            for f in $(ls test-report/junit/*.xml 2>/dev/null | xargs -n1 basename); do
+              echo "<li><a href=\"$f\">$f</a></li>"
+            done
+            echo '</ul>'
+          ) > test-report/junit/index.html
+          # Create machine-readable JSON index of XML files
+          (
+            echo '{'
+            echo '  "version": 1,'
+            echo '  "generatedAt": "'"$(date -u +%FT%TZ)"'",'
+            echo '  "run": {'
+            echo '    "runId": '"${GITHUB_RUN_ID}"','
+            echo '    "runNumber": '"${GITHUB_RUN_NUMBER}"','
+            echo '    "repo": '"\"${GITHUB_REPOSITORY}\""','
+            echo '    "ref": '"\"${GITHUB_REF}\""','
+            echo '    "sha": '"\"${GITHUB_SHA}\""''
+            echo '  },'
+            echo '  "urls": {'
+            echo '    "html": "index.html",'
+            echo '    "xmlZip": "junit.zip",'
+            echo '    "xmlIndex": "junit/index.html"'
+            echo '  },'
+            echo '  "files": ['
+            first=1
+            for f in test-report/junit/*.xml; do
+              [ -f "$f" ] || continue
+              name=$(basename "$f")
+              size=$(stat -c%s "$f" 2>/dev/null || stat -f%z "$f" 2>/dev/null || echo 0)
+              sha=$(sha256sum "$f" 2>/dev/null | cut -d' ' -f1)
+              if [ -z "$sha" ]; then sha=$(shasum -a 256 "$f" | awk '{print $1}'); fi
+              if [ $first -eq 0 ]; then echo ','; else first=0; fi
+              echo '    {"path": '"\"junit/$name\""', "size": '"$size"', "sha256": '"\"$sha\""'}'
+            done
+            echo '  ]'
+            echo '}'
+          ) > test-report/index.json
+          # Create HTML dashboard
+          npx --yes junit-viewer@9 --results=aggregated-junit --save=test-report/index.html --minify
+          # Zip raw XML for easy download
+          (cd test-report && zip -q -r junit.zip junit/*.xml || true)
+      - name: Upload Pages Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: test-report
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+      - name: Add URL to Job Summary
+        run: |
+          echo "# 🌐 Live Test Report" >> $GITHUB_STEP_SUMMARY
+          echo "${{ steps.deployment.outputs.page_url }}" >> $GITHUB_STEP_SUMMARY
+          echo "## 🤖 Raw XML (for agents)" >> $GITHUB_STEP_SUMMARY
+          echo "${{ steps.deployment.outputs.page_url }}junit.zip" >> $GITHUB_STEP_SUMMARY
+          echo "## 📄 JSON Index" >> $GITHUB_STEP_SUMMARY
+          echo "${{ steps.deployment.outputs.page_url }}index.json" >> $GITHUB_STEP_SUMMARY
+
+  publish-test-report-pr:
+    outputs:
+      page_url: ${{ steps.deployment.outputs.page_url }}
+    name: 🔎 Publish Test Report (PR Preview)
+    if: ${{ github.event_name == 'pull_request' }}
+    needs: [ci-status]
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+      pull-requests: write
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+      - name: Download Aggregated JUnit
+        uses: actions/download-artifact@v4
+        with:
+          name: junit-all-${{ github.run_number }}
+          path: aggregated-junit
+      - name: Generate HTML Test Report
+        run: |
+          # Prepare report directory
+          mkdir -p test-report/junit
+          # Copy raw XML for agents
+          find aggregated-junit -type f -name '*.xml' -exec cp {} test-report/junit/ \;
+          # Create a simple index for XML files
+          (
+            echo '<!doctype html><meta charset="utf-8"><title>JUnit XML</title><h1>JUnit XML Files</h1><ul>'
+            for f in $(ls test-report/junit/*.xml 2>/dev/null | xargs -n1 basename); do
+              echo "<li><a href=\"$f\">$f</a></li>"
+            done
+            echo '</ul>'
+          ) > test-report/junit/index.html
+          # Create machine-readable JSON index of XML files
+          (
+            echo '{'
+            echo '  "version": 1,'
+            echo '  "generatedAt": "'"$(date -u +%FT%TZ)"'",'
+            echo '  "run": {'
+            echo '    "runId": '"${GITHUB_RUN_ID}"','
+            echo '    "runNumber": '"${GITHUB_RUN_NUMBER}"','
+            echo '    "repo": '"\"${GITHUB_REPOSITORY}\""','
+            echo '    "ref": '"\"${GITHUB_REF}\""','
+            echo '    "sha": '"\"${GITHUB_SHA}\""''
+            echo '  },'
+            echo '  "urls": {'
+            echo '    "html": "index.html",'
+            echo '    "xmlZip": "junit.zip",'
+            echo '    "xmlIndex": "junit/index.html"'
+            echo '  },'
+            echo '  "files": ['
+            first=1
+            for f in test-report/junit/*.xml; do
+              [ -f "$f" ] || continue
+              name=$(basename "$f")
+              size=$(stat -c%s "$f" 2>/dev/null || stat -f%z "$f" 2>/dev/null || echo 0)
+              sha=$(sha256sum "$f" 2>/dev/null | cut -d' ' -f1)
+              if [ -z "$sha" ]; then sha=$(shasum -a 256 "$f" | awk '{print $1}'); fi
+              if [ $first -eq 0 ]; then echo ','; else first=0; fi
+              echo '    {"path": '"\"junit/$name\""', "size": '"$size"', "sha256": '"\"$sha\""'}'
+            done
+            echo '  ]'
+            echo '}'
+          ) > test-report/index.json
+          # Create HTML dashboard
+          npx --yes junit-viewer@9 --results=aggregated-junit --save=test-report/index.html --minify
+          # Zip raw XML for easy download
+          (cd test-report && zip -q -r junit.zip junit/*.xml || true)
+      - name: Upload Pages Artifact (PR)
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: test-report
+      - name: Deploy PR Preview to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+      - name: Add URL to Job Summary
+        run: |
+          echo "# 🌐 PR Test Report" >> $GITHUB_STEP_SUMMARY
+          echo "${{ steps.deployment.outputs.page_url }}" >> $GITHUB_STEP_SUMMARY
+          echo "## 🤖 Raw XML (for agents)" >> $GITHUB_STEP_SUMMARY
+          echo "${{ steps.deployment.outputs.page_url }}junit.zip" >> $GITHUB_STEP_SUMMARY
+          echo "## 📄 JSON Index" >> $GITHUB_STEP_SUMMARY
+          echo "${{ steps.deployment.outputs.page_url }}index.json" >> $GITHUB_STEP_SUMMARY
+      - name: Comment PR with Report Link
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const url = `${{ toJson(steps.deployment.outputs.page_url) }}`.replaceAll('"','');
+            const body = `🧪 Live Test Report: ${url}\n\n🤖 Raw XML (for agents): ${url}junit.zip\n\n📄 JSON Index: ${url}index.json`;
+            // Create or update a sticky comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            const marker = '<!-- test-report-link -->';
+            const existing = comments.find(c => c.user.login === 'github-actions[bot]' && c.body && c.body.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body: `${marker}\n${body}`,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: `${marker}\n${body}`,
+              });
+            }
+
+  ci-final-status:
+    name: 🧾 Final CI Summary (with PR links)
+    if: ${{ github.event_name == 'pull_request' }}
+    needs: [ci-status, publish-test-report-pr]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Append PR Report Links
+        run: |
+          echo "# 🔗 PR Report Links" >> $GITHUB_STEP_SUMMARY
+          echo "Live Dashboard: ${{ needs.publish-test-report-pr.outputs.page_url }}" >> $GITHUB_STEP_SUMMARY
+          echo "Raw XML (zip): ${{ needs.publish-test-report-pr.outputs.page_url }}junit.zip" >> $GITHUB_STEP_SUMMARY
+          echo "JSON Index: ${{ needs.publish-test-report-pr.outputs.page_url }}index.json" >> $GITHUB_STEP_SUMMARY

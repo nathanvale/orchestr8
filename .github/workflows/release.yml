@@ -51,10 +51,10 @@ jobs:
         run: pnpm run build
 
       - name: Run Unit Tests
-        run: pnpm run test
+        run: pnpm run test -- --bail=1
 
       - name: Run Integration Tests
-        run: NODE_OPTIONS='--max-old-space-size=4096' TEST_MODE=integration pnpm exec vitest run --no-coverage
+        run: NODE_OPTIONS='--max-old-space-size=4096' TEST_MODE=integration pnpm exec vitest run --no-coverage --bail=1
 
       - name: Verify Release Configuration
         run: |
