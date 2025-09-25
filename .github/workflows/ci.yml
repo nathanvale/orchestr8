@@ -32,8 +32,9 @@ jobs:
     env:
       VITEST_SILENT: 'true'
     steps:
-      - name: Standard CI Setup
-        uses: ./.github/actions/standard-setup
+      - uses: actions/checkout@v4
+      - name: Setup PNPM with Caching
+        uses: ./.github/actions/setup-pnpm
         with:
           node-version: ${{ env.NODE_VERSION }}
           pnpm-version: ${{ env.PNPM_VERSION }}
@@ -56,12 +57,14 @@ jobs:
     env:
       VITEST_SILENT: 'true'
     steps:
-      - name: Standard CI Setup
-        uses: ./.github/actions/standard-setup
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Setup PNPM with Caching
+        uses: ./.github/actions/setup-pnpm
         with:
           node-version: ${{ env.NODE_VERSION }}
           pnpm-version: ${{ env.PNPM_VERSION }}
-          fetch-depth: '0'
       - name: Run Focused Tests
         run: |
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
@@ -97,8 +100,9 @@ jobs:
     if: ${{ !cancelled() }}
     timeout-minutes: 4
     steps:
-      - name: Standard CI Setup
-        uses: ./.github/actions/standard-setup
+      - uses: actions/checkout@v4
+      - name: Setup PNPM with Caching
+        uses: ./.github/actions/setup-pnpm
         with:
           node-version: ${{ env.NODE_VERSION }}
           pnpm-version: ${{ env.PNPM_VERSION }}
@@ -111,8 +115,9 @@ jobs:
     if: ${{ !cancelled() }}
     timeout-minutes: 8
     steps:
-      - name: Standard CI Setup
-        uses: ./.github/actions/standard-setup
+      - uses: actions/checkout@v4
+      - name: Setup PNPM with Caching
+        uses: ./.github/actions/setup-pnpm
         with:
           node-version: ${{ env.NODE_VERSION }}
           pnpm-version: ${{ env.PNPM_VERSION }}
@@ -126,8 +131,9 @@ jobs:
     env:
       VITEST_SILENT: 'true'
     steps:
-      - name: Standard CI Setup
-        uses: ./.github/actions/standard-setup
+      - uses: actions/checkout@v4
+      - name: Setup PNPM with Caching
+        uses: ./.github/actions/setup-pnpm
         with:
           node-version: ${{ env.NODE_VERSION }}
           pnpm-version: ${{ env.PNPM_VERSION }}
@@ -150,8 +156,9 @@ jobs:
     if: ${{ !cancelled() && needs.quick-tests.result == 'success' && needs.lint-quality.result == 'success' && needs.typecheck.result == 'success' && needs.unit-tests.result == 'success' }}
     timeout-minutes: 5
     steps:
-      - name: Standard CI Setup
-        uses: ./.github/actions/standard-setup
+      - uses: actions/checkout@v4
+      - name: Setup PNPM with Caching
+        uses: ./.github/actions/setup-pnpm
         with:
           node-version: ${{ env.NODE_VERSION }}
           pnpm-version: ${{ env.PNPM_VERSION }}
@@ -186,8 +193,9 @@ jobs:
     env:
       VITEST_SILENT: 'true'
     steps:
-      - name: Standard CI Setup
-        uses: ./.github/actions/standard-setup
+      - uses: actions/checkout@v4
+      - name: Setup PNPM with Caching
+        uses: ./.github/actions/setup-pnpm
         with:
           node-version: ${{ env.NODE_VERSION }}
           pnpm-version: ${{ env.PNPM_VERSION }}
@@ -210,12 +218,14 @@ jobs:
     timeout-minutes: 5
     if: github.event_name == 'pull_request'
     steps:
-      - name: Standard CI Setup
-        uses: ./.github/actions/standard-setup
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Setup PNPM with Caching
+        uses: ./.github/actions/setup-pnpm
         with:
           node-version: ${{ env.NODE_VERSION }}
           pnpm-version: ${{ env.PNPM_VERSION }}
-          fetch-depth: '0'
       - run: |
           # Use commitlint's from/to range checking which respects ignores config
           # This will automatically skip merge commits based on commitlint.config.js
@@ -229,8 +239,9 @@ jobs:
     env:
       VITEST_SILENT: 'true'
     steps:
-      - name: Standard CI Setup
-        uses: ./.github/actions/standard-setup
+      - uses: actions/checkout@v4
+      - name: Setup PNPM with Caching
+        uses: ./.github/actions/setup-pnpm
         with:
           node-version: ${{ env.NODE_VERSION }}
           pnpm-version: ${{ env.PNPM_VERSION }}
@@ -373,10 +384,11 @@ jobs:
       pages: write
       id-token: write
     steps:
+      - uses: actions/checkout@v4
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
-      - name: Standard CI Setup
-        uses: ./.github/actions/standard-setup
+      - name: Setup PNPM with Caching
+        uses: ./.github/actions/setup-pnpm
         with:
           node-version: ${{ env.NODE_VERSION }}
           pnpm-version: ${{ env.PNPM_VERSION }}
