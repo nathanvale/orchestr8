@@ -9,7 +9,7 @@ BRANCH=$(git branch --show-current)
 echo "📝 Validating branch: $BRANCH"
 
 # Use centralized base detection logic
-source scripts/compute-base.sh
+. scripts/compute-base.sh
 
 # Branch-aware changeset validation
 if [ "$BRANCH" != "main" ] && [ "$BRANCH" != "develop" ]; then
