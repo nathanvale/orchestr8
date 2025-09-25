@@ -2,8 +2,10 @@ name: ADHD CI
 on:
   pull_request:
     types: [opened, synchronize, reopened]
+    branches:
+      - '**'  # Run on all PRs including changeset-release/*
   push:
-    branches: [main, develop]
+    branches: [main, develop, 'changeset-release/**']  # Also trigger on changeset branches
   workflow_dispatch:
 
 concurrency:
