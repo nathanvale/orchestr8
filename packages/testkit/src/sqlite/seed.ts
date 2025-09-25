@@ -27,7 +27,7 @@
  * ## Usage
  *
  * ```typescript
- * import { seedWithSql, seedWithFiles, consoleLogger } from '@template/testkit/sqlite'
+ * import { seedWithSql, seedWithFiles, consoleLogger } from '@orchestr8/testkit/sqlite'
  *
  * // Direct SQL seeding
  * await seedWithSql(db, 'INSERT INTO users (name) VALUES ("test");')

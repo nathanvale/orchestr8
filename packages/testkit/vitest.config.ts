@@ -55,27 +55,27 @@ cfg.resolve = cfg.resolve || {}
 ;(cfg.resolve as any).conditions = ['vitest', 'development', 'module', 'default']
 // Avoid duplicated instances of the package when self-importing
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-;(cfg.resolve as any).dedupe = ['@template/testkit']
+;(cfg.resolve as any).dedupe = ['@orchestr8/testkit']
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ;(cfg.resolve as any).alias = [
-  // e.g. import '@template/testkit/register' → packages/testkit/src/register.ts
+  // e.g. import '@orchestr8/testkit/register' → packages/testkit/src/register.ts
   { find: /^@template\/testkit\/(.*)$/, replacement: resolve(__dirname, 'src/$1') },
   // Explicit mapping to avoid any ambiguity for the register entry
-  { find: '@template/testkit/register', replacement: resolve(__dirname, 'src/register.ts') },
-  // e.g. import '@template/testkit' → packages/testkit/src/index.ts
-  { find: '@template/testkit', replacement: resolve(__dirname, 'src/index.ts') },
+  { find: '@orchestr8/testkit/register', replacement: resolve(__dirname, 'src/register.ts') },
+  // e.g. import '@orchestr8/testkit' → packages/testkit/src/index.ts
+  { find: '@orchestr8/testkit', replacement: resolve(__dirname, 'src/index.ts') },
 ]
 
 // Avoid pre-bundling self-imports which can bypass alias/conditions
 cfg.optimizeDeps = cfg.optimizeDeps || {}
 cfg.optimizeDeps.exclude = [
   ...(cfg.optimizeDeps.exclude || []),
-  '@template/testkit',
-  '@template/testkit/register',
+  '@orchestr8/testkit',
+  '@orchestr8/testkit/register',
 ]
 
 // Important: testkit runs its own sources, not the published entry.
-// Drop nested projects to avoid the default '@template/testkit/register' setupFiles in base.
+// Drop nested projects to avoid the default '@orchestr8/testkit/register' setupFiles in base.
 if (cfg.test && 'projects' in cfg.test!) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   delete (cfg.test as any).projects

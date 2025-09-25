@@ -39,7 +39,7 @@ export interface PrismaTestConfig {
  * @example
  * ```typescript
  * import { PrismaClient } from '@prisma/client'
- * import { createPrismaMemoryConfig, consoleLogger } from '@template/testkit/sqlite'
+ * import { createPrismaMemoryConfig, consoleLogger } from '@orchestr8/testkit/sqlite'
  *
  * const config = createPrismaMemoryConfig({
  *   name: 'test-db',
@@ -127,7 +127,7 @@ export function createPrismaMemoryConfig(
  * @example
  * ```typescript
  * import { PrismaClient } from '@prisma/client'
- * import { createPrismaFileConfig, consoleLogger } from '@template/testkit/sqlite'
+ * import { createPrismaFileConfig, consoleLogger } from '@orchestr8/testkit/sqlite'
  *
  * const config = await createPrismaFileConfig('test.db', {
  *   connectionLimit: 1
@@ -201,7 +201,7 @@ let _prismaEnvActive = false
  *
  * @example
  * ```typescript
- * import { createPrismaMemoryConfig, setPrismaTestEnv, consoleLogger } from '@template/testkit/sqlite'
+ * import { createPrismaMemoryConfig, setPrismaTestEnv, consoleLogger } from '@orchestr8/testkit/sqlite'
  *
  * const config = createPrismaMemoryConfig()
  * const restore = setPrismaTestEnv(config, consoleLogger)
@@ -274,7 +274,7 @@ export function setPrismaTestEnv(
  *
  * @example
  * ```typescript
- * import { usePrismaTestDatabase } from '@template/testkit/sqlite'
+ * import { usePrismaTestDatabase } from '@orchestr8/testkit/sqlite'
  *
  * const getPrisma = usePrismaTestDatabase()
  *
@@ -322,7 +322,7 @@ export interface PrismaTestEnvironmentOptions {
  *
  * @example
  * ```typescript
- * import { createPrismaTestEnvironment, consoleLogger } from '@template/testkit/sqlite'
+ * import { createPrismaTestEnvironment, consoleLogger } from '@orchestr8/testkit/sqlite'
  *
  * const testEnv = createPrismaTestEnvironment({
  *   logger: consoleLogger,
@@ -404,7 +404,7 @@ export function createPrismaTestEnvironment(options: PrismaTestEnvironmentOption
  *
  * @example
  * ```typescript
- * import { createPrismaMemoryConfig, validatePrismaConfig } from '@template/testkit/sqlite'
+ * import { createPrismaMemoryConfig, validatePrismaConfig } from '@orchestr8/testkit/sqlite'
  *
  * const config = createPrismaMemoryConfig()
  * const validation = validatePrismaConfig(config)

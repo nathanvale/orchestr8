@@ -12,7 +12,7 @@ import {
   probeEnvironment,
   type FileDatabase,
   type AppliedPragmas,
-} from '@template/testkit/sqlite'
+} from '@orchestr8/testkit/sqlite'
 
 // Example database interface
 interface Database {

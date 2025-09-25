@@ -11,7 +11,7 @@ import {
   createPrismaFileConfig,
   setPrismaTestEnv,
   applyRecommendedPragmas,
-} from '@template/testkit/sqlite'
+} from '@orchestr8/testkit/sqlite'
 
 // Mock Prisma Client (in real usage, import from '@prisma/client')
 interface PrismaClient {

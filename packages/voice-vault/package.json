@@ -1,5 +1,5 @@
 {
-  "name": "@claude-hooks/voice-vault",
+  "name": "@orchestr8/voice-vault",
   "version": "0.2.0",
   "description": "TTS package with intelligent caching to maximize free tier usage",
   "repository": {

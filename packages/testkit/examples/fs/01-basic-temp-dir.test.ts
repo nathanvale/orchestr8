@@ -1,4 +1,4 @@
-import { createTempDirectory } from '@template/testkit/fs'
+import { createTempDirectory } from '@orchestr8/testkit/fs'
 import { describe, expect, it } from 'vitest'
 
 // Basic temp directory usage demonstrating creation, file IO, and cleanup

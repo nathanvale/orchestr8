@@ -1,4 +1,4 @@
-import { createPaginatedHandler, setupMSW } from '@template/testkit/msw'
+import { createPaginatedHandler, setupMSW } from '@orchestr8/testkit/msw'
 import { describe, expect, it } from 'vitest'
 
 const data = Array.from({ length: 13 }, (_, i) => ({ id: `${i + 1}`, value: i }))

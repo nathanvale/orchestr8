@@ -25,7 +25,7 @@
  * ## Usage
  *
  * ```typescript
- * import { applyMigrations, resetDatabase } from '@template/testkit/sqlite'
+ * import { applyMigrations, resetDatabase } from '@orchestr8/testkit/sqlite'
  *
  * // Apply migrations from directory
  * await applyMigrations(db, { dir: './migrations' })

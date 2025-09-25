@@ -1,4 +1,4 @@
-import { spawnUtils } from '@template/testkit/cli'
+import { spawnUtils } from '@orchestr8/testkit/cli'
 import { exec } from 'node:child_process'
 import { describe, expect, it } from 'vitest'
 

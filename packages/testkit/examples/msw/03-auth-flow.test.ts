@@ -1,4 +1,4 @@
-import { createAuthHandlers, HTTP_STATUS, setupMSW } from '@template/testkit/msw'
+import { createAuthHandlers, HTTP_STATUS, setupMSW } from '@orchestr8/testkit/msw'
 import { describe, expect, it } from 'vitest'
 
 setupMSW([...createAuthHandlers('http://localhost:3000')])

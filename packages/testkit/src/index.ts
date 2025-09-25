@@ -1,5 +1,5 @@
 /**
- * @template/testkit - Shared testing utilities and helpers for the monorepo
+ * @orchestr8/testkit - Shared testing utilities and helpers for the monorepo
  *
  * This package provides a comprehensive testing toolkit for all packages in the monorepo,
  * including utilities for MSW, test containers, Convex testing, environment management,

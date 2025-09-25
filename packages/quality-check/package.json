@@ -1,5 +1,5 @@
 {
-  "name": "@claude-hooks/quality-check",
+  "name": "@orchestr8/quality-check",
   "version": "0.2.0",
   "description": "Production-ready quality check package for ESLint, Prettier, and TypeScript validation with <2s execution time",
   "keywords": [

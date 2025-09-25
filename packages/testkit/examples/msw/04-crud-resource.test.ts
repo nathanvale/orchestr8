@@ -1,4 +1,4 @@
-import { createCRUDHandlers, HTTP_STATUS, setupMSW } from '@template/testkit/msw'
+import { createCRUDHandlers, HTTP_STATUS, setupMSW } from '@orchestr8/testkit/msw'
 import { describe, expect, it } from 'vitest'
 
 type Note = { id: string; text: string }

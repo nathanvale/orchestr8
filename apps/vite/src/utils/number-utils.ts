@@ -7,10 +7,6 @@ export function average(numbers: number[]): number {
   return sum(numbers) / numbers.length
 }
 
-export function isApproximately(a: number, b: number, tolerance = 1e-6): boolean {
-  return Math.abs(a - b) <= tolerance
-}
-
 export function median(numbers: number[]): number {
   if (numbers.length === 0) return 0
   const sorted = [...numbers].sort((a, b) => a - b)
@@ -55,22 +51,4 @@ function interpolateSorted(sorted: number[], low: number, high: number, weight: 
   // c8 ignore next
   if (typeof lowVal !== 'number' || typeof highVal !== 'number') return 0
   return lowVal * (1 - weight) + highVal * weight
-}
-
-export interface NumberSummary {
-  count: number
-  sum: number
-  average: number
-  median: number
-  p90: number
-}
-
-export function summarize(numbers: number[]): NumberSummary {
-  return {
-    count: numbers.length,
-    sum: sum(numbers),
-    average: average(numbers),
-    median: median(numbers),
-    p90: percentile(numbers, 90),
-  }
 }

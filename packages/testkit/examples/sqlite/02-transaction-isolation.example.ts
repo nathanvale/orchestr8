@@ -6,7 +6,11 @@
  */
 
 import { describe, test, expect, beforeEach } from 'vitest'
-import { createMemoryUrl, withTransaction, type TransactionAdapter } from '@template/testkit/sqlite'
+import {
+  createMemoryUrl,
+  withTransaction,
+  type TransactionAdapter,
+} from '@orchestr8/testkit/sqlite'
 
 // Example database types
 interface Database {
