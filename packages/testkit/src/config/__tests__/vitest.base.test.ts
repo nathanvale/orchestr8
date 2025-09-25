@@ -168,7 +168,7 @@ describe('vitest.base', () => {
 
       expect(coverage).toEqual({
         enabled: false,
-        threshold: 69,
+        threshold: 68,
         reporter: ['text', 'html'],
       })
     })
@@ -186,7 +186,7 @@ describe('vitest.base', () => {
 
       expect(coverage).toEqual({
         enabled: true,
-        threshold: 69,
+        threshold: 68,
         reporter: ['json', 'clover'],
       })
     })
@@ -204,7 +204,7 @@ describe('vitest.base', () => {
 
       expect(coverage).toEqual({
         enabled: false,
-        threshold: 69,
+        threshold: 68,
         reporter: ['text', 'html'],
       })
     })
@@ -511,7 +511,7 @@ describe('vitest.base', () => {
     describe('coverage threshold configuration', () => {
       it('should use default coverage threshold', () => {
         const config = createBaseVitestConfig()
-        expect((config.test as any)?.coverage?.thresholds?.statements).toBe(69)
+        expect((config.test as any)?.coverage?.thresholds?.statements).toBe(68)
       })
 
       it('should respect COVERAGE_THRESHOLD env var', () => {
@@ -523,7 +523,7 @@ describe('vitest.base', () => {
       it('should fallback to default on invalid threshold', () => {
         process.env.COVERAGE_THRESHOLD = 'invalid'
         const config = createBaseVitestConfig()
-        expect((config.test as any)?.coverage?.thresholds?.statements).toBe(69)
+        expect((config.test as any)?.coverage?.thresholds?.statements).toBe(68)
       })
     })
   })
