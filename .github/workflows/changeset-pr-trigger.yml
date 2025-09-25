@@ -91,7 +91,7 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
           # Create an empty commit to trigger CI
-          git commit --allow-empty -m "chore: trigger CI for changeset release PR [skip ci]"
+          git commit --allow-empty -m "chore: trigger CI for changeset release PR"
           git push origin HEAD:${{ steps.pr-info.outputs.pr_head_ref }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
