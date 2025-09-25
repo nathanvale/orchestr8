@@ -23,7 +23,7 @@ env:
 permissions:
   contents: read
   actions: read
-  checks: read
+  checks: write
 
 jobs:
   quick-tests:
@@ -215,8 +215,15 @@ jobs:
       - name: Generate HTML Test Report
         if: always()
         run: |
-          npx --yes junit-viewer@9 --results=aggregated-junit --save=test-report/index.html --minify
-          echo "HTML report generated at test-report/index.html"
+          # Check if aggregated-junit exists and has files
+          if [ -d aggregated-junit ] && [ "$(ls -A aggregated-junit 2>/dev/null)" ]; then
+            npx --yes junit-viewer@9 --results=aggregated-junit --save=test-report/index.html --minify
+            echo "HTML report generated at test-report/index.html"
+          else
+            echo "No JUnit files found, creating placeholder report"
+            mkdir -p test-report
+            echo '<!DOCTYPE html><html><head><title>No Test Results</title></head><body><h1>No test results available</h1></body></html>' > test-report/index.html
+          fi
       - name: Upload HTML Test Report
         if: always()
         uses: actions/upload-artifact@v4
