@@ -27,4 +27,7 @@ runs:
 
     - name: Install dependencies
       shell: bash
-      run: pnpm install --frozen-lockfile --prefer-offline
+      run: |
+        pnpm install --frozen-lockfile --prefer-offline
+        # Ensure turbo is available in PATH
+        echo "$(pwd)/node_modules/.bin" >> $GITHUB_PATH
