@@ -54,10 +54,10 @@ console.log('✅ Minification disabled for ADHD-friendly debugging')
 // Test 9: Configuration extensibility
 const testConfig: Options = createTsupConfig({
   entry: ['src/index.ts'],
-  name: '@template/test',
+  name: '@orchestr8/test',
 })
 
-if (testConfig.entry?.[0] !== 'src/index.ts' || testConfig.name !== '@template/test') {
+if (testConfig.entry?.[0] !== 'src/index.ts' || testConfig.name !== '@orchestr8/test') {
   throw new Error('❌ Configuration extension not working')
 }
 
