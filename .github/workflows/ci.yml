@@ -110,8 +110,8 @@ jobs:
   quality:
     name: 🔧 Quality (Format + Lint + Types) (8m)
     runs-on: ubuntu-latest
-    needs: [quick-tests]
-    if: ${{ !cancelled() && needs.quick-tests.result == 'success' }}
+    # Run in parallel with quick-tests for faster overall feedback
+    if: ${{ !cancelled() }}
     timeout-minutes: 8
     steps:
       - name: Checkout code
@@ -258,7 +258,7 @@ jobs:
           | ⚧ Commit Lint | $([[ "${{ needs.commit-lint.result }}" == "success" ]] && echo "✅" || [[ "${{ needs.commit-lint.result }}" == "skipped" ]] && echo "⏭️" || echo "❌") | ${{ needs.commit-lint.result }} |
 
           ## 🧭 Pipeline Flow
-          Setup → Quick Tests → Integration → Quality → Build → Status
+          Setup → Quick Tests + Quality (parallel) → Build → Integration → Status
 
           ## 🔧 Available Fix Commands
           - **Lint**: \`pnpm lint:fix\`
