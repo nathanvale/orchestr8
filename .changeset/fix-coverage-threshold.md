@@ -1,5 +1,5 @@
 ---
-"@template/testkit": patch
+"@orchestr8/testkit": patch
 ---
 
 fix: lower coverage threshold to 68% to match actual coverage
