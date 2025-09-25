@@ -15,9 +15,9 @@ source scripts/compute-base.sh
 # Branch-aware changeset validation
 if [ "$BRANCH" != "main" ] && [ "$BRANCH" != "develop" ]; then
   # Only enforce changesets when actual source code changed (skip docs/config/chore changes)
-  CHANGED_CODE_COUNT=$(git diff --name-only "$BASE"...HEAD 2>/dev/null | grep -E '^(packages|apps)/.+/src/.+\.(ts|tsx|js|jsx)$' | wc -l | tr -d ' ' || echo 0)
+  CHANGED_CODE_COUNT=$(git diff --name-only "$BASE"...HEAD 2>/dev/null | grep -E '^(packages|apps)/.+/src/.+\.(ts|tsx|js|jsx)$' | wc -l | tr -d '[:space:]' || echo 0)
   if [ "${CHANGED_CODE_COUNT:-0}" -gt 0 ]; then
-    NEW_CHANGESETS=$(git diff --name-only "$BASE"...HEAD -- .changeset/*.md 2>/dev/null | wc -l | tr -d ' ')
+    NEW_CHANGESETS=$(git diff --name-only "$BASE"...HEAD -- .changeset/*.md 2>/dev/null | wc -l | tr -d '[:space:]')
     if [ "${NEW_CHANGESETS:-0}" -eq 0 ]; then
       echo "⚠️  No new changeset added on feature branch '$BRANCH'"
       echo "💡 This branch modifies code but doesn't include a changeset"
