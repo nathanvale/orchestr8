@@ -73,7 +73,7 @@ jobs:
 
       - name: Generate SBOM
         run: |
-          pnpx @cyclonedx/cdxgen@10.6.0 -o sbom.json -t js .
+          pnpx @cyclonedx/cdxgen@11 -o sbom.json -t js .
           echo "SBOM generated with $(jq '.components | length' sbom.json) components"
 
       - name: Create Release PR or Publish
