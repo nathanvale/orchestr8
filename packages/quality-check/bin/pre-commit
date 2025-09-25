@@ -6,7 +6,32 @@
  * ~30 lines
  */
 
-import { runGitHook } from '../dist/facades/git-hook.js'
+import { existsSync } from 'node:fs'
+import { dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+const __dirname = dirname(fileURLToPath(import.meta.url))
+const distPath = join(__dirname, '..', 'dist', 'facades', 'git-hook.js')
+
+// Check if dist directory exists
+if (!existsSync(distPath)) {
+  console.error(`
+⚠️  Pre-commit hook error: Quality check dist files not found!
+
+The quality-check package needs to be built before running pre-commit hooks.
+
+Please run:
+  pnpm --filter @template/quality-check build
+
+Or build all packages:
+  pnpm build
+
+Then try your commit again.
+`)
+  process.exit(1)
+}
+
+const { runGitHook } = await import('../dist/facades/git-hook.js')
 
 async function main() {
   try {

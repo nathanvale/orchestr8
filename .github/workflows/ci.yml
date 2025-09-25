@@ -58,17 +58,27 @@ jobs:
           pnpm-version: ${{ env.PNPM_VERSION }}
       - name: Run Focused Tests
         run: |
+          # Determine the best base reference (matching pre-push logic)
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            BASE_SHA="${{ github.event.pull_request.base.sha }}"
+            # For PRs, use the base branch
+            DEFAULT_BASE="origin/${{ github.event.pull_request.base.ref }}"
+          elif [[ "${{ github.ref_name }}" == "develop" ]]; then
+            DEFAULT_BASE="origin/develop"
           else
-            BASE_SHA="origin/${{ github.ref_name == 'develop' && 'develop' || 'main' }}"
+            DEFAULT_BASE="origin/main"
           fi
-          pnpm exec vitest run --changed $BASE_SHA --no-coverage --bail=1
+
+          # Compute merge-base for accurate change detection
+          BASE_SHA=$(git merge-base HEAD "$DEFAULT_BASE" 2>/dev/null || echo "$DEFAULT_BASE")
+          echo "Using base: $BASE_SHA (from $DEFAULT_BASE)"
+
+          pnpm exec vitest run --changed "$BASE_SHA" --no-coverage --bail=1
 
   quality:
     name: 🔧 Quality (Format + Lint + Types) (8m)
     runs-on: ubuntu-latest
     needs: [quick-tests]
+    if: ${{ !cancelled() && needs.quick-tests.result == 'success' }}
     timeout-minutes: 8
     steps:
       - name: Checkout code
@@ -87,6 +97,7 @@ jobs:
     name: 🏗️ Build (5m)
     runs-on: ubuntu-latest
     needs: [quick-tests, quality]
+    if: ${{ !cancelled() && needs.quick-tests.result == 'success' && needs.quality.result == 'success' }}
     timeout-minutes: 5
     steps:
       - name: Checkout code
@@ -103,7 +114,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [quick-tests, quality, build]  # Only run if quick tests, typecheck, and build pass
     timeout-minutes: 8
-    if: success()  # Explicit success check
+    if: ${{ !cancelled() && needs.quick-tests.result == 'success' && needs.quality.result == 'success' && needs.build.result == 'success' }}
     env:
       VITEST_SILENT: 'true'
     steps:

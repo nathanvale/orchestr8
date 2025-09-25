@@ -22,9 +22,11 @@ feat: comprehensive CI/CD workflow optimizations with Turbo cache maximization
 
 ## P3 Robustness Improvements
 - Enhanced pre-push hook with smarter base ref detection for tracking branches
-- Improved focused-tests with dynamic base selection for PRs vs pushes
+- Improved focused-tests with proper merge-base computation matching pre-push logic
+- Added if: !cancelled() guards to prevent running dependent jobs unnecessarily
+- Added dist directory check to pre-commit hook with helpful error messages
+- Aligned TURBO_TEAM to use secrets consistently across all workflows
 - Removed duplicate pnpm cache steps (setup-node already handles this)
-- Standardized Turbo environment variables across all workflows
 
 ## Impact
 - ✅ 40-50% faster CI execution via Turbo remote cache for test commands
