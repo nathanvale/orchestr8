@@ -7,6 +7,12 @@ on:
   push:
     branches: [main, develop, 'changeset-release/**']  # Also trigger on changeset branches
   workflow_dispatch:
+    inputs:
+      debug_enabled:
+        type: boolean
+        description: 'Enable debug logging'
+        required: false
+        default: false
 
 concurrency:
   group: ci-${{ github.ref }}
