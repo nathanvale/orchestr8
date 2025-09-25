@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 set -euo pipefail
-. "$(dirname "$0")/_/husky.sh"
 
 echo "🔍 Running pre-push validation..."
 echo "⏱️ This includes linting, typechecking, testing, and changeset validation"
