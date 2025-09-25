@@ -153,7 +153,7 @@ jobs:
       - name: Generate Enhanced Status Report
         run: |
           # Generate status for both console logs and GitHub Step Summary
-          STATUS_CONTENT=$(cat << 'EOF'
+          STATUS_CONTENT=$(cat << EOF
           # 🎯 ADHD-Optimized CI Pipeline Status
 
           ## 📊 Pipeline Results
