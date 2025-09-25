@@ -59,7 +59,7 @@ cfg.resolve = cfg.resolve || {}
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ;(cfg.resolve as any).alias = [
   // e.g. import '@orchestr8/testkit/register' → packages/testkit/src/register.ts
-  { find: /^@template\/testkit\/(.*)$/, replacement: resolve(__dirname, 'src/$1') },
+  { find: /^@orchestr8\/testkit\/(.*)$/, replacement: resolve(__dirname, 'src/$1') },
   // Explicit mapping to avoid any ambiguity for the register entry
   { find: '@orchestr8/testkit/register', replacement: resolve(__dirname, 'src/register.ts') },
   // e.g. import '@orchestr8/testkit' → packages/testkit/src/index.ts
