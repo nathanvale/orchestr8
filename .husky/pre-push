@@ -9,33 +9,13 @@ echo "💡 Tip: Use 'git push --no-verify' to bypass in emergencies"
 BRANCH=$(git branch --show-current)
 echo "📝 Validating branch: $BRANCH"
 
-# Ensure base refs exist locally for reliable diffing
-git fetch -q origin main develop || true
-
-# Determine the best base reference
-# 1. Try tracking branch base first
-TRACKING_BRANCH=$(git rev-parse --abbrev-ref --symbolic-full-name @{u} 2>/dev/null | sed 's/origin\///')
-if [ -n "$TRACKING_BRANCH" ] && git show-ref --verify --quiet "refs/remotes/origin/$TRACKING_BRANCH"; then
-  DEFAULT_BASE="origin/$TRACKING_BRANCH"
-# 2. Then try develop if it exists
-elif git show-ref --verify --quiet refs/remotes/origin/develop; then
-  DEFAULT_BASE="origin/develop"
-# 3. Then try main
-elif git show-ref --verify --quiet refs/remotes/origin/main; then
-  DEFAULT_BASE="origin/main"
-# 4. Fallback to HEAD~1
-else
-  DEFAULT_BASE="HEAD~1"
-fi
-BASE=$(git merge-base HEAD "$DEFAULT_BASE" 2>/dev/null || echo "$DEFAULT_BASE")
-
-# Export for Turbo to use
-export TURBO_SCM_BASE="$BASE"
+# Use centralized base detection logic
+source scripts/compute-base.sh
 
 # Branch-aware changeset validation
 if [ "$BRANCH" != "main" ] && [ "$BRANCH" != "develop" ]; then
-  # Only enforce changesets when code changed (skip docs/chore only changes)
-  CHANGED_CODE_COUNT=$(git diff --name-only "$BASE"...HEAD 2>/dev/null | grep -E '\.(ts|tsx|js|jsx|json)$' | wc -l | tr -d ' ' || echo 0)
+  # Only enforce changesets when actual source code changed (skip docs/config/chore changes)
+  CHANGED_CODE_COUNT=$(git diff --name-only "$BASE"...HEAD 2>/dev/null | grep -E '^(packages|apps)/.+/src/.+\.(ts|tsx|js|jsx)$' | wc -l | tr -d ' ' || echo 0)
   if [ "${CHANGED_CODE_COUNT:-0}" -gt 0 ]; then
     NEW_CHANGESETS=$(git diff --name-only "$BASE"...HEAD -- .changeset/*.md 2>/dev/null | wc -l | tr -d ' ')
     if [ "${NEW_CHANGESETS:-0}" -eq 0 ]; then

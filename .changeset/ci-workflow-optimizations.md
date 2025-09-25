@@ -23,6 +23,10 @@ feat: comprehensive CI/CD workflow optimizations with Turbo cache maximization
 
 ## P3 Robustness Improvements
 - Enhanced pre-push hook with smarter base ref detection for tracking branches
+- Created centralized compute-base.sh script for consistent base detection
+- Fixed validate:changed to respect TURBO_SCM_BASE for accurate change detection
+- Narrowed changeset enforcement to actual source code paths only
+- Added --continue flag to CI quality job for consistency with local scripts
 - Improved focused-tests with proper merge-base computation matching pre-push logic
 - Added if: !cancelled() guards to prevent running dependent jobs unnecessarily
 - Added dist directory check to pre-commit hook with helpful error messages

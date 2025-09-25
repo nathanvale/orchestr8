@@ -44,7 +44,7 @@
     "test:turbo:changed": "turbo run test --filter='[$TURBO_SCM_BASE...]' --output-logs=errors-only",
     "typecheck": "turbo run typecheck --output-logs=errors-only",
     "validate": "turbo run lint typecheck test test:integration \"//#format:check:root\" --output-logs=errors-only",
-    "validate:changed": "turbo run lint typecheck test --filter='[origin/main...]' --output-logs=errors-only",
+    "validate:changed": "turbo run lint typecheck test --filter='[${TURBO_SCM_BASE:-origin/main}...]' --output-logs=errors-only",
     "validate:quick": "turbo run lint typecheck --output-logs=errors-only",
     "validate:nocache": "turbo run lint typecheck test test:integration \"//#format:check:root\" --output-logs=errors-only --force",
     "perf": "tsx scripts/performance-monitor.ts",

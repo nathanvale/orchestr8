@@ -89,7 +89,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           pnpm-version: ${{ env.PNPM_VERSION }}
       - name: Run Quality Checks
-        run: turbo run lint typecheck "//#format:check:root" --output-logs=errors-only
+        run: turbo run lint typecheck "//#format:check:root" --continue=dependencies-successful --output-logs=errors-only
 
   build:
     name: 🏗️ Build (5m)
