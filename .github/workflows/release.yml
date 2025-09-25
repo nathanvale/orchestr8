@@ -20,8 +20,9 @@ env:
   FORCE_COLOR: 3
   # Vercel Remote Cache for faster builds during release
   TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
-  TURBO_TEAM: ${{ vars.TURBO_TEAM }}
+  TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
   TURBO_REMOTE_CACHE_SIGNATURE_KEY: ${{ secrets.TURBO_REMOTE_CACHE_SIGNATURE_KEY }}
+  TURBO_SCM_BASE: origin/main
 
 jobs:
   release:
@@ -38,28 +39,13 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: ${{ env.PNPM_VERSION }}
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Setup PNPM with Caching
+        uses: ./.github/actions/setup-pnpm
         with:
           node-version: ${{ env.NODE_VERSION }}
-          registry-url: "https://registry.npmjs.org"
-          cache: "pnpm"
-
-      - name: Cache Dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.pnpm-store
-            node_modules
-          key: ${{ runner.os }}-pnpm-release-${{ hashFiles('pnpm-lock.yaml') }}
-
-      - name: Install Dependencies
-        run: pnpm install --frozen-lockfile
+          pnpm-version: ${{ env.PNPM_VERSION }}
+      - name: Set npm registry for provenance
+        run: npm config set registry https://registry.npmjs.org
 
       - name: Build
         run: pnpm run build
@@ -68,7 +54,7 @@ jobs:
         run: pnpm run test
 
       - name: Run Integration Tests
-        run: NODE_OPTIONS='--max-old-space-size=4096' TEST_MODE=integration vitest run --no-coverage
+        run: NODE_OPTIONS='--max-old-space-size=4096' TEST_MODE=integration pnpm exec vitest run --no-coverage
 
       - name: Verify Release Configuration
         run: |

@@ -41,10 +41,10 @@
     "test:focused": "vitest run --changed HEAD~1 --no-coverage",
     "test:debug": "vitest --inspect-brk --pool=threads --poolOptions.threads.singleThread",
     "typecheck": "turbo run typecheck --output-logs=errors-only",
-    "validate": "turbo run lint typecheck test test:integration //#format:check:root --output-logs=errors-only",
-    "validate:changed": "turbo run lint typecheck test --filter='[HEAD^1]' --output-logs=errors-only",
+    "validate": "turbo run lint typecheck test test:integration \"//#format:check:root\" --output-logs=errors-only",
+    "validate:changed": "turbo run lint typecheck test --filter='[origin/main...]' --output-logs=errors-only",
     "validate:quick": "turbo run lint typecheck --output-logs=errors-only",
-    "validate:nocache": "turbo run lint typecheck test test:integration //#format:check:root --output-logs=errors-only --force",
+    "validate:nocache": "turbo run lint typecheck test test:integration \"//#format:check:root\" --output-logs=errors-only --force",
     "perf": "tsx scripts/performance-monitor.ts",
     "profile": "tsx scripts/memory-baseline.ts",
     "zombies": "tsx scripts/emergency-cleanup.ts",
@@ -54,7 +54,8 @@
     "memory:baseline": "NODE_OPTIONS='--max-old-space-size=4096' tsx scripts/memory-baseline.ts",
     "memory:profile": "NODE_OPTIONS='--max-old-space-size=4096 --expose-gc' tsx scripts/memory-baseline.ts --profile",
     "memory:compare": "tsx scripts/memory-baseline.ts --compare",
-    "memory:report": "tsx scripts/memory-baseline.ts --report"
+    "memory:report": "tsx scripts/memory-baseline.ts --report",
+    "server:start": "echo 'Performance benchmark server placeholder - implement based on your app needs'"
   },
   "config": {
     "commitizen": {
