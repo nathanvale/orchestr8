@@ -217,6 +217,7 @@ jobs:
         run: |
           # Check if aggregated-junit exists and has files
           if [ -d aggregated-junit ] && [ "$(ls -A aggregated-junit 2>/dev/null)" ]; then
+            mkdir -p test-report
             npx --yes junit-viewer@4 --results=aggregated-junit --save=test-report/index.html --minify
             echo "HTML report generated at test-report/index.html"
           else
