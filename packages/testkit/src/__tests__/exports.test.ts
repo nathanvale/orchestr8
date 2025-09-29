@@ -6,8 +6,8 @@ import { describe, expect, it } from 'vitest'
 
 describe('Package Exports', () => {
   describe('Main Export (lean)', () => {
-    it('should export core utilities without optional dependencies', async () => {
-      // This should work without msw, convex-test, better-sqlite3, etc.
+    it('should export core utilities without any optional dependencies', async () => {
+      // This should work without any external dependencies (vitest, msw, convex-test, better-sqlite3, etc.)
       const mainExport = await import('../index.js')
 
       // Should have core utilities
@@ -37,26 +37,10 @@ describe('Package Exports', () => {
       expect(mainExport).not.toHaveProperty('createConvexTestContext')
       expect(mainExport).not.toHaveProperty('createSQLiteDatabase')
       expect(mainExport).not.toHaveProperty('startContainer')
-    })
-  })
 
-  describe('Full Export', () => {
-    it('should be available for backward compatibility', async () => {
-      try {
-        const fullExport = await import('../index.full.js')
-
-        // Should have everything including optional deps
-        expect(fullExport.delay).toBeDefined()
-        expect(fullExport.getTestEnvironment).toBeDefined()
-        expect(fullExport.createTempDirectory).toBeDefined()
-
-        // Should also have MSW utilities (assuming MSW is available)
-        expect(fullExport.createMSWServer).toBeDefined()
-        expect(fullExport.setupMSW).toBeDefined()
-      } catch (error) {
-        // This might fail if optional deps aren't installed, which is okay for CI
-        console.warn('Full export test skipped due to missing optional dependencies:', error)
-      }
+      // Should NOT have vitest-dependent utilities (use sub-exports for those)
+      expect(mainExport).not.toHaveProperty('useTempDirectory') // Use @orchestr8/testkit/fs for this
+      expect(mainExport).not.toHaveProperty('useFakeTime') // Use @orchestr8/testkit/env for this
     })
   })
 
@@ -161,7 +145,6 @@ describe('Package Exports', () => {
 
       // Check all sub-exports have default condition
       const subExports = [
-        './full',
         './cli',
         './register',
         './msw',

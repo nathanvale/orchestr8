@@ -14,11 +14,6 @@
       "import": "./dist/index.js",
       "default": "./dist/index.js"
     },
-    "./full": {
-      "types": "./dist/index.full.d.ts",
-      "import": "./dist/index.full.js",
-      "default": "./dist/index.full.js"
-    },
     "./cli": {
       "vitest": "./dist/cli/index.js",
       "development": "./dist/cli/index.js",

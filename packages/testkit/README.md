@@ -46,32 +46,38 @@ import { startContainer } from '@orchestr8/testkit/containers'  // requires test
 
 | Feature | Import | Required Dependencies | Optional Dependencies |
 |---------|--------|---------------------|----------------------|
-| **Core Utils** | `@orchestr8/testkit` | None | None |
-| **Full Export** | `@orchestr8/testkit/full` | None | All optional deps |
-| **MSW Testing** | `@orchestr8/testkit/msw` | `msw@^2.0.0` | `happy-dom@^18.0.0` |
-| **Test Containers** | `@orchestr8/testkit/containers` | `testcontainers@^10.0.0` | `mysql2@^3.0.0`, `pg@^8.0.0` |
-| **SQLite Testing** | `@orchestr8/testkit/sqlite` | `better-sqlite3@^12.0.0` | None |
-| **Convex Testing** | `@orchestr8/testkit/convex` | `convex-test@^0.0.38` | None |
-| **CLI Utilities** | `@orchestr8/testkit/cli` | None | None |
-| **Environment** | `@orchestr8/testkit/env` | None | None |
-| **File System** | `@orchestr8/testkit/fs` | None | None |
+| **Core Utils** | `@orchestr8/testkit` | `vitest@^3.2.0` | None |
+| **MSW Testing** | `@orchestr8/testkit/msw` | `vitest@^3.2.0`, `msw@^2.0.0` | `happy-dom@^18.0.0` |
+| **Test Containers** | `@orchestr8/testkit/containers` | `vitest@^3.2.0`, `testcontainers@^10.0.0` | `mysql2@^3.0.0`, `pg@^8.0.0` |
+| **SQLite Testing** | `@orchestr8/testkit/sqlite` | `vitest@^3.2.0`, `better-sqlite3@^12.0.0` | None |
+| **Convex Testing** | `@orchestr8/testkit/convex` | `vitest@^3.2.0`, `convex-test@^0.0.38` | None |
+| **CLI Utilities** | `@orchestr8/testkit/cli` | `vitest@^3.2.0` | None |
+| **Environment** | `@orchestr8/testkit/env` | `vitest@^3.2.0` | None |
+| **File System** | `@orchestr8/testkit/fs` | `vitest@^3.2.0` | None |
 | **Config** | `@orchestr8/testkit/config` | None | None |
+| **Register** | `@orchestr8/testkit/register` | `vitest@^3.2.0` | None |
 
 ## Available Exports
 
 ### Main Export (`@orchestr8/testkit`)
 
-**Core utilities without optional dependencies:**
+**All utilities that only require vitest as a dependency:**
 
 ```typescript
 // Utility functions
 export { delay, retry, withTimeout, createMockFn } from '@orchestr8/testkit'
 
-// Environment utilities
-export { getTestEnvironment, setupTestEnv, getTestTimeouts } from '@orchestr8/testkit'
+// Environment utilities (complete set)
+export {
+  getTestEnvironment, setupTestEnv, getTestTimeouts,
+  useFakeTime, createRandomSeed, generateId
+} from '@orchestr8/testkit'
 
-// File system utilities (basic)
-export { createTempDirectory, createNamedTempDirectory } from '@orchestr8/testkit'
+// File system utilities (complete set)
+export {
+  createTempDirectory, createNamedTempDirectory,
+  useTempDirectory, createManagedTempDirectory
+} from '@orchestr8/testkit'
 
 // Vitest configuration
 export { createVitestConfig, defineVitestConfig } from '@orchestr8/testkit'
@@ -128,20 +134,13 @@ import {
 
 ## Installation Options
 
-### Option 1: Minimal Install (Core Only)
+### Option 1: Core Install (All Non-Optional Features)
 ```bash
 npm install @orchestr8/testkit @vitest/ui vitest
 ```
-Only provides access to core utilities without optional features.
+Provides access to all core utilities, environment management, file system utilities, and vitest configuration without optional external dependencies.
 
-### Option 2: Full Install (All Features)
-```bash
-npm install @orchestr8/testkit @vitest/ui vitest \
-  msw happy-dom better-sqlite3 convex-test testcontainers mysql2 pg
-```
-Provides access to all features including optional utilities.
-
-### Option 3: Selective Install (Pick Your Features)
+### Option 2: Selective Install (Pick Your Features)
 ```bash
 # Core + MSW
 npm install @orchestr8/testkit @vitest/ui vitest msw happy-dom
@@ -151,6 +150,10 @@ npm install @orchestr8/testkit @vitest/ui vitest better-sqlite3
 
 # Core + Containers
 npm install @orchestr8/testkit @vitest/ui vitest testcontainers
+
+# Core + All Optional Features
+npm install @orchestr8/testkit @vitest/ui vitest \
+  msw happy-dom better-sqlite3 convex-test testcontainers mysql2 pg
 ```
 
 ## Usage Examples
