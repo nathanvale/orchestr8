@@ -11,77 +11,95 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./full": {
+      "types": "./dist/index.full.d.ts",
+      "import": "./dist/index.full.js",
+      "default": "./dist/index.full.js"
     },
     "./cli": {
       "vitest": "./dist/cli/index.js",
       "development": "./dist/cli/index.js",
       "types": "./dist/cli/index.d.ts",
-      "import": "./dist/cli/index.js"
+      "import": "./dist/cli/index.js",
+      "default": "./dist/cli/index.js"
     },
     "./register": {
       "vitest": "./dist/register.js",
       "development": "./dist/register.js",
       "types": "./dist/register.d.ts",
-      "import": "./dist/register.js"
+      "import": "./dist/register.js",
+      "default": "./dist/register.js"
     },
     "./msw": {
       "vitest": "./dist/msw/index.js",
       "development": "./dist/msw/index.js",
       "types": "./dist/msw/index.d.ts",
-      "import": "./dist/msw/index.js"
+      "import": "./dist/msw/index.js",
+      "default": "./dist/msw/index.js"
     },
     "./msw/browser": {
       "types": "./dist/msw/browser.d.ts",
-      "import": "./dist/msw/browser.js"
+      "import": "./dist/msw/browser.js",
+      "default": "./dist/msw/browser.js"
     },
     "./containers": {
       "vitest": "./dist/containers/index.js",
       "development": "./dist/containers/index.js",
       "types": "./dist/containers/index.d.ts",
-      "import": "./dist/containers/index.js"
+      "import": "./dist/containers/index.js",
+      "default": "./dist/containers/index.js"
     },
     "./convex": {
       "vitest": "./dist/convex/index.js",
       "development": "./dist/convex/index.js",
       "types": "./dist/convex/index.d.ts",
-      "import": "./dist/convex/index.js"
+      "import": "./dist/convex/index.js",
+      "default": "./dist/convex/index.js"
     },
     "./sqlite": {
       "vitest": "./dist/sqlite/index.js",
       "development": "./dist/sqlite/index.js",
       "types": "./dist/sqlite/index.d.ts",
-      "import": "./dist/sqlite/index.js"
+      "import": "./dist/sqlite/index.js",
+      "default": "./dist/sqlite/index.js"
     },
     "./env": {
       "vitest": "./dist/env/index.js",
       "development": "./dist/env/index.js",
       "types": "./dist/env/index.d.ts",
-      "import": "./dist/env/index.js"
+      "import": "./dist/env/index.js",
+      "default": "./dist/env/index.js"
     },
     "./utils": {
       "vitest": "./dist/utils/index.js",
       "development": "./dist/utils/index.js",
       "types": "./dist/utils/index.d.ts",
-      "import": "./dist/utils/index.js"
+      "import": "./dist/utils/index.js",
+      "default": "./dist/utils/index.js"
     },
     "./fs": {
       "vitest": "./dist/fs/index.js",
       "development": "./dist/fs/index.js",
       "types": "./dist/fs/index.d.ts",
-      "import": "./dist/fs/index.js"
+      "import": "./dist/fs/index.js",
+      "default": "./dist/fs/index.js"
     },
     "./config": {
       "vitest": "./dist/config/index.js",
       "development": "./dist/config/index.js",
       "types": "./dist/config/index.d.ts",
-      "import": "./dist/config/index.js"
+      "import": "./dist/config/index.js",
+      "default": "./dist/config/index.js"
     },
     "./config/vitest": {
       "vitest": "./dist/config/vitest.base.js",
       "development": "./dist/config/vitest.base.js",
       "types": "./dist/config/vitest.base.d.ts",
-      "import": "./dist/config/vitest.base.js"
+      "import": "./dist/config/vitest.base.js",
+      "default": "./dist/config/vitest.base.js"
     }
   },
   "types": "./dist/index.d.ts",
@@ -133,7 +151,9 @@
     "convex-test": "^0.0.38",
     "testcontainers": "^10.0.0",
     "mysql2": "^3.0.0",
-    "pg": "^8.0.0"
+    "pg": "^8.0.0",
+    "msw": "^2.0.0",
+    "happy-dom": "^18.0.0"
   },
   "peerDependenciesMeta": {
     "better-sqlite3": {
@@ -149,6 +169,12 @@
       "optional": true
     },
     "pg": {
+      "optional": true
+    },
+    "msw": {
+      "optional": true
+    },
+    "happy-dom": {
       "optional": true
     }
   },
