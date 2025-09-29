@@ -11,9 +11,9 @@ import {
   stopMSWServer,
   resetMSWHandlers,
   disposeMSWServer,
-} from './server'
-import type { MSWConfig } from './config'
-import { createMSWConfig } from './config'
+} from './server.js'
+import type { MSWConfig } from './config.js'
+import { createMSWConfig } from './config.js'
 
 /**
  * Setup MSW for testing with automatic lifecycle management
