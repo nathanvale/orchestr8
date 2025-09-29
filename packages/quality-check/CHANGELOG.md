@@ -1,5 +1,21 @@
 # @claude-hooks/quality-check
 
+## 1.0.1
+
+### Patch Changes
+
+- [#109](https://github.com/nathanvale/orchestr8/pull/109)
+  [`00f7cc7`](https://github.com/nathanvale/orchestr8/commit/00f7cc7d7f8d4f8887f451d91a2aa53a3b56ce7b)
+  Thanks [@github-actions](https://github.com/apps/github-actions)! - Configure
+  PAT for automatic CI triggering on changeset release PRs
+  - Updated release workflow to use CHANGESET_GITHUB_TOKEN for checkout and
+    changeset actions
+  - Added fallback to GITHUB_TOKEN for backwards compatibility
+  - Documented PAT setup requirements in workflow comments
+  - Marked changeset-pr-trigger workflow as temporary workaround
+
+  This ensures CI runs automatically on bot-created PRs when PAT is configured.
+
 ## 1.0.0
 
 ### Major Changes
