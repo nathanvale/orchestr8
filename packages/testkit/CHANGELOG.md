@@ -1,5 +1,24 @@
 # @orchestr8/testkit
 
+## 1.0.2
+
+### Patch Changes
+
+- [#110](https://github.com/nathanvale/orchestr8/pull/110)
+  [`06bca09`](https://github.com/nathanvale/orchestr8/commit/06bca09303b64fdebc972b11f2cea64a6a322dd7)
+  Thanks [@nathanvale](https://github.com/nathanvale)! - Fix critical module
+  resolution issues for vitest/vite environments
+  - Fixed conditional exports: All `vitest` and `development` conditions now
+    correctly point to built files in `dist/` instead of source files in `src/`
+  - Added missing optional peer dependencies: `better-sqlite3`, `convex-test`,
+    `testcontainers`, `mysql2`, and `pg` are now properly declared as optional
+    peer dependencies
+  - Resolves "Cannot find package" errors when importing sub-exports like
+    `@orchestr8/testkit/utils`, `@orchestr8/testkit/msw`, etc.
+
+  This fix enables proper consumption of @orchestr8/testkit in modern JavaScript
+  toolchains (Vite, Vitest, pnpm workspaces).
+
 ## 1.0.1
 
 ### Patch Changes
