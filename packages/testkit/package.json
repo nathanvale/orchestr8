@@ -14,20 +14,20 @@
       "import": "./dist/index.js"
     },
     "./cli": {
-      "vitest": "./src/cli/index.ts",
-      "development": "./src/cli/index.ts",
+      "vitest": "./dist/cli/index.js",
+      "development": "./dist/cli/index.js",
       "types": "./dist/cli/index.d.ts",
       "import": "./dist/cli/index.js"
     },
     "./register": {
-      "vitest": "./src/register.ts",
-      "development": "./src/register.ts",
+      "vitest": "./dist/register.js",
+      "development": "./dist/register.js",
       "types": "./dist/register.d.ts",
       "import": "./dist/register.js"
     },
     "./msw": {
-      "vitest": "./src/msw/index.ts",
-      "development": "./src/msw/index.ts",
+      "vitest": "./dist/msw/index.js",
+      "development": "./dist/msw/index.js",
       "types": "./dist/msw/index.d.ts",
       "import": "./dist/msw/index.js"
     },
@@ -36,50 +36,50 @@
       "import": "./dist/msw/browser.js"
     },
     "./containers": {
-      "vitest": "./src/containers/index.ts",
-      "development": "./src/containers/index.ts",
+      "vitest": "./dist/containers/index.js",
+      "development": "./dist/containers/index.js",
       "types": "./dist/containers/index.d.ts",
       "import": "./dist/containers/index.js"
     },
     "./convex": {
-      "vitest": "./src/convex/index.ts",
-      "development": "./src/convex/index.ts",
+      "vitest": "./dist/convex/index.js",
+      "development": "./dist/convex/index.js",
       "types": "./dist/convex/index.d.ts",
       "import": "./dist/convex/index.js"
     },
     "./sqlite": {
-      "vitest": "./src/sqlite/index.ts",
-      "development": "./src/sqlite/index.ts",
+      "vitest": "./dist/sqlite/index.js",
+      "development": "./dist/sqlite/index.js",
       "types": "./dist/sqlite/index.d.ts",
       "import": "./dist/sqlite/index.js"
     },
     "./env": {
-      "vitest": "./src/env/index.ts",
-      "development": "./src/env/index.ts",
+      "vitest": "./dist/env/index.js",
+      "development": "./dist/env/index.js",
       "types": "./dist/env/index.d.ts",
       "import": "./dist/env/index.js"
     },
     "./utils": {
-      "vitest": "./src/utils/index.ts",
-      "development": "./src/utils/index.ts",
+      "vitest": "./dist/utils/index.js",
+      "development": "./dist/utils/index.js",
       "types": "./dist/utils/index.d.ts",
       "import": "./dist/utils/index.js"
     },
     "./fs": {
-      "vitest": "./src/fs/index.ts",
-      "development": "./src/fs/index.ts",
+      "vitest": "./dist/fs/index.js",
+      "development": "./dist/fs/index.js",
       "types": "./dist/fs/index.d.ts",
       "import": "./dist/fs/index.js"
     },
     "./config": {
-      "vitest": "./src/config/index.ts",
-      "development": "./src/config/index.ts",
+      "vitest": "./dist/config/index.js",
+      "development": "./dist/config/index.js",
       "types": "./dist/config/index.d.ts",
       "import": "./dist/config/index.js"
     },
     "./config/vitest": {
-      "vitest": "./src/config/vitest.base.ts",
-      "development": "./src/config/vitest.base.ts",
+      "vitest": "./dist/config/vitest.base.js",
+      "development": "./dist/config/vitest.base.js",
       "types": "./dist/config/vitest.base.d.ts",
       "import": "./dist/config/vitest.base.js"
     }
@@ -128,7 +128,29 @@
   },
   "peerDependencies": {
     "@vitest/ui": "^3.2.4",
-    "vitest": "^3.2.4"
+    "vitest": "^3.2.4",
+    "better-sqlite3": "^12.0.0",
+    "convex-test": "^0.0.38",
+    "testcontainers": "^10.0.0",
+    "mysql2": "^3.0.0",
+    "pg": "^8.0.0"
+  },
+  "peerDependenciesMeta": {
+    "better-sqlite3": {
+      "optional": true
+    },
+    "convex-test": {
+      "optional": true
+    },
+    "testcontainers": {
+      "optional": true
+    },
+    "mysql2": {
+      "optional": true
+    },
+    "pg": {
+      "optional": true
+    }
   },
   "publishConfig": {
     "access": "public",
