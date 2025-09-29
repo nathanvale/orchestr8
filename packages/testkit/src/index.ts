@@ -1,66 +1,33 @@
 /**
- * @orchestr8/testkit - Shared testing utilities and helpers for the monorepo
+ * @orchestr8/testkit - Lean core export with no optional dependencies
  *
- * This package provides a comprehensive testing toolkit for all packages in the monorepo,
- * including utilities for MSW, test containers, Convex testing, environment management,
- * and general testing utilities.
+ * This is the main entry point that only exports core utilities that don't
+ * require optional dependencies like convex-test, better-sqlite3, msw, etc.
+ *
+ * For optional features, use the specific sub-exports: '@orchestr8/testkit/msw',
+ * '@orchestr8/testkit/containers', etc.
  */
 
-// Re-export all utility modules
-export * from './cli/index.js'
-export * from './config/index.js'
-export * from './containers/index.js'
-export * from './convex/index.js'
-export * from './env/index.js'
-export * from './fs/index.js'
-export * from './sqlite/index.js'
-
-// MSW exports - handle delay conflict by aliasing
-export {
-  COMMON_HEADERS,
-  // Constants
-  HTTP_STATUS,
-  HttpResponse,
-  addMSWHandlers,
-  createAuthHandlers,
-  createCRUDHandlers,
-  createDelayedResponse,
-  createErrorResponse,
-  // Configuration
-  createMSWConfig,
-  createMSWServer,
-  createNetworkIssueHandler,
-  createPaginatedHandler,
-  // Handlers
-  createSuccessResponse,
-  createTestScopedMSW,
-  createUnreliableHandler,
-  defaultHandlers,
-  defaultMSWConfig,
-  disposeMSWServer,
-  getMSWConfig,
-  // Server management
-  getMSWServer,
-  // Direct MSW re-exports (except delay which conflicts with utils)
-  http,
-  quickSetupMSW,
-  resetMSWHandlers,
-  restoreMSWHandlers,
-  // Setup functions
-  setupMSW,
-  setupMSWForEnvironment,
-  setupMSWGlobal,
-  setupMSWManual,
-  startMSWServer,
-  stopMSWServer,
-  updateMSWConfig,
-  validateMSWConfig,
-} from './msw/index.js'
-
-export * from './register.js'
-
-// Utils exports - includes the general delay function
+// Only export from modules with no optional dependencies
 export * from './utils/index.js'
+export * from './config/index.js'
 
-// Export types for external consumption
+// Export only core functions from env and fs (no vitest dependencies)
+export * from './env/core.js'
+export * from './fs/core.js'
+
+// Export types that don't depend on vitest
+export type {
+  FakeTimerOptions,
+  FakeTimerContext,
+  SystemTimeContext,
+  DateHelpers,
+  TimezoneContext,
+  TimerType,
+  RetryConfig,
+  DebounceConfig,
+  ThrottleConfig,
+} from './env/types.js'
+
+// DO NOT export: cli, containers, convex, sqlite, msw, register (these have optional deps)
 export type { TestConfig, TestEnvironment, TestKit } from './types.js'

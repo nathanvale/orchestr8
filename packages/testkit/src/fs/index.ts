@@ -5,16 +5,8 @@
  * temporary directory management, automatic cleanup, and sandboxed operations.
  */
 
-// Temp directory management
-export {
-  createTempDirectory,
-  createNamedTempDirectory,
-  createMultipleTempDirectories,
-  cleanupMultipleTempDirectories,
-  type TempDirectory,
-  type TempDirectoryOptions,
-  type DirectoryStructure,
-} from './temp.js'
+// Re-export all core fs utilities
+export * from './core.js'
 
 // Automatic cleanup and test lifecycle integration
 export {
