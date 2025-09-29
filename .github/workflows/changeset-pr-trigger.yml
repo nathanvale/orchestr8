@@ -1,7 +1,14 @@
 name: Changeset PR CI Trigger
 
+# ⚠️ TEMPORARY WORKAROUND - Can be deleted after setting up CHANGESET_GITHUB_TOKEN
 # This workflow ensures CI runs on changeset release PRs
 # Even if created by bots (which sometimes don't trigger CI automatically)
+#
+# TO REMOVE THIS WORKAROUND:
+# 1. Create a PAT at https://github.com/settings/tokens/new with 'repo' and 'workflow' scopes
+# 2. Add it as repository secret named CHANGESET_GITHUB_TOKEN
+# 3. The release.yml workflow will then use the PAT and CI will run automatically
+# 4. Delete this entire workflow file
 on:
   pull_request_target:
     types: [opened, reopened]
