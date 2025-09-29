@@ -185,14 +185,15 @@ test('async operations', async () => {
 ### Environment Detection
 
 ```typescript
+import { test } from 'vitest'
 import { getTestEnvironment, setupTestEnv } from '@orchestr8/testkit'
 
 test('environment-specific behavior', () => {
   const env = getTestEnvironment()
 
   if (env.isCI) {
-    // Increase timeouts in CI
-    jest.setTimeout(30000)
+    // Increase timeout for this test in CI
+    test.setTimeout(30000)
   }
 
   if (env.isWallaby) {
