@@ -74,20 +74,22 @@ describe('README Validation', () => {
       expect(sqliteModule).toHaveProperty('createSQLitePool')
     })
 
-    test('seedDatabase function mentioned in README exists', async () => {
+    test('seed functions mentioned in README exist', async () => {
       if (!isOptionalDependencyAvailable('better-sqlite3')) {
         console.log('Skipping SQLite test - better-sqlite3 not available')
         return
       }
 
       const sqliteModule = await import('@orchestr8/testkit/sqlite')
-      // README line 128 mentions seedDatabase
-      // Note: This might not exist yet based on the exports
-      if ('seedDatabase' in sqliteModule) {
-        expect(typeof sqliteModule.seedDatabase).toBe('function')
-      } else {
-        console.warn('⚠️  seedDatabase mentioned in README but not exported')
-      }
+      // README lines 147-149 mention these seed functions
+      expect(sqliteModule).toHaveProperty('seedWithSql')
+      expect(typeof sqliteModule.seedWithSql).toBe('function')
+
+      expect(sqliteModule).toHaveProperty('seedWithFiles')
+      expect(typeof sqliteModule.seedWithFiles).toBe('function')
+
+      expect(sqliteModule).toHaveProperty('seedWithBatch')
+      expect(typeof sqliteModule.seedWithBatch).toBe('function')
     })
   })
 
@@ -215,16 +217,14 @@ describe('README Validation', () => {
           'createFileDatabase',
           'createSQLitePool',
           'withTransaction',
+          'seedWithSql',
+          'seedWithFiles',
+          'seedWithBatch',
         ]
         for (const fn of requiredFunctions) {
           if (!(fn in sqliteModule)) {
             issues.push(`❌ SQLite: "${fn}" mentioned in README but not exported`)
           }
-        }
-
-        // Check if seedDatabase is mentioned but not exported
-        if (!('seedDatabase' in sqliteModule)) {
-          warnings.push('⚠️  README line 128: "seedDatabase" is mentioned but not found in exports')
         }
       }
 

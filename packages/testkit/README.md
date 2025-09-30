@@ -75,22 +75,17 @@ import { createPostgresContext } from '@orchestr8/testkit/containers' // require
 // Utility functions
 export { delay, retry, withTimeout, createMockFn } from '@orchestr8/testkit'
 
-// Environment utilities (complete set)
+// Environment utilities (from /env sub-export)
 export {
   getTestEnvironment,
   setupTestEnv,
   getTestTimeouts,
-  useFakeTime,
-  createRandomSeed,
-  generateId,
 } from '@orchestr8/testkit'
 
-// File system utilities (complete set)
+// File system utilities (from /fs sub-export)
 export {
   createTempDirectory,
   createNamedTempDirectory,
-  useTempDirectory,
-  createManagedTempDirectory,
 } from '@orchestr8/testkit'
 
 // Vitest configuration
@@ -100,17 +95,41 @@ export { createVitestConfig, defineVitestConfig } from '@orchestr8/testkit'
 export type { TestConfig, TestEnvironment, TestKit } from '@orchestr8/testkit'
 ```
 
+**Additional utilities available via sub-exports:**
+
+```typescript
+// Advanced environment utilities (requires vitest)
+import {
+  useFakeTimers,
+  createSeedContext,
+  DeterministicGenerator,
+  createSystemTimeContext,
+  createTimezoneContext,
+} from '@orchestr8/testkit/env'
+
+// Advanced file system utilities (requires vitest)
+import {
+  useTempDirectory,
+  createManagedTempDirectory,
+  createTempDirectoryWithResourceManager,
+  withTempDirectoryScope,
+} from '@orchestr8/testkit/fs'
+```
+
 ### Sub-Exports
 
 #### MSW Testing (`@orchestr8/testkit/msw`)
 
 _Requires: `msw@^2.0.0`_
 
+> **Note:** MSW v2 introduces breaking changes from v1. Use `http.get` instead of `rest.get`, `http.post` instead of `rest.post`, etc.
+
 ```typescript
 import {
   setupMSW,
   createMSWServer,
   createAuthHandlers,
+  http,
   HttpResponse,
 } from '@orchestr8/testkit/msw'
 ```
@@ -125,7 +144,9 @@ import {
   createFileDatabase,
   createSQLitePool,
   withTransaction,
-  seedDatabase,
+  seedWithSql,
+  seedWithFiles,
+  seedWithBatch,
 } from '@orchestr8/testkit/sqlite'
 ```
 
@@ -217,6 +238,7 @@ import { getTestEnvironment, setupTestEnv } from '@orchestr8/testkit'
 
 test('environment-specific behavior', () => {
   const env = getTestEnvironment()
+  // env contains: { isCI, isWallaby, isVitest, isJest, nodeEnv }
 
   if (env.isCI) {
     // Increase timeout for this test in CI
@@ -259,16 +281,22 @@ test('file operations', async () => {
 
 ### MSW Mock Server (Optional)
 
+> **MSW v2 Migration Note:** This package uses MSW v2. If you're migrating from v1:
+> - Replace `rest.*` with `http.*` (e.g., `rest.get` → `http.get`)
+> - Import `http` instead of `rest` from the MSW module
+> - See [MSW v2 migration guide](https://mswjs.io/docs/migrations/1.x-to-2.x) for more details
+
 ```typescript
 import {
   setupMSW,
   createAuthHandlers,
+  http,
   HttpResponse,
 } from '@orchestr8/testkit/msw'
 
 const server = setupMSW([
   ...createAuthHandlers(),
-  rest.get('/api/users', () => {
+  http.get('/api/users', () => {
     return HttpResponse.json([
       { id: 1, name: 'John' },
       { id: 2, name: 'Jane' },
@@ -288,7 +316,9 @@ import {
   createMemoryUrl,
   createSQLitePool,
   withTransaction,
+  seedWithSql,
 } from '@orchestr8/testkit/sqlite'
+import { betterSqliteAdapter } from '@orchestr8/testkit/sqlite/adapters'
 import Database from 'better-sqlite3'
 
 test('database operations', async () => {
@@ -299,11 +329,14 @@ test('database operations', async () => {
   // Set up the schema
   db.exec('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)')
 
-  // Use transactions for safe database operations
-  await withTransaction(db, async (tx) => {
-    tx.run('INSERT INTO users (name) VALUES (?)', 'John')
-    const user = tx.get('SELECT * FROM users WHERE name = ?', 'John')
-    expect(user.name).toBe('John')
+  // Seed data
+  await seedWithSql(db, `INSERT INTO users (name) VALUES ('John')`)
+
+  // Use transactions for safe database operations with adapter
+  await withTransaction(db, betterSqliteAdapter, async (tx) => {
+    tx.run('INSERT INTO users (name) VALUES (?)', 'Alice')
+    const user = tx.get('SELECT * FROM users WHERE name = ?', 'Alice')
+    expect(user.name).toBe('Alice')
   })
 
   // Cleanup
@@ -406,9 +439,9 @@ experience:
 - **`use*`** - Hook-style functions for test lifecycle management
 
   ```typescript
-  useTempDirectory() // Returns a cleanup function
-  useFakeTimers() // Returns timer context
-  usePrismaTestDatabase() // Returns database context
+  useTempDirectory() // Returns a cleanup function (from @orchestr8/testkit/fs)
+  useFakeTimers() // Returns timer context (from @orchestr8/testkit/env)
+  usePrismaTestDatabase() // Returns database context (from @orchestr8/testkit/sqlite)
   ```
 
 - **`with*`** - Scoped operations with automatic cleanup
@@ -467,9 +500,11 @@ Full TypeScript definitions are included:
 import type {
   TestConfig,
   TestEnvironment,
-  TempDirectory,
-  FakeTimerOptions,
 } from '@orchestr8/testkit'
+
+// Types from sub-exports
+import type { TempDirectory } from '@orchestr8/testkit/fs'
+import type { FakeTimerOptions } from '@orchestr8/testkit/env'
 ```
 
 ## Error Handling
