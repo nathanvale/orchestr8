@@ -7,6 +7,9 @@
 
 import { afterEach, afterAll } from 'vitest'
 import type { FileDatabase } from './file.js'
+import { registerResource, ResourceCategory } from '../resources/index.js'
+import { resourceCleanupManager, databaseOperationsManager } from '../utils/concurrency.js'
+import { createExitHandler } from '../utils/process-listeners.js'
 
 /**
  * Generic cleanup function type for any database or resource
@@ -79,6 +82,13 @@ class SqliteCleanupRegistry {
   register(cleanupFn: CleanupFunction): void {
     this.cleanupFunctions.add(cleanupFn)
     this.ensureGlobalCleanup()
+
+    // Also register with the resource manager
+    const resourceId = `sqlite-cleanup-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`
+    registerResource(resourceId, cleanupFn, {
+      category: ResourceCategory.DATABASE,
+      description: 'SQLite cleanup function',
+    })
   }
 
   /**
@@ -87,6 +97,13 @@ class SqliteCleanupRegistry {
   registerDatabase(db: DatabaseLike): void {
     this.databases.add(db)
     this.ensureGlobalCleanup()
+
+    // Also register with the resource manager
+    const resourceId = `sqlite-database-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`
+    registerResource(resourceId, () => db.cleanup(), {
+      category: ResourceCategory.DATABASE,
+      description: 'SQLite database object',
+    })
   }
 
   /**
@@ -159,7 +176,8 @@ class SqliteCleanupRegistry {
       }
     })
 
-    await Promise.allSettled([...databaseCleanups, ...functionCleanups])
+    const allCleanupFunctions = [...databaseCleanups, ...functionCleanups]
+    await resourceCleanupManager.batch(allCleanupFunctions, (fn) => fn())
 
     this.cleanupFunctions.clear()
     this.databases.clear()
@@ -403,6 +421,8 @@ export function unregisterDatabaseCleanup(db: DatabaseLike): boolean {
  *
  * Useful for manual cleanup or emergency situations.
  * All cleanup functions are removed from the registry after execution.
+ * Note: This only cleans up items in the legacy SQLite registry.
+ * For comprehensive cleanup including resource manager, use cleanupAllResources.
  *
  * @param options - Cleanup options including timeout
  */
@@ -414,6 +434,7 @@ export async function cleanupAllSqlite(options: CleanupOptions = {}): Promise<vo
  * Get the number of currently registered cleanup items
  *
  * Useful for debugging and ensuring proper cleanup registration.
+ * Note: This only counts items in the legacy SQLite registry, not the resource manager.
  */
 export function getCleanupCount(): number {
   return registry.size()
@@ -460,13 +481,13 @@ export function useSqliteCleanup<T extends DatabaseLike>(
 
   // Register afterEach hook to clean up databases created in this test
   afterEach(async () => {
-    await Promise.allSettled(
-      databases.map((db) =>
+    const cleanupFunctions = databases.map(
+      (db) => () =>
         executeDatabaseCleanup(db).catch((error) => {
           console.warn('Failed to cleanup database in afterEach:', error)
         }),
-      ),
     )
+    await resourceCleanupManager.batch(cleanupFunctions, (fn) => fn())
     databases = []
   })
 
@@ -544,10 +565,11 @@ export async function withSqliteCleanupScope<T>(fn: () => T | Promise<T>): Promi
   })
 
   // Clean up scoped resources directly (they're already unregistered from global registry)
-  await Promise.allSettled([
-    ...scopedDatabases.map((db) => db.cleanup()),
-    ...scopedCleanups.map((fn) => fn()),
-  ])
+  const allScopedCleanups = [
+    ...scopedDatabases.map((db) => () => db.cleanup()),
+    ...scopedCleanups.map((fn) => () => fn()),
+  ]
+  await resourceCleanupManager.batch(allScopedCleanups, (fn) => fn())
 
   // Re-throw error if the scoped function failed
   if (error !== undefined) {
@@ -561,6 +583,7 @@ export async function withSqliteCleanupScope<T>(fn: () => T | Promise<T>): Promi
  * Create a file database with automatic cleanup registration
  *
  * This is a convenience function that combines database creation with cleanup registration.
+ * The database is registered with both the legacy SQLite registry and the resource manager.
  *
  * @param createDb - Function that creates a file database
  * @returns Promise resolving to the created database (automatically registered for cleanup)
@@ -570,6 +593,44 @@ export async function createCleanableFileDatabase<T extends FileDatabase>(
 ): Promise<T> {
   const db = await createDb()
   registerDatabaseCleanup(db)
+  return db
+}
+
+/**
+ * Create a database with resource manager integration
+ *
+ * This function creates a database and registers it directly with the resource manager
+ * without using the legacy SQLite registry. Use this for new code that wants to use
+ * the resource manager exclusively.
+ *
+ * @param createDb - Function that creates a database
+ * @param description - Description for the resource
+ * @returns Promise resolving to the created database
+ *
+ * @example
+ * ```typescript
+ * import { createDatabaseWithResourceManager } from '@orchestr8/testkit/sqlite'
+ * import { createFileDatabase } from '@orchestr8/testkit/sqlite'
+ *
+ * const db = await createDatabaseWithResourceManager(
+ *   () => createFileDatabase('test.db'),
+ *   'Test file database'
+ * )
+ * ```
+ */
+export async function createDatabaseWithResourceManager<T extends DatabaseLike>(
+  createDb: () => T | Promise<T>,
+  description: string = 'SQLite database',
+): Promise<T> {
+  const db = await createDb()
+
+  // Register directly with resource manager (no legacy registry)
+  const resourceId = `sqlite-rm-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`
+  registerResource(resourceId, () => db.cleanup(), {
+    category: ResourceCategory.DATABASE,
+    description,
+  })
+
   return db
 }
 
@@ -587,4 +648,26 @@ export async function createCleanableDatabase<T extends DatabaseLike>(
   const db = await createDb()
   registerDatabaseCleanup(db)
   return db
+}
+
+/**
+ * Bridge function to register existing SQLite cleanup with resource manager
+ *
+ * This function allows existing code using the legacy SQLite cleanup system
+ * to also benefit from resource manager features like leak detection.
+ *
+ * @example
+ * ```typescript
+ * import { bridgeSqliteCleanup } from '@orchestr8/testkit/sqlite'
+ *
+ * // Bridge existing SQLite cleanup with resource manager
+ * bridgeSqliteCleanup()
+ * ```
+ */
+export function bridgeSqliteCleanup(): void {
+  // Register the legacy cleanup function with the resource manager
+  registerResource('legacy-sqlite-cleanup', () => cleanupAllSqlite(), {
+    category: ResourceCategory.DATABASE,
+    description: 'Legacy SQLite cleanup bridge',
+  })
 }

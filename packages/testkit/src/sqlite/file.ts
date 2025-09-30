@@ -31,6 +31,8 @@
  */
 
 import { createManagedTempDirectory, type TempDirectory } from '../fs/index.js'
+import { registerResource, ResourceCategory } from '../resources/index.js'
+import { type SQLiteConnectionPool } from './pool.js'
 
 export interface FileDatabase {
   /** SQLite file URL (file:/path/to/db.sqlite) */
@@ -41,6 +43,8 @@ export interface FileDatabase {
   path: string
   /** Cleanup function to remove temp directory */
   cleanup: () => Promise<void>
+  /** Optional connection pool for this database */
+  pool?: SQLiteConnectionPool
 }
 
 /**
@@ -69,7 +73,7 @@ export async function createFileDatabase(name = 'db.sqlite'): Promise<FileDataba
   const dbPath = temp.getPath(name)
   const url = `file:${dbPath}`
 
-  return {
+  const database = {
     url,
     dir: temp.path,
     path: dbPath,
@@ -77,6 +81,70 @@ export async function createFileDatabase(name = 'db.sqlite'): Promise<FileDataba
       await temp.cleanup()
     },
   }
+
+  // Register the database with the resource manager
+  const resourceId = `file-database-${dbPath}`
+  registerResource(resourceId, () => database.cleanup(), {
+    category: ResourceCategory.DATABASE,
+    description: `File SQLite database: ${dbPath}`,
+  })
+
+  return database
+}
+
+/**
+ * Create a file-backed SQLite database with optional connection pooling.
+ *
+ * @param name - Database file name (default: 'db.sqlite')
+ * @param poolOptions - Optional pool configuration for connection pooling
+ * @returns Database information with URL, paths, optional pool, and cleanup function
+ *
+ * @example
+ * ```typescript
+ * // Create database with connection pool
+ * const db = await createFileDBWithPool('test.db', {
+ *   maxConnections: 5,
+ *   minConnections: 1,
+ *   idleTimeout: 30000
+ * })
+ *
+ * // Use pool to acquire connections
+ * const conn = await db.pool!.acquire()
+ * try {
+ *   conn.exec('CREATE TABLE test (id INTEGER PRIMARY KEY)')
+ * } finally {
+ *   await db.pool!.release(conn)
+ * }
+ *
+ * // Cleanup
+ * await db.cleanup()
+ * ```
+ */
+export async function createFileDBWithPool(
+  name = 'db.sqlite',
+  poolOptions?: Partial<import('./pool.js').PoolOptions>,
+): Promise<FileDatabase> {
+  const { SQLiteConnectionPool } = await import('./pool.js')
+
+  const db = await createFileDatabase(name)
+
+  if (poolOptions) {
+    const pool = new SQLiteConnectionPool(db.path, poolOptions)
+
+    // Update cleanup to also drain the pool
+    const originalCleanup = db.cleanup
+    db.cleanup = async () => {
+      await pool.drain()
+      await originalCleanup()
+    }
+
+    return {
+      ...db,
+      pool,
+    }
+  }
+
+  return db
 }
 
 /**

@@ -6,15 +6,7 @@
 
 import pino from 'pino'
 import { randomUUID } from 'node:crypto'
-import {
-  appendFileSync,
-  existsSync,
-  mkdirSync,
-  writeFileSync,
-  readdirSync,
-  unlinkSync,
-  statSync,
-} from 'node:fs'
+import { appendFile, mkdir, writeFile, readdir, unlink, stat } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { OutputFormatter } from '../services/OutputFormatter.js'
 
@@ -117,15 +109,17 @@ class QualityLogger {
     this.logger = pino(pinoConfig)
   }
 
-  private writeToFile(data: string): void {
+  private async writeToFile(data: string): Promise<void> {
     if (!this.logFile) return
 
     try {
       const dir = dirname(this.logFile)
-      if (!existsSync(dir)) {
-        mkdirSync(dir, { recursive: true })
+      try {
+        await stat(dir)
+      } catch {
+        await mkdir(dir, { recursive: true })
       }
-      appendFileSync(this.logFile, data)
+      await appendFile(this.logFile, data)
     } catch (error) {
       console.error('Failed to write log file:', error)
     }
@@ -349,7 +343,10 @@ class QualityLogger {
 
     const timestamp = new Date().toISOString()
     const logEntry = `${timestamp} [${level.toUpperCase()}] ${message} ${JSON.stringify(context)}\n`
-    this.writeToFile(logEntry)
+    // Fire-and-forget async operation to avoid breaking sync interface
+    this.writeToFile(logEntry).catch((error) => {
+      console.error('Failed to write to log file:', error)
+    })
   }
 }
 
@@ -383,11 +380,16 @@ export class EnhancedLogger extends QualityLogger {
     const errorsDir = join(this.logDir, 'logs', 'errors')
     const debugDir = join(this.logDir, 'logs', 'debug')
 
-    if (!existsSync(errorsDir)) {
-      mkdirSync(errorsDir, { recursive: true })
+    try {
+      await stat(errorsDir)
+    } catch {
+      await mkdir(errorsDir, { recursive: true })
     }
-    if (!existsSync(debugDir)) {
-      mkdirSync(debugDir, { recursive: true })
+
+    try {
+      await stat(debugDir)
+    } catch {
+      await mkdir(debugDir, { recursive: true })
     }
   }
 
@@ -399,7 +401,7 @@ export class EnhancedLogger extends QualityLogger {
     const filename = `${report.tool}-${report.timestamp}.json`
     const filePath = join(this.logDir, 'logs', 'errors', filename)
 
-    writeFileSync(filePath, JSON.stringify(report, null, 2))
+    await writeFile(filePath, JSON.stringify(report, null, 2))
     return filePath
   }
 
@@ -412,46 +414,71 @@ export class EnhancedLogger extends QualityLogger {
     const filename = `${type}-${timestamp}.json`
     const filePath = join(this.logDir, 'logs', 'debug', filename)
 
-    writeFileSync(filePath, JSON.stringify(data, null, 2))
+    await writeFile(filePath, JSON.stringify(data, null, 2))
     return filePath
   }
 
   // Clean up old logs beyond retention limit
   async cleanupOldLogs(tool: 'eslint' | 'typescript' | 'prettier'): Promise<void> {
     const errorsDir = join(this.logDir, 'logs', 'errors')
-    if (!existsSync(errorsDir)) return
+    try {
+      await stat(errorsDir)
+    } catch {
+      return // Directory doesn't exist
+    }
 
-    const files = readdirSync(errorsDir)
-      .filter((f) => f.startsWith(`${tool}-`))
-      .map((f) => ({
-        name: f,
-        path: join(errorsDir, f),
-        time: statSync(join(errorsDir, f)).mtime.getTime(),
-      }))
-      .sort((a, b) => b.time - a.time)
+    const fileList = await readdir(errorsDir)
+    const fileStats = await Promise.all(
+      fileList
+        .filter((f) => f.startsWith(`${tool}-`))
+        .map(async (f) => {
+          const filePath = join(errorsDir, f)
+          const stats = await stat(filePath)
+          return {
+            name: f,
+            path: filePath,
+            time: stats.mtime.getTime(),
+          }
+        }),
+    )
 
+    const files = fileStats.sort((a, b) => b.time - a.time)
     const maxReports = this.config.retentionPolicy!.errorReports
+
     if (files.length > maxReports) {
-      files.slice(maxReports).forEach((f) => unlinkSync(f.path))
+      const filesToDelete = files.slice(maxReports)
+      await Promise.allSettled(filesToDelete.map((f) => unlink(f.path)))
     }
   }
 
   // Clean up debug logs
   async cleanupDebugLogs(): Promise<void> {
     const debugDir = join(this.logDir, 'logs', 'debug')
-    if (!existsSync(debugDir)) return
+    try {
+      await stat(debugDir)
+    } catch {
+      return // Directory doesn't exist
+    }
 
-    const files = readdirSync(debugDir)
-      .map((f) => ({
-        name: f,
-        path: join(debugDir, f),
-        time: statSync(join(debugDir, f)).mtime.getTime(),
-      }))
-      .sort((a, b) => b.time - a.time)
+    const fileList = await readdir(debugDir)
+    const fileStats = await Promise.all(
+      fileList.map(async (f) => {
+        const filePath = join(debugDir, f)
+        const stats = await stat(filePath)
+        return {
+          name: f,
+          path: filePath,
+          time: stats.mtime.getTime(),
+        }
+      }),
+    )
+
+    const files = fileStats.sort((a, b) => b.time - a.time)
 
     const maxLogs = this.config.retentionPolicy!.debugLogs
     if (files.length > maxLogs) {
-      files.slice(maxLogs).forEach((f) => unlinkSync(f.path))
+      const filesToDelete = files.slice(maxLogs)
+      await Promise.allSettled(filesToDelete.map((f) => unlink(f.path)))
     }
   }
 

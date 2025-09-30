@@ -8,6 +8,7 @@
 import { promises as fs } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, dirname } from 'node:path'
+import { validatePath } from '../security/index.js'
 
 /**
  * Interface for a temporary directory with helper methods
@@ -71,12 +72,16 @@ export async function createTempDirectory(
 ): Promise<TempDirectory> {
   const { prefix = 'test-', randomSuffix = true, parent = tmpdir() } = options
 
+  // Validate parent directory if it's not the default tmpdir
+  const validatedParent =
+    parent === tmpdir() ? parent : validatePath(tmpdir(), parent.replace(tmpdir(), ''))
+
   let basePath: string
 
   if (randomSuffix) {
-    basePath = await fs.mkdtemp(join(parent, prefix))
+    basePath = await fs.mkdtemp(join(validatedParent, prefix))
   } else {
-    basePath = join(parent, prefix + Date.now())
+    basePath = join(validatedParent, prefix + Date.now())
     await fs.mkdir(basePath, { recursive: true })
   }
 
@@ -93,7 +98,7 @@ export async function createTempDirectory(
     },
 
     async writeFile(relativePath: string, content: string | Buffer): Promise<string> {
-      const filePath = join(basePath, relativePath)
+      const filePath = validatePath(basePath, relativePath)
       const dirPath = dirname(filePath)
 
       // Ensure parent directory exists
@@ -104,23 +109,23 @@ export async function createTempDirectory(
     },
 
     async mkdir(relativePath: string): Promise<string> {
-      const dirPath = join(basePath, relativePath)
+      const dirPath = validatePath(basePath, relativePath)
       await fs.mkdir(dirPath, { recursive: true })
       return dirPath
     },
 
     getPath(relativePath: string): string {
-      return join(basePath, relativePath)
+      return validatePath(basePath, relativePath)
     },
 
     async readFile(relativePath: string): Promise<string> {
-      const filePath = join(basePath, relativePath)
+      const filePath = validatePath(basePath, relativePath)
       return await fs.readFile(filePath, 'utf-8')
     },
 
     async exists(relativePath: string): Promise<boolean> {
       try {
-        const filePath = join(basePath, relativePath)
+        const filePath = validatePath(basePath, relativePath)
         await fs.access(filePath)
         return true
       } catch {
@@ -129,12 +134,12 @@ export async function createTempDirectory(
     },
 
     async readdir(relativePath = ''): Promise<string[]> {
-      const dirPath = join(basePath, relativePath)
+      const dirPath = validatePath(basePath, relativePath)
       return await fs.readdir(dirPath)
     },
 
     async copyFileIn(sourcePath: string, destRelativePath: string): Promise<string> {
-      const destPath = join(basePath, destRelativePath)
+      const destPath = validatePath(basePath, destRelativePath)
       const destDir = dirname(destPath)
 
       // Ensure parent directory exists
@@ -158,7 +163,7 @@ async function createDirectoryStructure(
   structure: DirectoryStructure,
 ): Promise<void> {
   for (const [name, content] of Object.entries(structure)) {
-    const fullPath = join(basePath, name)
+    const fullPath = validatePath(basePath, name)
 
     if (typeof content === 'string') {
       // It's a file

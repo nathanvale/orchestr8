@@ -320,7 +320,7 @@ describeConvex('Convex Test Patterns - Comprehensive Suite', () => {
   })
 
   describe('Module Discovery Pattern', () => {
-    it.skip('should support real modules via import.meta.glob (requires CONVEX_GENERATED)', () => {
+    it('should support real modules via import.meta.glob (requires CONVEX_GENERATED)', () => {
       // This would be in actual usage with real _generated directory:
       // const modules = import.meta.glob('./**/*.{js,ts}', { eager: true })
       // const harness = createConvexTestHarness({ schema, modules })

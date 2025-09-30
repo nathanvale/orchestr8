@@ -1,6 +1,6 @@
 /**
- * MySQL Container Integration Tests
- * Tests the MySQL Testcontainer helpers and validates all P1 fixes
+ * Comprehensive MySQL Container Tests
+ * Tests all MySQL container functionality including lifecycle, configuration, and error scenarios
  */
 
 import { describe, it, expect } from 'vitest'
@@ -16,10 +16,21 @@ import {
 import { MySQLCollation } from '../mysql-config.js'
 import { IsolationLevel } from '../types.js'
 
-const ENABLE = process.env.TESTCONTAINERS_MYSQL === '1'
-const describeIf = ENABLE ? describe : describe.skip
+// Check if testcontainers is available
+const hasTestcontainers = await (async () => {
+  try {
+    await import('testcontainers')
+    return true
+  } catch {
+    return false
+  }
+})()
 
-describeIf('MySQL Container Integration', () => {
+// Only run tests if testcontainers is available and enabled
+const shouldRun =
+  hasTestcontainers && (process.env.TESTCONTAINERS_MYSQL === '1' || process.env.NODE_ENV === 'test')
+
+describe.skipIf(!shouldRun)('MySQL Container Integration', () => {
   describe('createMySQLContainer factory', () => {
     it('should create a MySQL container with the documented API', async () => {
       const result = await createMySQLContainer()
@@ -117,14 +128,15 @@ describeIf('MySQL Container Integration', () => {
   })
 
   describe('Binary logging validation', () => {
-    it('should throw error when enableBinLog is true without serverId', () => {
-      expect(() => {
-        const config = createMySQLConfig({
-          enableBinLog: true,
-          // serverId is missing
-        })
-        new MySQLContainer(config)
-      }).toThrow('Binary logging requires a non-zero server-id')
+    it('should throw error when enableBinLog is true without serverId', async () => {
+      const config = createMySQLConfig({
+        enableBinLog: true,
+        // serverId is missing
+      })
+      const container = new MySQLContainer(config)
+      await expect(container.start()).rejects.toThrow(
+        'Binary logging requires a non-zero server-id',
+      )
     })
 
     it('should accept valid binlog configuration', async () => {

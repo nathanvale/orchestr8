@@ -119,13 +119,6 @@ export interface ConvexAuthContext<
     fn: (ctx: TestConvex<SchemaDefinition<Schema, boolean>>) => Promise<T>,
   ) => Promise<T>
 
-  // Mutating API (Legacy - modifies test-scoped state, isolated per test)
-  /** Set current user (mutating, test-scoped only) - prefer withUser() */
-  setUser: (identity: Partial<UserIdentity>) => void
-
-  /** Clear current user (mutating, test-scoped only) - prefer withoutAuth() */
-  clearUser: () => void
-
   /**
    * Get the last user identity set via metadata (does not reflect actual auth context).
    * This only returns metadata from setUser() and does NOT indicate which identity is
@@ -222,14 +215,6 @@ export interface ConvexTestConfig<Schema extends GenericSchema = GenericSchema> 
 
   /** Enable debug logging */
   debug?: boolean
-
-  /**
-   * Allow legacy mutating auth API (setUser/clearUser).
-   * @deprecated These methods only update metadata and don't affect actual auth.
-   * Use the fluent API (withUser/switchUser) instead.
-   * @default false
-   */
-  allowMutatingAuth?: boolean
 
   /** Custom setup functions */
   setup?: {

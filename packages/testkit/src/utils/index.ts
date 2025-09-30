@@ -2,6 +2,21 @@
  * General testing utilities
  */
 
+// Export security validation functions
+export {
+  sanitizeCommand,
+  validateCommand,
+  validatePath,
+  sanitizeSqlIdentifier,
+  escapeShellArg,
+  validateShellExecution,
+  validateBatch,
+  SecurityValidationError,
+  type SecurityValidationType,
+  type SecurityValidationOptions,
+  type ValidationResult,
+} from '../security'
+
 /**
  * Wait for a specified amount of time
  */
@@ -55,7 +70,7 @@ export function createMockFn<TArgs extends unknown[], TReturn>(
   // Check if vitest is available
   if (typeof globalThis !== 'undefined' && 'vi' in globalThis) {
     const vi = (globalThis as { vi?: { fn?: (impl?: unknown) => unknown } }).vi
-    if (vi?.fn) {
+    if (vi?.fn && typeof vi.fn === 'function') {
       return vi.fn(implementation)
     }
   }

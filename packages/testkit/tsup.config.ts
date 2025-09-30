@@ -1,5 +1,67 @@
-import { createTsupConfig } from '../../tooling/build/tsup.base.js'
+import { defineConfig } from 'tsup'
 
-export default createTsupConfig({
-  entry: ['src/**/*.ts', '!src/**/*.test.ts', '!src/**/*.spec.ts'],
-})
+export default defineConfig([
+  // ESM build
+  {
+    entry: ['src/**/*.ts', '!src/**/*.test.ts', '!src/**/*.spec.ts'],
+    format: ['esm'],
+    outDir: 'dist',
+    clean: true,
+    dts: true,
+    target: 'es2022',
+    platform: 'node',
+    treeshake: true,
+    splitting: true,
+    bundle: false,
+    minify: false,
+    sourcemap: true,
+  },
+  // CJS build - using bundle approach for simpler module resolution
+  {
+    entry: {
+      'index': 'src/index.ts',
+      'cli/index': 'src/cli/index.ts',
+      'register': 'src/register.ts',
+      'msw/index': 'src/msw/index.ts',
+      'msw/browser': 'src/msw/browser.ts',
+      'containers/index': 'src/containers/index.ts',
+      'convex/index': 'src/convex/index.ts',
+      'sqlite/index': 'src/sqlite/index.ts',
+      'env/index': 'src/env/index.ts',
+      'utils/index': 'src/utils/index.ts',
+      'fs/index': 'src/fs/index.ts',
+      'config/index': 'src/config/index.ts',
+      'config/vitest.base': 'src/config/vitest.base.ts',
+      'legacy/index': 'src/legacy/index.ts',
+    },
+    format: ['cjs'],
+    outDir: 'dist/cjs',
+    outExtension: () => ({ js: '.cjs' }),
+    clean: false, // Don't clean since ESM build already did
+    dts: false, // Share types from ESM build
+    target: 'es2022',
+    platform: 'node',
+    treeshake: true,
+    splitting: false, // CJS doesn't support splitting
+    bundle: true, // Bundle to avoid extension issues
+    minify: false,
+    sourcemap: true,
+    cjsInterop: true,
+    external: [
+      // External dependencies that should not be bundled
+      'node:*',
+      'vitest',
+      'msw',
+      'testcontainers',
+      '@testcontainers/*',
+      'better-sqlite3',
+      'convex',
+      'convex-test',
+      'mysql2',
+      'pg',
+      'happy-dom',
+      '@vitest/*',
+      '@edge-runtime/vm',
+    ],
+  },
+])
