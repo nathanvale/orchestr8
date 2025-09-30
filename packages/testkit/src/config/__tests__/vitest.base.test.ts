@@ -39,8 +39,8 @@ describe('vitest.base', () => {
 
   describe('createVitestEnvironmentConfig', () => {
     it('should detect local development environment', () => {
-      process.env.CI = undefined
-      process.env.WALLABY_ENV = undefined as unknown as string
+      delete process.env.CI
+      delete process.env.WALLABY_ENV
       process.env.VITEST = 'true'
       process.env.NODE_ENV = 'test'
 
@@ -57,7 +57,7 @@ describe('vitest.base', () => {
 
     it('should detect CI environment', () => {
       process.env.CI = 'true'
-      process.env.WALLABY_ENV = undefined as unknown as string
+      delete process.env.WALLABY_ENV
       process.env.VITEST = 'true'
       process.env.NODE_ENV = 'test'
 
@@ -68,7 +68,7 @@ describe('vitest.base', () => {
     })
 
     it('should detect Wallaby environment', () => {
-      process.env.CI = undefined
+      delete process.env.CI
       process.env.WALLABY_ENV = 'true'
       process.env.VITEST = 'true'
       process.env.NODE_ENV = 'test'
@@ -116,9 +116,9 @@ describe('vitest.base', () => {
 
     it('should handle environment variables edge cases', () => {
       // Test with mixed case and undefined values
-      process.env.CI = undefined
-      process.env.WALLABY_ENV = undefined as unknown as string
-      process.env.VITEST = undefined as unknown as string
+      delete process.env.CI
+      delete process.env.WALLABY_ENV
+      delete process.env.VITEST
       process.env.JEST_WORKER_ID = '1'
       process.env.NODE_ENV = 'development'
 
@@ -287,7 +287,7 @@ describe('vitest.base', () => {
   describe('createVitestBaseConfig', () => {
     it('should create complete base configuration object', () => {
       process.env.CI = 'false'
-      process.env.WALLABY_ENV = undefined as unknown as string
+      delete process.env.WALLABY_ENV
       process.env.VITEST = 'true'
       process.env.NODE_ENV = 'test'
 
@@ -315,7 +315,7 @@ describe('vitest.base', () => {
         },
         coverage: {
           enabled: false,
-          threshold: 68,
+          threshold: 69,
           reporter: ['text', 'html'],
         },
       })
@@ -323,7 +323,7 @@ describe('vitest.base', () => {
 
     it('should create CI-optimized base configuration', () => {
       process.env.CI = 'true'
-      process.env.WALLABY_ENV = undefined as unknown as string
+      delete process.env.WALLABY_ENV
       process.env.VITEST = 'true'
       process.env.NODE_ENV = 'test'
 
@@ -365,7 +365,7 @@ describe('vitest.base', () => {
 
       expect(coverage).toEqual({
         enabled: false,
-        threshold: 68,
+        threshold: 69,
         reporter: ['text', 'html'],
       })
     })
@@ -383,7 +383,7 @@ describe('vitest.base', () => {
 
       expect(coverage).toEqual({
         enabled: true,
-        threshold: 68,
+        threshold: 69,
         reporter: ['json', 'clover'],
       })
     })
@@ -401,7 +401,7 @@ describe('vitest.base', () => {
 
       expect(coverage).toEqual({
         enabled: false,
-        threshold: 68,
+        threshold: 69,
         reporter: ['text', 'html'],
       })
     })
@@ -433,7 +433,7 @@ describe('vitest.base', () => {
 
       const coverage = createVitestCoverage(envConfig)
 
-      expect(coverage.threshold).toBe(68) // Default threshold
+      expect(coverage.threshold).toBe(69) // Default threshold
     })
 
     it('should handle zero and negative thresholds', () => {
@@ -581,7 +581,7 @@ describe('vitest.base', () => {
     it('should configure reporters correctly for each environment', () => {
       // CI environment
       process.env.CI = 'true'
-      process.env.WALLABY_ENV = undefined as unknown as string
+      delete process.env.WALLABY_ENV
       const ciConfig = createBaseVitestConfig()
       expect(ciConfig.test?.reporters).toEqual(['verbose', 'junit'])
       expect(ciConfig.test?.outputFile).toEqual({ junit: './test-results/junit.xml' })
@@ -595,7 +595,7 @@ describe('vitest.base', () => {
 
       // Local environment
       process.env.CI = 'false'
-      process.env.WALLABY_ENV = undefined as unknown as string
+      delete process.env.WALLABY_ENV
       const localConfig = createBaseVitestConfig()
       expect(localConfig.test?.reporters).toEqual(['default'])
       expect(localConfig.test?.outputFile).toBeUndefined()
@@ -1074,7 +1074,7 @@ describe('vitest.base', () => {
     describe('coverage threshold configuration', () => {
       it('should use default coverage threshold', () => {
         const config = createBaseVitestConfig()
-        expect((config.test as any)?.coverage?.thresholds?.statements).toBe(68)
+        expect((config.test as any)?.coverage?.thresholds?.statements).toBe(69)
       })
 
       it('should respect COVERAGE_THRESHOLD env var', () => {
@@ -1086,7 +1086,7 @@ describe('vitest.base', () => {
       it('should fallback to default on invalid threshold', () => {
         process.env.COVERAGE_THRESHOLD = 'invalid'
         const config = createBaseVitestConfig()
-        expect((config.test as any)?.coverage?.thresholds?.statements).toBe(68)
+        expect((config.test as any)?.coverage?.thresholds?.statements).toBe(69)
       })
     })
   })

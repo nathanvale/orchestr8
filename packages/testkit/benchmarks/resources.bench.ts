@@ -7,7 +7,6 @@ import {
   ResourceManager,
   globalResourceManager,
   registerResource,
-  cleanupAllResources,
   getResourceStats,
   detectResourceLeaks,
   ResourceCategory,

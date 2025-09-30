@@ -1,8 +1,11 @@
 #!/usr/bin/env tsx
-import { execSync } from 'child_process'
+import { exec } from 'child_process'
+import { promisify } from 'util'
 import * as fs from 'fs'
 import * as os from 'os'
 import { pathToFileURL } from 'url'
+
+const execAsync = promisify(exec)
 
 type Proc = { pid: number; user: string; command: string }
 
@@ -26,7 +29,7 @@ function appendLog(line: string) {
   }
 }
 
-function findZombieProcesses(): Proc[] {
+async function findZombieProcesses(): Promise<Proc[]> {
   const platform = os.platform()
   let psCommand =
     "ps aux | grep -E 'node.*vitest|vitest|node.*test' | grep -v grep | grep -v cleanup-teardown | grep -v emergency-cleanup"
@@ -36,7 +39,8 @@ function findZombieProcesses(): Proc[] {
   }
 
   try {
-    const output = execSync(psCommand, { encoding: 'utf8' }).trim()
+    const { stdout } = await execAsync(psCommand)
+    const output = stdout.trim()
     if (!output) return []
     const lines = output.split('\n').filter(Boolean)
     const procs: Proc[] = []
@@ -70,19 +74,15 @@ function findZombieProcesses(): Proc[] {
   }
 }
 
-function killProcesses(procs: Proc[]) {
+async function killProcesses(procs: Proc[]) {
   let killed = 0
   let failed = 0
 
   for (const p of procs) {
     try {
       process.kill(p.pid, 'SIGTERM')
-      try {
-        // small pause
-        execSync('sleep 0.25')
-      } catch {
-        // ignore sleep failure
-      }
+      // small pause using setTimeout instead of execSync('sleep')
+      await new Promise((resolve) => setTimeout(resolve, 250))
       // if still exists, force
       try {
         process.kill(p.pid, 0)
@@ -106,13 +106,13 @@ function killProcesses(procs: Proc[]) {
   return { killed, failed }
 }
 
-function main() {
+async function main() {
   ensureLogDir(LOG_FILE)
   const timestamp = new Date().toISOString()
   appendLog(`=== Cleanup run: ${timestamp}`)
   appendLog(`Mode: non-interactive; LOG_FILE=${LOG_FILE}`)
 
-  const procs = findZombieProcesses()
+  const procs = await findZombieProcesses()
   appendLog(`Found ${procs.length} matching processes`)
   for (const p of procs) {
     appendLog(`  PID=${p.pid} USER=${p.user} CMD=${p.command}`)
@@ -124,7 +124,7 @@ function main() {
     return
   }
 
-  const { killed, failed } = killProcesses(procs)
+  const { killed, failed } = await killProcesses(procs)
   appendLog(`Summary: killed=${killed} failed=${failed}`)
   appendLog('')
 }
@@ -132,7 +132,7 @@ function main() {
 // Export a default function for Vitest globalTeardown
 export default async function teardown() {
   try {
-    main()
+    await main()
   } catch (err) {
     // Swallow errors to avoid masking test results; log instead
     try {
@@ -149,7 +149,7 @@ try {
     import.meta && process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href
   if (isCli) {
     console.log('Running cleanup-teardown in CLI mode')
-    teardown()
+    await teardown()
   }
 } catch {
   // ignore

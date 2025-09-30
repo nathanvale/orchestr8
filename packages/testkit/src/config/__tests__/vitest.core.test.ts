@@ -302,7 +302,7 @@ describe('vitest.base - Core Functions', () => {
         },
         coverage: {
           enabled: false,
-          threshold: 68,
+          threshold: 69,
           reporter: ['text', 'html'],
         },
       })
@@ -352,7 +352,7 @@ describe('vitest.base - Core Functions', () => {
 
       expect(coverage).toEqual({
         enabled: false,
-        threshold: 68,
+        threshold: 69,
         reporter: ['text', 'html'],
       })
     })
@@ -370,7 +370,7 @@ describe('vitest.base - Core Functions', () => {
 
       expect(coverage).toEqual({
         enabled: true,
-        threshold: 68,
+        threshold: 69,
         reporter: ['json', 'clover'],
       })
     })
@@ -388,7 +388,7 @@ describe('vitest.base - Core Functions', () => {
 
       expect(coverage).toEqual({
         enabled: false,
-        threshold: 68,
+        threshold: 69,
         reporter: ['text', 'html'],
       })
     })
@@ -420,7 +420,7 @@ describe('vitest.base - Core Functions', () => {
 
       const coverage = createVitestCoverage(envConfig)
 
-      expect(coverage.threshold).toBe(68) // Default threshold
+      expect(coverage.threshold).toBe(69) // Default threshold
     })
 
     it('should handle zero and negative thresholds', () => {

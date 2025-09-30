@@ -2,10 +2,9 @@
  * Tests for memory leak detection utilities
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import {
   LeakDetector,
-  globalLeakDetector,
   detectLeaks,
   startLeakTracking,
   stopLeakTracking,
@@ -123,9 +122,9 @@ describe('LeakDetector', () => {
       detector.startTracking()
 
       // Create some leaks
-      const timer1 = setTimeout(() => {}, 10000)
-      const timer2 = setTimeout(() => {}, 20000)
-      const interval1 = setInterval(() => {}, 5000)
+      const _timer1 = setTimeout(() => {}, 10000)
+      const _timer2 = setTimeout(() => {}, 20000)
+      const _interval1 = setInterval(() => {}, 5000)
 
       const beforeCleanup = detector.getReport().timers.stats
       expect(beforeCleanup.timers).toBeGreaterThanOrEqual(2)
@@ -137,28 +136,29 @@ describe('LeakDetector', () => {
       expect(afterCleanup.timers).toBe(0)
       expect(afterCleanup.intervals).toBe(0)
 
-      // Verify timers are actually cleared (they won't fire)
-      let timer1Fired = false
-      let timer2Fired = false
-      let interval1Fired = false
+      // Stop tracking so new timers work normally
+      detector.stopTracking()
+
+      // Verify that new timers work normally after cleanup and stopTracking
+      let newTimerFired = false
+      let newIntervalFired = false
 
       setTimeout(() => {
-        timer1Fired = true
+        newTimerFired = true
       }, 50)
-      setTimeout(() => {
-        timer2Fired = true
-      }, 50)
-      setInterval(() => {
-        interval1Fired = true
+      const newInterval = setInterval(() => {
+        newIntervalFired = true
       }, 50)
 
       // Wait a bit
       await new Promise((resolve) => setTimeout(resolve, 100))
 
-      // Original timers should not have fired since they were cleared
-      expect(timer1Fired).toBe(false)
-      expect(timer2Fired).toBe(false)
-      expect(interval1Fired).toBe(false)
+      // New timers should fire normally after cleanup and stopTracking
+      expect(newTimerFired).toBe(true)
+      expect(newIntervalFired).toBe(true)
+
+      // Clean up the test interval
+      clearInterval(newInterval)
     })
   })
 

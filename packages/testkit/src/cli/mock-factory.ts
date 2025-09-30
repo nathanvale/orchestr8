@@ -13,6 +13,7 @@ import { createExecLikeError } from './error-factory.js'
 import { findConfig, normalizeParts } from './normalize.js'
 import { MockChildProcess, type ProcessMockConfig } from './process-mock.js'
 import { getRegistry, trackCall, trackProcess } from './registry.js'
+import { ProcessError, ErrorCode } from '../errors/index.js'
 
 /**
  * Create a complete mock of the child_process module
@@ -75,9 +76,12 @@ export function createChildProcessMock(): typeof cp {
       }
       // Optionally throw in ultra-strict mode
       if (process.env.STRICT_PROCESS_MOCKS === 'throw') {
-        throw new Error(
+        throw new ProcessError(
+          ErrorCode.PROCESS_SPAWN_FAILED,
           `Strict mode: Mock for ${kind} "${input}" not found in primary registry. ` +
             `Found in fallback but STRICT_PROCESS_MOCKS=throw prevents fallback usage.`,
+          { command: input },
+          { operation: 'strict_mock_validation' },
         )
       }
     }
@@ -419,8 +423,11 @@ export function createChildProcessMock(): typeof cp {
 
       // Throw error if delay is specified - execFileSync doesn't support delays
       if (config?.delay) {
-        throw new Error(
+        throw new ProcessError(
+          ErrorCode.INVALID_PARAMETER,
           `execFileSync does not support delays. Remove delay from mock config for: ${fullCommand}`,
+          { command: fullCommand },
+          { operation: 'execFileSync_delay_validation' },
         )
       }
 

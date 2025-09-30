@@ -139,16 +139,15 @@ export class ConcurrencyManager {
 /**
  * Create a function with built-in concurrency limiting
  */
-export function limitConcurrency<
-  TArgs extends readonly unknown[],
-  TReturn,
-  TFn extends (...args: TArgs) => Promise<TReturn>,
->(fn: TFn, limit: number): TFn {
+export function limitConcurrency<T extends (...args: unknown[]) => Promise<unknown>>(
+  fn: T,
+  limit: number,
+): T {
   const manager = new ConcurrencyManager({ limit })
 
-  return ((...args: Parameters<TFn>) => {
+  return ((...args: Parameters<T>) => {
     return manager.execute(() => fn(...args))
-  }) as TFn
+  }) as T
 }
 
 /**

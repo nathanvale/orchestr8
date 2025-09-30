@@ -15,6 +15,12 @@ import './bootstrap.js'
 import { setupProcessMocking } from './cli/process-mock.js'
 setupProcessMocking()
 
+// Install global lifecycle hooks for process listener cleanup
+// This prevents accumulation of process listeners across tests
+import { afterEach } from 'vitest'
+import { removeAllProcessListeners } from './utils/process-listeners.js'
+afterEach(() => removeAllProcessListeners())
+
 import type { TestConfig, TestEnvironment } from './types.js'
 
 /**

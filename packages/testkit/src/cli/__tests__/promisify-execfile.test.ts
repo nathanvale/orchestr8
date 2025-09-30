@@ -47,10 +47,10 @@ describe('execFile promisify support', () => {
 
   it('should handle execFile with args via promisify', async () => {
     // Register mock that would match with args
-    mockSpawn('cmd --flag value').stdout('with args').exitCode(0).forExecFileOnly().mock()
+    mockSpawn('echo --flag value').stdout('with args').exitCode(0).forExecFileOnly().mock()
 
     const execFileAsync = promisify(cp.execFile)
-    const result = await execFileAsync('cmd', ['--flag', 'value'])
+    const result = await execFileAsync('echo', ['--flag', 'value'])
     expect(result.stdout).toBe('with args')
   })
 

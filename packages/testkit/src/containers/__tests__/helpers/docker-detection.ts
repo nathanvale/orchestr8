@@ -32,7 +32,6 @@ export function isDockerAvailable(): boolean {
   }
 
   // Check if docker binary exists in common paths (synchronous check)
-  const { existsSync } = require('node:fs')
   const dockerPaths = [
     '/usr/bin/docker',
     '/usr/local/bin/docker',

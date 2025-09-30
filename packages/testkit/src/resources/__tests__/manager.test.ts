@@ -543,7 +543,7 @@ describe('ResourceManager', () => {
       await manager.cleanup({ ids: ['db'] })
 
       const stats = manager.getStats()
-      expect(stats.cleaned).toBe(1)
+      expect(stats.cleaned).toBe(1) // One resource was cleaned up
     })
   })
 

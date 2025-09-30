@@ -64,11 +64,10 @@ describe('sanitizeCommand', () => {
   })
 
   it('should escape newlines and carriage returns', () => {
-    expect(sanitizeCommand('echo\nrm')).toBe('echo\\\nrm')
-    expect(sanitizeCommand('echo\rrm')).toBe('echo\\\rrm')
-    expect(sanitizeCommand('echo\trm')).toBe('echo\\\trm')
+    expect(sanitizeCommand('echo\nrm')).toBe('echo\\nrm')
+    expect(sanitizeCommand('echo\rrm')).toBe('echo\\rrm')
+    expect(sanitizeCommand('echo\trm')).toBe('echo\\trm')
   })
-
   it('should handle empty strings', () => {
     expect(sanitizeCommand('')).toBe('')
   })

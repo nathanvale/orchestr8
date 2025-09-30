@@ -45,6 +45,6 @@ Migration guide: https://github.com/yourorg/testkit/blob/main/packages/testkit/M
 `)
 
   // Re-export the actual implementation
-  const { createMemoryUrl } = require('../sqlite/memory.js')
+  const { createMemoryUrl } = await import('../sqlite/memory.js')
   return createMemoryUrl('raw', { identifier })
 }

@@ -1,0 +1,398 @@
+{
+  "version": "1.0.0",
+  "timestamp": "2025-01-30T00:00:00.000Z",
+  "testkit_version": "1.0.2",
+  "node_version": "v20.0.0",
+  "platform": "darwin",
+  "benchmarks": {
+    "utils": {
+      "delay": {
+        "delay_1ms": {
+          "ops_per_second": 800,
+          "avg_time_ms": 1.25,
+          "p95_ms": 2.0,
+          "memory_mb": 0.1
+        },
+        "delay_10ms": {
+          "ops_per_second": 95,
+          "avg_time_ms": 10.5,
+          "p95_ms": 12.0,
+          "memory_mb": 0.1
+        },
+        "delay_0ms": {
+          "ops_per_second": 50000,
+          "avg_time_ms": 0.02,
+          "p95_ms": 0.05,
+          "memory_mb": 0.05
+        }
+      },
+      "retry": {
+        "immediate_success": {
+          "ops_per_second": 10000,
+          "avg_time_ms": 0.1,
+          "p95_ms": 0.2,
+          "memory_mb": 0.1
+        },
+        "first_failure_then_success": {
+          "ops_per_second": 80,
+          "avg_time_ms": 12.5,
+          "p95_ms": 15.0,
+          "memory_mb": 0.2
+        },
+        "exponential_backoff": {
+          "ops_per_second": 35,
+          "avg_time_ms": 28.5,
+          "p95_ms": 35.0,
+          "memory_mb": 0.3
+        }
+      },
+      "withTimeout": {
+        "fast_resolution": {
+          "ops_per_second": 15000,
+          "avg_time_ms": 0.067,
+          "p95_ms": 0.15,
+          "memory_mb": 0.1
+        },
+        "delayed_resolution": {
+          "ops_per_second": 180,
+          "avg_time_ms": 5.5,
+          "p95_ms": 7.0,
+          "memory_mb": 0.15
+        }
+      },
+      "createMockFn": {
+        "creation": {
+          "ops_per_second": 100000,
+          "avg_time_ms": 0.01,
+          "p95_ms": 0.02,
+          "memory_mb": 0.05
+        },
+        "execution": {
+          "ops_per_second": 200000,
+          "avg_time_ms": 0.005,
+          "p95_ms": 0.01,
+          "memory_mb": 0.02
+        },
+        "tracking": {
+          "ops_per_second": 50000,
+          "avg_time_ms": 0.02,
+          "p95_ms": 0.04,
+          "memory_mb": 0.1
+        }
+      }
+    },
+    "concurrency": {
+      "manager_creation": {
+        "ops_per_second": 50000,
+        "avg_time_ms": 0.02,
+        "p95_ms": 0.05,
+        "memory_mb": 0.01
+      },
+      "execute_immediate": {
+        "ops_per_second": 25000,
+        "avg_time_ms": 0.04,
+        "p95_ms": 0.08,
+        "memory_mb": 0.05
+      },
+      "batch_operations": {
+        "small_batch_10": {
+          "ops_per_second": 2000,
+          "avg_time_ms": 0.5,
+          "p95_ms": 1.0,
+          "memory_mb": 0.5
+        },
+        "large_batch_50": {
+          "ops_per_second": 400,
+          "avg_time_ms": 2.5,
+          "p95_ms": 4.0,
+          "memory_mb": 2.0
+        }
+      },
+      "limited_promise_all": {
+        "small_batch": {
+          "ops_per_second": 3000,
+          "avg_time_ms": 0.33,
+          "p95_ms": 0.6,
+          "memory_mb": 0.3
+        },
+        "medium_batch": {
+          "ops_per_second": 800,
+          "avg_time_ms": 1.25,
+          "p95_ms": 2.0,
+          "memory_mb": 1.0
+        }
+      }
+    },
+    "fs": {
+      "temp_directory_creation": {
+        "basic": {
+          "ops_per_second": 200,
+          "avg_time_ms": 5.0,
+          "p95_ms": 8.0,
+          "memory_mb": 0.5
+        },
+        "custom_prefix": {
+          "ops_per_second": 190,
+          "avg_time_ms": 5.3,
+          "p95_ms": 8.5,
+          "memory_mb": 0.5
+        },
+        "multiple_concurrent_5": {
+          "ops_per_second": 50,
+          "avg_time_ms": 20.0,
+          "p95_ms": 30.0,
+          "memory_mb": 2.5
+        }
+      },
+      "file_operations": {
+        "write_small": {
+          "ops_per_second": 2000,
+          "avg_time_ms": 0.5,
+          "p95_ms": 1.0,
+          "memory_mb": 0.1
+        },
+        "write_medium_1kb": {
+          "ops_per_second": 1500,
+          "avg_time_ms": 0.67,
+          "p95_ms": 1.2,
+          "memory_mb": 0.15
+        },
+        "write_large_100kb": {
+          "ops_per_second": 400,
+          "avg_time_ms": 2.5,
+          "p95_ms": 4.0,
+          "memory_mb": 0.5
+        },
+        "read_after_write": {
+          "ops_per_second": 1000,
+          "avg_time_ms": 1.0,
+          "p95_ms": 1.8,
+          "memory_mb": 0.2
+        }
+      },
+      "directory_operations": {
+        "mkdir_single": {
+          "ops_per_second": 3000,
+          "avg_time_ms": 0.33,
+          "p95_ms": 0.6,
+          "memory_mb": 0.1
+        },
+        "mkdir_nested": {
+          "ops_per_second": 1500,
+          "avg_time_ms": 0.67,
+          "p95_ms": 1.2,
+          "memory_mb": 0.15
+        },
+        "exists_check": {
+          "ops_per_second": 10000,
+          "avg_time_ms": 0.1,
+          "p95_ms": 0.2,
+          "memory_mb": 0.02
+        }
+      },
+      "cleanup": {
+        "single_directory": {
+          "ops_per_second": 300,
+          "avg_time_ms": 3.3,
+          "p95_ms": 5.0,
+          "memory_mb": 0.3
+        },
+        "many_files_50": {
+          "ops_per_second": 50,
+          "avg_time_ms": 20.0,
+          "p95_ms": 30.0,
+          "memory_mb": 1.0
+        },
+        "deep_nesting": {
+          "ops_per_second": 100,
+          "avg_time_ms": 10.0,
+          "p95_ms": 15.0,
+          "memory_mb": 0.8
+        }
+      }
+    },
+    "sqlite": {
+      "memory_url_creation": {
+        "basic_raw": {
+          "ops_per_second": 1000000,
+          "avg_time_ms": 0.001,
+          "p95_ms": 0.002,
+          "memory_mb": 0.001
+        },
+        "with_identifier": {
+          "ops_per_second": 800000,
+          "avg_time_ms": 0.00125,
+          "p95_ms": 0.0025,
+          "memory_mb": 0.001
+        },
+        "auto_generate": {
+          "ops_per_second": 500000,
+          "avg_time_ms": 0.002,
+          "p95_ms": 0.004,
+          "memory_mb": 0.002
+        },
+        "prisma": {
+          "ops_per_second": 600000,
+          "avg_time_ms": 0.00167,
+          "p95_ms": 0.003,
+          "memory_mb": 0.002
+        }
+      },
+      "file_database_creation": {
+        "basic": {
+          "ops_per_second": 80,
+          "avg_time_ms": 12.5,
+          "p95_ms": 18.0,
+          "memory_mb": 1.0
+        },
+        "custom_name": {
+          "ops_per_second": 75,
+          "avg_time_ms": 13.3,
+          "p95_ms": 19.0,
+          "memory_mb": 1.0
+        },
+        "with_pool": {
+          "ops_per_second": 60,
+          "avg_time_ms": 16.7,
+          "p95_ms": 24.0,
+          "memory_mb": 1.5
+        },
+        "concurrent_5": {
+          "ops_per_second": 20,
+          "avg_time_ms": 50.0,
+          "p95_ms": 70.0,
+          "memory_mb": 5.0
+        }
+      },
+      "cleanup": {
+        "single_database": {
+          "ops_per_second": 100,
+          "avg_time_ms": 10.0,
+          "p95_ms": 15.0,
+          "memory_mb": 0.5
+        },
+        "multiple_databases_3": {
+          "ops_per_second": 40,
+          "avg_time_ms": 25.0,
+          "p95_ms": 35.0,
+          "memory_mb": 1.5
+        },
+        "pooled_database": {
+          "ops_per_second": 70,
+          "avg_time_ms": 14.3,
+          "p95_ms": 20.0,
+          "memory_mb": 1.0
+        }
+      }
+    },
+    "resources": {
+      "manager_creation": {
+        "basic": {
+          "ops_per_second": 50000,
+          "avg_time_ms": 0.02,
+          "p95_ms": 0.04,
+          "memory_mb": 0.01
+        },
+        "with_config": {
+          "ops_per_second": 40000,
+          "avg_time_ms": 0.025,
+          "p95_ms": 0.05,
+          "memory_mb": 0.02
+        }
+      },
+      "registration": {
+        "single_resource": {
+          "ops_per_second": 100000,
+          "avg_time_ms": 0.01,
+          "p95_ms": 0.02,
+          "memory_mb": 0.005
+        },
+        "multiple_resources_10": {
+          "ops_per_second": 20000,
+          "avg_time_ms": 0.05,
+          "p95_ms": 0.1,
+          "memory_mb": 0.05
+        },
+        "global_register": {
+          "ops_per_second": 80000,
+          "avg_time_ms": 0.0125,
+          "p95_ms": 0.025,
+          "memory_mb": 0.01
+        }
+      },
+      "cleanup": {
+        "single_resource": {
+          "ops_per_second": 20000,
+          "avg_time_ms": 0.05,
+          "p95_ms": 0.1,
+          "memory_mb": 0.02
+        },
+        "multiple_resources_20": {
+          "ops_per_second": 2000,
+          "avg_time_ms": 0.5,
+          "p95_ms": 1.0,
+          "memory_mb": 0.2
+        },
+        "by_category": {
+          "ops_per_second": 5000,
+          "avg_time_ms": 0.2,
+          "p95_ms": 0.4,
+          "memory_mb": 0.1
+        },
+        "with_dependencies": {
+          "ops_per_second": 8000,
+          "avg_time_ms": 0.125,
+          "p95_ms": 0.25,
+          "memory_mb": 0.05
+        }
+      },
+      "monitoring": {
+        "get_stats": {
+          "ops_per_second": 500000,
+          "avg_time_ms": 0.002,
+          "p95_ms": 0.004,
+          "memory_mb": 0.001
+        },
+        "leak_detection": {
+          "ops_per_second": 50000,
+          "avg_time_ms": 0.02,
+          "p95_ms": 0.04,
+          "memory_mb": 0.01
+        }
+      },
+      "stress_tests": {
+        "many_resources_1000": {
+          "ops_per_second": 500,
+          "avg_time_ms": 2.0,
+          "p95_ms": 3.0,
+          "memory_mb": 5.0
+        },
+        "churn_cycles": {
+          "ops_per_second": 100,
+          "avg_time_ms": 10.0,
+          "p95_ms": 15.0,
+          "memory_mb": 2.0
+        }
+      }
+    }
+  },
+  "thresholds": {
+    "performance_regression": {
+      "ops_per_second_decrease": 0.10,
+      "avg_time_increase": 0.15,
+      "memory_increase": 0.20
+    },
+    "acceptable_variance": {
+      "ops_per_second": 0.05,
+      "avg_time": 0.08,
+      "memory": 0.10
+    }
+  },
+  "notes": [
+    "Baseline metrics established on development machine",
+    "CI environment may show different absolute values",
+    "Focus on relative changes rather than absolute numbers",
+    "Memory measurements include overhead from benchmark framework",
+    "Some variance expected due to system load and garbage collection"
+  ]
+}

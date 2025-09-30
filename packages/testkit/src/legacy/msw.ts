@@ -28,7 +28,7 @@ import { http } from 'msw'
  * import { setupMSW } from '@orchestr8/testkit/msw'
  * setupMSW()
  */
-export async function setupMSWLegacy(handlers: unknown[] = []) {
+export async function setupMSWLegacy(_handlers: unknown[] = []) {
   console.error(`
 ⚠️  [DEPRECATED] setupMSWLegacy() will be removed in v3.0.0
 
@@ -47,7 +47,7 @@ Migration guide: https://github.com/yourorg/testkit/blob/main/packages/testkit/M
 
   // Re-export the actual implementation
   const { setupMSW } = await import('../msw/setup.js')
-  return setupMSW(...args)
+  return setupMSW()
 }
 
 /**

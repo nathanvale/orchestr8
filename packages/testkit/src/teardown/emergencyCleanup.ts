@@ -2,6 +2,7 @@
 import { exec } from 'child_process'
 import { promisify } from 'util'
 import * as os from 'os'
+import { processSpawningManager } from '../utils/concurrency.js'
 
 const execAsync = promisify(exec)
 
@@ -38,21 +39,20 @@ async function main() {
     console.log(`⚠️  Found ${pids.size} zombie processes`)
     console.log('Killing all matching processes...')
 
-    // Kill processes in parallel for better performance
-    const killResults = await Promise.allSettled(
-      Array.from(pids).map(async (pid) => {
-        try {
-          process.kill(pid, 'SIGKILL')
-          console.log(`  Killed PID ${pid}`)
-          return { success: true, pid }
-        } catch (err) {
-          console.error(`  Failed to kill PID ${pid}: ${String(err)}`)
-          return { success: false, pid, error: err }
-        }
-      }),
-    )
+    // Kill processes in parallel with concurrency control for better performance
+    const killFunctions = Array.from(pids).map((pid) => async () => {
+      try {
+        process.kill(pid, 'SIGKILL')
+        console.log(`  Killed PID ${pid}`)
+        return { success: true, pid }
+      } catch (err) {
+        console.error(`  Failed to kill PID ${pid}: ${String(err)}`)
+        return { success: false, pid, error: err }
+      }
+    })
+    const killResults = await processSpawningManager.batch(killFunctions, (fn) => fn())
 
-    const successful = killResults.filter((r) => r.status === 'fulfilled' && r.value.success).length
+    const successful = killResults.filter((r) => r.success).length
     const failed = killResults.length - successful
 
     console.log(`✅ Cleanup complete! Killed: ${successful}, Failed: ${failed}`)

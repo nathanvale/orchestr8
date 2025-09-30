@@ -70,6 +70,8 @@ export interface ProcessListenerStats {
 export class ProcessListenerManager {
   private listeners = new Map<ListenerKey, ListenerRecord>()
   private listenersByEvent = new Map<ProcessEvent, Set<ProcessListener>>()
+  private listenerIds = new WeakMap<ProcessListener, string>()
+  private nextId = 0
   private config: Required<ProcessListenerConfig>
   private isRegisteredAsResource = false
 
@@ -321,13 +323,18 @@ export class ProcessListenerManager {
     description?: string
   }> {
     const now = Date.now()
-    const leaks = []
+    const leaks: Array<{
+      listener: ProcessListener
+      event: ProcessEvent
+      age: number
+      description?: string
+    }> = []
 
-    for (const [listener, record] of this.listeners) {
+    for (const [_listenerKey, record] of this.listeners) {
       const age = now - record.registeredAt
       if (age > maxAge) {
         leaks.push({
-          listener,
+          listener: record.listener,
           event: record.event,
           age,
           description: record.description,
@@ -357,16 +364,24 @@ export class ProcessListenerManager {
    * Generate a hash for a listener function to use as part of composite keys
    */
   private getListenerHash(listener: ProcessListener): string {
-    // Use function toString and create a simple hash
-    // This is not cryptographically secure but sufficient for deduplication
-    const str = listener.toString()
-    let hash = 0
-    for (let i = 0; i < str.length; i++) {
-      const char = str.charCodeAt(i)
-      hash = (hash << 5) - hash + char
-      hash = hash & hash // Convert to 32-bit integer
+    if (!listener) {
+      throw new Error('Listener cannot be null or undefined')
     }
-    return hash.toString(36)
+
+    // Create a unique ID for each function instance
+    // Use WeakMap to store unique IDs or fallback to toString + random
+    if (!this.listenerIds) {
+      this.listenerIds = new WeakMap()
+      this.nextId = 0
+    }
+
+    let id = this.listenerIds.get(listener)
+    if (!id) {
+      id = `fn_${this.nextId++}_${Date.now()}`
+      this.listenerIds.set(listener, id)
+    }
+
+    return id
   }
 
   /**
@@ -407,10 +422,17 @@ export function addProcessOnceListener(
 }
 
 /**
- * Convenience function to remove a process listener globally
+ * Convenience function to remove a process listener from a specific event globally
  */
-export function removeProcessListener(listener: ProcessListener): boolean {
-  return globalProcessListenerManager.removeListener(listener)
+export function removeProcessListener(event: ProcessEvent, listener: ProcessListener): boolean {
+  return globalProcessListenerManager.removeListener(event, listener)
+}
+
+/**
+ * Convenience function to remove a process listener from all events globally
+ */
+export function removeProcessListenerFromAllEvents(listener: ProcessListener): number {
+  return globalProcessListenerManager.removeListenerFromAllEvents(listener)
 }
 
 /**

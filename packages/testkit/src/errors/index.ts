@@ -149,7 +149,7 @@ export abstract class TestkitError extends Error {
   /**
    * Returns a formatted string representation of the error
    */
-  toString(): string {
+  override toString(): string {
     const parts = [
       `${this.name}: ${this.message}`,
       `Category: ${this.category}`,

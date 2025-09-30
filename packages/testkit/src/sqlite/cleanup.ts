@@ -8,7 +8,7 @@
 import { afterEach, afterAll } from 'vitest'
 import type { FileDatabase } from './file.js'
 import { registerResource, ResourceCategory } from '../resources/index.js'
-import { resourceCleanupManager, databaseOperationsManager } from '../utils/concurrency.js'
+import { resourceCleanupManager } from '../utils/concurrency.js'
 import { createExitHandler } from '../utils/process-listeners.js'
 
 /**
@@ -75,6 +75,7 @@ class SqliteCleanupRegistry {
   private databases = new Set<DatabaseLike>()
   private isGlobalCleanupRegistered = false
   private isProcessListenersRegistered = false
+  private removeProcessListeners?: () => void
 
   /**
    * Register a generic cleanup function
@@ -176,8 +177,8 @@ class SqliteCleanupRegistry {
       }
     })
 
-    const allCleanupFunctions = [...databaseCleanups, ...functionCleanups]
-    await resourceCleanupManager.batch(allCleanupFunctions, (fn) => fn())
+    const allCleanupPromises = [...databaseCleanups, ...functionCleanups]
+    await Promise.allSettled(allCleanupPromises)
 
     this.cleanupFunctions.clear()
     this.databases.clear()
@@ -249,11 +250,11 @@ class SqliteCleanupRegistry {
       })
     }
 
-    // Register emergency cleanup for various exit scenarios
-    process.on('exit', emergencyCleanup)
-    process.on('SIGINT', emergencyCleanup)
-    process.on('SIGTERM', emergencyCleanup)
-    process.on('uncaughtException', emergencyCleanup)
+    // Use ProcessListenerManager to prevent memory leaks
+    this.removeProcessListeners = createExitHandler(emergencyCleanup, {
+      events: ['exit', 'SIGINT', 'SIGTERM', 'uncaughtException'],
+      description: 'SQLite emergency cleanup',
+    })
   }
 
   /**
@@ -303,6 +304,18 @@ class SqliteCleanupRegistry {
    */
   hasDatabase(db: DatabaseLike): boolean {
     return this.databases.has(db)
+  }
+
+  /**
+   * Cleanup process listeners and reset the registry
+   */
+  destroy(): void {
+    if (this.removeProcessListeners) {
+      this.removeProcessListeners()
+      this.removeProcessListeners = undefined
+    }
+    this.isProcessListenersRegistered = false
+    this.isGlobalCleanupRegistered = false
   }
 }
 
@@ -566,8 +579,8 @@ export async function withSqliteCleanupScope<T>(fn: () => T | Promise<T>): Promi
 
   // Clean up scoped resources directly (they're already unregistered from global registry)
   const allScopedCleanups = [
-    ...scopedDatabases.map((db) => () => db.cleanup()),
-    ...scopedCleanups.map((fn) => () => fn()),
+    ...scopedDatabases.map((db) => () => Promise.resolve(db.cleanup())),
+    ...scopedCleanups.map((fn) => () => Promise.resolve(fn())),
   ]
   await resourceCleanupManager.batch(allScopedCleanups, (fn) => fn())
 

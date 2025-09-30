@@ -39,7 +39,7 @@ export class ResourceManager {
   private eventListeners = new Map<ResourceEvent, Set<(data: ResourceEventData) => void>>()
   private removeProcessListeners?: () => void
   private cleanedCount = 0
-
+  private totalRegisteredCount = 0
   constructor(config: ResourceManagerConfig = {}) {
     this.config = {
       defaultTimeout: config.defaultTimeout ?? 10000,
@@ -120,13 +120,13 @@ export class ResourceManager {
     }
 
     this.resources.set(id, resource)
+    this.totalRegisteredCount++
     this.emit(ResourceEvent.RESOURCE_REGISTERED, {
       resourceId: id,
       category,
       timestamp: Date.now(),
       data: { description: options.description, tags: options.tags },
     })
-
     this.log(`Registered resource: ${id} (${category})`)
   }
 
@@ -245,6 +245,7 @@ export class ResourceManager {
 
     return {
       total: resources.length,
+      totalRegistered: this.totalRegisteredCount,
       byCategory,
       byPriority,
       cleaned: this.cleanedCount,
@@ -431,6 +432,8 @@ export class ResourceManager {
    * Clear all resources (for testing)
    */
   clear(): void {
+    this.cleanedCount = 0
+    this.totalRegisteredCount = 0
     this.resources.clear()
     this.log('All resources cleared')
   }
@@ -451,66 +454,135 @@ export class ResourceManager {
       summary[category] = { success: 0, failed: 0, duration: 0 }
     }
 
-    // Process resources in priority order
-    for (const resource of sortedResources) {
-      if (resource.cleaned) {
-        continue // Skip already cleaned resources
-      }
+    // Process resources in priority order or in parallel
+    if (options.parallel) {
+      // Parallel cleanup - all resources at once
+      const cleanupPromises = sortedResources.map(async (resource) => {
+        if (resource.cleaned) {
+          return { resource, skipped: true, success: false }
+        }
 
-      // Check dependencies
-      if (!options.force && resource.dependencies) {
-        const uncleanedDeps = resource.dependencies.filter((depId) => {
-          const dep = this.resources.get(depId)
-          return dep && !dep.cleaned
-        })
+        // Check dependencies
+        if (!options.force && resource.dependencies) {
+          const uncleanedDeps = resource.dependencies.filter((depId) => {
+            const dep = this.resources.get(depId)
+            return dep && !dep.cleaned
+          })
 
-        if (uncleanedDeps.length > 0) {
-          skipped.push(resource.id)
-          continue
+          if (uncleanedDeps.length > 0) {
+            return { resource, skipped: true, success: false }
+          }
+        }
+
+        const categoryStart = Date.now()
+        try {
+          await this.cleanupResource(resource, options)
+          resource.cleaned = true
+          this.cleanedCount++
+          resourcesCleaned++
+          summary[resource.category].success++
+          summary[resource.category].duration += Date.now() - categoryStart
+
+          // Remove cleaned resource from registry to prevent memory leaks
+          this.resources.delete(resource.id)
+
+          this.emit(ResourceEvent.RESOURCE_CLEANED, {
+            resourceId: resource.id,
+            category: resource.category,
+            timestamp: Date.now(),
+          })
+
+          return { resource, skipped: false, success: true }
+        } catch (error) {
+          const cleanupError: CleanupError = {
+            resourceId: resource.id,
+            category: resource.category,
+            error: error as Error,
+            timeout: (error as Error).message.includes("timeout"),
+            timestamp: Date.now(),
+          }
+          errors.push(cleanupError)
+          summary[resource.category].failed++
+          summary[resource.category].duration += Date.now() - categoryStart
+
+          this.emit(ResourceEvent.RESOURCE_CLEANUP_FAILED, {
+            resourceId: resource.id,
+            category: resource.category,
+            timestamp: Date.now(),
+            data: { error },
+          })
+
+          return { resource, skipped: false, success: false }
+        }
+      })
+
+      const results = await Promise.allSettled(cleanupPromises)
+      for (const result of results) {
+        if (result.status === "fulfilled" && result.value.skipped) {
+          skipped.push(result.value.resource.id)
         }
       }
-
-      const categoryStart = Date.now()
-      try {
-        await this.cleanupResource(resource, options)
-        resource.cleaned = true
-        this.cleanedCount++
-        resourcesCleaned++
-        summary[resource.category].success++
-
-        // Remove cleaned resource from registry to prevent memory leaks
-        this.resources.delete(resource.id)
-
-        this.emit(ResourceEvent.RESOURCE_CLEANED, {
-          resourceId: resource.id,
-          category: resource.category,
-          timestamp: Date.now(),
-        })
-      } catch (error) {
-        const cleanupError: CleanupError = {
-          resourceId: resource.id,
-          category: resource.category,
-          error: error as Error,
-          timeout: (error as Error).message.includes('timeout'),
-          timestamp: Date.now(),
+    } else {
+      // Sequential cleanup - process resources in priority order
+      for (const resource of sortedResources) {
+        if (resource.cleaned) {
+          continue // Skip already cleaned resources
         }
-        errors.push(cleanupError)
-        summary[resource.category].failed++
 
-        this.emit(ResourceEvent.RESOURCE_CLEANUP_FAILED, {
-          resourceId: resource.id,
-          category: resource.category,
-          timestamp: Date.now(),
-          data: { error },
-        })
+        // Check dependencies
+        if (!options.force && resource.dependencies) {
+          const uncleanedDeps = resource.dependencies.filter((depId) => {
+            const dep = this.resources.get(depId)
+            return dep && !dep.cleaned
+          })
 
-        if (!options.continueOnError) {
-          break
+          if (uncleanedDeps.length > 0) {
+            skipped.push(resource.id)
+            continue
+          }
         }
+
+        const categoryStart = Date.now()
+        try {
+          await this.cleanupResource(resource, options)
+          resource.cleaned = true
+          this.cleanedCount++
+          resourcesCleaned++
+          summary[resource.category].success++
+
+          // Remove cleaned resource from registry to prevent memory leaks
+          this.resources.delete(resource.id)
+
+          this.emit(ResourceEvent.RESOURCE_CLEANED, {
+            resourceId: resource.id,
+            category: resource.category,
+            timestamp: Date.now(),
+          })
+        } catch (error) {
+          const cleanupError: CleanupError = {
+            resourceId: resource.id,
+            category: resource.category,
+            error: error as Error,
+            timeout: (error as Error).message.includes("timeout"),
+            timestamp: Date.now(),
+          }
+          errors.push(cleanupError)
+          summary[resource.category].failed++
+
+          this.emit(ResourceEvent.RESOURCE_CLEANUP_FAILED, {
+            resourceId: resource.id,
+            category: resource.category,
+            timestamp: Date.now(),
+            data: { error },
+          })
+
+          if (!options.continueOnError) {
+            break
+          }
+        }
+        summary[resource.category].duration += Date.now() - categoryStart
       }
-      summary[resource.category].duration += Date.now() - categoryStart
     }
-
     const duration = Date.now() - startTime
     const success = errors.length === 0 || (options.continueOnError ?? false)
 
@@ -519,6 +591,7 @@ export class ResourceManager {
       resourcesProcessed: sortedResources.length,
       resourcesCleaned,
       errors,
+      errorCount: errors.length,
       duration,
       summary,
       skipped,
@@ -550,6 +623,10 @@ export class ResourceManager {
       resources = resources.filter((r) => !options.exclude!.includes(r.id))
     }
 
+    // Exclude specific categories
+    if (options.excludeCategories) {
+      resources = resources.filter((r) => !options.excludeCategories!.includes(r.category))
+    }
     return resources
   }
 
@@ -603,9 +680,7 @@ export class ResourceManager {
         try {
           listener(data)
         } catch (error) {
-          if (this.config.enableLogging) {
-            console.error(`Error in event listener for ${event}:`, error)
-          }
+          console.error("Error in resource event listener", error)
         }
       }
     }
@@ -661,4 +736,11 @@ export function getResourceStats(): ResourceStats {
  */
 export function detectResourceLeaks(): ResourceLeak[] {
   return globalResourceManager.detectLeaks()
+}
+
+/**
+ * Convenience function to clear all resources globally (for testing)
+ */
+export function clearAllResources(): void {
+  globalResourceManager.clear()
 }

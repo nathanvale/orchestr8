@@ -15,6 +15,7 @@ export {
   cleanupAllResources,
   getResourceStats,
   detectResourceLeaks,
+  clearAllResources,
 } from './manager.js'
 
 // Export all types and enums

@@ -5,13 +5,12 @@
  * to avoid requiring the better-sqlite3 dependency unless explicitly testing.
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import {
   betterSqlite3Adapter,
   betterSqlite3Utils,
   TransactionRollbackError,
   type BetterSqlite3DbLike,
-  type BetterSqlite3Transaction,
 } from '../better-sqlite3.js'
 
 // Skip all tests if better-sqlite3 testing is not enabled
@@ -37,12 +36,12 @@ class MockBetterSqlite3Database implements BetterSqlite3DbLike {
   prepare(sql: string) {
     this.executedSQL.push(sql)
     return {
-      run: (...args: unknown[]) => ({
+      run: (..._args: unknown[]) => ({
         changes: 1,
         lastInsertRowid: 1,
       }),
-      all: (...args: unknown[]) => [],
-      get: (...args: unknown[]) => null,
+      all: (..._args: unknown[]) => [],
+      get: (..._args: unknown[]) => null,
     }
   }
 
@@ -324,7 +323,7 @@ describe.skipIf(!isEnabled)('better-sqlite3 adapter', () => {
 
   describe('betterSqlite3Utils.withTransaction', () => {
     it('should execute work within transaction and commit', async () => {
-      const result = await betterSqlite3Utils.withTransaction(mockDb, (tx) => {
+      const result = await betterSqlite3Utils.withTransaction(mockDb, (_tx) => {
         mockDb.exec('INSERT INTO test VALUES (1)')
         return 'success'
       })
@@ -337,7 +336,7 @@ describe.skipIf(!isEnabled)('better-sqlite3 adapter', () => {
 
     it('should rollback transaction on error', async () => {
       await expect(
-        betterSqlite3Utils.withTransaction(mockDb, (tx) => {
+        betterSqlite3Utils.withTransaction(mockDb, (_tx) => {
           mockDb.exec('INSERT INTO test VALUES (1)')
           throw new Error('Work failed')
         }),
@@ -349,7 +348,7 @@ describe.skipIf(!isEnabled)('better-sqlite3 adapter', () => {
     })
 
     it('should handle async work', async () => {
-      const result = await betterSqlite3Utils.withTransaction(mockDb, async (tx) => {
+      const result = await betterSqlite3Utils.withTransaction(mockDb, async (_tx) => {
         await new Promise((resolve) => setTimeout(resolve, 10))
         mockDb.exec('INSERT INTO test VALUES (1)')
         return 'async success'

@@ -1,9 +1,9 @@
 import { exec } from 'child_process'
 import { promisify } from 'util'
 import * as fs from 'fs/promises'
-import * as fsSync from 'fs'
 import * as os from 'os'
 import * as path from 'path'
+import { processSpawningManager } from '../utils/concurrency.js'
 
 const execAsync = promisify(exec)
 
@@ -145,39 +145,38 @@ async function killProcesses(
   let killed = 0
   let failed = 0
 
-  // Process kills in parallel with Promise.allSettled for better performance
-  const killResults = await Promise.allSettled(
-    procs.map(async (p) => {
+  // Process kills in parallel with concurrency control for better performance
+  const killFunctions = procs.map((p) => async () => {
+    try {
+      process.kill(p.pid, 'SIGTERM')
+
+      // Use setTimeout instead of execSync('sleep 0.25') for non-blocking delay
+      await new Promise((resolve) => setTimeout(resolve, 250))
+
       try {
-        process.kill(p.pid, 'SIGTERM')
-
-        // Use setTimeout instead of execSync('sleep 0.25') for non-blocking delay
-        await new Promise((resolve) => setTimeout(resolve, 250))
-
-        try {
-          process.kill(p.pid, 0) // Check if process still exists
-          process.kill(p.pid, 'SIGKILL')
-          await appendLog(`  Killed PID ${p.pid} (forced) - ${p.command}`, logFile)
-        } catch {
-          await appendLog(`  Killed PID ${p.pid} - ${p.command}`, logFile)
-        }
-        return { success: true, pid: p.pid }
-      } catch (err) {
-        const e = err as NodeJS.ErrnoException
-        if (e && e.code === 'ESRCH') {
-          await appendLog(`  PID ${p.pid} already dead`, logFile)
-          return { success: true, pid: p.pid }
-        } else {
-          await appendLog(`  Failed to kill PID ${p.pid}: ${String(err)}`, logFile)
-          return { success: false, pid: p.pid, error: err }
-        }
+        process.kill(p.pid, 0) // Check if process still exists
+        process.kill(p.pid, 'SIGKILL')
+        await appendLog(`  Killed PID ${p.pid} (forced) - ${p.command}`, logFile)
+      } catch {
+        await appendLog(`  Killed PID ${p.pid} - ${p.command}`, logFile)
       }
-    }),
-  )
+      return { success: true, pid: p.pid }
+    } catch (err) {
+      const e = err as NodeJS.ErrnoException
+      if (e && e.code === 'ESRCH') {
+        await appendLog(`  PID ${p.pid} already dead`, logFile)
+        return { success: true, pid: p.pid }
+      } else {
+        await appendLog(`  Failed to kill PID ${p.pid}: ${String(err)}`, logFile)
+        return { success: false, pid: p.pid, error: err }
+      }
+    }
+  })
+  const killResults = await processSpawningManager.batch(killFunctions, (fn) => fn())
 
   // Count results
   for (const result of killResults) {
-    if (result.status === 'fulfilled' && result.value.success) {
+    if (result.success) {
       killed++
     } else {
       failed++

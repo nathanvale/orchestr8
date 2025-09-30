@@ -2,7 +2,7 @@
  * Simple integration test to verify vitest resource management works
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, afterEach } from 'vitest'
 import {
   registerResource,
   cleanupAllResources,
@@ -17,6 +17,9 @@ describe('simple vitest-resources integration', () => {
   })
 
   it('should register and cleanup resources', async () => {
+    // Clean up any existing resources first
+    await cleanupAllResources()
+
     // Initially no resources
     const initialStats = getResourceStats()
     expect(initialStats.total).toBe(0)
@@ -42,8 +45,8 @@ describe('simple vitest-resources integration', () => {
     // Cleanup should call our cleanup function
     const result = await cleanupAllResources()
     expect(cleanupCalled).toBe(true)
-    expect(result.successCount).toBe(1)
-    expect(result.errorCount).toBe(0)
+    expect(result.resourcesCleaned).toBe(1)
+    expect(result.errors.length).toBe(0)
 
     // Should have no resources after cleanup
     const finalStats = getResourceStats()
@@ -51,10 +54,13 @@ describe('simple vitest-resources integration', () => {
   })
 
   it('should handle fs integration', async () => {
+    // Clean up any existing resources first
+    await cleanupAllResources()
+
     const { useTempDirectoryWithResourceManager } = await import('../../fs/cleanup.js')
 
     // Create temp directory with resource manager
-    const tempDir = await useTempDirectoryWithResourceManager({ prefix: 'integration-test-' })
+    const _tempDir = await useTempDirectoryWithResourceManager({ prefix: 'integration-test-' })
 
     // Should be registered
     const stats = getResourceStats()
@@ -69,6 +75,9 @@ describe('simple vitest-resources integration', () => {
   })
 
   it('should handle sqlite integration', async () => {
+    // Clean up any existing resources first
+    await cleanupAllResources()
+
     const { createDatabaseWithResourceManager } = await import('../../sqlite/cleanup.js')
 
     let cleanupCalled = false

@@ -25,7 +25,7 @@ export function createMockFetch(config: {
     responseData: config.responseData || { data: 'success' },
   }
 
-  const mockFetch = async (url: string): Promise<MockResponse> => {
+  const mockFetch = async (_url: string): Promise<MockResponse> => {
     state.callCount++
 
     if (state.callCount <= state.shouldFailUntil) {

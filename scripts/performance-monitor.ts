@@ -7,9 +7,12 @@
  * Targets: 80%+ cache hit rate, <3s formatting time, 65-80% CI/CD reduction
  */
 
-import { execSync } from 'child_process'
+import { exec } from 'child_process'
+import { promisify } from 'util'
 import { writeFileSync, readFileSync, existsSync } from 'fs'
 import { join } from 'path'
+
+const execAsync = promisify(exec)
 
 interface PerformanceMetrics {
   timestamp: string
@@ -45,13 +48,12 @@ class PerformanceMonitor {
   /**
    * Collect current performance metrics
    */
-  collectMetrics(): PerformanceMetrics {
+  async collectMetrics(): Promise<PerformanceMetrics> {
     const startTime = Date.now()
 
     try {
       // Run turbo format:check to collect cache metrics
-      const output = execSync('turbo format:check --dry-run', {
-        encoding: 'utf8',
+      const { stdout: output } = await execAsync('turbo format:check --dry-run', {
         cwd: process.cwd(),
       })
 
@@ -70,7 +72,7 @@ class PerformanceMonitor {
         totalTasks,
         cacheHits,
         cacheMisses,
-        spaceSaved: this.calculateSpaceSaved(),
+        spaceSaved: await this.calculateSpaceSaved(),
         remoteCacheUptime: this.checkRemoteCacheUptime(),
       }
     } catch (error) {
@@ -137,8 +139,8 @@ class PerformanceMonitor {
   /**
    * Display performance dashboard
    */
-  displayDashboard(): void {
-    const currentMetrics = this.collectMetrics()
+  async displayDashboard(): Promise<void> {
+    const currentMetrics = await this.collectMetrics()
     const report = this.generateReport()
 
     console.log('\n🎯 Turborepo Prettier Cache Performance Dashboard')
@@ -191,12 +193,10 @@ class PerformanceMonitor {
     return matches && matches[1] ? parseInt(matches[1], 10) : 0
   }
 
-  private calculateSpaceSaved(): string {
+  private async calculateSpaceSaved(): Promise<string> {
     try {
       const cacheDir = join(process.cwd(), '.turbo', 'cache')
-      const output = execSync(`du -sh "${cacheDir}" 2>/dev/null || echo "0B"`, {
-        encoding: 'utf8',
-      })
+      const { stdout: output } = await execAsync(`du -sh "${cacheDir}" 2>/dev/null || echo "0B"`)
       const parts = output.split('\t')
       return parts[0] ? parts[0].trim() : '0B'
     } catch {
@@ -305,13 +305,13 @@ class PerformanceMonitor {
 }
 
 // CLI execution
-if (require.main === module) {
+async function main() {
   const monitor = new PerformanceMonitor()
 
   const command = process.argv[2]
   switch (command) {
     case 'collect': {
-      const metrics = monitor.collectMetrics()
+      const metrics = await monitor.collectMetrics()
       monitor.storeMetrics(metrics)
       console.log('Metrics collected and stored')
       break
@@ -326,7 +326,11 @@ if (require.main === module) {
 
     case 'dashboard':
     default:
-      monitor.displayDashboard()
+      await monitor.displayDashboard()
       break
   }
+}
+
+if (require.main === module) {
+  main().catch(console.error)
 }

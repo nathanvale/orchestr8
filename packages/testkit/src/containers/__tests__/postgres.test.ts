@@ -5,7 +5,7 @@
 
 import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach } from 'vitest'
 import * as path from 'node:path'
-import { writeFile, mkdir, rm, readdir } from 'node:fs/promises'
+import { writeFile, mkdir, rm } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
 import type { Client } from 'pg'
 import {
@@ -13,27 +13,16 @@ import {
   createPostgresConfig,
   createPostgresContext,
   setupPostgresTest,
-  type PostgresDatabaseConfig,
 } from '../postgres.js'
-import { IsolationLevel, type MigrationConfig, type SeedConfig } from '../types.js'
+import { shouldRunContainerTests, getSkipReason } from './helpers/docker-detection.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
-// Check if testcontainers is available
-const hasTestcontainers = await (async () => {
-  try {
-    await import('testcontainers')
-    return true
-  } catch {
-    return false
-  }
-})()
+// Check if container tests should run
+const shouldRun = shouldRunContainerTests('TESTCONTAINERS_PG')
+const skipReason = shouldRun ? '' : getSkipReason('TESTCONTAINERS_PG')
 
-// Only run tests if testcontainers is available and enabled
-const shouldRun =
-  hasTestcontainers && (process.env.TESTCONTAINERS_PG === '1' || process.env.NODE_ENV === 'test')
-
-describe.skipIf(!shouldRun)('PostgresContainer Comprehensive Tests', () => {
+describe.skipIf(!shouldRun)('PostgresContainer Comprehensive Tests' + (skipReason ? ' (skipped: ' + skipReason + ')' : ''), () => {
   const cleanups: Array<() => Promise<void>> = []
   let testDir: string
 
@@ -165,7 +154,7 @@ describe.skipIf(!shouldRun)('PostgresContainer Comprehensive Tests', () => {
       const container = new PostgresContainer(createPostgresConfig())
 
       await container.start()
-      const originalPort = container.getPort()
+      const _originalPort = container.getPort()
 
       // Stop and restart
       await container.stop()
@@ -364,13 +353,13 @@ describe.skipIf(!shouldRun)('PostgresContainer Comprehensive Tests', () => {
   })
 
   describe('Error Handling', () => {
-    it('should throw error when accessing methods before start', () => {
+    it('should throw error when accessing methods before start', async () => {
       const container = new PostgresContainer(createPostgresConfig())
 
       expect(() => container.getConnectionString()).toThrow('Container not started')
       expect(() => container.getConnectionConfig()).toThrow('Container not started')
       expect(() => container.getPort()).toThrow('Container not started')
-      expect(() => container.waitForReady()).rejects.toThrow('Container not started')
+      await expect(container.waitForReady()).rejects.toThrow('Container not started')
     })
 
     it('should handle invalid image gracefully', async () => {
@@ -417,7 +406,7 @@ describe.skipIf(!shouldRun)('PostgresContainer Comprehensive Tests', () => {
 
   describe('Health Checks', () => {
     it('should perform default health check', async () => {
-      const { db, cleanup } = await setupPostgresTest()
+      const { cleanup } = await setupPostgresTest()
       cleanups.push(cleanup)
 
       // Create a container instance to test health check
@@ -583,7 +572,7 @@ describe.skipIf(!shouldRun)('PostgresContainer Comprehensive Tests', () => {
 
       // All should be functional
       const results = await Promise.all(
-        containers.map(({ db, database }) =>
+        containers.map(({ db }) =>
           db.query('SELECT current_database()').then((r) => r.rows[0].current_database),
         ),
       )

@@ -282,6 +282,9 @@ export class SQLiteConnectionPool {
   async drain(): Promise<void> {
     this.isShuttingDown = true
 
+    // Clear maintenance intervals to prevent memory leaks
+    this.clearMaintenanceIntervals()
+
     // Reject all waiting requests
     const waitingRequests = [...this.waitingQueue]
     this.waitingQueue.length = 0
@@ -517,9 +520,9 @@ export class SQLiteConnectionPool {
    */
   private startMaintenanceTasks(): void {
     // Clean up idle connections periodically
-    const cleanupInterval = setInterval(() => {
+    this.cleanupInterval = setInterval(() => {
       if (this.isShuttingDown) {
-        clearInterval(cleanupInterval)
+        this.clearMaintenanceIntervals()
         return
       }
 
@@ -527,14 +530,28 @@ export class SQLiteConnectionPool {
     }, this.options.idleTimeout / 2) // Check twice per idle timeout period
 
     // Ensure we have minimum connections
-    const warmupInterval = setInterval(() => {
+    this.warmupInterval = setInterval(() => {
       if (this.isShuttingDown) {
-        clearInterval(warmupInterval)
+        this.clearMaintenanceIntervals()
         return
       }
 
       this.maintainMinimumConnections()
     }, 10000) // Check every 10 seconds
+  }
+
+  /**
+   * Clear maintenance intervals to prevent memory leaks
+   */
+  private clearMaintenanceIntervals(): void {
+    if (this.cleanupInterval) {
+      clearInterval(this.cleanupInterval)
+      this.cleanupInterval = undefined
+    }
+    if (this.warmupInterval) {
+      clearInterval(this.warmupInterval)
+      this.warmupInterval = undefined
+    }
   }
 
   /**

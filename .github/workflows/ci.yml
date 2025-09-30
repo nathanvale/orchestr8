@@ -239,6 +239,69 @@ jobs:
           # This will automatically skip merge commits based on commitlint.config.js
           pnpm commitlint --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }} --verbose
 
+  benchmarks:
+    name: ⚡ Performance Benchmarks
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    if: github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref_name == 'main')
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Needed for comparison with baseline
+      - name: Setup PNPM with Caching
+        uses: ./.github/actions/setup-pnpm
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          pnpm-version: ${{ env.PNPM_VERSION }}
+      - name: Run Performance Benchmarks
+        run: |
+          mkdir -p benchmark-results
+          cd packages/testkit
+          # Run benchmarks and generate JSON output
+          pnpm bench:ci
+        continue-on-error: true  # Don't fail CI if benchmarks fail
+      - name: Compare Against Baseline
+        id: benchmark-comparison
+        run: |
+          cd packages/testkit
+          if [ -f bench-results.json ]; then
+            if [ -f benchmarks/baseline.json ]; then
+              echo "Running benchmark comparison..."
+              node scripts/compare-benchmarks.js > benchmark-comparison.txt 2>&1 || echo "Comparison completed with regressions"
+              echo "comparison_ran=true" >> $GITHUB_OUTPUT
+            else
+              echo "No baseline found - this is likely the first run" > benchmark-comparison.txt
+              echo "comparison_ran=false" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "No benchmark results generated" > benchmark-comparison.txt
+            echo "comparison_ran=false" >> $GITHUB_OUTPUT
+          fi
+        continue-on-error: true
+      - name: Upload Benchmark Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results-${{ github.run_number }}
+          path: |
+            packages/testkit/bench-results.json
+            packages/testkit/benchmark-comparison.txt
+          retention-days: 30
+      - name: Add Benchmark Results to Summary
+        if: always()
+        run: |
+          cd packages/testkit
+          echo "## ⚡ Performance Benchmark Results" >> $GITHUB_STEP_SUMMARY
+          if [ -f benchmark-comparison.txt ]; then
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            cat benchmark-comparison.txt >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          else
+            echo "No benchmark comparison available" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "💡 **Note**: Benchmark failures don't block CI. Check artifacts for detailed results." >> $GITHUB_STEP_SUMMARY
+
   coverage:
     name: 📊 Code Coverage
     runs-on: ubuntu-latest
@@ -285,7 +348,7 @@ jobs:
   ci-status:
     name: 📊 CI Status
     runs-on: ubuntu-latest
-    needs: [quick-tests, focused-tests, unit-tests, integration-tests, lint-quality, typecheck, build, commit-lint]
+    needs: [quick-tests, focused-tests, unit-tests, integration-tests, lint-quality, typecheck, build, commit-lint, benchmarks]
     if: always()
     steps:
       - name: Download all JUnit artifacts
@@ -354,6 +417,7 @@ jobs:
           | 🔡 Type Check | $([[ "${{ needs.typecheck.result }}" == "success" ]] && echo "✅" || echo "❌") | ${{ needs.typecheck.result }} |
           | 🏠 Build | $([[ "${{ needs.build.result }}" == "success" ]] && echo "✅" || echo "❌") | ${{ needs.build.result }} |
           | ⚧ Commit Lint | $([[ "${{ needs.commit-lint.result }}" == "success" ]] && echo "✅" || [[ "${{ needs.commit-lint.result }}" == "skipped" ]] && echo "⏭️" || echo "❌") | ${{ needs.commit-lint.result }} |
+          | ⚡ Benchmarks | $([[ "${{ needs.benchmarks.result }}" == "success" ]] && echo "✅" || [[ "${{ needs.benchmarks.result }}" == "skipped" ]] && echo "⏭️" || echo "⚠️") | ${{ needs.benchmarks.result }} |
 
           ## 🧭 Pipeline Flow
           Setup → Quick/Focused/Lint+Format/TypeCheck/Full Unit (parallel) → Build → Integration → Status

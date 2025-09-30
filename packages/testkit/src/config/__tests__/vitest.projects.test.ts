@@ -230,7 +230,7 @@ describe('vitest.base - Project Configuration', () => {
   describe('coverage threshold configuration', () => {
     it('should use default coverage threshold', () => {
       const config = createBaseVitestConfig()
-      expect((config.test as any)?.coverage?.thresholds?.statements).toBe(68)
+      expect((config.test as any)?.coverage?.thresholds?.statements).toBe(69)
     })
 
     it('should respect COVERAGE_THRESHOLD env var', () => {
@@ -242,7 +242,7 @@ describe('vitest.base - Project Configuration', () => {
     it('should fallback to default on invalid threshold', () => {
       process.env.COVERAGE_THRESHOLD = 'invalid'
       const config = createBaseVitestConfig()
-      expect((config.test as any)?.coverage?.thresholds?.statements).toBe(68)
+      expect((config.test as any)?.coverage?.thresholds?.statements).toBe(69)
     })
   })
 })

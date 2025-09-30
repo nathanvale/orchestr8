@@ -110,13 +110,10 @@ class TimerTracker {
  * Event listener tracking for leak detection (simplified for Node.js environment)
  */
 class EventListenerTracker {
-  private isTracking = false
-
   /**
    * Start tracking event listeners (no-op in Node.js environment)
    */
   startTracking(): void {
-    this.isTracking = true
     // Event listener tracking is primarily for browser environments
     // In Node.js, we focus on process listeners which are handled separately
   }
@@ -125,7 +122,6 @@ class EventListenerTracker {
    * Stop tracking and restore original functions
    */
   stopTracking(): void {
-    this.isTracking = false
     // No cleanup needed for simplified implementation
   }
 

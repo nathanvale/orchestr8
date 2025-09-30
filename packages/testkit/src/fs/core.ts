@@ -7,8 +7,10 @@
 
 import { promises as fs } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { join, dirname } from 'node:path'
+import { join, dirname, resolve, relative } from 'node:path'
 import { validatePath } from '../security/index.js'
+import { FileSystemError, ErrorCode } from '../errors/index.js'
+import { fileOperationsManager, resourceCleanupManager } from '../utils/concurrency.js'
 
 /**
  * Interface for a temporary directory with helper methods
@@ -72,9 +74,22 @@ export async function createTempDirectory(
 ): Promise<TempDirectory> {
   const { prefix = 'test-', randomSuffix = true, parent = tmpdir() } = options
 
-  // Validate parent directory if it's not the default tmpdir
-  const validatedParent =
-    parent === tmpdir() ? parent : validatePath(tmpdir(), parent.replace(tmpdir(), ''))
+  // Validate parent directory if it's a custom path (for security)
+  let validatedParent = parent
+  if (parent !== tmpdir()) {
+    // For custom parent directories, ensure they're safe by normalizing them
+    // and checking they don't contain path traversal patterns
+    const normalizedParent = dirname(resolve(parent))
+    const relativePath = relative(normalizedParent, parent)
+    if (relativePath.includes('..') || relativePath.startsWith('/')) {
+      throw new FileSystemError(
+        ErrorCode.PATH_TRAVERSAL,
+        'Invalid parent directory path: contains dangerous patterns',
+        { path: parent, operation: 'validate_parent_directory' },
+      )
+    }
+    validatedParent = parent
+  }
 
   let basePath: string
 
@@ -128,7 +143,12 @@ export async function createTempDirectory(
         const filePath = validatePath(basePath, relativePath)
         await fs.access(filePath)
         return true
-      } catch {
+      } catch (error) {
+        // Re-throw security validation errors
+        if (error instanceof Error && error.name === 'SecurityValidationError') {
+          throw error
+        }
+        // Return false for legitimate file system errors (file doesn't exist, etc.)
         return false
       }
     },
@@ -195,13 +215,14 @@ export async function createMultipleTempDirectories(
   count: number,
   options: TempDirectoryOptions = {},
 ): Promise<TempDirectory[]> {
-  const promises = Array.from({ length: count }, () => createTempDirectory(options))
-  return Promise.all(promises)
+  const promises = Array.from({ length: count }, () => () => createTempDirectory(options))
+  return fileOperationsManager.batch(promises, (fn) => fn())
 }
 
 /**
  * Clean up multiple temporary directories
  */
 export async function cleanupMultipleTempDirectories(tempDirs: TempDirectory[]): Promise<void> {
-  await Promise.allSettled(tempDirs.map((dir) => dir.cleanup()))
+  const cleanupFunctions = tempDirs.map((dir) => () => dir.cleanup())
+  await resourceCleanupManager.batch(cleanupFunctions, (fn) => fn())
 }

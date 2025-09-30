@@ -300,6 +300,20 @@ export function bridgeTempDirectoryCleanup(): void {
 }
 
 /**
+ * Create a temporary directory with resource manager integration (legacy alias)
+ *
+ * @deprecated Use createTempDirectoryWithResourceManager instead. This alias exists for backwards compatibility.
+ *
+ * @param options - Options for temp directory creation
+ * @returns Promise resolving to the created temp directory
+ */
+export async function useTempDirectoryWithResourceManager(
+  options: TempDirectoryOptions = {},
+): Promise<TempDirectory> {
+  return createTempDirectoryWithResourceManager(options)
+}
+
+/**
  * Scoped temporary directory manager
  *
  * Creates a scope where temp directories are isolated and automatically

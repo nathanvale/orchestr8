@@ -8,7 +8,10 @@
  * Check if running in CI environment
  */
 function isCI(): boolean {
-  return Boolean(process.env.CI)
+  // CI env var should be explicitly 'true', '1', or 'yes' to be considered CI
+  // Empty string or other values should be considered false
+  const ci = process.env.CI
+  return ci === 'true' || ci === '1' || ci === 'yes'
 }
 
 /**

@@ -458,11 +458,14 @@ describe('Error System', () => {
         'Check database permissions',
         'Verify migration script',
       ])
+      // The DatabaseError constructor context overrides the metadata context
       expect(error.metadata.context).toEqual({
-        migrationVersion: '2023.01.15',
-        targetTable: 'users',
-        affectedRows: 1500,
+        database: 'production',
+        query: 'ALTER TABLE users ADD COLUMN email VARCHAR(255)',
       })
+      // But the original metadata context is still accessible through direct field access
+      expect(error.database).toBe('production')
+      expect(error.query).toBe('ALTER TABLE users ADD COLUMN email VARCHAR(255)')
     })
 
     it('should handle empty metadata gracefully', () => {

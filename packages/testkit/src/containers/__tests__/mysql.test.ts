@@ -15,22 +15,13 @@ import {
 } from '../mysql.js'
 import { MySQLCollation } from '../mysql-config.js'
 import { IsolationLevel } from '../types.js'
+import { shouldRunContainerTests, getSkipReason } from './helpers/docker-detection.js'
 
-// Check if testcontainers is available
-const hasTestcontainers = await (async () => {
-  try {
-    await import('testcontainers')
-    return true
-  } catch {
-    return false
-  }
-})()
+// Check if container tests should run
+const shouldRun = shouldRunContainerTests('TESTCONTAINERS_MYSQL')
+const skipReason = shouldRun ? '' : getSkipReason('TESTCONTAINERS_MYSQL')
 
-// Only run tests if testcontainers is available and enabled
-const shouldRun =
-  hasTestcontainers && (process.env.TESTCONTAINERS_MYSQL === '1' || process.env.NODE_ENV === 'test')
-
-describe.skipIf(!shouldRun)('MySQL Container Integration', () => {
+describe.skipIf(!shouldRun)('MySQL Container Integration' + (skipReason ? ' (skipped: ' + skipReason + ')' : ''), () => {
   describe('createMySQLContainer factory', () => {
     it('should create a MySQL container with the documented API', async () => {
       const result = await createMySQLContainer()
