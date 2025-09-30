@@ -5,7 +5,7 @@
 import type { RequestHandler } from 'msw'
 import type { SetupServer } from 'msw/node'
 import { setupServer } from 'msw/node'
-import { createMSWConfig, validateMSWConfig, type MSWConfig } from './config'
+import { createMSWConfig, validateMSWConfig, type MSWConfig } from './config.js'
 
 /**
  * Global MSW server instance

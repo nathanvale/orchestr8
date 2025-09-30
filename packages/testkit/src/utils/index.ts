@@ -12,16 +12,21 @@ export function delay(ms: number): Promise<void> {
 /**
  * Retry a function until it succeeds or max attempts reached
  */
-export async function retry<T>(fn: () => Promise<T>, maxAttempts = 3, delayMs = 1000): Promise<T> {
+export async function retry<T>(
+  fn: () => Promise<T>,
+  maxAttempts = 3,
+  baseDelay = 1000,
+): Promise<T> {
   let lastError: Error | undefined
 
-  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
     try {
       return await fn()
     } catch (error) {
       lastError = error as Error
-      if (attempt < maxAttempts) {
-        await delay(delayMs)
+      if (attempt < maxAttempts - 1) {
+        const delay = baseDelay * Math.pow(2, attempt)
+        await new Promise((resolve) => setTimeout(resolve, delay))
       }
     }
   }
@@ -36,7 +41,7 @@ export function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<
   return Promise.race([
     promise,
     new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error(`Timeout after ${timeoutMs}ms`)), timeoutMs),
+      setTimeout(() => reject(new Error(`timeout after ${timeoutMs}ms`)), timeoutMs),
     ),
   ])
 }
@@ -47,6 +52,15 @@ export function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<
 export function createMockFn<TArgs extends unknown[], TReturn>(
   implementation?: (...args: TArgs) => TReturn,
 ) {
+  // Check if vitest is available
+  if (typeof globalThis !== 'undefined' && 'vi' in globalThis) {
+    const vi = (globalThis as { vi?: { fn?: (impl?: unknown) => unknown } }).vi
+    if (vi?.fn) {
+      return vi.fn(implementation)
+    }
+  }
+
+  // Fallback implementation with call tracking
   const calls: TArgs[] = []
   const results: TReturn[] = []
 
@@ -57,5 +71,23 @@ export function createMockFn<TArgs extends unknown[], TReturn>(
     return result
   }
 
-  return Object.assign(mockFn, { calls, results })
+  // Add vitest-like properties for compatibility
+  const mockFnWithProps = Object.assign(mockFn, {
+    calls,
+    results,
+    mockClear: () => {
+      calls.length = 0
+      results.length = 0
+    },
+    mockReset: () => {
+      calls.length = 0
+      results.length = 0
+    },
+    mockRestore: () => {
+      calls.length = 0
+      results.length = 0
+    },
+  })
+
+  return mockFnWithProps
 }
