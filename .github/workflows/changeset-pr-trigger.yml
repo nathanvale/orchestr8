@@ -1,14 +1,11 @@
 name: Changeset PR CI Trigger
 
-# ⚠️ TEMPORARY WORKAROUND - Can be deleted after setting up CHANGESET_GITHUB_TOKEN
-# This workflow ensures CI runs on changeset release PRs
-# Even if created by bots (which sometimes don't trigger CI automatically)
+# This workflow ensures CI runs on changeset release PRs created by the release workflow.
+# GitHub blocks workflow triggers when PRs are created with a PAT from the repo owner,
+# so this workflow manually triggers CI by pushing an empty commit when needed.
 #
-# TO REMOVE THIS WORKAROUND:
-# 1. Create a PAT at https://github.com/settings/tokens/new with 'repo' and 'workflow' scopes
-# 2. Add it as repository secret named CHANGESET_GITHUB_TOKEN
-# 3. The release.yml workflow will then use the PAT and CI will run automatically
-# 4. Delete this entire workflow file
+# This is required when using a user PAT instead of a bot account PAT.
+# To avoid this workflow, create a bot account and use its PAT as CHANGESET_GITHUB_TOKEN.
 on:
   pull_request_target:
     types: [opened, reopened]
@@ -33,11 +30,10 @@ jobs:
     runs-on: ubuntu-latest
     # Only run for changeset release PRs (automatic trigger)
     # OR when manually triggered via workflow_dispatch
+    # Works with both bot and user PATs
     if: |
       github.event_name == 'workflow_dispatch' ||
-      (startsWith(github.event.pull_request.head.ref, 'changeset-release/') &&
-       (github.event.pull_request.user.type == 'Bot' ||
-        endsWith(github.event.pull_request.user.login, '[bot]')))
+      startsWith(github.event.pull_request.head.ref, 'changeset-release/')
     steps:
       - name: Get PR Info
         id: pr-info
