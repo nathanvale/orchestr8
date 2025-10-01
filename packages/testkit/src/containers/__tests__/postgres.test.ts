@@ -151,7 +151,7 @@ describe.skipIf(!shouldRun)(
         // Verify we can execute queries
         const result = await context.client.query('SELECT version()')
         expect(result.rows[0].version).toContain('PostgreSQL')
-      })
+      }, 30000)
 
       it('should handle container restart', async () => {
         const container = new PostgresContainer(createPostgresConfig())
