@@ -1,2 +1,3 @@
 // ESM stub to allow .js imports to resolve to .ts source
-export * from './mock-fetch.ts'
+// Import without extension - relies on Vite's resolve.extensions config
+export * from './mock-fetch'

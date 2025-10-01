@@ -1,2 +1,3 @@
 // ESM stub to allow .js imports to resolve to .ts source
-export * from './test-helpers.ts'
+// Import without extension - relies on Vite's resolve.extensions config
+export * from './test-helpers'
