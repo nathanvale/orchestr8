@@ -367,7 +367,7 @@ jobs:
 
       - name: Publish JUnit Test Report (Dashboard)
         if: always()
-        uses: mikepenz/action-junit-report@v4
+        uses: mikepenz/action-junit-report@v5
         with:
           report_paths: 'aggregated-junit/**/*.xml'
           check_name: 'Test Report'
