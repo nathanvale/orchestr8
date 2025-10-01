@@ -46,6 +46,8 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           pnpm-version: ${{ env.PNPM_VERSION }}
+      - name: Build packages (required for tests)
+        run: pnpm build
       - name: Run Smoke Tests (with JUnit, low-noise)
         run: |
           mkdir -p test-results
@@ -73,6 +75,8 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           pnpm-version: ${{ env.PNPM_VERSION }}
+      - name: Build packages (required for tests)
+        run: pnpm build
       - name: Run Focused Tests
         run: |
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
@@ -145,6 +149,8 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           pnpm-version: ${{ env.PNPM_VERSION }}
+      - name: Build packages (required for tests)
+        run: pnpm build
       - name: Run Full Unit Test Suite (JUnit + no coverage for speed)
         run: |
           mkdir -p test-results
