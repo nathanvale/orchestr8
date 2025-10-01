@@ -1,5 +1,19 @@
 # @orchestr8/testkit
 
+## 1.0.4
+
+### Patch Changes
+
+- [#117](https://github.com/nathanvale/orchestr8/pull/117)
+  [`697067f`](https://github.com/nathanvale/orchestr8/commit/697067f69c6ad93d5cf06ba79746d0f851882a33)
+  Thanks [@nathanvale](https://github.com/nathanvale)! - Auto-generated
+  changeset from PR commits
+
+  Commits:
+  - fix: async test isolation and auto-changeset detached HEAD issue
+  - chore: trigger CI for changeset release PR
+  - chore(release): version packages 🚀 [skip ci]
+
 ## 1.0.3
 
 ### Patch Changes
