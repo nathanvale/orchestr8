@@ -6,7 +6,7 @@
  * characteristics.
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import {
   ObjectPool,
   BufferPool,

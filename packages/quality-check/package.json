@@ -1,6 +1,7 @@
 {
   "name": "@orchestr8/quality-check",
   "version": "1.0.1",
+  "license": "MIT",
   "description": "Production-ready quality check package for ESLint, Prettier, and TypeScript validation with <2s execution time",
   "keywords": [
     "quality-check",
