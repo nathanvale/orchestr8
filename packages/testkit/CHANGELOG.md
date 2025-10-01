@@ -1,5 +1,28 @@
 # @orchestr8/testkit
 
+## 1.0.5
+
+### Patch Changes
+
+- [#134](https://github.com/nathanvale/orchestr8/pull/134)
+  [`5b57584`](https://github.com/nathanvale/orchestr8/commit/5b5758411584836dd25e03c6fdbc47ff7efeedb9)
+  Thanks [@nathanvale](https://github.com/nathanvale)! - Auto-generated
+  changeset from PR commits
+
+  Commits:
+  - chore: trigger CI
+  - chore(release): version packages 🚀 [skip ci]
+
+- [#137](https://github.com/nathanvale/orchestr8/pull/137)
+  [`6aa81d5`](https://github.com/nathanvale/orchestr8/commit/6aa81d57e0d9872c68693837265d4b24960f8b50)
+  Thanks [@nathanvale](https://github.com/nathanvale)! - Fix vitest config bug
+  and temporarily lower coverage threshold
+  - Fixed vitest.config.ts invalid coverage override that caused "Cannot read
+    properties of undefined (reading 'reporter')" error in CI
+  - Temporarily lowered coverage threshold from 69% to 55% while addressing
+    coverage gaps
+  - Coverage will be gradually improved back to 69% in follow-up PRs
+
 ## 1.0.4
 
 ### Patch Changes
