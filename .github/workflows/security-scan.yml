@@ -195,8 +195,8 @@ jobs:
 
           PROHIBITED_FOUND=false
           for license in "${PROHIBITED_LICENSES[@]}"; do
-            # Check if the prohibited license appears in the license summary
-            if grep -q "$license" license-summary.txt 2>/dev/null; then
+            # Check if the prohibited license appears in the license summary (exact match on line)
+            if grep -E "^[├└]─ ${license}:" license-summary.txt 2>/dev/null; then
               echo "❌ Prohibited license found: $license" >> license-report.md
               PROHIBITED_FOUND=true
             fi
