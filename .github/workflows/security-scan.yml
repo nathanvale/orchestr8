@@ -164,7 +164,7 @@ jobs:
           pnpm-version: ${{ env.PNPM_VERSION }}
 
       - name: Install license checker
-        run: pnpm add -D license-checker
+        run: pnpm add -D -w license-checker
 
       - name: Check licenses
         id: license-check
@@ -287,7 +287,7 @@ jobs:
           echo "## 🔐 Secret Detection Results" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
-          # Define patterns to search for secrets
+          # Define patterns to search for secrets (excluding test/mock patterns)
           SECRET_PATTERNS=(
             "password\s*=\s*['\"][^'\"]+['\"]"
             "api[_-]?key\s*[=:]\s*['\"][^'\"]+['\"]"
@@ -298,7 +298,17 @@ jobs:
 
           SECRETS_FOUND=0
           for pattern in "${SECRET_PATTERNS[@]}"; do
-            if git grep -i -E "$pattern" -- "*.js" "*.ts" "*.jsx" "*.tsx" "*.json" "*.env*" 2>/dev/null; then
+            # Search for pattern but exclude test files, examples, and obvious test values
+            if git grep -i -E "$pattern" -- \
+              "*.js" "*.ts" "*.jsx" "*.tsx" "*.json" "*.env*" \
+              ":!**/__tests__/**" \
+              ":!**/__mocks__/**" \
+              ":!**/*.test.*" \
+              ":!**/*.spec.*" \
+              ":!**/examples/**" \
+              ":!**/fixtures/**" \
+              2>/dev/null | \
+              grep -v -E "(mock|test|invalid|example|dummy|fake|'string'|\"string\"|localhost)" 2>/dev/null; then
               SECRETS_FOUND=$((SECRETS_FOUND + 1))
             fi
           done

@@ -115,6 +115,12 @@
     "node": ">=20.0.0",
     "pnpm": ">=9.0.0"
   },
+  "pnpm": {
+    "overrides": {
+      "vite@>=6.0.0 <=6.3.5": ">=6.3.6",
+      "tmp@<=0.2.3": ">=0.2.4"
+    }
+  },
   "publishConfig": {
     "access": "public",
     "provenance": true
