@@ -420,7 +420,8 @@ describe.skipIf(!shouldRun)(
 
         const healthResult = await container.healthCheck()
         expect(healthResult.healthy).toBe(true)
-        expect(healthResult.responseTime).toBeGreaterThan(0)
+        // Response time should be 0 or greater (may be 0 for very fast queries)
+        expect(healthResult.responseTime).toBeGreaterThanOrEqual(0)
         expect(healthResult.error).toBeUndefined()
       })
 
