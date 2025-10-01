@@ -195,9 +195,8 @@ jobs:
 
           PROHIBITED_FOUND=false
           for license in "${PROHIBITED_LICENSES[@]}"; do
-            if pnpm exec license-checker --onlyAllow "NOT_$license" --excludePrivatePackages 2>/dev/null; then
-              continue
-            else
+            # Check if the prohibited license appears in the license summary
+            if grep -q "$license" license-summary.txt 2>/dev/null; then
               echo "❌ Prohibited license found: $license" >> license-report.md
               PROHIBITED_FOUND=true
             fi
