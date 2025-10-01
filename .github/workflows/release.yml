@@ -41,8 +41,10 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           pnpm-version: ${{ env.PNPM_VERSION }}
 
-      # Trust CI - if tests failed, merge wouldn't have happened
-      # No need to re-run tests or builds here
+      # Build quality-check package (required by pre-commit hook during changeset version)
+      - name: Build quality-check package
+        run: pnpm --filter @orchestr8/quality-check build
+
       - name: Create Release PR or Publish
         id: changesets
         uses: changesets/action@v1
