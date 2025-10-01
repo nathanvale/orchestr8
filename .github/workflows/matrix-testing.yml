@@ -132,7 +132,7 @@ jobs:
             )
           fi
 
-          echo "matrix=$MATRIX_CONFIG" >> $GITHUB_OUTPUT
+          echo "matrix=$(echo "$MATRIX_CONFIG" | jq -c .)" >> $GITHUB_OUTPUT
           echo "## 🎯 Matrix Configuration" >> $GITHUB_STEP_SUMMARY
           echo '```json' >> $GITHUB_STEP_SUMMARY
           echo "$MATRIX_CONFIG" | jq . >> $GITHUB_STEP_SUMMARY
