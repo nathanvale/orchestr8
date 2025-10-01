@@ -1,5 +1,17 @@
 # @orchestr8/testkit
 
+## 1.0.4
+
+### Patch Changes
+
+- [#117](https://github.com/nathanvale/orchestr8/pull/117)
+  [`697067f`](https://github.com/nathanvale/orchestr8/commit/697067f69c6ad93d5cf06ba79746d0f851882a33)
+  Thanks [@nathanvale](https://github.com/nathanvale)! - Fix async test
+  isolation and auto-changeset detached HEAD issue
+
+  This patch resolves test isolation issues with async operations and fixes the
+  detached HEAD state that occurred during automated changeset generation in CI.
+
 ## 1.0.3
 
 ### Patch Changes
