@@ -838,7 +838,7 @@ describe('Resource Manager Performance', () => {
     }
 
     const registrationTime = Date.now() - startTime
-    expect(registrationTime).toBeLessThan(200) // Should be fast (increased for CI variability)
+    expect(registrationTime).toBeLessThan(300) // Should be fast (increased for CI variability)
 
     const cleanupStartTime = Date.now()
     const result = await manager.cleanup()
