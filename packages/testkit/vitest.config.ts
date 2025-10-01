@@ -50,6 +50,9 @@ const cfg = createBaseVitestConfig({
 
 // Map published subpath imports back to local sources during package tests
 cfg.resolve = cfg.resolve || {}
+// Allow .js imports to resolve to .ts source files
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+;(cfg.resolve as any).extensions = ['.ts', '.tsx', '.js', '.jsx', '.json']
 // Prefer 'vitest' and 'development' conditions for self-imports
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ;(cfg.resolve as any).conditions = ['vitest', 'development', 'module', 'default']
