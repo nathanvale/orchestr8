@@ -36,15 +36,7 @@ const cfg = createBaseVitestConfig({
       TEST_SEED: process.env['TEST_SEED'] || '12345',
       DEBUG_TESTKIT: process.env['DEBUG_TESTKIT'] || 'true',
     },
-    // Disable coverage locally to avoid threshold noise during focused debugging;
-    // CI still enforces thresholds via base config env detection.
-    coverage: process.env.CI
-      ? undefined
-      : {
-          provider: 'v8',
-          enabled: false,
-          reporter: ['text'],
-        },
+    // Coverage is handled by base config (enabled in CI, disabled locally)
   },
 })
 
