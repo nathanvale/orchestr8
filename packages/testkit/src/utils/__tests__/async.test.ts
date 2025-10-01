@@ -66,8 +66,12 @@ describe('retry', () => {
 
       await retry(failingFn, 3, 100)
 
+      // Filter out delays from SQLite pool maintenance timers (60s = 60000ms)
+      // which may run in background during tests
+      const retryDelays = delays.filter((d) => d !== 60000)
+
       // Should have delays: 100ms (2^0), 200ms (2^1)
-      expect(delays).toEqual([100, 200])
+      expect(retryDelays).toEqual([100, 200])
 
       setTimeoutSpy.mockRestore()
       vi.useFakeTimers()
