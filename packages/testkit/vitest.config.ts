@@ -61,6 +61,12 @@ cfg.resolve = cfg.resolve || {}
 ;(cfg.resolve as any).dedupe = ['@orchestr8/testkit']
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ;(cfg.resolve as any).alias = [
+  // Map built test fixtures to source fixtures for testing
+  // Handles: ./fixtures/test-helpers.js → src/__tests__/fixtures/test-helpers.ts
+  {
+    find: /^(\.\.?\/)?(.*\/)?fixtures\/(.*)\.js$/,
+    replacement: resolve(__dirname, 'src/__tests__/fixtures/$3.ts'),
+  },
   // e.g. import '@orchestr8/testkit/register' → packages/testkit/src/register.ts
   { find: /^@orchestr8\/testkit\/(.*)$/, replacement: resolve(__dirname, 'src/$1') },
   // Explicit mapping to avoid any ambiguity for the register entry
