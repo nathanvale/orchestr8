@@ -35,8 +35,8 @@
     "lint": "eslint . --cache --cache-location ../../.eslintcache/quality-check",
     "lint:fix": "NODE_NO_WARNINGS=1 eslint . --fix --cache --cache-location .eslintcache",
     "prepublishOnly": "pnpm run build && test -d dist",
-    "test": "echo 'No tests yet for quality-check'",
-    "test:watch": "echo 'No tests yet for quality-check'",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
