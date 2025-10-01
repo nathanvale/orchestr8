@@ -332,7 +332,7 @@ export class ProcessListenerManager {
 
     for (const [_listenerKey, record] of this.listeners) {
       const age = now - record.registeredAt
-      if (age > maxAge) {
+      if (age >= maxAge) {
         leaks.push({
           listener: record.listener,
           event: record.event,
