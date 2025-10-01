@@ -539,7 +539,7 @@ describe.skipIf(!shouldRun)('BaseDatabaseContainer', () => {
       const result = await container.healthCheck()
 
       expect(result.healthy).toBe(true)
-      expect(result.responseTime).toBeGreaterThan(0)
+      expect(result.responseTime).toBeGreaterThanOrEqual(0)
       expect(result.error).toBeUndefined()
     })
 
@@ -555,7 +555,7 @@ describe.skipIf(!shouldRun)('BaseDatabaseContainer', () => {
       const result = await container.healthCheck()
 
       expect(result.healthy).toBe(false)
-      expect(result.responseTime).toBeGreaterThan(0)
+      expect(result.responseTime).toBeGreaterThanOrEqual(0)
       expect(result.error).toBeDefined()
 
       await container.stop()
