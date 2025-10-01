@@ -1,5 +1,18 @@
 # @orchestr8/testkit
 
+## 1.0.5
+
+### Patch Changes
+
+- [#134](https://github.com/nathanvale/orchestr8/pull/134)
+  [`5b57584`](https://github.com/nathanvale/orchestr8/commit/5b5758411584836dd25e03c6fdbc47ff7efeedb9)
+  Thanks [@nathanvale](https://github.com/nathanvale)! - Auto-generated
+  changeset from PR commits
+
+  Commits:
+  - chore: trigger CI
+  - chore(release): version packages 🚀 [skip ci]
+
 ## 1.0.4
 
 ### Patch Changes
