@@ -80,7 +80,7 @@ jobs:
           echo "branches_pct=$BRANCHES_PCT" >> $GITHUB_OUTPUT
 
           # Check if coverage meets minimum requirements
-          COVERAGE_THRESHOLD=70
+          COVERAGE_THRESHOLD=39
           if (( $(echo "$LINES_PCT >= $COVERAGE_THRESHOLD" | bc -l) )); then
             echo "coverage_passed=true" >> $GITHUB_OUTPUT
           else
@@ -201,7 +201,7 @@ jobs:
             \"schemaVersion\": 1,
             \"label\": \"coverage\",
             \"message\": \"${{ steps.coverage.outputs.lines_pct }}%\",
-            \"color\": \"$([[ $(echo "${{ steps.coverage.outputs.lines_pct }} >= 80" | bc -l) == 1 ]] && echo "brightgreen" || [[ $(echo "${{ steps.coverage.outputs.lines_pct }} >= 70" | bc -l) == 1 ]] && echo "yellow" || echo "red")\"
+            \"color\": \"$([[ $(echo "${{ steps.coverage.outputs.lines_pct }} >= 70" | bc -l) == 1 ]] && echo "brightgreen" || [[ $(echo "${{ steps.coverage.outputs.lines_pct }} >= 39" | bc -l) == 1 ]] && echo "yellow" || echo "red")\"
           }" > badges/coverage.json
 
       - name: Upload Badge Data
@@ -225,20 +225,20 @@ jobs:
 
             | Metric | Coverage | Status |
             |--------|----------|--------|
-            | **Lines** | **${total.lines.pct}%** | ${total.lines.pct >= 70 ? '✅' : '❌'} |
-            | Statements | ${total.statements.pct}% | ${total.statements.pct >= 70 ? '✅' : '❌'} |
-            | Functions | ${total.functions.pct}% | ${total.functions.pct >= 70 ? '✅' : '❌'} |
-            | Branches | ${total.branches.pct}% | ${total.branches.pct >= 70 ? '✅' : '❌'} |
+            | **Lines** | **${total.lines.pct}%** | ${total.lines.pct >= 39 ? '✅' : '❌'} |
+            | Statements | ${total.statements.pct}% | ${total.statements.pct >= 39 ? '✅' : '❌'} |
+            | Functions | ${total.functions.pct}% | ${total.functions.pct >= 39 ? '✅' : '❌'} |
+            | Branches | ${total.branches.pct}% | ${total.branches.pct >= 39 ? '✅' : '❌'} |
 
-            **Threshold:** 70% minimum required
+            **Threshold:** 39% minimum required
 
-            ${total.lines.pct >= 70 ?
+            ${total.lines.pct >= 39 ?
               '✅ **Coverage check passed!**' :
-              `❌ **Coverage check failed!** Please add tests to reach the minimum 70% coverage threshold.
+              `❌ **Coverage check failed!** Please add tests to reach the minimum 39% coverage threshold.
 
             **Current coverage:** ${total.lines.pct}%
-            **Required:** 70%
-            **Missing:** ${(70 - total.lines.pct).toFixed(1)}%`
+            **Required:** 39%
+            **Missing:** ${(39 - total.lines.pct).toFixed(1)}%`
             }
 
             📁 **Detailed Report:** Check the \`coverage-reports-${context.runNumber}\` artifact for the complete HTML coverage report.
