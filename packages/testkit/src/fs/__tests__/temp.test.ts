@@ -14,6 +14,7 @@ import {
   type TempDirectory,
   type DirectoryStructure,
 } from '../temp.js'
+import { SecurityValidationError } from '../../security/index.js'
 
 describe('createTempDirectory', () => {
   let tempDirs: TempDirectory[] = []
@@ -456,5 +457,318 @@ describe('performance', () => {
     // Verify all files exist
     const contents = await tempDir.readdir()
     expect(contents).toHaveLength(100)
+  })
+})
+
+describe('security - path traversal prevention', () => {
+  let tempDirs: TempDirectory[] = []
+
+  afterEach(async () => {
+    await Promise.allSettled(tempDirs.map((dir) => dir.cleanup()))
+    tempDirs = []
+  })
+
+  describe('writeFile security', () => {
+    it('should prevent path traversal with ../', async () => {
+      const tempDir = await createTempDirectory()
+      tempDirs.push(tempDir)
+
+      await expect(tempDir.writeFile('../../../etc/passwd', 'malicious')).rejects.toThrow(
+        SecurityValidationError,
+      )
+    })
+
+    it('should prevent path traversal with ..\\', async () => {
+      const tempDir = await createTempDirectory()
+      tempDirs.push(tempDir)
+
+      await expect(
+        tempDir.writeFile('..\\..\\windows\\system32\\evil.txt', 'malicious'),
+      ).rejects.toThrow(SecurityValidationError)
+    })
+
+    it('should prevent absolute path access', async () => {
+      const tempDir = await createTempDirectory()
+      tempDirs.push(tempDir)
+
+      await expect(tempDir.writeFile('/etc/passwd', 'malicious')).rejects.toThrow(
+        SecurityValidationError,
+      )
+    })
+
+    it('should prevent Windows absolute path access', async () => {
+      const tempDir = await createTempDirectory()
+      tempDirs.push(tempDir)
+
+      await expect(
+        tempDir.writeFile('C:\\Windows\\System32\\evil.txt', 'malicious'),
+      ).rejects.toThrow(SecurityValidationError)
+    })
+
+    it('should prevent null byte injection', async () => {
+      const tempDir = await createTempDirectory()
+      tempDirs.push(tempDir)
+
+      await expect(tempDir.writeFile('file.txt\x00.exe', 'malicious')).rejects.toThrow(
+        SecurityValidationError,
+      )
+    })
+
+    it('should prevent home directory access', async () => {
+      const tempDir = await createTempDirectory()
+      tempDirs.push(tempDir)
+
+      await expect(tempDir.writeFile('~/sensitive.txt', 'malicious')).rejects.toThrow(
+        SecurityValidationError,
+      )
+    })
+  })
+
+  describe('mkdir security', () => {
+    it('should prevent path traversal with ../', async () => {
+      const tempDir = await createTempDirectory()
+      tempDirs.push(tempDir)
+
+      await expect(tempDir.mkdir('../../../tmp/evil')).rejects.toThrow(SecurityValidationError)
+    })
+
+    it('should prevent absolute path access', async () => {
+      const tempDir = await createTempDirectory()
+      tempDirs.push(tempDir)
+
+      await expect(tempDir.mkdir('/tmp/evil')).rejects.toThrow(SecurityValidationError)
+    })
+
+    it('should prevent null byte injection', async () => {
+      const tempDir = await createTempDirectory()
+      tempDirs.push(tempDir)
+
+      await expect(tempDir.mkdir('dir\x00evil')).rejects.toThrow(SecurityValidationError)
+    })
+  })
+
+  describe('getPath security', () => {
+    it('should prevent path traversal with ../', async () => {
+      const tempDir = await createTempDirectory()
+      tempDirs.push(tempDir)
+
+      expect(() => tempDir.getPath('../../../etc/passwd')).toThrow(SecurityValidationError)
+    })
+
+    it('should prevent absolute path access', async () => {
+      const tempDir = await createTempDirectory()
+      tempDirs.push(tempDir)
+
+      expect(() => tempDir.getPath('/etc/passwd')).toThrow(SecurityValidationError)
+    })
+
+    it('should prevent null byte injection', async () => {
+      const tempDir = await createTempDirectory()
+      tempDirs.push(tempDir)
+
+      expect(() => tempDir.getPath('file\x00.exe')).toThrow(SecurityValidationError)
+    })
+  })
+
+  describe('readFile security', () => {
+    it('should prevent path traversal with ../', async () => {
+      const tempDir = await createTempDirectory()
+      tempDirs.push(tempDir)
+
+      await expect(tempDir.readFile('../../../etc/passwd')).rejects.toThrow(SecurityValidationError)
+    })
+
+    it('should prevent absolute path access', async () => {
+      const tempDir = await createTempDirectory()
+      tempDirs.push(tempDir)
+
+      await expect(tempDir.readFile('/etc/passwd')).rejects.toThrow(SecurityValidationError)
+    })
+
+    it('should prevent null byte injection', async () => {
+      const tempDir = await createTempDirectory()
+      tempDirs.push(tempDir)
+
+      await expect(tempDir.readFile('file\x00.txt')).rejects.toThrow(SecurityValidationError)
+    })
+  })
+
+  describe('exists security', () => {
+    it('should prevent path traversal with ../', async () => {
+      const tempDir = await createTempDirectory()
+      tempDirs.push(tempDir)
+
+      await expect(tempDir.exists('../../../etc/passwd')).rejects.toThrow(SecurityValidationError)
+    })
+
+    it('should prevent absolute path access', async () => {
+      const tempDir = await createTempDirectory()
+      tempDirs.push(tempDir)
+
+      await expect(tempDir.exists('/etc/passwd')).rejects.toThrow(SecurityValidationError)
+    })
+  })
+
+  describe('readdir security', () => {
+    it('should prevent path traversal with ../', async () => {
+      const tempDir = await createTempDirectory()
+      tempDirs.push(tempDir)
+
+      await expect(tempDir.readdir('../../../etc')).rejects.toThrow(SecurityValidationError)
+    })
+
+    it('should prevent absolute path access', async () => {
+      const tempDir = await createTempDirectory()
+      tempDirs.push(tempDir)
+
+      await expect(tempDir.readdir('/etc')).rejects.toThrow(SecurityValidationError)
+    })
+  })
+
+  describe('copyFileIn security', () => {
+    it('should prevent path traversal in destination with ../', async () => {
+      const tempDir = await createTempDirectory()
+      tempDirs.push(tempDir)
+
+      // Create a source file first
+      const sourceDir = await createTempDirectory()
+      tempDirs.push(sourceDir)
+      await sourceDir.writeFile('source.txt', 'content')
+
+      await expect(
+        tempDir.copyFileIn(sourceDir.getPath('source.txt'), '../../../tmp/evil.txt'),
+      ).rejects.toThrow(SecurityValidationError)
+    })
+
+    it('should prevent absolute path in destination', async () => {
+      const tempDir = await createTempDirectory()
+      tempDirs.push(tempDir)
+
+      // Create a source file first
+      const sourceDir = await createTempDirectory()
+      tempDirs.push(sourceDir)
+      await sourceDir.writeFile('source.txt', 'content')
+
+      await expect(
+        tempDir.copyFileIn(sourceDir.getPath('source.txt'), '/tmp/evil.txt'),
+      ).rejects.toThrow(SecurityValidationError)
+    })
+
+    it('should prevent null byte injection in destination', async () => {
+      const tempDir = await createTempDirectory()
+      tempDirs.push(tempDir)
+
+      // Create a source file first
+      const sourceDir = await createTempDirectory()
+      tempDirs.push(sourceDir)
+      await sourceDir.writeFile('source.txt', 'content')
+
+      await expect(
+        tempDir.copyFileIn(sourceDir.getPath('source.txt'), 'dest\x00.exe'),
+      ).rejects.toThrow(SecurityValidationError)
+    })
+  })
+
+  describe('createStructure security', () => {
+    it('should prevent path traversal in structure keys', async () => {
+      const tempDir = await createTempDirectory()
+      tempDirs.push(tempDir)
+
+      const maliciousStructure: DirectoryStructure = {
+        '../../../tmp/evil.txt': 'malicious content',
+      }
+
+      await expect(tempDir.createStructure(maliciousStructure)).rejects.toThrow(
+        SecurityValidationError,
+      )
+    })
+
+    it('should prevent absolute paths in structure keys', async () => {
+      const tempDir = await createTempDirectory()
+      tempDirs.push(tempDir)
+
+      const maliciousStructure: DirectoryStructure = {
+        '/tmp/evil.txt': 'malicious content',
+      }
+
+      await expect(tempDir.createStructure(maliciousStructure)).rejects.toThrow(
+        SecurityValidationError,
+      )
+    })
+
+    it('should prevent null byte injection in structure keys', async () => {
+      const tempDir = await createTempDirectory()
+      tempDirs.push(tempDir)
+
+      const maliciousStructure: DirectoryStructure = {
+        'file\x00.exe': 'malicious content',
+      }
+
+      await expect(tempDir.createStructure(maliciousStructure)).rejects.toThrow(
+        SecurityValidationError,
+      )
+    })
+
+    it('should prevent nested path traversal in structure', async () => {
+      const tempDir = await createTempDirectory()
+      tempDirs.push(tempDir)
+
+      const maliciousStructure: DirectoryStructure = {
+        subdir: {
+          '../../../tmp/evil.txt': 'malicious content',
+        },
+      }
+
+      await expect(tempDir.createStructure(maliciousStructure)).rejects.toThrow(
+        SecurityValidationError,
+      )
+    })
+  })
+
+  describe('createTempDirectory parent option security', () => {
+    it('should handle safe parent directories', async () => {
+      const parentDir = await createTempDirectory()
+      tempDirs.push(parentDir)
+
+      const tempDir = await createTempDirectory({ parent: parentDir.path })
+      tempDirs.push(tempDir)
+
+      expect(tempDir.path.startsWith(parentDir.path)).toBe(true)
+    })
+
+    it('should allow default tmpdir parent', async () => {
+      const tempDir = await createTempDirectory({ parent: tmpdir() })
+      tempDirs.push(tempDir)
+
+      expect(tempDir.path.startsWith(tmpdir())).toBe(true)
+    })
+  })
+
+  describe('legitimate operations should work', () => {
+    it('should allow safe relative paths', async () => {
+      const tempDir = await createTempDirectory()
+      tempDirs.push(tempDir)
+
+      await tempDir.writeFile('safe/nested/file.txt', 'safe content')
+      const content = await tempDir.readFile('safe/nested/file.txt')
+      expect(content).toBe('safe content')
+    })
+
+    it('should allow safe file names', async () => {
+      const tempDir = await createTempDirectory()
+      tempDirs.push(tempDir)
+
+      await tempDir.writeFile('file-name_with.dots.txt', 'safe content')
+      const content = await tempDir.readFile('file-name_with.dots.txt')
+      expect(content).toBe('safe content')
+    })
+
+    it('should allow safe directory operations', async () => {
+      const tempDir = await createTempDirectory()
+      tempDirs.push(tempDir)
+
+      await tempDir.mkdir('safe/nested/dirs')
+      expect(await tempDir.exists('safe/nested/dirs')).toBe(true)
+    })
   })
 })

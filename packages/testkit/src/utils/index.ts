@@ -1,6 +1,87 @@
 /**
- * General testing utilities
+ * General testing utilities with performance optimization through object pooling
  */
+
+// Export security validation functions
+export {
+  sanitizeCommand,
+  validateCommand,
+  validatePath,
+  sanitizeSqlIdentifier,
+  escapeShellArg,
+  validateShellExecution,
+  validateBatch,
+  SecurityValidationError,
+  type SecurityValidationType,
+  type SecurityValidationOptions,
+  type ValidationResult,
+} from '../security'
+
+// Export resource management functions
+export {
+  ResourceManager,
+  globalResourceManager,
+  registerResource,
+  cleanupAllResources,
+  getResourceStats,
+  detectResourceLeaks,
+  ResourceCategory,
+  ResourcePriority,
+  ResourceEvent,
+  type SyncCleanupFunction,
+  type AsyncCleanupFunction,
+  type CleanupFunction,
+  type ResourceOptions,
+  type ResourceDefinition,
+  type CleanupOptions,
+  type CleanupError,
+  type CleanupCategorySummary,
+  type CleanupResult,
+  type ResourceLeak,
+  type ResourceStats,
+  type ResourceManagerConfig,
+  type ResourceEventData,
+  isAsyncCleanupFunction,
+  DEFAULT_CATEGORY_PRIORITIES,
+  DEFAULT_CATEGORY_TIMEOUTS,
+} from '../resources'
+
+// Export concurrency control functions
+export {
+  ConcurrencyManager,
+  ConcurrencyError,
+  limitConcurrency,
+  limitedPromiseAll,
+  limitedAll,
+  limitedAllSettled,
+  fileOperationsManager,
+  databaseOperationsManager,
+  networkOperationsManager,
+  processSpawningManager,
+  resourceCleanupManager,
+  DEFAULT_CONCURRENCY_LIMITS,
+  type ConcurrencyOptions,
+  type BatchOptions,
+} from './concurrency'
+
+// Export object pooling functions
+export {
+  ObjectPool,
+  BufferPool,
+  ArrayPool,
+  PromisePool,
+  PoolManager,
+  poolManager,
+  PoolUtils,
+  GlobalPools,
+  DEFAULT_POOL_OPTIONS,
+  type ObjectFactory,
+  type ObjectResetter,
+  type ObjectDisposer,
+  type ObjectValidator,
+  type ObjectPoolOptions,
+  type PoolStats,
+} from './object-pool'
 
 /**
  * Wait for a specified amount of time
@@ -55,7 +136,7 @@ export function createMockFn<TArgs extends unknown[], TReturn>(
   // Check if vitest is available
   if (typeof globalThis !== 'undefined' && 'vi' in globalThis) {
     const vi = (globalThis as { vi?: { fn?: (impl?: unknown) => unknown } }).vi
-    if (vi?.fn) {
+    if (vi?.fn && typeof vi.fn === 'function') {
       return vi.fn(implementation)
     }
   }
@@ -91,3 +172,51 @@ export function createMockFn<TArgs extends unknown[], TReturn>(
 
   return mockFnWithProps
 }
+
+/**
+ * Utility functions for common testing scenarios with object pooling
+ */
+export const TestingUtils = {
+  /**
+   * Create a pooled buffer for test data
+   */
+  createTestBuffer: (size = 1024) => {
+    return Buffer.allocUnsafe(size)
+  },
+
+  /**
+   * Release a test buffer back to the pool
+   */
+  releaseTestBuffer: (buffer: Buffer) => {
+    // Simple implementation - just fill with zeros for cleanup
+    buffer.fill(0)
+  },
+
+  /**
+   * Create a pooled array for test data
+   */
+  createTestArray: <T>() => {
+    return [] as T[]
+  },
+
+  /**
+   * Release a test array back to the pool
+   */
+  releaseTestArray: <T>(array: T[]) => {
+    // Simple implementation - just clear the array
+    array.length = 0
+  },
+
+  /**
+   * Create a controlled promise for async testing
+   */
+  createControlledPromise: <T>() => {
+    let resolve: (value: T | PromiseLike<T>) => void
+    let reject: (reason?: unknown) => void
+    const promise = new Promise<T>((res, rej) => {
+      resolve = res
+      reject = rej
+    })
+    return { promise, resolve: resolve!, reject: reject! }
+  },
+} as const

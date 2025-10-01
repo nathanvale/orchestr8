@@ -490,7 +490,7 @@ describe('SQLite Migration Support', () => {
       expect(mockDb.executedStatements[0]).toContain('CREATE TABLE users')
 
       // Verify checksum file was created
-      const checksumPath = migrationDir.getPath('001_create_users.sql.checksum')
+      const _checksumPath = migrationDir.getPath('001_create_users.sql.checksum')
       const checksumExists = await migrationDir.exists('001_create_users.sql.checksum')
       expect(checksumExists).toBe(true)
 

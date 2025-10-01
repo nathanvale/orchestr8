@@ -6,20 +6,11 @@
  * They test the interaction between different SQLite components and real databases.
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { createManagedTempDirectory, type TempDirectory } from '../../fs/index.js'
-import {
-  registerDatabaseCleanup,
-  cleanupAllSqlite,
-  getDetailedCleanupCount,
-  withSqliteCleanupScope,
-} from '../cleanup.js'
-import { applyMigrations, resetDatabase, type MigrationDatabase } from '../migrate.js'
-import {
-  betterSqlite3Adapter,
-  betterSqlite3Utils,
-  type BetterSqlite3DbLike,
-} from '../adapters/better-sqlite3.js'
+import { describe, it, expect, afterEach } from 'vitest'
+import { type TempDirectory } from '../../fs/index.js'
+import { cleanupAllSqlite } from '../cleanup.js'
+import { type MigrationDatabase as _MigrationDatabase } from '../migrate.js'
+import { type BetterSqlite3DbLike as _BetterSqlite3DbLike } from '../adapters/better-sqlite3.js'
 
 // Skip all tests if SQLite integration testing is not enabled
 const isEnabled = process.env.TEST_SQLITE_INTEGRATION === 'true'

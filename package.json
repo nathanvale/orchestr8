@@ -2,6 +2,7 @@
   "name": "node-pnpm-changesets-template",
   "version": "0.1.0",
   "private": true,
+  "license": "MIT",
   "description": "Node.js + pnpm monorepo template with Next.js, Turborepo, Vitest, Changesets & ADHD-optimized DX",
   "homepage": "https://github.com/nathanvale/bun-changesets-template#readme",
   "bugs": {
@@ -113,6 +114,12 @@
   "engines": {
     "node": ">=20.0.0",
     "pnpm": ">=9.0.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "vite@>=6.0.0 <=6.3.5": ">=6.3.6",
+      "tmp@<=0.2.3": ">=0.2.4"
+    }
   },
   "publishConfig": {
     "access": "public",

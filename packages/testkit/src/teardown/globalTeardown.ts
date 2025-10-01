@@ -1,33 +1,39 @@
-import { execSync } from 'child_process'
-import * as fs from 'fs'
+import { exec } from 'child_process'
+import { promisify } from 'util'
+import * as fs from 'fs/promises'
 import * as os from 'os'
 import * as path from 'path'
+import { processSpawningManager } from '../utils/concurrency.js'
+
+const execAsync = promisify(exec)
 
 type Proc = { pid: number; user: string; command: string }
 
-function dirExists(p: string): boolean {
+async function dirExists(p: string): Promise<boolean> {
   try {
-    return fs.statSync(p).isDirectory()
+    const stats = await fs.stat(p)
+    return stats.isDirectory()
   } catch {
     return false
   }
 }
 
-function fileExists(p: string): boolean {
+async function fileExists(p: string): Promise<boolean> {
   try {
-    return fs.statSync(p).isFile()
+    const stats = await fs.stat(p)
+    return stats.isFile()
   } catch {
     return false
   }
 }
 
-function findNearestProjectRoot(startDir: string): string {
+async function findNearestProjectRoot(startDir: string): Promise<string> {
   let current = startDir
   const { root } = path.parse(startDir)
   while (true) {
-    if (dirExists(path.join(current, '.git'))) return current
-    if (fileExists(path.join(current, 'pnpm-workspace.yaml'))) return current
-    if (fileExists(path.join(current, 'package.json')) && !current.includes('node_modules'))
+    if (await dirExists(path.join(current, '.git'))) return current
+    if (await fileExists(path.join(current, 'pnpm-workspace.yaml'))) return current
+    if ((await fileExists(path.join(current, 'package.json'))) && !current.includes('node_modules'))
       return current
     if (current === root) break
     current = path.dirname(current)
@@ -35,7 +41,7 @@ function findNearestProjectRoot(startDir: string): string {
   return startDir
 }
 
-function resolveLogFile(): string {
+async function resolveLogFile(): Promise<string> {
   // 1) Explicit overrides
   const envLogFile = process.env['LOG_FILE']
   if (envLogFile && envLogFile.trim().length > 0) return envLogFile
@@ -51,9 +57,8 @@ function resolveLogFile(): string {
   // 2) Try git root
   if (!baseDir) {
     try {
-      baseDir = execSync('git rev-parse --show-toplevel', { encoding: 'utf8' })
-        .trim()
-        .replace(/\r?\n/g, '')
+      const { stdout } = await execAsync('git rev-parse --show-toplevel')
+      baseDir = stdout.trim().replace(/\r?\n/g, '')
     } catch {
       // ignore
     }
@@ -61,7 +66,7 @@ function resolveLogFile(): string {
 
   // 3) Nearest project root
   if (!baseDir) {
-    baseDir = findNearestProjectRoot(process.cwd())
+    baseDir = await findNearestProjectRoot(process.cwd())
   }
 
   // 4) Fallback to cwd
@@ -71,25 +76,25 @@ function resolveLogFile(): string {
   return path.join(dir, 'agentic-test-zombies.log')
 }
 
-function ensureLogDir(filePath: string) {
+async function ensureLogDir(filePath: string): Promise<void> {
   const dir = filePath.replace(/\/[^/]*$/, '')
   try {
-    fs.mkdirSync(dir, { recursive: true })
+    await fs.mkdir(dir, { recursive: true })
   } catch {
     // ignore
   }
 }
 
-function appendLog(line: string, logFile: string) {
+async function appendLog(line: string, logFile: string): Promise<void> {
   try {
-    fs.appendFileSync(logFile, line + '\n')
+    await fs.appendFile(logFile, line + '\n')
   } catch {
     // fallback to stdout
     console.log(line)
   }
 }
 
-function findZombieProcesses(): Proc[] {
+async function findZombieProcesses(): Promise<Proc[]> {
   const platform = os.platform()
   let psCommand =
     "ps aux | grep -E 'node.*vitest|vitest|node.*test' | grep -v grep | grep -v globalTeardown"
@@ -99,7 +104,8 @@ function findZombieProcesses(): Proc[] {
   }
 
   try {
-    const output = execSync(psCommand, { encoding: 'utf8' }).trim()
+    const { stdout } = await execAsync(psCommand)
+    const output = stdout.trim()
     if (!output) return []
     const lines = output.split('\n').filter(Boolean)
     const procs: Proc[] = []
@@ -132,34 +138,48 @@ function findZombieProcesses(): Proc[] {
   }
 }
 
-function killProcesses(procs: Proc[], logFile: string) {
+async function killProcesses(
+  procs: Proc[],
+  logFile: string,
+): Promise<{ killed: number; failed: number }> {
   let killed = 0
   let failed = 0
 
-  for (const p of procs) {
+  // Process kills in parallel with concurrency control for better performance
+  const killFunctions = procs.map((p) => async () => {
     try {
       process.kill(p.pid, 'SIGTERM')
+
+      // Use setTimeout instead of execSync('sleep 0.25') for non-blocking delay
+      await new Promise((resolve) => setTimeout(resolve, 250))
+
       try {
-        execSync('sleep 0.25')
-      } catch {
-        // ignore
-      }
-      try {
-        process.kill(p.pid, 0)
+        process.kill(p.pid, 0) // Check if process still exists
         process.kill(p.pid, 'SIGKILL')
-        appendLog(`  Killed PID ${p.pid} (forced) - ${p.command}`, logFile)
+        await appendLog(`  Killed PID ${p.pid} (forced) - ${p.command}`, logFile)
       } catch {
-        appendLog(`  Killed PID ${p.pid} - ${p.command}`, logFile)
+        await appendLog(`  Killed PID ${p.pid} - ${p.command}`, logFile)
       }
-      killed++
+      return { success: true, pid: p.pid }
     } catch (err) {
       const e = err as NodeJS.ErrnoException
       if (e && e.code === 'ESRCH') {
-        appendLog(`  PID ${p.pid} already dead`, logFile)
+        await appendLog(`  PID ${p.pid} already dead`, logFile)
+        return { success: true, pid: p.pid }
       } else {
-        appendLog(`  Failed to kill PID ${p.pid}: ${String(err)}`, logFile)
-        failed++
+        await appendLog(`  Failed to kill PID ${p.pid}: ${String(err)}`, logFile)
+        return { success: false, pid: p.pid, error: err }
       }
+    }
+  })
+  const killResults = await processSpawningManager.batch(killFunctions, (fn) => fn())
+
+  // Count results
+  for (const result of killResults) {
+    if (result.success) {
+      killed++
+    } else {
+      failed++
     }
   }
 
@@ -168,34 +188,34 @@ function killProcesses(procs: Proc[], logFile: string) {
 
 export default async function globalTeardown() {
   try {
-    const logFile = resolveLogFile()
-    ensureLogDir(logFile)
+    const logFile = await resolveLogFile()
+    await ensureLogDir(logFile)
     const timestamp = new Date().toISOString()
-    appendLog(`=== Cleanup run: ${timestamp}`, logFile)
-    appendLog(`Mode: non-interactive; LOG_FILE=${logFile}`, logFile)
+    await appendLog(`=== Cleanup run: ${timestamp}`, logFile)
+    await appendLog(`Mode: non-interactive; LOG_FILE=${logFile}`, logFile)
 
-    const procs = findZombieProcesses()
-    appendLog(`Found ${procs.length} matching processes`, logFile)
+    const procs = await findZombieProcesses()
+    await appendLog(`Found ${procs.length} matching processes`, logFile)
     for (const p of procs) {
-      appendLog(`  PID=${p.pid} USER=${p.user} CMD=${p.command}`, logFile)
+      await appendLog(`  PID=${p.pid} USER=${p.user} CMD=${p.command}`, logFile)
     }
 
     if (procs.length === 0) {
-      appendLog('Nothing to kill', logFile)
+      await appendLog('Nothing to kill', logFile)
       // Always write a summary line for consistent parsing
-      appendLog('Summary: killed=0 failed=0', logFile)
-      appendLog('', logFile)
+      await appendLog('Summary: killed=0 failed=0', logFile)
+      await appendLog('', logFile)
       return
     }
 
-    const { killed, failed } = killProcesses(procs, logFile)
-    appendLog(`Summary: killed=${killed} failed=${failed}`, logFile)
-    appendLog('', logFile)
+    const { killed, failed } = await killProcesses(procs, logFile)
+    await appendLog(`Summary: killed=${killed} failed=${failed}`, logFile)
+    await appendLog('', logFile)
   } catch (err) {
     try {
-      const fallback = resolveLogFile()
-      ensureLogDir(fallback)
-      appendLog(`[error] globalTeardown failed: ${String(err)}`, fallback)
+      const fallback = await resolveLogFile()
+      await ensureLogDir(fallback)
+      await appendLog(`[error] globalTeardown failed: ${String(err)}`, fallback)
     } catch {
       // ignore
     }

@@ -13,6 +13,7 @@ export {
   useTempDirectory,
   useMultipleTempDirectories,
   createManagedTempDirectory,
+  createTempDirectoryWithResourceManager,
   cleanupTempDirectory,
   cleanupAllTempDirectories,
   getTempDirectoryCount,

@@ -24,6 +24,12 @@
 import { getRegistry, resetAll, clearCalls } from './registry.js'
 import { normalize } from './normalize.js'
 import type { ProcessMockConfig } from './process-mock.js'
+import {
+  sanitizeCommand,
+  validateCommand,
+  escapeShellArg,
+  validateShellExecution,
+} from '../security/index.js'
 
 /**
  * Options for spawn testing
@@ -81,7 +87,13 @@ export const spawnUtils = {
    */
   mockCommandSuccess: (command: string | RegExp, stdout = '', stderr = '', exitCode = 0): void => {
     const registry = getRegistry()
-    const key = typeof command === 'string' ? normalize(command) : command
+
+    // Security validation for string commands
+    if (typeof command === 'string') {
+      validateCommand(command)
+    }
+
+    const key = typeof command === 'string' ? normalize(sanitizeCommand(command)) : command
     const config: ProcessMockConfig = { stdout, stderr, exitCode }
 
     // Register for all methods by default (quad-register pattern)
@@ -103,7 +115,13 @@ export const spawnUtils = {
     stdout = '',
   ): void => {
     const registry = getRegistry()
-    const key = typeof command === 'string' ? normalize(command) : command
+
+    // Security validation for string commands
+    if (typeof command === 'string') {
+      validateCommand(command)
+    }
+
+    const key = typeof command === 'string' ? normalize(sanitizeCommand(command)) : command
     const config: ProcessMockConfig = { stdout, stderr, exitCode }
 
     // Register for all methods by default (quad-register pattern)
@@ -120,7 +138,13 @@ export const spawnUtils = {
    */
   mockCommandError: (command: string | RegExp, error: Error): void => {
     const registry = getRegistry()
-    const key = typeof command === 'string' ? normalize(command) : command
+
+    // Security validation for string commands
+    if (typeof command === 'string') {
+      validateCommand(command)
+    }
+
+    const key = typeof command === 'string' ? normalize(sanitizeCommand(command)) : command
     const config: ProcessMockConfig = { error }
 
     // Register for all methods by default (quad-register pattern)
@@ -142,7 +166,13 @@ export const spawnUtils = {
     exitCode = 0,
   ): void => {
     const registry = getRegistry()
-    const key = typeof command === 'string' ? normalize(command) : command
+
+    // Security validation for string commands
+    if (typeof command === 'string') {
+      validateCommand(command)
+    }
+
+    const key = typeof command === 'string' ? normalize(sanitizeCommand(command)) : command
     const config: ProcessMockConfig = { stdout, exitCode, delay }
 
     // Register for all methods by default (quad-register pattern)
@@ -164,11 +194,18 @@ export const spawnUtils = {
     exitCode = 0,
   ): void => {
     const registry = getRegistry()
-    const key = typeof command === 'string' ? normalize(command) : command
+
+    // Security validation for string commands
+    if (typeof command === 'string') {
+      validateCommand(command)
+    }
+
+    const key = typeof command === 'string' ? normalize(sanitizeCommand(command)) : command
 
     // For interactive commands, we simulate the full conversation
+    // Escape shell arguments in responses for security
     const fullOutput = Object.entries(responses)
-      .map(([prompt, response]) => `${prompt}\n${response}\n`)
+      .map(([prompt, response]) => `${prompt}\n${escapeShellArg(response)}\n`)
       .join('')
 
     const config: ProcessMockConfig = { stdout: fullOutput + finalOutput, exitCode }
@@ -202,6 +239,26 @@ export const spawnUtils = {
    */
   restore: (): void => {
     resetAll()
+  },
+
+  /**
+   * Validate shell execution with comprehensive security checks
+   *
+   * @param command - The base command to validate
+   * @param args - Array of arguments to escape
+   * @returns Object with validated command and escaped arguments
+   *
+   * @example
+   * ```typescript
+   * const { command, args } = spawnUtils.validateExecution('echo', ['hello', 'world; rm -rf /'])
+   * // Returns: { command: 'echo', args: ['\'hello\'', '\'world; rm -rf /\''] }
+   * ```
+   */
+  validateExecution: (
+    command: string,
+    args: string[] = [],
+  ): { command: string; args: string[] } => {
+    return validateShellExecution(command, args)
   },
 }
 
@@ -471,7 +528,14 @@ export class SpawnMockBuilder {
    */
   mock(): void {
     const registry = getRegistry()
-    const key = typeof this.command === 'string' ? normalize(this.command) : this.command
+
+    // Security validation for string commands
+    if (typeof this.command === 'string') {
+      validateCommand(this.command)
+    }
+
+    const key =
+      typeof this.command === 'string' ? normalize(sanitizeCommand(this.command)) : this.command
     const methods = this.methods || [
       'spawn',
       'exec',

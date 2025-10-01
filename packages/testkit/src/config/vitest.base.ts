@@ -13,12 +13,11 @@ import path from 'node:path'
 
 /**
  * Current coverage baseline threshold
- * Set to 68% based on actual coverage analysis (68.4% measured).
+ * Increased to 69% after implementing comprehensive improvements.
  * This provides ADHD-friendly fail-fast feedback while maintaining quality standards.
  * Adjust via COVERAGE_THRESHOLD env var or increment gradually in CI.
- * TODO: Increase back to 69% after improving test coverage
  */
-const DEFAULT_COVERAGE_THRESHOLD = 68
+const DEFAULT_COVERAGE_THRESHOLD = 69
 
 /**
  * Check if edge runtime dependency is available
@@ -47,7 +46,8 @@ function canUseEdgeRuntime(): boolean {
  */
 function hasConvexTests(): boolean {
   try {
-    const convexDir = path.join(process.cwd(), 'convex')
+    const cwd = process.cwd()
+    const convexDir = path.join(cwd, 'convex')
     return fs.existsSync(convexDir)
   } catch {
     return false
@@ -172,7 +172,16 @@ export function createVitestTimeouts(_envConfig: VitestEnvironmentConfig) {
  * Create coverage configuration
  */
 export function createVitestCoverage(envConfig: VitestEnvironmentConfig) {
-  const threshold = Number(process.env.COVERAGE_THRESHOLD) || DEFAULT_COVERAGE_THRESHOLD
+  // Use nullish coalescing to properly handle 0 as a valid threshold
+  const envThreshold = process.env.COVERAGE_THRESHOLD
+  let threshold = DEFAULT_COVERAGE_THRESHOLD
+
+  if (envThreshold !== undefined) {
+    const parsed = Number(envThreshold)
+    // Use the parsed value if it's a valid number, otherwise fall back to default
+    threshold = isNaN(parsed) ? DEFAULT_COVERAGE_THRESHOLD : parsed
+  }
+
   return {
     enabled: envConfig.isCI, // Enable coverage only in CI; speed up local/dev runs
     threshold,
@@ -207,8 +216,15 @@ export function createBaseVitestConfig(overrides: Partial<UserConfig> = {}): Use
   // 1. Use TESTKIT_LOCAL=1 env var for explicit local mode (preferred)
   // 2. Fallback to path-based detection as secondary method
   // 3. Default to published package entry
-  const isLocalTestkit =
-    process.env.TESTKIT_LOCAL === '1' || (process.cwd()?.includes('/packages/testkit') ?? false)
+  // Safely check if running in local testkit
+  let isLocalTestkit = process.env.TESTKIT_LOCAL === '1'
+  if (!isLocalTestkit) {
+    try {
+      isLocalTestkit = process.cwd().includes('/packages/testkit')
+    } catch {
+      isLocalTestkit = false
+    }
+  }
 
   const overrideSetup = Array.isArray(overrides.test?.setupFiles)
     ? (overrides.test?.setupFiles as string[])
@@ -362,11 +378,13 @@ export function createBaseVitestConfig(overrides: Partial<UserConfig> = {}): Use
   ]
 
   // Conditionally add edge-runtime project only when:
-  // - Edge runtime dependency is available (canUseEdgeRuntime returns true)
+  // - NOT explicitly disabled with TESTKIT_DISABLE_EDGE_RUNTIME=1
+  // - AND edge runtime dependency is available (canUseEdgeRuntime returns true)
   // - OR Convex tests exist in the project (hasConvexTests returns true)
   // - OR TESTKIT_ENABLE_EDGE_RUNTIME=1 is set
   const shouldIncludeEdgeRuntime =
-    process.env.TESTKIT_ENABLE_EDGE_RUNTIME === '1' || canUseEdgeRuntime() || hasConvexTests()
+    process.env.TESTKIT_DISABLE_EDGE_RUNTIME !== '1' &&
+    (process.env.TESTKIT_ENABLE_EDGE_RUNTIME === '1' || canUseEdgeRuntime() || hasConvexTests())
 
   if (shouldIncludeEdgeRuntime) {
     defaultProjects.push({
@@ -423,6 +441,13 @@ function mergeVitestConfig(base: UserConfig, override: Partial<UserConfig>): Use
     merged.test = {
       ...base.test,
       ...override.test,
+    }
+
+    // Normalize setupFiles to always be an array
+    if (override.test.setupFiles !== undefined) {
+      merged.test.setupFiles = Array.isArray(override.test.setupFiles)
+        ? override.test.setupFiles
+        : [override.test.setupFiles as string]
     }
 
     // Handle nested objects

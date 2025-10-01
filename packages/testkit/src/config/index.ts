@@ -16,3 +16,23 @@ export {
   createCIOptimizedConfig as createCIConfig,
   baseVitestConfig as defaultConfig,
 } from './vitest.base.js'
+
+// Export resource management integration for vitest
+export {
+  setupResourceCleanup,
+  enableResourceCleanup,
+  enableResourceCleanupWithDebugging,
+  useResourceManager,
+  bridgeLegacyCleanup,
+  type VitestResourceOptions,
+} from './vitest-resources.js'
+
+// Re-export resource manager types and functions for convenience
+export {
+  ResourceCategory,
+  ResourcePriority,
+  ResourceEvent,
+  type CleanupOptions,
+  type ResourceLeak,
+  type ResourceStats,
+} from '../resources/index.js'

@@ -1,6 +1,7 @@
 {
   "name": "@orchestr8/voice-vault",
   "version": "1.0.0",
+  "license": "MIT",
   "description": "TTS package with intelligent caching to maximize free tier usage",
   "repository": {
     "type": "git",

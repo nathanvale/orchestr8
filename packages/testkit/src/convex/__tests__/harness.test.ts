@@ -384,7 +384,7 @@ describeConvex('Convex Test Harness', () => {
       expect(response.ok).toBeDefined()
     })
 
-    it.skip('should handle t.fetch with modules (requires CONVEX_GENERATED)', () => {
+    it('should handle t.fetch with modules (requires CONVEX_GENERATED)', () => {
       // This test would only run when CONVEX_GENERATED=true
       // Example pattern for real projects with route handlers:
       //
@@ -504,7 +504,7 @@ describeConvex('Convex Test Harness', () => {
   })
 
   describe('Module Loading', () => {
-    it.skip('should support real modules via import.meta.glob (requires CONVEX_GENERATED)', () => {
+    it('should support real modules via import.meta.glob (requires CONVEX_GENERATED)', () => {
       // This test would only run when CONVEX_GENERATED=true
       // Example pattern for real projects:
       // const modules = import.meta.glob('./**/*.{js,ts}', { eager: true })

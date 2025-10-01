@@ -55,6 +55,7 @@ junit.xml
 
 # Claude Code
 .claude/settings.local.json
+.mcp.json
 PROJECT_INDEX.json
 
 # Agent OS

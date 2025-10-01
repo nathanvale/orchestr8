@@ -1,6 +1,7 @@
 {
   "name": "@orchestr8/testkit",
   "version": "1.0.2",
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/nathanvale/bun-changesets-template.git",
@@ -12,6 +13,7 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
+      "require": "./dist/cjs/index.cjs",
       "default": "./dist/index.js"
     },
     "./cli": {
@@ -19,6 +21,7 @@
       "development": "./dist/cli/index.js",
       "types": "./dist/cli/index.d.ts",
       "import": "./dist/cli/index.js",
+      "require": "./dist/cjs/cli/index.cjs",
       "default": "./dist/cli/index.js"
     },
     "./register": {
@@ -26,6 +29,7 @@
       "development": "./dist/register.js",
       "types": "./dist/register.d.ts",
       "import": "./dist/register.js",
+      "require": "./dist/cjs/register.cjs",
       "default": "./dist/register.js"
     },
     "./msw": {
@@ -33,11 +37,13 @@
       "development": "./dist/msw/index.js",
       "types": "./dist/msw/index.d.ts",
       "import": "./dist/msw/index.js",
+      "require": "./dist/cjs/msw/index.cjs",
       "default": "./dist/msw/index.js"
     },
     "./msw/browser": {
       "types": "./dist/msw/browser.d.ts",
       "import": "./dist/msw/browser.js",
+      "require": "./dist/cjs/msw/browser.cjs",
       "default": "./dist/msw/browser.js"
     },
     "./containers": {
@@ -45,6 +51,7 @@
       "development": "./dist/containers/index.js",
       "types": "./dist/containers/index.d.ts",
       "import": "./dist/containers/index.js",
+      "require": "./dist/cjs/containers/index.cjs",
       "default": "./dist/containers/index.js"
     },
     "./convex": {
@@ -52,6 +59,7 @@
       "development": "./dist/convex/index.js",
       "types": "./dist/convex/index.d.ts",
       "import": "./dist/convex/index.js",
+      "require": "./dist/cjs/convex/index.cjs",
       "default": "./dist/convex/index.js"
     },
     "./sqlite": {
@@ -59,6 +67,7 @@
       "development": "./dist/sqlite/index.js",
       "types": "./dist/sqlite/index.d.ts",
       "import": "./dist/sqlite/index.js",
+      "require": "./dist/cjs/sqlite/index.cjs",
       "default": "./dist/sqlite/index.js"
     },
     "./env": {
@@ -66,6 +75,7 @@
       "development": "./dist/env/index.js",
       "types": "./dist/env/index.d.ts",
       "import": "./dist/env/index.js",
+      "require": "./dist/cjs/env/index.cjs",
       "default": "./dist/env/index.js"
     },
     "./utils": {
@@ -73,6 +83,7 @@
       "development": "./dist/utils/index.js",
       "types": "./dist/utils/index.d.ts",
       "import": "./dist/utils/index.js",
+      "require": "./dist/cjs/utils/index.cjs",
       "default": "./dist/utils/index.js"
     },
     "./fs": {
@@ -80,6 +91,7 @@
       "development": "./dist/fs/index.js",
       "types": "./dist/fs/index.d.ts",
       "import": "./dist/fs/index.js",
+      "require": "./dist/cjs/fs/index.cjs",
       "default": "./dist/fs/index.js"
     },
     "./config": {
@@ -87,6 +99,7 @@
       "development": "./dist/config/index.js",
       "types": "./dist/config/index.d.ts",
       "import": "./dist/config/index.js",
+      "require": "./dist/cjs/config/index.cjs",
       "default": "./dist/config/index.js"
     },
     "./config/vitest": {
@@ -94,7 +107,16 @@
       "development": "./dist/config/vitest.base.js",
       "types": "./dist/config/vitest.base.d.ts",
       "import": "./dist/config/vitest.base.js",
+      "require": "./dist/cjs/config/vitest.base.cjs",
       "default": "./dist/config/vitest.base.js"
+    },
+    "./legacy": {
+      "vitest": "./dist/legacy/index.js",
+      "development": "./dist/legacy/index.js",
+      "types": "./dist/legacy/index.d.ts",
+      "import": "./dist/legacy/index.js",
+      "require": "./dist/cjs/legacy/index.cjs",
+      "default": "./dist/legacy/index.js"
     }
   },
   "types": "./dist/index.d.ts",
@@ -115,7 +137,12 @@
     "test:watch": "vitest watch -c ./vitest.config.ts",
     "test:ui": "vitest --ui -c ./vitest.config.ts",
     "test:coverage": "vitest run --coverage -c ./vitest.config.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "bench": "vitest bench --config vitest.bench.config.ts",
+    "bench:watch": "vitest bench --config vitest.bench.config.ts --watch",
+    "bench:ci": "vitest bench --config vitest.bench.config.ts --run --reporter=json --outputFile=bench-results.json",
+    "bench:compare": "node scripts/compare-benchmarks.js",
+    "bench:baseline": "vitest bench --config vitest.bench.config.ts --run --reporter=json --outputFile=benchmarks/baseline-generated.json"
   },
   "dependencies": {},
   "devDependencies": {

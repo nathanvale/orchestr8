@@ -8,6 +8,7 @@
 import { createMemoryUrl, type MemoryDatabaseOptions } from './memory.js'
 import { createFileDatabase, type FileDatabase } from './file.js'
 import { type Logger, consoleLogger } from './migrate.js'
+import { createExitHandler } from '../utils/process-listeners.js'
 
 /**
  * Prisma datasource configuration for testing
@@ -367,15 +368,18 @@ export function createPrismaTestEnvironment(options: PrismaTestEnvironmentOption
   )
 
   // Setup auto-cleanup if requested
-  let cleanupHandler: (() => void) | null = null
+  let removeProcessListeners: (() => void) | null = null
   if (autoCleanup) {
-    cleanupHandler = () => {
+    const cleanupHandler = () => {
       logger.info('Auto-cleanup triggered for Prisma test environment')
       // Additional cleanup logic can be added here in Phase 2
     }
-    process.on('exit', cleanupHandler)
-    process.on('SIGINT', cleanupHandler)
-    process.on('SIGTERM', cleanupHandler)
+
+    // Use ProcessListenerManager to prevent memory leaks
+    removeProcessListeners = createExitHandler(cleanupHandler, {
+      events: ['exit', 'SIGINT', 'SIGTERM'],
+      description: 'Prisma test environment cleanup',
+    })
   }
 
   return {
@@ -386,10 +390,9 @@ export function createPrismaTestEnvironment(options: PrismaTestEnvironmentOption
     },
     cleanup: () => {
       logger.info('Cleaning up Prisma test environment')
-      if (cleanupHandler) {
-        process.removeListener('exit', cleanupHandler)
-        process.removeListener('SIGINT', cleanupHandler)
-        process.removeListener('SIGTERM', cleanupHandler)
+      if (removeProcessListeners) {
+        removeProcessListeners()
+        removeProcessListeners = null
       }
     },
   }

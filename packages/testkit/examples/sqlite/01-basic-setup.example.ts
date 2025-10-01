@@ -6,22 +6,20 @@
  */
 
 import { describe, test, expect, beforeEach, afterEach } from 'vitest'
-import { createFileDatabase, applyMigrations, seedWithSql } from '@orchestr8/testkit/sqlite'
-import type { FileDatabase } from '@orchestr8/testkit/sqlite'
+import {
+  createFileDatabase,
+  migrateDatabase as _migrateDatabase,
+  seedDatabase as _seedDatabase,
+  applyRecommendedPragmas,
+  type FileDatabase
+} from '@orchestr8/testkit/sqlite'
+import Database from 'better-sqlite3'
 
-// Example types for demonstration
-interface Database {
-  exec(sql: string): void
-  get<T = unknown>(sql: string, params?: unknown[]): T | undefined
-  all<T = unknown>(sql: string, params?: unknown[]): T[]
-  close(): Promise<void>
-}
-
-// Mock database connection function for example
-declare function connectToDatabase(url: string): Promise<Database>
+// Note: This example assumes you have better-sqlite3 installed
+// Install with: npm install better-sqlite3 @types/better-sqlite3
 
 describe('Basic SQLite Test Setup', () => {
-  let db: Database
+  let db: Database.Database
   let fileDb: FileDatabase
 
   beforeEach(async () => {
@@ -29,18 +27,33 @@ describe('Basic SQLite Test Setup', () => {
     fileDb = await createFileDatabase('test.db')
 
     // 2. Connect to the database
-    db = await connectToDatabase(fileDb.url)
+    db = new Database(fileDb.path)
 
-    // 3. Apply schema migrations
-    await applyMigrations(db, {
-      dir: './migrations',
-      glob: '*.sql',
+    // 3. Apply recommended SQLite settings
+    await applyRecommendedPragmas(db, {
+      journalMode: 'WAL',
+      foreignKeys: true,
+      busyTimeoutMs: 5000
     })
 
-    // 4. Seed with test data
-    await seedWithSql(
-      db,
-      `
+    // 4. Create schema (in real app, use migrateDatabase)
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY,
+        name TEXT NOT NULL,
+        email TEXT UNIQUE NOT NULL
+      );
+      
+      CREATE TABLE IF NOT EXISTS posts (
+        id INTEGER PRIMARY KEY,
+        title TEXT NOT NULL,
+        author_id INTEGER NOT NULL,
+        FOREIGN KEY (author_id) REFERENCES users(id)
+      );
+    `)
+
+    // 5. Seed with test data
+    const seedSql = `
       INSERT INTO users (id, name, email) VALUES
         (1, 'Alice', 'alice@example.com'),
         (2, 'Bob', 'bob@example.com');
@@ -48,38 +61,63 @@ describe('Basic SQLite Test Setup', () => {
       INSERT INTO posts (id, title, author_id) VALUES
         (1, 'First Post', 1),
         (2, 'Second Post', 2);
-    `,
-    )
+    `
+    db.exec(seedSql)
   })
 
   afterEach(async () => {
     // Important: Close database before cleanup
-    await db.close()
+    db.close()
     await fileDb.cleanup()
   })
 
-  test('should create and query users', async () => {
-    const user = db.get<{ id: number; name: string; email: string }>(
-      'SELECT * FROM users WHERE id = ?',
-      [1],
-    )
+  test('should create and query users', () => {
+    const user = db.prepare('SELECT * FROM users WHERE id = ?').get(1) as 
+      { id: number; name: string; email: string } | undefined
 
     expect(user).toBeDefined()
     expect(user?.name).toBe('Alice')
     expect(user?.email).toBe('alice@example.com')
   })
 
-  test('should have isolated data between tests', async () => {
+  test('should handle foreign key constraints', () => {
+    // Try to insert post with invalid author_id
+    expect(() => {
+      db.prepare('INSERT INTO posts (title, author_id) VALUES (?, ?)')
+        .run('Invalid Post', 999)
+    }).toThrow() // Should fail due to foreign key constraint
+  })
+
+  test('should have isolated data between tests', () => {
     // This test has its own fresh database
-    const users = db.all('SELECT * FROM users')
+    const users = db.prepare('SELECT * FROM users').all()
     expect(users).toHaveLength(2) // Only seeded data
 
     // Add test-specific data
-    db.exec(`INSERT INTO users (name, email) VALUES ('Charlie', 'charlie@example.com')`)
+    db.prepare('INSERT INTO users (name, email) VALUES (?, ?)')
+      .run('Charlie', 'charlie@example.com')
 
-    const updatedUsers = db.all('SELECT * FROM users')
+    const updatedUsers = db.prepare('SELECT * FROM users').all()
     expect(updatedUsers).toHaveLength(3)
 
     // This change won't affect other tests
+  })
+
+  test('should support transactions', () => {
+    const insertUser = db.prepare('INSERT INTO users (name, email) VALUES (?, ?)')
+    const insertPost = db.prepare('INSERT INTO posts (title, author_id) VALUES (?, ?)')
+    
+    const transaction = db.transaction(() => {
+      const result = insertUser.run('David', 'david@example.com')
+      insertPost.run('David\'s Post', result.lastInsertRowid)
+    })
+    
+    transaction()
+    
+    const users = db.prepare('SELECT * FROM users').all()
+    const posts = db.prepare('SELECT * FROM posts').all()
+    
+    expect(users).toHaveLength(3) // 2 seeded + 1 new
+    expect(posts).toHaveLength(3) // 2 seeded + 1 new
   })
 })

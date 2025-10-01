@@ -41,6 +41,7 @@
 import { readdir, readFile, stat, writeFile } from 'node:fs/promises'
 import { createHash } from 'node:crypto'
 import { extname, join } from 'node:path'
+import { sanitizeSqlIdentifier } from '../security/index.js'
 
 /**
  * Logger interface for customizable logging in SQLite operations
@@ -325,17 +326,28 @@ export async function resetDatabase<
     // Drop objects in safe order within a transaction
     if (objects.length > 0) {
       const dropStatements = objects.map((obj) => {
+        // Sanitize object names to prevent SQL injection
+        let sanitizedName: string
+        try {
+          sanitizedName = sanitizeSqlIdentifier(obj.name)
+        } catch (err) {
+          logger.warn(
+            `Skipping object with invalid name: ${obj.name} (${err instanceof Error ? err.message : String(err)})`,
+          )
+          return `-- Skipped invalid object name: ${obj.name}`
+        }
+
         switch (obj.type) {
           case 'trigger':
-            return `DROP TRIGGER IF EXISTS "${obj.name}";`
+            return `DROP TRIGGER IF EXISTS "${sanitizedName}";`
           case 'view':
-            return `DROP VIEW IF EXISTS "${obj.name}";`
+            return `DROP VIEW IF EXISTS "${sanitizedName}";`
           case 'index':
-            return `DROP INDEX IF EXISTS "${obj.name}";`
+            return `DROP INDEX IF EXISTS "${sanitizedName}";`
           case 'table':
-            return `DROP TABLE IF EXISTS "${obj.name}";`
+            return `DROP TABLE IF EXISTS "${sanitizedName}";`
           default:
-            return `-- Unknown type: ${obj.type} ${obj.name}`
+            return `-- Unknown type: ${obj.type} ${sanitizedName}`
         }
       })
 

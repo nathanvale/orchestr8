@@ -57,23 +57,3 @@ export { viteDemoHandlers } from './example-handlers/vite-demo.js'
 // Convenience re-exports from MSW
 export { http, HttpResponse, delay } from 'msw'
 export type { RequestHandler } from 'msw'
-
-/**
- * Backward compatibility - legacy function names
- * @deprecated Use setupMSW instead
- */
-export { setupMSW as setupMSWLegacy } from './setup.js'
-
-/**
- * Backward compatibility - create mock handler
- * @deprecated Use createSuccessResponse with http.get/post/etc instead
- */
-export function createMockHandler(endpoint: string, response: unknown) {
-  console.warn(
-    'createMockHandler is deprecated. Use http handlers with createSuccessResponse instead.',
-  )
-  return {
-    endpoint,
-    response,
-  }
-}

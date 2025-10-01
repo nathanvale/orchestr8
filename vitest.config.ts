@@ -27,8 +27,11 @@ export default defineConfig(
       coverage: {
         enabled: process.env['CI'] === 'true',
         provider: 'v8' as const,
-        reporter: process.env['CI'] === 'true' ? ['json', 'clover'] : ['text', 'html'],
-        reportsDirectory: './test-results/coverage',
+        reporter:
+          process.env['CI'] === 'true'
+            ? ['lcov', 'json-summary', 'json', 'text']
+            : ['text', 'html'],
+        reportsDirectory: './coverage',
         exclude: [
           'node_modules/',
           'dist/',

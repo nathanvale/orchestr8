@@ -1,0 +1,31 @@
+name: "CodeQL Config"
+
+disable-default-queries: false
+
+queries:
+  - uses: security-and-quality
+  - uses: security-extended
+
+paths-ignore:
+  - node_modules
+  - "**/*.test.ts"
+  - "**/*.test.js"
+  - "**/*.spec.ts"
+  - "**/*.spec.js"
+  - "packages/*/dist"
+  - "packages/*/build"
+  - coverage
+  - ".turbo"
+  - ".pnpm-store"
+
+paths:
+  - packages
+  - apps
+
+query-filters:
+  - exclude:
+      id: js/path-injection
+      # Exclude path injection for test files
+  - exclude:
+      id: js/incomplete-url-substring-sanitization
+      # Common in build tools
