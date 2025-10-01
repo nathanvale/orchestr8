@@ -40,7 +40,7 @@ jobs:
     env:
       VITEST_SILENT: 'true'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Setup PNPM with Caching
         uses: ./.github/actions/setup-pnpm
         with:
@@ -67,7 +67,7 @@ jobs:
     env:
       VITEST_SILENT: 'true'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
       - name: Setup PNPM with Caching
@@ -112,7 +112,7 @@ jobs:
     if: ${{ !cancelled() }}
     timeout-minutes: 4
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Setup PNPM with Caching
         uses: ./.github/actions/setup-pnpm
         with:
@@ -127,7 +127,7 @@ jobs:
     if: ${{ !cancelled() }}
     timeout-minutes: 8
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Setup PNPM with Caching
         uses: ./.github/actions/setup-pnpm
         with:
@@ -143,7 +143,7 @@ jobs:
     env:
       VITEST_SILENT: 'true'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Setup PNPM with Caching
         uses: ./.github/actions/setup-pnpm
         with:
@@ -170,7 +170,7 @@ jobs:
     if: ${{ !cancelled() && needs.quick-tests.result == 'success' && needs.lint-quality.result == 'success' && needs.typecheck.result == 'success' && needs.unit-tests.result == 'success' }}
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Setup PNPM with Caching
         uses: ./.github/actions/setup-pnpm
         with:
@@ -207,7 +207,7 @@ jobs:
     env:
       VITEST_SILENT: 'true'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Setup PNPM with Caching
         uses: ./.github/actions/setup-pnpm
         with:
@@ -232,7 +232,7 @@ jobs:
     timeout-minutes: 5
     if: github.event_name == 'pull_request'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
       - name: Setup PNPM with Caching
@@ -251,7 +251,7 @@ jobs:
     timeout-minutes: 20
     if: github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref_name == 'main')
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0  # Needed for comparison with baseline
       - name: Setup PNPM with Caching
@@ -316,7 +316,7 @@ jobs:
     env:
       VITEST_SILENT: 'true'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Setup PNPM with Caching
         uses: ./.github/actions/setup-pnpm
         with:
@@ -359,7 +359,7 @@ jobs:
     steps:
       - name: Download all JUnit artifacts
         if: always()
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           pattern: junit-*
           merge-multiple: true
@@ -462,7 +462,7 @@ jobs:
       pages: write
       id-token: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
       - name: Setup PNPM with Caching
@@ -471,7 +471,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           pnpm-version: ${{ env.PNPM_VERSION }}
       - name: Download Aggregated JUnit
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: junit-all-${{ github.run_number }}
           path: aggregated-junit
@@ -525,7 +525,7 @@ jobs:
           # Zip raw XML for easy download
           (cd test-report && zip -q -r junit.zip junit/*.xml || true)
       - name: Upload Pages Artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v4
         with:
           path: test-report
       - name: Deploy to GitHub Pages

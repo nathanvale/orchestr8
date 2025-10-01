@@ -35,7 +35,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Setup PNPM with Caching
         uses: ./.github/actions/setup-pnpm
         with:
@@ -86,7 +86,7 @@ jobs:
       matrix:
         test-type: [unit, integration]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Setup PNPM with Caching
         uses: ./.github/actions/setup-pnpm
         with:
@@ -130,7 +130,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Setup PNPM with Caching
         uses: ./.github/actions/setup-pnpm
         with:
@@ -164,7 +164,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Setup PNPM with Caching
         uses: ./.github/actions/setup-pnpm
         with:
@@ -197,7 +197,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Setup PNPM with Caching
         uses: ./.github/actions/setup-pnpm
         with:
@@ -278,7 +278,7 @@ jobs:
 
       - name: Create Issue if Failed
         if: failure()
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const title = `🚨 Weekly Paranoid Tests Failed - ${new Date().toISOString().split('T')[0]}`;
