@@ -62,7 +62,7 @@ export {
   DEFAULT_CONCURRENCY_LIMITS,
   type ConcurrencyOptions,
   type BatchOptions,
-} from './concurrency'
+} from './concurrency.js'
 
 // Export object pooling functions
 export {
@@ -81,7 +81,7 @@ export {
   type ObjectValidator,
   type ObjectPoolOptions,
   type PoolStats,
-} from './object-pool'
+} from './object-pool.js'
 
 /**
  * Wait for a specified amount of time
