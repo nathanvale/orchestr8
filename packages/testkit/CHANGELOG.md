@@ -1,5 +1,14 @@
 # @orchestr8/testkit
 
+## 1.0.7
+
+### Patch Changes
+
+- [#146](https://github.com/nathanvale/orchestr8/pull/146)
+  [`6c929a1`](https://github.com/nathanvale/orchestr8/commit/6c929a1c556abb744e248083aeb32f1ff085c6ca)
+  Thanks [@nathanvale](https://github.com/nathanvale)! - fix: update repository
+  URLs to match actual GitHub repository for npm provenance validation
+
 ## 1.0.6
 
 ### Patch Changes
