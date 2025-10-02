@@ -27,7 +27,6 @@ describe('Package Exports', () => {
 
       // Should have config utilities
       expect(mainExport.createVitestConfig).toBeDefined()
-      expect(mainExport.defineVitestConfig).toBeDefined()
 
       // Types are exported but not available at runtime (TypeScript types)
       // This is expected - types are compile-time only
@@ -74,7 +73,6 @@ describe('Package Exports', () => {
       const configExport = await import('../config/index.js')
 
       expect(configExport.createVitestConfig).toBeDefined()
-      expect(configExport.defineVitestConfig).toBeDefined()
       expect(configExport.createBaseVitestConfig).toBeDefined()
     })
 

@@ -6,7 +6,7 @@
  * for stability and performance.
  */
 
-import { defineConfig, type UserConfig } from 'vitest/config'
+import type { UserConfig } from 'vitest/config'
 import { getTestEnvironment, getTestTimeouts } from '../env/core.js'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -423,13 +423,6 @@ export function createBaseVitestConfig(overrides: Partial<UserConfig> = {}): Use
  * Default base configuration export
  */
 export const baseVitestConfig = createBaseVitestConfig()
-
-/**
- * Convenience function to create a Vitest config with base settings
- */
-export function defineVitestConfig(overrides: Partial<UserConfig> = {}) {
-  return defineConfig(createBaseVitestConfig(overrides))
-}
 
 /**
  * Deep merge Vitest configurations

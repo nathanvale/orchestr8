@@ -14,7 +14,6 @@ import {
   createVitestPoolOptions,
   createVitestTimeouts,
   createWallabyOptimizedConfig,
-  defineVitestConfig,
   type VitestEnvironmentConfig,
 } from '../vitest.base.js'
 
@@ -655,40 +654,6 @@ describe('vitest.base', () => {
       expect(config.test?.isolate).toBe(true)
       expect(config.test?.include).toBeDefined()
       expect(config.test?.exclude).toBeDefined()
-    })
-  })
-
-  describe('defineVitestConfig', () => {
-    it('should return a defineConfig result', () => {
-      const config = defineVitestConfig()
-
-      expect(config).toHaveProperty('test')
-      expect(typeof config).toBe('object')
-    })
-
-    it('should accept overrides', () => {
-      const config = defineVitestConfig({
-        test: {
-          environment: 'happy-dom',
-        },
-      })
-
-      expect(config.test?.environment).toBe('happy-dom')
-    })
-
-    it('should handle defineVitestConfig with complex overrides', () => {
-      const config = defineVitestConfig({
-        test: {
-          environment: 'jsdom',
-          setupFiles: ['./custom-setup.ts'],
-        },
-        plugins: [],
-      })
-
-      expect(config).toBeDefined()
-      expect(config.test?.environment).toBe('jsdom')
-      expect(config.test?.setupFiles).toEqual(['./custom-setup.ts'])
-      expect(config.plugins).toEqual([])
     })
   })
 

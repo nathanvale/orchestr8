@@ -6,7 +6,6 @@
  * during test lifecycle events.
  */
 
-import { beforeEach, afterEach, afterAll } from 'vitest'
 import {
   cleanupAllResources,
   getResourceStats,
@@ -15,6 +14,19 @@ import {
   type ResourceLeak,
   ResourceCategory,
 } from '../resources/index.js'
+
+/**
+ * Lazy import of vitest hooks to prevent config-time loading
+ * These should only be imported when actually setting up tests, not during config loading
+ */
+async function getVitestHooks() {
+  const vitest = await import('vitest')
+  return {
+    beforeEach: vitest.beforeEach,
+    afterEach: vitest.afterEach,
+    afterAll: vitest.afterAll,
+  }
+}
 
 /**
  * Options for vitest resource management setup
@@ -80,8 +92,9 @@ const DEFAULT_VITEST_RESOURCE_OPTIONS: Required<VitestResourceOptions> = {
  * })
  * ```
  */
-export function setupResourceCleanup(options: VitestResourceOptions = {}): void {
+export async function setupResourceCleanup(options: VitestResourceOptions = {}): Promise<void> {
   const config = { ...DEFAULT_VITEST_RESOURCE_OPTIONS, ...options }
+  const { beforeEach, afterEach, afterAll } = await getVitestHooks()
 
   // Store initial resource count to detect leaks from previous tests
   let initialResourceCount = 0
@@ -202,8 +215,8 @@ export function setupResourceCleanup(options: VitestResourceOptions = {}): void 
  * enableResourceCleanup()
  * ```
  */
-export function enableResourceCleanup(): void {
-  setupResourceCleanup()
+export async function enableResourceCleanup(): Promise<void> {
+  await setupResourceCleanup()
 }
 
 /**
@@ -219,8 +232,8 @@ export function enableResourceCleanup(): void {
  * enableResourceCleanupWithDebugging()
  * ```
  */
-export function enableResourceCleanupWithDebugging(): void {
-  setupResourceCleanup({
+export async function enableResourceCleanupWithDebugging(): Promise<void> {
+  await setupResourceCleanup({
     enableLeakDetection: true,
     logStats: true,
     cleanupOptions: {

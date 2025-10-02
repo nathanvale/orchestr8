@@ -11,7 +11,6 @@ export * from './vitest.base.js'
 // Export commonly used configuration presets for convenience
 export {
   createBaseVitestConfig as createVitestConfig,
-  defineVitestConfig,
   createWallabyOptimizedConfig as createWallabyConfig,
   createCIOptimizedConfig as createCIConfig,
   baseVitestConfig as defaultConfig,
