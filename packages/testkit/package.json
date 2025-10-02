@@ -46,6 +46,12 @@
       "require": "./dist/cjs/msw/browser.cjs",
       "default": "./dist/msw/browser.js"
     },
+    "./msw/handlers": {
+      "types": "./dist/msw/handlers.d.ts",
+      "import": "./dist/msw/handlers.js",
+      "require": "./dist/cjs/msw/handlers.cjs",
+      "default": "./dist/msw/handlers.js"
+    },
     "./containers": {
       "vitest": "./dist/containers/index.js",
       "development": "./dist/containers/index.js",

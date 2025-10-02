@@ -34,6 +34,12 @@ import { createManagedTempDirectory, type TempDirectory } from '../fs/index.js'
 import { registerResource, ResourceCategory } from '../resources/index.js'
 import { type SQLiteConnectionPool } from './pool.js'
 
+/**
+ * Interface representing a file-based SQLite database.
+ * Use `createFileDatabase()` or `createFileDBWithPool()` to create instances.
+ *
+ * Note: This is a TypeScript interface and cannot be used with `new` or `instanceof`.
+ */
 export interface FileDatabase {
   /** SQLite file URL (file:/path/to/db.sqlite) */
   url: string

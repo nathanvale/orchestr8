@@ -15,7 +15,7 @@ export {
   type SecurityValidationType,
   type SecurityValidationOptions,
   type ValidationResult,
-} from '../security'
+} from '../security/index.js'
 
 // Export resource management functions
 export {
@@ -44,7 +44,7 @@ export {
   isAsyncCleanupFunction,
   DEFAULT_CATEGORY_PRIORITIES,
   DEFAULT_CATEGORY_TIMEOUTS,
-} from '../resources'
+} from '../resources/index.js'
 
 // Export concurrency control functions
 export {
