@@ -1,5 +1,18 @@
 # @orchestr8/testkit
 
+## 1.0.8
+
+### Patch Changes
+
+- [#148](https://github.com/nathanvale/orchestr8/pull/148)
+  [`9cf9c38`](https://github.com/nathanvale/orchestr8/commit/9cf9c3878a7758e662e2566aa4322c1f9c5cc3af)
+  Thanks [@nathanvale](https://github.com/nathanvale)! - Fix ES module
+  compatibility issues
+  - Fixed directory imports in utils/index.ts - now uses explicit .js extensions
+    for security and resources imports
+  - Added missing export for msw/handlers module in package.json
+  - Improved FileDatabase type export to prevent "is not a constructor" errors
+
 ## 1.0.7
 
 ### Patch Changes
