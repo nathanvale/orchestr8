@@ -1,21 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
 describe('Package Export API', () => {
-  it('should export defineVitestConfig from config/vitest', async () => {
-    let vitestExports: Record<string, unknown>
-    try {
-      const spec = ['@orchestr8', 'testkit', 'config', 'vitest'].join('/')
-      vitestExports = await import(spec)
-    } catch (err) {
-      // Fallback to source when running locally without dist build
-      vitestExports = await import('../src/config/vitest.base')
-      void err
-    }
-    expect(vitestExports).toBeDefined()
-    expect(vitestExports.defineVitestConfig).toBeDefined()
-    expect(typeof vitestExports.defineVitestConfig).toBe('function')
-  })
-
   it('should export createBaseVitestConfig from config/vitest', async () => {
     let vitestExports: Record<string, unknown>
     try {
@@ -30,19 +15,19 @@ describe('Package Export API', () => {
     expect(typeof vitestExports.createBaseVitestConfig).toBe('function')
   })
 
-  it('should create a valid vitest config using defineVitestConfig', async () => {
-    let defineVitestConfig: any
+  it('should create a valid vitest config using createBaseVitestConfig', async () => {
+    let createBaseVitestConfig: any
     try {
       const spec = ['@orchestr8', 'testkit', 'config', 'vitest'].join('/')
       const module = await import(spec)
-      defineVitestConfig = module.defineVitestConfig
+      createBaseVitestConfig = module.createBaseVitestConfig
     } catch (err) {
       // Fallback to source when running locally without dist build
       const module = await import('../src/config/vitest.base')
-      defineVitestConfig = module.defineVitestConfig
+      createBaseVitestConfig = module.createBaseVitestConfig
       void err
     }
-    const config = defineVitestConfig({
+    const config = createBaseVitestConfig({
       test: {
         name: 'consumer-test',
       },

@@ -89,7 +89,7 @@ export {
 } from '@orchestr8/testkit'
 
 // Vitest configuration
-export { createVitestConfig, defineVitestConfig } from '@orchestr8/testkit'
+export { createVitestConfig } from '@orchestr8/testkit'
 
 // Types
 export type { TestConfig, TestEnvironment, TestKit } from '@orchestr8/testkit'
