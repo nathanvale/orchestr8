@@ -5,7 +5,7 @@
 
 import { http } from 'msw'
 import type { RequestHandler } from 'msw'
-import { createSuccessResponse } from '../handlers'
+import { createSuccessResponse } from '../handlers.js'
 
 // Types for the Vite demo app
 export interface LogEntry {
