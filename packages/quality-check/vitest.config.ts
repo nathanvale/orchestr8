@@ -4,9 +4,16 @@ export default defineConfig({
   test: {
     name: 'quality-check',
     environment: 'node',
-    // Disable coverage for quality-check (no tests yet)
     coverage: {
-      enabled: false,
+      enabled: process.env['CI'] === 'true',
+      provider: 'v8',
+      // Allow 0% coverage for packages without real tests
+      thresholds: {
+        statements: 0,
+        branches: 0,
+        functions: 0,
+        lines: 0,
+      },
     },
   },
 })
