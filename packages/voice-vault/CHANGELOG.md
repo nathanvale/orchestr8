@@ -1,5 +1,25 @@
 # @claude-hooks/voice-vault
 
+## 1.0.1
+
+### Patch Changes
+
+- [#144](https://github.com/nathanvale/orchestr8/pull/144)
+  [`85e245c`](https://github.com/nathanvale/orchestr8/commit/85e245c7f10443e6d91de540553a7720f28a4269)
+  Thanks [@nathanvale](https://github.com/nathanvale)! - Add placeholder tests
+  for packages without tests to fix CI validation
+
+- [#142](https://github.com/nathanvale/orchestr8/pull/142)
+  [`e2c1c8a`](https://github.com/nathanvale/orchestr8/commit/e2c1c8a821cf555a16713822a46a07fd53885642)
+  Thanks [@nathanvale](https://github.com/nathanvale)! - Disable coverage
+  requirements for voice-vault package (contains only example files, no real
+  tests)
+
+- [#145](https://github.com/nathanvale/orchestr8/pull/145)
+  [`2d572f5`](https://github.com/nathanvale/orchestr8/commit/2d572f54d8c1c382fd3fd2d688aca6d7377dbcdd)
+  Thanks [@nathanvale](https://github.com/nathanvale)! - chore: cleanup GitHub
+  workflows to minimal validate and release
+
 ## 1.0.0
 
 ### Major Changes

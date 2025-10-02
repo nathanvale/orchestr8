@@ -1,5 +1,20 @@
 # @orchestr8/testkit
 
+## 1.0.6
+
+### Patch Changes
+
+- [#140](https://github.com/nathanvale/orchestr8/pull/140)
+  [`aac644f`](https://github.com/nathanvale/orchestr8/commit/aac644fc767fc5848011cea5f94e78c987f0c31c)
+  Thanks [@nathanvale](https://github.com/nathanvale)! - Fix flaky performance
+  test by increasing timeout threshold from 200ms to 300ms to account for slower
+  CI runners
+
+- [#145](https://github.com/nathanvale/orchestr8/pull/145)
+  [`2d572f5`](https://github.com/nathanvale/orchestr8/commit/2d572f54d8c1c382fd3fd2d688aca6d7377dbcdd)
+  Thanks [@nathanvale](https://github.com/nathanvale)! - chore: cleanup GitHub
+  workflows to minimal validate and release
+
 ## 1.0.5
 
 ### Patch Changes

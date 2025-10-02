@@ -1,5 +1,24 @@
 # @claude-hooks/quality-check
 
+## 1.0.2
+
+### Patch Changes
+
+- [#144](https://github.com/nathanvale/orchestr8/pull/144)
+  [`85e245c`](https://github.com/nathanvale/orchestr8/commit/85e245c7f10443e6d91de540553a7720f28a4269)
+  Thanks [@nathanvale](https://github.com/nathanvale)! - Add placeholder tests
+  for packages without tests to fix CI validation
+
+- [#143](https://github.com/nathanvale/orchestr8/pull/143)
+  [`f511f80`](https://github.com/nathanvale/orchestr8/commit/f511f80f3201a03e3df588b83ad7a875e2c97ea5)
+  Thanks [@nathanvale](https://github.com/nathanvale)! - Disable coverage
+  requirements for quality-check package (no tests yet)
+
+- [#145](https://github.com/nathanvale/orchestr8/pull/145)
+  [`2d572f5`](https://github.com/nathanvale/orchestr8/commit/2d572f54d8c1c382fd3fd2d688aca6d7377dbcdd)
+  Thanks [@nathanvale](https://github.com/nathanvale)! - chore: cleanup GitHub
+  workflows to minimal validate and release
+
 ## 1.0.1
 
 ### Patch Changes
