@@ -4,13 +4,13 @@
   "private": true,
   "license": "MIT",
   "description": "Node.js + pnpm monorepo template with Next.js, Turborepo, Vitest, Changesets & ADHD-optimized DX",
-  "homepage": "https://github.com/nathanvale/bun-changesets-template#readme",
+  "homepage": "https://github.com/nathanvale/orchestr8#readme",
   "bugs": {
-    "url": "https://github.com/nathanvale/bun-changesets-template/issues"
+    "url": "https://github.com/nathanvale/orchestr8/issues"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/nathanvale/bun-changesets-template.git"
+    "url": "https://github.com/nathanvale/orchestr8.git"
   },
   "sideEffects": false,
   "type": "module",
