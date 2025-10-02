@@ -1,5 +1,39 @@
 # @orchestr8/testkit
 
+## 1.0.9
+
+### Patch Changes
+
+- [#150](https://github.com/nathanvale/orchestr8/pull/150)
+  [`6724138`](https://github.com/nathanvale/orchestr8/commit/6724138092e07a1eb954d87c650f8f39cc55e5ca)
+  Thanks [@nathanvale](https://github.com/nathanvale)! - Fix ES module
+  compatibility issues
+  - Fixed directory imports in utils/index.ts - now uses explicit .js extensions
+    for security and resources imports
+  - Added missing export for msw/handlers module in package.json
+  - Improved FileDatabase type export to prevent "is not a constructor" errors
+
+- [#150](https://github.com/nathanvale/orchestr8/pull/150)
+  [`6724138`](https://github.com/nathanvale/orchestr8/commit/6724138092e07a1eb954d87c650f8f39cc55e5ca)
+  Thanks [@nathanvale](https://github.com/nathanvale)! - Fix critical ESM module
+  resolution issues
+
+  Fixed ERR_MODULE_NOT_FOUND errors by adding missing .js extensions to relative
+  imports in TypeScript source files. This resolves build issues where certain
+  JavaScript files were not being generated correctly when using tsup with
+  bundle: false for ESM builds.
+
+  **Changes:**
+  - Added .js extensions to utils/concurrency and object-pool imports
+  - Added .js extension to msw/handlers import
+
+  **Impact:**
+  - dist/utils/concurrency.js now generates correctly
+  - dist/utils/object-pool.js now generates correctly
+  - dist/msw/handlers.js now generates correctly
+
+  All 1359 tests pass.
+
 ## 1.0.8
 
 ### Patch Changes
