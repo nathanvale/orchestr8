@@ -1,5 +1,112 @@
 # @orchestr8/testkit
 
+## 2.0.0
+
+### Major Changes
+
+- [#152](https://github.com/nathanvale/orchestr8/pull/152)
+  [`3b79cad`](https://github.com/nathanvale/orchestr8/commit/3b79cad64498ced5e0cdd70fe6664c48c9554055)
+  Thanks [@nathanvale](https://github.com/nathanvale)! - **BREAKING CHANGE**:
+  Remove `defineVitestConfig` to fix "Vitest failed to access its internal
+  state" error
+
+  ## What Changed
+  - **Removed**: `defineVitestConfig` function and export
+  - **Fixed**: Config helpers no longer import vitest internals during config
+    loading
+  - **Fixed**: Made vitest-resources imports lazy to prevent config-time loading
+
+  ## Why This Change
+
+  Vitest config files cannot import vitest internals (like `defineConfig`,
+  `beforeEach`, `afterEach`) because these require the vitest runtime to be
+  initialized. When `defineVitestConfig` imported `defineConfig` from
+  `vitest/config`, it caused the error:
+
+  ```
+  Error: Vitest failed to access its internal state.
+  - "vitest" is imported inside Vite / Vitest config file
+  ```
+
+  This prevented any project using TestKit's config helpers from running tests.
+
+  ## Migration Guide
+
+  **Before:**
+
+  ```typescript
+  import { defineConfig } from 'vitest/config'
+  import { defineVitestConfig } from '@orchestr8/testkit/config'
+
+  export default defineVitestConfig({
+    test: {
+      name: 'my-package',
+      environment: 'node',
+    },
+  })
+  ```
+
+  **After:**
+
+  ```typescript
+  import { defineConfig } from 'vitest/config'
+  import { createBaseVitestConfig } from '@orchestr8/testkit/config'
+
+  export default defineConfig(
+    createBaseVitestConfig({
+      test: {
+        name: 'my-package',
+        environment: 'node',
+      },
+    }),
+  )
+  ```
+
+  ## Impact
+  - **Breaking**: Projects using `defineVitestConfig` must update to use
+    `createBaseVitestConfig` wrapped in `defineConfig`
+  - **Fixed**: All config helpers now work correctly without triggering vitest
+    state errors
+  - **Improved**: Resource cleanup functions are now async (prevents config-time
+    vitest imports)
+
+  ## Related Issues
+
+  Fixes the critical issue reported in
+  `/Users/nathanvale/code/capture-bridge/docs/support-ticket-testkit-config-vitest-state-error.md`
+
+### Patch Changes
+
+- [#152](https://github.com/nathanvale/orchestr8/pull/152)
+  [`3b79cad`](https://github.com/nathanvale/orchestr8/commit/3b79cad64498ced5e0cdd70fe6664c48c9554055)
+  Thanks [@nathanvale](https://github.com/nathanvale)! - Fix ES module
+  compatibility issues
+  - Fixed directory imports in utils/index.ts - now uses explicit .js extensions
+    for security and resources imports
+  - Added missing export for msw/handlers module in package.json
+  - Improved FileDatabase type export to prevent "is not a constructor" errors
+
+- [#152](https://github.com/nathanvale/orchestr8/pull/152)
+  [`3b79cad`](https://github.com/nathanvale/orchestr8/commit/3b79cad64498ced5e0cdd70fe6664c48c9554055)
+  Thanks [@nathanvale](https://github.com/nathanvale)! - Fix critical ESM module
+  resolution issues
+
+  Fixed ERR_MODULE_NOT_FOUND errors by adding missing .js extensions to relative
+  imports in TypeScript source files. This resolves build issues where certain
+  JavaScript files were not being generated correctly when using tsup with
+  bundle: false for ESM builds.
+
+  **Changes:**
+  - Added .js extensions to utils/concurrency and object-pool imports
+  - Added .js extension to msw/handlers import
+
+  **Impact:**
+  - dist/utils/concurrency.js now generates correctly
+  - dist/utils/object-pool.js now generates correctly
+  - dist/msw/handlers.js now generates correctly
+
+  All 1359 tests pass.
+
 ## 1.0.9
 
 ### Patch Changes
