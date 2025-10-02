@@ -5,7 +5,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/nathanvale/bun-changesets-template.git",
+    "url": "https://github.com/nathanvale/orchestr8.git",
     "directory": "apps/app"
   },
   "type": "module",

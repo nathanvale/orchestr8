@@ -5,7 +5,7 @@
   "description": "TTS package with intelligent caching to maximize free tier usage",
   "repository": {
     "type": "git",
-    "url": "https://github.com/nathanvale/bun-changesets-template.git",
+    "url": "https://github.com/nathanvale/orchestr8.git",
     "directory": "packages/voice-vault"
   },
   "sideEffects": false,
