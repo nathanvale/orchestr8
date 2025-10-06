@@ -58,7 +58,7 @@
     "@types/proper-lockfile": "^4.1.4",
     "@types/write-file-atomic": "^4.0.0",
     "js-yaml": "^4.1.0",
-    "typescript": "~5.7.2",
+    "typescript": "~5.9.3",
     "vitest": "^3.2.4"
   },
   "engines": {
