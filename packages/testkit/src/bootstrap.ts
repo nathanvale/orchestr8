@@ -1,4 +1,6 @@
 import { vi } from 'vitest'
+import { getSqliteGuardConfig } from './guards/config.js'
+import { SqliteLeakGuard } from './guards/sqlite-guard.js'
 
 // ============================================================================
 // TESTKIT BOOTSTRAP
@@ -55,18 +57,16 @@ vi.mock('child_process', async () => {
 
 // Module-level guard instance for SQLite leak detection
 let __sqliteGuardModule: {
-  guard: import('./guards/sqlite-guard.js').SqliteLeakGuard
-  config: import('./guards/config.js').SqliteGuardConfig
+  guard: SqliteLeakGuard
+  config: ReturnType<typeof getSqliteGuardConfig>
 } | null = null
 
-async function getSqliteGuard() {
+function getSqliteGuard() {
   if (!__sqliteGuardModule) {
     try {
-      const { getSqliteGuardConfig } = await import('./guards/config.js')
       const config = getSqliteGuardConfig()
 
       if (config.enabled) {
-        const { SqliteLeakGuard } = await import('./guards/sqlite-guard.js')
         __sqliteGuardModule = {
           guard: new SqliteLeakGuard(config),
           config,
@@ -88,7 +88,7 @@ async function getSqliteGuard() {
 
 // Mock better-sqlite3 to track database connections
 vi.mock('better-sqlite3', async () => {
-  const guardModule = await getSqliteGuard()
+  const guardModule = getSqliteGuard()
 
   // If guard not enabled or not available, return actual module
   if (!guardModule) {
