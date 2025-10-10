@@ -30,6 +30,21 @@ if (hasAnyGuardsEnabled()) {
   void setupGuards()
 }
 
+// Global cleanup for SQLite poolManager singleton
+// This prevents pool maintenance intervals from leaking between test files
+import { afterAll } from 'vitest'
+afterAll(async () => {
+  try {
+    const { poolManager } = await import('./sqlite/pool.js')
+    await poolManager.drainAll()
+  } catch (error) {
+    // Silently ignore if sqlite module not available
+    if (process.env.DEBUG_TESTKIT) {
+      console.warn('[Register] Failed to drain poolManager:', error)
+    }
+  }
+})
+
 import type { TestConfig, TestEnvironment } from './types.js'
 
 /**
