@@ -12,7 +12,7 @@
  * - Verbose mode: logs forced closures for debugging
  */
 
-import { afterEach, afterAll, vi } from 'vitest'
+import { afterEach, afterAll } from 'vitest'
 import type { getSqliteGuardConfig } from './config.js'
 
 type SqliteGuardConfig = ReturnType<typeof getSqliteGuardConfig>
@@ -50,7 +50,7 @@ interface ForcedClosure {
 /**
  * SQLite leak guard manager
  */
-class SqliteLeakGuard {
+export class SqliteLeakGuard {
   private trackedDbs = new Set<DatabaseMetadata>()
   private forcedClosures: ForcedClosure[] = []
   private config: SqliteGuardConfig
@@ -193,45 +193,21 @@ function isBetterSqlite3Available(): boolean {
 }
 
 /**
- * Setup SQLite leak guard with Vitest mocking
+ * Setup SQLite leak guard cleanup hooks
+ *
+ * Note: The vi.mock for better-sqlite3 is handled in bootstrap.ts to ensure proper hoisting.
+ * This function only installs the cleanup hooks.
  */
 export function setupSqliteGuard(config: SqliteGuardConfig): void {
-  // Skip if better-sqlite3 is not installed
-  if (!isBetterSqlite3Available()) {
+  // Skip if better-sqlite3 is not installed or guard not enabled
+  if (!config.enabled || !isBetterSqlite3Available()) {
     if (config.verbose) {
-      console.log('[SQLite Guard] better-sqlite3 not found, skipping guard setup')
+      console.log('[SQLite Guard] Skipping setup - not enabled or better-sqlite3 not found')
     }
     return
   }
 
   const guard = new SqliteLeakGuard(config)
-
-  // Mock better-sqlite3 with Proxy-wrapped constructor
-  vi.mock('better-sqlite3', async () => {
-    const actual = (await vi.importActual('better-sqlite3')) as {
-      default: new (...args: unknown[]) => Database
-      [key: string]: unknown
-    }
-
-    // Wrap the constructor with a Proxy to track instances
-    const ProxiedDatabase = new Proxy(actual.default, {
-      construct(target, args: unknown[]) {
-        // Create the real database instance
-        const db = new target(...(args as ConstructorParameters<typeof target>)) as Database
-
-        // Track the instance
-        guard.trackDatabase(db)
-
-        return db
-      },
-    })
-
-    // Return the module with wrapped constructor
-    return {
-      ...actual,
-      default: ProxiedDatabase,
-    }
-  })
 
   // Install cleanup hooks
   afterEach(() => {
@@ -251,6 +227,6 @@ export function setupSqliteGuard(config: SqliteGuardConfig): void {
   })
 
   if (config.verbose) {
-    console.log('[SQLite Guard] Enabled with config:', config)
+    console.log('[SQLite Guard] Cleanup hooks installed with config:', config)
   }
 }

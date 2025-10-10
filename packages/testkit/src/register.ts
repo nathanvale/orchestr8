@@ -21,11 +21,12 @@ import { afterEach } from 'vitest'
 import { removeAllProcessListeners } from './utils/process-listeners.js'
 afterEach(() => removeAllProcessListeners())
 
-// Conditionally enable leak guards based on configuration
-// Guards provide automatic cleanup of leaked resources (SQLite DBs, timers, etc.)
+// Conditionally enable leak guard cleanup hooks
+// Note: vi.mock for better-sqlite3 is handled in bootstrap.ts for proper hoisting
+// This only sets up the afterEach/afterAll cleanup hooks
 import { hasAnyGuardsEnabled, setupGuards } from './guards/index.js'
 if (hasAnyGuardsEnabled()) {
-  // Setup guards asynchronously (won't block test execution)
+  // Setup guard cleanup hooks asynchronously
   void setupGuards()
 }
 
