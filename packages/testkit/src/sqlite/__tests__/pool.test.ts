@@ -86,7 +86,7 @@ describe('SQLiteConnectionPool', () => {
         minConnections: 1,
         idleTimeout: 5000,
         acquireTimeout: 2000,
-        })
+      })
     })
 
     it('should acquire and release a single connection', async () => {
@@ -136,7 +136,7 @@ describe('SQLiteConnectionPool', () => {
       pool = new SQLiteConnectionPool(dbPath, {
         validateConnections: true,
         maxConnections: 2,
-        })
+      })
 
       const db = await pool.acquire()
 
@@ -157,7 +157,7 @@ describe('SQLiteConnectionPool', () => {
       pool = new SQLiteConnectionPool(dbPath, {
         validateConnections: true,
         maxConnections: 2,
-        })
+      })
 
       const db = await pool.acquire()
       await pool.release(db)
@@ -179,7 +179,7 @@ describe('SQLiteConnectionPool', () => {
         maxConnections: 2,
         minConnections: 0,
         acquireTimeout: 1000,
-        })
+      })
     })
 
     it('should enforce maximum connection limit', async () => {
@@ -262,7 +262,7 @@ describe('SQLiteConnectionPool', () => {
         maxConnections: 3,
         idleTimeout: 1500, // 1.5 seconds for faster tests
         validateConnections: true,
-        })
+      })
     })
 
     it('should apply pragma settings to new connections', async () => {
@@ -271,7 +271,7 @@ describe('SQLiteConnectionPool', () => {
           foreign_keys: 'ON',
           journal_mode: 'WAL',
         },
-        })
+      })
 
       const db = await pool.acquire()
 
@@ -288,7 +288,7 @@ describe('SQLiteConnectionPool', () => {
     it('should handle shared cache pragma setting', async () => {
       pool = new SQLiteConnectionPool(dbPath, {
         enableSharedCache: true,
-        })
+      })
 
       const db = await pool.acquire()
 
@@ -305,7 +305,7 @@ describe('SQLiteConnectionPool', () => {
         minConnections: 0,
         idleTimeout: 1500,
         validateConnections: true,
-        })
+      })
 
       const db1 = await pool.acquire()
       const db2 = await pool.acquire()
@@ -330,7 +330,7 @@ describe('SQLiteConnectionPool', () => {
       pool = new SQLiteConnectionPool(dbPath, {
         maxConnections: 3,
         minConnections: 1,
-        })
+      })
     })
 
     it('should track connection creation and destruction', async () => {
@@ -384,7 +384,7 @@ describe('SQLiteConnectionPool', () => {
       pool = new SQLiteConnectionPool(dbPath, {
         maxConnections: 5,
         acquireTimeout: 2000,
-        })
+      })
     })
 
     it('should handle concurrent acquisitions', async () => {
@@ -422,7 +422,7 @@ describe('SQLiteConnectionPool', () => {
             expect(result.value).toBe(i)
 
             await pool.release(conn)
-            })(),
+          })(),
         )
       }
 
@@ -437,7 +437,7 @@ describe('SQLiteConnectionPool', () => {
     beforeEach(() => {
       pool = new SQLiteConnectionPool(dbPath, {
         maxConnections: 3,
-        })
+      })
     })
 
     it('should drain all connections and reject new acquisitions', async () => {
@@ -483,6 +483,36 @@ describe('SQLiteConnectionPool', () => {
       await pool.release(db2).catch(() => {})
       await pool.release(db3).catch(() => {})
     })
+
+    it('should prevent connection creation during shutdown', async () => {
+      // Start draining the pool
+      const drainPromise = pool.drain()
+
+      // Attempt to create a connection via acquire during shutdown should fail
+      await expect(pool.acquire()).rejects.toThrow(
+        'Cannot acquire connection from shutting down pool',
+      )
+
+      await drainPromise
+    })
+
+    it('should skip warmup during shutdown', async () => {
+      pool = new SQLiteConnectionPool(dbPath, {
+        minConnections: 2,
+        maxConnections: 5,
+      })
+
+      // Start draining
+      const drainPromise = pool.drain()
+
+      // Attempt warmup during shutdown should complete without creating connections
+      await pool.warmUp()
+
+      const stats = pool.getStats()
+      expect(stats.totalConnections).toBe(0)
+
+      await drainPromise
+    })
   })
 
   describe('Pool Warming and Minimum Connections', () => {
@@ -490,7 +520,7 @@ describe('SQLiteConnectionPool', () => {
       pool = new SQLiteConnectionPool(dbPath, {
         minConnections: 2,
         maxConnections: 5,
-        })
+      })
 
       await pool.warmUp()
 
@@ -504,7 +534,7 @@ describe('SQLiteConnectionPool', () => {
         minConnections: 2,
         maxConnections: 5,
         idleTimeout: 1000, // Short for testing
-        })
+      })
 
       // Create more connections than minimum
       const connections = await Promise.all([
@@ -543,9 +573,9 @@ describe('SQLiteConnectionPool', () => {
 
       pool = new SQLiteConnectionPool(dbPath, {
         pragmaSettings: {
-          'invalid!!pragma': 'bad value'
+          'invalid!!pragma': 'bad value',
         },
-        })
+      })
 
       // Should still work despite pragma error
       const db = await pool.acquire()
@@ -564,7 +594,7 @@ describe('SQLiteConnectionPool', () => {
       // Create a fresh pool for this test
       pool = new SQLiteConnectionPool(dbPath, {
         maxConnections: 3,
-        })
+      })
 
       const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
 
@@ -576,12 +606,17 @@ describe('SQLiteConnectionPool', () => {
       if (!db.open) {
         // Database already closed, manually add a connection to force error
         pool['connections'].set('test-conn', {
-          database: { open: true, close: () => { throw new Error('Simulated close error') } },
+          database: {
+            open: true,
+            close: () => {
+              throw new Error('Simulated close error')
+            },
+          },
           createdAt: Date.now(),
           lastUsedAt: Date.now(),
           inUse: false,
-          id: 'test-conn'
-          })
+          id: 'test-conn',
+        })
       } else {
         // Corrupt the database object to force an error
 
@@ -589,7 +624,7 @@ describe('SQLiteConnectionPool', () => {
           value: () => {
             throw new Error('Simulated close error')
           },
-          writable: false
+          writable: false,
         })
       }
 

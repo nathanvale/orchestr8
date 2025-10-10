@@ -67,6 +67,22 @@ describe('SQLite Guard Configuration', () => {
       expect(config.enabled).toBe(expected)
     }
   })
+
+  it('should use default value for unknown boolean formats', async () => {
+    // Test invalid/unknown values fall back to default (false)
+    process.env.TESTKIT_SQLITE_GUARD = 'invalid-value'
+    vi.resetModules()
+    const { getSqliteGuardConfig } = await import('../config.js')
+    const config = getSqliteGuardConfig()
+    expect(config.enabled).toBe(false) // Should use default
+
+    // Test with strict mode too
+    process.env.TESTKIT_SQLITE_GUARD_STRICT = 'maybe'
+    vi.resetModules()
+    const { getSqliteGuardConfig: getConfig2 } = await import('../config.js')
+    const config2 = getConfig2()
+    expect(config2.strict).toBe(false) // Should use default
+  })
 })
 
 describe('Timers Guard Configuration', () => {
