@@ -342,6 +342,10 @@ export class SQLiteConnectionPool {
    * Warm up the pool by creating minimum connections
    */
   async warmUp(): Promise<void> {
+    if (this.isShuttingDown) {
+      return
+    }
+
     const connectionsToCreate = Math.max(0, this.options.minConnections - this.connections.size)
 
     const createFunctions = Array.from(
@@ -379,6 +383,11 @@ export class SQLiteConnectionPool {
    * Create a new database connection
    */
   private async createConnection(): Promise<PooledConnection> {
+    // Prevent connection creation during shutdown
+    if (this.isShuttingDown) {
+      throw new Error('Pool is shutting down')
+    }
+
     // Note: better-sqlite3 v12+ doesn't support shared cache via constructor options
     // Shared cache is enabled globally or via pragma
     const database = new Database(this.databasePath)
