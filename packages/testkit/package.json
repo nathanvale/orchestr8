@@ -123,6 +123,30 @@
       "import": "./dist/legacy/index.js",
       "require": "./dist/cjs/legacy/index.cjs",
       "default": "./dist/legacy/index.js"
+    },
+    "./guards": {
+      "vitest": "./dist/guards/index.js",
+      "development": "./dist/guards/index.js",
+      "types": "./dist/guards/index.d.ts",
+      "import": "./dist/guards/index.js",
+      "require": "./dist/cjs/guards/index.cjs",
+      "default": "./dist/guards/index.js"
+    },
+    "./guards/sqlite": {
+      "vitest": "./dist/guards/sqlite-guard.js",
+      "development": "./dist/guards/sqlite-guard.js",
+      "types": "./dist/guards/sqlite-guard.d.ts",
+      "import": "./dist/guards/sqlite-guard.js",
+      "require": "./dist/cjs/guards/sqlite-guard.cjs",
+      "default": "./dist/guards/sqlite-guard.js"
+    },
+    "./guards/timers": {
+      "vitest": "./dist/guards/timers-guard.js",
+      "development": "./dist/guards/timers-guard.js",
+      "types": "./dist/guards/timers-guard.d.ts",
+      "import": "./dist/guards/timers-guard.js",
+      "require": "./dist/cjs/guards/timers-guard.cjs",
+      "default": "./dist/guards/timers-guard.js"
     }
   },
   "types": "./dist/index.d.ts",

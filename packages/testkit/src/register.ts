@@ -21,6 +21,14 @@ import { afterEach } from 'vitest'
 import { removeAllProcessListeners } from './utils/process-listeners.js'
 afterEach(() => removeAllProcessListeners())
 
+// Conditionally enable leak guards based on configuration
+// Guards provide automatic cleanup of leaked resources (SQLite DBs, timers, etc.)
+import { hasAnyGuardsEnabled, setupGuards } from './guards/index.js'
+if (hasAnyGuardsEnabled()) {
+  // Setup guards asynchronously (won't block test execution)
+  void setupGuards()
+}
+
 import type { TestConfig, TestEnvironment } from './types.js'
 
 /**

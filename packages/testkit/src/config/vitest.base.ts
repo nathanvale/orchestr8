@@ -336,11 +336,25 @@ export function createBaseVitestConfig(overrides: Partial<UserConfig> = {}): Use
       },
 
       // Reporter configuration
-      reporters: config.environment.isCI
-        ? ['verbose', 'junit']
-        : config.environment.isWallaby
-          ? ['verbose']
-          : ['default'],
+      reporters: (() => {
+        const baseReporters = config.environment.isCI
+          ? ['verbose', 'junit']
+          : config.environment.isWallaby
+            ? ['verbose']
+            : ['default']
+
+        // Conditionally add hanging-process reporter for debugging process hangs
+        // Enabled by default in CI to help diagnose leaked handles
+        const shouldReportHangs =
+          process.env.TESTKIT_REPORT_HANGS === 'on' ||
+          (config.environment.isCI && process.env.TESTKIT_REPORT_HANGS !== 'off')
+
+        if (shouldReportHangs && !baseReporters.includes('hanging-process')) {
+          return [...baseReporters, 'hanging-process']
+        }
+
+        return baseReporters
+      })(),
 
       // Output configuration
       outputFile: config.environment.isCI
