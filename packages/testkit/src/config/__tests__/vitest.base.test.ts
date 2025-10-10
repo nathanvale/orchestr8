@@ -578,11 +578,12 @@ describe('vitest.base', () => {
     })
 
     it('should configure reporters correctly for each environment', () => {
-      // CI environment
+      // CI environment (hanging-process reporter auto-enabled)
       process.env.CI = 'true'
       delete process.env.WALLABY_ENV
+      delete process.env.TESTKIT_REPORT_HANGS // Let it default to 'on' in CI
       const ciConfig = createBaseVitestConfig()
-      expect(ciConfig.test?.reporters).toEqual(['verbose', 'junit'])
+      expect(ciConfig.test?.reporters).toEqual(['verbose', 'junit', 'hanging-process'])
       expect(ciConfig.test?.outputFile).toEqual({ junit: './test-results/junit.xml' })
 
       // Wallaby environment
