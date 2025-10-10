@@ -30,17 +30,17 @@ if (hasAnyGuardsEnabled()) {
   void setupGuards()
 }
 
-// Global cleanup for SQLite poolManager singleton
-// This prevents pool maintenance intervals from leaking between test files
+// Global cleanup for all registered resources (including SQLite pools)
+// This prevents resource leaks (e.g., pool maintenance intervals) between test files
 import { afterAll } from 'vitest'
+import { cleanupAllResources } from './resources/index.js'
 afterAll(async () => {
   try {
-    const { poolManager } = await import('./sqlite/pool.js')
-    await poolManager.drainAll()
+    await cleanupAllResources({ continueOnError: true })
   } catch (error) {
-    // Silently ignore if sqlite module not available
+    // Silently ignore cleanup errors
     if (process.env.DEBUG_TESTKIT) {
-      console.warn('[Register] Failed to drain poolManager:', error)
+      console.warn('[Register] Failed to cleanup resources:', error)
     }
   }
 })
