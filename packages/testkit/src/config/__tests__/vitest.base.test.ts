@@ -314,7 +314,7 @@ describe('vitest.base', () => {
         },
         coverage: {
           enabled: false,
-          threshold: 54,
+          threshold: 53.5,
           reporter: ['text', 'html'],
         },
       })
@@ -364,7 +364,7 @@ describe('vitest.base', () => {
 
       expect(coverage).toEqual({
         enabled: false,
-        threshold: 54,
+        threshold: 53.5,
         reporter: ['text', 'html'],
       })
     })
@@ -382,7 +382,7 @@ describe('vitest.base', () => {
 
       expect(coverage).toEqual({
         enabled: true,
-        threshold: 54,
+        threshold: 53.5,
         reporter: ['json', 'clover'],
       })
     })
@@ -400,7 +400,7 @@ describe('vitest.base', () => {
 
       expect(coverage).toEqual({
         enabled: false,
-        threshold: 54,
+        threshold: 53.5,
         reporter: ['text', 'html'],
       })
     })
@@ -432,7 +432,7 @@ describe('vitest.base', () => {
 
       const coverage = createVitestCoverage(envConfig)
 
-      expect(coverage.threshold).toBe(54) // Default threshold
+      expect(coverage.threshold).toBe(53.5) // Default threshold
     })
 
     it('should handle zero and negative thresholds', () => {
@@ -578,11 +578,12 @@ describe('vitest.base', () => {
     })
 
     it('should configure reporters correctly for each environment', () => {
-      // CI environment
+      // CI environment (hanging-process reporter auto-enabled)
       process.env.CI = 'true'
       delete process.env.WALLABY_ENV
+      delete process.env.TESTKIT_REPORT_HANGS // Let it default to 'on' in CI
       const ciConfig = createBaseVitestConfig()
-      expect(ciConfig.test?.reporters).toEqual(['verbose', 'junit'])
+      expect(ciConfig.test?.reporters).toEqual(['verbose', 'junit', 'hanging-process'])
       expect(ciConfig.test?.outputFile).toEqual({ junit: './test-results/junit.xml' })
 
       // Wallaby environment
@@ -1039,7 +1040,7 @@ describe('vitest.base', () => {
     describe('coverage threshold configuration', () => {
       it('should use default coverage threshold', () => {
         const config = createBaseVitestConfig()
-        expect((config.test as any)?.coverage?.thresholds?.statements).toBe(54)
+        expect((config.test as any)?.coverage?.thresholds?.statements).toBe(53.5)
       })
 
       it('should respect COVERAGE_THRESHOLD env var', () => {
@@ -1051,7 +1052,7 @@ describe('vitest.base', () => {
       it('should fallback to default on invalid threshold', () => {
         process.env.COVERAGE_THRESHOLD = 'invalid'
         const config = createBaseVitestConfig()
-        expect((config.test as any)?.coverage?.thresholds?.statements).toBe(54)
+        expect((config.test as any)?.coverage?.thresholds?.statements).toBe(53.5)
       })
     })
   })

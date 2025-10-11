@@ -1,4 +1,6 @@
 import { vi } from 'vitest'
+import { getSqliteGuardConfig } from './guards/config.js'
+import { SqliteLeakGuard } from './guards/sqlite-guard.js'
 
 // ============================================================================
 // TESTKIT BOOTSTRAP
@@ -47,6 +49,79 @@ vi.mock('node:child_process', async () => {
 // Also mock the non-prefixed specifier to catch all imports
 vi.mock('child_process', async () => {
   return getChildProcessMock()
+})
+
+// ============================================================================
+// SQLITE GUARD MOCKING (better-sqlite3)
+// ============================================================================
+
+// Module-level guard instance for SQLite leak detection
+let __sqliteGuardModule: {
+  guard: SqliteLeakGuard
+  config: ReturnType<typeof getSqliteGuardConfig>
+} | null = null
+
+function getSqliteGuard() {
+  if (!__sqliteGuardModule) {
+    try {
+      const config = getSqliteGuardConfig()
+
+      if (config.enabled) {
+        __sqliteGuardModule = {
+          guard: new SqliteLeakGuard(config),
+          config,
+        }
+
+        if (config.verbose) {
+          console.log('[Bootstrap] SQLite Guard enabled:', config)
+        }
+      }
+    } catch (error) {
+      // Silently fail if guards module not available
+      if (process.env.DEBUG_TESTKIT) {
+        console.warn('[Bootstrap] Failed to load SQLite guard:', error)
+      }
+    }
+  }
+  return __sqliteGuardModule
+}
+
+// Mock better-sqlite3 to track database connections
+vi.mock('better-sqlite3', async () => {
+  const guardModule = getSqliteGuard()
+
+  // If guard not enabled or not available, return actual module
+  if (!guardModule) {
+    return vi.importActual('better-sqlite3')
+  }
+
+  // Better-sqlite3 Database interface (minimal subset needed for tracking)
+  interface Database {
+    readonly name: string
+    readonly open: boolean
+    readonly readonly: boolean
+    readonly memory: boolean
+    close(): void
+  }
+
+  const actual = (await vi.importActual('better-sqlite3')) as {
+    default: new (...args: unknown[]) => Database
+    [key: string]: unknown
+  }
+
+  // Wrap the constructor with a Proxy to track instances
+  const ProxiedDatabase = new Proxy(actual.default, {
+    construct(target, args: unknown[]) {
+      const db = new target(...(args as ConstructorParameters<typeof target>))
+      guardModule.guard.trackDatabase(db)
+      return db
+    },
+  })
+
+  return {
+    ...actual,
+    default: ProxiedDatabase,
+  }
 })
 
 // Future mock declarations will go here:
