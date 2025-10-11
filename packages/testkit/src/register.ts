@@ -43,6 +43,10 @@ afterAll(async () => {
       console.warn('[Register] Failed to cleanup resources:', error)
     }
   }
+
+  // Clean up process listeners after entire suite completes
+  // This prevents file handles from keeping the process alive
+  removeAllProcessListeners()
 })
 
 import type { TestConfig, TestEnvironment } from './types.js'
@@ -98,6 +102,25 @@ export function getTestConfig(): TestConfig {
 export function isTestEnvironment(env: keyof TestEnvironment): boolean {
   const config = getTestConfig()
   return Boolean(config.environment[env])
+}
+
+// Parent process cleanup for fork pool scenarios
+// The parent Vitest process never runs afterAll hooks, only fork workers do.
+// We need to clean up process listeners when the parent process exits.
+if (typeof process !== 'undefined') {
+  const parentProcessCleanup = () => {
+    try {
+      removeAllProcessListeners()
+    } catch (error) {
+      // Silently ignore cleanup errors during exit
+      if (process.env.DEBUG_TESTKIT) {
+        console.warn('[Register] Parent process cleanup error:', error)
+      }
+    }
+  }
+
+  // Register exit cleanup for parent process (fork pool coordinator)
+  process.on('exit', parentProcessCleanup)
 }
 
 // Global type extension
