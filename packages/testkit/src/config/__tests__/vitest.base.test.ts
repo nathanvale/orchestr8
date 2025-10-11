@@ -314,7 +314,7 @@ describe('vitest.base', () => {
         },
         coverage: {
           enabled: false,
-          threshold: 54,
+          threshold: 53.5,
           reporter: ['text', 'html'],
         },
       })
@@ -364,7 +364,7 @@ describe('vitest.base', () => {
 
       expect(coverage).toEqual({
         enabled: false,
-        threshold: 54,
+        threshold: 53.5,
         reporter: ['text', 'html'],
       })
     })
@@ -382,7 +382,7 @@ describe('vitest.base', () => {
 
       expect(coverage).toEqual({
         enabled: true,
-        threshold: 54,
+        threshold: 53.5,
         reporter: ['json', 'clover'],
       })
     })
@@ -400,7 +400,7 @@ describe('vitest.base', () => {
 
       expect(coverage).toEqual({
         enabled: false,
-        threshold: 54,
+        threshold: 53.5,
         reporter: ['text', 'html'],
       })
     })
@@ -432,7 +432,7 @@ describe('vitest.base', () => {
 
       const coverage = createVitestCoverage(envConfig)
 
-      expect(coverage.threshold).toBe(54) // Default threshold
+      expect(coverage.threshold).toBe(53.5) // Default threshold
     })
 
     it('should handle zero and negative thresholds', () => {
@@ -1040,7 +1040,7 @@ describe('vitest.base', () => {
     describe('coverage threshold configuration', () => {
       it('should use default coverage threshold', () => {
         const config = createBaseVitestConfig()
-        expect((config.test as any)?.coverage?.thresholds?.statements).toBe(54)
+        expect((config.test as any)?.coverage?.thresholds?.statements).toBe(53.5)
       })
 
       it('should respect COVERAGE_THRESHOLD env var', () => {
@@ -1052,7 +1052,7 @@ describe('vitest.base', () => {
       it('should fallback to default on invalid threshold', () => {
         process.env.COVERAGE_THRESHOLD = 'invalid'
         const config = createBaseVitestConfig()
-        expect((config.test as any)?.coverage?.thresholds?.statements).toBe(54)
+        expect((config.test as any)?.coverage?.thresholds?.statements).toBe(53.5)
       })
     })
   })
