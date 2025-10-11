@@ -1,5 +1,41 @@
 # @orchestr8/testkit
 
+## 2.1.0
+
+### Minor Changes
+
+- [#165](https://github.com/nathanvale/orchestr8/pull/165)
+  [`fb8eb41`](https://github.com/nathanvale/orchestr8/commit/fb8eb41f216fcba4b1f652dfe31721b6933809ae)
+  Thanks [@nathanvale](https://github.com/nathanvale)! - feat: add SQLite leak
+  guard and open-handle hygiene
+
+  Adds automatic detection and cleanup of resource leaks (SQLite databases,
+  timers) that prevent Vitest processes from exiting cleanly.
+
+  **Features:**
+  - SQLite Leak Guard: auto-closes leaked better-sqlite3 connections
+  - Timers Guard: auto-clears leaked setTimeout/setInterval
+  - Hanging-Process Reporter: auto-enables in CI for debugging
+  - Strict mode: fails tests if leaks detected
+  - Verbose mode: logs forced closures for debugging
+
+  **Configuration (opt-in):**
+  - `TESTKIT_SQLITE_GUARD=on` - Enable SQLite leak detection
+  - `TESTKIT_SQLITE_GUARD_STRICT=on` - Fail on leaks
+  - `TESTKIT_SQLITE_GUARD_VERBOSE=on` - Log closures
+  - `TESTKIT_TIMERS_GUARD=on` - Enable timer cleanup
+  - `TESTKIT_REPORT_HANGS=on` - Enable hanging-process reporter (default in CI)
+
+  **Usage:**
+
+  ```bash
+  export TESTKIT_SQLITE_GUARD=on
+  pnpm test
+  ```
+
+  Fixes hanging Vitest processes that timeout after 20+ seconds. With guards
+  enabled, processes exit cleanly within 2 seconds.
+
 ## 2.0.0
 
 ### Major Changes
