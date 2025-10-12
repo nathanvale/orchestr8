@@ -19,11 +19,14 @@ vi.mock('../../utils/index.js', () => ({
   }),
 }))
 
+// Shared console spy for all tests
+let consoleLogSpy: ReturnType<typeof vi.spyOn>
+
 describe('createTestSetup', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
-    // Clear console logs
-    vi.spyOn(console, 'log').mockImplementation(() => {})
+    vi.restoreAllMocks()
+    // Create shared console spy
+    consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
   })
 
   it('should call setupResourceCleanup with default options', async () => {
@@ -76,8 +79,6 @@ describe('createTestSetup', () => {
     const originalEnv = process.env['NODE_ENV']
     process.env['NODE_ENV'] = 'test'
 
-    const consoleLogSpy = vi.spyOn(console, 'log')
-
     await createTestSetup({ packageName: 'my-test-package' })
 
     expect(consoleLogSpy).toHaveBeenCalledWith(
@@ -96,8 +97,6 @@ describe('createTestSetup', () => {
     const originalEnv = process.env['NODE_ENV']
     process.env['NODE_ENV'] = 'production'
 
-    const consoleLogSpy = vi.spyOn(console, 'log')
-
     await createTestSetup({ packageName: 'my-test-package' })
 
     expect(consoleLogSpy).not.toHaveBeenCalled()
@@ -113,8 +112,6 @@ describe('createTestSetup', () => {
   it('should log without package name when logStats is true', async () => {
     const originalEnv = process.env['NODE_ENV']
     process.env['NODE_ENV'] = 'test'
-
-    const consoleLogSpy = vi.spyOn(console, 'log')
 
     await createTestSetup({ logStats: true })
 
@@ -146,14 +143,5 @@ describe('createTestSetup', () => {
         excludeCategories: [],
       }),
     )
-  })
-})
-
-describe('setup module side effects', () => {
-  it('should execute createTestSetup on import', () => {
-    // This test verifies that the module executes setup on import
-    // The actual execution happens via `void createTestSetup()` at module level
-    // We verify this by checking that setupResourceCleanup was called during module load
-    expect(configModule.setupResourceCleanup).toHaveBeenCalled()
   })
 })

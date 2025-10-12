@@ -34,6 +34,7 @@ export default defineConfig([
       'config/vitest.base': 'src/config/vitest.base.ts',
       'legacy/index': 'src/legacy/index.ts',
       'setup/index': 'src/setup/index.ts',
+      'setup/auto': 'src/setup/auto.ts',
     },
     format: ['cjs'],
     outDir: 'dist/cjs',

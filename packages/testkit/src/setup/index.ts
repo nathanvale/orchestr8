@@ -1,18 +1,18 @@
 /**
  * Pre-configured test setup with automatic resource cleanup
  *
- * This module provides a zero-config setup for TestKit resource cleanup.
- * Simply add '@orchestr8/testkit/setup' to your vitest setupFiles to get
- * automatic resource management with sensible defaults.
+ * This module provides the core setup function for TestKit resource cleanup.
+ * For zero-config automatic setup, use '@orchestr8/testkit/setup/auto'.
+ * For custom configuration, import and call createTestSetup() with your options.
  *
- * @example
+ * @example Zero-config automatic setup
  * ```typescript
  * // vitest.config.ts
  * export default defineConfig({
  *   test: {
  *     setupFiles: [
  *       '@orchestr8/testkit/register',
- *       '@orchestr8/testkit/setup',  // ← Automatic cleanup
+ *       '@orchestr8/testkit/setup/auto',  // ← Automatic cleanup
  *     ],
  *   },
  * })
@@ -20,12 +20,13 @@
  *
  * @example Custom configuration
  * ```typescript
- * // test-setup.ts (only if you need customization)
+ * // test-setup.ts
  * import { createTestSetup } from '@orchestr8/testkit/setup'
  *
  * await createTestSetup({
  *   packageName: 'my-package',
- *   logStats: true
+ *   logStats: true,
+ *   cleanupAfterEach: false  // Custom override
  * })
  * ```
  */
@@ -91,8 +92,3 @@ export async function createTestSetup(options: TestSetupOptions = {}): Promise<v
     console.log('✅ TestKit resource cleanup configured')
   }
 }
-
-// Apply recommended defaults for most projects when imported as a setupFile
-// This makes it work seamlessly when added to vitest.config.ts setupFiles
-// Using void to handle async without top-level await (for CJS compatibility)
-void createTestSetup()
