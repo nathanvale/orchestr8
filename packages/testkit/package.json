@@ -32,6 +32,14 @@
       "require": "./dist/cjs/register.cjs",
       "default": "./dist/register.js"
     },
+    "./setup": {
+      "vitest": "./dist/setup/index.js",
+      "development": "./dist/setup/index.js",
+      "types": "./dist/setup/index.d.ts",
+      "import": "./dist/setup/index.js",
+      "require": "./dist/cjs/setup/index.cjs",
+      "default": "./dist/setup/index.js"
+    },
     "./msw": {
       "vitest": "./dist/msw/index.js",
       "development": "./dist/msw/index.js",
