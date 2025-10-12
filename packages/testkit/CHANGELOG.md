@@ -1,5 +1,53 @@
 # @orchestr8/testkit
 
+## 2.2.0
+
+### Minor Changes
+
+- [#172](https://github.com/nathanvale/orchestr8/pull/172)
+  [`d6e5c11`](https://github.com/nathanvale/orchestr8/commit/d6e5c116d0dcda8366360c2d3660fbb531f2a31c)
+  Thanks [@nathanvale](https://github.com/nathanvale)! - Add pre-configured test
+  setup module with automatic resource cleanup
+
+  Introduces `@orchestr8/testkit/setup` and `@orchestr8/testkit/setup/auto`
+  modules to eliminate test-setup.ts boilerplate across packages.
+
+  **Features:**
+  - `@orchestr8/testkit/setup` - Manual configuration with `createTestSetup()`
+    factory
+  - `@orchestr8/testkit/setup/auto` - Zero-config auto-executing setup for
+    vitest setupFiles
+  - Centralized resource cleanup with sensible defaults
+  - Optional package name logging and statistics
+  - Full TypeScript support with proper type exports
+
+  **Usage:**
+
+  Zero-config (auto-executing):
+
+  ```typescript
+  // vitest.config.ts
+  export default defineConfig({
+    test: {
+      setupFiles: ['@orchestr8/testkit/setup/auto'],
+    },
+  })
+  ```
+
+  Custom configuration:
+
+  ```typescript
+  import { createTestSetup } from '@orchestr8/testkit/setup'
+
+  await createTestSetup({
+    packageName: 'my-package',
+    cleanupAfterEach: false,
+    logStats: true,
+  })
+  ```
+
+  This eliminates 101 lines of duplicated boilerplate code across packages.
+
 ## 2.1.2
 
 ### Patch Changes
