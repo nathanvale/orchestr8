@@ -34,6 +34,18 @@ export default [
   // TypeScript rules
   ...typescript.configs.recommended,
 
+  // TypeScript parser configuration for proper project service initialization
+  // Required for monorepo with project references and type-aware linting
+  {
+    files: ['**/*.{ts,tsx}'],
+    languageOptions: {
+      parserOptions: {
+        projectService: true,
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
+  },
+
   // React rules for apps
   {
     files: ['apps/**/*.{jsx,tsx}', 'packages/**/*.{jsx,tsx}'],
