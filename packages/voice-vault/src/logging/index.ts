@@ -3,17 +3,41 @@
  * Provides structured logging with correlation IDs for complete operation tracing
  */
 
-// Import types and functions from @orchestr8/logger
-import type { Logger, LogFields, LogLevel, LoggerOptions } from '@orchestr8/logger'
+// Local logger type contracts to avoid hard type dependency on external logger package
+export type LogLevel = 'trace' | 'debug' | 'info' | 'warn' | 'error'
+
+export interface LogFields {
+  [key: string]: unknown
+}
+
+export interface LoggerOptions {
+  name?: string
+  level?: LogLevel
+  pretty?: boolean
+  defaultFields?: Record<string, unknown>
+}
+
+export interface Logger {
+  child: (bindings?: Record<string, unknown>) => Logger
+  trace: (msg: string, fields?: LogFields) => void
+  debug: (msg: string, fields?: LogFields) => void
+  info: (msg: string, fields?: LogFields) => void
+  warn: (msg: string, fields?: LogFields) => void
+  error: (msg: string, fields?: LogFields) => void
+}
 
 // Conditionally import based on Node.js version to maintain CI compatibility
 let createLogger: (options?: LoggerOptions) => Promise<Logger>
 let createLoggerSync: (options?: LoggerOptions) => Logger
 
 try {
-  const module = await import('@orchestr8/logger')
-  createLogger = module.createLogger
-  createLoggerSync = module.createLoggerSync
+  // Use a non-literal module specifier to avoid TypeScript resolution errors
+  const moduleId = '@' + 'orchestr8/logger'
+  const mod: unknown = await import(moduleId)
+  const create = (mod as { createLogger: (o?: LoggerOptions) => Promise<Logger> }).createLogger
+  const createSync = (mod as { createLoggerSync: (o?: LoggerOptions) => Logger }).createLoggerSync
+  createLogger = create
+  createLoggerSync = createSync
 } catch {
   // Fallback for environments where @orchestr8/logger isn't available
   createLogger = async () => {
@@ -241,5 +265,4 @@ export function createChildLogger(
   })
 }
 
-// Re-export useful types
-export type { LogFields, Logger, LogLevel }
+// Exported above (local contracts)

@@ -41,25 +41,44 @@ jobs:
           pnpm-version: ${{ env.PNPM_VERSION }}
 
       # PR: Only validate affected packages
-      - name: Validate affected packages (PR)
+      - name: Validate affected packages (PR) - build/lint/test
         if: github.event_name == 'pull_request'
         run: |
-          turbo run build lint typecheck test \
+          turbo run build lint test \
+            --filter="...[origin/${{ github.event.pull_request.base.ref }}]" \
+            --output-logs=errors-only
+
+      - name: Validate affected packages (PR) - typecheck
+        if: github.event_name == 'pull_request'
+        run: |
+          turbo run typecheck \
             --filter="...[origin/${{ github.event.pull_request.base.ref }}]" \
             --output-logs=errors-only
 
       # Push to main/develop: Validate everything
-      - name: Validate all packages (Push)
+      - name: Validate all packages (Push) - build/lint/test
         if: github.event_name == 'push'
         run: |
-          turbo run build lint typecheck test \
+          turbo run build lint test \
+            --output-logs=errors-only
+
+      - name: Validate all packages (Push) - typecheck
+        if: github.event_name == 'push'
+        run: |
+          turbo run typecheck \
             --output-logs=errors-only
 
       # Manual trigger: Validate everything
-      - name: Validate all packages (Manual)
+      - name: Validate all packages (Manual) - build/lint/test
         if: github.event_name == 'workflow_dispatch'
         run: |
-          turbo run build lint typecheck test \
+          turbo run build lint test \
+            --output-logs=errors-only
+
+      - name: Validate all packages (Manual) - typecheck
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          turbo run typecheck \
             --output-logs=errors-only
 
   # Only run on push to main - informational only

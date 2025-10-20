@@ -157,11 +157,11 @@ async function example4_CacheManagement(): Promise<void> {
   // Check cache statistics
   const stats: CacheStats = await vault.getCacheStats()
   console.log('\n📊 Cache Statistics:')
-  console.log(`  Total entries: ${stats.totalEntries}`)
+  console.log(`  Total entries: ${stats.entryCount}`)
   console.log(`  Cache size: ${(stats.totalSizeBytes / 1024 / 1024).toFixed(2)} MB`)
   console.log(`  Hit rate: ${(stats.hitRate * 100).toFixed(1)}%`)
-  console.log(`  Total hits: ${stats.totalHits}`)
-  console.log(`  Total misses: ${stats.totalMisses}`)
+  console.log(`  Total hits: ${stats.cacheHits}`)
+  console.log(`  Total misses: ${stats.cacheMisses}`)
 
   console.log('✅ Cache management example completed')
 }
@@ -232,7 +232,7 @@ async function example6_CorrelationIds(): Promise<void> {
   await vault.speak('Starting conversation session', {}, true, sessionId)
 
   const stats = await vault.getCacheStats(sessionId)
-  console.log(`Cache stats for ${sessionId}: ${stats.totalEntries} entries`)
+  console.log(`Cache stats for ${sessionId}: ${stats.entryCount} entries`)
 
   // Preload with same correlation ID
   await vault.preload('Session ending soon', {}, sessionId)
@@ -259,7 +259,7 @@ async function example7_Cleanup(): Promise<void> {
 
   // Get final stats before cleanup
   const stats = await vault.getCacheStats()
-  console.log(`Before cleanup: ${stats.totalEntries} cache entries`)
+  console.log(`Before cleanup: ${stats.entryCount} cache entries`)
 
   // Clear cache if needed
   const clearedEntries = await vault.clearCache()
