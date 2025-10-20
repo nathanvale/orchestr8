@@ -44,6 +44,9 @@ export default [
         // Allow using the default TypeScript project for files not covered by a tsconfig
         allowDefaultProject: true,
         tsconfigRootDir: import.meta.dirname,
+        // Suppress warnings for TypeScript versions that may not fully support projectService
+        // This prevents parser initialization failures in edge cases with version mismatches
+        warnOnUnsupportedTypeScriptVersion: false,
       },
     },
   },
