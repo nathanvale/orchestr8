@@ -50,10 +50,10 @@ export default defineConfig(
         ],
         // Use a more reasonable threshold for the overall monorepo
         thresholds: {
-          statements: 52, // Adjusted for environment differences
-          branches: 52,
-          functions: 52,
-          lines: 52,
+          statements: 52.4, // Adjusted for environment differences (52.52% CI coverage)
+          branches: 52.4,
+          functions: 52.4,
+          lines: 52.4,
         },
       },
     },
