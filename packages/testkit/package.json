@@ -177,7 +177,7 @@
     "build": "tsup",
     "clean": "rm -rf dist .tsbuildinfo",
     "dev": "tsup --watch",
-    "lint": "eslint . --cache --cache-location ../../.eslintcache/testkit",
+    "lint": "eslint . $([ -n \"$CI\" ] && echo '--no-cache' || echo '--cache --cache-location ../../.eslintcache/testkit')",
     "prepublishOnly": "pnpm run build && test -d dist",
     "test": "vitest run -c ./vitest.config.ts",
     "test:watch": "vitest watch -c ./vitest.config.ts",
