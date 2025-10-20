@@ -60,10 +60,16 @@ async function testSpeak() {
     console.log('🏥 Test 5: Checking system health...')
     const health = await vault.getHealthStatus()
     console.log('System Health:')
-    console.log(`   Overall: ${health.healthy ? '✅ Healthy' : '❌ Unhealthy'}`)
-    console.log(`   Cache: ${health.cache.healthy ? '✅' : '❌'} ${health.cache.status}`)
-    console.log(`   Providers: ${health.providers.available}/${health.providers.total} available`)
-    console.log(`   Audio: ${health.audio.canPlay ? '✅ Ready' : '❌ Not ready'}\n`)
+    console.log(`   Overall: ${health.status === 'healthy' ? '✅ Healthy' : '❌ Unhealthy'}`)
+    console.log(
+      `   Cache: ${health.components.cache.status === 'healthy' ? '✅' : '❌'} ${health.components.cache.status}`,
+    )
+    const providerEntries = Object.entries(health.components.providers)
+    const healthyProviders = providerEntries.filter(([, p]) => p.status === 'healthy').length
+    console.log(`   Providers: ${healthyProviders}/${providerEntries.length} healthy`)
+    console.log(
+      `   Logging: ${health.components.logging.status === 'healthy' ? '✅ Ready' : '❌ Not ready'}\n`,
+    )
 
     console.log('🎉 All tests completed successfully!')
     console.log(`📁 Check logs in: packages/voice-vault/logs/`)

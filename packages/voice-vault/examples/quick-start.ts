@@ -75,7 +75,7 @@ async function managingCache(): Promise<void> {
 
   // Check cache statistics
   const stats = await vault.getCacheStats()
-  console.log(`Cache contains ${stats.totalEntries} entries`)
+  console.log(`Cache contains ${stats.entryCount} entries`)
   console.log(`Hit rate: ${(stats.hitRate * 100).toFixed(1)}%`)
 
   // Clear cache if needed
@@ -203,7 +203,7 @@ async function healthCheck(): Promise<void> {
       console.log(`${name}: ${status.status}`)
     }
 
-    console.log(`Cache: ${health.components.cache.healthy ? 'healthy' : 'unhealthy'}`)
+    console.log(`Cache: ${health.components.cache.status === 'healthy' ? 'healthy' : 'unhealthy'}`)
   } catch (error) {
     console.error('Health check failed:', error)
   }
@@ -222,7 +222,7 @@ async function testBasicFunctionality(): Promise<void> {
 
     // Test cache
     const stats = await vault.getCacheStats()
-    console.log(`✅ Cache test: ${stats.totalEntries >= 0 ? 'passed' : 'failed'}`)
+    console.log(`✅ Cache test: ${stats.entryCount >= 0 ? 'passed' : 'failed'}`)
 
     console.log('All tests passed! Voice Vault is working correctly.')
   } catch (error) {

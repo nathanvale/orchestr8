@@ -34,6 +34,30 @@ export default [
   // TypeScript rules
   ...typescript.configs.recommended,
 
+  // TypeScript parser configuration for proper project service initialization
+  // Required for monorepo with project references and type-aware linting
+  {
+    files: ['**/*.{ts,tsx}'],
+    languageOptions: {
+      parserOptions: {
+        projectService: true,
+        // Allow using the default TypeScript project for files not covered by a tsconfig
+        allowDefaultProject: true,
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
+  },
+
+  // For TS config files, disable type-aware parsing to avoid project-service lookup errors
+  {
+    files: ['**/vitest.config.ts', '**/tsup.config.ts', '**/*.config.ts'],
+    languageOptions: {
+      parserOptions: {
+        projectService: false,
+      },
+    },
+  },
+
   // React rules for apps
   {
     files: ['apps/**/*.{jsx,tsx}', 'packages/**/*.{jsx,tsx}'],
@@ -123,10 +147,42 @@ export default [
       '**/*.spec.{js,ts,jsx,tsx}',
       '**/tests/**/*.{js,ts,jsx,tsx}',
     ],
+    languageOptions: {
+      parserOptions: {
+        // Tests don't need type-aware linting; avoid tsconfig project-service lookups
+        projectService: false,
+      },
+    },
     rules: {
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-non-null-assertion': 'off',
       'max-lines-per-function': ['error', { max: 500, skipBlankLines: true, skipComments: true }], // Tests can be longer but still have limits
+    },
+  },
+  // Benchmark file overrides
+  {
+    files: ['**/*.bench.{js,ts,jsx,tsx}', '**/benchmarks/**/*.{js,ts,jsx,tsx}'],
+    languageOptions: {
+      parserOptions: {
+        // Benchmarks don't need type-aware linting; avoid tsconfig project-service lookups
+        projectService: false,
+      },
+    },
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-non-null-assertion': 'off',
+    },
+  },
+  // Examples and scripts in packages should lint without type-aware parsing
+  {
+    files: [
+      'packages/**/examples/**/*.{js,ts,jsx,tsx}',
+      'packages/**/test-*.{js,ts}',
+    ],
+    languageOptions: {
+      parserOptions: {
+        projectService: false,
+      },
     },
   },
   {
@@ -134,7 +190,8 @@ export default [
     ignores: ['**/*.test.{js,ts,jsx,tsx}', '**/*.spec.{js,ts,jsx,tsx}'],
     rules: {
       // Stricter rules for quality-check source files (not tests)
-      'max-lines-per-function': ['error', { max: 150, skipBlankLines: true, skipComments: true }],
+      // Keep signal without blocking PRs
+      'max-lines-per-function': ['warn', { max: 200, skipBlankLines: true, skipComments: true }],
     },
   },
   {

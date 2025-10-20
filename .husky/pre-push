@@ -39,11 +39,17 @@ fi
 
 # Use changed-only validation for feature branches, full validation for main/develop
 if [ "$BRANCH" = "main" ] || [ "$BRANCH" = "develop" ]; then
-  echo "🧪 Running full validation suite for $BRANCH..."
-  pnpm run validate
+  echo "🧪 Running full validation suite for $BRANCH (build/lint/test)..."
+  pnpm dlx turbo run build lint test --output-logs=errors-only
+
+  echo "🔍 Running typecheck..."
+  pnpm dlx turbo run typecheck --output-logs=errors-only
 else
-  echo "🧪 Running changed-only validation for feature branch..."
-  pnpm run validate:changed
+  echo "🧪 Running changed-only validation for feature branch (build/lint/test)..."
+  pnpm dlx turbo run build lint test --filter="...[${TURBO_SCM_BASE:-origin/main}]" --output-logs=errors-only
+
+  echo "🔍 Running changed-only typecheck..."
+  pnpm dlx turbo run typecheck --filter="...[${TURBO_SCM_BASE:-origin/main}]" --output-logs=errors-only
 fi
 
 echo "🎉 All validations passed! Ready to push."
