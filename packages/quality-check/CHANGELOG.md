@@ -1,5 +1,18 @@
 # @claude-hooks/quality-check
 
+## 1.0.4
+
+### Patch Changes
+
+- [#178](https://github.com/nathanvale/orchestr8/pull/178)
+  [`0a09aac`](https://github.com/nathanvale/orchestr8/commit/0a09aac7647e8f0100d460d114b47faba5df3a0e)
+  Thanks [@nathanvale](https://github.com/nathanvale)! - Fix validation issues
+  across packages
+  - Add ESLint benchmark file overrides to prevent parsing errors
+  - Update voice-vault type references to match current type definitions
+  - Remove PostgreSQL container tests requiring Docker runtime
+  - Rebuild better-sqlite3 native module for current Node.js version
+
 ## 1.0.3
 
 ### Patch Changes
