@@ -36,7 +36,17 @@ const cfg = createBaseVitestConfig({
       TEST_SEED: process.env['TEST_SEED'] || '12345',
       DEBUG_TESTKIT: process.env['DEBUG_TESTKIT'] || 'true',
     },
-    // Coverage is handled by base config (enabled in CI, disabled locally)
+    // Coverage configuration - match root thresholds for consistency
+    coverage: {
+      enabled: process.env['CI'] === 'true',
+      provider: 'v8' as const,
+      thresholds: {
+        statements: 52.4,
+        branches: 52.4,
+        functions: 52.4,
+        lines: 52.4,
+      },
+    },
   },
 })
 
