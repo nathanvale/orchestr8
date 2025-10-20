@@ -1,5 +1,51 @@
 # @claude-hooks/quality-check
 
+## 1.1.0
+
+### Minor Changes
+
+- [#182](https://github.com/nathanvale/orchestr8/pull/182)
+  [`db26d04`](https://github.com/nathanvale/orchestr8/commit/db26d0437bfcd897dfceebfbe69f0f12ce6eb54b)
+  Thanks [@nathanvale](https://github.com/nathanvale)! - Improve ESLint parser
+  resilience with graceful degradation
+
+  Implements a 3-layer defense against TypeScript parser service failures:
+  1. **ESLint Config Hardening**: Add
+     `warnOnUnsupportedTypeScriptVersion: false` to suppress version mismatch
+     warnings that can cause parser initialization failures in monorepo
+     environments
+  2. **Engine-Level Fallback**: Wrap ESLint instantiation in try-catch with
+     cache-disabled retry for `fileExists` errors. If parser service fails with
+     type-aware linting, retry without cache as fallback
+  3. **Enhanced Error Handling**: Downgrade parser service failures to warnings
+     with actionable error messages suggesting:
+     - Verify all tsconfig.json files are valid
+     - Check for circular project references
+     - Disable type-aware linting for specific files if needed
+
+  This ensures the quality-check pipeline continues functioning even when
+  TypeScript parser initialization fails in edge cases, such as:
+  - Circular project references in monorepo
+  - TypeScript version mismatches
+  - Missing or invalid tsconfig.json files
+  - Complex monorepo configurations
+
+  Includes comprehensive tests verifying graceful degradation behavior and
+  resource cleanup.
+
+## 1.0.4
+
+### Patch Changes
+
+- [#178](https://github.com/nathanvale/orchestr8/pull/178)
+  [`0a09aac`](https://github.com/nathanvale/orchestr8/commit/0a09aac7647e8f0100d460d114b47faba5df3a0e)
+  Thanks [@nathanvale](https://github.com/nathanvale)! - Fix validation issues
+  across packages
+  - Add ESLint benchmark file overrides to prevent parsing errors
+  - Update voice-vault type references to match current type definitions
+  - Remove PostgreSQL container tests requiring Docker runtime
+  - Rebuild better-sqlite3 native module for current Node.js version
+
 ## 1.0.3
 
 ### Patch Changes

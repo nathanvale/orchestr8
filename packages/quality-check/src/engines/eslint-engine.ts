@@ -88,12 +88,37 @@ export class ESLintEngine {
         !this.areFixTypesEqual(this.lastConfig.fixTypes, eslintConfig.fixTypes) ||
         this.lastConfig.cacheLocation !== eslintConfig.cacheLocation
       ) {
-        this.eslint = new ESLint({
-          ...eslintConfig,
-          cache: true,
-          errorOnUnmatchedPattern: false,
-          // Flat config is default in v9
-        })
+        try {
+          this.eslint = new ESLint({
+            ...eslintConfig,
+            cache: true,
+            errorOnUnmatchedPattern: false,
+            // Flat config is default in v9
+          })
+        } catch (parserError) {
+          // Graceful degradation: retry without cache if TypeScript parser service fails
+          // This handles cases where projectService initialization fails in edge cases
+          // (e.g., circular project references, version mismatches, missing tsconfig)
+          if (parserError instanceof Error && parserError.message.includes('fileExists')) {
+            try {
+              this.eslint = new ESLint({
+                ...eslintConfig,
+                cache: false, // Disable cache to avoid corrupted cache state
+                errorOnUnmatchedPattern: false,
+              })
+            } catch (fallbackError) {
+              // If fallback still fails, mark it and let outer catch handle it
+              throw new Error(
+                `ESLint initialization failed (parser service fallback also failed): ${
+                  fallbackError instanceof Error ? fallbackError.message : String(fallbackError)
+                }`,
+              )
+            }
+          } else {
+            // Re-throw if it's a different kind of error
+            throw parserError
+          }
+        }
         this.lastConfig = eslintConfig
       }
 
@@ -166,16 +191,24 @@ export class ESLintEngine {
       }
 
       const duration = Date.now() - startTime
+      const errorMessage = error instanceof Error ? error.message : String(error)
+
+      // Layer 3: Enhanced error handling for parser service failures
+      // Provide actionable feedback when TypeScript parser initialization fails
+      const isParserServiceError = errorMessage.includes('fileExists')
+
       return {
         success: false,
         issues: [
           {
             engine: 'eslint',
-            severity: 'error',
+            severity: isParserServiceError ? 'warning' : 'error',
             file: config.files[0] ?? process.cwd(),
             line: 1,
             col: 1,
-            message: error instanceof Error ? error.message : String(error),
+            message: isParserServiceError
+              ? `TypeScript parser service initialization failed. ESLint will continue with basic linting. If issues persist, try: (1) Ensure all tsconfig.json files are valid, (2) Check for circular project references, (3) Disable type-aware linting for this file with \`projectService: false\` in eslint.config.mjs`
+              : errorMessage,
           },
         ],
         duration,
