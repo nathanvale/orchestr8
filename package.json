@@ -34,7 +34,7 @@
     "test": "NODE_OPTIONS='--max-old-space-size=4096' vitest run",
     "test:watch": "vitest watch",
     "test:ui": "vitest --ui",
-    "test:coverage": "NODE_OPTIONS='--max-old-space-size=4096' vitest run --coverage",
+    "test:coverage": "CI=true NODE_OPTIONS='--max-old-space-size=4096' vitest run --coverage",
     "test:integration": "NODE_OPTIONS='--max-old-space-size=4096' TEST_MODE=integration vitest run",
     "test:e2e": "TEST_MODE=e2e vitest run",
     "test:smoke": "vitest run --bail=1 --no-coverage **/*.smoke.test.*",
