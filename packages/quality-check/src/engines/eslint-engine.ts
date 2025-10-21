@@ -132,8 +132,38 @@ export class ESLintEngine {
         }
       }
 
-      // Lint files
-      const results = await this.eslint.lintFiles(config.files)
+      // Lint files with fallback for parser service errors during execution
+      let results: ESLint.LintResult[]
+      try {
+        results = await this.eslint.lintFiles(config.files)
+      } catch (lintError) {
+        // If parser service fails during linting (not just initialization), retry without cache
+        if (lintError instanceof Error && lintError.message.includes('fileExists')) {
+          try {
+            // Clear cached instance and retry without cache
+            this.eslint = new ESLint({
+              ...eslintConfig,
+              cache: false, // Disable cache to avoid corrupted parser state
+              errorOnUnmatchedPattern: false,
+            })
+            this.lastConfig = { ...eslintConfig, cacheLocation: '' }
+
+            // Retry linting with cache disabled
+            results = await this.eslint.lintFiles(config.files)
+          } catch (retryError) {
+            // If retry also fails, fall back to graceful degradation
+            // Return empty results and let the catch block below handle it
+            throw new Error(
+              `ESLint parser service failed (retry also failed): ${
+                retryError instanceof Error ? retryError.message : String(retryError)
+              }. Consider disabling type-aware linting for test files in eslint.config.mjs`,
+            )
+          }
+        } else {
+          // Re-throw if it's a different error
+          throw lintError
+        }
+      }
 
       // Check for cancellation
       if (config.token?.isCancellationRequested) {

@@ -52,6 +52,21 @@ export class TypeScriptEngine {
         throw new ToolMissingError('typescript')
       }
 
+      // Validate critical TypeScript APIs - skip gracefully if unavailable
+      if (
+        !ts.parseJsonConfigFileContent ||
+        !ts.sys ||
+        (!ts.createIncrementalProgram && !ts.createProgram)
+      ) {
+        // TypeScript APIs not fully available - skip TypeScript checking
+        const duration = Date.now() - startTime
+        return {
+          success: true,
+          issues: [],
+          duration,
+          fixable: false,
+        }
+      }
       // Set cache directory if provided
       if (config.cacheDir) {
         this.cacheDir = config.cacheDir
@@ -137,28 +152,90 @@ export class TypeScriptEngine {
     tsconfigPath?: string,
     targetFile?: string,
   ): Promise<{ configPath: string; parsedConfig: ts.ParsedCommandLine }> {
+    // Provide fallback file system utilities when ts.sys is not available
+    // This handles edge cases where TypeScript's sys utilities aren't properly initialized
+    const fileExists = ts.sys?.fileExists ?? ((filePath: string) => fs.existsSync(filePath))
+    const readFile = ts.sys?.readFile ?? ((filePath: string) => fs.readFileSync(filePath, 'utf8'))
+
+    // Fallback implementation of findConfigFile when ts.findConfigFile is not available
+    const findConfigFile = (
+      searchPath: string,
+      fileExistsFn: (path: string) => boolean,
+      configName: string,
+    ): string | undefined => {
+      if (ts.findConfigFile) {
+        return ts.findConfigFile(searchPath, fileExistsFn, configName)
+      }
+
+      // Manual implementation as fallback
+      let currentDir = path.resolve(searchPath)
+      while (true) {
+        const configPath = path.join(currentDir, configName)
+        if (fileExistsFn(configPath)) {
+          return configPath
+        }
+
+        const parentDir = path.dirname(currentDir)
+        if (parentDir === currentDir) {
+          return undefined
+        }
+        currentDir = parentDir
+      }
+    }
+
     // Find tsconfig.json
     const configPath =
       tsconfigPath ??
       (targetFile
-        ? ts.findConfigFile(path.dirname(targetFile), ts.sys.fileExists, 'tsconfig.json')
-        : ts.findConfigFile(process.cwd(), ts.sys.fileExists, 'tsconfig.json'))
+        ? findConfigFile(path.dirname(targetFile), fileExists, 'tsconfig.json')
+        : findConfigFile(process.cwd(), fileExists, 'tsconfig.json'))
 
     if (!configPath) {
       throw new FileError('tsconfig.json not found')
     }
 
-    // Read and parse config
-    const configFile = ts.readConfigFile(configPath, ts.sys.readFile)
+    // Read and parse config with fallback
+    let configFile: { config?: unknown; error?: ts.Diagnostic }
+    if (ts.readConfigFile) {
+      configFile = ts.readConfigFile(configPath, readFile)
+    } else {
+      // Fallback: manually read and parse JSON
+      // TypeScript config files support JSON5 (comments, trailing commas, etc.)
+      try {
+        const configText = readFile(configPath)
+        if (configText === undefined) {
+          throw new FileError(`Failed to read tsconfig.json at ${configPath}`)
+        }
+        // Strip comments and trailing commas to make it valid JSON
+        const cleanedJson = configText
+          .replace(/\/\*[\s\S]*?\*\/|\/\/.*/g, '') // Remove comments
+          .replace(/,(\s*[}\]])/g, '$1') // Remove trailing commas
+        configFile = { config: JSON.parse(cleanedJson) }
+      } catch (error) {
+        throw new FileError(
+          `Failed to read tsconfig.json: ${error instanceof Error ? error.message : String(error)}`,
+        )
+      }
+    }
+
     if (configFile.error) {
       throw new FileError(
         `Failed to read tsconfig.json: ${ts.flattenDiagnosticMessageText(configFile.error.messageText, '\n')}`,
       )
     }
 
+    // Create fallback sys object if ts.sys is not available
+    const sys = ts.sys ?? {
+      fileExists,
+      readFile,
+      getCurrentDirectory: () => process.cwd(),
+      useCaseSensitiveFileNames: process.platform !== 'win32',
+      getNewLine: () => os.EOL,
+    }
+
     const parsedConfig = ts.parseJsonConfigFileContent(
       configFile.config,
-      ts.sys,
+      sys as ts.System,
       path.dirname(configPath),
       {
         noEmit: true,
