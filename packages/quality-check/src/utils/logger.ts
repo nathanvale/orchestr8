@@ -381,14 +381,14 @@ export class EnhancedLogger extends QualityLogger {
     // Determine log directory with priority:
     // 1. Explicit config
     // 2. Environment variable
-    // 3. Git root .logs/ (if in git repo)
-    // 4. Current directory .logs/
+    // 3. Git root logs/ (if in git repo)
+    // 4. Current directory logs/
     const defaultLogDir = (() => {
       if (process.env.QUALITY_CHECK_LOG_DIR) {
         return process.env.QUALITY_CHECK_LOG_DIR
       }
       const gitRoot = findGitRoot()
-      return gitRoot ? join(gitRoot, '.logs') : join(process.cwd(), '.logs')
+      return gitRoot ? join(gitRoot, 'logs') : join(process.cwd(), 'logs')
     })()
 
     this.config = {
