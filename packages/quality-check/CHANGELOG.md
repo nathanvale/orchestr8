@@ -1,5 +1,21 @@
 # @claude-hooks/quality-check
 
+## 1.2.1
+
+### Patch Changes
+
+- [#187](https://github.com/nathanvale/orchestr8/pull/187)
+  [`1cbd163`](https://github.com/nathanvale/orchestr8/commit/1cbd163fb67d73b3e1c6a60bd09b9cd8dd52567d)
+  Thanks [@nathanvale](https://github.com/nathanvale)! - fix: use logs/ instead
+  of .logs/ for centralized log directory
+
+  Changes the centralized log directory from `.logs/` to `logs/` at the git
+  repository root.
+  - **Before:** `<git-root>/.logs/quality-check/{errors,debug}/`
+  - **After:** `<git-root>/logs/quality-check/{errors,debug}/`
+
+  The `logs/` directory is already covered by `.gitignore`.
+
 ## 1.2.0
 
 ### Minor Changes
