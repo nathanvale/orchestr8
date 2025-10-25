@@ -7,8 +7,29 @@
 import pino from 'pino'
 import { randomUUID } from 'node:crypto'
 import { appendFile, mkdir, writeFile, readdir, unlink, stat } from 'node:fs/promises'
+import { existsSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { OutputFormatter } from '../services/OutputFormatter.js'
+
+/**
+ * Find the git repository root directory
+ * Walks up the directory tree until it finds a .git directory
+ */
+function findGitRoot(startPath: string = process.cwd()): string | null {
+  let currentPath = startPath
+
+  while (currentPath !== dirname(currentPath)) {
+    // Check if .git exists in current directory
+    if (existsSync(join(currentPath, '.git'))) {
+      return currentPath
+    }
+
+    // Move up one directory
+    currentPath = dirname(currentPath)
+  }
+
+  return null // No git root found
+}
 
 // Global correlation ID for request tracing
 let globalCorrelationId: string | null = null
@@ -357,13 +378,26 @@ export class EnhancedLogger extends QualityLogger {
 
   constructor(config?: Partial<LoggerConfig>) {
     super()
+    // Determine log directory with priority:
+    // 1. Explicit config
+    // 2. Environment variable
+    // 3. Git root .logs/ (if in git repo)
+    // 4. Current directory .logs/
+    const defaultLogDir = (() => {
+      if (process.env.QUALITY_CHECK_LOG_DIR) {
+        return process.env.QUALITY_CHECK_LOG_DIR
+      }
+      const gitRoot = findGitRoot()
+      return gitRoot ? join(gitRoot, '.logs') : join(process.cwd(), '.logs')
+    })()
+
     this.config = {
       console: config?.console ?? true,
       file: config?.file ?? false,
       silent: config?.silent ?? this.isEnvironmentSilent(),
       colored: config?.colored ?? true,
       outputFormat: config?.outputFormat ?? 'basic',
-      logDir: config?.logDir ?? join(process.cwd(), 'packages', 'quality-check'),
+      logDir: config?.logDir ?? defaultLogDir,
       retentionPolicy: {
         errorReports:
           config?.retentionPolicy?.errorReports ??
@@ -377,8 +411,8 @@ export class EnhancedLogger extends QualityLogger {
 
   // Ensure log directories exist
   async ensureLogDirectories(): Promise<void> {
-    const errorsDir = join(this.logDir, 'logs', 'errors')
-    const debugDir = join(this.logDir, 'logs', 'debug')
+    const errorsDir = join(this.logDir, 'quality-check', 'errors')
+    const debugDir = join(this.logDir, 'quality-check', 'debug')
 
     try {
       await stat(errorsDir)
@@ -399,7 +433,7 @@ export class EnhancedLogger extends QualityLogger {
 
     // Keep colons in timestamp for consistency
     const filename = `${report.tool}-${report.timestamp}.json`
-    const filePath = join(this.logDir, 'logs', 'errors', filename)
+    const filePath = join(this.logDir, 'quality-check', 'errors', filename)
 
     await writeFile(filePath, JSON.stringify(report, null, 2))
     return filePath
@@ -412,7 +446,7 @@ export class EnhancedLogger extends QualityLogger {
     // Keep colons in timestamp for consistency
     const timestamp = new Date().toISOString()
     const filename = `${type}-${timestamp}.json`
-    const filePath = join(this.logDir, 'logs', 'debug', filename)
+    const filePath = join(this.logDir, 'quality-check', 'debug', filename)
 
     await writeFile(filePath, JSON.stringify(data, null, 2))
     return filePath
@@ -420,7 +454,7 @@ export class EnhancedLogger extends QualityLogger {
 
   // Clean up old logs beyond retention limit
   async cleanupOldLogs(tool: 'eslint' | 'typescript' | 'prettier'): Promise<void> {
-    const errorsDir = join(this.logDir, 'logs', 'errors')
+    const errorsDir = join(this.logDir, 'quality-check', 'errors')
     try {
       await stat(errorsDir)
     } catch {
@@ -453,7 +487,7 @@ export class EnhancedLogger extends QualityLogger {
 
   // Clean up debug logs
   async cleanupDebugLogs(): Promise<void> {
-    const debugDir = join(this.logDir, 'logs', 'debug')
+    const debugDir = join(this.logDir, 'quality-check', 'debug')
     try {
       await stat(debugDir)
     } catch {
