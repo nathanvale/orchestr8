@@ -1,5 +1,64 @@
 # @claude-hooks/quality-check
 
+## 1.2.0
+
+### Minor Changes
+
+- [#186](https://github.com/nathanvale/orchestr8/pull/186)
+  [`0ee0b11`](https://github.com/nathanvale/orchestr8/commit/0ee0b11d0fa753a27d81d640a7389b5764c876b8)
+  Thanks [@nathanvale](https://github.com/nathanvale)! - feat: centralize logs
+  to .logs/ directory at git root
+
+  **Problem:** Log files were being created in multiple scattered locations
+  throughout the monorepo:
+  - `./packages/quality-check/logs`
+  - `./apps/migration-cli/packages/quality-check/logs`
+  - `./apps/portal/packages/quality-check/logs`
+
+  **Solution:** All quality-check logs now write to a single, centralized
+  `.logs/` directory:
+  - **Default:** `<git-root>/.logs/quality-check/{errors,debug}/`
+  - **Fallback:** `<cwd>/.logs/quality-check/{errors,debug}/` (if not in a git
+    repo)
+
+  **Features:**
+  - ✨ Auto-detect git repository root for centralized logging
+  - 🔧 Environment variable support: `QUALITY_CHECK_LOG_DIR`
+  - 📝 Updated `.gitignore` to exclude `.logs/` directory
+  - 🧹 Cleaner monorepo workspace - no more scattered log directories
+
+  **Configuration Priority:**
+  1. Explicit `logDir` config option
+  2. `QUALITY_CHECK_LOG_DIR` environment variable
+  3. Git root `.logs/` directory (auto-detected)
+  4. Current directory `.logs/` (fallback)
+
+  **Breaking Changes:** None - backward compatible. Existing log directories
+  will be ignored and new logs write to centralized location.
+
+### Patch Changes
+
+- [#184](https://github.com/nathanvale/orchestr8/pull/184)
+  [`771d83b`](https://github.com/nathanvale/orchestr8/commit/771d83b87dc178c556dc70e914fbf3e389d58795)
+  Thanks [@nathanvale](https://github.com/nathanvale)! - fix: add graceful
+  TypeScript API fallback to prevent parser crashes
+
+  Fixes "Cannot read properties of undefined (reading 'fileExists')" error when
+  processing test files.
+
+  **Changes:**
+  - Add TypeScript API validation with graceful degradation
+  - Implement Node.js fs fallbacks for ts.sys.fileExists/readFile
+  - Add manual findConfigFile implementation
+  - Support JSON5 parsing for tsconfig.json (comments, trailing commas)
+  - Create minimal ts.sys object when unavailable
+  - Enhanced ESLint engine error handling with retry logic
+
+  **Impact:**
+  - Quality-check now works reliably on test files
+  - Graceful degradation when TypeScript APIs unavailable
+  - No crashes - returns success with empty results when APIs missing
+
 ## 1.1.0
 
 ### Minor Changes
