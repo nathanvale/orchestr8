@@ -232,8 +232,8 @@ importers:
         specifier: ^11.6.0
         version: 11.6.0
       '@testcontainers/postgresql':
-        specifier: ^11.6.0
-        version: 11.6.0
+        specifier: ^11.7.2
+        version: 11.7.2
       '@types/better-sqlite3':
         specifier: ^7.6.13
         version: 7.6.13
@@ -393,6 +393,10 @@ packages:
 
   '@babel/runtime@7.28.3':
     resolution: {integrity: sha512-9uIQ10o0WGdpP6GDhXcdOJPJuDgFtIDtN/9+ArJQ2NAfAmiuhTQdzkaTGR33v43GYS2UrSA0eX2pPPHoFVvpxA==}
+    engines: {node: '>=6.9.0'}
+
+  '@babel/runtime@7.28.4':
+    resolution: {integrity: sha512-Q/N6JNWvIvPnLDvjlE1OUBLPQHH6l3CltCEsHIujp45zQUSSh8K+gHnaEX45yAT1nyngnINhvWtzN+Nb9D8RAQ==}
     engines: {node: '>=6.9.0'}
 
   '@babel/template@7.27.2':
@@ -1205,8 +1209,8 @@ packages:
   '@testcontainers/mysql@11.6.0':
     resolution: {integrity: sha512-x8q2/Sz743Ohpu870A6HnzETB8iGoDGv7CKx27LQT/ps3vSDHVmzRrAnCHP7jMRx4LSFDGYR3IsfrZcIISEC4Q==}
 
-  '@testcontainers/postgresql@11.6.0':
-    resolution: {integrity: sha512-+JlbHfcWpxrfWG4BZeWiNKI4pjn4FPWCnKFYkUSneuYjEuYJQWSFdP38W5RB0N1rf5ce+dYzb5SXi4i2MWH3Zw==}
+  '@testcontainers/postgresql@11.7.2':
+    resolution: {integrity: sha512-sG0J/q/i2XWToDzoGhwNT+z1ae/65wvINg4t171rGRYdtW777w5rvin4hkT7poe5thsTrs6zBkrlF+r55Zt5/g==}
 
   '@testing-library/dom@10.4.1':
     resolution: {integrity: sha512-o4PXJQidqJl82ckFaXUeoAW+XysPLauYI43Abki5hABd853iMhitooc6znOnczgbTYmEP6U6/y1ZyKAIsvMKGg==}
@@ -1275,6 +1279,9 @@ packages:
 
   '@types/dockerode@3.3.44':
     resolution: {integrity: sha512-fUpIHlsbYpxAJb285xx3vp7q5wf5mjqSn3cYwl/MhiM+DB99OdO5sOCPlO0PjO+TyOtphPs7tMVLU/RtOo/JjA==}
+
+  '@types/dockerode@3.3.45':
+    resolution: {integrity: sha512-iYpZF+xr5QLpIICejLdUF2r5gh8IXY1Gw3WLmt41dUbS3Vn/3hVgL+6lJBVbmrhYBWfbWPPstdr6+A0s95DTWA==}
 
   '@types/estree@1.0.8':
     resolution: {integrity: sha512-dWHzHa2WqEXI/O1E9OjrocMTKJl2mSrEolh1Iomrv6U+JuNwaHXsXx9bLu5gG7BUWFIN0skIQJQ/L1rIex4X6w==}
@@ -2107,6 +2114,10 @@ packages:
 
   dockerode@4.0.8:
     resolution: {integrity: sha512-HdPBprWmwfHMHi12AVIFDhXIqIS+EpiOVkZaAZxgML4xf5McqEZjJZtahTPkLDxWOt84ApfWPAH9EoQwOiaAIQ==}
+    engines: {node: '>= 8.0'}
+
+  dockerode@4.0.9:
+    resolution: {integrity: sha512-iND4mcOWhPaCNh54WmK/KoSb35AFqPAUWFMffTQcp52uQt36b5uNwEJTSXntJZBbeGad72Crbi/hvDIv6us/6Q==}
     engines: {node: '>= 8.0'}
 
   doctrine@2.1.0:
@@ -4055,6 +4066,9 @@ packages:
   testcontainers@11.6.0:
     resolution: {integrity: sha512-2kXdhZ4mvvPP4xEY1yxhLSrFt/TXokClOtppA4bt/5FJJwZrnUkyCo3TVfhHx3Ynlq1N00qjoQuxpnwFqU9a7g==}
 
+  testcontainers@11.7.2:
+    resolution: {integrity: sha512-jeFzeyzLhIouRAbLnQNapJ2esBs/mvXkkYvO1/vSZehT3/7+Q557qaNxwKwMqAbfxfSh7gcx1OLlMsQUZ9JLdA==}
+
   text-decoder@1.2.3:
     resolution: {integrity: sha512-3/o9z3X0X0fTupwsYvR03pJ/DjWuqqrfwBgTQzdWDiQSm9KitAyz/9WqsT2JQW7KV2m+bC2ol/zqpW37NHxLaA==}
 
@@ -4619,6 +4633,8 @@ snapshots:
       '@babel/helper-plugin-utils': 7.27.1
 
   '@babel/runtime@7.28.3': {}
+
+  '@babel/runtime@7.28.4': {}
 
   '@babel/template@7.27.2':
     dependencies:
@@ -5419,9 +5435,9 @@ snapshots:
       - react-native-b4a
       - supports-color
 
-  '@testcontainers/postgresql@11.6.0':
+  '@testcontainers/postgresql@11.7.2':
     dependencies:
-      testcontainers: 11.6.0
+      testcontainers: 11.7.2
     transitivePeerDependencies:
       - bare-buffer
       - react-native-b4a
@@ -5430,7 +5446,7 @@ snapshots:
   '@testing-library/dom@10.4.1':
     dependencies:
       '@babel/code-frame': 7.27.1
-      '@babel/runtime': 7.28.3
+      '@babel/runtime': 7.28.4
       '@types/aria-query': 5.0.4
       aria-query: 5.3.0
       dom-accessibility-api: 0.5.16
@@ -5516,6 +5532,12 @@ snapshots:
       '@types/node': 22.18.0
       '@types/ssh2': 1.15.5
 
+  '@types/dockerode@3.3.45':
+    dependencies:
+      '@types/docker-modem': 3.0.6
+      '@types/node': 22.18.0
+      '@types/ssh2': 1.15.5
+
   '@types/estree@1.0.8': {}
 
   '@types/js-yaml@4.0.9': {}
@@ -5565,7 +5587,7 @@ snapshots:
 
   '@types/ssh2-streams@0.1.12':
     dependencies:
-      '@types/node': 22.18.0
+      '@types/node': 24.3.0
 
   '@types/ssh2@0.5.52':
     dependencies:
@@ -6445,7 +6467,7 @@ snapshots:
 
   docker-modem@5.0.6:
     dependencies:
-      debug: 4.4.3
+      debug: 4.4.1
       readable-stream: 3.6.2
       split-ca: 1.0.1
       ssh2: 1.17.0
@@ -6453,6 +6475,18 @@ snapshots:
       - supports-color
 
   dockerode@4.0.8:
+    dependencies:
+      '@balena/dockerignore': 1.0.2
+      '@grpc/grpc-js': 1.14.0
+      '@grpc/proto-loader': 0.7.15
+      docker-modem: 5.0.6
+      protobufjs: 7.5.4
+      tar-fs: 2.1.4
+      uuid: 10.0.0
+    transitivePeerDependencies:
+      - supports-color
+
+  dockerode@4.0.9:
     dependencies:
       '@balena/dockerignore': 1.0.2
       '@grpc/grpc-js': 1.14.0
@@ -8729,6 +8763,28 @@ snapshots:
       debug: 4.4.3
       docker-compose: 1.3.0
       dockerode: 4.0.8
+      get-port: 7.1.0
+      proper-lockfile: 4.1.2
+      properties-reader: 2.3.0
+      ssh-remote-port-forward: 1.0.4
+      tar-fs: 3.1.1
+      tmp: 0.2.5
+      undici: 7.16.0
+    transitivePeerDependencies:
+      - bare-buffer
+      - react-native-b4a
+      - supports-color
+
+  testcontainers@11.7.2:
+    dependencies:
+      '@balena/dockerignore': 1.0.2
+      '@types/dockerode': 3.3.45
+      archiver: 7.0.1
+      async-lock: 1.4.1
+      byline: 5.0.0
+      debug: 4.4.3
+      docker-compose: 1.3.0
+      dockerode: 4.0.9
       get-port: 7.1.0
       proper-lockfile: 4.1.2
       properties-reader: 2.3.0
