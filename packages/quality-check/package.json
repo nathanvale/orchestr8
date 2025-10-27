@@ -59,7 +59,7 @@
     "@types/write-file-atomic": "^4.0.0",
     "js-yaml": "^4.1.0",
     "typescript": "~5.7.2",
-    "vitest": "^3.2.4"
+    "vitest": "^4.0.3"
   },
   "engines": {
     "node": ">=18.0.0"
