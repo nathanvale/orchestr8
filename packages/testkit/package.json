@@ -208,8 +208,8 @@
     "mysql2": "^3.15.0",
     "pg": "^8.16.3",
     "testcontainers": "^10.17.2",
-    "tsup": "^8.3.5",
-    "typescript": "^5.7.3",
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3",
     "vitest": "^3.2.4"
   },
   "peerDependencies": {
